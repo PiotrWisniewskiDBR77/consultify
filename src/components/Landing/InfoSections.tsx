@@ -21,7 +21,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -494,8 +494,6 @@ export const InfoSections: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentUser } = useAppStore();
-  const howItWorksTeaserRef = useRef<HTMLVideoElement | null>(null);
-  const [howItWorksTeaserEnded, setHowItWorksTeaserEnded] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
 
   const faqs = [
@@ -579,96 +577,7 @@ export const InfoSections: React.FC = () => {
             </h3>
           </div>
 
-          {/* Public teaser (Film 2) */}
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-4xl mx-auto mb-16"
-          >
-            <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl">
-              <div className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-slate-200 dark:border-navy-700">
-                <div>
-                  <p className="text-sm font-black text-slate-900 dark:text-white">
-                    {t('landing.howItWorks.teaser.title', 'See it live (20s)')}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {t(
-                      'landing.howItWorks.teaser.subtitle',
-                      'Public teaser. Full version after login.'
-                    )}
-                  </p>
-                </div>
-                <button
-                  onClick={async () => {
-                    try {
-                      howItWorksTeaserRef.current?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center',
-                      });
-                      await howItWorksTeaserRef.current?.play();
-                    } catch {
-                      // ignore autoplay restrictions
-                    }
-                  }}
-                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-colors"
-                >
-                  {t('landing.howItWorks.teaser.cta', 'See it live')}
-                </button>
-              </div>
-
-              <div className="bg-black">
-                <video
-                  ref={howItWorksTeaserRef}
-                  className="w-full aspect-video object-contain"
-                  playsInline
-                  controls
-                  onPlay={() => {
-                    setHowItWorksTeaserEnded(false);
-                    trackFunnelEvent('landing_video_teaser_started', {
-                      filmId: LANDING_FILMS.film2.id,
-                    });
-                  }}
-                  onEnded={() => {
-                    setHowItWorksTeaserEnded(true);
-                    trackFunnelEvent('landing_video_teaser_completed', {
-                      filmId: LANDING_FILMS.film2.id,
-                    });
-                  }}
-                >
-                  <source src={LANDING_FILMS.film2.teaserUrl} type="video/mp4" />
-                </video>
-              </div>
-
-              {howItWorksTeaserEnded ? (
-                <div className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
-                    {t(
-                      'landing.howItWorks.teaser.after',
-                      'Want the full version? Log in to unlock all videos.'
-                    )}
-                  </p>
-                  <button
-                    onClick={() => {
-                      trackFunnelEvent('landing_watch_full_after_login_clicked', {
-                        filmId: LANDING_FILMS.film2.id,
-                      });
-                      if (currentUser?.isAuthenticated) {
-                        navigate('/resources');
-                      } else {
-                        navigate('/login');
-                      }
-                    }}
-                    className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-200 font-semibold transition-colors"
-                  >
-                    {currentUser?.isAuthenticated
-                      ? t('landing.howItWorks.teaser.afterCtaAuthed', 'Watch full version')
-                      : t('landing.howItWorks.teaser.afterCta', 'Watch full version after login')}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </motion.div>
+          {/* Methodology teaser hidden temporarily; keep implementation history in git for restore */}
 
           <div className="grid md:grid-cols-3 gap-16 lg:gap-24">
             {steps.map((step, idx) => {

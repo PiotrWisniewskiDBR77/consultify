@@ -8,19 +8,19 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertTriangle,
   ArrowRight,
   BookOpen,
-  Brain,
   ChevronRight,
   Clock,
   Eye,
   Filter,
   GraduationCap,
-  Rocket,
   Search,
-  Shield,
   Tag,
+  TrendingUp,
   X,
+  Zap,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,27 +39,27 @@ import { useKnowledgeTags } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 
 const SECTION_ICONS: Record<string, React.ReactNode> = {
-  'consultify-governance-and-roi': <Shield size={22} />,
-  'consultify-execution-and-rollout': <Rocket size={22} />,
-  'consultify-ai-and-decision-making': <Brain size={22} />,
+  'consultify-why-transformations-fail': <AlertTriangle size={22} />,
+  'consultify-the-money-question': <TrendingUp size={22} />,
+  'consultify-decisions-that-ship': <Zap size={22} />,
 };
 
 const SECTION_ACCENT: Record<string, { gradient: string; border: string; glow: string; text: string; bg: string }> = {
-  'consultify-governance-and-roi': {
+  'consultify-why-transformations-fail': {
+    gradient: 'from-rose-400 to-red-500',
+    border: 'border-rose-500/20 hover:border-rose-500/40',
+    glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(244,63,94,0.35)]',
+    text: 'text-rose-400',
+    bg: 'bg-rose-500/10',
+  },
+  'consultify-the-money-question': {
     gradient: 'from-emerald-400 to-teal-500',
     border: 'border-emerald-500/20 hover:border-emerald-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(16,185,129,0.35)]',
     text: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
   },
-  'consultify-execution-and-rollout': {
-    gradient: 'from-violet-400 to-fuchsia-500',
-    border: 'border-violet-500/20 hover:border-violet-500/40',
-    glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(139,92,246,0.35)]',
-    text: 'text-violet-400',
-    bg: 'bg-violet-500/10',
-  },
-  'consultify-ai-and-decision-making': {
+  'consultify-decisions-that-ship': {
     gradient: 'from-amber-400 to-orange-500',
     border: 'border-amber-500/20 hover:border-amber-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(245,158,11,0.35)]',
@@ -68,7 +68,7 @@ const SECTION_ACCENT: Record<string, { gradient: string; border: string; glow: s
   },
 };
 
-const DEFAULT_ACCENT = SECTION_ACCENT['consultify-execution-and-rollout'];
+const DEFAULT_ACCENT = SECTION_ACCENT['consultify-decisions-that-ship'];
 
 const ARTICLES_PER_PAGE = 12;
 const CARD_TAG_LIMIT = 4;

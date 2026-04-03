@@ -283,9 +283,9 @@ function main() {
     sectionCategoryMap[section.label] = catId;
 
     const iconMap: Record<string, string> = {
-      'Governance And ROI': 'Shield',
-      'Execution And Rollout': 'Rocket',
-      'AI And Decision Making': 'Brain',
+      'Why Transformations Fail': 'AlertTriangle',
+      'The Money Question': 'TrendingUp',
+      'Decisions That Ship': 'Zap',
     };
 
     sql.push(`INSERT INTO kb_categories (id, slug, icon, sort_order, is_active, is_public) VALUES`);
@@ -294,20 +294,20 @@ function main() {
     sql.push('');
 
     const sectionTranslations: Record<string, { name: string; description: string }> = {
-      'Governance And ROI': {
-        en: { name: 'Governance & ROI', description: 'Strategy governance, ROI visibility, and transformation control for executive leadership.' },
-        pl: { name: 'Governance i ROI', description: 'Governance strategiczny, widoczność ROI i kontrola transformacji dla kadry zarządzającej.' },
-        de: { name: 'Governance & ROI', description: 'Strategische Governance, ROI-Transparenz und Transformationssteuerung für die Unternehmensführung.' },
+      'Why Transformations Fail': {
+        en: { name: 'Why Transformations Fail', description: 'The uncomfortable patterns behind stalled programs, dead initiatives, and governance theater.' },
+        pl: { name: 'Dlaczego transformacje padają', description: 'Niewygodne wzorce za wstrzymanymi programami, martwymi inicjatywami i governance-teatrem.' },
+        de: { name: 'Warum Transformationen scheitern', description: 'Die unbequemen Muster hinter ins Stocken geratenen Programmen, toten Initiativen und Governance-Theater.' },
       },
-      'Execution And Rollout': {
-        en: { name: 'Execution & Rollout', description: 'Practical transformation execution, PMO operations, and initiative rollout management.' },
-        pl: { name: 'Egzekucja i Wdrożenie', description: 'Praktyczna realizacja transformacji, operacje PMO i zarządzanie wdrożeniami inicjatyw.' },
-        de: { name: 'Umsetzung & Rollout', description: 'Praktische Transformationsumsetzung, PMO-Betrieb und Initiativ-Rollout-Management.' },
+      'The Money Question': {
+        en: { name: 'The Money Question', description: 'ROI defense, board packets, budget linkage, and investment logic that survives scrutiny.' },
+        pl: { name: 'Pytanie o pieniądze', description: 'Obrona ROI, pakiety dla zarządu, powiązanie z budżetem i logika inwestycyjna, która przetrwa weryfikację.' },
+        de: { name: 'Die Geldfrage', description: 'ROI-Verteidigung, Vorstandspakete, Budgetverknüpfung und Investitionslogik, die einer Prüfung standhält.' },
       },
-      'AI And Decision Making': {
-        en: { name: 'AI & Decision Making', description: 'AI-powered strategic analysis, decision support, and data-driven transformation intelligence.' },
-        pl: { name: 'AI i Podejmowanie Decyzji', description: 'Analiza strategiczna wspierana AI, wsparcie decyzji i inteligencja transformacyjna oparta na danych.' },
-        de: { name: 'KI & Entscheidungsfindung', description: 'KI-gestützte strategische Analyse, Entscheidungsunterstützung und datengetriebene Transformationsintelligenz.' },
+      'Decisions That Ship': {
+        en: { name: 'Decisions That Ship', description: 'From decision latency to owned initiatives — how to move from alignment theater to execution clarity.' },
+        pl: { name: 'Decyzje, które lądują w egzekucji', description: 'Od opóźnień decyzyjnych do inicjatyw z właścicielem — jak przejść od teatru alignmentu do jasności egzekucji.' },
+        de: { name: 'Entscheidungen, die umgesetzt werden', description: 'Von Entscheidungslatenz zu verantworteten Initiativen — wie man vom Alignment-Theater zur Ausführungsklarheit gelangt.' },
       },
     } as any;
 
@@ -354,9 +354,9 @@ function main() {
     sql.push(`ON CONFLICT (id) DO NOTHING;`);
 
     const collTranslations: Record<string, Record<string, string>> = {
-      'Governance And ROI': { en: 'Governance & ROI', pl: 'Governance i ROI', de: 'Governance & ROI' },
-      'Execution And Rollout': { en: 'Execution & Rollout', pl: 'Egzekucja i Wdrożenie', de: 'Umsetzung & Rollout' },
-      'AI And Decision Making': { en: 'AI & Decision Making', pl: 'AI i Podejmowanie Decyzji', de: 'KI & Entscheidungsfindung' },
+      'Why Transformations Fail': { en: 'Why Transformations Fail', pl: 'Dlaczego transformacje padają', de: 'Warum Transformationen scheitern' },
+      'The Money Question': { en: 'The Money Question', pl: 'Pytanie o pieniądze', de: 'Die Geldfrage' },
+      'Decisions That Ship': { en: 'Decisions That Ship', pl: 'Decyzje, które lądują w egzekucji', de: 'Entscheidungen, die umgesetzt werden' },
     };
 
     const ct = collTranslations[section.label] || { en: section.label, pl: section.label, de: section.label };
@@ -374,23 +374,19 @@ function main() {
   sql.push('-- ============================================');
 
   const tagDefs = [
-    { slug: 'transformation-governance', kind: 'domain', en: 'Transformation Governance', pl: 'Governance Transformacji', de: 'Transformations-Governance' },
-    { slug: 'roi-visibility', kind: 'domain', en: 'ROI Visibility', pl: 'Widoczność ROI', de: 'ROI-Transparenz' },
-    { slug: 'execution-control', kind: 'domain', en: 'Execution Control', pl: 'Kontrola Egzekucji', de: 'Umsetzungssteuerung' },
-    { slug: 'pmo-operations', kind: 'domain', en: 'PMO Operations', pl: 'Operacje PMO', de: 'PMO-Betrieb' },
-    { slug: 'strategic-alignment', kind: 'domain', en: 'Strategic Alignment', pl: 'Alignment Strategiczny', de: 'Strategische Ausrichtung' },
-    { slug: 'portfolio-management', kind: 'domain', en: 'Portfolio Management', pl: 'Zarządzanie Portfolio', de: 'Portfoliomanagement' },
-    { slug: 'board-reporting', kind: 'domain', en: 'Board Reporting', pl: 'Raportowanie do Zarządu', de: 'Vorstandsberichterstattung' },
-    { slug: 'ai-decision-support', kind: 'domain', en: 'AI Decision Support', pl: 'Wsparcie Decyzji AI', de: 'KI-Entscheidungsunterstützung' },
-    { slug: 'change-management', kind: 'domain', en: 'Change Management', pl: 'Zarządzanie Zmianą', de: 'Change Management' },
-    { slug: 'capacity-planning', kind: 'domain', en: 'Capacity Planning', pl: 'Planowanie Zasobów', de: 'Kapazitätsplanung' },
-    { slug: 'owner-president', kind: 'audience', en: 'Owner / President', pl: 'Właściciel / Prezes', de: 'Inhaber / Geschäftsführer' },
-    { slug: 'cfo-finance', kind: 'audience', en: 'CFO / Finance', pl: 'CFO / Finanse', de: 'CFO / Finanzen' },
-    { slug: 'transformation-lead', kind: 'audience', en: 'Transformation Lead', pl: 'Lider Transformacji', de: 'Transformationsleiter' },
-    { slug: 'awareness', kind: 'stage', en: 'Awareness', pl: 'Świadomość', de: 'Bewusstsein' },
-    { slug: 'consideration', kind: 'stage', en: 'Consideration', pl: 'Rozważanie', de: 'Erwägung' },
-    { slug: 'decision', kind: 'stage', en: 'Decision', pl: 'Decyzja', de: 'Entscheidung' },
-    { slug: 'adoption', kind: 'stage', en: 'Adoption', pl: 'Adopcja', de: 'Einführung' },
+    { slug: 'governance', kind: 'domain', en: 'Governance', pl: 'Governance', de: 'Governance' },
+    { slug: 'roi-finance', kind: 'domain', en: 'ROI & Finance', pl: 'ROI i Finanse', de: 'ROI & Finanzen' },
+    { slug: 'execution', kind: 'domain', en: 'Execution', pl: 'Egzekucja', de: 'Umsetzung' },
+    { slug: 'pmo', kind: 'domain', en: 'PMO', pl: 'PMO', de: 'PMO' },
+    { slug: 'decision-speed', kind: 'domain', en: 'Decision Speed', pl: 'Szybkość Decyzji', de: 'Entscheidungsgeschwindigkeit' },
+    { slug: 'ai-strategy', kind: 'domain', en: 'AI & Strategy', pl: 'AI i Strategia', de: 'KI & Strategie' },
+    { slug: 'portfolio', kind: 'domain', en: 'Portfolio Mgmt', pl: 'Zarządzanie Portfolio', de: 'Portfoliomanagement' },
+    { slug: 'risk', kind: 'domain', en: 'Risk', pl: 'Ryzyko', de: 'Risiko' },
+    { slug: 'leadership', kind: 'domain', en: 'Leadership', pl: 'Przywództwo', de: 'Führung' },
+    { slug: 'board-room', kind: 'domain', en: 'Board Room', pl: 'Sala Zarządu', de: 'Vorstandsraum' },
+    { slug: 'for-owners', kind: 'audience', en: 'For Owners & Presidents', pl: 'Dla Właścicieli', de: 'Für Inhaber' },
+    { slug: 'for-cfo', kind: 'audience', en: 'For CFOs & Finance', pl: 'Dla CFO', de: 'Für CFOs' },
+    { slug: 'for-pmo', kind: 'audience', en: 'For PMO & Delivery', pl: 'Dla PMO', de: 'Für PMO' },
   ];
 
   for (const tag of tagDefs) {
@@ -417,25 +413,95 @@ function main() {
   const articleSections: Record<string, string> = {};
 
   const personaTagMap: Record<string, string> = {
-    'Owner / President / Chairman': 'owner-president',
-    'Owner / President': 'owner-president',
-    'CFO / Finance Director': 'cfo-finance',
-    'Transformation Lead': 'transformation-lead',
-    'Transformation Lead / PMO Director': 'transformation-lead',
-    'PMO Director': 'transformation-lead',
-  };
-
-  const stageTagMap: Record<string, string> = {
-    'Awareness': 'awareness',
-    'Consideration': 'consideration',
-    'Decision': 'decision',
-    'Adoption': 'adoption',
+    'Owner / President / Chairman': 'for-owners',
+    'Owner / President': 'for-owners',
+    'Owner / President / Change Leader': 'for-owners',
+    'Owner / President / CFO': 'for-owners',
+    'Owner / President / COO': 'for-owners',
+    'Owner / COO / transformation sponsor': 'for-owners',
+    'COO / Change Leader / Owner': 'for-owners',
+    'COO / change leader / owner': 'for-owners',
+    'COO / transformation sponsor / owner': 'for-owners',
+    'COO / transformation sponsor / portfolio owner': 'for-owners',
+    'CFO / Owner / President': 'for-cfo',
+    'CFO / Finance Director': 'for-cfo',
+    'CFO / COO / Owner': 'for-cfo',
+    'CFO / transformation sponsor / portfolio steering lead': 'for-cfo',
+    'CFO / transformation sponsor / finance partner': 'for-cfo',
+    'CFO / PMO lead / transformation sponsor': 'for-cfo',
+    'CFO / portfolio sponsor / transformation steering owner': 'for-cfo',
+    'CFO / transformation sponsor / metrics owner': 'for-cfo',
+    'CFO / transformation sponsor / head of strategy reporting to the board': 'for-cfo',
+    'Transformation PMO lead / portfolio office head / program director': 'for-pmo',
+    'Transformation PMO lead / chief of staff to sponsor / portfolio operations head': 'for-pmo',
+    'Transformation PMO lead / delivery lead / sponsor': 'for-pmo',
+    'Transformation PMO lead / enterprise architect / sponsor chief of staff': 'for-pmo',
+    'Transformation PMO director / transformation office lead': 'for-pmo',
+    'Transformation Lead': 'for-pmo',
+    'Transformation Lead / PMO Director': 'for-pmo',
+    'PMO Director': 'for-pmo',
+    'Program director / transformation PMO lead / interface owner': 'for-pmo',
+    'Risk owner / transformation PMO / program director': 'for-pmo',
+    'Transformation PMO lead / delivery lead / sponsor': 'for-pmo',
   };
 
   const sectionTagMap: Record<string, string[]> = {
-    'Governance And ROI': ['transformation-governance', 'roi-visibility', 'board-reporting'],
-    'Execution And Rollout': ['execution-control', 'pmo-operations', 'change-management'],
-    'AI And Decision Making': ['ai-decision-support', 'strategic-alignment'],
+    'Why Transformations Fail': ['governance', 'risk', 'leadership'],
+    'The Money Question': ['roi-finance', 'board-room', 'portfolio'],
+    'Decisions That Ship': ['decision-speed', 'execution', 'ai-strategy'],
+  };
+
+  const articleSpecificTags: Record<string, string[]> = {
+    '01_why_traditional_consulting_is_broken': ['governance', 'leadership', 'risk'],
+    '02_10_questions_before_buying_ai_consulting_platform': ['ai-strategy', 'decision-speed', 'roi-finance'],
+    '03_first_30_minutes_in_consultify': ['execution', 'ai-strategy', 'decision-speed'],
+    '04_roi_calculator_guide': ['roi-finance', 'board-room', 'decision-speed'],
+    '05_ai_driven_swot': ['ai-strategy', 'decision-speed', 'leadership'],
+    '06_scenario_planning': ['ai-strategy', 'decision-speed', 'risk'],
+    '07_competitive_intelligence': ['ai-strategy', 'leadership', 'decision-speed'],
+    '08_strategic_alignment': ['execution', 'leadership', 'governance'],
+    '09_data_first_strategy': ['ai-strategy', 'decision-speed', 'board-room'],
+    '10_decision_latency': ['decision-speed', 'execution', 'leadership'],
+    '11_strategic_reporting': ['board-room', 'decision-speed', 'governance'],
+    '12_okr_management': ['execution', 'governance', 'leadership'],
+    '13_why_board_updates_should_come_from_live_transformation_systems': ['board-room', 'roi-finance', 'governance'],
+    '14_why_strategy_workshops_fail_without_execution_system': ['execution', 'leadership', 'governance'],
+    '15_how_to_keep_transformation_roi_visible_after_kickoff': ['roi-finance', 'governance', 'portfolio'],
+    '16_why_steering_committees_fail_when_the_system_is_static': ['governance', 'leadership', 'decision-speed'],
+    '17_why_transformation_programs_need_one_source_of_truth': ['execution', 'governance', 'pmo'],
+    '18_how_to_turn_leadership_decisions_into_owned_initiatives': ['decision-speed', 'execution', 'leadership'],
+    '19_why_transformation_portfolios_fail_without_live_prioritization': ['portfolio', 'decision-speed', 'execution'],
+    '20_how_to_keep_leadership_alignment_after_the_offsite': ['leadership', 'execution', 'governance'],
+    '21_how_to_defend_transformation_investment_with_live_value_evidence': ['roi-finance', 'board-room', 'portfolio'],
+    '22_what_monthly_transformation_reviews_should_actually_decide': ['governance', 'decision-speed', 'board-room'],
+    '23_how_to_run_quarterly_transformation_resets_without_losing_momentum': ['portfolio', 'governance', 'execution'],
+    '24_what_a_transformation_pmo_should_track_every_week': ['pmo', 'execution', 'decision-speed'],
+    '25_how_to_cut_dead_initiatives_without_political_drift': ['portfolio', 'leadership', 'governance'],
+    '26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course': ['portfolio', 'governance', 'risk'],
+    '27_how_to_make_strategy_assumptions_visible_before_the_board_review': ['board-room', 'governance', 'risk'],
+    '28_why_transformation_capacity_breaks_before_strategy_does': ['risk', 'execution', 'leadership'],
+    '29_how_to_link_transformation_initiatives_to_budget_reality': ['roi-finance', 'portfolio', 'governance'],
+    '30_what_executive_sponsors_should_never_delegate_in_transformation': ['leadership', 'governance', 'risk'],
+    '31_how_to_build_a_live_transformation_risk_register': ['risk', 'governance', 'pmo'],
+    '32_when_a_transformation_program_needs_intervention_not_more_reporting': ['governance', 'pmo', 'leadership'],
+    '33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes': ['leadership', 'governance', 'board-room'],
+    '34_when_a_transformation_portfolio_should_stop_funding_an_initiative': ['portfolio', 'roi-finance', 'governance'],
+    '35_what_a_good_escalation_path_looks_like_in_cross_functional_programs': ['pmo', 'decision-speed', 'execution'],
+    '36_how_to_reduce_governance_debt_in_large_transformation_programs': ['governance', 'pmo', 'decision-speed'],
+    '37_when_transformation_metrics_start_driving_the_wrong_behavior': ['governance', 'risk', 'roi-finance'],
+    '38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater': ['board-room', 'governance', 'decision-speed'],
+    '39_what_executives_should_require_before_approving_the_next_wave_of_change': ['board-room', 'portfolio', 'risk'],
+    '40_how_to_prove_transformation_value_before_the_full_program_finishes': ['roi-finance', 'governance', 'risk'],
+    '41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green': ['risk', 'pmo', 'execution'],
+    '42_how_to_reset_transformation_control_after_a_missed_quarter': ['governance', 'execution', 'portfolio'],
+    '43_how_to_define_decision_rights_in_a_transformation_operating_system': ['decision-speed', 'governance', 'execution'],
+    '44_what_a_board_ready_transformation_packet_should_include_every_time': ['board-room', 'roi-finance', 'governance'],
+    '45_when_to_rewrite_a_transformation_business_case_and_when_not_to': ['roi-finance', 'governance', 'risk'],
+    '46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos': ['governance', 'risk', 'pmo'],
+    '47_what_a_good_transformation_capacity_model_should_make_visible': ['risk', 'pmo', 'execution'],
+    '48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem': ['governance', 'risk', 'leadership'],
+    '49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory': ['pmo', 'governance', 'decision-speed'],
+    '50_how_to_turn_transformation_management_into_a_repeatable_operating_system': ['execution', 'governance', 'pmo'],
   };
 
   let articleCount = 0;
@@ -527,14 +593,17 @@ function main() {
     sql.push(`ON CONFLICT (article_id, collection_id) DO NOTHING;`);
     sql.push('');
 
-    // Article ↔ Tags
+    // Article ↔ Tags (3-4 tags: specific domain tags + optional audience tag)
     const tags: string[] = [];
+    const specificTags = articleSpecificTags[article.slug];
+    if (specificTags) {
+      tags.push(...specificTags);
+    } else {
+      const fallbackTags = sectionTagMap[article.lp_section] || [];
+      tags.push(...fallbackTags.slice(0, 3));
+    }
     const personaTag = personaTagMap[article.target_persona];
     if (personaTag) tags.push(personaTag);
-    const stageTag = stageTagMap[article.funnel_stage];
-    if (stageTag) tags.push(stageTag);
-    const sectionTags = sectionTagMap[article.lp_section] || [];
-    tags.push(...sectionTags.slice(0, 2));
 
     for (const tagSlug of tags) {
       sql.push(`INSERT INTO kb_article_tags (article_id, tag_id) VALUES`);

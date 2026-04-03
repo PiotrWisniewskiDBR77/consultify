@@ -128,7 +128,7 @@ describe('AnnaAssistantWidget P16-B guardrails', () => {
               categoryName: 'Consultify Execution and Rollout',
               currentSection: 'Minutes 10-18: Run the first diagnostic',
               articleUrl:
-                'http://localhost:3000/knowledge-base/consultify-execution-and-rollout/03_first_30_minutes_in_consultify',
+                'http://localhost:3000/knowledge-base/consultify-decisions-that-ship/03_first_30_minutes_in_consultify',
             },
           },
         }),
@@ -163,7 +163,7 @@ describe('AnnaAssistantWidget P16-B guardrails', () => {
       categoryName: 'Consultify Execution and Rollout',
       currentSection: 'Minutes 10-18: Run the first diagnostic',
       articleUrl:
-        'http://localhost:3000/knowledge-base/consultify-execution-and-rollout/03_first_30_minutes_in_consultify',
+        'http://localhost:3000/knowledge-base/consultify-decisions-that-ship/03_first_30_minutes_in_consultify',
     });
   });
 });

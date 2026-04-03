@@ -5,11 +5,11 @@
 
 import { ArrowRight, BookOpen, Clock, Play } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { KbArticleListItem, useKnowledgePublicPreview } from '../../hooks/useKnowledge';
+import { KbArticleListItem, useKnowledgeFeatured, useKnowledgePublicPreview } from '../../hooks/useKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 
 // ============================================
@@ -26,6 +26,26 @@ const DynamicIcon: React.FC<{ name: string; size?: number; className?: string }>
   return <IconComponent size={size} className={className} />;
 };
 
+function buildLandingArticles(
+  featuredArticles: KbArticleListItem[],
+  previewArticles: KbArticleListItem[],
+  limit: number
+) {
+  const articlesById = new Map<string, KbArticleListItem>();
+
+  featuredArticles.forEach((article) => {
+    articlesById.set(article.id, article);
+  });
+
+  previewArticles.forEach((article) => {
+    if (!articlesById.has(article.id) && articlesById.size < limit) {
+      articlesById.set(article.id, article);
+    }
+  });
+
+  return Array.from(articlesById.values()).slice(0, limit);
+}
+
 // ============================================
 // PREVIEW CARD
 // ============================================
@@ -39,7 +59,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onCTAClick }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-xl border border-slate-200 dark:border-slate-700 hover:shadow-2xl transition-all group">
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all group hover:shadow-2xl dark:border-slate-700 dark:bg-slate-900">
       {/* Video Teaser / Thumbnail */}
       <div className="relative aspect-video bg-gradient-to-br from-purple-900 to-indigo-900 overflow-hidden">
         {article.thumbnail_url ? (
@@ -81,16 +101,16 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onCTAClick }) => {
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="mb-2 min-h-[3.5rem] text-lg font-bold text-slate-900 transition-colors line-clamp-2 group-hover:text-purple-600 dark:text-white dark:group-hover:text-purple-400">
           {article.title}
         </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">
+        <p className="mb-4 flex-1 text-sm text-slate-600 line-clamp-3 dark:text-slate-400">
           {article.summary}
         </p>
         <button
           onClick={onCTAClick}
-          className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2"
+          className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:from-purple-700 hover:to-indigo-700"
         >
           {t('landing.knowledge.readMore', 'Read Full Article')}
           <ArrowRight size={14} />
@@ -115,7 +135,15 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: articles = [], isLoading } = useKnowledgePublicPreview(3);
+  const previewLimit = 3;
+  const { data: featuredArticles = [], isLoading: featuredLoading } = useKnowledgeFeatured(previewLimit);
+  const { data: previewArticles = [], isLoading: previewLoading } = useKnowledgePublicPreview(previewLimit * 2);
+
+  const articles = useMemo(
+    () => buildLandingArticles(featuredArticles, previewArticles, previewLimit),
+    [featuredArticles, previewArticles]
+  );
+  const isLoading = featuredLoading || previewLoading;
 
   const handleCTAClick = () => {
     if (onTrialClick) {

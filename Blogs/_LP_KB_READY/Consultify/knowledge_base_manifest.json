@@ -1645,34 +1645,34 @@
     "low_commitment": {
       "label": "explore transformation blind spots",
       "intent": "explore",
-      "target": "Governance And ROI"
+      "target": "Why Transformations Fail"
     },
     "mid_commitment": {
       "label": "book workshop",
       "intent": "workshop",
-      "target": "Execution And Rollout"
+      "target": "Decisions That Ship"
     },
     "high_commitment": {
       "label": "review ROI case",
       "intent": "decision",
-      "target": "Governance And ROI"
+      "target": "The Money Question"
     }
   },
   "cross_product_bridges": {
-    "Governance And ROI": {
+    "Why Transformations Fail": {
       "target_product": "DT",
       "target_section": "CAPEX And Investment",
-      "why_next": "Use scenario testing when investment logic needs stronger evidence."
+      "why_next": "Recognize the patterns before they cost you another quarter."
     },
-    "Execution And Rollout": {
+    "The Money Question": {
+      "target_product": "DT",
+      "target_section": "CAPEX And Investment",
+      "why_next": "Build the investment case that survives board scrutiny."
+    },
+    "Decisions That Ship": {
       "target_product": "IRIS",
       "target_section": "Execution And Rollout",
-      "why_next": "Move from program design into daily execution control."
-    },
-    "AI And Decision Making": {
-      "target_product": "Vector",
-      "target_section": "Governance And ROI",
-      "why_next": "Bring AI governance into executive decision quality."
+      "why_next": "Turn decisions into owned execution before alignment fades."
     }
   }
 }

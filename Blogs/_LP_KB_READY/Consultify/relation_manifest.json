@@ -1,0 +1,2636 @@
+{
+  "product": "Consultify",
+  "same_lp_edges": [
+    {
+      "from_slug": "01_why_traditional_consulting_is_broken",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_traditional_consulting_is_broken",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_traditional_consulting_is_broken",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_traditional_consulting_is_broken",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_traditional_consulting_is_broken",
+      "to_slug": "09_data_first_strategy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "09_data_first_strategy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "09_data_first_strategy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "09_data_first_strategy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_competitive_intelligence",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_competitive_intelligence",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_competitive_intelligence",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_competitive_intelligence",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_competitive_intelligence",
+      "to_slug": "09_data_first_strategy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos",
+      "to_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos",
+      "to_slug": "05_ai_driven_swot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos",
+      "to_slug": "06_scenario_planning",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Decisions That Ship",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_escalation_path_looks_like_in_cross_functional_programs",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_escalation_path_looks_like_in_cross_functional_programs",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_escalation_path_looks_like_in_cross_functional_programs",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_escalation_path_looks_like_in_cross_functional_programs",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_escalation_path_looks_like_in_cross_functional_programs",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_define_decision_rights_in_a_transformation_operating_system",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_define_decision_rights_in_a_transformation_operating_system",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_define_decision_rights_in_a_transformation_operating_system",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_define_decision_rights_in_a_transformation_operating_system",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_define_decision_rights_in_a_transformation_operating_system",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_transformation_management_into_a_repeatable_operating_system",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_transformation_management_into_a_repeatable_operating_system",
+      "to_slug": "08_strategic_alignment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_transformation_management_into_a_repeatable_operating_system",
+      "to_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_transformation_management_into_a_repeatable_operating_system",
+      "to_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_transformation_management_into_a_repeatable_operating_system",
+      "to_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "edge_type": "same_section",
+      "reason": "same lp_section: The Money Question",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_okr_management",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_okr_management",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_okr_management",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_okr_management",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_okr_management",
+      "to_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "to_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_why_transformation_capacity_breaks_before_strategy_does",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_why_transformation_capacity_breaks_before_strategy_does",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_why_transformation_capacity_breaks_before_strategy_does",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_why_transformation_capacity_breaks_before_strategy_does",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_why_transformation_capacity_breaks_before_strategy_does",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_what_executive_sponsors_should_never_delegate_in_transformation",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_what_executive_sponsors_should_never_delegate_in_transformation",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_what_executive_sponsors_should_never_delegate_in_transformation",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_what_executive_sponsors_should_never_delegate_in_transformation",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_what_executive_sponsors_should_never_delegate_in_transformation",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_how_to_build_a_live_transformation_risk_register",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_how_to_build_a_live_transformation_risk_register",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_how_to_build_a_live_transformation_risk_register",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_how_to_build_a_live_transformation_risk_register",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_how_to_build_a_live_transformation_risk_register",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_transformation_portfolio_should_stop_funding_an_initiative",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_transformation_portfolio_should_stop_funding_an_initiative",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_transformation_portfolio_should_stop_funding_an_initiative",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_transformation_portfolio_should_stop_funding_an_initiative",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_transformation_portfolio_should_stop_funding_an_initiative",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_reduce_governance_debt_in_large_transformation_programs",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_reduce_governance_debt_in_large_transformation_programs",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_reduce_governance_debt_in_large_transformation_programs",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_reduce_governance_debt_in_large_transformation_programs",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_reduce_governance_debt_in_large_transformation_programs",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_transformation_metrics_start_driving_the_wrong_behavior",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_transformation_metrics_start_driving_the_wrong_behavior",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_transformation_metrics_start_driving_the_wrong_behavior",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_transformation_metrics_start_driving_the_wrong_behavior",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_transformation_metrics_start_driving_the_wrong_behavior",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_executives_should_require_before_approving_the_next_wave_of_change",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_executives_should_require_before_approving_the_next_wave_of_change",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_executives_should_require_before_approving_the_next_wave_of_change",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_executives_should_require_before_approving_the_next_wave_of_change",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_executives_should_require_before_approving_the_next_wave_of_change",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_prove_transformation_value_before_the_full_program_finishes",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_prove_transformation_value_before_the_full_program_finishes",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_prove_transformation_value_before_the_full_program_finishes",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_prove_transformation_value_before_the_full_program_finishes",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_prove_transformation_value_before_the_full_program_finishes",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_how_to_reset_transformation_control_after_a_missed_quarter",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_how_to_reset_transformation_control_after_a_missed_quarter",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_how_to_reset_transformation_control_after_a_missed_quarter",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_how_to_reset_transformation_control_after_a_missed_quarter",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_how_to_reset_transformation_control_after_a_missed_quarter",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_what_a_board_ready_transformation_packet_should_include_every_time",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_what_a_board_ready_transformation_packet_should_include_every_time",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_what_a_board_ready_transformation_packet_should_include_every_time",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_what_a_board_ready_transformation_packet_should_include_every_time",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_what_a_board_ready_transformation_packet_should_include_every_time",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_when_to_rewrite_a_transformation_business_case_and_when_not_to",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_when_to_rewrite_a_transformation_business_case_and_when_not_to",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_when_to_rewrite_a_transformation_business_case_and_when_not_to",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_when_to_rewrite_a_transformation_business_case_and_when_not_to",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_when_to_rewrite_a_transformation_business_case_and_when_not_to",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_what_a_good_transformation_capacity_model_should_make_visible",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_what_a_good_transformation_capacity_model_should_make_visible",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_what_a_good_transformation_capacity_model_should_make_visible",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_what_a_good_transformation_capacity_model_should_make_visible",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_what_a_good_transformation_capacity_model_should_make_visible",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem",
+      "to_slug": "12_okr_management",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem",
+      "to_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem",
+      "to_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Why Transformations Fail",
+      "weight": 100
+    }
+  ],
+  "cross_product_edges": [
+    {
+      "from_slug": "01_why_traditional_consulting_is_broken",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "07_competitive_intelligence",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "12_okr_management",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "28_why_transformation_capacity_breaks_before_strategy_does",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "30_what_executive_sponsors_should_never_delegate_in_transformation",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "31_how_to_build_a_live_transformation_risk_register",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "34_when_a_transformation_portfolio_should_stop_funding_an_initiative",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "35_what_a_good_escalation_path_looks_like_in_cross_functional_programs",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "36_how_to_reduce_governance_debt_in_large_transformation_programs",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "37_when_transformation_metrics_start_driving_the_wrong_behavior",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "39_what_executives_should_require_before_approving_the_next_wave_of_change",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "40_how_to_prove_transformation_value_before_the_full_program_finishes",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "42_how_to_reset_transformation_control_after_a_missed_quarter",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "43_how_to_define_decision_rights_in_a_transformation_operating_system",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "44_what_a_board_ready_transformation_packet_should_include_every_time",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "45_when_to_rewrite_a_transformation_business_case_and_when_not_to",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / Why Transformations Fail",
+      "weight": 80
+    },
+    {
+      "from_slug": "47_what_a_good_transformation_capacity_model_should_make_visible",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem",
+      "to_slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to DT / CAPEX And Investment",
+      "weight": 80
+    },
+    {
+      "from_slug": "49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    },
+    {
+      "from_slug": "50_how_to_turn_transformation_management_into_a_repeatable_operating_system",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Decisions That Ship",
+      "weight": 80
+    }
+  ],
+  "featured_edges": [
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "04_roi_calculator_guide",
+      "to_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_why_board_updates_should_come_from_live_transformation_systems",
+      "to_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_keep_transformation_roi_visible_after_kickoff",
+      "to_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "19_why_transformation_portfolios_fail_without_live_prioritization",
+      "to_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "23_how_to_run_quarterly_transformation_resets_without_losing_momentum",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "25_how_to_cut_dead_initiatives_without_political_drift",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_what_monthly_transformation_reviews_should_actually_decide",
+      "to_slug": "29_how_to_link_transformation_initiatives_to_budget_reality",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Why Transformations Fail",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "08_strategic_alignment",
+      "to_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_why_strategy_workshops_fail_without_execution_system",
+      "to_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "17_why_transformation_programs_need_one_source_of_truth",
+      "to_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "18_how_to_turn_leadership_decisions_into_owned_initiatives",
+      "to_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "16_why_steering_committees_fail_when_the_system_is_static",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "32_when_a_transformation_program_needs_intervention_not_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "20_how_to_keep_leadership_alignment_after_the_offsite",
+      "to_slug": "33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within The Money Question",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "12_okr_management",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_10_questions_before_buying_ai_consulting_platform",
+      "to_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "12_okr_management",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_ai_driven_swot",
+      "to_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "12_okr_management",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_scenario_planning",
+      "to_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "12_okr_management",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_data_first_strategy",
+      "to_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "12_okr_management",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_decision_latency",
+      "to_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "01_why_traditional_consulting_is_broken",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "07_competitive_intelligence",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "12_okr_management",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_strategic_reporting",
+      "to_slug": "27_how_to_make_strategy_assumptions_visible_before_the_board_review",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Decisions That Ship",
+      "weight": 85
+    }
+  ],
+  "mva_edges": [
+    {
+      "from_slug": "01_why_traditional_consulting_is_broken",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    },
+    {
+      "from_slug": "03_first_30_minutes_in_consultify",
+      "to_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    },
+    {
+      "from_slug": "21_how_to_defend_transformation_investment_with_live_value_evidence",
+      "to_slug": "24_what_a_transformation_pmo_should_track_every_week",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    }
+  ]
+}

@@ -7,45 +7,45 @@
 -- CONSULTIFY KB CATEGORIES (3 sections)
 -- ============================================
 INSERT INTO kb_categories (id, slug, icon, sort_order, is_active, is_public) VALUES
-  ('kb-cat-consultify-governance-and-roi', 'consultify-governance-and-roi', 'Shield', 10, 1, 1)
+  ('kb-cat-consultify-why-transformations-fail', 'consultify-why-transformations-fail', 'AlertTriangle', 10, 1, 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-governance-and-roi-trans-en', 'kb-cat-consultify-governance-and-roi', 'en', 'Governance & ROI', 'Strategy governance, ROI visibility, and transformation control for executive leadership.')
+  ('kb-cat-consultify-why-transformations-fail-trans-en', 'kb-cat-consultify-why-transformations-fail', 'en', 'Why Transformations Fail', 'The uncomfortable patterns behind stalled programs, dead initiatives, and governance theater.')
 ON CONFLICT (category_id, language) DO NOTHING;
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-governance-and-roi-trans-pl', 'kb-cat-consultify-governance-and-roi', 'pl', 'Governance i ROI', 'Governance strategiczny, widoczność ROI i kontrola transformacji dla kadry zarządzającej.')
+  ('kb-cat-consultify-why-transformations-fail-trans-pl', 'kb-cat-consultify-why-transformations-fail', 'pl', 'Dlaczego transformacje padają', 'Niewygodne wzorce za wstrzymanymi programami, martwymi inicjatywami i governance-teatrem.')
 ON CONFLICT (category_id, language) DO NOTHING;
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-governance-and-roi-trans-de', 'kb-cat-consultify-governance-and-roi', 'de', 'Governance & ROI', 'Strategische Governance, ROI-Transparenz und Transformationssteuerung für die Unternehmensführung.')
+  ('kb-cat-consultify-why-transformations-fail-trans-de', 'kb-cat-consultify-why-transformations-fail', 'de', 'Warum Transformationen scheitern', 'Die unbequemen Muster hinter ins Stocken geratenen Programmen, toten Initiativen und Governance-Theater.')
 ON CONFLICT (category_id, language) DO NOTHING;
 
 INSERT INTO kb_categories (id, slug, icon, sort_order, is_active, is_public) VALUES
-  ('kb-cat-consultify-execution-and-rollout', 'consultify-execution-and-rollout', 'Rocket', 11, 1, 1)
+  ('kb-cat-consultify-the-money-question', 'consultify-the-money-question', 'TrendingUp', 11, 1, 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-execution-and-rollout-trans-en', 'kb-cat-consultify-execution-and-rollout', 'en', 'Execution & Rollout', 'Practical transformation execution, PMO operations, and initiative rollout management.')
+  ('kb-cat-consultify-the-money-question-trans-en', 'kb-cat-consultify-the-money-question', 'en', 'The Money Question', 'ROI defense, board packets, budget linkage, and investment logic that survives scrutiny.')
 ON CONFLICT (category_id, language) DO NOTHING;
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-execution-and-rollout-trans-pl', 'kb-cat-consultify-execution-and-rollout', 'pl', 'Egzekucja i Wdrożenie', 'Praktyczna realizacja transformacji, operacje PMO i zarządzanie wdrożeniami inicjatyw.')
+  ('kb-cat-consultify-the-money-question-trans-pl', 'kb-cat-consultify-the-money-question', 'pl', 'Pytanie o pieniądze', 'Obrona ROI, pakiety dla zarządu, powiązanie z budżetem i logika inwestycyjna, która przetrwa weryfikację.')
 ON CONFLICT (category_id, language) DO NOTHING;
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-execution-and-rollout-trans-de', 'kb-cat-consultify-execution-and-rollout', 'de', 'Umsetzung & Rollout', 'Praktische Transformationsumsetzung, PMO-Betrieb und Initiativ-Rollout-Management.')
+  ('kb-cat-consultify-the-money-question-trans-de', 'kb-cat-consultify-the-money-question', 'de', 'Die Geldfrage', 'ROI-Verteidigung, Vorstandspakete, Budgetverknüpfung und Investitionslogik, die einer Prüfung standhält.')
 ON CONFLICT (category_id, language) DO NOTHING;
 
 INSERT INTO kb_categories (id, slug, icon, sort_order, is_active, is_public) VALUES
-  ('kb-cat-consultify-ai-and-decision-making', 'consultify-ai-and-decision-making', 'Brain', 12, 1, 1)
+  ('kb-cat-consultify-decisions-that-ship', 'consultify-decisions-that-ship', 'Zap', 12, 1, 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-ai-and-decision-making-trans-en', 'kb-cat-consultify-ai-and-decision-making', 'en', 'AI & Decision Making', 'AI-powered strategic analysis, decision support, and data-driven transformation intelligence.')
+  ('kb-cat-consultify-decisions-that-ship-trans-en', 'kb-cat-consultify-decisions-that-ship', 'en', 'Decisions That Ship', 'From decision latency to owned initiatives — how to move from alignment theater to execution clarity.')
 ON CONFLICT (category_id, language) DO NOTHING;
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-ai-and-decision-making-trans-pl', 'kb-cat-consultify-ai-and-decision-making', 'pl', 'AI i Podejmowanie Decyzji', 'Analiza strategiczna wspierana AI, wsparcie decyzji i inteligencja transformacyjna oparta na danych.')
+  ('kb-cat-consultify-decisions-that-ship-trans-pl', 'kb-cat-consultify-decisions-that-ship', 'pl', 'Decyzje, które lądują w egzekucji', 'Od opóźnień decyzyjnych do inicjatyw z właścicielem — jak przejść od teatru alignmentu do jasności egzekucji.')
 ON CONFLICT (category_id, language) DO NOTHING;
 INSERT INTO kb_category_translations (id, category_id, language, name, description) VALUES
-  ('kb-cat-consultify-ai-and-decision-making-trans-de', 'kb-cat-consultify-ai-and-decision-making', 'de', 'KI & Entscheidungsfindung', 'KI-gestützte strategische Analyse, Entscheidungsunterstützung und datengetriebene Transformationsintelligenz.')
+  ('kb-cat-consultify-decisions-that-ship-trans-de', 'kb-cat-consultify-decisions-that-ship', 'de', 'Entscheidungen, die umgesetzt werden', 'Von Entscheidungslatenz zu verantworteten Initiativen — wie man vom Alignment-Theater zur Ausführungsklarheit gelangt.')
 ON CONFLICT (category_id, language) DO NOTHING;
 
 -- ============================================
@@ -66,266 +66,214 @@ INSERT INTO kb_collection_translations (id, collection_id, language, title, desc
 ON CONFLICT (collection_id, language) DO NOTHING;
 
 INSERT INTO kb_collections (id, slug, parent_collection_id, visibility, featured, sort_order, status) VALUES
-  ('kb-coll-consultify-governance-and-roi', 'consultify-governance-and-roi', 'kb-coll-consultify', 'public', TRUE, 1, 'active')
+  ('kb-coll-consultify-why-transformations-fail', 'consultify-why-transformations-fail', 'kb-coll-consultify', 'public', TRUE, 1, 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-governance-and-roi-trans-en', 'kb-coll-consultify-governance-and-roi', 'en', 'Governance & ROI', 'Show how transformation becomes governable, financially visible, and board-defensible.')
+  ('kb-coll-consultify-why-transformations-fail-trans-en', 'kb-coll-consultify-why-transformations-fail', 'en', 'Why Transformations Fail', 'The uncomfortable patterns behind stalled programs, dead initiatives, and governance theater.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-governance-and-roi-trans-pl', 'kb-coll-consultify-governance-and-roi', 'pl', 'Governance i ROI', 'Show how transformation becomes governable, financially visible, and board-defensible.')
+  ('kb-coll-consultify-why-transformations-fail-trans-pl', 'kb-coll-consultify-why-transformations-fail', 'pl', 'Dlaczego transformacje padają', 'The uncomfortable patterns behind stalled programs, dead initiatives, and governance theater.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-governance-and-roi-trans-de', 'kb-coll-consultify-governance-and-roi', 'de', 'Governance & ROI', 'Show how transformation becomes governable, financially visible, and board-defensible.')
+  ('kb-coll-consultify-why-transformations-fail-trans-de', 'kb-coll-consultify-why-transformations-fail', 'de', 'Warum Transformationen scheitern', 'The uncomfortable patterns behind stalled programs, dead initiatives, and governance theater.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 
 INSERT INTO kb_collections (id, slug, parent_collection_id, visibility, featured, sort_order, status) VALUES
-  ('kb-coll-consultify-execution-and-rollout', 'consultify-execution-and-rollout', 'kb-coll-consultify', 'public', TRUE, 2, 'active')
+  ('kb-coll-consultify-the-money-question', 'consultify-the-money-question', 'kb-coll-consultify', 'public', TRUE, 2, 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-execution-and-rollout-trans-en', 'kb-coll-consultify-execution-and-rollout', 'en', 'Execution & Rollout', 'Show how transformation moves from workshop logic into owned operating behavior.')
+  ('kb-coll-consultify-the-money-question-trans-en', 'kb-coll-consultify-the-money-question', 'en', 'The Money Question', 'ROI defense, board packets, budget linkage, and investment logic that survives scrutiny.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-execution-and-rollout-trans-pl', 'kb-coll-consultify-execution-and-rollout', 'pl', 'Egzekucja i Wdrożenie', 'Show how transformation moves from workshop logic into owned operating behavior.')
+  ('kb-coll-consultify-the-money-question-trans-pl', 'kb-coll-consultify-the-money-question', 'pl', 'Pytanie o pieniądze', 'ROI defense, board packets, budget linkage, and investment logic that survives scrutiny.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-execution-and-rollout-trans-de', 'kb-coll-consultify-execution-and-rollout', 'de', 'Umsetzung & Rollout', 'Show how transformation moves from workshop logic into owned operating behavior.')
+  ('kb-coll-consultify-the-money-question-trans-de', 'kb-coll-consultify-the-money-question', 'de', 'Die Geldfrage', 'ROI defense, board packets, budget linkage, and investment logic that survives scrutiny.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 
 INSERT INTO kb_collections (id, slug, parent_collection_id, visibility, featured, sort_order, status) VALUES
-  ('kb-coll-consultify-ai-and-decision-making', 'consultify-ai-and-decision-making', 'kb-coll-consultify', 'public', TRUE, 3, 'active')
+  ('kb-coll-consultify-decisions-that-ship', 'consultify-decisions-that-ship', 'kb-coll-consultify', 'public', TRUE, 3, 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-ai-and-decision-making-trans-en', 'kb-coll-consultify-ai-and-decision-making', 'en', 'AI & Decision Making', 'Show how strategic clarity improves when assumptions, reporting, and scenarios become structured.')
+  ('kb-coll-consultify-decisions-that-ship-trans-en', 'kb-coll-consultify-decisions-that-ship', 'en', 'Decisions That Ship', 'From decision latency to owned initiatives — how to move from alignment theater to execution clarity.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-ai-and-decision-making-trans-pl', 'kb-coll-consultify-ai-and-decision-making', 'pl', 'AI i Podejmowanie Decyzji', 'Show how strategic clarity improves when assumptions, reporting, and scenarios become structured.')
+  ('kb-coll-consultify-decisions-that-ship-trans-pl', 'kb-coll-consultify-decisions-that-ship', 'pl', 'Decyzje, które lądują w egzekucji', 'From decision latency to owned initiatives — how to move from alignment theater to execution clarity.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description) VALUES
-  ('kb-coll-consultify-ai-and-decision-making-trans-de', 'kb-coll-consultify-ai-and-decision-making', 'de', 'KI & Entscheidungsfindung', 'Show how strategic clarity improves when assumptions, reporting, and scenarios become structured.')
+  ('kb-coll-consultify-decisions-that-ship-trans-de', 'kb-coll-consultify-decisions-that-ship', 'de', 'Entscheidungen, die umgesetzt werden', 'From decision latency to owned initiatives — how to move from alignment theater to execution clarity.')
 ON CONFLICT (collection_id, language) DO NOTHING;
 
 -- ============================================
 -- CONSULTIFY KB TAGS
 -- ============================================
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-transformation-governance', 'transformation-governance', 'domain', 'public', 'active')
+  ('kb-tag-governance', 'governance', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-transformation-governance-trans-en', 'kb-tag-transformation-governance', 'en', 'Transformation Governance')
+  ('kb-tag-governance-trans-en', 'kb-tag-governance', 'en', 'Governance')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-transformation-governance-trans-pl', 'kb-tag-transformation-governance', 'pl', 'Governance Transformacji')
+  ('kb-tag-governance-trans-pl', 'kb-tag-governance', 'pl', 'Governance')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-transformation-governance-trans-de', 'kb-tag-transformation-governance', 'de', 'Transformations-Governance')
+  ('kb-tag-governance-trans-de', 'kb-tag-governance', 'de', 'Governance')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-roi-visibility', 'roi-visibility', 'domain', 'public', 'active')
+  ('kb-tag-roi-finance', 'roi-finance', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-roi-visibility-trans-en', 'kb-tag-roi-visibility', 'en', 'ROI Visibility')
+  ('kb-tag-roi-finance-trans-en', 'kb-tag-roi-finance', 'en', 'ROI & Finance')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-roi-visibility-trans-pl', 'kb-tag-roi-visibility', 'pl', 'Widoczność ROI')
+  ('kb-tag-roi-finance-trans-pl', 'kb-tag-roi-finance', 'pl', 'ROI i Finanse')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-roi-visibility-trans-de', 'kb-tag-roi-visibility', 'de', 'ROI-Transparenz')
+  ('kb-tag-roi-finance-trans-de', 'kb-tag-roi-finance', 'de', 'ROI & Finanzen')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-execution-control', 'execution-control', 'domain', 'public', 'active')
+  ('kb-tag-execution', 'execution', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-execution-control-trans-en', 'kb-tag-execution-control', 'en', 'Execution Control')
+  ('kb-tag-execution-trans-en', 'kb-tag-execution', 'en', 'Execution')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-execution-control-trans-pl', 'kb-tag-execution-control', 'pl', 'Kontrola Egzekucji')
+  ('kb-tag-execution-trans-pl', 'kb-tag-execution', 'pl', 'Egzekucja')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-execution-control-trans-de', 'kb-tag-execution-control', 'de', 'Umsetzungssteuerung')
+  ('kb-tag-execution-trans-de', 'kb-tag-execution', 'de', 'Umsetzung')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-pmo-operations', 'pmo-operations', 'domain', 'public', 'active')
+  ('kb-tag-pmo', 'pmo', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-pmo-operations-trans-en', 'kb-tag-pmo-operations', 'en', 'PMO Operations')
+  ('kb-tag-pmo-trans-en', 'kb-tag-pmo', 'en', 'PMO')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-pmo-operations-trans-pl', 'kb-tag-pmo-operations', 'pl', 'Operacje PMO')
+  ('kb-tag-pmo-trans-pl', 'kb-tag-pmo', 'pl', 'PMO')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-pmo-operations-trans-de', 'kb-tag-pmo-operations', 'de', 'PMO-Betrieb')
+  ('kb-tag-pmo-trans-de', 'kb-tag-pmo', 'de', 'PMO')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-strategic-alignment', 'strategic-alignment', 'domain', 'public', 'active')
+  ('kb-tag-decision-speed', 'decision-speed', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-strategic-alignment-trans-en', 'kb-tag-strategic-alignment', 'en', 'Strategic Alignment')
+  ('kb-tag-decision-speed-trans-en', 'kb-tag-decision-speed', 'en', 'Decision Speed')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-strategic-alignment-trans-pl', 'kb-tag-strategic-alignment', 'pl', 'Alignment Strategiczny')
+  ('kb-tag-decision-speed-trans-pl', 'kb-tag-decision-speed', 'pl', 'Szybkość Decyzji')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-strategic-alignment-trans-de', 'kb-tag-strategic-alignment', 'de', 'Strategische Ausrichtung')
+  ('kb-tag-decision-speed-trans-de', 'kb-tag-decision-speed', 'de', 'Entscheidungsgeschwindigkeit')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-portfolio-management', 'portfolio-management', 'domain', 'public', 'active')
+  ('kb-tag-ai-strategy', 'ai-strategy', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-portfolio-management-trans-en', 'kb-tag-portfolio-management', 'en', 'Portfolio Management')
+  ('kb-tag-ai-strategy-trans-en', 'kb-tag-ai-strategy', 'en', 'AI & Strategy')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-portfolio-management-trans-pl', 'kb-tag-portfolio-management', 'pl', 'Zarządzanie Portfolio')
+  ('kb-tag-ai-strategy-trans-pl', 'kb-tag-ai-strategy', 'pl', 'AI i Strategia')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-portfolio-management-trans-de', 'kb-tag-portfolio-management', 'de', 'Portfoliomanagement')
+  ('kb-tag-ai-strategy-trans-de', 'kb-tag-ai-strategy', 'de', 'KI & Strategie')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-board-reporting', 'board-reporting', 'domain', 'public', 'active')
+  ('kb-tag-portfolio', 'portfolio', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-board-reporting-trans-en', 'kb-tag-board-reporting', 'en', 'Board Reporting')
+  ('kb-tag-portfolio-trans-en', 'kb-tag-portfolio', 'en', 'Portfolio Mgmt')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-board-reporting-trans-pl', 'kb-tag-board-reporting', 'pl', 'Raportowanie do Zarządu')
+  ('kb-tag-portfolio-trans-pl', 'kb-tag-portfolio', 'pl', 'Zarządzanie Portfolio')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-board-reporting-trans-de', 'kb-tag-board-reporting', 'de', 'Vorstandsberichterstattung')
+  ('kb-tag-portfolio-trans-de', 'kb-tag-portfolio', 'de', 'Portfoliomanagement')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-ai-decision-support', 'ai-decision-support', 'domain', 'public', 'active')
+  ('kb-tag-risk', 'risk', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-ai-decision-support-trans-en', 'kb-tag-ai-decision-support', 'en', 'AI Decision Support')
+  ('kb-tag-risk-trans-en', 'kb-tag-risk', 'en', 'Risk')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-ai-decision-support-trans-pl', 'kb-tag-ai-decision-support', 'pl', 'Wsparcie Decyzji AI')
+  ('kb-tag-risk-trans-pl', 'kb-tag-risk', 'pl', 'Ryzyko')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-ai-decision-support-trans-de', 'kb-tag-ai-decision-support', 'de', 'KI-Entscheidungsunterstützung')
+  ('kb-tag-risk-trans-de', 'kb-tag-risk', 'de', 'Risiko')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-change-management', 'change-management', 'domain', 'public', 'active')
+  ('kb-tag-leadership', 'leadership', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-change-management-trans-en', 'kb-tag-change-management', 'en', 'Change Management')
+  ('kb-tag-leadership-trans-en', 'kb-tag-leadership', 'en', 'Leadership')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-change-management-trans-pl', 'kb-tag-change-management', 'pl', 'Zarządzanie Zmianą')
+  ('kb-tag-leadership-trans-pl', 'kb-tag-leadership', 'pl', 'Przywództwo')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-change-management-trans-de', 'kb-tag-change-management', 'de', 'Change Management')
+  ('kb-tag-leadership-trans-de', 'kb-tag-leadership', 'de', 'Führung')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-capacity-planning', 'capacity-planning', 'domain', 'public', 'active')
+  ('kb-tag-board-room', 'board-room', 'domain', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-capacity-planning-trans-en', 'kb-tag-capacity-planning', 'en', 'Capacity Planning')
+  ('kb-tag-board-room-trans-en', 'kb-tag-board-room', 'en', 'Board Room')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-capacity-planning-trans-pl', 'kb-tag-capacity-planning', 'pl', 'Planowanie Zasobów')
+  ('kb-tag-board-room-trans-pl', 'kb-tag-board-room', 'pl', 'Sala Zarządu')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-capacity-planning-trans-de', 'kb-tag-capacity-planning', 'de', 'Kapazitätsplanung')
+  ('kb-tag-board-room-trans-de', 'kb-tag-board-room', 'de', 'Vorstandsraum')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-owner-president', 'owner-president', 'audience', 'public', 'active')
+  ('kb-tag-for-owners', 'for-owners', 'audience', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-owner-president-trans-en', 'kb-tag-owner-president', 'en', 'Owner / President')
+  ('kb-tag-for-owners-trans-en', 'kb-tag-for-owners', 'en', 'For Owners & Presidents')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-owner-president-trans-pl', 'kb-tag-owner-president', 'pl', 'Właściciel / Prezes')
+  ('kb-tag-for-owners-trans-pl', 'kb-tag-for-owners', 'pl', 'Dla Właścicieli')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-owner-president-trans-de', 'kb-tag-owner-president', 'de', 'Inhaber / Geschäftsführer')
+  ('kb-tag-for-owners-trans-de', 'kb-tag-for-owners', 'de', 'Für Inhaber')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-cfo-finance', 'cfo-finance', 'audience', 'public', 'active')
+  ('kb-tag-for-cfo', 'for-cfo', 'audience', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-cfo-finance-trans-en', 'kb-tag-cfo-finance', 'en', 'CFO / Finance')
+  ('kb-tag-for-cfo-trans-en', 'kb-tag-for-cfo', 'en', 'For CFOs & Finance')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-cfo-finance-trans-pl', 'kb-tag-cfo-finance', 'pl', 'CFO / Finanse')
+  ('kb-tag-for-cfo-trans-pl', 'kb-tag-for-cfo', 'pl', 'Dla CFO')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-cfo-finance-trans-de', 'kb-tag-cfo-finance', 'de', 'CFO / Finanzen')
+  ('kb-tag-for-cfo-trans-de', 'kb-tag-for-cfo', 'de', 'Für CFOs')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-transformation-lead', 'transformation-lead', 'audience', 'public', 'active')
+  ('kb-tag-for-pmo', 'for-pmo', 'audience', 'public', 'active')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-transformation-lead-trans-en', 'kb-tag-transformation-lead', 'en', 'Transformation Lead')
+  ('kb-tag-for-pmo-trans-en', 'kb-tag-for-pmo', 'en', 'For PMO & Delivery')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-transformation-lead-trans-pl', 'kb-tag-transformation-lead', 'pl', 'Lider Transformacji')
+  ('kb-tag-for-pmo-trans-pl', 'kb-tag-for-pmo', 'pl', 'Dla PMO')
 ON CONFLICT (tag_id, language) DO NOTHING;
 INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-transformation-lead-trans-de', 'kb-tag-transformation-lead', 'de', 'Transformationsleiter')
-ON CONFLICT (tag_id, language) DO NOTHING;
-
-INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-awareness', 'awareness', 'stage', 'public', 'active')
-ON CONFLICT (id) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-awareness-trans-en', 'kb-tag-awareness', 'en', 'Awareness')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-awareness-trans-pl', 'kb-tag-awareness', 'pl', 'Świadomość')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-awareness-trans-de', 'kb-tag-awareness', 'de', 'Bewusstsein')
-ON CONFLICT (tag_id, language) DO NOTHING;
-
-INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-consideration', 'consideration', 'stage', 'public', 'active')
-ON CONFLICT (id) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-consideration-trans-en', 'kb-tag-consideration', 'en', 'Consideration')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-consideration-trans-pl', 'kb-tag-consideration', 'pl', 'Rozważanie')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-consideration-trans-de', 'kb-tag-consideration', 'de', 'Erwägung')
-ON CONFLICT (tag_id, language) DO NOTHING;
-
-INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-decision', 'decision', 'stage', 'public', 'active')
-ON CONFLICT (id) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-decision-trans-en', 'kb-tag-decision', 'en', 'Decision')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-decision-trans-pl', 'kb-tag-decision', 'pl', 'Decyzja')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-decision-trans-de', 'kb-tag-decision', 'de', 'Entscheidung')
-ON CONFLICT (tag_id, language) DO NOTHING;
-
-INSERT INTO kb_tags (id, slug, kind, visibility, status) VALUES
-  ('kb-tag-adoption', 'adoption', 'stage', 'public', 'active')
-ON CONFLICT (id) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-adoption-trans-en', 'kb-tag-adoption', 'en', 'Adoption')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-adoption-trans-pl', 'kb-tag-adoption', 'pl', 'Adopcja')
-ON CONFLICT (tag_id, language) DO NOTHING;
-INSERT INTO kb_tag_translations (id, tag_id, language, label) VALUES
-  ('kb-tag-adoption-trans-de', 'kb-tag-adoption', 'de', 'Einführung')
+  ('kb-tag-for-pmo-trans-de', 'kb-tag-for-pmo', 'de', 'Für PMO')
 ON CONFLICT (tag_id, language) DO NOTHING;
 
 -- ============================================
@@ -333,7 +281,7 @@ ON CONFLICT (tag_id, language) DO NOTHING;
 -- ============================================
 -- Article 01_why_traditional_consulting_is_broken
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-cat-consultify-ai-and-decision-making', '01_why_traditional_consulting_is_broken', 'published', 0, 1, 4, '/kb/consultify/01_why_traditional_consulting_is_broken/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-cat-consultify-why-transformations-fail', '01_why_traditional_consulting_is_broken', 'published', 0, 1, 4, '/kb/consultify/01_why_traditional_consulting_is_broken/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/01_why_traditional_consulting_is_broken/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -568,38 +516,38 @@ Sondern weil das Modell für eine langsamere Welt und für geringeren Druck auf 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('57af6a0a-2576-4455-b309-11b8e5400023', 'kb-consultify-01_why_traditional_consulting_is_broken', 'public_docs')
+  ('cc846016-0de2-449b-88b4-5669996b70f3', 'kb-consultify-01_why_traditional_consulting_is_broken', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d1b26bbc-efa8-4657-a924-5fdb898d5b5b', 'kb-consultify-01_why_traditional_consulting_is_broken', 'help')
+  ('c223fef9-dfce-4789-aee1-601d537aad96', 'kb-consultify-01_why_traditional_consulting_is_broken', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('976e8f80-38d0-4000-938e-09eb46e03427', 'kb-consultify-01_why_traditional_consulting_is_broken', 'lp')
+  ('e4a9fb98-d7f5-408a-bd0b-aeee1de89cfe', 'kb-consultify-01_why_traditional_consulting_is_broken', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-coll-consultify', 0)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-coll-consultify-ai-and-decision-making', 0)
+  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-coll-consultify-why-transformations-fail', 0)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-owner-president')
+  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-awareness')
+  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-ai-decision-support')
+  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-strategic-alignment')
+  ('kb-consultify-01_why_traditional_consulting_is_broken', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 02_10_questions_before_buying_ai_consulting_platform
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-cat-consultify-ai-and-decision-making', '02_10_questions_before_buying_ai_consulting_platform', 'published', 1, 1, 12, '/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-cat-consultify-decisions-that-ship', '02_10_questions_before_buying_ai_consulting_platform', 'published', 1, 1, 12, '/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 12, thumbnail_url = '/kb/consultify/02_10_questions_before_buying_ai_consulting_platform/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -1259,109 +1207,105 @@ Er ist ein Weg, keine modern aussehende Version desselben alten Consulting-Probl
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('027c9036-e6ad-4739-91b3-9f130a801d53', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'public_docs')
+  ('5329b150-4064-46b8-9ac2-f74c0935968b', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0317478b-b866-4a42-bbed-7aa0f0014792', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'help')
+  ('9886c8be-bcd1-4bf6-a76a-d6824892abaa', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2fdbca90-019e-4cdf-926c-d8d124b4e471', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'lp')
+  ('ab778e91-ec68-4895-aae1-feedbc6eeaa4', 'kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-coll-consultify', 1)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-coll-consultify-ai-and-decision-making', 1)
+  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-coll-consultify-decisions-that-ship', 1)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-tag-decision')
+  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-tag-ai-strategy')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-tag-ai-decision-support')
+  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-tag-strategic-alignment')
+  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-tag-roi-finance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-02_10_questions_before_buying_ai_consulting_platform', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 03_first_30_minutes_in_consultify
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-cat-consultify-execution-and-rollout', '03_first_30_minutes_in_consultify', 'published', 1, 1, 5, '/kb/consultify/03_first_30_minutes_in_consultify/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, thumbnail_url = '/kb/consultify/03_first_30_minutes_in_consultify/hero.png', updated_at = CURRENT_TIMESTAMP;
+  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-cat-consultify-decisions-that-ship', '03_first_30_minutes_in_consultify', 'published', 1, 1, 6, '/kb/consultify/03_first_30_minutes_in_consultify/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 6, thumbnail_url = '/kb/consultify/03_first_30_minutes_in_consultify/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
-  ('kb-consultify-03_first_30_minutes_in_consultify-trans-en', 'kb-consultify-03_first_30_minutes_in_consultify', 'en', 'Your First 30 Minutes in Consultify', 'new users often lose momentum in strategic platforms because the first session feels like setup instead of progress', 'Your first session in Consultify should not feel like software onboarding. It should feel like the beginning of structured transformation work.
+  ('kb-consultify-03_first_30_minutes_in_consultify-trans-en', 'kb-consultify-03_first_30_minutes_in_consultify', 'en', 'Your First 30 Minutes in Consultify', 'new users often lose momentum in strategic platforms because the first session feels like setup instead of progress', 'Your first session in Consultify should not feel like software onboarding. It should feel like the start of real transformation work.
 
 
 ![hero image for an onboarding article about a leader using Consultify for the first time Scene: executive entering a transformation workspace where a business challenge, diagnostic, roadmap, and output appear as one connected flow](/kb/consultify/03_first_30_minutes_in_consultify/hero.png)
 
 
 
-That means the goal of the first 30 minutes is not to "explore features." It is to move from context to clarity fast enough that the platform earns trust immediately.
+That changes the standard immediately. The first 30 minutes are not there to help a leader "discover features." They are there to prove that a strategic platform can turn a messy business challenge into a usable line of action before momentum disappears.
 
-If the first session only creates another unfinished workspace, momentum dies. If it produces a usable diagnosis and a first execution path, adoption starts.
+If the first session only creates another half-configured workspace, trust drops and adoption stalls. If it produces a credible diagnosis, a first roadmap, and something leadership can actually react to, the platform starts earning its place.
 
 ## What success looks like after 30 minutes
 
-By the end of the first session, a serious user should have: one clear business context loaded into the system; one initial diagnostic completed; one draft roadmap or initiative set reviewed; one output that can be shared internally. That is the standard. Not product familiarity for its own sake. Progress.
+By the end of the first session, a serious user should have one clear business context in the system, one first diagnostic, one draft roadmap or initiative set, and one output that can be shared internally without embarrassment. That is the real standard. Not familiarity for its own sake. Not "we clicked through the workflow." Progress.
+
+> **What leadership should get after 30 minutes:** a sharper problem frame, visible strategic gaps, an initial action path, and one summary they can use in a real conversation.
 
 ## Minutes 0-5: frame the problem correctly
 
-The first mistake many users make is starting too broadly.
+The first mistake many users make is starting far too broadly.
 
-Do not begin with: "company strategy"; "growth plan"; "digital transformation". Those labels are too vague to create useful output.
+Leaders often enter a platform with labels like "company strategy," "growth plan," or "digital transformation." Those labels sound important, but they are too vague to produce useful output in a first session.
 
-Start with a concrete challenge instead: margin improvement in a business unit; market expansion into a specific geography; operating model redesign after growth; portfolio prioritization before the next board cycle. The more specific the challenge, the sharper the first output becomes. This is not because the AI needs perfection. It is because good strategic work always starts with a usable frame.
+Start with a concrete challenge instead: margin improvement in one business unit, expansion into a defined geography, operating model redesign after growth, or portfolio prioritization before the next board cycle. The more specific the challenge, the sharper the first output becomes.
+
+That is not because the system needs perfect inputs. It is because strategic work becomes valuable only when the frame is tight enough to support a real decision.
 
 ## Minutes 5-10: give the system the context that matters
 
 Consultify becomes useful when it understands enough context to avoid generic advice.
 
-That means the first inputs should cover: company type and size; operating geography; current business challenge; time horizon; key financial or strategic constraints. You do not need a perfect data room to start.
+The first inputs should therefore cover the company type and size, operating geography, current business challenge, time horizon, and the key financial or strategic constraints. You do not need a perfect data room to begin.
 
-You need enough signal for the system to distinguish your case from a generic business template. The right attitude here is not "wait until everything is ready." It is: "Give the platform enough truth to produce a relevant first draft."
+What you need is enough signal for the platform to distinguish your situation from a generic strategy template. The right attitude is not, "Let''s wait until everything is ready." It is, "Let''s give the platform enough truth to produce a relevant first draft."
+
+This is where many first sessions quietly fail. People hold back real constraints, keep the description abstract, and then blame the output for sounding generic. In practice, the quality of the first draft usually improves the moment the business reality becomes specific enough to work with.
 
 ## Minutes 10-18: run the first diagnostic
 
 This is the moment where most users decide whether the platform is real or superficial.
 
-The first diagnostic should help surface: major strategic gaps; risk areas; unclear assumptions; hidden priority conflicts; near-term opportunities.
+The first diagnostic should bring the real shape of the situation into view. That usually means surfacing the major strategic gaps, the most meaningful risk areas, the assumptions that are still too soft, the hidden conflicts between priorities, and the near-term opportunities that deserve attention first.
 
-The most important behavior during this step is not passive acceptance.
+The most important behavior in this step is not passive acceptance. Strong users do not sit back and watch the system talk. They answer in full sentences when detail matters, push back when the reasoning feels shallow, and refine the context instead of abandoning the flow the moment something is incomplete.
 
-Good users do three things: answer in full sentences when useful; push back when the output feels incomplete; refine the context instead of abandoning the flow.
-
-The value of the diagnostic is not that it is magically perfect on the first pass.
-
-The value is that it moves the conversation forward much faster than traditional advisory work.
+The value of the diagnostic is not that it becomes magically perfect on the first pass. The value is that it moves the strategic conversation forward much faster than traditional advisory work, while keeping the leadership team inside the reasoning loop.
 
 ## Minutes 18-25: turn insight into a first roadmap
 
 Analysis becomes valuable only when it starts shaping action.
 
-That is why the next move should be to convert the first diagnostic into a draft roadmap or initiative set.
+That is why the next move should be to convert the first diagnostic into a draft roadmap or initiative set instead of leaving the insight suspended as commentary.
 
-At this stage, the user should look for: which initiatives actually matter first; what dependencies exist; what should be delayed; what needs human approval before moving. The first roadmap should not try to be complete. It should be good enough to create direction.
+At this stage, the user should ask which initiatives truly matter first, which dependencies shape the sequence, what should be delayed, and what requires explicit human approval before moving any further. The first roadmap does not need to be complete. It needs to be credible enough to create direction.
 
-In practice, that usually means 3 to 5 priority initiatives are enough for the first working version.
+In practice, three to five priority initiatives are usually enough for the first working version. More than that often creates the illusion of sophistication while weakening focus.
 
 ## Minutes 25-30: generate the first leadership-ready output
 
 Trust grows when a system helps the user communicate clearly, not only think privately.
 
-That is why the first session should end with an exportable output such as:
+That is why the first session should end with an exportable output: an executive summary, an initiative brief, a board-facing snapshot, or a short transformation note for internal alignment.
 
-- an executive summary
-- an initiative brief
-- a board-facing snapshot
-- a short transformation note for internal alignment
-
-This matters for one simple reason:
-
-adoption improves when the first session produces something other people can react to. Without that, the platform feels like an interesting tool.
-
-With it, the platform starts acting like an operating system for strategic work.
+This matters for one simple reason. Adoption improves when the first session produces something other people can react to. Without that, the platform feels like an interesting tool. With it, the platform starts acting like an operating system for strategic work.
 
 
 
@@ -1372,21 +1316,19 @@ With it, the platform starts acting like an operating system for strategic work.
 
 The first 30 minutes are not the finish line. They are the activation point.
 
-The strongest next steps are: share the first output with one or two decision-makers; assign owners to the top initiatives; review the assumptions behind the roadmap; schedule a follow-up session to refine financial logic.
+The strongest next steps are straightforward: share the first output with one or two decision-makers, assign owners to the top initiatives, review the assumptions behind the roadmap, and schedule the next session to sharpen the financial logic.
 
-This is where the difference between software usage and transformation management becomes visible.
-
-The session should produce a next move, not only a feeling of progress.
+This is where the difference between software usage and transformation management becomes visible. The session should create a next move, not merely a feeling of progress.
 
 ## Common mistakes in the first session
 
-Several patterns reduce value quickly: starting with a challenge that is too broad; waiting for perfect data before beginning; treating the diagnostic as final truth instead of a working draft; generating outputs before reviewing assumptions; leaving the roadmap unowned after the session. Each one creates the same problem:
+Several patterns reduce value quickly. Users start with a challenge that is too broad, wait for perfect data before beginning, treat the diagnostic as final truth instead of a working draft, generate outputs before reviewing assumptions, or leave the roadmap unowned after the session.
 
-the platform generates motion, but the organization does not yet create execution.
+Each mistake creates the same problem: the platform generates motion, but the organization still does not create execution.
 
 ## Why this onboarding flow matters
 
-Traditional consulting often conditions leaders to expect long delays before useful output appears. Weeks of scoping. Weeks of interviews. Weeks of synthesis. Consultify changes that expectation.
+Traditional consulting often trains leaders to expect long delays before useful output appears. Weeks of scoping. Weeks of interviews. Weeks of synthesis. Consultify is valuable only if it resets that expectation.
 
 It should produce early strategic clarity inside the first session while keeping human judgment in control. That does not remove the need for leadership.
 
@@ -1396,7 +1338,7 @@ It removes the unnecessary delay between challenge definition and structured act
 
 The real goal is not to learn the product.
 
-The real goal is to prove that strategy work can start faster, stay governed, and move toward execution without waiting for a traditional consulting timeline. That is when Consultify starts making sense. Not as software to click through. But as a system that helps leaders move from uncertainty to a first usable operating path in one session.
+The real goal is to prove that strategy work can start faster, stay governed, and move toward execution without waiting for a traditional consulting timeline. That is when Consultify starts making sense: not as software to click through, but as a system that helps leaders move from uncertainty to a first usable operating path in one session.
 
 ---
 
@@ -1638,32 +1580,38 @@ Sondern als System, das Führungskräften hilft, in einer einzigen Session von U
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2eed4a3d-4f5d-4593-bc7a-6c6b6c9bcd77', 'kb-consultify-03_first_30_minutes_in_consultify', 'public_docs')
+  ('8e434e7b-839e-4720-9151-65a045698215', 'kb-consultify-03_first_30_minutes_in_consultify', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fffa1342-f9f5-4ccc-88ce-9bfd4ecdd1c6', 'kb-consultify-03_first_30_minutes_in_consultify', 'help')
+  ('78674fb6-85a9-4ea0-894b-8955b0de0788', 'kb-consultify-03_first_30_minutes_in_consultify', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('04157966-6236-4506-8f9a-e92b0a5ce000', 'kb-consultify-03_first_30_minutes_in_consultify', 'lp')
+  ('bfa0fb9f-4214-4cee-8183-c3a515b5c728', 'kb-consultify-03_first_30_minutes_in_consultify', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-coll-consultify', 2)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-coll-consultify-execution-and-rollout', 2)
+  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-coll-consultify-decisions-that-ship', 2)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-tag-execution-control')
+  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-tag-pmo-operations')
+  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-tag-ai-strategy')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-tag-decision-speed')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-03_first_30_minutes_in_consultify', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 04_roi_calculator_guide
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-04_roi_calculator_guide', 'kb-cat-consultify-governance-and-roi', '04_roi_calculator_guide', 'published', 1, 1, 5, '/kb/consultify/04_roi_calculator_guide/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-04_roi_calculator_guide', 'kb-cat-consultify-the-money-question', '04_roi_calculator_guide', 'published', 1, 1, 5, '/kb/consultify/04_roi_calculator_guide/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, thumbnail_url = '/kb/consultify/04_roi_calculator_guide/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -2013,35 +1961,38 @@ Sondern die, die strategischen Wert leichter erzeugbar, messbar und verteidigbar
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bfb56907-31b8-4c0c-9f60-ecf27c35ff07', 'kb-consultify-04_roi_calculator_guide', 'public_docs')
+  ('72d4d45a-41e3-437c-83eb-c065af4d9aff', 'kb-consultify-04_roi_calculator_guide', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('49acaadd-d16c-4dc3-ae55-bf8cb0624732', 'kb-consultify-04_roi_calculator_guide', 'help')
+  ('353471b1-c629-4ba4-936a-36eebc2c0bd4', 'kb-consultify-04_roi_calculator_guide', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('eac866e2-6222-460d-a157-1e07e2d40045', 'kb-consultify-04_roi_calculator_guide', 'lp')
+  ('943db84e-4bff-498f-aadf-8b46073ab0a1', 'kb-consultify-04_roi_calculator_guide', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-04_roi_calculator_guide', 'kb-coll-consultify', 3)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-04_roi_calculator_guide', 'kb-coll-consultify-governance-and-roi', 3)
+  ('kb-consultify-04_roi_calculator_guide', 'kb-coll-consultify-the-money-question', 3)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-04_roi_calculator_guide', 'kb-tag-decision')
+  ('kb-consultify-04_roi_calculator_guide', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-04_roi_calculator_guide', 'kb-tag-transformation-governance')
+  ('kb-consultify-04_roi_calculator_guide', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-04_roi_calculator_guide', 'kb-tag-roi-visibility')
+  ('kb-consultify-04_roi_calculator_guide', 'kb-tag-decision-speed')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-04_roi_calculator_guide', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 05_ai_driven_swot
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-05_ai_driven_swot', 'kb-cat-consultify-ai-and-decision-making', '05_ai_driven_swot', 'published', 1, 1, 5, '/kb/consultify/05_ai_driven_swot/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-05_ai_driven_swot', 'kb-cat-consultify-decisions-that-ship', '05_ai_driven_swot', 'published', 1, 1, 5, '/kb/consultify/05_ai_driven_swot/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Change Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 5, thumbnail_url = '/kb/consultify/05_ai_driven_swot/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -2336,35 +2287,38 @@ AI-Driven SWOT wird wertvoll, wenn es Leadership hilft, die Realität schneller 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7f3ba839-0eef-4ee7-bc80-6d8d4360d1f6', 'kb-consultify-05_ai_driven_swot', 'public_docs')
+  ('a427cba8-d194-40f9-a9c2-a6621beb1de5', 'kb-consultify-05_ai_driven_swot', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7891b806-3334-4765-ac56-3df8c3327282', 'kb-consultify-05_ai_driven_swot', 'help')
+  ('6da557e4-7578-4b89-8035-69bda8301176', 'kb-consultify-05_ai_driven_swot', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dc545964-98c9-43ef-ae71-b2419812f0f6', 'kb-consultify-05_ai_driven_swot', 'lp')
+  ('29419cf5-048b-4829-a420-071c2a09d6ad', 'kb-consultify-05_ai_driven_swot', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-05_ai_driven_swot', 'kb-coll-consultify', 4)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-05_ai_driven_swot', 'kb-coll-consultify-ai-and-decision-making', 4)
+  ('kb-consultify-05_ai_driven_swot', 'kb-coll-consultify-decisions-that-ship', 4)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-05_ai_driven_swot', 'kb-tag-consideration')
+  ('kb-consultify-05_ai_driven_swot', 'kb-tag-ai-strategy')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-05_ai_driven_swot', 'kb-tag-ai-decision-support')
+  ('kb-consultify-05_ai_driven_swot', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-05_ai_driven_swot', 'kb-tag-strategic-alignment')
+  ('kb-consultify-05_ai_driven_swot', 'kb-tag-leadership')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-05_ai_driven_swot', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 06_scenario_planning
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-06_scenario_planning', 'kb-cat-consultify-ai-and-decision-making', '06_scenario_planning', 'published', 1, 1, 4, '/kb/consultify/06_scenario_planning/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-06_scenario_planning', 'kb-cat-consultify-decisions-that-ship', '06_scenario_planning', 'published', 1, 1, 4, '/kb/consultify/06_scenario_planning/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/06_scenario_planning/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -2658,35 +2612,38 @@ Sie werden besser im Vorbereiten, Vergleichen und Handeln unter Unsicherheit. Da
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1e616c16-c6f3-4842-a90e-c1cf0ca32eb1', 'kb-consultify-06_scenario_planning', 'public_docs')
+  ('129271bf-5753-4dbe-9967-9b41c1f14a07', 'kb-consultify-06_scenario_planning', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('589a328a-73a5-4f71-aca7-29cb412d2fb3', 'kb-consultify-06_scenario_planning', 'help')
+  ('913559ea-76d2-4137-95cf-28a5f2b4189b', 'kb-consultify-06_scenario_planning', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a8ec4c24-becb-4751-9a04-7eb942b295f7', 'kb-consultify-06_scenario_planning', 'lp')
+  ('4020874d-1a36-4229-bf56-1ba474ccd1be', 'kb-consultify-06_scenario_planning', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-06_scenario_planning', 'kb-coll-consultify', 5)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-06_scenario_planning', 'kb-coll-consultify-ai-and-decision-making', 5)
+  ('kb-consultify-06_scenario_planning', 'kb-coll-consultify-decisions-that-ship', 5)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-06_scenario_planning', 'kb-tag-consideration')
+  ('kb-consultify-06_scenario_planning', 'kb-tag-ai-strategy')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-06_scenario_planning', 'kb-tag-ai-decision-support')
+  ('kb-consultify-06_scenario_planning', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-06_scenario_planning', 'kb-tag-strategic-alignment')
+  ('kb-consultify-06_scenario_planning', 'kb-tag-risk')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-06_scenario_planning', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 07_competitive_intelligence
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-07_competitive_intelligence', 'kb-cat-consultify-ai-and-decision-making', '07_competitive_intelligence', 'published', 0, 1, 4, '/kb/consultify/07_competitive_intelligence/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Strategy Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-07_competitive_intelligence', 'kb-cat-consultify-why-transformations-fail', '07_competitive_intelligence', 'published', 0, 1, 4, '/kb/consultify/07_competitive_intelligence/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / Strategy Leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/07_competitive_intelligence/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -2997,35 +2954,35 @@ Sie ist wertvoll, weil sie Leadership hilft, früher zu entscheiden, klüger zu 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3478ddb8-8ace-4fd4-b934-8e66247039c9', 'kb-consultify-07_competitive_intelligence', 'public_docs')
+  ('4e03c712-d32c-40f2-b9fd-68a9b8ff15c8', 'kb-consultify-07_competitive_intelligence', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('77692218-106a-436d-8f06-8abd503a2bd9', 'kb-consultify-07_competitive_intelligence', 'help')
+  ('bc3a671d-6bcb-47ca-a3c9-ceae388d96f7', 'kb-consultify-07_competitive_intelligence', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a6de1122-de8d-42a7-a2ef-f7ce44fa05e6', 'kb-consultify-07_competitive_intelligence', 'lp')
+  ('88f12d0c-c022-4215-905b-2ceb368e7c7f', 'kb-consultify-07_competitive_intelligence', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-07_competitive_intelligence', 'kb-coll-consultify', 6)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-07_competitive_intelligence', 'kb-coll-consultify-ai-and-decision-making', 6)
+  ('kb-consultify-07_competitive_intelligence', 'kb-coll-consultify-why-transformations-fail', 6)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-07_competitive_intelligence', 'kb-tag-consideration')
+  ('kb-consultify-07_competitive_intelligence', 'kb-tag-ai-strategy')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-07_competitive_intelligence', 'kb-tag-ai-decision-support')
+  ('kb-consultify-07_competitive_intelligence', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-07_competitive_intelligence', 'kb-tag-strategic-alignment')
+  ('kb-consultify-07_competitive_intelligence', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 08_strategic_alignment
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-08_strategic_alignment', 'kb-cat-consultify-execution-and-rollout', '08_strategic_alignment', 'published', 1, 1, 4, '/kb/consultify/08_strategic_alignment/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-08_strategic_alignment', 'kb-cat-consultify-decisions-that-ship', '08_strategic_alignment', 'published', 1, 1, 4, '/kb/consultify/08_strategic_alignment/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/08_strategic_alignment/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -3325,35 +3282,38 @@ Sie ist der Zustand, in dem die Organisation sich mit gemeinsamen Prioritäten, 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('2f5880c1-864e-4b72-81c9-b4a79eb46fd1', 'kb-consultify-08_strategic_alignment', 'public_docs')
+  ('1ae49f1f-d064-47c4-9972-ba395ec5f11d', 'kb-consultify-08_strategic_alignment', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fd8d90e7-890f-4491-a0a6-a7fd0214280a', 'kb-consultify-08_strategic_alignment', 'help')
+  ('9b920504-dfe1-45bb-9232-f1c347ca85be', 'kb-consultify-08_strategic_alignment', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e224ec6f-b75c-4f45-91a3-5a871862fc00', 'kb-consultify-08_strategic_alignment', 'lp')
+  ('e66d5570-82ee-4bba-a456-b172ffb1300b', 'kb-consultify-08_strategic_alignment', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-08_strategic_alignment', 'kb-coll-consultify', 7)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-08_strategic_alignment', 'kb-coll-consultify-execution-and-rollout', 7)
+  ('kb-consultify-08_strategic_alignment', 'kb-coll-consultify-decisions-that-ship', 7)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-08_strategic_alignment', 'kb-tag-consideration')
+  ('kb-consultify-08_strategic_alignment', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-08_strategic_alignment', 'kb-tag-execution-control')
+  ('kb-consultify-08_strategic_alignment', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-08_strategic_alignment', 'kb-tag-pmo-operations')
+  ('kb-consultify-08_strategic_alignment', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-08_strategic_alignment', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 09_data_first_strategy
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-09_data_first_strategy', 'kb-cat-consultify-ai-and-decision-making', '09_data_first_strategy', 'published', 1, 1, 4, '/kb/consultify/09_data_first_strategy/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-09_data_first_strategy', 'kb-cat-consultify-decisions-that-ship', '09_data_first_strategy', 'published', 1, 1, 4, '/kb/consultify/09_data_first_strategy/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / CFO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/09_data_first_strategy/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -3679,35 +3639,38 @@ Das schafft: bessere Priorisierung; klarere Trade-offs; weniger politischen Drif
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c2e3b8d0-3a6a-4223-8e62-31e1f967ec62', 'kb-consultify-09_data_first_strategy', 'public_docs')
+  ('9bd732c2-4a9c-4f1c-8e41-41d2cd443e91', 'kb-consultify-09_data_first_strategy', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d882f111-1b23-4e99-b675-944b425bd1fc', 'kb-consultify-09_data_first_strategy', 'help')
+  ('02ffe476-ab9a-40da-82eb-dd2e15039eb8', 'kb-consultify-09_data_first_strategy', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fe06d6f7-04f1-4a32-b783-741783f94bea', 'kb-consultify-09_data_first_strategy', 'lp')
+  ('62ad86ca-e2be-458e-8e64-6771288ae5b2', 'kb-consultify-09_data_first_strategy', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-09_data_first_strategy', 'kb-coll-consultify', 8)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-09_data_first_strategy', 'kb-coll-consultify-ai-and-decision-making', 8)
+  ('kb-consultify-09_data_first_strategy', 'kb-coll-consultify-decisions-that-ship', 8)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-09_data_first_strategy', 'kb-tag-consideration')
+  ('kb-consultify-09_data_first_strategy', 'kb-tag-ai-strategy')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-09_data_first_strategy', 'kb-tag-ai-decision-support')
+  ('kb-consultify-09_data_first_strategy', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-09_data_first_strategy', 'kb-tag-strategic-alignment')
+  ('kb-consultify-09_data_first_strategy', 'kb-tag-board-room')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-09_data_first_strategy', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 10_decision_latency
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-10_decision_latency', 'kb-cat-consultify-ai-and-decision-making', '10_decision_latency', 'published', 1, 1, 4, '/kb/consultify/10_decision_latency/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-10_decision_latency', 'kb-cat-consultify-decisions-that-ship', '10_decision_latency', 'published', 1, 1, 4, '/kb/consultify/10_decision_latency/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/10_decision_latency/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -3989,35 +3952,38 @@ Darum verdient Decision Latency viel mehr Aufmerksamkeit, als sie normalerweise 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('897b3aa4-bcb4-46d9-b296-59a14a2e57f5', 'kb-consultify-10_decision_latency', 'public_docs')
+  ('ad7cc492-0e84-4a86-a022-fdf8c9e81322', 'kb-consultify-10_decision_latency', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4ccbe8cf-2f9e-42a5-be89-5f6436a1184a', 'kb-consultify-10_decision_latency', 'help')
+  ('72cee429-fb27-45b5-bbad-9f928114c87a', 'kb-consultify-10_decision_latency', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0673ac80-9770-4537-a220-472061ace43f', 'kb-consultify-10_decision_latency', 'lp')
+  ('3d4b5031-ade4-46e0-b94b-4f75c2804f0c', 'kb-consultify-10_decision_latency', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-10_decision_latency', 'kb-coll-consultify', 9)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-10_decision_latency', 'kb-coll-consultify-ai-and-decision-making', 9)
+  ('kb-consultify-10_decision_latency', 'kb-coll-consultify-decisions-that-ship', 9)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-10_decision_latency', 'kb-tag-consideration')
+  ('kb-consultify-10_decision_latency', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-10_decision_latency', 'kb-tag-ai-decision-support')
+  ('kb-consultify-10_decision_latency', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-10_decision_latency', 'kb-tag-strategic-alignment')
+  ('kb-consultify-10_decision_latency', 'kb-tag-leadership')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-10_decision_latency', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 11_strategic_reporting
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-11_strategic_reporting', 'kb-cat-consultify-ai-and-decision-making', '11_strategic_reporting', 'published', 1, 1, 4, '/kb/consultify/11_strategic_reporting/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-11_strategic_reporting', 'kb-cat-consultify-decisions-that-ship', '11_strategic_reporting', 'published', 1, 1, 4, '/kb/consultify/11_strategic_reporting/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/11_strategic_reporting/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -4315,35 +4281,38 @@ Das bedeutet: besseres Strategic Reporting ist: klarer; selektiver; entscheidung
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ee3d696f-ec8f-4efb-a094-6261557c059b', 'kb-consultify-11_strategic_reporting', 'public_docs')
+  ('5f8fbdcb-085f-451b-b2c2-3f28ca824918', 'kb-consultify-11_strategic_reporting', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1e671a5b-4e65-435f-9d9d-722e3ecb8dd9', 'kb-consultify-11_strategic_reporting', 'help')
+  ('5bc71384-8b43-480e-9480-a72b41771106', 'kb-consultify-11_strategic_reporting', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e5379e4f-8683-47b2-9161-a294f80714c8', 'kb-consultify-11_strategic_reporting', 'lp')
+  ('495d88af-04ab-484c-9c30-10eaa09d0489', 'kb-consultify-11_strategic_reporting', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-11_strategic_reporting', 'kb-coll-consultify', 10)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-11_strategic_reporting', 'kb-coll-consultify-ai-and-decision-making', 10)
+  ('kb-consultify-11_strategic_reporting', 'kb-coll-consultify-decisions-that-ship', 10)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-11_strategic_reporting', 'kb-tag-consideration')
+  ('kb-consultify-11_strategic_reporting', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-11_strategic_reporting', 'kb-tag-ai-decision-support')
+  ('kb-consultify-11_strategic_reporting', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-11_strategic_reporting', 'kb-tag-strategic-alignment')
+  ('kb-consultify-11_strategic_reporting', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-11_strategic_reporting', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 12_okr_management
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-12_okr_management', 'kb-cat-consultify-governance-and-roi', '12_okr_management', 'published', 0, 1, 4, '/kb/consultify/12_okr_management/hero.png', '["assessment","dashboard","roadmap"]', '["COO / Change Leader / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-12_okr_management', 'kb-cat-consultify-why-transformations-fail', '12_okr_management', 'published', 0, 1, 4, '/kb/consultify/12_okr_management/hero.png', '["assessment","dashboard","roadmap"]', '["COO / Change Leader / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/12_okr_management/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -4605,35 +4574,38 @@ Es gelingt, wenn Objectives, Ownership, Initiatives und Reporting eng genug verb
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('84d73db1-6582-454e-9eaa-6348958a117a', 'kb-consultify-12_okr_management', 'public_docs')
+  ('a1ba2a5d-2915-4b7c-b79f-39331cc39aa8', 'kb-consultify-12_okr_management', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('22fe8f1d-1fcf-4589-a114-f931d89bc9b2', 'kb-consultify-12_okr_management', 'help')
+  ('ef040569-9823-4358-a349-164d4d322de1', 'kb-consultify-12_okr_management', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0b945171-25be-4118-8e4c-c54a1d862ce6', 'kb-consultify-12_okr_management', 'lp')
+  ('b47ea78e-3f2c-4a10-8106-9b2253788808', 'kb-consultify-12_okr_management', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-12_okr_management', 'kb-coll-consultify', 11)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-12_okr_management', 'kb-coll-consultify-governance-and-roi', 11)
+  ('kb-consultify-12_okr_management', 'kb-coll-consultify-why-transformations-fail', 11)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-12_okr_management', 'kb-tag-consideration')
+  ('kb-consultify-12_okr_management', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-12_okr_management', 'kb-tag-transformation-governance')
+  ('kb-consultify-12_okr_management', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-12_okr_management', 'kb-tag-roi-visibility')
+  ('kb-consultify-12_okr_management', 'kb-tag-leadership')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-12_okr_management', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 13_why_board_updates_should_come_from_live_transformation_systems
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-cat-consultify-governance-and-roi', '13_why_board_updates_should_come_from_live_transformation_systems', 'published', 1, 1, 3, '/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-cat-consultify-the-money-question', '13_why_board_updates_should_come_from_live_transformation_systems', 'published', 1, 1, 3, '/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / President"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/13_why_board_updates_should_come_from_live_transformation_systems/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -4873,35 +4845,38 @@ So wird Reporting Teil von Kontrolle statt Teil eines reporting theater.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6cfd00bc-c687-4c4d-8edf-29121876837e', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'public_docs')
+  ('14d3c58c-5351-4a95-9c1a-e70d63b6447e', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1abc000d-4f40-4187-a29f-8bf1b74b9469', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'help')
+  ('732e7728-19a6-49c8-9ea3-f40cab0a7294', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('08fb2926-010e-4cb8-93dd-a41715de023f', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'lp')
+  ('8b3209f7-0282-4da6-beab-c4a9611f01ce', 'kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-coll-consultify', 12)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-coll-consultify-governance-and-roi', 12)
+  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-coll-consultify-the-money-question', 12)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-tag-decision')
+  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-tag-transformation-governance')
+  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-tag-roi-visibility')
+  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-13_why_board_updates_should_come_from_live_transformation_systems', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 14_why_strategy_workshops_fail_without_execution_system
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-cat-consultify-execution-and-rollout', '14_why_strategy_workshops_fail_without_execution_system', 'published', 1, 1, 3, '/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png', '["assessment","dashboard","roadmap"]', '["COO / change leader / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-cat-consultify-why-transformations-fail', '14_why_strategy_workshops_fail_without_execution_system', 'published', 1, 1, 3, '/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png', '["assessment","dashboard","roadmap"]', '["COO / change leader / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/14_why_strategy_workshops_fail_without_execution_system/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -5141,35 +5116,38 @@ Das starkere Modell ist ein Workshop, der direkt in ein System fliesst, das steu
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('87c97738-e84c-4bf6-a3cf-7340133ae01e', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'public_docs')
+  ('2706d965-a960-418d-9a1a-c34eaec58844', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e10858e6-f989-427d-b4b8-3dcaf9442072', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'help')
+  ('fa14be07-e4ea-41d5-8e58-061b6776d374', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('561f247f-2882-43ab-a8bc-cbfadaf0aad6', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'lp')
+  ('2c5881f2-8760-434d-b39f-850fc1cb1e5a', 'kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-coll-consultify', 13)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-coll-consultify-execution-and-rollout', 13)
+  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-coll-consultify-why-transformations-fail', 13)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-tag-consideration')
+  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-tag-execution-control')
+  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-tag-pmo-operations')
+  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-14_why_strategy_workshops_fail_without_execution_system', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 15_how_to_keep_transformation_roi_visible_after_kickoff
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-cat-consultify-governance-and-roi', '15_how_to_keep_transformation_roi_visible_after_kickoff', 'published', 1, 1, 4, '/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / COO / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-cat-consultify-the-money-question', '15_how_to_keep_transformation_roi_visible_after_kickoff', 'published', 1, 1, 4, '/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / COO / Owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/15_how_to_keep_transformation_roi_visible_after_kickoff/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -5377,35 +5355,38 @@ Wert entsteht wahrend der Execution, genau deshalb muss der finanzielle Case lan
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('79ffc597-e577-4e4d-af84-1aa6c0565992', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'public_docs')
+  ('a5416a6b-cee9-479b-b337-be6a7b217efd', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3f46b094-bfd5-4928-9fd5-d48edff1e57d', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'help')
+  ('8f668707-b62f-4aa1-86f4-ce3df697eec2', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3aa1aea1-59e4-4680-8196-52bd3f5a7316', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'lp')
+  ('5f1b725a-434b-48a4-be14-7c6aa84610f6', 'kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-coll-consultify', 14)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-coll-consultify-governance-and-roi', 14)
+  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-coll-consultify-the-money-question', 14)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-tag-decision')
+  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-tag-transformation-governance')
+  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-tag-roi-visibility')
+  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-tag-portfolio')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-15_how_to_keep_transformation_roi_visible_after_kickoff', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 16_why_steering_committees_fail_when_the_system_is_static
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-cat-consultify-governance-and-roi', '16_why_steering_committees_fail_when_the_system_is_static', 'published', 0, 1, 3, '/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-cat-consultify-why-transformations-fail', '16_why_steering_committees_fail_when_the_system_is_static', 'published', 0, 1, 3, '/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/16_why_steering_committees_fail_when_the_system_is_static/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -5659,35 +5640,38 @@ Das starkere Modell ist ein live steering system, das Leadership genug Sichtbark
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ae9bb71f-cc78-4acc-8d36-4fd579f37cd1', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'public_docs')
+  ('ab12b06d-b28f-4250-8dbd-b6b71c5bcc75', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('179df5b5-0e3f-4bd2-b95c-1e2d24a2153f', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'help')
+  ('05694498-80c1-4ada-9c06-80c4b02221e9', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('98085592-7b5a-435e-a729-89bfdc6b9eef', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'lp')
+  ('8f89653c-a199-45b4-840a-473df6876414', 'kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-coll-consultify', 15)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-coll-consultify-governance-and-roi', 15)
+  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-coll-consultify-why-transformations-fail', 15)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-tag-consideration')
+  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-tag-transformation-governance')
+  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-tag-roi-visibility')
+  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-tag-decision-speed')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-16_why_steering_committees_fail_when_the_system_is_static', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 17_why_transformation_programs_need_one_source_of_truth
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-cat-consultify-execution-and-rollout', '17_why_transformation_programs_need_one_source_of_truth', 'published', 1, 1, 4, '/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-cat-consultify-decisions-that-ship', '17_why_transformation_programs_need_one_source_of_truth', 'published', 1, 1, 4, '/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/17_why_transformation_programs_need_one_source_of_truth/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -5922,35 +5906,38 @@ Das starkere Modell ist ein System, in dem Strategie, Arbeit und value case eng 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('08369f84-da83-49ba-924e-be4ca7e51f15', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'public_docs')
+  ('15208b13-b513-4673-9efd-90836a6b86f9', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f4abb9ca-905a-4b7a-8f68-232b70e8302f', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'help')
+  ('a39beffe-9360-40d6-834a-f50acfa0c555', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bb2e96c7-7cae-4f1c-958d-53ad2b9593e7', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'lp')
+  ('71a1b9f2-aabd-4fb3-95a5-a58b10ba536e', 'kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-coll-consultify', 16)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-coll-consultify-execution-and-rollout', 16)
+  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-coll-consultify-decisions-that-ship', 16)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-tag-consideration')
+  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-tag-execution-control')
+  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-tag-pmo-operations')
+  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-tag-pmo')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-17_why_transformation_programs_need_one_source_of_truth', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 18_how_to_turn_leadership_decisions_into_owned_initiatives
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-cat-consultify-execution-and-rollout', '18_how_to_turn_leadership_decisions_into_owned_initiatives', 'published', 1, 1, 3, '/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png', '["assessment","dashboard","roadmap"]', '["COO / owner / transformation leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-cat-consultify-decisions-that-ship', '18_how_to_turn_leadership_decisions_into_owned_initiatives', 'published', 1, 1, 3, '/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png', '["assessment","dashboard","roadmap"]', '["COO / owner / transformation leader"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/18_how_to_turn_leadership_decisions_into_owned_initiatives/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -6213,35 +6200,35 @@ Darum beginnt die eigentliche Arbeit nach der Entscheidung und nicht in dem Mome
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('51d87c85-7d9c-4d11-b424-7665c6ba72c9', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'public_docs')
+  ('43da90a7-4b8a-464a-8297-ce6cc8c050f5', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fd31a350-0a34-4c36-8c57-4b6c4c561345', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'help')
+  ('42d7ff0e-adbe-4136-bdce-95173a302b0c', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('69eda8fd-a527-44b2-bc36-88a1c5e956fd', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'lp')
+  ('2d27b5d9-a614-4afb-bd63-e78043988ee4', 'kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-coll-consultify', 17)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-coll-consultify-execution-and-rollout', 17)
+  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-coll-consultify-decisions-that-ship', 17)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-tag-decision')
+  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-tag-execution-control')
+  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-tag-pmo-operations')
+  ('kb-consultify-18_how_to_turn_leadership_decisions_into_owned_initiatives', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 19_why_transformation_portfolios_fail_without_live_prioritization
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-cat-consultify-governance-and-roi', '19_why_transformation_portfolios_fail_without_live_prioritization', 'published', 1, 1, 3, '/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-cat-consultify-decisions-that-ship', '19_why_transformation_portfolios_fail_without_live_prioritization', 'published', 1, 1, 3, '/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / COO / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/19_why_transformation_portfolios_fail_without_live_prioritization/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -6470,35 +6457,38 @@ Das starkere Modell ist ein Portfoliosystem, das Trade-offs sichtbar genug halt,
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e6633907-556a-46b9-9aa2-83a40b123018', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'public_docs')
+  ('72fc600f-6736-4b38-8b18-c527d277a9ae', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5d285e23-208c-4d18-8f67-84505ec8a7ef', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'help')
+  ('b5c490da-8f12-44ec-9144-01bb18dd7acf', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('41d4c095-48bb-46d4-b778-eb221dcecbbf', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'lp')
+  ('60485c8c-1493-4906-9798-6e973d8feaf1', 'kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-coll-consultify', 18)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-coll-consultify-governance-and-roi', 18)
+  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-coll-consultify-decisions-that-ship', 18)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-tag-consideration')
+  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-tag-transformation-governance')
+  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-tag-roi-visibility')
+  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-tag-execution')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-19_why_transformation_portfolios_fail_without_live_prioritization', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 20_how_to_keep_leadership_alignment_after_the_offsite
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-cat-consultify-execution-and-rollout', '20_how_to_keep_leadership_alignment_after_the_offsite', 'published', 1, 1, 3, '/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-cat-consultify-decisions-that-ship', '20_how_to_keep_leadership_alignment_after_the_offsite', 'published', 1, 1, 3, '/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png', '["assessment","dashboard","roadmap"]', '["Owner / President / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/20_how_to_keep_leadership_alignment_after_the_offsite/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -6773,35 +6763,38 @@ Leadership alignment nach dem Offsite uberlebt nur dann, wenn Entscheidungen, Pr
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dcd68d99-a73a-4189-8d57-149fee259131', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'public_docs')
+  ('39f4e04b-8fb7-4ba7-8dda-cab05f7e7fb0', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d6c457c4-dfa2-42f1-995b-a27b66c6d6c9', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'help')
+  ('38e9f329-16ad-4ff2-84bd-2221187eeb53', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f3092ef6-603b-4073-85b7-b0e8daabf088', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'lp')
+  ('3f7e367f-8730-45b2-b0d7-f686321b7461', 'kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-coll-consultify', 19)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-coll-consultify-execution-and-rollout', 19)
+  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-coll-consultify-decisions-that-ship', 19)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-tag-consideration')
+  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-tag-execution-control')
+  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-tag-pmo-operations')
+  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-20_how_to_keep_leadership_alignment_after_the_offsite', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 21_how_to_defend_transformation_investment_with_live_value_evidence
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-cat-consultify-governance-and-roi', '21_how_to_defend_transformation_investment_with_live_value_evidence', 'published', 1, 1, 4, '/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-cat-consultify-the-money-question', '21_how_to_defend_transformation_investment_with_live_value_evidence', 'published', 1, 1, 4, '/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / Owner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/21_how_to_defend_transformation_investment_with_live_value_evidence/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -7059,35 +7052,35 @@ So halt Leadership strategische conviction aufrecht, ohne sich auf blinden Glaub
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('80f2c653-f956-4d4e-af69-247f1d62b823', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'public_docs')
+  ('4acc3fa5-ceb1-4973-b026-c891a6c956b0', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('546032ac-f809-47bc-a9ab-0d545e1f0693', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'help')
+  ('28c218d2-4a70-41ac-9507-b507fcf6a109', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bfdbe247-d517-4092-9450-d146278f2e1f', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'lp')
+  ('dbeaabce-f66c-486e-95da-f3913178e5d8', 'kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-coll-consultify', 20)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-coll-consultify-governance-and-roi', 20)
+  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-coll-consultify-the-money-question', 20)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-tag-decision')
+  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-tag-transformation-governance')
+  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-tag-roi-visibility')
+  ('kb-consultify-21_how_to_defend_transformation_investment_with_live_value_evidence', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 22_what_monthly_transformation_reviews_should_actually_decide
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-cat-consultify-governance-and-roi', '22_what_monthly_transformation_reviews_should_actually_decide', 'published', 1, 1, 3, '/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-cat-consultify-the-money-question', '22_what_monthly_transformation_reviews_should_actually_decide', 'published', 1, 1, 3, '/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 1, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/22_what_monthly_transformation_reviews_should_actually_decide/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -7317,35 +7310,38 @@ Wenn sie nur zusammenfassen, was bereits passiert ist, verbrauchen sie Leadershi
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('334a7aea-21ff-49ad-9d26-687ea01148ac', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'public_docs')
+  ('a04aef3b-92a2-494d-ba12-d17ca876c8d7', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d1ebf9c4-098e-4dac-b2ae-2a59ea9ed0f5', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'help')
+  ('a3c68d4b-e593-453f-9422-1a271dcefbbe', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6c3a0f2c-a149-4456-aab7-b71e59826e65', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'lp')
+  ('98cc7ebc-82f9-4ee7-9598-11f2fe64a987', 'kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-coll-consultify', 21)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-coll-consultify-governance-and-roi', 21)
+  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-coll-consultify-the-money-question', 21)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-tag-consideration')
+  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-tag-transformation-governance')
+  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-tag-roi-visibility')
+  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-tag-board-room')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-22_what_monthly_transformation_reviews_should_actually_decide', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 23_how_to_run_quarterly_transformation_resets_without_losing_momentum
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-cat-consultify-governance-and-roi', '23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'published', 0, 1, 3, '/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-cat-consultify-the-money-question', '23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'published', 0, 1, 3, '/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png', '["assessment","dashboard","roadmap"]', '["COO / transformation sponsor / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/23_how_to_run_quarterly_transformation_resets_without_losing_momentum/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -7553,35 +7549,38 @@ Wenn die Quartalsgrenze Warten erhoeht, arbeitet der Reset gegen Momentum.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1346798f-bebf-480f-80d1-aeaa615eaa42', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'public_docs')
+  ('7360d752-b0d7-4034-8826-e8f1c00087ed', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3644cf05-5791-4b41-8b6b-719c20ff32c3', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'help')
+  ('fc25adb1-874c-4e79-8be7-22f64d59f918', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c4ee747b-d490-4b98-aff0-626314e0983e', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'lp')
+  ('16b04dab-4bc5-49c1-8ff6-21852dbe1f6b', 'kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-coll-consultify', 22)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-coll-consultify-governance-and-roi', 22)
+  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-coll-consultify-the-money-question', 22)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-tag-consideration')
+  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-tag-transformation-governance')
+  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-tag-roi-visibility')
+  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-tag-execution')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-23_how_to_run_quarterly_transformation_resets_without_losing_momentum', 'kb-tag-for-owners')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 24_what_a_transformation_pmo_should_track_every_week
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-cat-consultify-execution-and-rollout', '24_what_a_transformation_pmo_should_track_every_week', 'published', 0, 1, 3, '/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / portfolio office head / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-cat-consultify-decisions-that-ship', '24_what_a_transformation_pmo_should_track_every_week', 'published', 0, 1, 3, '/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / portfolio office head / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/24_what_a_transformation_pmo_should_track_every_week/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -7791,32 +7790,38 @@ Wenn es nur Bewegung beschreibt, wird Fuehrung spaeter ueberrascht als noetig.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3027c97b-f57c-416b-99b9-5ef360f11915', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'public_docs')
+  ('cbd0710e-dcce-4201-a7fd-acf5cc1807e2', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('378855e1-f1c3-4beb-b7a2-43090e0c76b6', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'help')
+  ('313e1ad1-98c2-402d-aaec-6090c1740951', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('71c35e42-8fdb-4e25-882f-c740dd9ee34e', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'lp')
+  ('1ea86ab7-8f38-4187-a2b0-5b2938a9fb71', 'kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-coll-consultify', 23)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-coll-consultify-execution-and-rollout', 23)
+  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-coll-consultify-decisions-that-ship', 23)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-tag-execution-control')
+  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-tag-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-tag-pmo-operations')
+  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-tag-execution')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-tag-decision-speed')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-24_what_a_transformation_pmo_should_track_every_week', 'kb-tag-for-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 25_how_to_cut_dead_initiatives_without_political_drift
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-cat-consultify-governance-and-roi', '25_how_to_cut_dead_initiatives_without_political_drift', 'published', 0, 1, 3, '/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png', '["assessment","dashboard","roadmap"]', '["Portfolio owner / transformation sponsor / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-cat-consultify-why-transformations-fail', '25_how_to_cut_dead_initiatives_without_political_drift', 'published', 0, 1, 3, '/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png', '["assessment","dashboard","roadmap"]', '["Portfolio owner / transformation sponsor / COO"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/25_how_to_cut_dead_initiatives_without_political_drift/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -8034,35 +8039,35 @@ Machen Sie Stopp regelgeleitet, kriterienbasiert und sponsor-owned, und politisc
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9cd094b0-faa7-45d7-b438-1f1b61bc8537', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'public_docs')
+  ('46d3c275-0df6-4be9-9512-61c88d019e93', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0ab57101-5f6e-46c9-ad69-b73b6a81a8a6', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'help')
+  ('e1f7cb72-8472-45f0-9bf1-c57288dfd530', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('15dd0005-f3c9-432e-b74b-753a9e4e18c3', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'lp')
+  ('79c2a146-cc95-4526-aa11-1becc8c620df', 'kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-coll-consultify', 24)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-coll-consultify-governance-and-roi', 24)
+  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-coll-consultify-why-transformations-fail', 24)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-tag-consideration')
+  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-tag-transformation-governance')
+  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-tag-roi-visibility')
+  ('kb-consultify-25_how_to_cut_dead_initiatives_without_political_drift', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-cat-consultify-governance-and-roi', '26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'published', 0, 1, 3, '/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / portfolio steering lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-cat-consultify-the-money-question', '26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'published', 0, 1, 3, '/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / portfolio steering lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -8274,35 +8279,38 @@ Die beiden zu vermischen, ist wie Portfolios Glaubwuerdigkeit verlieren.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c8cb5ffb-9a8e-4731-a03c-e3db31cf9b8c', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'public_docs')
+  ('b001ba9e-a8c2-4827-93f2-4f65a53baab9', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d4a7ea9b-b0f8-4c20-8aca-b4de3ec4f090', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'help')
+  ('6041deeb-6cb3-4099-8f0d-2865499c0500', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c8e2d2ba-6b58-45e8-9d70-3e70c69a1b42', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'lp')
+  ('0c0a2517-1f93-4c1a-8f6c-09230b1f2d45', 'kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-coll-consultify', 25)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-coll-consultify-governance-and-roi', 25)
+  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-coll-consultify-the-money-question', 25)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-tag-consideration')
+  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-tag-transformation-governance')
+  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-tag-roi-visibility')
+  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-tag-risk')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-26_when_to_replan_a_transformation_portfolio_and_when_to_hold_course', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 27_how_to_make_strategy_assumptions_visible_before_the_board_review
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-cat-consultify-governance-and-roi', '27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'published', 0, 1, 3, '/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png', '["assessment","dashboard","roadmap"]', '["Strategy lead / board liaison / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-cat-consultify-the-money-question', '27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'published', 0, 1, 3, '/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png', '["assessment","dashboard","roadmap"]', '["Strategy lead / board liaison / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/27_how_to_make_strategy_assumptions_visible_before_the_board_review/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -8481,35 +8489,35 @@ Wenn das Board nur Schlussfolgerungen sieht, kann es die Logik nicht steuern. Ma
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('19d785f4-5349-40c5-91b6-d3556e9531f5', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'public_docs')
+  ('b9be8b8f-81f7-4ec8-8314-ce6523303967', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0ce4abda-7d5e-43d0-881c-d8f7696718d3', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'help')
+  ('2279027f-338f-4db7-a86a-3a251a028b54', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('56692a11-8710-414d-aebf-ec97fc5c5a5e', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'lp')
+  ('bfa32ee3-8b8a-405f-bc74-3e7d38eb90df', 'kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-coll-consultify', 26)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-coll-consultify-governance-and-roi', 26)
+  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-coll-consultify-the-money-question', 26)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-tag-awareness')
+  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-tag-transformation-governance')
+  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-tag-roi-visibility')
+  ('kb-consultify-27_how_to_make_strategy_assumptions_visible_before_the_board_review', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 28_why_transformation_capacity_breaks_before_strategy_does
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-cat-consultify-governance-and-roi', '28_why_transformation_capacity_breaks_before_strategy_does', 'published', 0, 1, 3, '/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png', '["assessment","dashboard","roadmap"]', '["COO / CHRO partner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-cat-consultify-why-transformations-fail', '28_why_transformation_capacity_breaks_before_strategy_does', 'published', 0, 1, 3, '/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png', '["assessment","dashboard","roadmap"]', '["COO / CHRO partner / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/28_why_transformation_capacity_breaks_before_strategy_does/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -8711,35 +8719,35 @@ Kapazitaet scheitert leise, bis die Strategie-Narrative die Schuld absorbiert.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ac95f2b5-c570-4579-84de-e5f74002a706', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'public_docs')
+  ('27b1b41d-2e89-43e6-88b5-5a501723ca1c', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('8be67cda-3933-47a3-a7b3-05caba6dd433', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'help')
+  ('05d2b464-c29e-47ae-aeae-7f6f8bb943b7', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b8f0cff1-046e-4cc8-b06e-f77672bc3414', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'lp')
+  ('7e04f1a6-bfaf-442e-86ed-5b48a354fc75', 'kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-coll-consultify', 27)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-coll-consultify-governance-and-roi', 27)
+  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-coll-consultify-why-transformations-fail', 27)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-tag-awareness')
+  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-tag-transformation-governance')
+  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-tag-roi-visibility')
+  ('kb-consultify-28_why_transformation_capacity_breaks_before_strategy_does', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 29_how_to_link_transformation_initiatives_to_budget_reality
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-cat-consultify-governance-and-roi', '29_how_to_link_transformation_initiatives_to_budget_reality', 'published', 0, 1, 3, '/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / PMO lead / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-cat-consultify-the-money-question', '29_how_to_link_transformation_initiatives_to_budget_reality', 'published', 0, 1, 3, '/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / PMO lead / transformation sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/29_how_to_link_transformation_initiatives_to_budget_reality/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -8932,32 +8940,38 @@ Machen Sie Envelopes, Cash-Timing und Change-Regeln sichtbar und mit Ownern vers
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9c26748f-0b69-4e6e-aa55-17824045b94a', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'public_docs')
+  ('9081ff94-ad72-4c59-9745-14ea322db7a9', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f3b2cf3c-ee67-4f28-9ed8-5a918fb1302e', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'help')
+  ('aca61d03-e635-4659-9d02-dc21d50dba58', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('aa0ed23e-b54b-4837-946c-1dab4e616cc4', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'lp')
+  ('61ee5241-ddec-4d96-8c70-8c52aa326104', 'kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-coll-consultify', 28)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-coll-consultify-governance-and-roi', 28)
+  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-coll-consultify-the-money-question', 28)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-tag-transformation-governance')
+  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-tag-roi-visibility')
+  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-tag-portfolio')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-29_how_to_link_transformation_initiatives_to_budget_reality', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 30_what_executive_sponsors_should_never_delegate_in_transformation
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-cat-consultify-governance-and-roi', '30_what_executive_sponsors_should_never_delegate_in_transformation', 'published', 0, 1, 3, '/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / CEO / board-facing owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-cat-consultify-why-transformations-fail', '30_what_executive_sponsors_should_never_delegate_in_transformation', 'published', 0, 1, 3, '/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / CEO / board-facing owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/30_what_executive_sponsors_should_never_delegate_in_transformation/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -9138,35 +9152,35 @@ Halten Sie Trade-offs, Stops, Deadlocks, Wert-Behauptungen und Board-Alignment d
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('de3f66f6-1910-464f-a92c-68911ca947c4', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'public_docs')
+  ('9f419d36-eeeb-44a8-ab8d-de7cf0351c8f', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('06b22be2-7efb-4c32-af58-1f8731061f26', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'help')
+  ('8deedf8b-eff2-4327-9372-24b38413044a', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d75316fd-e06b-4f3f-bfa7-8cb607917e00', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'lp')
+  ('bc37dbf6-4837-4b9c-9cb5-8e4376cb679f', 'kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-coll-consultify', 29)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-coll-consultify-governance-and-roi', 29)
+  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-coll-consultify-why-transformations-fail', 29)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-tag-consideration')
+  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-tag-transformation-governance')
+  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-tag-roi-visibility')
+  ('kb-consultify-30_what_executive_sponsors_should_never_delegate_in_transformation', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 31_how_to_build_a_live_transformation_risk_register
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-cat-consultify-governance-and-roi', '31_how_to_build_a_live_transformation_risk_register', 'published', 0, 1, 3, '/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png', '["assessment","dashboard","roadmap"]', '["Risk owner / transformation PMO / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-cat-consultify-the-money-question', '31_how_to_build_a_live_transformation_risk_register', 'published', 0, 1, 3, '/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png', '["assessment","dashboard","roadmap"]', '["Risk owner / transformation PMO / program director"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/31_how_to_build_a_live_transformation_risk_register/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -9355,32 +9369,38 @@ Machen Sie es live, owner-gefuehrt, trigger-basiert und in echte Governance-Fore
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a9f96f77-4ee4-442f-8d09-bbd078c9dd15', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'public_docs')
+  ('ddf75675-3531-4a65-ba40-22b3af4d4b55', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1b2210d2-a2df-4efe-9289-11cb91d8e599', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'help')
+  ('ee932893-2e17-459c-a747-23231f4e0e56', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d54049c8-9085-4e6e-8065-dc514e74911f', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'lp')
+  ('6ebb41fe-3dec-4cc9-b818-86eb679e3776', 'kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-coll-consultify', 30)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-coll-consultify-governance-and-roi', 30)
+  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-coll-consultify-the-money-question', 30)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-tag-transformation-governance')
+  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-tag-roi-visibility')
+  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-tag-pmo')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-31_how_to_build_a_live_transformation_risk_register', 'kb-tag-for-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 32_when_a_transformation_program_needs_intervention_not_more_reporting
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-cat-consultify-execution-and-rollout', '32_when_a_transformation_program_needs_intervention_not_more_reporting', 'published', 0, 1, 3, '/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation owner / sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-cat-consultify-why-transformations-fail', '32_when_a_transformation_program_needs_intervention_not_more_reporting', 'published', 0, 1, 3, '/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation owner / sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/32_when_a_transformation_program_needs_intervention_not_more_reporting/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -9580,35 +9600,35 @@ Wenn ein Programm Intervention braucht, ersetzt ein weiterer Report keine Autori
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('61fc2a03-c5a6-4cb9-a30e-1b2f2b586b86', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'public_docs')
+  ('783daa92-055a-40ac-9938-88c77b199975', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f7117d78-9258-4cdd-a121-44a99ab5b722', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'help')
+  ('aaf465d7-ddfd-4804-b06e-98aa558db9fe', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('adf0c5e0-0162-4422-9890-5c9f99da779f', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'lp')
+  ('24ac09bd-ffff-4a0b-be2e-7fc52df6c09e', 'kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-coll-consultify', 31)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-coll-consultify-execution-and-rollout', 31)
+  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-coll-consultify-why-transformations-fail', 31)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-tag-consideration')
+  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-tag-execution-control')
+  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-tag-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-tag-pmo-operations')
+  ('kb-consultify-32_when_a_transformation_program_needs_intervention_not_more_reporting', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-cat-consultify-governance-and-roi', '33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'published', 0, 1, 4, '/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation owner / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-cat-consultify-the-money-question', '33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'published', 0, 1, 4, '/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation owner / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -9856,35 +9876,35 @@ Wenn Ihr Takt vor allem Narrative zirkuliert, finanzieren Sie Storytelling, nich
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('411a0bca-18fe-453b-9bc3-97ebbfc39898', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'public_docs')
+  ('9d73c172-affc-4e25-896f-af7037017f7f', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('197063ca-2fe7-42f4-bfe1-87d029e01c77', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'help')
+  ('e3e25283-5773-4989-a4aa-d25b1ed28245', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9e0c07dd-2bc3-49ae-93bc-5aae6dcf9046', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'lp')
+  ('30bd8811-7a30-4267-819d-76d9d526402a', 'kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-coll-consultify', 32)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-coll-consultify-governance-and-roi', 32)
+  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-coll-consultify-the-money-question', 32)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-tag-consideration')
+  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-tag-transformation-governance')
+  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-tag-roi-visibility')
+  ('kb-consultify-33_how_to_design_a_sponsor_cadence_that_actually_changes_transformation_outcomes', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 34_when_a_transformation_portfolio_should_stop_funding_an_initiative
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-cat-consultify-governance-and-roi', '34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'published', 0, 1, 4, '/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / portfolio sponsor / transformation steering owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-cat-consultify-the-money-question', '34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'published', 0, 1, 4, '/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / portfolio sponsor / transformation steering owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/34_when_a_transformation_portfolio_should_stop_funding_an_initiative/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -10116,35 +10136,38 @@ Wenn Sie nie defunden, haben Sie kein Portfolio. Sie haben einen Verpflichtungss
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0e460864-58b0-4b94-8802-018cbd322a8f', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'public_docs')
+  ('baea35aa-76b3-435c-8b03-f0cf2ec97022', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dffef0cf-f568-4c0f-a9b7-280dedc2ea35', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'help')
+  ('b87a0a11-168a-4e6d-95d3-41bdb47387c4', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a2174dd4-2845-41d6-8e73-a0d9fc0a6347', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'lp')
+  ('f907ecfe-e29d-4a89-8827-24352a2bf824', 'kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-coll-consultify', 33)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-coll-consultify-governance-and-roi', 33)
+  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-coll-consultify-the-money-question', 33)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-tag-decision')
+  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-tag-transformation-governance')
+  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-tag-roi-visibility')
+  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-34_when_a_transformation_portfolio_should_stop_funding_an_initiative', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 35_what_a_good_escalation_path_looks_like_in_cross_functional_programs
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-cat-consultify-execution-and-rollout', '35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'published', 0, 1, 4, '/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png', '["assessment","dashboard","roadmap"]', '["Program director / transformation PMO lead / interface owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-cat-consultify-why-transformations-fail', '35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'published', 0, 1, 4, '/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png', '["assessment","dashboard","roadmap"]', '["Program director / transformation PMO lead / interface owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/35_what_a_good_escalation_path_looks_like_in_cross_functional_programs/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -10388,35 +10411,38 @@ Wenn es keine Defaults und kein Aging gibt, eskalieren Sie nicht. Sie warten.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('bdfdc2af-cb35-4c84-9287-735e25446687', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'public_docs')
+  ('216aa92f-9d80-43ab-a451-4cddf2079367', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0cec57a8-ad41-407e-942f-6724bdfd9081', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'help')
+  ('f48210fb-2782-4d93-9e12-c52131a050a2', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9fcb96d3-964e-4bb6-8e87-f204c888cfee', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'lp')
+  ('2b059838-ed6d-4d5e-a3d3-e5ecc3d1f8e3', 'kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-coll-consultify', 34)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-coll-consultify-execution-and-rollout', 34)
+  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-coll-consultify-why-transformations-fail', 34)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-tag-consideration')
+  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-tag-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-tag-execution-control')
+  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-tag-pmo-operations')
+  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-tag-execution')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-35_what_a_good_escalation_path_looks_like_in_cross_functional_programs', 'kb-tag-for-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 36_how_to_reduce_governance_debt_in_large_transformation_programs
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-cat-consultify-governance-and-roi', '36_how_to_reduce_governance_debt_in_large_transformation_programs', 'published', 0, 1, 4, '/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / chief of staff to sponsor / portfolio operations head"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-cat-consultify-why-transformations-fail', '36_how_to_reduce_governance_debt_in_large_transformation_programs', 'published', 0, 1, 4, '/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / chief of staff to sponsor / portfolio operations head"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 4, thumbnail_url = '/kb/consultify/36_how_to_reduce_governance_debt_in_large_transformation_programs/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -10630,32 +10656,38 @@ Governance-Schulden abbauen ist ein expliziter Portfolio-Akt: mergen, loeschen, 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fdce7b61-4ca0-4751-8aed-955eec568b7b', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'public_docs')
+  ('ee190adc-c5a0-47e8-919a-3a24dd22f2c5', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f44fc0a5-de6b-44f9-9ec9-6f99c99d223c', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'help')
+  ('acadda51-4894-4b44-9dca-9980cbd82e2d', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3726f28f-2a8e-4e42-91c1-0d3547787b6a', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'lp')
+  ('ff5f7b5c-3c6f-40a5-a266-71f59459ba99', 'kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-coll-consultify', 35)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-coll-consultify-governance-and-roi', 35)
+  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-coll-consultify-why-transformations-fail', 35)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-tag-transformation-governance')
+  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-tag-roi-visibility')
+  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-tag-pmo')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-tag-decision-speed')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-36_how_to_reduce_governance_debt_in_large_transformation_programs', 'kb-tag-for-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 37_when_transformation_metrics_start_driving_the_wrong_behavior
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-cat-consultify-governance-and-roi', '37_when_transformation_metrics_start_driving_the_wrong_behavior', 'published', 0, 1, 3, '/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / metrics owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-cat-consultify-why-transformations-fail', '37_when_transformation_metrics_start_driving_the_wrong_behavior', 'published', 0, 1, 3, '/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / metrics owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/37_when_transformation_metrics_start_driving_the_wrong_behavior/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -10880,35 +10912,38 @@ Reparieren Sie die Lenkung, bevor Sie eine weitere Scorecard hinzufuegen.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('f3c71590-9eed-407e-9902-64d2b8bd38d6', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'public_docs')
+  ('9028ab85-2296-4de6-87f8-872a0aa95292', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d6788b78-2265-48fa-b306-4dab3bada991', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'help')
+  ('155ee148-f077-468f-a661-ae7bc859470b', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('772f4c50-912c-47e7-8a51-c0f7088f550f', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'lp')
+  ('f4801f4c-9f6f-4098-a2e2-d02899bcc435', 'kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-coll-consultify', 36)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-coll-consultify-governance-and-roi', 36)
+  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-coll-consultify-why-transformations-fail', 36)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-tag-awareness')
+  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-tag-transformation-governance')
+  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-tag-roi-visibility')
+  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-tag-roi-finance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-37_when_transformation_metrics_start_driving_the_wrong_behavior', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-cat-consultify-ai-and-decision-making', '38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'published', 0, 1, 3, '/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png', '["assessment","dashboard","roadmap"]', '["Strategy owner / transformation sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-cat-consultify-why-transformations-fail', '38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'published', 0, 1, 3, '/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png', '["assessment","dashboard","roadmap"]', '["Strategy owner / transformation sponsor / board-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -11117,35 +11152,35 @@ Wenn alle inspiriert gehen, aber niemand accountable geht, haben Sie fuer Theate
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b111a248-c8c8-4fd0-8305-124fbe091e23', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'public_docs')
+  ('cf0ee5e9-cdbc-4241-b9ae-94403a0e4bf3', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('321d91d9-6cc6-4777-9519-ed95bb4d4699', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'help')
+  ('712fc689-3410-4823-a618-63872b9c3e66', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('53f18f2c-b84c-4967-b164-f6d1cfa72bf9', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'lp')
+  ('d57eb067-99cc-44ba-a299-2995314d51df', 'kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-coll-consultify', 37)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-coll-consultify-ai-and-decision-making', 37)
+  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-coll-consultify-why-transformations-fail', 37)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-tag-consideration')
+  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-tag-ai-decision-support')
+  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-tag-strategic-alignment')
+  ('kb-consultify-38_how_to_keep_strategy_reviews_from_turning_into_narrative_theater', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 39_what_executives_should_require_before_approving_the_next_wave_of_change
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-cat-consultify-governance-and-roi', '39_what_executives_should_require_before_approving_the_next_wave_of_change', 'published', 0, 1, 3, '/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png', '["assessment","dashboard","roadmap"]', '["CEO / executive sponsor / board-facing transformation lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-cat-consultify-the-money-question', '39_what_executives_should_require_before_approving_the_next_wave_of_change', 'published', 0, 1, 3, '/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png', '["assessment","dashboard","roadmap"]', '["CEO / executive sponsor / board-facing transformation lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/39_what_executives_should_require_before_approving_the_next_wave_of_change/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -11364,35 +11399,35 @@ Wenn sie ein kurzes Evidenz-Gate nicht passiert, pausieren, bis sie es kann.
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('548a0b99-1ee3-4a06-8aa3-59815a6d0f75', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'public_docs')
+  ('fbbd8599-2f10-4ebd-b5a2-a9194ae9730c', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0ce60ef9-b5de-4885-bb83-d1793ee81648', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'help')
+  ('3a598f45-c638-42be-a828-f9507ba8e8a4', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e3aa5f51-dfc5-4e5d-b6f1-45d24a8e9285', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'lp')
+  ('ac2b086e-c63b-415a-a7f0-ad132ac28f97', 'kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-coll-consultify', 38)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-coll-consultify-governance-and-roi', 38)
+  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-coll-consultify-the-money-question', 38)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-tag-decision')
+  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-tag-transformation-governance')
+  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-tag-roi-visibility')
+  ('kb-consultify-39_what_executives_should_require_before_approving_the_next_wave_of_change', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 40_how_to_prove_transformation_value_before_the_full_program_finishes
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-cat-consultify-governance-and-roi', '40_how_to_prove_transformation_value_before_the_full_program_finishes', 'published', 0, 1, 3, '/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation owner / finance partner / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-cat-consultify-the-money-question', '40_how_to_prove_transformation_value_before_the_full_program_finishes', 'published', 0, 1, 3, '/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation owner / finance partner / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/40_how_to_prove_transformation_value_before_the_full_program_finishes/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -11590,32 +11625,35 @@ Bauen Sie die Leiter frueh, oder Sie streiten ueber Wert, nachdem Geld ausgegebe
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('63abd162-c3cf-42be-9b99-829b1876ad87', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'public_docs')
+  ('1d301af7-b650-41ac-93dc-b771a328c4cd', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('c660ca8d-eb77-4253-9a29-c9addc29db54', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'help')
+  ('0c60b7db-5f0f-43c6-823c-2274a0c3a829', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('d0e17d5b-d209-4d95-adb0-a64cf43e94e6', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'lp')
+  ('fcb5a525-7f88-4c14-8b88-4ddb295b53ca', 'kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-coll-consultify', 39)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-coll-consultify-governance-and-roi', 39)
+  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-coll-consultify-the-money-question', 39)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-tag-transformation-governance')
+  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-tag-roi-visibility')
+  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-40_how_to_prove_transformation_value_before_the_full_program_finishes', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-cat-consultify-governance-and-roi', '41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'published', 0, 1, 3, '/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / delivery lead / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-cat-consultify-why-transformations-fail', '41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'published', 0, 1, 3, '/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / delivery lead / sponsor"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -11806,35 +11844,38 @@ Ueberlastung ist ein Portfolio-Problem im Kostuem einer Personalstimmung. Messen
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('61ca2ccd-1e57-4c77-898c-22d0dbc49703', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'public_docs')
+  ('8c35feb2-08d3-4e89-9e91-aadad24b72a9', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('fe10254c-ef1e-49b1-ac84-5bd90e3300a4', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'help')
+  ('0b7169e2-abc4-4cd4-9aa9-9c63b26aaaa5', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9a0f7576-0ff7-46ca-9a03-56f012d04395', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'lp')
+  ('e981c929-704c-4c4c-a9fa-174cff3c8525', 'kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-coll-consultify', 40)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-coll-consultify-governance-and-roi', 40)
+  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-coll-consultify-why-transformations-fail', 40)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-tag-consideration')
+  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-tag-transformation-governance')
+  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-tag-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-tag-roi-visibility')
+  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-tag-execution')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-41_when_a_transformation_team_is_overloaded_even_if_the_plan_looks_green', 'kb-tag-for-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 42_how_to_reset_transformation_control_after_a_missed_quarter
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-cat-consultify-governance-and-roi', '42_how_to_reset_transformation_control_after_a_missed_quarter', 'published', 0, 1, 3, '/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation sponsor / program director / CFO-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-cat-consultify-the-money-question', '42_how_to_reset_transformation_control_after_a_missed_quarter', 'published', 0, 1, 3, '/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation sponsor / program director / CFO-facing lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/42_how_to_reset_transformation_control_after_a_missed_quarter/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -12057,32 +12098,35 @@ Setzen Sie Kontrolle mit Kompromissen, Ownership und Governance-Disziplin zuruec
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b5f81d4d-d94c-4989-a0ee-4da5765a4f41', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'public_docs')
+  ('dbdbafa8-ae43-4d70-8579-c932af20e168', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('71c1f35c-f7b1-427d-afc0-24dcc8660259', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'help')
+  ('ea687e0a-9d7b-47f6-bc10-0f53a83264c2', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('838190f6-40f3-4435-96b2-669a4cda3300', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'lp')
+  ('6c2e4340-65d0-4931-9f55-80c6617eb29a', 'kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-coll-consultify', 41)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-coll-consultify-governance-and-roi', 41)
+  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-coll-consultify-the-money-question', 41)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-tag-transformation-governance')
+  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-tag-roi-visibility')
+  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-tag-execution')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-42_how_to_reset_transformation_control_after_a_missed_quarter', 'kb-tag-portfolio')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 43_how_to_define_decision_rights_in_a_transformation_operating_system
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-cat-consultify-execution-and-rollout', '43_how_to_define_decision_rights_in_a_transformation_operating_system', 'published', 0, 1, 3, '/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation governance lead / enterprise architect / COO office partner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-cat-consultify-decisions-that-ship', '43_how_to_define_decision_rights_in_a_transformation_operating_system', 'published', 0, 1, 3, '/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation governance lead / enterprise architect / COO office partner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/43_how_to_define_decision_rights_in_a_transformation_operating_system/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -12318,35 +12362,35 @@ Machen Sie sie explizit, zeitlich begrenzt und dokumentiert, oder Ihr Betriebssy
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3006f99f-94f5-41ba-a132-bc2c6566af17', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'public_docs')
+  ('f5c515a4-d557-4380-aee7-f2bc79d6e4fe', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('61e79dc7-8c4b-4f32-bdab-9adfac8baa88', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'help')
+  ('a0ac5bce-ec56-4135-8108-ac697ac2ba42', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('13daf473-1b8c-4147-9db7-64aaaab6954f', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'lp')
+  ('8f19f574-8f76-42c0-84df-fa4d09ae9e57', 'kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-coll-consultify', 42)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-coll-consultify-execution-and-rollout', 42)
+  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-coll-consultify-decisions-that-ship', 42)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-tag-consideration')
+  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-tag-decision-speed')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-tag-execution-control')
+  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-tag-pmo-operations')
+  ('kb-consultify-43_how_to_define_decision_rights_in_a_transformation_operating_system', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 44_what_a_board_ready_transformation_packet_should_include_every_time
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-cat-consultify-governance-and-roi', '44_what_a_board_ready_transformation_packet_should_include_every_time', 'published', 0, 1, 3, '/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / head of strategy reporting to the board"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-cat-consultify-the-money-question', '44_what_a_board_ready_transformation_packet_should_include_every_time', 'published', 0, 1, 3, '/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png', '["assessment","dashboard","roadmap"]', '["CFO / transformation sponsor / head of strategy reporting to the board"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/44_what_a_board_ready_transformation_packet_should_include_every_time/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -12595,35 +12639,38 @@ Standardisieren Sie die sieben Bloecke, oder jeder Zyklus oeffnet dieselben Frag
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('0461edd1-30e7-4c35-8edf-af54b24a9cf7', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'public_docs')
+  ('87d59dbb-5b14-4b38-a3ad-5e577dc99362', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('61870bcb-dfbb-407a-a61b-f68e7c88f828', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'help')
+  ('eab1915a-26c7-4e2d-a21b-467894ae9a25', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('98dca39e-97b3-4aa2-b974-ffca710c2a70', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'lp')
+  ('e1343731-3c57-4531-8c5a-c41ec76e60ff', 'kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-coll-consultify', 43)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-coll-consultify-governance-and-roi', 43)
+  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-coll-consultify-the-money-question', 43)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-tag-decision')
+  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-tag-board-room')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-tag-transformation-governance')
+  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-tag-roi-visibility')
+  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-44_what_a_board_ready_transformation_packet_should_include_every_time', 'kb-tag-for-cfo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 45_when_to_rewrite_a_transformation_business_case_and_when_not_to
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-cat-consultify-governance-and-roi', '45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'published', 0, 1, 3, '/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation sponsor / finance partner / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-cat-consultify-the-money-question', '45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'published', 0, 1, 3, '/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation sponsor / finance partner / portfolio owner"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/45_when_to_rewrite_a_transformation_business_case_and_when_not_to/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -12828,35 +12875,35 @@ Selten und bewusst neu schreiben. Annahmen laufend aktualisieren. So bleibt Valu
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('b59aaf71-c7c4-4e1e-9843-0f7b8d443b77', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'public_docs')
+  ('7ecce7a9-88ca-42fa-8a0b-5095a4dc58a1', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('1472c794-f6b3-4fb8-af9d-ec38734ddfba', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'help')
+  ('7007dc47-0577-4c7e-b81e-0925ae364bf0', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('6e4ac101-d5a2-406d-909f-abfcf21e7e03', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'lp')
+  ('262ef4a1-4984-45f5-8a47-13f7902542e1', 'kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-coll-consultify', 44)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-coll-consultify-governance-and-roi', 44)
+  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-coll-consultify-the-money-question', 44)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-tag-consideration')
+  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-tag-roi-finance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-tag-transformation-governance')
+  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-tag-roi-visibility')
+  ('kb-consultify-45_when_to_rewrite_a_transformation_business_case_and_when_not_to', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-cat-consultify-ai-and-decision-making', '46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'published', 0, 1, 3, '/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / enterprise architect / sponsor chief of staff"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-cat-consultify-why-transformations-fail', '46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'published', 0, 1, 3, '/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO lead / enterprise architect / sponsor chief of staff"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -13043,32 +13090,38 @@ Fuehren Sie ein Annahmen-Ledger mit Ownern und Tests, oder jedes Review oeffnet 
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3adea173-8f2b-4a7f-9d06-c951923c6b72', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'public_docs')
+  ('6dbfc193-bbea-4413-b724-b9d436fb7474', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('5ba8fbc4-c96a-4f91-afdc-d242da0d99f8', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'help')
+  ('d6821b95-87d1-43e6-aaf1-584f8f73d7c2', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9679513e-7d0e-4327-a31c-2d08e6e910d4', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'lp')
+  ('12036450-daa7-4781-a4e1-f8293eba12f6', 'kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-coll-consultify', 45)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-coll-consultify-ai-and-decision-making', 45)
+  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-coll-consultify-why-transformations-fail', 45)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-tag-ai-decision-support')
+  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-tag-strategic-alignment')
+  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-tag-risk')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-tag-pmo')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-46_how_to_manage_transformation_assumptions_without_spreadsheet_chaos', 'kb-tag-for-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 47_what_a_good_transformation_capacity_model_should_make_visible
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-cat-consultify-governance-and-roi', '47_what_a_good_transformation_capacity_model_should_make_visible', 'published', 0, 1, 3, '/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation COO / portfolio lead / HR business partner supporting change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-cat-consultify-why-transformations-fail', '47_what_a_good_transformation_capacity_model_should_make_visible', 'published', 0, 1, 3, '/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation COO / portfolio lead / HR business partner supporting change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/47_what_a_good_transformation_capacity_model_should_make_visible/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -13290,35 +13343,35 @@ Machen Sie Kapazitaet sichtbar nach Name, Stunde und Contention, oder Execution-
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('caf5edbc-f61c-4f5d-941f-3e33f4540a5e', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'public_docs')
+  ('57ce6ce4-f395-420b-bef9-c17b9a7bed85', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('3cf91f2f-844e-4179-99d8-b4b50b555491', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'help')
+  ('6c07ba04-2de3-45c2-9a13-fd2f6b2d7612', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('611af924-5954-4f7f-9bd4-9cf7c92dd61f', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'lp')
+  ('7c2985fe-ce03-4df6-a486-632d0fdde275', 'kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-coll-consultify', 46)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-coll-consultify-governance-and-roi', 46)
+  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-coll-consultify-why-transformations-fail', 46)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-tag-awareness')
+  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-tag-risk')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-tag-transformation-governance')
+  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-tag-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-tag-roi-visibility')
+  ('kb-consultify-47_what_a_good_transformation_capacity_model_should_make_visible', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-cat-consultify-governance-and-roi', '48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'published', 0, 1, 3, '/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead working with HR partners"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-cat-consultify-why-transformations-fail', '48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'published', 0, 1, 3, '/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead working with HR partners"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -13524,32 +13577,35 @@ Menschen verdienen ein System, das ihre Kapazitaet nicht mit wiederholtem Beweis
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('e989dd3d-4f07-4fb8-ba2f-24c2b3372dbe', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'public_docs')
+  ('c6a0e378-8053-46e1-a03a-ba4af2ca70aa', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('dcdf62d9-c85b-4913-b04b-181535b96754', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'help')
+  ('367d2cda-2766-498c-8d1a-ff1fc6bdfdad', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('9b94a982-c72e-48cc-8775-45b836e227a9', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'lp')
+  ('6eb37804-72fb-466d-b19c-b1f1d639d3f9', 'kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-coll-consultify', 47)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-coll-consultify-governance-and-roi', 47)
+  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-coll-consultify-why-transformations-fail', 47)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-tag-transformation-governance')
+  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-tag-roi-visibility')
+  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-tag-risk')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-48_when_change_exhaustion_is_a_governance_problem_not_a_people_problem', 'kb-tag-leadership')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-cat-consultify-execution-and-rollout', '49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'published', 0, 1, 3, '/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO director / transformation office lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-cat-consultify-why-transformations-fail', '49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'published', 0, 1, 3, '/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png', '["assessment","dashboard","roadmap"]', '["Transformation PMO director / transformation office lead"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -13750,32 +13806,38 @@ Invertieren Sie das Modell: Records zuerst, Entscheidungen zweitens, Slides zule
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('571873e3-a15f-488d-a0a4-cdb6b7832005', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'public_docs')
+  ('f08c99b1-153f-4d7d-aa39-45195141020c', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4d6c6c08-7c0a-4b0d-888a-e342e102cde2', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'help')
+  ('65ca4174-2669-4602-84e7-79f903cb3d9a', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('7fd15543-f25c-4295-ae49-3bc18ed064c2', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'lp')
+  ('94396507-0204-45b9-aeed-18c48ab1c763', 'kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-coll-consultify', 48)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-coll-consultify-execution-and-rollout', 48)
+  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-coll-consultify-why-transformations-fail', 48)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-tag-execution-control')
+  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-tag-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-tag-pmo-operations')
+  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-tag-governance')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-tag-decision-speed')
+ON CONFLICT (article_id, tag_id) DO NOTHING;
+INSERT INTO kb_article_tags (article_id, tag_id) VALUES
+  ('kb-consultify-49_how_to_keep_a_transformation_pmo_from_becoming_a_reporting_factory', 'kb-tag-for-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- Article 50_how_to_turn_transformation_management_into_a_repeatable_operating_system
 INSERT INTO kb_articles (id, category_id, slug, status, is_featured, is_public, reading_time_minutes, thumbnail_url, related_modules, target_audience, created_at, updated_at) VALUES
-  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-cat-consultify-execution-and-rollout', '50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'published', 0, 1, 3, '/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead accountable for multi-year change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-cat-consultify-decisions-that-ship', '50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'published', 0, 1, 3, '/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png', '["assessment","dashboard","roadmap"]', '["Executive sponsor / transformation lead accountable for multi-year change"]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET status = 'published', is_public = 1, is_featured = 0, reading_time_minutes = 3, thumbnail_url = '/kb/consultify/50_how_to_turn_transformation_management_into_a_repeatable_operating_system/hero.png', updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
@@ -14019,30 +14081,30 @@ Wiederholbares Transformationsmanagement ist ein designed Betriebssystem mit sta
 ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;
 
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('ff42229d-3a7e-4bbb-9321-8585b24d711c', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'public_docs')
+  ('07a3570f-5019-4803-af93-45acb816cab2', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'public_docs')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('4c40b5f2-4976-43f4-82d2-4e7286cce2c4', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'help')
+  ('9a29f10e-1370-4c94-93ce-2260bf51d480', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'help')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 INSERT INTO kb_surface_bindings (id, article_id, surface) VALUES
-  ('a5af6d52-ae14-4fe7-94a8-0608bddfcc78', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'lp')
+  ('d14c6604-cb01-43d1-9673-cf4c3fa41a7c', 'kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'lp')
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
   ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-coll-consultify', 49)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_article_collections (article_id, collection_id, sort_order) VALUES
-  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-coll-consultify-execution-and-rollout', 49)
+  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-coll-consultify-decisions-that-ship', 49)
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-tag-decision')
+  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-tag-execution')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-tag-execution-control')
+  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-tag-governance')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 INSERT INTO kb_article_tags (article_id, tag_id) VALUES
-  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-tag-pmo-operations')
+  ('kb-consultify-50_how_to_turn_transformation_management_into_a_repeatable_operating_system', 'kb-tag-pmo')
 ON CONFLICT (article_id, tag_id) DO NOTHING;
 
 -- ============================================
