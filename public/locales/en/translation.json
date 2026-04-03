@@ -563,6 +563,10 @@
   },
   "partner": {
     "becomePartner": "Become Partner",
+    "footerCta": {
+      "title": "Become a Consultify Partner",
+      "sub": "Resell, integrate, or co-create with us globally."
+    },
     "hero": {
       "badge": "Partner Program",
       "title1": "Be Our Partner.",

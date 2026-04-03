@@ -1007,7 +1007,7 @@
         }
       }
     },
-    "search": {
+  "search": {
       "placeholder": "Search help articles, tutorials...",
       "searching": "Searching...",
       "results": "Results",
@@ -1089,6 +1089,12 @@
       "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
       "support": "Support",
       "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
+    }
+  },
+  "kb": {
+    "article": {
+      "listen": "Anhören",
+      "stopListening": "Stopp"
     }
   },
   "settings": {
@@ -1174,10 +1180,47 @@
         "title": "Human Governance",
         "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
       }
+    },
+    "footer": {
+      "tagline": "Wir unterstützen Organisationen bei der digitalen Transformation mit KI-gestützter Strategie und menschengeführter Governance.",
+      "copyright": "Alle Rechte vorbehalten.",
+      "products": {
+        "title": "Produkte"
+      },
+      "company": {
+        "title": "Unternehmen",
+        "about": "Über uns",
+        "news": "Neuigkeiten",
+        "events": "Veranstaltungen",
+        "contact": "Kontakt"
+      },
+      "caseStudies": {
+        "title": "Fallstudien",
+        "businessCases": "Business Cases"
+      },
+      "knowledge": {
+        "title": "Wissen",
+        "blog": "Blog",
+        "reports": "Berichte",
+        "podcasts": "Podcasts"
+      },
+      "legal": {
+        "privacy": "Datenschutzrichtlinie",
+        "cookies": "Cookie-Richtlinie",
+        "terms": "Nutzungsbedingungen",
+        "acceptableUse": "Richtlinie zur akzeptablen Nutzung",
+        "aiPolicy": "KI-Richtlinie",
+        "security": "Sicherheitsübersicht",
+        "consent": "Einwilligung & Kontrolle"
+      }
     }
   },
   "partner": {
-    "becomePartner": "Become Partner"
+    "becomePartner": "Partner werden",
+    "footerCta": {
+      "title": "Werden Sie Consultify-Partner",
+      "sub": "Weiterverkaufen, integrieren oder gemeinsam weltweit gestalten."
+    }
   },
   "showcase": {
     "common": {

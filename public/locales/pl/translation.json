@@ -2923,10 +2923,10 @@
         "privacy": "Polityka prywatności",
         "cookies": "Polityka cookies",
         "terms": "Warunki korzystania ze strony",
-        "acceptableUse": "Zasady dopuszczalnego regulycia",
+        "acceptableUse": "Zasady dopuszczalnego użycia",
         "aiPolicy": "Polityka AI",
         "security": "Przegląd bezpieczeństwa",
-        "consent": "Porozumienie i kontrola"
+        "consent": "Zgoda i kontrola"
       }
     },
     "docs": {
@@ -2955,6 +2955,10 @@
   },
   "partner": {
     "becomePartner": "Zostań partnerem",
+    "footerCta": {
+      "title": "Zostań partnerem Consultify",
+      "sub": "Odsprzedawaj, integruj lub współtwórz z nami globalnie."
+    },
     "hero": {
       "badge": "Program Partnerski",
       "title1": "Zostań Naszym Partnerem.",
