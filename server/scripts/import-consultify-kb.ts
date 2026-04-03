@@ -9,7 +9,7 @@
  *  - Blogs/Consultify/Blog/<slug>/publish.md (image placement)
  *
  * Outputs:
- *  - server/migrations/20260403_consultify_kb_import_v5.sql
+ *  - server/migrations/20260403_consultify_kb_import_v6.sql
  *  - public/kb/consultify/<slug>/ (hero, analytical, social images)
  */
 
@@ -25,7 +25,7 @@ const BLOGS_ROOT = path.join(ROOT, 'Blogs', 'Consultify', 'Blog');
 const MANIFEST_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'knowledge_base_manifest.json');
 const RENDERER_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'renderer_manifest.json');
 const RELATION_PATH = path.join(ROOT, 'Blogs', '_LP_KB_READY', 'Consultify', 'relation_manifest.json');
-const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260403_consultify_kb_import_v5.sql');
+const OUTPUT_PATH = path.join(ROOT, 'server', 'migrations', '20260403_consultify_kb_import_v6.sql');
 
 interface ManifestArticle {
   canonical_id: string;
@@ -108,6 +108,15 @@ function stripArticleMetadata(content: string): string {
   }
 
   return content.trim();
+}
+
+function extractMetadataValue(content: string, labels: string[]): string {
+  if (!content) return '';
+
+  const escaped = labels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`^(?:${escaped.join('|')}):\\s*(.+)$`, 'mi');
+  const match = content.match(pattern);
+  return match ? match[1].trim() : '';
 }
 
 interface ImageMeta {
@@ -268,7 +277,7 @@ function main() {
 
   const sql: string[] = [];
 
-  sql.push(`-- Migration: 20260403_consultify_kb_import_v5.sql`);
+  sql.push(`-- Migration: 20260403_consultify_kb_import_v6.sql`);
   sql.push(`-- Purpose: Import 50 Consultify knowledge base articles with EN/PL/DE translations`);
   sql.push(`-- Source: Blogs/_LP_KB_READY/Consultify manifests + Blogs/Consultify/Blog/ articles`);
   sql.push(`-- Date: 2026-04-02`);
@@ -563,6 +572,9 @@ function main() {
     const enTitle = extractTitle(enFileRaw) || article.title;
     const plTitle = extractTitle(plFileRaw) || enTitle;
     const deTitle = extractTitle(deFileRaw) || enTitle;
+    const enSummary = extractMetadataValue(enFileRaw, ['Core problem']) || article.summary_line;
+    const plSummary = extractMetadataValue(plFileRaw, ['Główny problem']) || enSummary;
+    const deSummary = extractMetadataValue(deFileRaw, ['Kernproblem']) || enSummary;
 
     const thumbnailUrl = `/kb/consultify/${article.slug}/hero.png`;
     const socialImageUrl = `/kb/consultify/${article.slug}/social.png`;
@@ -577,20 +589,20 @@ function main() {
 
     // EN translation
     sql.push(`INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES`);
-    sql.push(`  ('${artId}-trans-en', '${artId}', 'en', '${esc(enTitle)}', '${esc(article.summary_line)}', '${esc(enContent)}')`);
+    sql.push(`  ('${artId}-trans-en', '${artId}', 'en', '${esc(enTitle)}', '${esc(enSummary)}', '${esc(enContent)}')`);
     sql.push(`ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;`);
 
     // PL translation
     if (plContent) {
       sql.push(`INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES`);
-      sql.push(`  ('${artId}-trans-pl', '${artId}', 'pl', '${esc(plTitle)}', '${esc(article.summary_line)}', '${esc(plContent)}')`);
+      sql.push(`  ('${artId}-trans-pl', '${artId}', 'pl', '${esc(plTitle)}', '${esc(plSummary)}', '${esc(plContent)}')`);
       sql.push(`ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;`);
     }
 
     // DE translation
     if (deContent) {
       sql.push(`INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES`);
-      sql.push(`  ('${artId}-trans-de', '${artId}', 'de', '${esc(deTitle)}', '${esc(article.summary_line)}', '${esc(deContent)}')`);
+      sql.push(`  ('${artId}-trans-de', '${artId}', 'de', '${esc(deTitle)}', '${esc(deSummary)}', '${esc(deContent)}')`);
       sql.push(`ON CONFLICT (article_id, language) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary, content = EXCLUDED.content;`);
     }
     sql.push('');
