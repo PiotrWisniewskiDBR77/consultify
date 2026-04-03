@@ -330,11 +330,19 @@ export function getArtifactPath(type: ArtifactType, id: string): string {
   const code = buildArtifactCode(type, safeId);
   const ref = buildArtifactRef(type, safeId);
   const basePath = getBasePath(type, safeId);
+
   const params = new URLSearchParams({
     artifact: ref,
     code,
   });
-  return `${basePath}?${params.toString()}`;
+
+  if (type === 'initiative') {
+    params.set('open', safeId);
+    params.set('mode', 'doc');
+  }
+
+  const separator = basePath.includes('?') ? '&' : '?';
+  return `${basePath}${separator}${params.toString()}`;
 }
 
 export function buildArtifactCode(type: ArtifactType, id: string): string {
