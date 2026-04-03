@@ -2898,31 +2898,35 @@
     },
     "footer": {
       "tagline": "Wspieramy organizacje w transformacji cyfrowej dzięki strategii wspieranej przez AI i ładowi prowadzonemu przez ludzi.",
-      "product": {
-        "title": "Produkt",
-        "demo": "Demo",
-        "trial": "Okres próbny",
-        "pricing": "Cennik",
-        "login": "Zaloguj się"
-      },
-      "resources": {
-        "title": "Zasoby",
-        "masterclass": "Masterclass",
-        "blog": "Blog",
-        "podcast": "Factory on Air"
+      "copyright": "Wszelkie prawa zastrzeżone.",
+      "products": {
+        "title": "Produkty"
       },
       "company": {
         "title": "Firma",
         "about": "O nas",
+        "news": "Aktualności",
+        "events": "Wydarzenia",
         "contact": "Kontakt"
       },
+      "caseStudies": {
+        "title": "Studia przypadków",
+        "businessCases": "Business Cases"
+      },
+      "knowledge": {
+        "title": "Wiedza",
+        "blog": "Blog",
+        "reports": "Reporty",
+        "podcasts": "Podcasty"
+      },
       "legal": {
-        "title": "Dokumenty",
-        "terms": "Regulamin",
-        "privacy": "Prywatność",
-        "cookies": "Cookies",
-        "security": "Bezpieczeństwo",
-        "allDocuments": "Wszystkie dokumenty"
+        "privacy": "Polityka prywatności",
+        "cookies": "Polityka cookies",
+        "terms": "Warunki korzystania ze strony",
+        "acceptableUse": "Zasady dopuszczalnego regulycia",
+        "aiPolicy": "Polityka AI",
+        "security": "Przegląd bezpieczeństwa",
+        "consent": "Porozumienie i kontrola"
       }
     },
     "docs": {

@@ -39,85 +39,68 @@ const SOCIAL_LINKS = {
   spotify: 'https://open.spotify.com/show/7MJjs0AJ79hfRaCrcFbs4B',
 };
 
-// Strategic Partnerships - Saudi Arabia Vision 2030
-const PARTNERSHIPS = {
-  futureFactory: {
-    name: 'Future Factory',
-    url: 'https://www.mim.gov.sa/en/initiatives-programs/industrial-sector-initiatives/future-factories-program-initiative',
-    label: 'Future Factory Partner',
-    enabled: true,
-  },
-  ampc: {
-    name: 'AMPC',
-    url: 'https://www.arabnews.com/node/2602503/business-economy',
-    label: 'AMPC Partner',
-    enabled: true,
-  },
-};
-
 interface EntryFooterProps {
   onDemoClick?: () => void;
   onTrialClick?: () => void;
   hidePartnerBadges?: boolean;
 }
 
-export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialClick, hidePartnerBadges = false }) => {
+export const EntryFooter: React.FC<EntryFooterProps> = () => {
   const { t } = useTranslation();
 
   const sections = [
     {
-      title: t('landing.footer.product.title', 'Product'),
+      title: t('landing.footer.products.title', 'Products'),
       links: [
-        { label: t('landing.footer.product.demo', 'Try Demo'), href: '/demo', onClick: onDemoClick },
-        {
-          label: t('landing.footer.product.trial', 'Start Trial'),
-          href: ROUTES.TRIAL_ENTRY,
-          onClick: onTrialClick,
-        },
-        { label: t('landing.footer.product.pricing', 'Pricing'), href: ROUTES.PRICING },
-        { label: t('landing.footer.product.login', 'Log in'), href: ROUTES.LOGIN },
-      ],
-    },
-    {
-      title: t('landing.footer.resources.title', 'Resources'),
-      links: [
-        {
-          label: t('landing.footer.resources.knowledgeBase', 'Knowledge Base'),
-          href: ROUTES.KNOWLEDGE_BASE_PUBLIC,
-        },
-        {
-          label: t('landing.footer.resources.masterclass', 'Masterclass'),
-          href: 'https://masterclass.dbr77.com/?utm_source=Consultify&utm_medium=Footer&utm_campaign=landing_footer',
-          external: true,
-        },
-        {
-          label: t('landing.footer.resources.blog', 'Blog'),
-          href: 'https://dbr77.com/blog/',
-          external: true,
-        },
-        {
-          label: t('landing.footer.resources.podcast', 'Factory on Air'),
-          href: 'https://open.spotify.com/show/7MJjs0AJ79hfRaCrcFbs4B',
-          external: true,
-        },
+        { label: 'Industrial IoT', href: 'https://iot.dbr77.com', external: true },
+        { label: 'Digital Twin', href: 'https://dt.dbr77.com', external: true },
+        { label: 'IRIS', href: 'https://iris.dbr77.com', external: true },
+        { label: 'Marketplace', href: 'https://marketplace.dbr77.com/marketplace', external: true },
+        { label: 'Consultify', href: '/' },
       ],
     },
     {
       title: t('landing.footer.company.title', 'Company'),
       links: [
         { label: t('landing.footer.company.about', 'About'), href: '/about' },
+        { label: t('landing.footer.company.news', 'News'), href: 'https://dbr77.com/news', external: true },
+        { label: t('landing.footer.company.events', 'Events'), href: 'https://dbr77.com/events', external: true },
         { label: t('landing.footer.company.contact', 'Contact'), href: '/contact' },
-        { label: 'DBR77.com', href: 'https://dbr77.com', external: true },
       ],
     },
     {
-      title: t('landing.footer.legal.title', 'Legal'),
+      title: t('landing.footer.caseStudies.title', 'Case Studies'),
       links: [
-        { label: t('landing.footer.legal.terms', 'Terms'), href: '/terms' },
-        { label: t('landing.footer.legal.privacy', 'Privacy'), href: '/privacy' },
-        { label: t('landing.footer.legal.cookies', 'Cookies'), href: '/cookies' },
-        { label: t('landing.footer.legal.security', 'Security'), href: '/security' },
-        { label: t('landing.footer.legal.allDocuments', 'All Documents'), href: '/legal' },
+        { label: t('landing.footer.caseStudies.businessCases', 'Business Cases'), href: 'https://dbr77.com/case-studies', external: true },
+        { label: 'Atelier Tools', href: 'https://dbr77.com/atelier-tools', external: true },
+      ],
+    },
+    {
+      title: t('landing.footer.knowledge.title', 'Knowledge'),
+      links: [
+        {
+          label: t('landing.footer.knowledge.blog', 'Blog'),
+          href: 'https://dbr77.com/blog/',
+          external: true,
+        },
+        { label: 'DBR77 na ITM', href: 'https://dbr77.com/itm', external: true },
+        { label: 'DBR77 Conference', href: 'https://dbr77.com/conference', external: true },
+        {
+          label: t('landing.footer.knowledge.reports', 'Reports'),
+          href: 'https://dbr77.com/reports',
+          external: true,
+        },
+        {
+          label: t('landing.footer.knowledge.podcasts', 'Podcasts'),
+          href: 'https://open.spotify.com/show/7MJjs0AJ79hfRaCrcFbs4B',
+          external: true,
+        },
+        { label: 'DBR77 Vector', href: 'https://dbr77.com/vector', external: true },
+        {
+          label: 'DBR77 Masterclass',
+          href: 'https://masterclass.dbr77.com/?utm_source=Consultify&utm_medium=Footer&utm_campaign=landing_footer',
+          external: true,
+        },
       ],
     },
   ];
@@ -258,24 +241,9 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
           </a>
         </div>
 
-        {/* Bottom Section */}
+        {/* Social Links Row */}
         <div className="mt-10 border-t border-slate-200/80 pt-8 dark:border-white/[0.08]">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
-            {/* Copyright */}
-            <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-slate-400">
-              © 2025 Consultify. Powered by{' '}
-              <a
-                href={COMPANY.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-500 hover:text-purple-400 transition-colors"
-              >
-                DBR77 Robotics
-              </a>
-            </p>
-
-            {/* Social Links */}
-            <div className="flex items-center gap-4">
+          <div className="flex justify-center items-center gap-4 mb-8">
               <a
                 href={SOCIAL_LINKS.linkedin}
                 target="_blank"
@@ -332,64 +300,33 @@ export const EntryFooter: React.FC<EntryFooterProps> = ({ onDemoClick, onTrialCl
                 </svg>
               </a>
             </div>
-
-            {!hidePartnerBadges && (
-              <div className="flex items-center gap-4 flex-wrap justify-center lg:justify-end">
-                {PARTNERSHIPS.futureFactory.enabled && (
-                  <a
-                    href={PARTNERSHIPS.futureFactory.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 opacity-50 hover:opacity-80 transition-opacity group"
-                    title="Saudi Arabia Future Factory Program Partner"
-                  >
-                    <svg
-                      className="w-4 h-4 text-green-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                    <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">
-                      {PARTNERSHIPS.futureFactory.label}
-                    </span>
-                  </a>
-                )}
-                {PARTNERSHIPS.ampc.enabled && (
-                  <a
-                    href={PARTNERSHIPS.ampc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 opacity-50 hover:opacity-80 transition-opacity group"
-                    title="Advanced Manufacturing and Production Center Partner"
-                  >
-                    <svg
-                      className="w-4 h-4 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                      />
-                    </svg>
-                    <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
-                      {PARTNERSHIPS.ampc.label}
-                    </span>
-                  </a>
-                )}
-              </div>
-            )}
           </div>
+
+          {/* Legal Links Strip */}
+          <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {[
+              { label: t('landing.footer.legal.privacy', 'Privacy Policy'), href: '/privacy' },
+              { label: t('landing.footer.legal.cookies', 'Cookie Policy'), href: '/cookies' },
+              { label: t('landing.footer.legal.terms', 'Terms of Service'), href: '/terms' },
+              { label: t('landing.footer.legal.acceptableUse', 'Acceptable Use Policy'), href: '/legal' },
+              { label: t('landing.footer.legal.aiPolicy', 'AI Policy'), href: '/legal' },
+              { label: t('landing.footer.legal.security', 'Security Overview'), href: '/security' },
+              { label: t('landing.footer.legal.consent', 'Consent & Control'), href: '/legal' },
+            ].map((link, idx) => (
+              <a
+                key={idx}
+                href={link.href}
+                className="text-[10px] text-slate-400 hover:text-purple-500 transition-colors dark:text-slate-500 dark:hover:text-purple-400"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+
+          {/* Copyright */}
+          <p className="mt-6 text-center text-[10px] font-medium text-slate-400 dark:text-slate-500">
+            © 2026 DBR77 Robotics Sp. z o.o. {t('landing.footer.copyright', 'All rights reserved.')}
+          </p>
         </div>
       </div>
     </footer>

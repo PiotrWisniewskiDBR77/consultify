@@ -506,31 +506,35 @@
     },
     "footer": {
       "tagline": "Empowering organizations to navigate digital transformation with AI-driven strategy and human-led governance.",
-      "product": {
-        "title": "Product",
-        "demo": "Demo",
-        "trial": "Trial",
-        "pricing": "Pricing",
-        "login": "Log in"
-      },
-      "resources": {
-        "title": "Resources",
-        "masterclass": "Masterclass",
-        "blog": "Blog",
-        "podcast": "Factory on Air"
+      "copyright": "All rights reserved.",
+      "products": {
+        "title": "Products"
       },
       "company": {
         "title": "Company",
         "about": "About",
+        "news": "News",
+        "events": "Events",
         "contact": "Contact"
       },
+      "caseStudies": {
+        "title": "Case Studies",
+        "businessCases": "Business Cases"
+      },
+      "knowledge": {
+        "title": "Knowledge",
+        "blog": "Blog",
+        "reports": "Reports",
+        "podcasts": "Podcasts"
+      },
       "legal": {
-        "title": "Legal",
-        "terms": "Terms",
-        "privacy": "Privacy",
-        "cookies": "Cookies",
-        "security": "Security",
-        "allDocuments": "All Documents"
+        "privacy": "Privacy Policy",
+        "cookies": "Cookie Policy",
+        "terms": "Terms of Service",
+        "acceptableUse": "Acceptable Use Policy",
+        "aiPolicy": "AI Policy",
+        "security": "Security Overview",
+        "consent": "Consent & Control"
       }
     },
     "docs": {
