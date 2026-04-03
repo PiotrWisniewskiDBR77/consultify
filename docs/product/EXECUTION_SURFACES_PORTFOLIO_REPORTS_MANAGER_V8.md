@@ -235,6 +235,10 @@ Every report must declare:
 - `RAG / confidence logic`
 - `expected follow-up actions`
 
+Detailed implementation contract:
+
+- `docs/product/EXECUTION_REPORT_TEMPLATES_P03_V8.md`
+
 ### 5.6 Allowed actions
 
 - open a pre-defined report,

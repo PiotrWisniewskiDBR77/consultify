@@ -127,6 +127,7 @@ When one-truth readback cannot be guaranteed, control tower must be honest:
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_WDROZENIA_2026-03-29.md`
 - Benchmark: `docs/product/EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
 - Execution surfaces standard: `docs/product/EXECUTION_SURFACES_PORTFOLIO_REPORTS_MANAGER_V8.md`
+- Execution reports templates spec: `docs/product/EXECUTION_REPORT_TEMPLATES_P03_V8.md`
 - Adjacent benchmark: `docs/product/TASK_AND_DECISION_BENCHMARK_V8.md`, `docs/product/PROJECT_MANAGEMENT_V8_BENCHMARK.md`
 
 ## 4. Softs inspirations (benchmark apps)
@@ -209,7 +210,8 @@ Rules:
 - owns pre-defined reports built from execution truth,
 - focuses on audience-specific reporting packs and snapshots,
 - may link back to live work, but does not replace the portfolio surface,
-- must keep report definitions explicit: audience, cadence, scope, sections, follow-up actions.
+- must keep report definitions explicit: audience, cadence, scope, sections, follow-up actions,
+- must implement the fixed 11-report catalog and section contract from `docs/product/EXECUTION_REPORT_TEMPLATES_P03_V8.md`.
 
 #### `Manager`
 - owns PMO/operator/manager cockpit semantics,
