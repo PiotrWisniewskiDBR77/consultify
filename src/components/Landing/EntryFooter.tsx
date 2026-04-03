@@ -300,7 +300,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
                 </svg>
               </a>
             </div>
-          </div>
 
           {/* Legal Links Strip */}
           <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2">
