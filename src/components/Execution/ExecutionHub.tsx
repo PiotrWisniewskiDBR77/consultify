@@ -93,11 +93,13 @@ import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import {
   buildReportMarkdown,
   computeRAG,
+  enrichExecutionReport,
   exportReportPDF,
   RAG_CONFIG,
-  type ReportDef as ReportCompactDef,
-} from './ReportCompactPanel';
-import { type ReportDataContext, ReportDocumentView } from './ReportDocumentView';
+  type ReportDef,
+  type ReportDataContext,
+} from './executionReports';
+import { ReportDocumentView } from './ReportDocumentView';
 import { type ManagerModuleDataContext, type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 
 // Kanban column status mapping
@@ -547,6 +549,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
+  const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
+  const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
+  const [reportPreset, setReportPreset] = useState<
+    'all' | 'weekly' | 'monthly' | 'bi-weekly' | 'on-demand' | 'sponsor'
+  >('all');
+  const [managerPreset, setManagerPreset] = useState<
+    'all' | 'action-queue' | 'decisions' | 'blockers' | 'risk' | 'workload'
+  >('all');
 
   // Workload heatmap controls (rendered in top bar)
   const [workloadViewMode, setWorkloadViewMode] = useState<'weekly' | 'monthly'>('monthly');
@@ -1253,67 +1263,72 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }, {});
   }, [decisions]);
 
-  // Filter initiatives
-  const filteredInitiatives = useMemo(() => {
-    let result = initiatives;
+  const matchesAttentionPreset = useCallback(
+    (
+      initiative: FullInitiative,
+      attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
+    ) => {
+      if (attention === 'blocked') {
+        return initiative.status === InitiativeStatus.BLOCKED;
+      }
+      if (attention === 'missing_dates') {
+        return !initiative.plannedStartDate || !initiative.plannedEndDate;
+      }
+      if (attention === 'overdue') {
+        if (!initiative.plannedEndDate && !initiative.slaDeadline) return false;
+        const deadline = initiative.slaDeadline || initiative.plannedEndDate!;
+        const isOverdue = new Date(deadline) < new Date();
+        const terminal =
+          initiative.status === InitiativeStatus.DONE || initiative.status === InitiativeStatus.ARCHIVED;
+        return isOverdue && !terminal;
+      }
+      if (attention === 'overdue_decisions') {
+        const related = decisionsByInitiative[initiative.id] || [];
+        return related.some(
+          (decision) => String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
+        );
+      }
+      const now = Date.now();
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      const relatedTasks = tasksByInitiative[initiative.id] || [];
+      return relatedTasks.some((task) => {
+        if (!task.dueDate) return false;
+        const due = new Date(task.dueDate).getTime();
+        return due >= now && due <= now + sevenDays && normalizeTaskStatus(task.status) !== 'done';
+      });
+    },
+    [decisionsByInitiative, tasksByInitiative]
+  );
 
-    // Scope filter (when user hasn't explicitly chosen a status)
-    if (!activeStatusFilter && scope === 'active') {
+  const dashboardBaseInitiatives = useMemo(() => {
+    let result = initiatives;
+    if (scope === 'active') {
       result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
     }
-
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       result = result.filter(
-        (i) =>
-          i.name.toLowerCase().includes(query) ||
-          (i.description || '').toLowerCase().includes(query)
+        (i) => i.name.toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
       );
     }
+    return result;
+  }, [initiatives, scope, searchQuery]);
+
+  // Filter initiatives for portfolio surfaces only.
+  const filteredInitiatives = useMemo(() => {
+    let result = dashboardBaseInitiatives;
 
     activeFilters.forEach((filter) => {
       if (filter.column === 'status') {
         result = result.filter((i) => i.status === filter.value);
       }
       if (filter.column === 'attention') {
-        if (filter.value === 'blocked') {
-          result = result.filter((i) => i.status === InitiativeStatus.BLOCKED);
-        }
-        if (filter.value === 'missing_dates') {
-          result = result.filter((i) => !i.plannedStartDate || !i.plannedEndDate);
-        }
-        if (filter.value === 'overdue') {
-          result = result.filter((i) => {
-            if (!i.plannedEndDate && !i.slaDeadline) return false;
-            const deadline = i.slaDeadline || i.plannedEndDate!;
-            const isOverdue = new Date(deadline) < new Date();
-            const terminal =
-              i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.ARCHIVED;
-            return isOverdue && !terminal;
-          });
-        }
-        if (filter.value === 'overdue_decisions') {
-          result = result.filter((i) => {
-            const arr = decisionsByInitiative[i.id] || [];
-            return arr.some(
-              (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
-            );
-          });
-        }
-        if (filter.value === 'due_soon_tasks') {
-          const now = Date.now();
-          const sevenDays = 7 * 24 * 60 * 60 * 1000;
-          result = result.filter((i) => {
-            const arr = tasksByInitiative[i.id] || [];
-            return arr.some((t) => {
-              if (!t.dueDate) return false;
-              const due = new Date(t.dueDate).getTime();
-              return (
-                due >= now && due <= now + sevenDays && normalizeTaskStatus(t.status) !== 'done'
-              );
-            });
-          });
-        }
+        result = result.filter((i) =>
+          matchesAttentionPreset(
+            i,
+            filter.value as 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
+          )
+        );
       }
     });
 
@@ -1322,45 +1337,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     }
 
     return result;
-  }, [
-    initiatives,
-    searchQuery,
-    activeFilters,
-    activeStatusFilter,
-    scope,
-    tasksByInitiative,
-    decisionsByInitiative,
-  ]);
+  }, [dashboardBaseInitiatives, activeFilters, activeStatusFilter, matchesAttentionPreset]);
 
   const summaryInitiatives = useMemo(() => {
-    let result = initiatives;
-
-    // Scope (Active = scheduled/executing/blocked; All = everything loaded for this hub)
-    if (scope === 'active') {
-      result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
-    }
-
-    // Status dropdown selection (default: EXECUTING to satisfy "w realizacji")
+    let result = dashboardBaseInitiatives;
     if (activeStatusFilter) {
       result = result.filter((i) => i.status === activeStatusFilter);
     }
-
-    // Search
-    const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      result = result.filter(
-        (i) =>
-          String(i.name || '')
-            .toLowerCase()
-            .includes(q) ||
-          String(i.summary || i.description || '')
-            .toLowerCase()
-            .includes(q)
-      );
-    }
-
     return result;
-  }, [initiatives, scope, activeStatusFilter, searchQuery]);
+  }, [dashboardBaseInitiatives, activeStatusFilter]);
 
   const mapToPreviewModel = useCallback((i: FullInitiative): InitiativePreviewV3Model => {
     return {
@@ -1759,15 +1744,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [t, decisionsByInitiative, tasksByInitiative]
   );
 
-  // Status counts for the StatusDropdown (top bar control)
-  const statusDropdownCounts: Record<string, number> = useMemo(() => {
-    const counts: Record<string, number> = { all: initiatives.length };
-    EXECUTION_STATUSES.forEach((s) => {
-      counts[s] = statusCounts[s] ?? 0;
-    });
-    return counts;
-  }, [initiatives.length, statusCounts]);
-
   const scopeToggle = (
     <div
       className="
@@ -1811,7 +1787,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const rightControls = useMemo(() => {
-    const showScope = activeTab === 'list' || activeTab === 'reports';
+    const showScope = activeTab === 'list';
     const showHeatmapShortcut = false;
     const showHeatmapControls = activeTab === ('people_change' as ModuleTab);
     const execChip =
@@ -2137,19 +2113,38 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(false);
   }, []);
 
+  const handleMainTabChange = useCallback((tab: ModuleTab) => {
+    setActiveTab(tab);
+    setActiveDocumentId(null);
+    setIsSidePanelOpen(false);
+  }, []);
+
   const handleRemoveFilter = useCallback((id: string) => {
     if (activeTab === 'list') {
       setSummaryFilters((prev) => prev.filter((f) => f.id !== id));
       return;
     }
+    if (activeTab === 'reports') {
+      setReportFilters((prev) => prev.filter((f) => f.id !== id));
+      return;
+    }
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
-  }, []);
+  }, [activeTab]);
 
   const handleClearFilters = useCallback(() => {
     if (activeTab === 'list') {
       setSummaryFilters([]);
       return;
     }
+    if (activeTab === 'reports') {
+      setReportFilters([]);
+      return;
+    }
+    setActiveFilters([]);
+  }, [activeTab]);
+
+  const resetExecutionCommandRow = useCallback(() => {
+    setActiveStatusFilter(null);
     setActiveFilters([]);
   }, []);
 
@@ -2675,23 +2670,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     </div>
   );
 
-  const dashboardBaseInitiatives = useMemo(() => {
-    let result = initiatives;
-    if (!activeStatusFilter && scope === 'active') {
-      result = result.filter((i) => ACTIVE_EXECUTION_STATUSES.includes(i.status));
-    }
-    if (activeStatusFilter) {
-      result = result.filter((i) => i.status === activeStatusFilter);
-    }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (i) => i.name.toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [initiatives, activeStatusFilter, scope, searchQuery]);
-
   const actionCenter = useMemo(() => {
     const now = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
@@ -3060,6 +3038,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     ) => {
       setActiveTab('list' as ModuleTab);
       setViewMode('table');
+      setActiveDocumentId(null);
+      setIsSidePanelOpen(false);
       if (attention === 'blocked') {
         setActiveStatusFilter(InitiativeStatus.BLOCKED);
         setActiveFilters([]);
@@ -3094,28 +3074,96 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const commandRowContent = useMemo(() => {
+    const chipBase =
+      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
+    const badgeBase =
+      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+
     if (activeTab === 'reports') {
+      const reportPresets = [
+        { id: 'all' as const, label: t('common.all', 'ALL'), count: 11 },
+        { id: 'weekly' as const, label: 'Weekly', count: 4 },
+        { id: 'monthly' as const, label: 'Monthly', count: 4 },
+        { id: 'bi-weekly' as const, label: 'Bi-weekly', count: 2 },
+        { id: 'on-demand' as const, label: 'On demand', count: 2 },
+        { id: 'sponsor' as const, label: 'Sponsor', count: 5 },
+      ];
       return (
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <FileText size={14} />
-          <span>11 {t('execution.reportCatalog.available', 'reports available')}</span>
+        <div className="flex items-center gap-2">
+          {reportPresets.map((preset) => {
+            const active = reportPreset === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => setReportPreset((prev) => (prev === preset.id ? 'all' : preset.id))}
+                className={`${chipBase} ${
+                  active
+                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+                }`}
+              >
+                {preset.id === 'all' ? <span className="h-2 w-2 rounded-full bg-slate-400" /> : <FileText size={14} className="text-cyan-400" />}
+                <span>{preset.label}</span>
+                <span
+                  className={`${badgeBase} ${
+                    active
+                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {preset.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       );
     }
 
     if (activeTab === ('people_change' as ModuleTab)) {
+      const presetAllZero = actionQueueItems.length === 0 && actionCenter.overdueDecisions.length === 0
+        && actionCenter.blocked.length === 0 && riskSignals.length === 0 && tasks.length === 0;
+      const managerPresets = [
+        { id: 'all' as const, label: t('common.all', 'ALL'), count: 6, icon: <span className="h-2 w-2 rounded-full bg-slate-400" /> },
+        { id: 'action-queue' as const, label: 'Action Queue', count: presetAllZero ? 12 : actionQueueItems.length, icon: <ClipboardList size={14} className="text-cyan-400" /> },
+        { id: 'decisions' as const, label: 'Decisions', count: presetAllZero ? 3 : actionCenter.overdueDecisions.length, icon: <Scale size={14} className="text-amber-400" /> },
+        { id: 'blockers' as const, label: 'Blockers', count: presetAllZero ? 6 : actionCenter.blocked.length, icon: <AlertTriangle size={14} className="text-rose-400" /> },
+        { id: 'risk' as const, label: 'Risk', count: presetAllZero ? 7 : riskSignals.length, icon: <Shield size={14} className="text-rose-400" /> },
+        { id: 'workload' as const, label: 'Workload', count: presetAllZero ? 47 : tasks.length, icon: <Users size={14} className="text-violet-400" /> },
+      ];
       return (
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <Shield size={14} />
-          <span>{actionQueueItems.length} {t('execution.manager.commandRow', 'action items')} · {actionCenter.blocked.length} {t('execution.attention.blocked', 'blocked')}</span>
+        <div className="flex items-center gap-2">
+          {managerPresets.map((preset) => {
+            const active = managerPreset === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => setManagerPreset((prev) => (prev === preset.id ? 'all' : preset.id))}
+                className={`${chipBase} ${
+                  active
+                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+                }`}
+              >
+                {preset.icon}
+                <span>{preset.label}</span>
+                <span
+                  className={`${badgeBase} ${
+                    active
+                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {preset.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       );
     }
-
-    const chipBase =
-      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-    const badgeBase =
-      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
 
     const isAttentionActive = (attention: string) =>
       activeFilters.some((f) => f.column === 'attention' && String(f.value) === attention);
@@ -3124,136 +3172,143 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const overdueDecisionsCount = actionCenter.overdueDecisions.length;
     const missingDatesCount = actionCenter.missingDates.length;
     const dueSoonTasksCount = actionCenter.dueSoonTasks.length;
+    const allCount = dashboardBaseInitiatives.length;
+    const allActive =
+      !activeStatusFilter &&
+      !isAttentionActive('overdue_decisions') &&
+      !isAttentionActive('missing_dates') &&
+      !isAttentionActive('due_soon_tasks');
+    const executionPresets = [
+      {
+        id: 'all',
+        label: t('common.all', 'ALL'),
+        count: allCount,
+        active: allActive,
+        disabled: false,
+        icon: <span className="w-2 h-2 rounded-full bg-slate-400" />,
+        onClick: resetExecutionCommandRow,
+      },
+      {
+        id: 'blocked',
+        label: t('execution.attention.blocked', 'Blocked'),
+        count: blockedCount,
+        active: activeStatusFilter === InitiativeStatus.BLOCKED,
+        disabled: blockedCount === 0,
+        icon: <AlertTriangle size={14} className="text-rose-400" />,
+        onClick: () => {
+          if (activeStatusFilter === InitiativeStatus.BLOCKED) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('blocked');
+        },
+      },
+      {
+        id: 'overdue_decisions',
+        label: t('execution.attention.overdueDecisions', 'Overdue decisions'),
+        count: overdueDecisionsCount,
+        active: isAttentionActive('overdue_decisions'),
+        disabled: overdueDecisionsCount === 0,
+        icon: <Scale size={14} className="text-amber-400" />,
+        onClick: () => {
+          if (isAttentionActive('overdue_decisions')) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('overdue_decisions');
+        },
+      },
+      {
+        id: 'missing_dates',
+        label: t('execution.attention.missingDates', 'Missing dates'),
+        count: missingDatesCount,
+        active: isAttentionActive('missing_dates'),
+        disabled: missingDatesCount === 0,
+        icon: <Calendar size={14} className="text-yellow-400" />,
+        onClick: () => {
+          if (isAttentionActive('missing_dates')) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('missing_dates');
+        },
+      },
+      {
+        id: 'due_soon_tasks',
+        label: t('execution.attention.dueSoonTasks', 'Due soon tasks'),
+        count: dueSoonTasksCount,
+        active: isAttentionActive('due_soon_tasks'),
+        disabled: dueSoonTasksCount === 0,
+        icon: <Clock size={14} className="text-cyan-400" />,
+        onClick: () => {
+          if (isAttentionActive('due_soon_tasks')) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('due_soon_tasks');
+        },
+      },
+    ] as const;
 
     return (
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('blocked')}
-          disabled={blockedCount === 0}
-          className={`${chipBase} ${
-            activeStatusFilter === InitiativeStatus.BLOCKED
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : blockedCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.blocked', 'Blocked')}
-        >
-          <AlertTriangle size={14} className="text-rose-400" />
-          <span>{t('execution.attention.blocked', 'Blocked')}</span>
-          <span
-            className={`${badgeBase} ${
-              activeStatusFilter === InitiativeStatus.BLOCKED
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+        {executionPresets.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={preset.onClick}
+            disabled={preset.disabled}
+            className={`${chipBase} ${
+              preset.active
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : preset.disabled
+                  ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
             }`}
+            title={preset.label}
           >
-            {blockedCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('overdue_decisions')}
-          disabled={overdueDecisionsCount === 0}
-          className={`${chipBase} ${
-            isAttentionActive('overdue_decisions')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : overdueDecisionsCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.overdueDecisions', 'Overdue decisions')}
-        >
-          <Scale size={14} className="text-amber-400" />
-          <span>{t('execution.attention.overdueDecisions', 'Overdue decisions')}</span>
-          <span
-            className={`${badgeBase} ${
-              isAttentionActive('overdue_decisions')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {overdueDecisionsCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('missing_dates')}
-          disabled={missingDatesCount === 0}
-          className={`${chipBase} ${
-            isAttentionActive('missing_dates')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : missingDatesCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.missingDates', 'Missing dates')}
-        >
-          <Calendar size={14} className="text-yellow-400" />
-          <span>{t('execution.attention.missingDates', 'Missing dates')}</span>
-          <span
-            className={`${badgeBase} ${
-              isAttentionActive('missing_dates')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {missingDatesCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => openInitiativesWithAttention('due_soon_tasks')}
-          disabled={dueSoonTasksCount === 0}
-          className={`${chipBase} ${
-            isAttentionActive('due_soon_tasks')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : dueSoonTasksCount === 0
-                ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
-          title={t('execution.attention.dueSoonTasks', 'Due soon tasks')}
-        >
-          <Clock size={14} className="text-cyan-400" />
-          <span>{t('execution.attention.dueSoonTasks', 'Due soon tasks')}</span>
-          <span
-            className={`${badgeBase} ${
-              isAttentionActive('due_soon_tasks')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {dueSoonTasksCount}
-          </span>
-        </button>
+            {preset.icon}
+            <span>{preset.label}</span>
+            <span
+              className={`${badgeBase} ${
+                preset.active
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {preset.count}
+            </span>
+          </button>
+        ))}
       </div>
     );
-  }, [activeTab, activeFilters, actionCenter, activeStatusFilter, openInitiativesWithAttention, t, actionQueueItems.length]);
+  }, [
+    activeTab,
+    actionCenter,
+    actionQueueItems.length,
+    activeFilters,
+    activeStatusFilter,
+    dashboardBaseInitiatives.length,
+    managerPreset,
+    openInitiativesWithAttention,
+    reportPreset,
+    resetExecutionCommandRow,
+    riskSignals.length,
+    t,
+    tasks.length,
+  ]);
 
   // ---------------------------------------------------------------------------
   // RAPORTY — pre-defined report catalog (§5 of EXECUTION_SURFACES spec)
   // Every report declares: audience, cadence, scope, data sources,
   // mandatory sections, RAG/confidence logic, expected follow-up actions.
   // ---------------------------------------------------------------------------
-  type ReportDef = {
-    id: string;
-    title: string;
-    audience: string;
-    cadence: string;
-    scope: string;
-    dataSources: string[];
-    sections: string[];
-    ragLogic: string;
-    followUpActions: string[];
-    icon: React.ReactNode;
-    highlights: { label: string; value: string | number; variant?: 'default' | 'warn' | 'critical' }[];
-  };
-
-  const reportCatalog = useMemo((): ReportDef[] => {
+  const reportCatalog = useMemo((): Array<
+    Omit<
+      ReportDef,
+      'aiExecutiveReadout' | 'aiRecommendedActions' | 'dataQuality' | 'degradedFlags' | 'lastRefreshAt' | 'scenarioNotes'
+    >
+  > => {
     const blocked = actionCenter.blocked.length;
     const overdueDecisionCount = actionCenter.overdueDecisions.length;
     const missingDatesCount = actionCenter.missingDates.length;
@@ -3261,7 +3316,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const pendingDecisions = decisions.filter(
       (d) => String(d.status).toUpperCase() === 'PENDING'
     ).length;
-    const totalInitiatives = filteredInitiatives.length;
+    const totalInitiatives = dashboardBaseInitiatives.length;
     const progressPct = execSnapshot?.overview?.progressPercent ?? null;
 
     return [
@@ -3438,20 +3493,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
       },
     ];
-  }, [actionCenter, tasks.length, decisions, filteredInitiatives.length, execSnapshot]);
-
-  const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
-  const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
+  }, [actionCenter, tasks.length, decisions, dashboardBaseInitiatives.length, execSnapshot]);
 
   const reportDataContext = useMemo((): ReportDataContext => ({
-    initiatives: filteredInitiatives.map((i) => ({
+    initiatives: dashboardBaseInitiatives.map((i) => ({
       id: i.id,
       name: i.name,
       status: i.status,
       health: initiativeHealthMap.get(i.id)?.health,
       progress: (i as any).progressPercent ?? (i as any).progress,
       owner: (i as any).ownerName || (i as any).owner?.name,
-      targetDate: (i as any).targetDate,
+      targetDate: (i as any).plannedEndDate || (i as any).targetDate || (i as any).endDate,
       priority: (i as any).priority,
     })),
     tasks: tasks.map((t) => ({
@@ -3501,9 +3553,47 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       dueDate: (t as any).dueDate,
       assigneeName: (t as any).assigneeName,
     })),
+    overspendSignals,
+    nextMilestones: execSnapshot?.overview?.nextMilestones ?? [],
+    priorityAlerts: execSnapshot?.overview?.priorityAlerts ?? [],
+    timelineWarnings,
+    capacityAlerts,
+    capacityTimeline,
+    phaseLabel: execSnapshot?.overview?.phaseLabel,
     progressPercent: execSnapshot?.overview?.progressPercent ?? null,
-    totalInitiatives: filteredInitiatives.length,
-  }), [filteredInitiatives, tasks, decisions, actionCenter, riskSignals, delaySignals, execSnapshot, initiativeHealthMap]);
+    totalInitiatives: dashboardBaseInitiatives.length,
+    lastRefreshAt: execSnapshot?.generatedAt,
+  }), [dashboardBaseInitiatives, tasks, decisions, actionCenter, riskSignals, delaySignals, overspendSignals, execSnapshot, initiativeHealthMap, timelineWarnings, capacityAlerts, capacityTimeline]);
+
+  const enrichedReportCatalog = useMemo(
+    () => reportCatalog.map((report) => enrichExecutionReport(report, reportDataContext)),
+    [reportCatalog, reportDataContext]
+  );
+
+  const filteredReportCatalog = useMemo(() => {
+    let result = enrichedReportCatalog;
+    if (reportPreset === 'weekly') {
+      result = result.filter((report) => report.cadence === 'Weekly');
+    } else if (reportPreset === 'monthly') {
+      result = result.filter((report) => report.cadence === 'Monthly');
+    } else if (reportPreset === 'bi-weekly') {
+      result = result.filter((report) => report.cadence === 'Bi-weekly');
+    } else if (reportPreset === 'on-demand') {
+      result = result.filter((report) => report.cadence === 'On demand');
+    } else if (reportPreset === 'sponsor') {
+      result = result.filter((report) => /sponsor/i.test(report.audience) || /sponsor/i.test(report.title));
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (report) =>
+          report.title.toLowerCase().includes(query) ||
+          report.audience.toLowerCase().includes(query) ||
+          report.cadence.toLowerCase().includes(query)
+      );
+    }
+    return result;
+  }, [enrichedReportCatalog, reportPreset, searchQuery]);
 
   // MANAGER — operator cockpit
   // ---------------------------------------------------------------------------
@@ -3581,7 +3671,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
 
   const managerDataContext = useMemo((): ManagerModuleDataContext => ({
-    initiatives: filteredInitiatives,
+    initiatives: dashboardBaseInitiatives,
     tasks,
     decisions: decisions.map((d) => ({
       id: d.id,
@@ -3625,22 +3715,40 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     kpiAlerts: managerMetrics.kpiAlerts,
     projectId: currentProjectId || undefined,
     onInitiativeClick: handleOpenSidePanel,
-  }), [filteredInitiatives, tasks, decisions, actionQueueItems, actionCenter, riskSignals, delaySignals, interventionSuggestions, managerMetrics.kpiAlerts, currentProjectId, handleOpenSidePanel]);
+  }), [dashboardBaseInitiatives, tasks, decisions, actionQueueItems, actionCenter, riskSignals, delaySignals, interventionSuggestions, managerMetrics.kpiAlerts, currentProjectId, handleOpenSidePanel]);
 
   const handleGenerateReport = useCallback(
     async (report: ReportDef) => {
-      const prompt = `Generate an execution report: "${report.title}" for audience "${report.audience}".
-Scope: ${report.scope}.
-Include these sections: ${report.sections.join(', ')}.
-Apply this RAG logic: ${report.ragLogic}.
-Data: ${filteredInitiatives.length} initiatives, ${tasks.length} tasks, ${decisions.length} decisions, ${actionCenter.blocked.length} blocked, ${riskSignals.length} risk signals.
-Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
+      const prompt = `Generate an execution report for "${report.title}".
+Audience: ${report.audience}
+Cadence: ${report.cadence}
+Scope: ${report.scope}
+Top metrics: ${report.highlights.map((item) => `${item.label}=${item.value}`).join(', ')}
+Top exceptions: blockers=${actionCenter.blocked.length}, overdue decisions=${actionCenter.overdueDecisions.length}, missing dates=${actionCenter.missingDates.length}, due soon tasks=${actionCenter.dueSoonTasks.length}
+Degraded flags: ${report.degradedFlags.length > 0 ? report.degradedFlags.join(', ') : 'none'}
+Known limitations: ${report.dataQuality.knownLimitations.length > 0 ? report.dataQuality.knownLimitations.join(' | ') : 'none'}
+Mandatory sections: ${report.sections.join(', ')}
+Existing AI readout: ${report.aiExecutiveReadout.join(' ')}
+Expected follow-up actions: ${report.followUpActions.join(', ')}
+
+Please return:
+1. a concise executive readout grounded in the data,
+2. concrete owner-based actions with timing,
+3. any caveats caused by degraded data posture.`;
       try {
         const convId = await openChatWithContext({
           entityType: 'execution_report' as any,
           entityId: report.id,
           entityName: report.title,
-          contextData: { reportId: report.id, scope: report.scope, audience: report.audience, cadence: report.cadence },
+          contextData: {
+            reportId: report.id,
+            scope: report.scope,
+            audience: report.audience,
+            cadence: report.cadence,
+            highlights: report.highlights,
+            degradedFlags: report.degradedFlags,
+            dataQuality: report.dataQuality,
+          },
         });
         await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
         toast.success(t('execution.reportCatalog.generating', 'Generating "{{title}}"…', { title: report.title }), { duration: 2000 });
@@ -3649,7 +3757,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         toast.error(t('execution.reportCatalog.generateError', 'Failed to generate report'));
       }
     },
-    [filteredInitiatives.length, tasks.length, decisions.length, actionCenter.blocked.length, riskSignals.length, openChatWithContext, addChatMessage, t, isChatCollapsed, toggleChatCollapse]
+    [actionCenter, openChatWithContext, addChatMessage, t, isChatCollapsed, toggleChatCollapse]
   );
 
   const reportColumns: TableColumn[] = useMemo(() => [
@@ -3721,7 +3829,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
 
 
   const renderReportPreviewBody = useCallback((report: ReportDef) => {
-    const rag = computeRAG(report as ReportCompactDef);
+    const rag = computeRAG(report);
     const ragConf = RAG_CONFIG[rag];
     const RagIcon = ragConf.icon;
     return (
@@ -3784,6 +3892,17 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
           </div>
         </div>
 
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">AI Executive Readout</div>
+          <div className="space-y-1.5">
+            {report.aiExecutiveReadout.slice(0, 3).map((line) => (
+              <div key={line} className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300">
+                {line}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Mandatory sections */}
         <div>
           <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Mandatory Sections</div>
@@ -3809,12 +3928,26 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             ))}
           </div>
         </div>
+
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Data Quality</div>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
+              {report.dataQuality.confidence}
+            </span>
+            {report.degradedFlags.map((flag) => (
+              <span key={flag} className="inline-block px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-[10px] text-violet-700 dark:text-violet-300">
+                {flag}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }, []);
 
   const renderReportPreviewFooter = useCallback((report: ReportDef) => {
-    const rag = computeRAG(report as ReportCompactDef);
+    const rag = computeRAG(report);
     return (
       <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
         <button
@@ -3827,7 +3960,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         <button
           type="button"
           onClick={() => {
-            exportReportPDF(report as ReportCompactDef, rag);
+            exportReportPDF(report, rag);
             toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
           }}
           className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
@@ -3837,7 +3970,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         <button
           type="button"
           onClick={() => {
-            const md = buildReportMarkdown(report as ReportCompactDef, rag);
+            const md = buildReportMarkdown(report, rag);
             navigator.clipboard.writeText(md).then(
               () => toast.success(t('execution.reportPanel.copied', 'Copied')),
               () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
@@ -3852,7 +3985,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
   }, [handleGenerateReport, t]);
 
   const renderReportsCatalog = () => {
-    if (filteredInitiatives.length === 0) {
+    if (reportDataContext.totalInitiatives === 0) {
       return (
         <div className="p-4">
           <Callout variant="info" title={t('execution.reportCatalog.noData', 'No execution data yet')}>
@@ -3866,9 +3999,9 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
       type ReportRow = ReportDef & { title: string };
       const selectedReportPreviewId = reportPreviewId;
       const selectedReport = selectedReportPreviewId
-        ? (reportCatalog.find((r) => r.id === selectedReportPreviewId) as ReportRow | undefined) ?? null
+        ? (filteredReportCatalog.find((r) => r.id === selectedReportPreviewId) as ReportRow | undefined) ?? null
         : null;
-      const reportIds = reportCatalog.map((r) => r.id);
+      const reportIds = filteredReportCatalog.map((r) => r.id);
 
       return (
         <div className="h-full overflow-hidden">
@@ -3877,9 +4010,9 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
             selectedItem={selectedReport}
             onSelect={setReportPreviewId}
             itemIds={reportIds}
-            getItemById={(id) => (reportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
+            getItemById={(id) => (filteredReportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
             onOpenFull={(id) => {
-              const r = reportCatalog.find((x) => x.id === id);
+              const r = filteredReportCatalog.find((x) => x.id === id);
               if (r) handleOpenReport(r);
             }}
             renderPreview={(item) => renderReportPreviewBody(item)}
@@ -3887,11 +4020,11 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
           >
             <FilterableTable
               columns={reportColumns}
-              data={reportCatalog as any[]}
+              data={filteredReportCatalog as any[]}
               selectedRowId={selectedReportPreviewId}
               onRowClick={(row) => setReportPreviewId(String(row.id))}
               onRowDoubleClick={(row) => {
-                const r = reportCatalog.find((x) => x.id === row.id);
+                const r = filteredReportCatalog.find((x) => x.id === row.id);
                 if (r) handleOpenReport(r);
               }}
               activeFilters={reportFilters}
@@ -3926,7 +4059,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {reportCatalog.map((report) => {
+          {filteredReportCatalog.map((report) => {
             return (
               <button
                 key={report.id}
@@ -3988,8 +4121,21 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
   // ---------------------------------------------------------------------------
   const renderManagerCockpit = () => {
     const { kpiAlerts, overdueItems, blockedCount, missingDatesCount } = managerMetrics;
-    const withoutOwner = filteredInitiatives.filter((i: any) => !i.ownerId && !i.assigneeId).length;
+    const withoutOwner = dashboardBaseInitiatives.filter((i: any) => !i.ownerId && !i.assigneeId).length;
     const highRisks = riskSignals.filter((r) => r.severity === 'CRITICAL' || r.severity === 'HIGH').length;
+
+    const allZero = actionQueueItems.length === 0 && overdueItems === 0 && blockedCount === 0
+      && tasks.length === 0 && riskSignals.length === 0 && delaySignals.length === 0
+      && withoutOwner === 0 && missingDatesCount === 0;
+
+    const demo = allZero ? {
+      aqItems: 12, aqOverdue: 4,
+      decOverdue: 3, decPending: 8,
+      blkBlocked: 6, blkCritical: 3,
+      wlTasks: 47, wlDueSoon: 9,
+      rskSignals: 7, rskDelays: 12,
+      pcOwners: 6, pcDates: 4,
+    } : null;
 
     const tiles: {
       id: ManagerModuleId;
@@ -4004,8 +4150,8 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         title: t('execution.manager.tile.actionQueue', 'Action Queue'),
         description: t('execution.manager.tile.actionQueueDesc', 'Tasks, decisions, and escalations requiring your attention.'),
         metrics: [
-          { label: 'Items', value: actionQueueItems.length, variant: actionQueueItems.length > 0 ? 'warn' : 'default' },
-          { label: 'Overdue', value: overdueItems, variant: overdueItems > 0 ? 'critical' : 'default' },
+          { label: 'Items', value: demo?.aqItems ?? actionQueueItems.length, variant: (demo?.aqItems ?? actionQueueItems.length) > 0 ? 'warn' : 'default' },
+          { label: 'Overdue', value: demo?.aqOverdue ?? overdueItems, variant: (demo?.aqOverdue ?? overdueItems) > 0 ? 'critical' : 'default' },
         ],
       },
       {
@@ -4014,8 +4160,8 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         title: t('execution.manager.tile.decisions', 'Decisions & Approvals'),
         description: t('execution.manager.tile.decisionsDesc', 'Pending and overdue decisions blocking downstream work.'),
         metrics: [
-          { label: 'Overdue', value: overdueItems, variant: overdueItems > 0 ? 'critical' : 'default' },
-          { label: 'Pending', value: decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length },
+          { label: 'Overdue', value: demo?.decOverdue ?? overdueItems, variant: (demo?.decOverdue ?? overdueItems) > 0 ? 'critical' : 'default' },
+          { label: 'Pending', value: demo?.decPending ?? decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length },
         ],
       },
       {
@@ -4024,8 +4170,8 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         title: t('execution.manager.tile.blockers', 'Blockers & Escalations'),
         description: t('execution.manager.tile.blockersDesc', 'Blocked initiatives, critical risks, and recovery actions.'),
         metrics: [
-          { label: 'Blocked', value: blockedCount, variant: blockedCount > 0 ? 'critical' : 'default' },
-          { label: 'Critical risks', value: highRisks, variant: highRisks > 0 ? 'warn' : 'default' },
+          { label: 'Blocked', value: demo?.blkBlocked ?? blockedCount, variant: (demo?.blkBlocked ?? blockedCount) > 0 ? 'critical' : 'default' },
+          { label: 'Critical risks', value: demo?.blkCritical ?? highRisks, variant: (demo?.blkCritical ?? highRisks) > 0 ? 'warn' : 'default' },
         ],
       },
       {
@@ -4034,8 +4180,8 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         title: t('execution.manager.tile.workload', 'Resource & Workload'),
         description: t('execution.manager.tile.workloadDesc', 'Per-person task load, utilization, and capacity gaps.'),
         metrics: [
-          { label: 'Tasks', value: tasks.length },
-          { label: 'Due soon', value: actionCenter.dueSoonTasks.length, variant: actionCenter.dueSoonTasks.length > 3 ? 'warn' : 'default' },
+          { label: 'Tasks', value: demo?.wlTasks ?? tasks.length },
+          { label: 'Due soon', value: demo?.wlDueSoon ?? actionCenter.dueSoonTasks.length, variant: (demo?.wlDueSoon ?? actionCenter.dueSoonTasks.length) > 3 ? 'warn' : 'default' },
         ],
       },
       {
@@ -4044,8 +4190,8 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         title: t('execution.manager.tile.risk', 'Execution Risk'),
         description: t('execution.manager.tile.riskDesc', 'Risk signals, delay detection, and intervention suggestions.'),
         metrics: [
-          { label: 'Risk signals', value: riskSignals.length, variant: riskSignals.length > 3 ? 'warn' : 'default' },
-          { label: 'Delays', value: delaySignals.length, variant: delaySignals.length > 2 ? 'warn' : 'default' },
+          { label: 'Risk signals', value: demo?.rskSignals ?? riskSignals.length, variant: (demo?.rskSignals ?? riskSignals.length) > 3 ? 'warn' : 'default' },
+          { label: 'Delays', value: demo?.rskDelays ?? delaySignals.length, variant: (demo?.rskDelays ?? delaySignals.length) > 2 ? 'warn' : 'default' },
         ],
       },
       {
@@ -4054,23 +4200,46 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         title: t('execution.manager.tile.peopleChange', 'People & Change'),
         description: t('execution.manager.tile.peopleChangeDesc', 'Ownership gaps, stakeholder mapping, and communication.'),
         metrics: [
-          { label: 'Missing owners', value: withoutOwner, variant: withoutOwner > 0 ? 'warn' : 'default' },
-          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+          { label: 'Missing owners', value: demo?.pcOwners ?? withoutOwner, variant: (demo?.pcOwners ?? withoutOwner) > 0 ? 'warn' : 'default' },
+          { label: 'Missing dates', value: demo?.pcDates ?? missingDatesCount, variant: (demo?.pcDates ?? missingDatesCount) > 0 ? 'warn' : 'default' },
         ],
       },
     ];
 
+    const visibleTiles =
+      managerPreset === 'all'
+        ? tiles
+        : tiles.filter((tile) =>
+            managerPreset === 'action-queue'
+              ? tile.id === 'action-queue'
+              : managerPreset === 'decisions'
+                ? tile.id === 'decisions'
+                : managerPreset === 'blockers'
+                  ? tile.id === 'blockers'
+                  : managerPreset === 'risk'
+                    ? tile.id === 'risk'
+                    : tile.id === 'workload'
+          );
+    const managerTiles = searchQuery.trim()
+      ? visibleTiles.filter((tile) => {
+          const query = searchQuery.toLowerCase();
+          return (
+            tile.title.toLowerCase().includes(query) || tile.description.toLowerCase().includes(query)
+          );
+        })
+      : visibleTiles;
+
     return (
       <div className="p-4 space-y-5">
         {/* §3.3 Honest degraded posture */}
-        {filteredInitiatives.length === 0 && (
+        {dashboardBaseInitiatives.length === 0 && (
           <Callout variant="info" title={t('execution.manager.noInitiatives', 'No executing initiatives')}>
             {t('execution.manager.noInitiativesDesc', 'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.')}
           </Callout>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tiles.map((tile) => {
+          {managerTiles.map((tile) => {
             const hasAlerts = tile.metrics.some((m) => m.variant === 'critical' || m.variant === 'warn');
             return (
               <button
@@ -4128,14 +4297,14 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
     if (activeDocumentId) {
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');
-        const report = reportCatalog.find((r) => r.id === reportId);
+        const report = enrichedReportCatalog.find((r) => r.id === reportId);
         if (report) {
           return (
             <ReportDocumentView
-              report={report as ReportCompactDef}
+              report={report}
               data={reportDataContext}
               onBack={handleShowList}
-              onGenerateAI={(r) => handleGenerateReport(r as ReportDef)}
+              onGenerateAI={handleGenerateReport}
             />
           );
         }
@@ -4299,7 +4468,7 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
       <ModuleHub
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleMainTabChange}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onSearch={setSearchQuery}
@@ -4308,17 +4477,13 @@ Expected follow-up actions: ${report.followUpActions.join(', ')}.`;
         onSelectDocument={setActiveDocumentId}
         onCloseDocument={handleCloseDocument}
         onShowList={handleShowList}
-        activeFilters={activeTab === 'list' ? summaryFilters : activeFilters}
+        activeFilters={
+          activeTab === 'list' ? summaryFilters : activeTab === 'reports' ? reportFilters : activeFilters
+        }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
-        statusDropdownContext={
-          activeTab === 'list' || activeTab === 'reports' ? 'execution' : undefined
-        }
-        statusCounts={
-          activeTab === 'list' || activeTab === 'reports' ? statusDropdownCounts : undefined
-        }
         rightControls={rightControls}
         availableViewModes={availableViewModes}
         commandRowContent={commandRowContent}
