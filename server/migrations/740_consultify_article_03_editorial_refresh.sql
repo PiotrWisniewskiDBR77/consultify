@@ -9,7 +9,7 @@ The first 30 minutes are not there to help a leader "discover features." They ar
 
 If the first session only creates another half-configured workspace, trust drops and adoption stalls. If it produces a credible diagnosis, a first roadmap, and something leadership can actually react to, the platform starts earning its place.
 
-![Consultify first-session workspace](/kb/consultify/03_first_30_minutes_in_consultify/hero.png)
+![Consultify first-session workspace](/kb/consultify/03_first_30_minutes_in_consultify/hero.webp)
 
 ## What success looks like after 30 minutes
 
@@ -57,7 +57,7 @@ At this stage, the user should ask which initiatives truly matter first, which d
 
 In practice, three to five priority initiatives are usually enough for the first working version. More than that often creates the illusion of sophistication while weakening focus.
 
-![First-session workflow map](/kb/consultify/03_first_30_minutes_in_consultify/analytical.png)
+![First-session workflow map](/kb/consultify/03_first_30_minutes_in_consultify/analytical.webp)
 
 ## Minutes 25-30: generate the first leadership-ready output
 
