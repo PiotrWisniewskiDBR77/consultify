@@ -354,7 +354,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <MarketingLayout>
+      <MarketingLayout footerVariant="knowledge">
         <div className="relative">
           <div className="fixed inset-0 pointer-events-none z-0">
             <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
@@ -375,7 +375,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
   if (error || !article) {
     return (
-      <MarketingLayout>
+      <MarketingLayout footerVariant="knowledge">
         <div className="relative">
           <div className="fixed inset-0 pointer-events-none z-0">
             <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
@@ -397,7 +397,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
   }
 
   return (
-    <MarketingLayout>
+    <MarketingLayout footerVariant="knowledge">
       {/* Reading progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-[3px]">
         <div

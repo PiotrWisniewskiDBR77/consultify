@@ -157,7 +157,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const isFiltering = !!activeSearch || !!selectedCategory || !!selectedTag;
 
   return (
-    <MarketingLayout>
+    <MarketingLayout footerVariant="knowledge">
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">

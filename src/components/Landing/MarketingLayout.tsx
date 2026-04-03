@@ -11,9 +11,10 @@ import { EntryTopBar } from './EntryTopBar';
 
 interface MarketingLayoutProps {
   children: React.ReactNode;
+  footerVariant?: 'default' | 'knowledge';
 }
 
-export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) => {
+export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children, footerVariant = 'default' }) => {
   const navigate = useNavigate();
   const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } =
     useAppStore();
@@ -59,7 +60,7 @@ export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) =>
         hasWorkspace={!!currentUser?.hasWorkspace}
       />
       <main className="pt-14">{children}</main>
-      <EntryFooter />
+      <EntryFooter hidePartnerBadges={footerVariant === 'knowledge'} />
       <AnnaAssistantWidget
         onDemoClick={handleDemoClick}
         onTrialClick={handleTrialClick}

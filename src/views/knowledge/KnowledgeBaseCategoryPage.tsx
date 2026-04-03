@@ -37,7 +37,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
   const otherArticles = articles?.filter((a: KbArticleListItem) => !a.is_featured) || [];
 
   return (
-    <MarketingLayout>
+    <MarketingLayout footerVariant="knowledge">
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">
