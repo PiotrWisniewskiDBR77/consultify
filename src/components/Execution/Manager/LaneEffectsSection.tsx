@@ -10,16 +10,21 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '../../shared/NModeBlocks/EmptyStateInline';
 import { ToggleBlock } from '../../shared/NModeBlocks/ToggleBlock';
+import { AiManageButton } from './AiManageButton';
 import type { EffectItem } from './types';
 
 interface LaneEffectsSectionProps {
   effects: EffectItem[];
   defaultOpen?: boolean;
+  onAiManage?: (signalId: string) => void;
+  aiManageLoading?: string | null;
 }
 
 export const LaneEffectsSection: React.FC<LaneEffectsSectionProps> = ({
   effects,
   defaultOpen = false,
+  onAiManage,
+  aiManageLoading,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -42,7 +47,7 @@ export const LaneEffectsSection: React.FC<LaneEffectsSectionProps> = ({
           {effects.map((eff) => (
             <div
               key={eff.id}
-              className="flex items-start gap-2.5 py-2.5 px-3 rounded-lg bg-rose-500/[0.04] dark:bg-rose-500/[0.06]"
+              className="flex items-start gap-2.5 py-2.5 px-3 rounded-lg bg-rose-500/[0.04] dark:bg-rose-500/[0.06] group"
             >
               <Flame size={13} className="text-rose-500 mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
@@ -80,6 +85,14 @@ export const LaneEffectsSection: React.FC<LaneEffectsSectionProps> = ({
                   </div>
                 )}
               </div>
+              {onAiManage && (
+                <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <AiManageButton
+                    onClick={() => onAiManage(eff.id)}
+                    loading={aiManageLoading === eff.id}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -3,7 +3,7 @@
  *
  * Shared shell for all 6 manager lanes.
  * Provides: header, summary strip, master-detail layout,
- * and the 6-section analytical cycle.
+ * the 6-section analytical cycle, and AI action plan generation.
  */
 
 import { ArrowLeft } from 'lucide-react';
@@ -11,6 +11,12 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '../../shared/NModeBlocks/Callout';
+import { AiActionPlanPanel } from './AiActionPlanPanel';
+import { AiManageButton } from './AiManageButton';
+import {
+  generateComprehensivePlan,
+  generateSingleSignalPlan,
+} from './aiPlanGenerator';
 import { LaneDecisionsSection } from './LaneDecisionsSection';
 import { LaneEffectsSection } from './LaneEffectsSection';
 import { LaneExecutionSection } from './LaneExecutionSection';
@@ -19,7 +25,7 @@ import { LaneObservationsSection } from './LaneObservationsSection';
 import { LaneProblemList, type ProblemEntry } from './LaneProblemList';
 import { LaneSuggestionsSection } from './LaneSuggestionsSection';
 import { LaneSummaryStrip } from './LaneSummaryStrip';
-import type { LaneAction, LaneAnalysis, ManagerLaneId, MetricDef } from './types';
+import type { AiActionPlan, LaneAction, LaneAnalysis, ManagerLaneId, MetricDef } from './types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -36,7 +42,6 @@ interface LaneCockpitShellProps {
   onBack: () => void;
   onAction?: (action: LaneAction) => void;
   onRefresh?: () => void;
-  /** Extra content injected below the 6 sections (e.g. PeopleChangeWorkspace) */
   children?: React.ReactNode;
 }
 
@@ -63,10 +68,48 @@ export const LaneCockpitShell: React.FC<LaneCockpitShellProps> = ({
     problems[0]?.id
   );
 
+  // AI action plan state
+  const [aiPlan, setAiPlan] = useState<AiActionPlan | null>(null);
+  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+  const [aiManageLoadingId, setAiManageLoadingId] = useState<string | null>(null);
+
   const handleAction = useCallback(
     (action: LaneAction) => onAction?.(action),
     [onAction]
   );
+
+  const handleAiManageSingle = useCallback(
+    (signalId: string, signalType: 'observation' | 'insight' | 'effect') => {
+      if (!analysis) return;
+      setAiManageLoadingId(signalId);
+      setAiPlanLoading(true);
+      // Simulate async delay for realistic UX
+      setTimeout(() => {
+        const plan = generateSingleSignalPlan(signalId, signalType, analysis, laneId, isPolish);
+        setAiPlan(plan);
+        setAiPlanLoading(false);
+        setAiManageLoadingId(null);
+      }, 1200);
+    },
+    [analysis, laneId, isPolish]
+  );
+
+  const handleAiManageAll = useCallback(() => {
+    if (!analysis) return;
+    setAiPlanLoading(true);
+    setAiManageLoadingId('__all__');
+    setTimeout(() => {
+      const plan = generateComprehensivePlan(analysis, laneId, isPolish);
+      setAiPlan(plan);
+      setAiPlanLoading(false);
+      setAiManageLoadingId(null);
+    }, 2000);
+  }, [analysis, laneId, isPolish]);
+
+  const handleClosePlan = useCallback(() => {
+    setAiPlan(null);
+    setAiPlanLoading(false);
+  }, []);
 
   const hasSidebar = problems.length > 0;
 
@@ -99,10 +142,25 @@ export const LaneCockpitShell: React.FC<LaneCockpitShellProps> = ({
     lastRefreshed,
   } = analysis;
 
+  const hasSignals = observations.length > 0 || insights.length > 0 || effects.length > 0;
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
-      {/* Header */}
-      <ShellHeader icon={icon} title={title} onBack={onBack} />
+      {/* Header with global AI Manage button */}
+      <ShellHeader
+        icon={icon}
+        title={title}
+        onBack={onBack}
+        rightContent={
+          hasSignals ? (
+            <AiManageButton
+              variant="global"
+              onClick={handleAiManageAll}
+              loading={aiManageLoadingId === '__all__'}
+            />
+          ) : undefined
+        }
+      />
 
       {/* Summary strip */}
       <div className="shrink-0 px-6 py-3">
@@ -128,7 +186,7 @@ export const LaneCockpitShell: React.FC<LaneCockpitShellProps> = ({
           </div>
         )}
 
-        {/* Right panel — 6 sections */}
+        {/* Right panel — AI plan + 6 sections */}
         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3">
           {confidence === 'degraded' && (
             <Callout variant="warning" compact>
@@ -138,9 +196,48 @@ export const LaneCockpitShell: React.FC<LaneCockpitShellProps> = ({
             </Callout>
           )}
 
-          <LaneObservationsSection observations={observations} defaultOpen />
-          <LaneInsightsSection insights={insights} defaultOpen />
-          <LaneEffectsSection effects={effects} />
+          {/* AI Action Plan (appears above sections when generated) */}
+          {(aiPlan || aiPlanLoading) && (
+            <AiActionPlanPanel
+              plan={aiPlan}
+              loading={aiPlanLoading && !aiPlan}
+              onClose={handleClosePlan}
+              onAcceptStep={(step, idx) => {
+                handleAction({
+                  type: 'approve',
+                  targetId: `ai-step-${idx}`,
+                  payload: { aiStep: step },
+                });
+              }}
+              onAcceptAll={() => {
+                if (aiPlan) {
+                  handleAction({
+                    type: 'ai_manage_all',
+                    targetId: aiPlan.id,
+                    payload: { plan: aiPlan },
+                  });
+                }
+              }}
+            />
+          )}
+
+          <LaneObservationsSection
+            observations={observations}
+            defaultOpen
+            onAiManage={(id) => handleAiManageSingle(id, 'observation')}
+            aiManageLoading={aiManageLoadingId}
+          />
+          <LaneInsightsSection
+            insights={insights}
+            defaultOpen
+            onAiManage={(id) => handleAiManageSingle(id, 'insight')}
+            aiManageLoading={aiManageLoadingId}
+          />
+          <LaneEffectsSection
+            effects={effects}
+            onAiManage={(id) => handleAiManageSingle(id, 'effect')}
+            aiManageLoading={aiManageLoadingId}
+          />
           <LaneSuggestionsSection suggestions={suggestions} onAction={handleAction} />
           <LaneDecisionsSection
             decisions={decisions}
@@ -160,11 +257,12 @@ export const LaneCockpitShell: React.FC<LaneCockpitShellProps> = ({
 // Shell header (internal)
 // ---------------------------------------------------------------------------
 
-const ShellHeader: React.FC<{ icon: React.ReactNode; title: string; onBack: () => void }> = ({
-  icon,
-  title,
-  onBack,
-}) => {
+const ShellHeader: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  onBack: () => void;
+  rightContent?: React.ReactNode;
+}> = ({ icon, title, onBack, rightContent }) => {
   const { t } = useTranslation();
   return (
     <div className="shrink-0 px-6 pt-4 pb-3 border-b border-slate-100 dark:border-navy-800">
@@ -179,7 +277,7 @@ const ShellHeader: React.FC<{ icon: React.ReactNode; title: string; onBack: () =
         <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
           {icon}
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
             {t('execution.manager.moduleSubtitle', 'Execution Management · {{date}}', {
@@ -187,6 +285,7 @@ const ShellHeader: React.FC<{ icon: React.ReactNode; title: string; onBack: () =
             })}
           </p>
         </div>
+        {rightContent && <div className="shrink-0">{rightContent}</div>}
       </div>
     </div>
   );

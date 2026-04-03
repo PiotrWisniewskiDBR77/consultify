@@ -1,3 +1,5 @@
+export { AiActionPlanPanel } from './AiActionPlanPanel';
+export { AiManageButton } from './AiManageButton';
 export { FeasibilityBadge } from './FeasibilityBadge';
 export { LaneCockpitShell } from './LaneCockpitShell';
 export { LaneDecisionsSection } from './LaneDecisionsSection';

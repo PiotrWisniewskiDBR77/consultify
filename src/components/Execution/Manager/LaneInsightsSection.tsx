@@ -5,13 +5,14 @@
  * Shows confidence level, whether the issue is systemic, and action-required flag.
  */
 
-import { AlertCircle, Lightbulb, Sparkles } from 'lucide-react';
+import { Lightbulb, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '../../shared/NModeBlocks/Callout';
 import { EmptyStateInline } from '../../shared/NModeBlocks/EmptyStateInline';
 import { ToggleBlock } from '../../shared/NModeBlocks/ToggleBlock';
+import { AiManageButton } from './AiManageButton';
 import type { InsightItem } from './types';
 
 const CONFIDENCE_DOT: Record<string, string> = {
@@ -23,11 +24,15 @@ const CONFIDENCE_DOT: Record<string, string> = {
 interface LaneInsightsSectionProps {
   insights: InsightItem[];
   defaultOpen?: boolean;
+  onAiManage?: (signalId: string) => void;
+  aiManageLoading?: string | null;
 }
 
 export const LaneInsightsSection: React.FC<LaneInsightsSectionProps> = ({
   insights,
   defaultOpen = true,
+  onAiManage,
+  aiManageLoading,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -71,13 +76,21 @@ export const LaneInsightsSection: React.FC<LaneInsightsSectionProps> = ({
                     )}
                   </div>
                 </div>
+                {onAiManage && (
+                  <div className="shrink-0">
+                    <AiManageButton
+                      onClick={() => onAiManage(ins.id)}
+                      loading={aiManageLoading === ins.id}
+                    />
+                  </div>
+                )}
               </div>
             </Callout>
           ))}
           {informational.map((ins) => (
             <div
               key={ins.id}
-              className="flex items-start gap-2.5 py-2 px-3 rounded-lg bg-slate-50/30 dark:bg-navy-900/20"
+              className="flex items-start gap-2.5 py-2 px-3 rounded-lg bg-slate-50/30 dark:bg-navy-900/20 group"
             >
               <Lightbulb size={13} className="text-slate-400 dark:text-slate-500 mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1">
@@ -87,6 +100,14 @@ export const LaneInsightsSection: React.FC<LaneInsightsSectionProps> = ({
                   {ins.confidence}
                 </span>
               </div>
+              {onAiManage && (
+                <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <AiManageButton
+                    onClick={() => onAiManage(ins.id)}
+                    loading={aiManageLoading === ins.id}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
