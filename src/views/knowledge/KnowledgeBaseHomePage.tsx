@@ -192,7 +192,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               </h1>
 
               <p className="mt-6 text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto dark:text-white/55">
-                {t('kb.hero.subtitle', 'Governance, execution, and AI decision support for transformation leaders. Built from real industrial practice, not theory.')}
+                {t('kb.hero.subtitle', 'Read the guides leaders use before they commit budget, launch rollout, or defend ROI. Built for moments when the next decision matters more than another opinion.')}
               </p>
 
               {/* Search */}
