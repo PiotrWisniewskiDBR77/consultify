@@ -51,6 +51,11 @@ import { useKnowledgeRelated } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
+function kbImg(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.startsWith('/kb/') && url.endsWith('.png') ? url.slice(0, -4) + '.webp' : url;
+}
+
 interface TocItem {
   id: string;
   text: string;
@@ -127,7 +132,7 @@ function useArticleSeo(article: any, categorySlug?: string) {
     setMeta('property', 'og:description', description);
     setMeta('property', 'og:type', 'article');
     setMeta('property', 'og:url', url);
-    if (article.thumbnail_url) setMeta('property', 'og:image', article.thumbnail_url);
+    if (article.thumbnail_url) setMeta('property', 'og:image', kbImg(article.thumbnail_url) || article.thumbnail_url);
     setMeta('name', 'twitter:card', 'summary_large_image');
     setMeta('name', 'twitter:title', title);
     setMeta('name', 'twitter:description', description);
@@ -144,7 +149,7 @@ function useArticleSeo(article: any, categorySlug?: string) {
       headline: article.title,
       description,
       url,
-      ...(article.thumbnail_url && { image: article.thumbnail_url }),
+      ...(article.thumbnail_url && { image: kbImg(article.thumbnail_url) }),
       ...(article.reading_time_minutes && { timeRequired: `PT${article.reading_time_minutes}M` }),
       publisher: { '@type': 'Organization', name: 'Consultify', url: 'https://consultify.ai' },
       mainEntityOfPage: { '@type': 'WebPage', '@id': url },
@@ -597,7 +602,7 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                       return (
                         <figure className="my-6 sm:my-10">
                           <img
-                            src={src}
+                            src={kbImg(src) || src}
                             alt={alt || ''}
                             width={1200}
                             height={675}

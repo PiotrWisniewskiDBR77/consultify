@@ -16,6 +16,11 @@ import { KbArticleListItem, KbCategory, useDocsArticles, useDocsCategories } fro
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
+function kbImg(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.startsWith('/kb/') && url.endsWith('.png') ? url.slice(0, -4) + '.webp' : url;
+}
+
 export const KnowledgeBaseCategoryPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { categorySlug } = useParams<{ categorySlug: string }>();
@@ -189,7 +194,7 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
       {article.thumbnail_url ? (
         <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0D0828]">
           <img
-            src={article.thumbnail_url}
+            src={kbImg(article.thumbnail_url)}
             alt={article.title}
             width={1200}
             height={675}

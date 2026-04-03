@@ -89,6 +89,11 @@ const SECTION_META_KEYS: Record<string, SectionMetaKeys> = {
   },
 };
 
+function kbImg(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.startsWith('/kb/') && url.endsWith('.png') ? url.slice(0, -4) + '.webp' : url;
+}
+
 const ARTICLES_PER_PAGE = 12;
 const CARD_TAG_LIMIT = 4;
 
@@ -545,7 +550,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
       {article.thumbnail_url ? (
         <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0D0828]">
           <img
-            src={article.thumbnail_url}
+            src={kbImg(article.thumbnail_url)}
             alt={article.title}
             width={1200}
             height={675}
@@ -728,7 +733,7 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
             {article.thumbnail_url && (
               <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0D0828]">
                 <img
-                  src={article.thumbnail_url}
+                  src={kbImg(article.thumbnail_url)}
                   alt={article.title}
                   width={1200}
                   height={675}
