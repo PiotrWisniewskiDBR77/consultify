@@ -99,8 +99,8 @@ import {
   type ReportDef,
   type ReportDataContext,
 } from './executionReports';
+import { ExecutionManagementView } from './ExecutionManagementView';
 import { ReportDocumentView } from './ReportDocumentView';
-import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 
 // Kanban column status mapping
 type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
@@ -554,9 +554,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [reportPreset, setReportPreset] = useState<
     'all' | 'weekly' | 'monthly' | 'bi-weekly' | 'on-demand' | 'sponsor'
   >('all');
-  const [managerPreset, setManagerPreset] = useState<
-    'all' | 'action-queue' | 'decisions' | 'blockers' | 'risk' | 'workload'
-  >('all');
 
   // Workload heatmap controls (rendered in top bar)
   const [workloadViewMode, setWorkloadViewMode] = useState<'weekly' | 'monthly'>('monthly');
@@ -631,6 +628,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
 
   const [managerLaneCounts, setManagerLaneCounts] = useState<Record<string, { total: number; critical: number; warning: number }>>({});
+
+  useEffect(() => {
+    setOpenDocuments((prev) =>
+      prev.filter((doc) => !(doc.type === 'report' && doc.subType === 'manager'))
+    );
+    setActiveDocumentId((prev) => (prev?.startsWith('manager:') ? null : prev));
+  }, []);
 
   const formatNumber = useCallback(
     (v: number | null | undefined, opts?: Intl.NumberFormatOptions) => {
@@ -2096,34 +2100,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(false);
   }, []);
 
-  const MANAGER_MODULES: { id: ManagerModuleId; title: string }[] = [
-    { id: 'action-queue', title: 'Action Queue' },
-    { id: 'decisions', title: 'Decisions & Approvals' },
-    { id: 'blockers', title: 'Blockers & Escalations' },
-    { id: 'workload', title: 'Resource & Workload' },
-    { id: 'risk', title: 'Execution Risk' },
-    { id: 'people-change', title: 'People & Change' },
-  ];
-
-  const handleOpenManagerModule = useCallback((moduleId: ManagerModuleId) => {
-    const mod = MANAGER_MODULES.find((m) => m.id === moduleId);
-    if (!mod) return;
-    const docId = `manager:${mod.id}`;
-    const doc: OpenDocument = {
-      id: docId,
-      type: 'report',
-      subType: 'manager',
-      name: mod.title,
-      status: 'DRAFT',
-    };
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === docId)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(docId);
-    setIsSidePanelOpen(false);
-  }, []);
-
   const handleOpenSidePanel = useCallback((row: FullInitiative) => {
     setActiveDocumentId(null);
     setSelectedInitiative(row);
@@ -3153,49 +3129,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     }
 
-    if (activeTab === ('people_change' as ModuleTab)) {
-      const mlc = (id: string) => managerLaneCounts[id]?.total ?? 0;
-      const managerPresets = [
-        { id: 'all' as const, label: t('common.all', 'ALL'), count: 6, icon: <span className="h-2 w-2 rounded-full bg-slate-400" /> },
-        { id: 'action-queue' as const, label: 'Action Queue', count: mlc('action-queue'), icon: <ClipboardList size={14} className="text-cyan-400" /> },
-        { id: 'decisions' as const, label: 'Decisions', count: mlc('decisions'), icon: <Scale size={14} className="text-amber-400" /> },
-        { id: 'blockers' as const, label: 'Blockers', count: mlc('blockers'), icon: <AlertTriangle size={14} className="text-rose-400" /> },
-        { id: 'risk' as const, label: 'Risk', count: mlc('risk'), icon: <Shield size={14} className="text-rose-400" /> },
-        { id: 'workload' as const, label: 'Workload', count: mlc('workload'), icon: <Users size={14} className="text-violet-400" /> },
-      ];
-      return (
-        <div className="flex items-center gap-2">
-          {managerPresets.map((preset) => {
-            const active = managerPreset === preset.id;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => setManagerPreset((prev) => (prev === preset.id ? 'all' : preset.id))}
-                className={`${chipBase} ${
-                  active
-                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-                }`}
-              >
-                {preset.icon}
-                <span>{preset.label}</span>
-                <span
-                  className={`${badgeBase} ${
-                    active
-                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  {preset.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      );
-    }
-
     const isAttentionActive = (attention: string) =>
       activeFilters.some((f) => f.column === 'attention' && String(f.value) === attention);
 
@@ -3320,7 +3253,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     activeFilters,
     activeStatusFilter,
     dashboardBaseInitiatives.length,
-    managerPreset,
     openInitiativesWithAttention,
     reportPreset,
     resetExecutionCommandRow,
@@ -4104,152 +4036,6 @@ Please return:
     );
   };
 
-  // ---------------------------------------------------------------------------
-  const renderManagerCockpit = () => {
-    const lc = (id: string) => managerLaneCounts[id] || { total: 0, critical: 0, warning: 0 };
-
-    const tiles: {
-      id: ManagerModuleId;
-      icon: React.ReactNode;
-      title: string;
-      description: string;
-      metrics: { label: string; value: number | string; variant?: 'default' | 'warn' | 'critical' }[];
-    }[] = [
-      {
-        id: 'action-queue',
-        icon: <ClipboardList size={20} className="text-cyan-500" />,
-        title: t('execution.manager.tile.actionQueue', 'Action Queue'),
-        description: t('execution.manager.tile.actionQueueDesc', 'Tasks, decisions, and escalations requiring your attention.'),
-        metrics: [
-          { label: 'Items', value: lc('action-queue').total, variant: lc('action-queue').total > 0 ? 'warn' : 'default' },
-          { label: 'Critical', value: lc('action-queue').critical, variant: lc('action-queue').critical > 0 ? 'critical' : 'default' },
-        ],
-      },
-      {
-        id: 'decisions',
-        icon: <Scale size={20} className="text-amber-500" />,
-        title: t('execution.manager.tile.decisions', 'Decisions & Approvals'),
-        description: t('execution.manager.tile.decisionsDesc', 'Pending and overdue decisions blocking downstream work.'),
-        metrics: [
-          { label: 'Critical', value: lc('decisions').critical, variant: lc('decisions').critical > 0 ? 'critical' : 'default' },
-          { label: 'Issues', value: lc('decisions').total, variant: lc('decisions').total > 0 ? 'warn' : 'default' },
-        ],
-      },
-      {
-        id: 'blockers',
-        icon: <AlertTriangle size={20} className="text-rose-500" />,
-        title: t('execution.manager.tile.blockers', 'Blockers & Escalations'),
-        description: t('execution.manager.tile.blockersDesc', 'Blocked initiatives, critical risks, and recovery actions.'),
-        metrics: [
-          { label: 'Blocked', value: lc('blockers').critical, variant: lc('blockers').critical > 0 ? 'critical' : 'default' },
-          { label: 'Issues', value: lc('blockers').total, variant: lc('blockers').total > 0 ? 'warn' : 'default' },
-        ],
-      },
-      {
-        id: 'workload',
-        icon: <Users size={20} className="text-violet-500" />,
-        title: t('execution.manager.tile.workload', 'Resource & Workload'),
-        description: t('execution.manager.tile.workloadDesc', 'Per-person task load, utilization, and capacity gaps.'),
-        metrics: [
-          { label: 'Issues', value: lc('workload').total, variant: lc('workload').total > 0 ? 'warn' : 'default' },
-          { label: 'Critical', value: lc('workload').critical, variant: lc('workload').critical > 0 ? 'critical' : 'default' },
-        ],
-      },
-      {
-        id: 'risk',
-        icon: <Shield size={20} className="text-rose-500" />,
-        title: t('execution.manager.tile.risk', 'Execution Risk'),
-        description: t('execution.manager.tile.riskDesc', 'Risk signals, delay detection, and intervention suggestions.'),
-        metrics: [
-          { label: 'Risks', value: lc('risk').total, variant: lc('risk').total > 0 ? 'warn' : 'default' },
-          { label: 'Critical', value: lc('risk').critical, variant: lc('risk').critical > 0 ? 'critical' : 'default' },
-        ],
-      },
-      {
-        id: 'people-change',
-        icon: <Users size={20} className="text-emerald-500" />,
-        title: t('execution.manager.tile.peopleChange', 'People & Change'),
-        description: t('execution.manager.tile.peopleChangeDesc', 'Ownership gaps, stakeholder mapping, and communication.'),
-        metrics: [
-          { label: 'Gaps', value: lc('people-change').total, variant: lc('people-change').total > 0 ? 'warn' : 'default' },
-          { label: 'Critical', value: lc('people-change').critical, variant: lc('people-change').critical > 0 ? 'critical' : 'default' },
-        ],
-      },
-    ];
-
-    const visibleTiles =
-      managerPreset === 'all'
-        ? tiles
-        : tiles.filter((tile) =>
-            managerPreset === 'action-queue'
-              ? tile.id === 'action-queue'
-              : managerPreset === 'decisions'
-                ? tile.id === 'decisions'
-                : managerPreset === 'blockers'
-                  ? tile.id === 'blockers'
-                  : managerPreset === 'risk'
-                    ? tile.id === 'risk'
-                    : tile.id === 'workload'
-          );
-    const managerTiles = searchQuery.trim()
-      ? visibleTiles.filter((tile) => {
-          const query = searchQuery.toLowerCase();
-          return (
-            tile.title.toLowerCase().includes(query) || tile.description.toLowerCase().includes(query)
-          );
-        })
-      : visibleTiles;
-
-    return (
-      <div className="p-4 space-y-5">
-        {/* §3.3 Honest degraded posture */}
-        {dashboardBaseInitiatives.length === 0 && (
-          <Callout variant="info" title={t('execution.manager.noInitiatives', 'No executing initiatives')}>
-            {t('execution.manager.noInitiativesDesc', 'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.')}
-          </Callout>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {managerTiles.map((tile) => {
-            const hasAlerts = tile.metrics.some((m) => m.variant === 'critical' || m.variant === 'warn');
-            return (
-              <button
-                key={tile.id}
-                type="button"
-                onClick={() => handleOpenManagerModule(tile.id)}
-                className={`group text-left rounded-xl border bg-white dark:bg-navy-900 p-5 transition-all hover:shadow-md hover:border-cyan-500/40 dark:hover:border-cyan-400/30 ${
-                  hasAlerts ? 'border-amber-200 dark:border-amber-800/40' : 'border-slate-200 dark:border-navy-700'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
-                    {tile.icon}
-                  </div>
-                  <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors mt-1" />
-                </div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{tile.title}</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">{tile.description}</p>
-                <div className="flex gap-3">
-                  {tile.metrics.map((m) => (
-                    <div key={m.label} className="min-w-0">
-                      <div className={`text-lg font-bold tabular-nums ${
-                        m.variant === 'critical' ? 'text-rose-600 dark:text-rose-400' :
-                        m.variant === 'warn' ? 'text-amber-600 dark:text-amber-400' :
-                        'text-slate-900 dark:text-white'
-                      }`}>{m.value}</div>
-                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">{m.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-
   const sidePanelInitiative = useMemo(
     () => (selectedInitiative ? toPortfolioInitiative(selectedInitiative) : null),
     [selectedInitiative]
@@ -4262,6 +4048,22 @@ Please return:
         <div className="flex items-center justify-center h-full">
           <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
         </div>
+      );
+    }
+
+    if (activeTab === ('people_change' as ModuleTab)) {
+      return (
+        <ExecutionManagementView
+          managerLaneCounts={managerLaneCounts}
+          projectId={currentProjectId || undefined}
+          searchQuery={searchQuery}
+          hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}
+          onOpenEntity={
+            handleOpenSidePanel
+              ? (type, id) => handleOpenSidePanel({ id, name: id } as any)
+              : undefined
+          }
+        />
       );
     }
 
@@ -4279,17 +4081,6 @@ Please return:
             />
           );
         }
-      }
-      if (activeDocumentId.startsWith('manager:')) {
-        const moduleId = activeDocumentId.replace('manager:', '');
-        return (
-          <ManagerModuleView
-            moduleId={moduleId}
-            projectId={currentProjectId || undefined}
-            onBack={handleShowList}
-            onOpenEntity={handleOpenSidePanel ? (type, id) => handleOpenSidePanel({ id, name: id } as any) : undefined}
-          />
-        );
       }
       return (
         <InitiativeDocumentView
@@ -4414,10 +4205,6 @@ Please return:
       );
     }
 
-    if (activeTab === ('people_change' as ModuleTab)) {
-      return renderManagerCockpit();
-    }
-
     if (activeTab === 'reports') {
       return renderReportsCatalog();
     }
@@ -4444,13 +4231,19 @@ Please return:
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onSearch={setSearchQuery}
-        openDocuments={openDocuments}
-        activeDocumentId={activeDocumentId}
+        openDocuments={activeTab === ('people_change' as ModuleTab) ? [] : openDocuments}
+        activeDocumentId={activeTab === ('people_change' as ModuleTab) ? null : activeDocumentId}
         onSelectDocument={setActiveDocumentId}
         onCloseDocument={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={
-          activeTab === 'list' ? summaryFilters : activeTab === 'reports' ? reportFilters : activeFilters
+          activeTab === ('people_change' as ModuleTab)
+            ? []
+            : activeTab === 'list'
+              ? summaryFilters
+              : activeTab === 'reports'
+                ? reportFilters
+                : activeFilters
         }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
@@ -4458,7 +4251,7 @@ Please return:
         onStatusFilterChange={setActiveStatusFilter}
         rightControls={rightControls}
         availableViewModes={availableViewModes}
-        commandRowContent={commandRowContent}
+        commandRowContent={activeTab === ('people_change' as ModuleTab) ? null : commandRowContent}
       >
         {renderContent()}
       </ModuleHub>

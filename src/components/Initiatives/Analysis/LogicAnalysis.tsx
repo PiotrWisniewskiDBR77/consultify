@@ -31,6 +31,9 @@ import { useTranslation } from 'react-i18next';
 
 import type { PortfolioInitiative } from '@/types';
 
+import {
+  getMenu3AiButtonClass,
+} from './menu3ActionButtonStyles';
 import type { AnalysisIssue, DependencyLink, OrgUser, QuickUpdatePayload } from './types';
 
 /* ------------------------------------------------------------------ */
@@ -521,36 +524,28 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         <button
           onClick={computeDiscoverDeps}
           disabled={discoverRunning}
-          className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+          className={getMenu3AiButtonClass(false)}
         >
           {discoverRunning ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
           AI Discover Dependencies
         </button>
         <button
           onClick={detectCycles}
-          className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50 transition-colors"
+          className={getMenu3AiButtonClass(false)}
         >
           <Shuffle size={12} />
           Detect Cycles
         </button>
         <button
           onClick={() => setShowCriticalPath((v) => !v)}
-          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
-            showCriticalPath
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
+          className={getMenu3AiButtonClass(showCriticalPath)}
         >
           <Route size={12} />
           Critical Path
         </button>
         <button
           onClick={() => setShowSequencer((v) => !v)}
-          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
-            showSequencer
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
+          className={getMenu3AiButtonClass(showSequencer)}
         >
           <Network size={12} />
           AI Sequencer

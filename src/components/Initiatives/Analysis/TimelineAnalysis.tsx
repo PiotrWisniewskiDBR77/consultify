@@ -23,6 +23,9 @@ import { useTranslation } from 'react-i18next';
 
 import type { PortfolioInitiative } from '@/types';
 
+import {
+  getMenu3AiButtonClass,
+} from './menu3ActionButtonStyles';
 import type { AnalysisIssue, DependencyLink, OrgUser, QuickUpdatePayload, TimelineBar } from './types';
 
 /* ------------------------------------------------------------------ */
@@ -495,7 +498,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           <button
             onClick={computeAutoSchedule}
             disabled={scheduleRunning}
-            className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+            className={getMenu3AiButtonClass(false)}
           >
             {scheduleRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             AI Auto-Schedule
@@ -503,22 +506,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         )}
         <button
           onClick={() => setShowConflicts((v) => !v)}
-          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
-            showConflicts
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
+          className={getMenu3AiButtonClass(showConflicts)}
         >
           <AlertTriangle size={12} />
           Conflicts ({conflicts.length})
         </button>
         <button
           onClick={() => setShowOptimizer((v) => !v)}
-          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
-            showOptimizer
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
+          className={getMenu3AiButtonClass(showOptimizer)}
         >
           <TrendingUp size={12} />
           AI Optimizer

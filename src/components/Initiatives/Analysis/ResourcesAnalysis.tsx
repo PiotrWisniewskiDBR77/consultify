@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PortfolioInitiative } from '@/types';
 
+import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
 import type { OrgUser, QuickUpdatePayload, ResourceAllocation } from './types';
 
 /* ------------------------------------------------------------------ */
@@ -388,7 +389,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       <button
         onClick={computeAiProposals}
         disabled={aiRunning}
-        className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+        className={getMenu3AiButtonClass(false)}
       >
         {aiRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
         {aiRunning ? 'Analyzing...' : 'AI Balance workload'}

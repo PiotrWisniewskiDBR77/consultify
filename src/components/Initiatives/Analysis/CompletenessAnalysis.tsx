@@ -28,6 +28,9 @@ import { useTranslation } from 'react-i18next';
 import type { InitiativeLevel } from '@/components/Initiatives/templates/types';
 import type { PortfolioInitiative } from '@/types';
 
+import {
+  getMenu3AiButtonClass,
+} from './menu3ActionButtonStyles';
 import type { AnalysisIssue, OrgUser, QuickUpdatePayload } from './types';
 
 /* ------------------------------------------------------------------ */
@@ -344,7 +347,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
           <button
             onClick={computeAutoFill}
             disabled={autoFillRunning}
-            className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+            className={getMenu3AiButtonClass(false)}
           >
             {autoFillRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             AI Auto-Fill
@@ -353,11 +356,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         {onQuickUpdate && (
           <button
             onClick={() => setShowBulkFix((v) => !v)}
-            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
-              showBulkFix
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
+            className={getMenu3AiButtonClass(showBulkFix)}
           >
             <Zap size={12} />
             Bulk Fix
@@ -365,11 +364,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         )}
         <button
           onClick={() => setShowTriage((v) => !v)}
-          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
-            showTriage
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-          }`}
+          className={getMenu3AiButtonClass(showTriage)}
         >
           <Target size={12} />
           AI Priority Triage
