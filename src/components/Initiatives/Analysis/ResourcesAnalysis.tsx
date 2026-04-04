@@ -21,7 +21,7 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -51,6 +51,7 @@ interface ResourcesAnalysisProps {
   onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
   users?: OrgUser[];
   initiatives?: PortfolioInitiative[];
+  onRegisterActions?: (node: React.ReactNode) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -107,6 +108,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
   onQuickUpdate,
   users = [],
   initiatives = [],
+  onRegisterActions,
 }) => {
   const { t } = useTranslation();
   const [expandedResourceId, setExpandedResourceId] = useState<string | null>(null);
@@ -376,11 +378,29 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
     setAiRunning(false);
   }, [aiProposals, proposalOverrides, onQuickUpdate, t]);
 
+  useEffect(() => {
+    if (!onRegisterActions) return;
+    if (!onQuickUpdate) {
+      onRegisterActions(null);
+      return;
+    }
+    onRegisterActions(
+      <button
+        onClick={computeAiProposals}
+        disabled={aiRunning}
+        className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+      >
+        {aiRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+        {aiRunning ? 'Analyzing...' : 'AI Balance workload'}
+      </button>
+    );
+  }, [onRegisterActions, onQuickUpdate, computeAiProposals, aiRunning]);
+
   /* ---------- render ---------- */
 
   return (
     <div className="space-y-6">
-      {/* Header strip: stats + AI button */}
+      {/* Header strip: stats */}
       <div className="flex items-center gap-4">
         {/* Stats cards */}
         <div className="flex-1 grid grid-cols-4 gap-3">
@@ -417,28 +437,6 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             </div>
           </div>
         </div>
-
-        {/* AI Balance button */}
-        {onQuickUpdate && (
-          <button
-            onClick={computeAiProposals}
-            disabled={aiRunning}
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
-              bg-gradient-to-r from-purple-600 to-indigo-600 text-white
-              hover:from-purple-700 hover:to-indigo-700
-              disabled:opacity-60 disabled:cursor-not-allowed
-              shadow-lg shadow-purple-500/20 transition-all duration-200"
-          >
-            {aiRunning ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Sparkles size={16} />
-            )}
-            {aiRunning
-              ? t('initiatives.analysis.resources.aiAnalyzing', 'Analyzing...')
-              : t('initiatives.analysis.resources.aiBalance', 'AI Balance workload')}
-          </button>
-        )}
       </div>
 
       {/* AI Proposals panel */}

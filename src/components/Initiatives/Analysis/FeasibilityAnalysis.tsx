@@ -19,7 +19,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -49,6 +49,7 @@ interface FeasibilityAnalysisProps {
   onOpenInitiative: (id: string) => void;
   onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
   users?: OrgUser[];
+  onRegisterActions?: (node: React.ReactNode) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -92,6 +93,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
   onOpenInitiative,
   onQuickUpdate,
   users = [],
+  onRegisterActions,
 }) => {
   const { t } = useTranslation();
 
@@ -348,11 +350,40 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
     risk: 'Risk',
   };
 
+  useEffect(() => {
+    if (!onRegisterActions) return;
+    onRegisterActions(
+      <>
+        {onQuickUpdate && (
+          <button
+            onClick={computeAiOptimizer}
+            disabled={aiOptRunning}
+            className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+          >
+            {aiOptRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+            AI Optimize
+          </button>
+        )}
+        <button
+          onClick={() => setShowRanking((v) => !v)}
+          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
+            showRanking
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+        >
+          <ListOrdered size={12} />
+          AI Ranking
+        </button>
+      </>
+    );
+  }, [onRegisterActions, onQuickUpdate, computeAiOptimizer, aiOptRunning, showRanking]);
+
   /* ---------- render ---------- */
 
   return (
     <div className="space-y-6">
-      {/* Header: stats + AI buttons */}
+      {/* Header: stats */}
       <div className="flex items-center gap-4">
         <div className="flex-1 grid grid-cols-3 gap-3">
           <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3">
@@ -379,33 +410,6 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
               {t('initiatives.analysis.feasibility.criticalDims', 'With critical dimension')}
             </div>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-2 shrink-0">
-          {onQuickUpdate && (
-            <button
-              onClick={computeAiOptimizer}
-              disabled={aiOptRunning}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold
-                bg-gradient-to-r from-purple-600 to-indigo-600 text-white
-                hover:from-purple-700 hover:to-indigo-700
-                disabled:opacity-60 shadow-lg shadow-purple-500/20 transition-all"
-            >
-              {aiOptRunning ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-              {t('initiatives.analysis.feasibility.aiOptimize', 'AI Optimize')}
-            </button>
-          )}
-          <button
-            onClick={() => setShowRanking((v) => !v)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all
-              ${showRanking
-                ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-400/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
-              }`}
-          >
-            <ListOrdered size={14} />
-            {t('initiatives.analysis.feasibility.aiRanking', 'AI Ranking')}
-          </button>
         </div>
       </div>
 

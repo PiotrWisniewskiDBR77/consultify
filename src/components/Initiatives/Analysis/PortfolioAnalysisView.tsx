@@ -6,7 +6,7 @@
  */
 
 import { BarChart3, CheckCircle2, GitBranch, Target, Users } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -56,6 +56,8 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const [subview, setSubview] = useState<AnalysisSubview>('resources');
+  const [actionButtons, setActionButtons] = useState<React.ReactNode>(null);
+  const registerActions = useCallback((node: React.ReactNode) => setActionButtons(node), []);
 
   const {
     allocations,
@@ -90,27 +92,34 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sub-view pills — DBR77: rounded-full, h-8 */}
-      <div className="flex items-center gap-1.5 p-1 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
-        {SUBVIEWS.map((sv) => (
-          <button
-            key={sv.id}
-            type="button"
-            onClick={() => setSubview(sv.id)}
-            className={`
-              inline-flex items-center gap-2 h-8 px-4 rounded-full text-sm font-medium
-              transition-colors duration-150
-              ${
-                subview === sv.id
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 border border-transparent'
-              }
-            `}
-          >
-            {sv.icon}
-            {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
-          </button>
-        ))}
+      {/* Menu 3: sub-view pills (left) + action buttons (right) */}
+      <div className="flex items-center justify-between px-2 py-1 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
+        <div className="flex items-center gap-1.5">
+          {SUBVIEWS.map((sv) => (
+            <button
+              key={sv.id}
+              type="button"
+              onClick={() => setSubview(sv.id)}
+              className={`
+                inline-flex items-center gap-2 h-8 px-4 rounded-full text-sm font-medium
+                transition-colors duration-150
+                ${
+                  subview === sv.id
+                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 border border-transparent'
+                }
+              `}
+            >
+              {sv.icon}
+              {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
+            </button>
+          ))}
+        </div>
+        {actionButtons && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            {actionButtons}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -123,6 +132,7 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             onQuickUpdate={onQuickUpdate}
             users={users}
             initiatives={initiatives}
+            onRegisterActions={registerActions}
           />
         )}
         {subview === 'feasibility' && (
@@ -132,6 +142,7 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             onOpenInitiative={onOpenInitiative}
             onQuickUpdate={onQuickUpdate}
             users={users}
+            onRegisterActions={registerActions}
           />
         )}
         {subview === 'logic' && (
@@ -142,6 +153,7 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             onQuickUpdate={onQuickUpdate}
             initiatives={initiatives}
             users={users}
+            onRegisterActions={registerActions}
           />
         )}
         {subview === 'timeline' && (
@@ -153,6 +165,7 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             users={users}
             initiatives={initiatives}
             dependencies={dependencies}
+            onRegisterActions={registerActions}
           />
         )}
         {subview === 'completeness' && (
@@ -163,6 +176,7 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
             onQuickUpdate={onQuickUpdate}
             users={users}
             rawInitiatives={initiatives}
+            onRegisterActions={registerActions}
           />
         )}
       </div>

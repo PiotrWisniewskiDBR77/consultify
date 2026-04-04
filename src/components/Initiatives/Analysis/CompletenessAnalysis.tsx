@@ -21,7 +21,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -73,6 +73,7 @@ interface CompletenessAnalysisProps {
   onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
   users?: OrgUser[];
   rawInitiatives?: PortfolioInitiative[];
+  onRegisterActions?: (node: React.ReactNode) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -97,6 +98,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
   issues,
   onOpenInitiative,
   onQuickUpdate,
+  onRegisterActions,
   users = [],
   rawInitiatives = [],
 }) => {
@@ -334,6 +336,48 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
 
   /* ---------- render ---------- */
 
+  useEffect(() => {
+    if (!onRegisterActions) return;
+    onRegisterActions(
+      <>
+        {onQuickUpdate && (
+          <button
+            onClick={computeAutoFill}
+            disabled={autoFillRunning}
+            className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+          >
+            {autoFillRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+            AI Auto-Fill
+          </button>
+        )}
+        {onQuickUpdate && (
+          <button
+            onClick={() => setShowBulkFix((v) => !v)}
+            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
+              showBulkFix
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+          >
+            <Zap size={12} />
+            Bulk Fix
+          </button>
+        )}
+        <button
+          onClick={() => setShowTriage((v) => !v)}
+          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
+            showTriage
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+        >
+          <Target size={12} />
+          AI Priority Triage
+        </button>
+      </>
+    );
+  }, [onRegisterActions, onQuickUpdate, computeAutoFill, autoFillRunning, showBulkFix, showTriage]);
+
   return (
     <div className="space-y-6">
       {/* Header: stats + heatmap + AI buttons */}
@@ -400,47 +444,6 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             <span className="ml-auto text-[10px] text-red-500 font-medium">{totalMissingCritical} critical fields missing across portfolio</span>
           )}
         </div>
-      </div>
-
-      {/* AI buttons */}
-      <div className="flex flex-wrap items-center gap-2">
-        {onQuickUpdate && (
-          <button
-            onClick={computeAutoFill}
-            disabled={autoFillRunning}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold
-              bg-gradient-to-r from-purple-600 to-indigo-600 text-white
-              hover:from-purple-700 hover:to-indigo-700
-              disabled:opacity-60 shadow-lg shadow-purple-500/20 transition-all"
-          >
-            {autoFillRunning ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            AI Auto-Fill
-          </button>
-        )}
-        {onQuickUpdate && (
-          <button
-            onClick={() => setShowBulkFix((v) => !v)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all
-              ${showBulkFix
-                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-400/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
-              }`}
-          >
-            <Zap size={14} />
-            Bulk Fix
-          </button>
-        )}
-        <button
-          onClick={() => setShowTriage((v) => !v)}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all
-            ${showTriage
-              ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-400/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
-            }`}
-        >
-          <Target size={14} />
-          AI Priority Triage
-        </button>
       </div>
 
       {/* AI Auto-Fill panel */}

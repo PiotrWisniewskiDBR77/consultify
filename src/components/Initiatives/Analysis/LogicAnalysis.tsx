@@ -25,7 +25,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -82,6 +82,7 @@ interface LogicAnalysisProps {
   onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
   initiatives?: PortfolioInitiative[];
   users?: OrgUser[];
+  onRegisterActions?: (node: React.ReactNode) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -136,6 +137,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   onQuickUpdate,
   initiatives = [],
   users: _users = [],
+  onRegisterActions,
 }) => {
   const { t } = useTranslation();
 
@@ -512,6 +514,51 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     [onQuickUpdate, t]
   );
 
+  useEffect(() => {
+    if (!onRegisterActions) return;
+    onRegisterActions(
+      <>
+        <button
+          onClick={computeDiscoverDeps}
+          disabled={discoverRunning}
+          className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
+        >
+          {discoverRunning ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
+          AI Discover Dependencies
+        </button>
+        <button
+          onClick={detectCycles}
+          className="h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50 transition-colors"
+        >
+          <Shuffle size={12} />
+          Detect Cycles
+        </button>
+        <button
+          onClick={() => setShowCriticalPath((v) => !v)}
+          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
+            showCriticalPath
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+        >
+          <Route size={12} />
+          Critical Path
+        </button>
+        <button
+          onClick={() => setShowSequencer((v) => !v)}
+          className={`h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors ${
+            showSequencer
+              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+          }`}
+        >
+          <Network size={12} />
+          AI Sequencer
+        </button>
+      </>
+    );
+  }, [onRegisterActions, computeDiscoverDeps, discoverRunning, showCriticalPath, showSequencer]);
+
   /* ---------- render ---------- */
 
   return (
@@ -556,53 +603,6 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* AI action buttons */}
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={computeDiscoverDeps}
-          disabled={discoverRunning}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold
-            bg-gradient-to-r from-purple-600 to-indigo-600 text-white
-            hover:from-purple-700 hover:to-indigo-700
-            disabled:opacity-60 shadow-lg shadow-purple-500/20 transition-all"
-        >
-          {discoverRunning ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-          {t('initiatives.analysis.logic.aiDiscover', 'AI Discover Dependencies')}
-        </button>
-        <button
-          onClick={detectCycles}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold
-            bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300
-            border border-slate-200 dark:border-navy-700
-            hover:bg-slate-200 dark:hover:bg-navy-700 transition-all"
-        >
-          <Shuffle size={14} />
-          {t('initiatives.analysis.logic.detectCycles', 'Detect Cycles')}
-        </button>
-        <button
-          onClick={() => setShowCriticalPath((v) => !v)}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all
-            ${showCriticalPath
-              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-400/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
-            }`}
-        >
-          <Route size={14} />
-          {t('initiatives.analysis.logic.criticalPath', 'Critical Path')}
-        </button>
-        <button
-          onClick={() => setShowSequencer((v) => !v)}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all
-            ${showSequencer
-              ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-400/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700 hover:bg-slate-200 dark:hover:bg-navy-700'
-            }`}
-        >
-          <Network size={14} />
-          {t('initiatives.analysis.logic.sequencer', 'AI Sequencer')}
-        </button>
       </div>
 
       {/* AI Discover Dependencies panel */}
