@@ -412,42 +412,6 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         </div>
       </div>
 
-      {/* Completeness heatmap bar */}
-      <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Portfolio gate readiness</span>
-          <span className="text-xs text-slate-500">
-            {gateReadyCount}/{initiatives.length} ready ({initiatives.length > 0 ? Math.round((gateReadyCount / initiatives.length) * 100) : 0}%)
-          </span>
-        </div>
-        <div className="w-full h-4 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden flex">
-          {initiatives.length > 0 && (
-            <>
-              <div
-                className="h-full bg-emerald-500 transition-all"
-                style={{ width: `${(gateReadyCount / initiatives.length) * 100}%` }}
-              />
-              <div
-                className="h-full bg-amber-500 transition-all"
-                style={{ width: `${(initiatives.filter((i) => i.completeness >= 50 && !i.gateReady).length / initiatives.length) * 100}%` }}
-              />
-              <div
-                className="h-full bg-red-500 transition-all"
-                style={{ width: `${(initiatives.filter((i) => i.completeness < 50).length / initiatives.length) * 100}%` }}
-              />
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-4 mt-1.5">
-          <span className="flex items-center gap-1 text-[10px] text-slate-500"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Gate-ready</span>
-          <span className="flex items-center gap-1 text-[10px] text-slate-500"><span className="w-2 h-2 rounded-full bg-amber-500" /> ≥50%</span>
-          <span className="flex items-center gap-1 text-[10px] text-slate-500"><span className="w-2 h-2 rounded-full bg-red-500" /> &lt;50%</span>
-          {totalMissingCritical > 0 && (
-            <span className="ml-auto text-[10px] text-red-500 font-medium">{totalMissingCritical} critical fields missing across portfolio</span>
-          )}
-        </div>
-      </div>
-
       {/* AI Auto-Fill panel */}
       {autoFillSuggestions !== null && (
         <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
