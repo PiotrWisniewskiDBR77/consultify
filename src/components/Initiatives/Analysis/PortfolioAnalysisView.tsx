@@ -29,23 +29,11 @@ interface PortfolioAnalysisViewProps {
 }
 
 const SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
-  { id: 'resources', labelKey: 'initiatives.analysis.resources.title', icon: <Users size={14} /> },
-  {
-    id: 'feasibility',
-    labelKey: 'initiatives.analysis.feasibility.title',
-    icon: <Target size={14} />,
-  },
-  { id: 'logic', labelKey: 'initiatives.analysis.logic.title', icon: <GitBranch size={14} /> },
-  {
-    id: 'timeline',
-    labelKey: 'initiatives.analysis.timeline.title',
-    icon: <BarChart3 size={14} />,
-  },
-  {
-    id: 'completeness',
-    labelKey: 'initiatives.analysis.completeness.title',
-    icon: <CheckCircle2 size={14} />,
-  },
+  { id: 'resources', labelKey: 'initiatives.analysis.resources.title', icon: <Users size={14} className="text-violet-400" /> },
+  { id: 'feasibility', labelKey: 'initiatives.analysis.feasibility.title', icon: <Target size={14} className="text-amber-400" /> },
+  { id: 'logic', labelKey: 'initiatives.analysis.logic.title', icon: <GitBranch size={14} className="text-cyan-400" /> },
+  { id: 'timeline', labelKey: 'initiatives.analysis.timeline.title', icon: <BarChart3 size={14} className="text-emerald-400" /> },
+  { id: 'completeness', labelKey: 'initiatives.analysis.completeness.title', icon: <CheckCircle2 size={14} className="text-rose-400" /> },
 ];
 
 export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
@@ -92,23 +80,19 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Menu 3: sub-view pills (left) + action buttons (right) */}
-      <div className="flex items-center justify-between px-2 py-1 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
-        <div className="flex items-center gap-1.5">
+      {/* Menu 3: sub-view chips (left) + action buttons (right) — §3.2/§3.3 canon */}
+      <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
+        <div className="flex items-center gap-2">
           {SUBVIEWS.map((sv) => (
             <button
               key={sv.id}
               type="button"
               onClick={() => setSubview(sv.id)}
-              className={`
-                inline-flex items-center gap-2 h-8 px-4 rounded-full text-sm font-medium
-                transition-colors duration-150
-                ${
-                  subview === sv.id
-                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 border border-transparent'
-                }
-              `}
+              className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap ${
+                subview === sv.id
+                  ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+              }`}
             >
               {sv.icon}
               {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
