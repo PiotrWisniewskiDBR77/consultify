@@ -20,6 +20,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
+
 import {
   V8ExecutionControlApi,
   type V8ManagerProblemRow,
@@ -54,6 +56,7 @@ interface ManagerModuleViewProps {
   projectId?: string;
   onBack: () => void;
   onOpenEntity?: (entityType: string, entityId: string) => void;
+  onRegisterActions?: (node: React.ReactNode) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -139,6 +142,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
   projectId,
   onBack,
   onOpenEntity,
+  onRegisterActions,
 }) => {
   const { t } = useTranslation();
   const icon = MODULE_ICONS[moduleId];
@@ -170,6 +174,42 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
     setAiPanelMode('manage-all');
     setAiPanelOpen(true);
   }, []);
+
+  const closeAiPanel = useCallback(() => {
+    setAiPanelOpen(false);
+    setAiProblemId(undefined);
+  }, []);
+
+  const toggleAiTriage = useCallback(() => {
+    if (aiPanelOpen && aiPanelMode === 'triage') {
+      closeAiPanel();
+      return;
+    }
+    openAiTriage();
+  }, [aiPanelMode, aiPanelOpen, closeAiPanel, openAiTriage]);
+
+  const toggleAiManageAll = useCallback(() => {
+    if (aiPanelOpen && aiPanelMode === 'manage-all') {
+      closeAiPanel();
+      return;
+    }
+    openAiManageAll();
+  }, [aiPanelMode, aiPanelOpen, closeAiPanel, openAiManageAll]);
+
+  const toggleAiRecommend = useCallback(
+    (problemId: string) => {
+      if (
+        aiPanelOpen &&
+        aiPanelMode === 'recommend' &&
+        aiProblemId === problemId
+      ) {
+        closeAiPanel();
+        return;
+      }
+      openAiRecommend(problemId);
+    },
+    [aiPanelMode, aiPanelOpen, aiProblemId, closeAiPanel, openAiRecommend]
+  );
 
   const selectedProblem = useMemo(
     () => rows.find((r) => r.id === selectedId) || null,
@@ -277,6 +317,43 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
     info: rows.filter((r) => r.severity === 'info').length,
   }), [rows]);
 
+  useEffect(() => {
+    if (!onRegisterActions) return;
+    onRegisterActions(
+      <>
+        <button
+          type="button"
+          onClick={toggleAiTriage}
+          disabled={loading || rows.length === 0}
+          className={getMenu3AiButtonClass(aiPanelOpen && aiPanelMode === 'triage')}
+          title="AI Triage — cluster and prioritize problems"
+        >
+          <Layers size={12} />
+          AI Triage
+        </button>
+        <button
+          type="button"
+          onClick={toggleAiManageAll}
+          disabled={loading || rows.length === 0}
+          className={getMenu3AiButtonClass(aiPanelOpen && aiPanelMode === 'manage-all')}
+          title="AI Manage All — comprehensive management plan"
+        >
+          <Sparkles size={12} />
+          AI Manage All
+        </button>
+      </>
+    );
+    return () => onRegisterActions(null);
+  }, [
+    aiPanelMode,
+    aiPanelOpen,
+    loading,
+    onRegisterActions,
+    rows.length,
+    toggleAiManageAll,
+    toggleAiTriage,
+  ]);
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
       {/* ─── Header ─── */}
@@ -312,30 +389,6 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
               </span>
             )}
             <span className="text-[10px] text-slate-400 tabular-nums">{rows.length} total</span>
-          </div>
-
-          {/* AI buttons */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={openAiTriage}
-              disabled={loading || rows.length === 0}
-              className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[10px] font-semibold text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-40 dark:border-violet-800/40 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/30"
-              title="AI Triage — cluster and prioritize problems"
-            >
-              <Layers size={12} />
-              AI Triage
-            </button>
-            <button
-              type="button"
-              onClick={openAiManageAll}
-              disabled={loading || rows.length === 0}
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-3 py-1.5 text-[10px] font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40"
-              title="AI Manage All — comprehensive management plan"
-            >
-              <Sparkles size={12} />
-              AI Manage All
-            </button>
           </div>
 
           <button
@@ -382,8 +435,12 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
             <div className="shrink-0 border-t border-slate-200 dark:border-navy-700 px-3 py-2">
               <button
                 type="button"
-                onClick={() => openAiRecommend(selectedProblem.id)}
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-3 py-2 text-[11px] font-semibold text-white shadow-sm transition-all hover:shadow-md hover:brightness-110"
+                onClick={() => toggleAiRecommend(selectedProblem.id)}
+                className={`${getMenu3AiButtonClass(
+                  aiPanelOpen &&
+                    aiPanelMode === 'recommend' &&
+                    aiProblemId === selectedProblem.id
+                )} w-full justify-center`}
               >
                 <Sparkles size={13} />
                 {t('execution.manager.ai.suggest', 'AI — How to manage this?')}
@@ -396,7 +453,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
       {/* AI Recommendation Panel */}
       <AiRecommendationPanel
         isOpen={aiPanelOpen}
-        onClose={() => setAiPanelOpen(false)}
+        onClose={closeAiPanel}
         mode={aiPanelMode}
         laneId={moduleId}
         problemId={aiProblemId}

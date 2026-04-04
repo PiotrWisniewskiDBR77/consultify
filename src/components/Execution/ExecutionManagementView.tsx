@@ -6,7 +6,7 @@ import {
   Shield,
   Users,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
@@ -25,7 +25,6 @@ interface ExecutionManagementViewProps {
   searchQuery: string;
   hasExecutingInitiatives: boolean;
   onOpenEntity?: (entityType: string, entityId: string) => void;
-  actionButtons?: React.ReactNode;
 }
 
 type ManagementSubview = 'all' | ManagerModuleId;
@@ -42,10 +41,20 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
   searchQuery,
   hasExecutingInitiatives,
   onOpenEntity,
-  actionButtons,
 }) => {
   const { t } = useTranslation();
   const [subview, setSubview] = useState<ManagementSubview>('all');
+  const [actionButtons, setActionButtons] = useState<React.ReactNode>(null);
+
+  const registerActions = useCallback((node: React.ReactNode) => {
+    setActionButtons(node);
+  }, []);
+
+  useEffect(() => {
+    if (subview === 'all') {
+      setActionButtons(null);
+    }
+  }, [subview]);
 
   const laneCount = (id: string) =>
     managerLaneCounts[id] || { total: 0, critical: 0, warning: 0 };
@@ -355,6 +364,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
             projectId={projectId}
             onBack={() => setSubview('all')}
             onOpenEntity={onOpenEntity}
+            onRegisterActions={registerActions}
           />
         )}
       </div>
