@@ -1420,7 +1420,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={() => setShowNewModal(true)}
-        newItemLabel={`+ ${t('initiatives.form.newInitiative')}`}
+        newItemLabel={t('initiatives.form.newInitiative')}
         filterActions={filterActions}
         rightControls={rightControls}
         commandRowContent={activeTab === 'analysis' ? null : commandRowContent}
