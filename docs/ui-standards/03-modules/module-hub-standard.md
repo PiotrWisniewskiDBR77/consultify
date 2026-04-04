@@ -118,6 +118,136 @@ Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 r�
 - **Priorytet trybów (MUST):** **Bulk actions** nadpisuje pozostałe tryby (to jest “szybkie wybieranie i działanie”). Search ma priorytet nad tabs/counters. Tabs mają priorytet nad counters.
 - **Hierarchia wizualna (MUST):** elementy w **Command Row** są **symbolicznie mniejsze** niż główne taby/topbar (żeby nie wyglądały jak ten sam poziom nawigacji).
 
+### 3.2 Standard wizualny Menu 3 — tło i separator (MUST)
+
+**Tło Menu 3 (Command Row):**
+
+Menu 3 dziedziczy tło z `ModuleNavBar` (`bg-white dark:bg-navy-900`), ale chipy wewnątrz mają **ciemniejsze tło** (`dark:bg-navy-800`), co tworzy wizualne wyróżnienie paska chipów względem tab baru (Menu 2).
+
+**Separator:**
+
+Pod całym `ModuleNavBar` (obejmującym Menu 2 + Menu 3) przebiega **jedna linia separująca** oddzielająca od obszaru roboczego:
+
+```
+border-b border-slate-200/60 dark:border-white/5
+```
+
+**Hierarchia warstw (ciemny motyw):**
+
+| Warstwa         | Tło              | Opis                                |
+| --------------- | ---------------- | ----------------------------------- |
+| Menu 2 (tabs)   | `dark:bg-navy-900` | Tło tab baru                       |
+| Menu 3 (chips)  | `dark:bg-navy-900` + chipy `dark:bg-navy-800` | Chipy wyróżnione ciemniejszym tłem |
+| Separator        | `dark:border-white/5` | Subtelna biała linia 5% opacity   |
+| Obszar roboczy  | `dark:bg-navy-950` | Ciemniejsze tło contentu           |
+
+**SSOT implementacji:** `src/components/shared/ModuleHub/ModuleNavBar.tsx`
+
+### 3.3 Standard wizualny chipów Menu 3 — "Preset Filter Chips" (MUST)
+
+Wszystkie chipy w Command Row (we wszystkich modułach) stosują **identyczny format wizualny**.
+
+**Anatomia chipa:**
+
+```
+[ 🔴 ikona kolorowa ] [ Label ] [ ⬤ badge z liczbą ]
+```
+
+Trzy elementy w jednym wierszu: kolorowa ikona (14px), tekst etykiety, okrągły badge z counterem.
+
+**Kształt i rozmiar:**
+
+| Właściwość  | Wartość                                                  |
+| ----------- | -------------------------------------------------------- |
+| Wysokość    | `h-8` (32px)                                             |
+| Zaokrąglenie | `rounded-full` (pill shape)                             |
+| Padding     | `px-2.5`                                                 |
+| Gap wewnętrzny | `gap-1.5`                                             |
+| Tekst       | `text-[11px] font-medium`                                |
+| Kontener    | `inline-flex items-center`                               |
+| Przejście   | `transition-colors`                                      |
+| Odstęp między chipami | `gap-2` (8px)                                  |
+
+**Stan nieaktywny (default):**
+
+| Element | Light                          | Dark                                  |
+| ------- | ------------------------------ | ------------------------------------- |
+| Tło     | `bg-slate-100`                 | `dark:bg-navy-800`                    |
+| Tekst   | `text-slate-600`               | `dark:text-slate-300`                 |
+| Ramka   | `border-slate-200/60`          | `dark:border-navy-700/60`             |
+| Hover   | `hover:bg-white/60`            | `dark:hover:bg-navy-900/50`           |
+
+**Stan aktywny (selected) — fiolet:**
+
+| Element | Light                          | Dark                                  |
+| ------- | ------------------------------ | ------------------------------------- |
+| Tło     | `bg-purple-500/10`             | `bg-purple-500/10`                    |
+| Tekst   | `text-purple-700`              | `dark:text-purple-200`                |
+| Ramka   | `border-purple-500/40`         | `border-purple-500/40`                |
+
+**Stan disabled:**
+
+| Element | Light                          | Dark                                  |
+| ------- | ------------------------------ | ------------------------------------- |
+| Tło     | `bg-slate-100/60`              | `dark:bg-navy-800/40`                 |
+| Tekst   | `text-slate-400`               | `dark:text-slate-500`                 |
+| Ramka   | `border-slate-200/40`          | `dark:border-navy-700/40`             |
+| Kursor  | `cursor-not-allowed`           | `cursor-not-allowed`                  |
+
+**Badge (counter):**
+
+| Stan       | Light                                       | Dark                                        |
+| ---------- | ------------------------------------------- | ------------------------------------------- |
+| Nieaktywny | `bg-slate-200 text-slate-600`               | `dark:bg-navy-700 dark:text-slate-300`      |
+| Aktywny    | `bg-purple-500/30 text-purple-700`          | `bg-purple-500/30 dark:text-purple-200`     |
+
+Format badge: `px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none`
+
+**Ikony chipów:**
+
+Każdy chip ma kolorową ikonę (14px) z palety semantycznej. Chip `ALL` zamiast ikony ma małą kropkę (`w-2 h-2 rounded-full bg-slate-400`).
+
+Przykłady kolorów ikon:
+
+| Chip             | Ikona            | Kolor ikony         |
+| ---------------- | ---------------- | -------------------- |
+| ALL              | kropka 2×2       | `bg-slate-400`       |
+| Action Queue     | `ClipboardList`  | `text-cyan-400`      |
+| Decisions        | `Scale`          | `text-amber-400`     |
+| Blockers/Blocked | `AlertTriangle`  | `text-rose-400`      |
+| Risk             | `Shield`         | `text-rose-400`      |
+| Workload         | `Users`          | `text-violet-400`    |
+| Missing dates    | `Calendar`       | `text-yellow-400`    |
+| Due soon         | `Clock`          | `text-cyan-400`      |
+| Reports          | `FileText`       | `text-cyan-400`      |
+
+**Tailwind class strings (copy-paste ready):**
+
+```ts
+const chipBase =
+  'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
+
+const badgeBase =
+  'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+
+// Nieaktywny chip:
+'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+
+// Aktywny chip:
+'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+
+// Disabled chip:
+'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40 cursor-not-allowed'
+
+// Nieaktywny badge:
+'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+
+// Aktywny badge:
+'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+```
+
+**SSOT implementacji:** `src/components/Execution/ExecutionHub.tsx` → `commandRowContent` (referencyjny wzorzec dla wszystkich modułów).
+
 ---
 
 ## 4. Tabela Danych
