@@ -26,14 +26,12 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
   ChevronRight,
   ClipboardList,
   Clock,
   FileText,
   GripVertical,
   LayoutDashboard,
-  LayoutGrid,
   Loader2,
   MessageSquare,
   Scale,
@@ -554,16 +552,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [reportPreset, setReportPreset] = useState<
     'all' | 'weekly' | 'monthly' | 'bi-weekly' | 'on-demand' | 'sponsor'
   >('all');
-
-  // Workload heatmap controls (rendered in top bar)
-  const [workloadViewMode, setWorkloadViewMode] = useState<'weekly' | 'monthly'>('monthly');
-  const [workloadWeekCount, setWorkloadWeekCount] = useState(8);
-  const [workloadMonthCount, setWorkloadMonthCount] = useState(6);
-  const [workloadStartDate, setWorkloadStartDate] = useState(() => {
-    const today = new Date();
-    today.setDate(today.getDate() - 7);
-    return today;
-  });
 
   // Data state
   const [initiatives, setInitiatives] = useState<FullInitiative[]>([]);
@@ -1824,8 +1812,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const rightControls = useMemo(() => {
     const showScope = activeTab === 'list';
-    const showHeatmapShortcut = false;
-    const showHeatmapControls = activeTab === ('people_change' as ModuleTab);
     const execChip =
       currentProjectId && activeTab !== 'list' ? (
         <button
@@ -1852,117 +1838,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </button>
       ) : null;
 
-    if (!showScope && !showHeatmapShortcut && !showHeatmapControls) {
+    if (!showScope) {
       return <div className="flex items-center gap-2">{execChip}</div>;
     }
-
-    const navigateWorkload = (direction: 'prev' | 'next') => {
-      setWorkloadStartDate((prev) => {
-        const next = new Date(prev);
-        if (workloadViewMode === 'weekly') {
-          next.setDate(next.getDate() + (direction === 'next' ? 7 : -7));
-        } else {
-          next.setMonth(next.getMonth() + (direction === 'next' ? 1 : -1));
-        }
-        return next;
-      });
-    };
-
-    const heatmapShortcut = (
-      <button
-        type="button"
-        onClick={() =>
-          setActiveTab(activeTab === 'team' ? ('initiatives' as ModuleTab) : ('team' as ModuleTab))
-        }
-        className={`h-9 w-9 rounded-lg flex items-center justify-center border transition-colors ${
-          activeTab === 'team'
-            ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-        }`}
-        title={t('execution.heatmap', 'Workload Heatmap')}
-      >
-        <Users size={16} />
-      </button>
-    );
-
-    const heatmapControls = showHeatmapControls ? (
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
-          <button
-            type="button"
-            onClick={() => navigateWorkload('prev')}
-            className="h-7 w-7 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-navy-900/50 transition-colors"
-            title={t('common.prev', 'Previous')}
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigateWorkload('next')}
-            className="h-7 w-7 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-navy-900/50 transition-colors"
-            title={t('common.next', 'Next')}
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
-
-        <div className="flex items-center p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
-          <button
-            type="button"
-            onClick={() => setWorkloadViewMode('weekly')}
-            className={`h-7 px-2 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              workloadViewMode === 'weekly'
-                ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title="Weekly"
-          >
-            <LayoutGrid size={14} />W
-          </button>
-          <button
-            type="button"
-            onClick={() => setWorkloadViewMode('monthly')}
-            className={`h-7 px-2 rounded-md text-[11px] font-semibold transition-colors flex items-center gap-1 ${
-              workloadViewMode === 'monthly'
-                ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title="Monthly"
-          >
-            <CalendarDays size={14} />M
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60">
-          {(workloadViewMode === 'weekly' ? [6, 8, 12] : [3, 6, 12]).map((n) => (
-            <button
-              key={`${workloadViewMode}-${n}`}
-              type="button"
-              onClick={() => {
-                if (workloadViewMode === 'weekly') setWorkloadWeekCount(n);
-                else setWorkloadMonthCount(n);
-              }}
-              className={`h-7 px-2 rounded-md text-[11px] font-semibold transition-colors ${
-                (workloadViewMode === 'weekly' ? workloadWeekCount === n : workloadMonthCount === n)
-                  ? 'bg-white/80 dark:bg-navy-900/70 text-slate-700 dark:text-slate-200 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-navy-900/50'
-              }`}
-              title={workloadViewMode === 'weekly' ? `${n} weeks` : `${n} months`}
-            >
-              {n}
-              {workloadViewMode === 'weekly' ? 'W' : 'M'}
-            </button>
-          ))}
-        </div>
-      </div>
-    ) : null;
 
     return (
       <div className="flex items-center gap-2">
         {execChip}
-        {showScope ? scopeToggle : null}
-        {showHeatmapShortcut ? heatmapShortcut : null}
-        {heatmapControls}
+        {scopeToggle}
       </div>
     );
   }, [
@@ -1972,9 +1855,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     execTopline,
     scopeToggle,
     t,
-    workloadMonthCount,
-    workloadViewMode,
-    workloadWeekCount,
   ]);
 
   const portfolioMetrics = useMemo(() => {
@@ -2422,6 +2302,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     },
     [activeTab, currentProjectId]
   );
+
+  const handleCreateInitiative = useCallback(() => {
+    navigate(`${ROUTES.INITIATIVES}?new=1`);
+  }, [navigate]);
 
   const handleInitiativeUpdate = useCallback((updated: FullInitiative) => {
     setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
@@ -4247,6 +4131,8 @@ Please return:
         }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
+        onNewItem={handleCreateInitiative}
+        newItemLabel={t('initiatives.form.newInitiative', 'New Initiative')}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
         rightControls={rightControls}

@@ -93,6 +93,10 @@
 - Context counters (pills: All, Overdue, This week…)
 - Bulk actions (po zaznaczeniu)
 
+**Doprecyzowanie (MUST):**
+- Jeśli Menu 3 używa prawej strony na przyciski AI / actions, nie dokładamy tam przełączników typu `prev/next`, `W/M`, `3M/6M/12M`.
+- Takie kontrolki należą do toolbara konkretnego widoku (np. timeline / heatmap / canvas), a nie do Command Row.
+
 **MUST NOT:** Dokładanie 2.–3. rzędu filtrów/toolbarów między topbarem a tabelą.
 
 **Standard wizualny (MUST — identyczny we wszystkich modułach):**
