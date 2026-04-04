@@ -118,6 +118,27 @@ Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 r�
 - **Priorytet trybów (MUST):** **Bulk actions** nadpisuje pozostałe tryby (to jest “szybkie wybieranie i działanie”). Search ma priorytet nad tabs/counters. Tabs mają priorytet nad counters.
 - **Hierarchia wizualna (MUST):** elementy w **Command Row** są **symbolicznie mniejsze** niż główne taby/topbar (żeby nie wyglądały jak ten sam poziom nawigacji).
 
+### 3.1a Własność Menu 3 w podwidokach specjalistycznych (MUST)
+
+Jeżeli dany tab modułu otwiera **specjalistyczny workspace / analysis view / management view**, Menu 3 może być renderowane **lokalnie przez ten widok**, zamiast przez globalny `ModuleHub`.
+
+**Przykłady kanoniczne:**
+- `Initiatives → Analysis`
+- `Execution / Implementation → Management`
+
+**Reguły:**
+
+- **MUST:** nadal istnieje **tylko jeden** rząd Menu 3 pod Menu 2.
+- **MUST:** lokalne Menu 3 zajmuje **dokładnie to samo miejsce** co standardowy Command Row.
+- **MUST:** jeżeli widok ma własne lokalne Menu 3, globalny `ModuleHub.commandRowContent` dla tego taba powinien być wyłączony (`null` / brak renderu).
+- **MUST:** lokalne Menu 3 zachowuje ten sam background, separator, wysokość, spacing i hierarchię wizualną co globalny Command Row.
+- **MUST:** jeśli widok ma własne presety/chipy i własne przyciski funkcyjne po prawej stronie, stan i zachowanie są zarządzane przez ten widok lokalnie, a nie przez dynamic tabs.
+- **MUST NOT:** otwarcie panelu lub lokalnego subwidoku nie może powodować pojawienia się alternatywnego drugiego paska pod topbarem.
+
+**Uzasadnienie:**
+
+Specjalistyczne widoki często mają własną logikę subview (`Resources`, `Timeline`, `Completeness`, lane focus, itp.). W takich przypadkach Menu 3 jest częścią lokalnej nawigacji roboczej tego widoku i nie powinno być przejmowane przez globalne `DynamicTabs`.
+
 ### 3.2 Standard wizualny Menu 3 — tło i separator (MUST)
 
 **Tło Menu 3 (Command Row):**
