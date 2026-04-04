@@ -362,7 +362,6 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
           <ManagerModuleView
             moduleId={subview}
             projectId={projectId}
-            onBack={() => setSubview('all')}
             onOpenEntity={onOpenEntity}
             onRegisterActions={registerActions}
           />

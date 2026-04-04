@@ -5,18 +5,7 @@
  * Left: ProblemTable (filterable, sortable). Right: ProblemPreview (details + actions).
  */
 
-import {
-  AlertTriangle,
-  ArrowLeft,
-  ClipboardList,
-  Layers,
-  RefreshCw,
-  Scale,
-  Shield,
-  Sparkles,
-  Target,
-  Users,
-} from 'lucide-react';
+import { Layers, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -54,41 +43,9 @@ export interface ManagerModuleDef {
 interface ManagerModuleViewProps {
   moduleId: string;
   projectId?: string;
-  onBack: () => void;
   onOpenEntity?: (entityType: string, entityId: string) => void;
   onRegisterActions?: (node: React.ReactNode) => void;
 }
-
-// ---------------------------------------------------------------------------
-// CONSTANTS
-// ---------------------------------------------------------------------------
-
-const MODULE_ICONS: Record<string, React.ReactNode> = {
-  'action-queue': <ClipboardList size={16} className="text-amber-500" />,
-  decisions: <Scale size={16} className="text-indigo-500" />,
-  blockers: <AlertTriangle size={16} className="text-rose-500" />,
-  workload: <Target size={16} className="text-blue-500" />,
-  risk: <Shield size={16} className="text-orange-500" />,
-  'people-change': <Users size={16} className="text-emerald-500" />,
-};
-
-const MODULE_TITLES: Record<string, string> = {
-  'action-queue': 'Action Queue',
-  decisions: 'Decisions & Approvals',
-  blockers: 'Blockers & Escalations',
-  workload: 'Resource & Workload',
-  risk: 'Execution Risk',
-  'people-change': 'People & Change',
-};
-
-const MODULE_DESCRIPTIONS: Record<string, string> = {
-  'action-queue': 'Overdue tasks, blocked items, and critical issues requiring immediate attention.',
-  decisions: 'Pending, overdue, and deferred decisions blocking progress.',
-  blockers: 'Blocked initiatives, tasks, dependencies, and critical issues.',
-  workload: 'Overloaded team members, unassigned tasks, missing estimates.',
-  risk: 'Open risks, overdue initiatives, missing baselines, stale items.',
-  'people-change': 'Missing owners, sponsors, dates, and bus-factor risks.',
-};
 
 // ---------------------------------------------------------------------------
 // DATA HOOK
@@ -140,15 +97,10 @@ function useManagerProblems(moduleId: string, projectId?: string) {
 export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
   moduleId,
   projectId,
-  onBack,
   onOpenEntity,
   onRegisterActions,
 }) => {
   const { t } = useTranslation();
-  const icon = MODULE_ICONS[moduleId];
-  const title = MODULE_TITLES[moduleId] || moduleId;
-  const description = MODULE_DESCRIPTIONS[moduleId] || '';
-
   const { rows, loading, refresh } = useManagerProblems(moduleId, projectId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -311,12 +263,6 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
     [selectedProblem, handleAction]
   );
 
-  const counts = useMemo(() => ({
-    critical: rows.filter((r) => r.severity === 'critical').length,
-    warning: rows.filter((r) => r.severity === 'warning').length,
-    info: rows.filter((r) => r.severity === 'info').length,
-  }), [rows]);
-
   useEffect(() => {
     if (!onRegisterActions) return;
     onRegisterActions(
@@ -356,53 +302,6 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
-      {/* ─── Header ─── */}
-      <div className="shrink-0 px-4 py-3 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
-            {icon}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h1>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{description}</p>
-          </div>
-
-          {/* Counters */}
-          <div className="flex items-center gap-2">
-            {counts.critical > 0 && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-[10px] font-semibold text-rose-700 dark:text-rose-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                {counts.critical}
-              </span>
-            )}
-            {counts.warning > 0 && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                {counts.warning}
-              </span>
-            )}
-            <span className="text-[10px] text-slate-400 tabular-nums">{rows.length} total</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={loading}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
-            title="Refresh"
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
-      </div>
-
       {/* ─── Body: Table + Preview ─── */}
       <div className="flex-1 flex overflow-hidden">
         {/* Table (left) */}
