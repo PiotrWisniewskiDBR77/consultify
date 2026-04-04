@@ -248,6 +248,81 @@ const badgeBase =
 
 **SSOT implementacji:** `src/components/Execution/ExecutionHub.tsx` → `commandRowContent` (referencyjny wzorzec dla wszystkich modułów).
 
+### 3.4 Przyciski AI w Menu 3 — prawa strona (MUST)
+
+Po prawej stronie Command Row (Menu 3) umieszczamy **przyciski funkcji AI** kontekstowe dla danego ekranu/taba.
+
+**Layout Menu 3:**
+
+```
+[ preset chips (lewa) ] ─────────────────────── [ AI buttons (prawa) ]
+```
+
+Kontener Command Row używa `flex items-center justify-between` — chipy po lewej, przyciski AI po prawej.
+
+**Zasady:**
+
+- **MUST:** Przyciski AI pojawiają się **tylko gdy ekran oferuje funkcje AI** — nie dodajemy pustych slotów.
+- **MUST:** Przyciski AI są **kontekstowe** — zmieniają się w zależności od aktywnego taba/widoku (np. Management → "AI Triage" + "AI Manage All"; Resources Analysis → "AI Balance workload").
+- **MUST:** Rozmiar przycisków AI jest **identyczny z chipami Menu 3** (`h-8`, `text-[11px]`, `rounded-full`) — nie mogą być większe ani mniejsze niż preset chips.
+- **MUST:** Ikona `Sparkles` (lucide) jest kanonicznym symbolem AI w przyciskach Menu 3.
+- **SHOULD:** Maksymalnie 2–3 przyciski AI na ekran. Jeśli jest więcej akcji AI — grupuj w dropdown.
+
+**Format przycisku AI:**
+
+Dwa warianty — **secondary** (outline) i **primary** (filled). Jeśli ekran ma 2 przyciski AI, pierwszy jest secondary, drugi primary.
+
+**AI Secondary (outline):**
+
+| Właściwość  | Wartość                                                  |
+| ----------- | -------------------------------------------------------- |
+| Kształt     | `h-8 rounded-full px-3` (identyczny z chipami)           |
+| Tekst       | `text-[11px] font-semibold`                              |
+| Ikona       | `Sparkles` lub kontekstowa (12–14px), po lewej           |
+| Gap         | `gap-1.5`                                                |
+
+| Element | Light                          | Dark                                  |
+| ------- | ------------------------------ | ------------------------------------- |
+| Tło     | `bg-violet-50`                 | `dark:bg-violet-900/20`               |
+| Tekst   | `text-violet-700`              | `dark:text-violet-400`                |
+| Ramka   | `border border-violet-200`     | `dark:border-violet-800/40`           |
+| Hover   | `hover:bg-violet-100`          | `dark:hover:bg-violet-900/30`         |
+| Disabled | `disabled:opacity-40`         | `disabled:opacity-40`                 |
+
+**AI Primary (filled):**
+
+| Element | Wartość                                                  |
+| ------- | -------------------------------------------------------- |
+| Tło     | `bg-gradient-to-r from-violet-600 to-cyan-600`           |
+| Tekst   | `text-white text-[11px] font-semibold`                   |
+| Kształt | `h-8 rounded-full px-3`                                  |
+| Shadow  | `shadow-sm`                                              |
+| Hover   | `hover:shadow-md hover:brightness-110`                   |
+| Disabled | `disabled:opacity-40`                                   |
+
+> **Uwaga:** Kolor przycisków AI (violet) jest wstępny — może zostać zmieniony. Gradient primary `violet → cyan` jest obecnym standardem.
+
+**Tailwind class strings (copy-paste ready):**
+
+```ts
+// AI Secondary (outline):
+'h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-40 dark:border-violet-800/40 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/30'
+
+// AI Primary (filled):
+'h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40'
+```
+
+**Przykłady przycisków AI na ekranach:**
+
+| Ekran / Tab                     | Przyciski AI                                |
+| ------------------------------- | ------------------------------------------- |
+| Execution → Management (lane)   | `AI Triage` (secondary) + `AI Manage All` (primary) |
+| Initiatives → Analysis → Resources | `AI Balance workload` (primary)          |
+| Execution → Summary             | _(brak — ekran nie ma dedykowanej funkcji AI)_ |
+| Execution → Reporting (report)  | `AI Generate` (primary)                     |
+
+**SSOT implementacji:** `src/components/Execution/ManagerModuleView.tsx` (referencyjny wzorzec AI buttons).
+
 ---
 
 ## 4. Tabela Danych

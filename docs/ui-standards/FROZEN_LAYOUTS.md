@@ -100,7 +100,8 @@
 - **Separator:** `border-b border-slate-200/60 dark:border-white/5` pod całym ModuleNavBar
 - **Format chipów:** pill shape `h-8 rounded-full`, ikona kolorowa 14px + label + badge z counterem
 - **Aktywny chip:** fioletowa ramka `border-purple-500/40`, tło `bg-purple-500/10`, tekst `text-purple-700 dark:text-purple-200`
-- **Pełna specyfikacja:** `module-hub-standard.md` §3.2 (tło/separator) i §3.3 (chipy)
+- **Przyciski AI (prawa strona):** kontekstowe, `h-8 rounded-full`, ikona `Sparkles`, wariant secondary (outline violet) lub primary (gradient violet→cyan)
+- **Pełna specyfikacja:** `module-hub-standard.md` §3.2 (tło/separator), §3.3 (chipy), §3.4 (AI buttons)
 
 ---
 
