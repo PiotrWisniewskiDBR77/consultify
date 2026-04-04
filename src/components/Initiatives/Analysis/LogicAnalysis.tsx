@@ -519,12 +519,19 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
   useEffect(() => {
     if (!onRegisterActions) return;
+    const toggleDiscoveredDepsPanel = () => {
+      if (discoveredDeps !== null) {
+        setDiscoveredDeps(null);
+        return;
+      }
+      computeDiscoverDeps();
+    };
     onRegisterActions(
       <>
         <button
-          onClick={computeDiscoverDeps}
+          onClick={toggleDiscoveredDepsPanel}
           disabled={discoverRunning}
-          className={getMenu3AiButtonClass(false)}
+          className={getMenu3AiButtonClass(discoveredDeps !== null)}
         >
           {discoverRunning ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
           AI Discover Dependencies
@@ -552,7 +559,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         </button>
       </>
     );
-  }, [onRegisterActions, computeDiscoverDeps, discoverRunning, showCriticalPath, showSequencer]);
+  }, [onRegisterActions, computeDiscoverDeps, discoveredDeps, discoverRunning, showCriticalPath, showSequencer]);
 
   /* ---------- render ---------- */
 

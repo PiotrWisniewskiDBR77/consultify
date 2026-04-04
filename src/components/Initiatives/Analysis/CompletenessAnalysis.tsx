@@ -341,13 +341,20 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
 
   useEffect(() => {
     if (!onRegisterActions) return;
+    const toggleAutoFillPanel = () => {
+      if (autoFillSuggestions !== null) {
+        setAutoFillSuggestions(null);
+        return;
+      }
+      computeAutoFill();
+    };
     onRegisterActions(
       <>
         {onQuickUpdate && (
           <button
-            onClick={computeAutoFill}
+            onClick={toggleAutoFillPanel}
             disabled={autoFillRunning}
-            className={getMenu3AiButtonClass(false)}
+            className={getMenu3AiButtonClass(autoFillSuggestions !== null)}
           >
             {autoFillRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             AI Auto-Fill
@@ -371,7 +378,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         </button>
       </>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAutoFill, autoFillRunning, showBulkFix, showTriage]);
+  }, [onRegisterActions, onQuickUpdate, computeAutoFill, autoFillRunning, autoFillSuggestions, showBulkFix, showTriage]);
 
   return (
     <div className="space-y-6">

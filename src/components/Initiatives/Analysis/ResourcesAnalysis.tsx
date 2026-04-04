@@ -385,17 +385,25 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
       onRegisterActions(null);
       return;
     }
+    const toggleAiProposalsPanel = () => {
+      if (aiProposals !== null) {
+        setAiProposals(null);
+        setProposalOverrides({});
+        return;
+      }
+      computeAiProposals();
+    };
     onRegisterActions(
       <button
-        onClick={computeAiProposals}
+        onClick={toggleAiProposalsPanel}
         disabled={aiRunning}
-        className={getMenu3AiButtonClass(false)}
+        className={getMenu3AiButtonClass(aiProposals !== null)}
       >
         {aiRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
         {aiRunning ? 'Analyzing...' : 'AI Balance workload'}
       </button>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAiProposals, aiRunning]);
+  }, [onRegisterActions, onQuickUpdate, computeAiProposals, aiProposals, aiRunning]);
 
   /* ---------- render ---------- */
 

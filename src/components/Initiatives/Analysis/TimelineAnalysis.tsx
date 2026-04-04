@@ -492,13 +492,20 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
   useEffect(() => {
     if (!onRegisterActions) return;
+    const toggleAutoSchedulePanel = () => {
+      if (scheduleProposals !== null) {
+        setScheduleProposals(null);
+        return;
+      }
+      computeAutoSchedule();
+    };
     onRegisterActions(
       <>
         {onQuickUpdate && (
           <button
-            onClick={computeAutoSchedule}
+            onClick={toggleAutoSchedulePanel}
             disabled={scheduleRunning}
-            className={getMenu3AiButtonClass(false)}
+            className={getMenu3AiButtonClass(scheduleProposals !== null)}
           >
             {scheduleRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             AI Auto-Schedule
@@ -520,7 +527,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
         </button>
       </>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAutoSchedule, scheduleRunning, showConflicts, conflicts.length, showOptimizer]);
+  }, [onRegisterActions, onQuickUpdate, computeAutoSchedule, scheduleProposals, scheduleRunning, showConflicts, conflicts.length, showOptimizer]);
 
   return (
     <div className="space-y-6">

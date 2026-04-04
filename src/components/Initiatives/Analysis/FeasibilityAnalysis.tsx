@@ -355,13 +355,20 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
 
   useEffect(() => {
     if (!onRegisterActions) return;
+    const toggleAiOptimizerPanel = () => {
+      if (aiOptProposals !== null) {
+        setAiOptProposals(null);
+        return;
+      }
+      computeAiOptimizer();
+    };
     onRegisterActions(
       <>
         {onQuickUpdate && (
           <button
-            onClick={computeAiOptimizer}
+            onClick={toggleAiOptimizerPanel}
             disabled={aiOptRunning}
-            className={getMenu3AiButtonClass(false)}
+            className={getMenu3AiButtonClass(aiOptProposals !== null)}
           >
             {aiOptRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             AI Optimize
@@ -376,7 +383,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
         </button>
       </>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAiOptimizer, aiOptRunning, showRanking]);
+  }, [onRegisterActions, onQuickUpdate, computeAiOptimizer, aiOptProposals, aiOptRunning, showRanking]);
 
   /* ---------- render ---------- */
 
