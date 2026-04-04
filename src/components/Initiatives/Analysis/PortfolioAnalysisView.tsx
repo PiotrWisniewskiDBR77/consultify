@@ -5,7 +5,7 @@
  * 5 sub-views: Resources, Feasibility, Logic, Timeline, Completeness
  */
 
-import { BarChart3, CheckCircle2, GitBranch, Target, Users } from 'lucide-react';
+import { BarChart3, CheckCircle2, ChevronRight, GitBranch, Target, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -28,25 +28,21 @@ interface PortfolioAnalysisViewProps {
   users?: OrgUser[];
 }
 
-const SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
-  { id: 'resources', labelKey: 'initiatives.analysis.resources.title', icon: <Users size={14} /> },
-  {
-    id: 'feasibility',
-    labelKey: 'initiatives.analysis.feasibility.title',
-    icon: <Target size={14} />,
-  },
-  { id: 'logic', labelKey: 'initiatives.analysis.logic.title', icon: <GitBranch size={14} /> },
-  {
-    id: 'timeline',
-    labelKey: 'initiatives.analysis.timeline.title',
-    icon: <BarChart3 size={14} />,
-  },
-  {
-    id: 'completeness',
-    labelKey: 'initiatives.analysis.completeness.title',
-    icon: <CheckCircle2 size={14} />,
-  },
+const SUBVIEWS: { id: AnalysisSubview; labelKey: string; descKey: string; icon: React.ReactNode }[] = [
+  { id: 'resources', labelKey: 'initiatives.analysis.resources.title', descKey: 'initiatives.analysis.resources.desc', icon: <Users size={20} className="text-violet-500" /> },
+  { id: 'feasibility', labelKey: 'initiatives.analysis.feasibility.title', descKey: 'initiatives.analysis.feasibility.desc', icon: <Target size={20} className="text-amber-500" /> },
+  { id: 'logic', labelKey: 'initiatives.analysis.logic.title', descKey: 'initiatives.analysis.logic.desc', icon: <GitBranch size={20} className="text-cyan-500" /> },
+  { id: 'timeline', labelKey: 'initiatives.analysis.timeline.title', descKey: 'initiatives.analysis.timeline.desc', icon: <BarChart3 size={20} className="text-emerald-500" /> },
+  { id: 'completeness', labelKey: 'initiatives.analysis.completeness.title', descKey: 'initiatives.analysis.completeness.desc', icon: <CheckCircle2 size={20} className="text-rose-500" /> },
 ];
+
+const SUBVIEW_DESCS: Record<AnalysisSubview, string> = {
+  resources: 'Team allocation, workload balance, and capacity gaps.',
+  feasibility: 'Feasibility scores, risk flags, and readiness gates.',
+  logic: 'Dependency chains, circular refs, and logic integrity.',
+  timeline: 'Schedule health, milestone drift, and critical path.',
+  completeness: 'Data quality, missing fields, and gate readiness.',
+};
 
 export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
   initiatives,
@@ -90,27 +86,50 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Sub-view pills — DBR77: rounded-full, h-8 */}
-      <div className="flex items-center gap-1.5 p-1 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
-        {SUBVIEWS.map((sv) => (
-          <button
-            key={sv.id}
-            type="button"
-            onClick={() => setSubview(sv.id)}
-            className={`
-              inline-flex items-center gap-2 h-8 px-4 rounded-full text-sm font-medium
-              transition-colors duration-150
-              ${
-                subview === sv.id
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 border border-transparent'
-              }
-            `}
-          >
-            {sv.icon}
-            {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
-          </button>
-        ))}
+      {/* Sub-view tile cards — DBR77 style matching Management cockpit */}
+      <div className="shrink-0 p-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-900/30">
+        <div className="flex items-stretch gap-3 overflow-x-auto">
+          {SUBVIEWS.map((sv) => {
+            const active = subview === sv.id;
+            return (
+              <button
+                key={sv.id}
+                type="button"
+                onClick={() => setSubview(sv.id)}
+                className={[
+                  'group text-left rounded-xl border p-4 min-w-[180px] flex-1 transition-all',
+                  active
+                    ? 'bg-white dark:bg-navy-900 border-primary-500/40 shadow-sm ring-1 ring-primary-500/20'
+                    : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:shadow-md hover:border-cyan-500/40 dark:hover:border-cyan-400/30',
+                ].join(' ')}
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className={[
+                    'shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-colors',
+                    active
+                      ? 'bg-primary-500/10'
+                      : 'bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20',
+                  ].join(' ')}>
+                    {sv.icon}
+                  </div>
+                  <ChevronRight size={14} className={[
+                    'transition-colors mt-1',
+                    active ? 'text-primary-500' : 'text-slate-300 dark:text-slate-600 group-hover:text-cyan-500',
+                  ].join(' ')} />
+                </div>
+                <h3 className={[
+                  'text-sm font-semibold mb-0.5',
+                  active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-900 dark:text-white',
+                ].join(' ')}>
+                  {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {t(sv.descKey, SUBVIEW_DESCS[sv.id])}
+                </p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Content */}
