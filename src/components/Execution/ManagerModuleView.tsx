@@ -15,7 +15,10 @@ import {
   V8ExecutionControlApi,
   type V8ManagerProblemRow,
 } from '../../services/api/v8/execution-control';
-import { AiRecommendationPanel } from './Manager/AiRecommendationPanel';
+import {
+  AiRecommendationPanel,
+  type ManagementWorkspaceMode,
+} from './Manager/AiRecommendationPanel';
 import { ProblemPreview } from './Manager/ProblemPreview';
 import { ProblemTable } from './Manager/ProblemTable';
 import type { ManagerProblemRow, ProblemAction } from './Manager/types';
@@ -90,6 +93,42 @@ function useManagerProblems(moduleId: string, projectId?: string) {
   return { rows, loading, refresh: fetchProblems };
 }
 
+const THIRD_WORKSPACE_CONFIG: Record<
+  ManagerModuleId,
+  { mode: ManagementWorkspaceMode; label: string; title: string }
+> = {
+  'action-queue': {
+    mode: 'due-soon',
+    label: 'Due Soon',
+    title: 'Due Soon — items about to become active issues',
+  },
+  decisions: {
+    mode: 'decision-pack',
+    label: 'Decision Pack',
+    title: 'Decision Pack — resolve approvals and blockers faster',
+  },
+  blockers: {
+    mode: 'recovery-plan',
+    label: 'Recovery Plan',
+    title: 'Recovery Plan — unblock and recover delivery flow',
+  },
+  risk: {
+    mode: 'watchlist',
+    label: 'Watchlist',
+    title: 'Watchlist — monitor early warning signals',
+  },
+  workload: {
+    mode: 'rebalance',
+    label: 'Rebalance',
+    title: 'Rebalance — reduce overload and restore capacity balance',
+  },
+  'people-change': {
+    mode: 'ownership-fix',
+    label: 'Ownership Fix',
+    title: 'Ownership Fix — close accountability and governance gaps',
+  },
+};
+
 // ---------------------------------------------------------------------------
 // MAIN COMPONENT
 // ---------------------------------------------------------------------------
@@ -104,63 +143,69 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
   const { rows, loading, refresh } = useManagerProblems(moduleId, projectId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // AI panel state
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
-  const [aiPanelMode, setAiPanelMode] = useState<'recommend' | 'triage' | 'manage-all'>('manage-all');
+  // workspace panel state
+  const [workspaceMode, setWorkspaceMode] = useState<ManagementWorkspaceMode | null>(null);
   const [aiProblemId, setAiProblemId] = useState<string | undefined>();
+  const thirdWorkspace = THIRD_WORKSPACE_CONFIG[moduleId as ManagerModuleId];
 
   const openAiRecommend = useCallback((problemId: string) => {
     setAiProblemId(problemId);
-    setAiPanelMode('recommend');
-    setAiPanelOpen(true);
+    setWorkspaceMode('recommend');
   }, []);
 
   const openAiTriage = useCallback(() => {
     setAiProblemId(undefined);
-    setAiPanelMode('triage');
-    setAiPanelOpen(true);
+    setWorkspaceMode('triage');
   }, []);
 
-  const openAiManageAll = useCallback(() => {
+  const openActionPlan = useCallback(() => {
     setAiProblemId(undefined);
-    setAiPanelMode('manage-all');
-    setAiPanelOpen(true);
+    setWorkspaceMode('action-plan');
   }, []);
 
-  const closeAiPanel = useCallback(() => {
-    setAiPanelOpen(false);
+  const openThirdWorkspace = useCallback(() => {
+    setAiProblemId(undefined);
+    setWorkspaceMode(thirdWorkspace.mode);
+  }, [thirdWorkspace.mode]);
+
+  const closeWorkspacePanel = useCallback(() => {
+    setWorkspaceMode(null);
     setAiProblemId(undefined);
   }, []);
 
   const toggleAiTriage = useCallback(() => {
-    if (aiPanelOpen && aiPanelMode === 'triage') {
-      closeAiPanel();
+    if (workspaceMode === 'triage') {
+      closeWorkspacePanel();
       return;
     }
     openAiTriage();
-  }, [aiPanelMode, aiPanelOpen, closeAiPanel, openAiTriage]);
+  }, [closeWorkspacePanel, openAiTriage, workspaceMode]);
 
-  const toggleAiManageAll = useCallback(() => {
-    if (aiPanelOpen && aiPanelMode === 'manage-all') {
-      closeAiPanel();
+  const toggleActionPlan = useCallback(() => {
+    if (workspaceMode === 'action-plan') {
+      closeWorkspacePanel();
       return;
     }
-    openAiManageAll();
-  }, [aiPanelMode, aiPanelOpen, closeAiPanel, openAiManageAll]);
+    openActionPlan();
+  }, [closeWorkspacePanel, openActionPlan, workspaceMode]);
+
+  const toggleThirdWorkspace = useCallback(() => {
+    if (workspaceMode === thirdWorkspace.mode) {
+      closeWorkspacePanel();
+      return;
+    }
+    openThirdWorkspace();
+  }, [closeWorkspacePanel, openThirdWorkspace, thirdWorkspace.mode, workspaceMode]);
 
   const toggleAiRecommend = useCallback(
     (problemId: string) => {
-      if (
-        aiPanelOpen &&
-        aiPanelMode === 'recommend' &&
-        aiProblemId === problemId
-      ) {
-        closeAiPanel();
+      if (workspaceMode === 'recommend' && aiProblemId === problemId) {
+        closeWorkspacePanel();
         return;
       }
       openAiRecommend(problemId);
     },
-    [aiPanelMode, aiPanelOpen, aiProblemId, closeAiPanel, openAiRecommend]
+    [aiProblemId, closeWorkspacePanel, openAiRecommend, workspaceMode]
   );
 
   const selectedProblem = useMemo(
@@ -271,7 +316,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
           type="button"
           onClick={toggleAiTriage}
           disabled={loading || rows.length === 0}
-          className={getMenu3AiButtonClass(aiPanelOpen && aiPanelMode === 'triage')}
+          className={getMenu3AiButtonClass(workspaceMode === 'triage')}
           title="AI Triage — cluster and prioritize problems"
         >
           <Layers size={12} />
@@ -279,25 +324,38 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
         </button>
         <button
           type="button"
-          onClick={toggleAiManageAll}
+          onClick={toggleActionPlan}
           disabled={loading || rows.length === 0}
-          className={getMenu3AiButtonClass(aiPanelOpen && aiPanelMode === 'manage-all')}
-          title="AI Manage All — comprehensive management plan"
+          className={getMenu3AiButtonClass(workspaceMode === 'action-plan')}
+          title="Action Plan — operational moves and follow-up"
         >
           <Sparkles size={12} />
-          AI Manage All
+          Action Plan
+        </button>
+        <button
+          type="button"
+          onClick={toggleThirdWorkspace}
+          disabled={loading || rows.length === 0}
+          className={getMenu3AiButtonClass(workspaceMode === thirdWorkspace.mode)}
+          title={thirdWorkspace.title}
+        >
+          <Sparkles size={12} />
+          {thirdWorkspace.label}
         </button>
       </>
     );
     return () => onRegisterActions(null);
   }, [
-    aiPanelMode,
-    aiPanelOpen,
     loading,
     onRegisterActions,
     rows.length,
-    toggleAiManageAll,
+    thirdWorkspace.label,
+    thirdWorkspace.mode,
+    thirdWorkspace.title,
+    toggleActionPlan,
     toggleAiTriage,
+    toggleThirdWorkspace,
+    workspaceMode,
   ]);
 
   return (
@@ -305,7 +363,11 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
       {/* ─── Body: Table + Preview ─── */}
       <div className="flex-1 flex overflow-hidden">
         {/* Table (left) */}
-        <div className={`flex-1 min-w-0 ${selectedProblem ? 'border-r border-slate-200 dark:border-navy-700' : ''}`}>
+        <div
+          className={`flex-1 min-w-0 ${
+            selectedProblem || workspaceMode ? 'border-r border-slate-200 dark:border-navy-700' : ''
+          }`}
+        >
           <ProblemTable
             rows={rows}
             selectedId={selectedId}
@@ -322,7 +384,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
         </div>
 
         {/* Preview (right) */}
-        {selectedProblem && (
+        {!workspaceMode && selectedProblem && (
           <div className="w-[380px] shrink-0 flex flex-col">
             <ProblemPreview
               problem={selectedProblem}
@@ -336,9 +398,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
                 type="button"
                 onClick={() => toggleAiRecommend(selectedProblem.id)}
                 className={`${getMenu3AiButtonClass(
-                  aiPanelOpen &&
-                    aiPanelMode === 'recommend' &&
-                    aiProblemId === selectedProblem.id
+                  workspaceMode === 'recommend' && aiProblemId === selectedProblem.id
                 )} w-full justify-center`}
               >
                 <Sparkles size={13} />
@@ -347,17 +407,27 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
             </div>
           </div>
         )}
-      </div>
 
-      {/* AI Recommendation Panel */}
-      <AiRecommendationPanel
-        isOpen={aiPanelOpen}
-        onClose={closeAiPanel}
-        mode={aiPanelMode}
-        laneId={moduleId}
-        problemId={aiProblemId}
-        projectId={projectId}
-      />
+        {workspaceMode && (
+          <div className="w-[460px] shrink-0 min-w-0 border-l border-slate-200 dark:border-navy-700">
+            <AiRecommendationPanel
+              isOpen={Boolean(workspaceMode)}
+              onClose={closeWorkspacePanel}
+              mode={workspaceMode}
+              laneId={moduleId}
+              problemId={aiProblemId}
+              projectId={projectId}
+              rows={rows}
+              onSelectProblem={(problemId) => {
+                const row = rows.find((item) => item.id === problemId);
+                if (row) {
+                  setSelectedId(problemId);
+                }
+              }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
