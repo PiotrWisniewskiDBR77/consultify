@@ -250,7 +250,9 @@ const badgeBase =
 
 ### 3.4 Przyciski AI w Menu 3 — prawa strona (MUST)
 
-Po prawej stronie Command Row (Menu 3) umieszczamy **przyciski funkcji AI** kontekstowe dla danego ekranu/taba.
+Po prawej stronie Command Row (Menu 3) umieszczamy **funkcjonalne przyciski kontekstowe** dla danego ekranu/taba.
+
+To jest **kanon przycisków funkcjonalnych Menu 3**. Standard dotyczy nie tylko akcji AI, ale wszystkich przycisków operacyjnych po prawej stronie tego rzędu.
 
 **Layout Menu 3:**
 
@@ -260,19 +262,20 @@ Po prawej stronie Command Row (Menu 3) umieszczamy **przyciski funkcji AI** kont
 
 Kontener Command Row używa `flex items-center justify-between` — chipy po lewej, przyciski AI po prawej.
 
-**Zasady:**
+**Zasady ogólne:**
 
-- **MUST:** Przyciski AI pojawiają się **tylko gdy ekran oferuje funkcje AI** — nie dodajemy pustych slotów.
-- **MUST:** Przyciski AI są **kontekstowe** — zmieniają się w zależności od aktywnego taba/widoku (np. Management → "AI Triage" + "AI Manage All"; Resources Analysis → "AI Balance workload").
-- **MUST:** Rozmiar przycisków AI jest **identyczny z chipami Menu 3** (`h-8`, `text-[11px]`, `rounded-full`) — nie mogą być większe ani mniejsze niż preset chips.
-- **MUST:** Ikona `Sparkles` (lucide) jest kanonicznym symbolem AI w przyciskach Menu 3.
-- **SHOULD:** Maksymalnie 2–3 przyciski AI na ekran. Jeśli jest więcej akcji AI — grupuj w dropdown.
+- **MUST:** Przyciski funkcjonalne pojawiają się **tylko gdy ekran oferuje realne akcje** — nie dodajemy pustych slotów.
+- **MUST:** Przyciski są **kontekstowe** — zmieniają się zależnie od aktywnego taba / subwidoku / trybu.
+- **MUST:** Rozmiar przycisków jest **identyczny z chipami Menu 3** (`h-8`, `text-[11px]`, `rounded-full`) — nie mogą być większe ani mniejsze niż preset chips.
+- **MUST:** Wszystkie przyciski funkcjonalne po prawej stronie Menu 3 używają **jednego wspólnego formatu wizualnego**. Nie wolno mieszać lokalnych wariantów `primary`, `secondary`, gradientów i innych wyjątków.
+- **MUST:** Jeśli akcja dotyczy AI, ikoną kanoniczną jest `Sparkles`; dla akcji nie-AI używamy ikony kontekstowej.
+- **SHOULD:** Maksymalnie 2–4 przyciski na ekran. Jeśli jest więcej akcji, grupuj je w dropdown / overflow.
 
-**Format przycisku AI:**
+**Format przycisku funkcjonalnego (kanon):**
 
-Dwa warianty — **secondary** (outline) i **primary** (filled). Jeśli ekran ma 2 przyciski AI, pierwszy jest secondary, drugi primary.
+Jest **jeden bazowy format** i **jeden stan aktywny**.
 
-**AI Secondary (outline):**
+**Baza (default):**
 
 | Właściwość  | Wartość                                                  |
 | ----------- | -------------------------------------------------------- |
@@ -280,48 +283,67 @@ Dwa warianty — **secondary** (outline) i **primary** (filled). Jeśli ekran ma
 | Tekst       | `text-[11px] font-semibold`                              |
 | Ikona       | `Sparkles` lub kontekstowa (12–14px), po lewej           |
 | Gap         | `gap-1.5`                                                |
+| Ramka       | zawsze obecna                                            |
+| Disabled    | `disabled:opacity-40`                                    |
 
 | Element | Light                          | Dark                                  |
 | ------- | ------------------------------ | ------------------------------------- |
-| Tło     | `bg-violet-50`                 | `dark:bg-violet-900/20`               |
-| Tekst   | `text-violet-700`              | `dark:text-violet-400`                |
-| Ramka   | `border border-violet-200`     | `dark:border-violet-800/40`           |
-| Hover   | `hover:bg-violet-100`          | `dark:hover:bg-violet-900/30`         |
-| Disabled | `disabled:opacity-40`         | `disabled:opacity-40`                 |
+| Tło     | `bg-slate-100`                 | `dark:bg-navy-800`                    |
+| Tekst   | `text-slate-600`               | `dark:text-slate-300`                 |
+| Ramka   | `border-slate-200/60`          | `dark:border-navy-700/60`             |
+| Hover   | `hover:bg-white/60`            | `dark:hover:bg-navy-900/50`           |
 
-**AI Primary (filled):**
+**Stan aktywny (toggle open / panel open):**
 
-| Element | Wartość                                                  |
-| ------- | -------------------------------------------------------- |
-| Tło     | `bg-gradient-to-r from-violet-600 to-cyan-600`           |
-| Tekst   | `text-white text-[11px] font-semibold`                   |
-| Kształt | `h-8 rounded-full px-3`                                  |
-| Shadow  | `shadow-sm`                                              |
-| Hover   | `hover:shadow-md hover:brightness-110`                   |
-| Disabled | `disabled:opacity-40`                                   |
+| Element | Light                          | Dark                                  |
+| ------- | ------------------------------ | ------------------------------------- |
+| Tło     | `bg-cyan-500/10`               | `bg-cyan-500/10`                      |
+| Tekst   | `text-cyan-700`                | `dark:text-cyan-200`                  |
+| Ramka   | `border-cyan-500/40`           | `border-cyan-500/40`                  |
 
-> **Uwaga:** Kolor przycisków AI (violet) jest wstępny — może zostać zmieniony. Gradient primary `violet → cyan` jest obecnym standardem.
+> **Uwaga:** Aktywny stan przycisku funkcjonalnego Menu 3 jest **zawsze cyan / blue**, nie violet.
+
+**Semantyka zachowania (MUST):**
+
+1. **Przycisk jednorazowej akcji**
+   - uruchamia działanie natychmiast (`analyze`, `autofill`, `generate`, `create`, `optimize`)
+   - po kliknięciu **nie zmienia się w aktywny toggle tylko dlatego, że akcja została uruchomiona**
+   - może pokazywać `loading`, ale po zakończeniu wraca do stanu bazowego
+
+2. **Przycisk otwierający panel / wynik**
+   - po otwarciu panelu przechodzi w **stan aktywny cyan**
+   - drugie kliknięcie **zamyka panel**
+   - aktywność przycisku musi być 1:1 powiązana ze stanem panelu
+
+3. **Przycisk hybrydowy (akcja + panel wyniku)**
+   - jeśli pierwszy klik uruchamia obliczenie i otwiera panel wyniku, to po wyrenderowaniu panelu przycisk przechodzi w aktywny stan
+   - gdy panel jest już otwarty, kolejne kliknięcie **zamyka panel zamiast ponownie uruchamiać akcję**
 
 **Tailwind class strings (copy-paste ready):**
 
 ```ts
-// AI Secondary (outline):
-'h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-40 dark:border-violet-800/40 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/30'
+const MENU3_AI_BUTTON_BASE_CLASS =
+  'h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold border transition-colors disabled:opacity-40';
 
-// AI Primary (filled):
-'h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-600 shadow-sm transition-all hover:shadow-md hover:brightness-110 disabled:opacity-40'
+const getMenu3AiButtonClass = (active = false) =>
+  `${MENU3_AI_BUTTON_BASE_CLASS} ${
+    active
+      ? 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-200 border-cyan-500/40'
+      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+  }`;
 ```
 
-**Przykłady przycisków AI na ekranach:**
+**Przykłady:**
 
 | Ekran / Tab                     | Przyciski AI                                |
 | ------------------------------- | ------------------------------------------- |
-| Execution → Management (lane)   | `AI Triage` (secondary) + `AI Manage All` (primary) |
-| Initiatives → Analysis → Resources | `AI Balance workload` (primary)          |
-| Execution → Summary             | _(brak — ekran nie ma dedykowanej funkcji AI)_ |
-| Execution → Reporting (report)  | `AI Generate` (primary)                     |
+| Initiatives → Analysis → Completeness | `AI Auto-Fill`, `Bulk Fix`, `AI Priority Triage` |
+| Initiatives → Analysis → Timeline | `AI Auto-Schedule`, `Conflicts`, `AI Optimizer` |
+| Initiatives → Analysis → Logic | `AI Discover Dependencies`, `Detect Cycles`, `Critical Path`, `AI Sequencer` |
+| Initiatives → Analysis → Resources | `AI Balance workload` |
+| Execution → Summary             | _(brak — ekran nie ma dedykowanych akcji kontekstowych)_ |
 
-**SSOT implementacji:** `src/components/Execution/ManagerModuleView.tsx` (referencyjny wzorzec AI buttons).
+**SSOT implementacji:** `src/components/Initiatives/Analysis/menu3ActionButtonStyles.ts` oraz przyciski rejestrowane przez `onRegisterActions(...)` w podwidokach Analysis.
 
 ---
 

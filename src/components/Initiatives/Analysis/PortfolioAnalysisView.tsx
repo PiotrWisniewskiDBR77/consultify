@@ -5,9 +5,7 @@
  * 5 sub-views: Resources, Feasibility, Logic, Timeline, Completeness
  */
 
-import { BarChart3, CheckCircle2, GitBranch, Target, Users } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useCallback, useEffect } from 'react';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { PortfolioInitiative } from '@/types';
@@ -26,27 +24,20 @@ interface PortfolioAnalysisViewProps {
   onOpenInitiative: (id: string) => void;
   onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
   users?: OrgUser[];
+  /** Controlled sub-view from parent (lifted to Hub for Menu 3 chips) */
+  subview: AnalysisSubview;
+  /** Callback to register action buttons rendered in Menu 3 right side */
+  onRegisterActions?: (node: React.ReactNode) => void;
 }
-
-const SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
-  { id: 'resources', labelKey: 'initiatives.analysis.resources.title', icon: <Users size={14} className="text-violet-400" /> },
-  { id: 'feasibility', labelKey: 'initiatives.analysis.feasibility.title', icon: <Target size={14} className="text-amber-400" /> },
-  { id: 'logic', labelKey: 'initiatives.analysis.logic.title', icon: <GitBranch size={14} className="text-cyan-400" /> },
-  { id: 'timeline', labelKey: 'initiatives.analysis.timeline.title', icon: <BarChart3 size={14} className="text-emerald-400" /> },
-  { id: 'completeness', labelKey: 'initiatives.analysis.completeness.title', icon: <CheckCircle2 size={14} className="text-rose-400" /> },
-];
 
 export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
   initiatives,
   onOpenInitiative,
   onQuickUpdate,
   users = [],
+  subview,
+  onRegisterActions,
 }) => {
-  const { t } = useTranslation();
-  const [subview, setSubview] = useState<AnalysisSubview>('resources');
-  const [actionButtons, setActionButtons] = useState<React.ReactNode>(null);
-  const registerActions = useCallback((node: React.ReactNode) => setActionButtons(node), []);
-
   const {
     allocations,
     resourceIssues,
@@ -78,35 +69,13 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
     trackFunnelEvent('initiatives_analysis_opened', { subview });
   }, [subview]);
 
+  const registerActions = useCallback(
+    (node: React.ReactNode) => onRegisterActions?.(node),
+    [onRegisterActions]
+  );
+
   return (
     <div className="flex flex-col h-full">
-      {/* Menu 3: sub-view chips (left) + action buttons (right) — §3.2/§3.3 canon */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
-        <div className="flex items-center gap-2">
-          {SUBVIEWS.map((sv) => (
-            <button
-              key={sv.id}
-              type="button"
-              onClick={() => setSubview(sv.id)}
-              className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap ${
-                subview === sv.id
-                  ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-              }`}
-            >
-              {sv.icon}
-              {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
-            </button>
-          ))}
-        </div>
-        {actionButtons && (
-          <div className="flex items-center gap-1.5 shrink-0">
-            {actionButtons}
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         {subview === 'resources' && (
           <ResourcesAnalysis

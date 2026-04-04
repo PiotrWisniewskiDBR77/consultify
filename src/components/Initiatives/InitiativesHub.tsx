@@ -8,13 +8,17 @@
 import {
   AlertTriangle,
   BarChart3,
+  CheckCircle2,
   Edit2,
   Filter,
+  GitBranch,
   Lightbulb,
   List,
   Plus,
   RefreshCw,
   Shield,
+  Target,
+  Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -62,6 +66,7 @@ import {
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
+import type { AnalysisSubview } from './Analysis/types';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import {
   getCreatedInitiativeRevealState,
@@ -164,6 +169,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
   /** Active/All scope toggle — used for Kanban columns and data filtering */
   const [scope, setScope] = useState<KanbanScope>('active');
+
+  // Analysis sub-view state (lifted so chips render in Menu 3 via commandRowContent)
+  const [analysisSubview, setAnalysisSubview] = useState<AnalysisSubview>('resources');
+  const [analysisActionButtons, setAnalysisActionButtons] = useState<React.ReactNode>(null);
+  const registerAnalysisActions = useCallback((node: React.ReactNode) => setAnalysisActionButtons(node), []);
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -930,6 +940,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             await handleQuickUpdate(initiativeId, updates as Partial<PortfolioInitiative>);
           }}
           users={users}
+          subview={analysisSubview}
+          onRegisterActions={registerAnalysisActions}
         />
       );
     }
@@ -1280,6 +1292,42 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       ? v8InitiativeSnapshot.wbsCompleteness.gaps.length
       : 0;
 
+  const ANALYSIS_SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
+    { id: 'resources', labelKey: 'initiatives.analysis.resources.title', icon: <Users size={14} className="text-violet-400" /> },
+    { id: 'feasibility', labelKey: 'initiatives.analysis.feasibility.title', icon: <Target size={14} className="text-amber-400" /> },
+    { id: 'logic', labelKey: 'initiatives.analysis.logic.title', icon: <GitBranch size={14} className="text-cyan-400" /> },
+    { id: 'timeline', labelKey: 'initiatives.analysis.timeline.title', icon: <BarChart3 size={14} className="text-emerald-400" /> },
+    { id: 'completeness', labelKey: 'initiatives.analysis.completeness.title', icon: <CheckCircle2 size={14} className="text-rose-400" /> },
+  ];
+
+  const analysisCommandRow = (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {ANALYSIS_SUBVIEWS.map((sv) => (
+          <button
+            key={sv.id}
+            type="button"
+            onClick={() => setAnalysisSubview(sv.id)}
+            className={[
+              'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap',
+              analysisSubview === sv.id
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50',
+            ].join(' ')}
+          >
+            {sv.icon}
+            {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
+          </button>
+        ))}
+      </div>
+      {analysisActionButtons && (
+        <div className="flex items-center gap-1.5 shrink-0">
+          {analysisActionButtons}
+        </div>
+      )}
+    </div>
+  );
+
   const commandRowContent = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
       <button
@@ -1423,7 +1471,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         newItemLabel={t('initiatives.form.newInitiative')}
         filterActions={filterActions}
         rightControls={rightControls}
-        commandRowContent={activeTab === 'analysis' ? null : commandRowContent}
+        commandRowContent={activeTab === 'analysis' ? analysisCommandRow : commandRowContent}
         availableViewModes={availableViewModes}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
