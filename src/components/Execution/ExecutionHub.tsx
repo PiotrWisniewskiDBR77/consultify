@@ -4200,90 +4200,51 @@ Please return:
         })
       : visibleTiles;
 
-    const activeModuleId = activeDocumentId?.startsWith('manager:')
-      ? activeDocumentId.replace('manager:', '')
-      : null;
-
     return (
-      <div className="flex flex-col h-full">
-        {/* Tile navigation strip */}
-        <div className="shrink-0 p-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-900/30">
-          {dashboardBaseInitiatives.length === 0 && (
-            <Callout variant="info" title={t('execution.manager.noInitiatives', 'No executing initiatives')}>
-              {t('execution.manager.noInitiativesDesc', 'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.')}
-            </Callout>
-          )}
-
-          <div className="flex items-stretch gap-3 overflow-x-auto">
-            {managerTiles.map((tile) => {
-              const isActive = activeModuleId === tile.id;
-              const hasAlerts = tile.metrics.some((m) => m.variant === 'critical' || m.variant === 'warn');
-              return (
-                <button
-                  key={tile.id}
-                  type="button"
-                  onClick={() => handleOpenManagerModule(tile.id)}
-                  className={[
-                    'group text-left rounded-xl border p-4 min-w-[180px] flex-1 transition-all',
-                    isActive
-                      ? 'bg-white dark:bg-navy-900 border-primary-500/40 shadow-sm ring-1 ring-primary-500/20'
-                      : `bg-white dark:bg-navy-900 hover:shadow-md hover:border-cyan-500/40 dark:hover:border-cyan-400/30 ${
-                          hasAlerts ? 'border-amber-200 dark:border-amber-800/40' : 'border-slate-200 dark:border-navy-700'
-                        }`,
-                  ].join(' ')}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className={[
-                      'shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-colors',
-                      isActive
-                        ? 'bg-primary-500/10'
-                        : 'bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20',
-                    ].join(' ')}>
-                      {tile.icon}
-                    </div>
-                    <ChevronRight size={14} className={[
-                      'transition-colors mt-1',
-                      isActive ? 'text-primary-500' : 'text-slate-300 dark:text-slate-600 group-hover:text-cyan-500',
-                    ].join(' ')} />
-                  </div>
-                  <h3 className={[
-                    'text-sm font-semibold mb-0.5',
-                    isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-900 dark:text-white',
-                  ].join(' ')}>{tile.title}</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-2">{tile.description}</p>
-                  <div className="flex gap-3">
-                    {tile.metrics.map((m) => (
-                      <div key={m.label} className="min-w-0">
-                        <div className={`text-lg font-bold tabular-nums ${
-                          m.variant === 'critical' ? 'text-rose-600 dark:text-rose-400' :
-                          m.variant === 'warn' ? 'text-amber-600 dark:text-amber-400' :
-                          'text-slate-900 dark:text-white'
-                        }`}>{m.value}</div>
-                        <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">{m.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Module content — full screen below tiles */}
-        {activeModuleId ? (
-          <div className="flex-1 overflow-hidden">
-            <ManagerModuleView
-              moduleId={activeModuleId}
-              projectId={currentProjectId || undefined}
-              onBack={handleShowList}
-              onOpenEntity={handleOpenSidePanel ? (type, id) => handleOpenSidePanel({ id, name: id } as any) : undefined}
-            />
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center p-8 text-slate-400 dark:text-slate-500">
-            <p className="text-sm">{t('execution.manager.selectModule', 'Select a module above to begin')}</p>
-          </div>
+      <div className="p-4 space-y-5">
+        {/* §3.3 Honest degraded posture */}
+        {dashboardBaseInitiatives.length === 0 && (
+          <Callout variant="info" title={t('execution.manager.noInitiatives', 'No executing initiatives')}>
+            {t('execution.manager.noInitiativesDesc', 'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.')}
+          </Callout>
         )}
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {managerTiles.map((tile) => {
+            const hasAlerts = tile.metrics.some((m) => m.variant === 'critical' || m.variant === 'warn');
+            return (
+              <button
+                key={tile.id}
+                type="button"
+                onClick={() => handleOpenManagerModule(tile.id)}
+                className={`group text-left rounded-xl border bg-white dark:bg-navy-900 p-5 transition-all hover:shadow-md hover:border-cyan-500/40 dark:hover:border-cyan-400/30 ${
+                  hasAlerts ? 'border-amber-200 dark:border-amber-800/40' : 'border-slate-200 dark:border-navy-700'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                    {tile.icon}
+                  </div>
+                  <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors mt-1" />
+                </div>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{tile.title}</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">{tile.description}</p>
+                <div className="flex gap-3">
+                  {tile.metrics.map((m) => (
+                    <div key={m.label} className="min-w-0">
+                      <div className={`text-lg font-bold tabular-nums ${
+                        m.variant === 'critical' ? 'text-rose-600 dark:text-rose-400' :
+                        m.variant === 'warn' ? 'text-amber-600 dark:text-amber-400' :
+                        'text-slate-900 dark:text-white'
+                      }`}>{m.value}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">{m.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -4304,10 +4265,7 @@ Please return:
       );
     }
 
-    const isManagerDocOnManagerTab =
-      activeDocumentId?.startsWith('manager:') && activeTab === ('people_change' as ModuleTab);
-
-    if (activeDocumentId && !isManagerDocOnManagerTab) {
+    if (activeDocumentId) {
       if (activeDocumentId.startsWith('report:')) {
         const reportId = activeDocumentId.replace('report:', '');
         const report = enrichedReportCatalog.find((r) => r.id === reportId);
