@@ -251,12 +251,11 @@ export class DeepThinkingOrchestrator {
 
     const depth = normalizeDepth((context as any)?.deepThinkingDepth);
     const webSearchEnabled = aiModes?.webSearch === true;
-    const tavilyKey = (process.env.TAVILY_API_KEY || '').trim();
     const showHighlights = aiModes?.showReasoning === true;
 
     let researchOutput: DeepResearchOutput | null = null;
 
-    if (webSearchEnabled && tavilyKey) {
+    if (webSearchEnabled) {
       try {
         const orgId = String((context as any)?.organizationId || '').trim();
         const projectId = String((context as any)?.projectId || '').trim() || undefined;
@@ -287,8 +286,8 @@ export class DeepThinkingOrchestrator {
           researchOutput = null;
         } else {
           const { conductDeepResearch } = await import('./deepResearchService.js');
-          const { TavilyWebSearchService } = await import('./tavilyWebSearchService.js');
-          const base = new (TavilyWebSearchService as any)(tavilyKey);
+          const { RuntimeWebSearchService } = await import('./runtimeWebSearchService.js');
+          const base = new (RuntimeWebSearchService as any)();
 
           const webSearchService = {
             search: async (rawQuery: string, options: any) => {
@@ -377,15 +376,6 @@ export class DeepThinkingOrchestrator {
           error: 'Web research unavailable',
         });
       }
-    } else if (webSearchEnabled && !tavilyKey) {
-      emit({
-        type: 'research_progress',
-        topic: message,
-        stage: 'complete',
-        queries: [],
-        sources: [],
-        error: 'Web research enabled but TAVILY_API_KEY is missing',
-      });
     }
 
     // 3) Thinking (controlled visibility)

@@ -349,8 +349,8 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
       });
     }
 
-    const { TavilyWebSearchService } = await import('./tavilyWebSearchService.js');
-    const tavily = new TavilyWebSearchService(process.env.TAVILY_API_KEY || '');
+    const { RuntimeWebSearchService } = await import('./runtimeWebSearchService.js');
+    const webSearch = new RuntimeWebSearchService();
     const cleanQuery =
       typeof sanitizeQuery === 'function' ? sanitizeQuery(String(args.query || '')) : args.query;
 
@@ -358,9 +358,10 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
       typeof getCached === 'function' ? getCached(orgId, cleanQuery, (ctx as any)?.language) : null;
     const results =
       cached ||
-      (await tavily.search(cleanQuery, {
+      (await webSearch.search(cleanQuery, {
         maxResults: Math.min(args.max_results || 5, policy.maxCitations || 8),
         searchDepth: 'basic',
+        language: (ctx as any)?.language,
       }));
     const rawResults = Array.isArray((results as any)?.results) ? (results as any).results : [];
     const filtered =

@@ -196,11 +196,13 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
     internetEnabled: boolean;
     tavilyConfigured: boolean;
     webSearchAvailable: boolean;
+    searchProvider: string | null;
   }>({
     loading: true,
     internetEnabled: false,
     tavilyConfigured: false,
     webSearchAvailable: false,
+    searchProvider: null,
   });
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
@@ -418,6 +420,10 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
           internetEnabled: Boolean(summary?.internetEnabled),
           tavilyConfigured: Boolean(runtime?.tavilyConfigured),
           webSearchAvailable: Boolean(runtime?.webSearchAvailable),
+          searchProvider:
+            typeof runtime?.provider === 'string' && runtime.provider.trim().length > 0
+              ? runtime.provider
+              : null,
         });
       })
       .catch(() => {
@@ -461,9 +467,9 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
               title={
                 internetSignal.loading
                   ? 'Checking internet & web search configuration'
-                  : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Tavily key: ${
-                      internetSignal.tavilyConfigured ? 'configured' : 'missing'
-                    }`
+                  : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Provider: ${
+                      internetSignal.searchProvider || 'unavailable'
+                    }; Tavily key: ${internetSignal.tavilyConfigured ? 'configured' : 'missing'}`
               }
             >
               <span className={`w-2 h-2 rounded-full ${internetDotClass}`} />

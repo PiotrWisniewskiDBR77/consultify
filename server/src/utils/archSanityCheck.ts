@@ -86,7 +86,9 @@ export async function runAIHealthChecks(): Promise<SanityReport['healthChecks']>
   checks.push({
     name: 'env:TAVILY_API_KEY',
     status: process.env.TAVILY_API_KEY ? 'ok' : 'warn',
-    detail: process.env.TAVILY_API_KEY ? 'Configured' : 'Not configured — web search disabled',
+    detail: process.env.TAVILY_API_KEY
+      ? 'Configured'
+      : 'Not configured — fallback web search provider will be used',
   });
 
   if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {

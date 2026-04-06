@@ -1653,6 +1653,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         workspaceContext,
         conversationId,
         conversationLanguage: chatLanguage,
+        virtualWorkerSlug: 'teresa',
       };
 
       // Backend expects history roles as: user | model (Gemini-style)
@@ -2562,6 +2563,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         },
         conversationId: activeConversationId,
         conversationLanguage: chatLanguage,
+        virtualWorkerSlug: 'teresa',
       };
 
       if (aiConfig?.deepResearch) {

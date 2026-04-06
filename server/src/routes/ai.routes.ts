@@ -1653,6 +1653,11 @@ router.post(
           (context as any)?.workspaceContext?.projectId ||
           bodyProjectId ||
           null;
+      const virtualWorkerSlug =
+        typeof (context as any)?.virtualWorkerSlug === 'string' &&
+        (context as any).virtualWorkerSlug.trim().length > 0
+          ? String((context as any).virtualWorkerSlug).trim().toLowerCase()
+          : null;
 
       const screenContext = aiModes?.deepResearch
         ? null
@@ -2022,6 +2027,89 @@ router.post(
         }
       }
 
+      let workerWebPolicyOverride: Record<string, unknown> | null = null;
+      if (virtualWorkerSlug) {
+        emitSSE({
+          type: 'thought',
+          step: 'virtual_worker',
+          status: 'in_progress',
+          label: `Loading ${virtualWorkerSlug} worker profile and governed knowledge…`,
+        });
+        try {
+          const workerService = await import('../services/ai/virtualWorkerService.js');
+          const workerKnowledgeService = await import('../services/ai/virtualWorkerKnowledgeService.js');
+          const workerWebAccessService = await import(
+            '../services/ai/virtualWorkerWebAccessService.js'
+          );
+          const workerConfig = await workerService.getWorkerWithProfile(virtualWorkerSlug);
+
+          if (workerConfig?.worker) {
+            const workerSurface = String(workerConfig.worker.surface || 'in_platform');
+            const workerPublicStateOk =
+              workerConfig.worker.status === 'active' &&
+              (workerSurface === 'in_platform' || workerSurface === 'both');
+
+            if (workerPublicStateOk && workerConfig.profile) {
+              const workerPromptAddon = String(workerConfig.profile.system_prompt || '').trim();
+              if (workerPromptAddon) {
+                pipelineRequest = {
+                  ...pipelineRequest,
+                  options: {
+                    ...(pipelineRequest.options || {}),
+                    systemInstruction:
+                      `## ACTIVE WORKER PROFILE (${workerConfig.worker.name})\n${workerPromptAddon}\n\n` +
+                      String((pipelineRequest.options as any)?.systemInstruction || ''),
+                  },
+                } as any;
+              }
+
+              const workerKnowledge = await workerKnowledgeService.buildWorkerKnowledgeContext({
+                workerSlug: virtualWorkerSlug,
+                query: String(message || ''),
+                locale: language,
+                limit: 6,
+              });
+
+              if (workerKnowledge?.contextText?.trim()) {
+                pipelineRequest = {
+                  ...pipelineRequest,
+                  options: {
+                    ...(pipelineRequest.options || {}),
+                    systemInstruction:
+                      String((pipelineRequest.options as any)?.systemInstruction || '') +
+                      `\n\n## GOVERNED WORKER KNOWLEDGE (${workerConfig.worker.name})\n${workerKnowledge.contextText}\n`,
+                  },
+                  context: {
+                    ...((pipelineRequest as any).context || {}),
+                    external: {
+                      ...((pipelineRequest as any).context?.external || {}),
+                      workerKnowledge: {
+                        workerSlug: virtualWorkerSlug,
+                        sources: workerKnowledge.sources || [],
+                        matchedProducts: workerKnowledge.matchedProducts || [],
+                        primaryProducts: workerKnowledge.primaryProducts || [],
+                        usedPillIds: workerKnowledge.usedPillIds || [],
+                        usedPillSections: workerKnowledge.usedPillSections || [],
+                        fallbackReason: workerKnowledge.fallbackReason || null,
+                      },
+                    },
+                  },
+                } as any;
+              }
+
+              const extractedWorkerWebPolicy = workerWebAccessService.extractWorkerWebAccessPolicy(
+                workerConfig.profile
+              );
+              workerWebPolicyOverride = extractedWorkerWebPolicy.internetEnabled
+                ? extractedWorkerWebPolicy
+                : null;
+            }
+          }
+        } catch (workerErr: any) {
+          logger.warn('[AI Stream] Virtual worker overlay failed:', workerErr?.message || String(workerErr));
+        }
+      }
+
       logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
         projectId,
         focusMode,
@@ -2158,6 +2246,15 @@ router.post(
               projectId || undefined
             );
           }
+          if (workerWebPolicyOverride) {
+            const mergeWorkerWebAccessPolicy =
+              (await import('../services/ai/virtualWorkerWebAccessService.js')).mergeWorkerWebAccessPolicy;
+            webPolicy = mergeWorkerWebAccessPolicy({
+              workerPolicy: workerWebPolicyOverride as any,
+              orgPolicy: webPolicy,
+              requireOrgPolicy: true,
+            });
+          }
         } catch {
           webPolicy = null;
           webGov = null;
@@ -2169,7 +2266,8 @@ router.post(
           const { detectWebSearchIntent } =
             await import('../services/ai/webSearchIntentDetector.js');
           searchIntent = detectWebSearchIntent(message, {
-            userEnabledWebSearch,
+            userEnabledWebSearch:
+              userEnabledWebSearch || Boolean((workerWebPolicyOverride as any)?.autoSearch),
             historyLength: Array.isArray(history) ? history.length : 0,
           });
         } catch (err: any) {
@@ -2187,13 +2285,13 @@ router.post(
           }
         }
 
-        if (searchIntent?.shouldSearch && webPolicy?.internetEnabled) {
+        const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
+        if ((searchIntent?.shouldSearch || workerAutoSearchRequested) && webPolicy?.internetEnabled) {
           try {
-            const { TavilyWebSearchService } =
-              await import('../services/ai/tavilyWebSearchService.js');
-            const svc = new (TavilyWebSearchService as any)(
-              (process.env.TAVILY_API_KEY || '').trim()
+            const { RuntimeWebSearchService } = await import(
+              '../services/ai/runtimeWebSearchService.js'
             );
+            const svc = new (RuntimeWebSearchService as any)();
             const sanitizeQuery = webGov?.sanitizeQuery || webGov?.default?.sanitizeQuery;
             const filterResults = webGov?.filterResults || webGov?.default?.filterResults;
             const getCached = webGov?.getCached || webGov?.default?.getCached;
@@ -2227,6 +2325,7 @@ router.post(
                     maxResults: searchIntent.maxResults ?? 5,
                     includeNews: true,
                     searchDepth: searchIntent.searchDepth ?? 'basic',
+                    language,
                   }));
                 const resultsRaw = Array.isArray((resp as any)?.results)
                   ? (resp as any).results
@@ -2301,7 +2400,7 @@ router.post(
                 });
             }
 
-            // Inject sources + Tavily answers into system instruction
+            // Inject sources + web-search synthesis into system instruction
             const sourcesText = citations
               .map((c: any, i: number) => `[${i + 1}] ${c.title}\n${c.link}\n${c.excerpt || ''}`)
               .join('\n\n');

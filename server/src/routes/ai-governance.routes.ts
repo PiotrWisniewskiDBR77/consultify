@@ -29,15 +29,18 @@ router.get(
       AIPolicyEngine.getPolicySummary(orgId),
     ]);
 
-    const tavilyConfigured = Boolean(String(process.env.TAVILY_API_KEY || '').trim());
+    const { getRuntimeWebSearchStatus } = await import(
+      '../services/ai/runtimeWebSearchService.js'
+    );
+    const runtimeStatus = getRuntimeWebSearchStatus();
     res.json({
       success: true,
       data: {
         effective,
         summary,
         runtime: {
-          tavilyConfigured,
-          webSearchAvailable: Boolean((effective as any)?.internetEnabled) && tavilyConfigured,
+          ...runtimeStatus,
+          webSearchAvailable: Boolean((effective as any)?.internetEnabled) && runtimeStatus.available,
         },
       },
     });

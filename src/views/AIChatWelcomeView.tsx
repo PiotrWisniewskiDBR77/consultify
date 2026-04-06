@@ -903,6 +903,7 @@ For example: REMEMBER: preferred_language: Polish`;
         conversationLanguage: chatLanguage,
         attachmentDocIds,
         attachments: uploadedAttachments,
+        virtualWorkerSlug: 'teresa',
       };
 
       const systemPrompt = buildSystemPrompt();
