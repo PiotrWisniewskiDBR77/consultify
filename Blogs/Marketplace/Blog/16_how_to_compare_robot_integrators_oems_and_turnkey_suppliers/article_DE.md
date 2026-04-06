@@ -1,81 +1,58 @@
 # Wie man Robotik-Integratoren, OEMs und Turnkey-Lieferanten vergleicht
 
-Target persona: Einkaufskomitee / Engineering- und Einkaufsfuehrung  
-Funnel stage: Decision  
-Core problem: Hersteller vergleichen Lieferanten wie eine Kategorie, obwohl Liefermodelle, Risikoallokation und Aenderungsmechanik stark differieren  
-Main promise: ein Vergleichsrahmen, der Lieferantentypen zu Optimierung, Sichtbarkeit und Buyer-Ownership mapped
+Zielpersona: Einkaufskomitee / Engineering- und Beschaffungsführung  
+Funnel-Stufe: Entscheidungsphase  
+Kernproblem: Hersteller vergleichen Lieferanten, als wären sie eine Kategorie — obwohl Liefermodelle, Risikoeigentum und Change-Mechaniken materiell differieren  
+Hauptversprechen: Ein Vergleichsrahmen, der Lieferantentypen zu dem mappt, was sie optimieren, was sie offenlegen und was der Käufer besitzen muss
 
-Robotik-Integratoren, OEMs und Turnkey-Lieferanten koennen Automatisierung liefern. Sie liefern nicht dieselbe Entscheidung.
+Integratoren, OEMs und Turnkey-Lieferanten können alle Automation auf Ihre Fläche bringen. Sie verkaufen nicht dieselbe Projektart. Wenn Sie Angebote nur nach Preis und Lieferzeit sortieren, verpassen Sie strukturelle Unterschiede, die bestimmen, ob Woche sechs wie Partnerschaft oder wie Streitigkeit wirkt.
 
-Wenn Sie nur Preis und Lieferzeit vergleichen, uebersehen Sie strukturelle Unterschiede, die bestimmen, wie sich das Projekt nach Woche eins anfuehlt.
+Der Fix ist, Felder statt Labels zu vergleichen — und ehrlich zu sein, was Ihr Werk in jedem Modell besitzen muss.
 
-## Drei Lieferanten-Archetypen (nuetzlich, nicht perfekt)
+## Integrator-geführte Lieferung: Fit und Ihre Klarheitsschuld
 
-Reale Lieferanten koennen Mischformen sein. Diese Archetypen helfen trotzdem, bessere Fragen zu stellen.
+Integrator-geführte Arbeit optimiert oft für technisches Fit zu unordentlicher Werkrealität. Sie bekommen Flexibilität und maßgeschneiderte Schnittstellen; Sie tragen auch höhere Last für interne Klarheit. Konflikt erscheint an Scope-Kanten, Annahmenlücken und Integrationsüberraschungen, wo das Briefing weich war. Dieser Pfad belohnt starke Käufer-Governance.
 
-### Integrator-gefuehrte Lieferung
+## OEM-geführte Lieferung: Musterstärke und Grenzspannung
 
-**Was es oft optimiert**: flexibles Engineering-Fit zur realen Werkssituation.
+OEM-Pfade optimieren oft um standardisierte Plattformen und wiederholbare Subsysteme. Grenzen tendieren klarer zu sein, Fabriktestmuster stärker, Change Control enger. Konflikt entsteht, wenn Ihre Randbedingungen das Template brechen — ungewöhnliche Variabilität, ungeschickte periphere Integration oder Site-Bedingungen, die nicht zur Katalogstory passen.
 
-**Was Sie erwarten sollten**: mehr Customizing, mehr Schnittstellenarbeit, staerkere Abhaengigkeit von interner Klarheit. **Wo Konflikt entsteht**: Scope-Drift, Annahmenluecken, Integrationsueberraschungen.
+## Turnkey und Paketlieferung: Einheitsverantwortung, wenn die Box sauber ist
 
-### OEM-gefuehrte Lieferung
+Turnkey-Pakete können Verantwortung für ein definiertes Outcome bündeln — wenn Exclusions ehrlich sind und Schnittstellen stabil. Konflikt ballt sich in Grauzonen: unordentliche Upstream-/Downstream-Übergaben, unklare Subunternehmer-Sichtbarkeit oder „Single-Throat“-Sprache, die die erste Site-Wahrheit nicht übersteht.
 
-**Was es oft optimiert**: standardisierte Maschinenplattformen und wiederholbare Subsysteme.
+## Acht Felder, die Sie über jeden Typ konstant halten
 
-**Was Sie erwarten sollten**: klarere Produktgrenzen, staerkere Werks-Testmuster, engere Change-Control.
+Fragen Sie jeden Lieferanten dieselben Fragen in derselben Struktur. Was ist in und außerhalb des Scopes, in klarer Sprache? Welche Annahmen liegen unter Leistung und Zeitplan? Wie wird Fähigkeit nachgewiesen — wo, mit welchen Samples, gegen welche Abnahmelogik? Wer besitzt Integration auf mechanischer, elektrischer, Steuerungs- und Datenebene? Wie werden Changes angefragt, gepreist und genehmigt? Wie werden Verzögerungen, Lieferengpässe und technische Unbekannte verteilt? Was bedeuten Dokumentation, Training und „komplett“ operativ? Was passiert nach Go-Live — Reaktionserwartungen, Ersatzteile, Eskalation?
 
-**Wo Konflikt entsteht**: Fit zu nicht-standard Constraints, Variabilitaets-Handling, Ownership peripherer Integration.
+Wenn ein Lieferant diese Antworten nicht lesbar machen kann, behandeln Sie das als Signal — kein Format-Quirk.
 
-### Turnkey / Paketlieferung
+## Modell an Problemform anpassen
 
-**Was es oft optimiert**: eine verantwortliche Kehle fuer ein definiertes Ergebnispaket.
+Hohe Integrationslast mit reifer interner Governance kann Integratortiefe begünstigen, wenn Sie Scope-Disziplin halten. Wiederholbare, gerätezentrierte Probleme mit kontrollierter Variabilität können OEM-Stärken begünstigen. Outcomes mit sauberen Grenzen und stabilen Schnittstellen können zu Turnkey passen — vorausgesetzt, Exclusions sind messbar.
 
-**Was Sie erwarten sollten**: konsolidierte Verantwortung, wenn Grenzen sauber sind.
+Der typische Fehlmodus ist Wahl aus Markenvertrautheit, während die Problemform woanders zeigt.
 
-**Wo Konflikt entsteht**: Graubereich-Ownership bei messy Upstream/Downstream, unklare Exclusions, Subunternehmer-Sichtbarkeit.
+## Vergleichsmeetings, die Substanz belohnen
 
-## Vergleich ueber acht Entscheidungsfelder
+Nutzen Sie ein Briefing und ein Antwort-Skelett. Strukturieren Sie Q&A um Annahmen und Exclusions. Verlangen Sie eine kurze Abhängigkeits- und Risikoerklärung. Erfassen Sie Unterschiede in einer Matrix, die Beschaffung besitzt. Lassen Sie nicht standardmäßig den besten Presenter gewinnen.
 
-Nutzen Sie dieselben Felder fuer jeden Lieferantentyp.
+## Wie DBR77 Marketplace hilft
 
-| Feld | was vergleichen |
-| --- | --- |
-| Scope-Grenze | Inklusionen/Exklusionen klar formuliert |
-| Annahmen | Durchsatz, Mix, Verfuegbarkeit, Umfeld, IT/OT |
-| Leistungsnachweis | FAT/SAT-Logik, Muster, Abnahmetests |
-| Integrations-Ownership | wer macht was an Nachbarsystemen |
-| Aenderungsmechanik | wie Scope-Aenderungen bepreist und freigegeben werden |
-| Risikoallokation | Verzoegerungen, Supply Chain, technische Unbekannte |
-| Dokumentation und Training | was "komplett" operativ bedeutet |
-| Support nach Go-Live | Reaktionserwartung und Ersatzteilpfad |
+Strukturierter Vergleich macht Lieferantentyp-Unterschiede in Annahmen, Scope und Eigentum sichtbar — nicht nur in Folienästhetik.
 
-Wenn ein Lieferant diese Felder nicht klar beantworten kann, ist das Signal, kein Formatproblem.
+Für ergänzende Lektüre kombinieren Sie dies mit [Was ein gutes Automatisierungsangebot sichtbar machen sollte](../17_what_a_good_automation_offer_should_make_visible/article_DE.md) und [Was vor Unterzeichnung eines Automatisierungsvertrags zu prüfen ist](../20_what_to_check_before_signing_an_automation_contract/article_DE.md).
 
-## Praktische Regel: Liefermodell an Problemform matchen
+## Lieferantenarchetypen und Ihre interne Kapazität
 
-Das ist Urteil, kein Gesetz.
+Der „richtige“ Lieferantentyp hängt davon ab, was Ihre Organisation regieren kann. Integrator-Pfade verbrauchen Käuferklarheit; OEM-Pfade verbrauchen Template-Fit; Turnkey-Pfade verbrauchen saubere Grenzdefinition. Wenn Ihr Werk kein stabiles Briefing und Schnittstellen-Owner produzieren kann, zerfällt die eleganteste Turnkey-Sprache trotzdem. Matchen Sie das Lieferantenmodell nicht nur an das technische Problem, sondern an die Governance-Reife, die Sie während Integration tatsächlich fahren.
 
-**Hohe werksspezifische Integrationslast** beguenstigt oft Integratorstaerke bei starkem Governance; **Wiederholbare geraetezentrische Loesung** passt oft zu OEM-Staerke bei kontrollierter Variabilitaet; **Ergebniskauf mit sauberer Grenze** kann zu Turnkey passen, wenn Exclusions ehrlich und messbar sind. Fehlermodus ist Wahl nach Markenbekanntheit statt nach Problemform.
+Wenn Modelle sich mischen — und das tun sie oft — schreiben Sie, welche Elemente welchen Regeln folgen: wo Standardplattformen enden, wo Custom Engineering beginnt und wie Support nach Go-Live verläuft. Gemischte Lieferung ohne explizite Regeln wird das Schlimmste aus beiden Welten: Custom-Komplexität mit unklarem Accountability.
 
-## Wie man ein faires Vergleichstreffen fuehrt
+## Kurz gesagt
 
-Denselben Brief und dieselbe Antwortstruktur senden; strukturiertes Q und A zu Annahmen und Exclusions; kurze Risiko- und Abhaengigkeitsstellung von jeder Seite verlangen; Unterschiede in einer von Einkauf gefuehrten Matrix dokumentieren; vermeiden, dass der beste Praesentator standardmaessig gewinnt.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace unterstuetzt hersteller-first Einkauf, indem Automatisierung als Workflow behandelt wird, nicht als Katalog-Browse.
-
-Es hilft Teams, Angebote strukturierter und mit sichtbareren Annahmen zu vergleichen, gerade wenn Lieferantentypen differieren.
-
-Es unterstuetzt auch vertrauensorientierte Integratorenauswahl: Ziel ist verteidigbarer Vergleich, kein Schoenheitswettbewerb.
-
-## Bottom line
-
-Integratoren, OEMs und Turnkey sind nicht austauschbare Labels. Sie implizieren unterschiedliche Ownership-Muster. Vergleichen Sie Felder, keine Slogans.
-
-Wenn der Vergleich sauber ist, wird die Entscheidung im Werk leichter erklaerbar und spaeter leichter verteidigbar.
+Diese Lieferantenarchetypen implizieren unterschiedliche Eigentumsmuster. Vergleichen Sie dieselben Entscheidungsfelder für jeden Pfad — dann können Sie die Vergabe im Werk erklären und verteidigen, wenn die Ausführung hart wird.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt strukturierten Angebotsvergleich und vertrauensorientierte Integratorenauswahl, damit Lieferantentyp-Unterschiede in Annahmen und Scope sichtbar werden, nicht nur in Präsentationen. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

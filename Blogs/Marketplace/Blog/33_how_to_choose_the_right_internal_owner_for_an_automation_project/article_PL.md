@@ -1,71 +1,54 @@
-# Jak wybrac wlasciwego wewnetrznego wlasciciela projektu automatyzacji
+# Jak wybrać właściwego wewnętrznego właściciela projektu automatyzacji
 
-Target persona: sponsor zakladu / lider programu z autorytetem budzetowym  
-Funnel stage: Consideration (wczesna struktura przed wejsciem na rynek)  
-Core problem: rozproszone wlascicielstwo zamienia rozmowy z dostawcami w rownolegle watki, slaba porownywalnosc i pozne niespodzianki przy bramkach akceptacji  
-Main promise: praktyczny zestaw regul wyboru wlasciciela powiazany z zakresem, ryzykiem, interfejsami i prawami decyzyjnymi
+Docelowa persona: Sponsor zakładu / lider programu z kompetencją budżetową  
+Etap lejka: Rozważanie (wczesna struktura przed wejściem na rynek)  
+Główny problem: rozproszone właścicielstwo zamienia rozmowy z dostawcami w równoległe wątki, słabą porównywalność i późne niespodzianki przy bramach akceptacji  
+Główna obietnica: praktyczny zestaw reguł wyboru właściciela powiązany z zakresem, ryzykiem, interfejsami i prawami decyzyjnymi
 
-Ktos musi miec prawo powiedziec nie w imieniu zakladu.
+Rozproszone właścicielstwo jest drogie. Inżynieria odpowiada na jedno pytanie w wątku u dostawcy, zakupy na drugie, operacje o decyzjach interfejsów dowiadują się z maila integratora, a finanse widzi cenę, której nikt nie potrafi zmapować na zakres. Nie macie projektu — macie pokój rozmów w przebraniu kodu capexu.
 
-Jesli wszyscy sa odpowiedzialni, nikt nie jest rozliczalny, gdy poslizgaja sie interfejsy lub jezyk akceptacji zostaje mglisty. Wewnetrzne wlascicielstwo to nie cwiczenie z tytulow.
+Wyznaczcie głównego wewnętrznego właściciela, który utrzyma jedną spójną narrację od briefu do przyznania — i rozdzielcie role wspierające świadomie.
 
-To decyzja, by wskazac jedno gardlo dla harmonogramu, spojnosci zakresu i dialogu z integratorem.
+## Co główny właściciel musi kontrolować
 
-## Bezposrednia odpowiedz
+Powinien móc wiązać rzeczywistość operacyjną, interfejsy techniczne i logikę przyznania — albo eskalować czysto, gdy nie może. Posiada zapis decyzji: wersjonowany brief, rejestr założeń, kręgosłup porównań i dyscyplinę wyjaśnień. Jeśli nikt nie potrafi w jednym akapicie powiedzieć „oto, co zdecydowaliśmy”, wybraliście złego właściciela.
 
-Wybierz wewnetrznego wlasciciela, dopasowujac ryzyko projektu i obciazenie interfejsami do osoby, ktora moze zapewnic czas operacji, prawde inzynierska i dyscypline zakupow w jednym lancuchu.
+## Dopasujcie kompetencje do kształtu ryzyka
 
-Jesli praca jest glownie mechaniczna ze stabilnym mixem produktu, czesto sprawdza sie prowadzenie przez operacje.
+Projekty obciążone interfejsami potrzebują właściciela, który potrafi powiedzieć „nie” przez funkcje. Projekty nastawione na pracę i przepustowość potrzebują kogoś, komu operacje ufają w reprezentowaniu linii pod presją. Silnie komercyjne lub wielolokalizacyjne portfele mogą wymagać lidera programu z jawnym wsparciem sponsora. Tytuły mają mniejsze znaczenie niż prawa decyzyjne i wiarygodność na hali.
 
-Jesli praca jest ciezka interfejsami przez MES, systemy jakosci i IT, zwykle potrzebujesz technicznego wlasciciela programu z operacjami jako twardym partnerem, a nie pasywnym recenzentem.
+## Role wspierające powinny być jawne
 
-## Archetypy wlascicieli (wybierz jednego glownego)
+Inżynieria tłumaczy ograniczenia; zakupy strzegą porównywalności; finanse testują timing gotówki; prawo przegląda język zobowiązań. Wspieranie nie znaczy równoległe właścicielstwo. Równoległe właścicielstwo bez głównego właściciela to sposób, w jaki umiera porównywalność.
 
-| archetyp | pasuje gdy | uwagi |
-| --- | --- | --- |
-| prowadzone przez operacje | przepustowosc, obsada i uptime dominuja sukces | moze niedoceniac dlugocyklowych zaleznosci IT i danych |
-| prowadzone przez inzynierie | uklad, bezpieczenstwo i wykonalnosc techniczna dominuja | moze niedoceniac ekspozycji komercyjnej i logiki przyznania |
-| prowadzone przez zakupy | porownywalnosc, warunki i zarzadzanie dostawcami dominuja | nie moze zredukowac prawdy technicznej do teatru arkuszy |
-| prowadzone przez IT | tozsamosc, siec i punkty styku systemow dominuja | musi pozostac sprzezone z rzeczywistoscia uruchomienia fizycznego |
+## Złe sygnały właścicielstwa
 
-Hybryda jest powszechna.
+Uważajcie na sytuację, w której dostawcy dostają różne odpowiedzi z różnych funkcji, zakres dryfuje bez udokumentowanej decyzji albo spotkania „wyrównania” co tydzień odtwarzają ten sam konflikt. To objawy, nie dziwactwa.
 
-Hybryda bez nazwanego glownego wlasciciela to sposob, w jaki zaklady tracaja tygodnie.
+## Jak DBR77 Marketplace się łączy
 
-## Lista kontrolna decyzji zanim nazwiesz wlasciciela
+Ustrukturyzowane porównanie pomaga tylko wtedy, gdy ktoś wewnątrz zakładu posiada zapis od pierwszego briefu przez dialog z dostawcą. Inaczej porównywalne oferty rozpadają się z powrotem w równoległe wewnętrzne historie w momencie, gdy rozmowy przyspieszają.
 
-Uzyj jako jednostronicowego wewnetrznego zapisu (ilustracyjnie):
+Najbliższe domknięcie wyrównania: [Jak dopasować operacje, inżynierię i zakupy przed zakupem automatyzacji](../19_how_to_align_operations_engineering_and_procurement_before_automation_buying/article_PL.md) oraz [Jak przeprowadzić końcowy wewnętrzny przegląd wyrównania przed kickoffem automatyzacji](../42_how_to_run_a_final_internal_alignment_review_before_automation_kickoff/article_PL.md).
 
-1. kto akceptuje obiekty akceptacji i w jakiej kolejnosci
-2. kto moze zamrozic zakres do zewnetrznych wycen
-3. kto posiada decyzje interfejsowe z MES / ERP / QMS / CMMS
-4. kto planuje okna dostepu i okna ryzyka produkcji
-5. kto eskaluje, gdy propozycja dostawcy zmienia zalozenia
+## Kompetencje bez heroizmu
 
-Jesli jedna osoba nie pokrywa punktow 1 do 3, podziel role jawnie i mimo wszystko wskaz jednego lidera do kontaktu z integratorem.
+Właściciel nie powinien być jedyną osobą rozumiejącą projekt — to ryzyko „autobusu”. Powinien być kimś, kto integruje wejścia w jeden wątek decyzyjny i eskaluje, gdy funkcje wpadają w impas. Sparujcie go z mocnym zastępcą dla ciągłości w urlopy, zmiany i nieunikniony tydzień, gdy operacje pochłonie kryzys klienta.
 
-## Kiedy dodac rytm sterowania
+Jeśli kultura myli właścicielstwo z robieniem całej pracy, naprawcie to przed automatyzacją. Projekty integracyjne karzą kulturę bohaterów wypaleniem i gubionymi przekazaniami.
 
-Dodaj lekkie forum sterujace gdy: capex przekracza prog, ktory zaklad traktuje politycznie; wiecej niz dwie funkcje moga pozno zawetowac; sciezka integratora dotyka sladow audytu klienta lub regulacyjnego. Sterowanie to nie drugi wlasciciel. To widocznosc dla glownego wlasciciela.
+## Od decyzji do zachowania hali
 
-## Jak wyglada dobre wlascicielstwo w dialogu z dostawca
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „jak wybrać właściwego wewnętrznego właściciela projektu automatyzacji” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-Dobre wlascicielstwo widac po: jednej wychodzacej narracji o zakresie i ograniczeniach; porownywalnych zestawach pytan do oferentow; udokumentowanych zmianach zalozenia zamiast edycji z korytarza.
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-Zle wlascicielstwo widac po: inzynieria odpowiada jedno, zakupy drugie; operacje dowiaduja sie o decyzjach interfejsowych od dostawcy.
-
-## Co to znaczy dla DBR77 Marketplace
-
-DBR77 Marketplace jest zbudowany jako workflow decyzji automatyzacji, a nie katalog do przegladania.
-
-Jasne wewnetrzne wlascicielstwo czyni ten workflow uzytecznym: strukturalne pola, porownywalne oferty i sygnaly zaufania kompresuja chaos tylko wtedy, gdy ktos wewnatrz zakladu moze prowadzic watek.
-
-Marketplace wspiera wybor integratora i porownanie ofert, gdy strona nabywcy wie, kto posiada zapis decyzji.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
 ## Podsumowanie
 
-Wskaz jednego glownego wewnetrznego wlasciciela, ktory moze zwiazac operacje, interfejsy techniczne i logike przyznania. Podziel role wspierajace celowo, nie przez przypadek. Potem wejdz na rynek raz, z jedna spojna historia.
+Wybierzcie jednego głównego właściciela, który potrafi wiązać operacje, prawdę techniczną i logikę przyznania. Obsadźcie funkcje wspierające jasno. Potem wejdźcie na rynek raz — z jednym spójnym wątkiem.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace utrzymuje jeden spójny wątek kupującego w polach zakresu i porównań, gdy nazwany wewnętrzny właściciel może nieść zapis decyzji. [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

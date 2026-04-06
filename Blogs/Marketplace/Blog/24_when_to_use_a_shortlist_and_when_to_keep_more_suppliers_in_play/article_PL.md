@@ -1,77 +1,52 @@
-# Kiedy stosowac shortliste, a kiedy trzymac wieksza liczbe dostawcow w grze
+# Kiedy stosować shortlistę, a kiedy utrzymywać więcej dostawców w grze
 
-Target persona: lider zakupow / wlasciciel zakupu  
-Funnel stage: Consideration (projektowanie procesu pod porownywalnosc)  
-Core problem: zespoly albo zapraszaja za wielu dostawcow i gina w szumie, albo za wczesnie zawezaja liste i traca napiecie negocjacyjne oraz realnosc  
-Main promise: prosta brama decyzyjna, ktora dopasowuje liczbe dostawcow do niepewnosci, potrzeb porownawczych i wewnetrznego wyrownania
+Docelowa persona: Lider zakupów / Właściciel procesu zakupowego  
+Etap lejka: Rozważanie (projektowanie procesu pod porównywalność)  
+Główny problem: zespoły albo zapraszają zbyt wielu dostawców i toną w szumie, albo zbyt wcześnie zawężają pole i tracą negocjacyjną rzeczywistość  
+Główna obietnica: prosta bramka decyzyjna dopasowująca liczbę dostawców do niepewności, potrzeb porównywalności i wewnętrznego dopasowania
 
-Liczba dostawcow nie jest cnota. To zmienna sterujaca.
+Liczba dostawców to zmienna sterująca, nie cnota. Zbyt wielu oferentów rozcieńcza uwagę, zachęca do cienkich propozycji i sygnalizuje niskie szanse — więc integratorzy inwestują mniej. Zbyt wąskie pole zbyt wcześnie zamyka was w opowieści, zanim wiecie, co kupujecie. Właściwa liczba podąża za niepewnością: zostańcie szersi, dopóki wyzwanie i rama porównywalności się kształtują; zwężajcie, gdy możecie porównać uczciwie i potrzebujecie głębi zamiast szerokości.
 
-Za wielu dostawcow tworzy: niekompatybilne propozycje; rozproszenie uwagi Twojego zespolu; mniejszy naklad pracy integratorow, bo szanse wydaja sie niskie.
+## Poszerz pole, gdy rozpoznanie jest realne
 
-Za malo dostawcow za wczesnie tworzy: slabe napiecie cenowe i zakresowe; wewnetrzne podejrzenie, ze naprawa zostala wybrana zanim problem byl zrozumiany.
+Utrzymuj więcej dostawców w grze, gdy klasa rozwiązania nie jest ustalona, wewnętrzne dopasowanie wciąż chwieje się lub ograniczenia w zakładzie nie są jeszcze czytelne. W tych warunkach rozmowy są narzędziem nauki. Wymuszenie shortlisty przedwcześnie produkuje pewne zgadywanie na złym problemie.
 
-Producenci radza sobie lepiej, gdy liczbe dostawcow wybieraja swiadomie.
+## Shortlista, gdy porównywalność jest możliwa
 
-## Bezposrednia odpowiedz
+Przejdź na shortlistę, gdy możesz zamrozić pola oceny, opublikować te same doprecyzowania do poważnych oferentów i oceniać odpowiedzi według meritum zamiast formatu. Shortlista to obietnica wobec dostawców, że ich wysiłek spotka się z uczciwym, ograniczonym porównaniem — nie z wiecznym turniejem.
 
-Uzyj shortlisty, gdy problem jest na tyle zdefiniowany, by porownywac uczciwie, a Twoj zespol potrafi prowadzic zdyscyplinowana macierz.
+## Nie przesuwaj kolumn po shortliście
 
-Trzymaj w grze wiecej dostawcow, gdy niepewnosc jest nadal strukturalna: niejasny zakres, niejasne ograniczenia lub nierozstrzygnieci wlasciciele wewnetrzni.
+Jeśli kryteria oceny wciąż się przesuwają, gdy lista jest mała, zmuszasz integratorów do gonienia ruchomego celu i niszczysz zaufanie. Zamroź kręgosłup; zmieniaj go tylko z dyscypliną wersji i jawnym resetem.
 
-Praktyczna regula: wysoka niepewnosc problemu: poszerzaj, az brief sie ustabilizuje; wysokie ryzyko decyzji: trzymaj co najmniej dwie wiarygodne sciezki, az warunki komercyjne beda porownywalne; wysoka presja czasu przy zamrozonym zakresie: shortlista szybko, ale najpierw zamroz pola porownania.
+## Negocjacyjna rzeczywistość bez chaosu
 
-Jesli zmieniasz liczbe dostawcow bez zmiany briefu, zwykle tylko porzadkasz chaos.
+Shortlista powinna wciąż zostawiać napięcie na uczciwą rozmowę handlową. Pojedyncze żywotne nazwisko bywa rzeczywistością — wtedy dyscyplina dowodzenia ma jeszcze większe znaczenie, nie mniejsze.
 
-## Sygnaly pod shortliste (kiedy zawezenie jest racjonalne)
+## Jak pomaga DBR77 Marketplace
 
-Shortlista ma sens, gdy: granice zakresu sa zapisane i wersjonowane; kryteria sukcesu sa testowalne, nie estetyczne; wlasciciele integracji sa nazwani po Twojej stronie; kolumny porownania sa zamrozone na jeden cykl ewaluacji; potrafisz wyjasnic, czemu wykluczeni dostawcy sa wykluczeni bez wstydu. To nie "podobaja nam sie trzej". To "uczciwie ocenimy przy trzech".
+Liczba dostawców staje się użyteczna, gdy potrafisz wyjaśnić, czemu rozpoznanie zostało szerokie albo czemu porównanie na etapie decyzji się zwęziło. To zamienia projekt shortlisty w regułę operacyjną zamiast gestu politycznego.
 
-## Sygnaly, by trzymac wiecej dostawcow (kiedy szerzej ma sens)
+Sąsiednia ścieżka decyzyjna: [Kiedy single sourcing jest mądrzejszy niż pełny konkurs piękności](../27_when_single_sourcing_is_smarter_than_running_a_full_supplier_beauty_contest/article_PL.md); jeśli zakres wciąż jest niestabilny, zobacz też [Jak określić zakres projektu automatyzacji bez przesady](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_PL.md).
 
-Zostan szerszy, gdy: operacje i inzynieria nie zgadzaja sie co do realnego ograniczenia; linia nie moze zadeklarowac prob, temp czy zalozen przestojow; zasady bezpieczenstwa lub walidacji sa nadal niejasne; zakupy maja porownywac oferty, ktore jeszcze nie sa naprawde porownywalne. W takim stanie shortlista nie przyspiesza. Zwielokrotnia przerobki.
+## Doświadczenie dostawcy ma znaczenie
 
-## Reality check: zespoly czesto zawezaja liste za wczesnie, bo mniejsza liczba dostawcow wyglada jak postep
+Integratorzy przydzielają talenty szansom, które wyglądają poważnie. Przerośnięte pole może przypadkowo sygnalizować niski intent; zbyt wąskie — ustawioną grę. Wyjaśnij wewnętrznie, czemu liczba dostawców pasuje do niepewności, by zespół komunikował się z zewnątrz z szacunkiem. Uczciwy proces to nie tylko etyka — to sposób, by przyciągnąć jakościowy wysiłek na projekt.
 
-To odczucie jest zrozumiale. Kalendarze robia sie lzejsze. Spotkania staja sie krotsze. Proces wyglada na bardziej kontrolowany. Ale jesli niepewnosc nadal siedzi w briefie, krotsza lista nie tworzy porownywalnosci.
+Gdy shortlistujesz, zobowiąż się do głębi: warsztaty, prawda z hali i ustrukturyzowane doprecyzowania uzasadniające zawężenie. Shortlista, która tylko zawęża nazwy bez pogłębienia rozumienia, jest kosmetyczna.
 
-Ukrywa tylko fakt, ze kupujacy zawezyl wybor zanim problem ustabilizowal sie na tyle, by uczciwie go ocenic.
+## Od decyzji do zachowania hala
 
-## Model dwuetapowy myslenia
+Chodzi o dociśnięcie tej części podróży zakupowej — w praktyce shortlista kontra szersze pole — by realizacja była przewidywalna. W zakładach przemysłowych niejasność nie zostaje abstrakcją: staje się czekaniem, przeróbką, cichymi obejściami i sporami przy sprzęcie, gdy linia potrzebowała jasności tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widoczną odpowiedzialność, dostawcy odpowiadają mniejszą liczbą niespodzianek, a funkcje wewnętrzne marnują mniej czasu na uzgadnianie konkurujących opowieści.
 
-Mysl w dwoch pulach dostawcow, nie w jednej stalej liscie.
+To nie teoria tylko dla funkcji sztabowych. Menedżerowie zakładów czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: pochłonięte nadgodziny, napięta czujność jakości i utrzymanie wciągane w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja produkcyjna — mniej dramatu przy montażu, mniej nagłych rozmów o zmianach i szybsza droga do stabilnego wyjścia. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-| Etap | cel | typowa liczba (ilustracyjnie) |
-| --- | --- | --- |
-| discovery | redukcja nieznanych, test zalozen wykonalnosci | szersza |
-| decision | porownanie ofert przy zamrozonych polach | wezsza |
-
-Przejdz z discovery do decision tylko wtedy, gdy brief przetrwa jedna partie wyjasnien bez przeksztalcenia zakresu.
-
-## Higiena porownania, ktora sprawia, ze obie liczby dzialaja
-
-Niezaleznie czy trzymasz czterech czy dwoch dostawcow, ta sama regula: jeden kanal wychodzacy, jedna macierz, jeden rejestr zalozen.
-
-Jesli poszerzasz dostawcow, ale kanaly zostaja nieformalne, mnozysz sprzecznosci.
-
-Jesli shortlistujesz, ale ciagle ruszasz kolumnami, zmuszasz integratorow do zgadywania.
-
-## Co to znaczy dla DBR77 Marketplace
-
-DBR77 Marketplace jest zbudowany jako workflow decyzji automatyzacji, nie katalog do przegladania.
-
-Wspiera przeksztalcanie wczesnych, chaotycznych rozmow w strukturalne porownanie, gdy jestes gotowy do zawezenia.
-
-To ten sam moment, w ktorym shortlista przestaje byc polityka i zaczyna byc operacjami. Marketplace to nie katalog robotow.
-
-To system redukcji chaosu sourcingowego przez jawna liczbe dostawcow i pola porownania.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy duży wynik zakupowy jako coś, co operacje i utrzymanie mogłyby zaudytować. Jeśli nie da się tego prześledzić do zachowania na hali, dociśnij język, aż się da.
 
 ## Podsumowanie
 
-Shortlistuj, gdy mozesz porownywac uczciwie.
-
-Zostan szerszy, gdy nadal nie potrafisz opisac, co znaczy uczciwe porownanie. Liczba dostawcow powinna wynikac z niepewnosci, nie z przyzwyczajenia.
+Shortlistuj, gdy możesz porównać uczciwie. Zostań szerszy, dopóki nie opiszesz, co znaczy uczciwe porównanie. Pozwól niepewności napędzać liczbę — nie nawyk, nie samą politykę i nie strach przed pominięciem nazwiska.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace pomaga zespołom przejść od rozmów rozpoznawczych do porównania z zamrożonymi polami bez gubienia zapisu decyzji w wątkach mailowych. [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

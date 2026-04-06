@@ -5,62 +5,51 @@ Funnel stage: Consideration (early structuring before market engagement)
 Core problem: diffused ownership turns vendor conversations into parallel threads, weak comparability, and late surprises at approval gates  
 Main promise: a practical owner-selection rule set tied to scope, risk, interfaces, and decision rights
 
-Someone must be allowed to say no on behalf of the plant.
+Diffused ownership is expensive. Engineering answers one question in a supplier thread, procurement another, operations learns interface decisions from the integrator’s email, and finance sees a price that nobody can map to scope. You do not have a project; you have a chat room wearing a capex code.
 
-If everyone is responsible, nobody is accountable when interfaces slip or acceptance language stays fuzzy. Internal ownership is not a title exercise.
+Name a primary internal owner who can carry one coherent story from brief through award—and split supporting roles on purpose.
 
-It is the decision to assign one throat to choke for schedule, scope coherence, and integrator dialogue.
+## What the primary owner must control
 
-Choose the internal owner by matching project risk and interface load to a person who can commit operations time, engineering truth, and procurement discipline in one chain.
+They should be able to bind operations reality, technical interfaces, and award logic—or escalate cleanly when they cannot. They own the decision record: versioned brief, assumptions log, comparison spine, and clarification discipline. If nobody can say “this is what we decided” in one paragraph, you picked the wrong owner.
 
-If the work is mostly mechanical with stable product mix, operations-led ownership often works.
+## Match authority to risk shape
 
-If the work is interface-heavy across MES, quality systems, and IT, you usually need a technical program owner with operations as a hard partner, not a passive reviewer.
+Interface-heavy projects need an owner comfortable saying no across functions. Labor- and throughput-centric projects need someone operations trusts to represent the line under pressure. Highly commercial or multi-site portfolios may need a program lead with explicit sponsor backing. Titles matter less than decision rights and floor credibility.
 
-## Owner archetypes (pick one primary)
+## Supporting roles should be explicit
 
-| archetype | fits when | watch-outs |
-| --- | --- | --- |
-| operations-led | throughput, staffing, and uptime dominate success | may under-weight long-cycle IT and data dependencies |
-| engineering-led | layout, safety, and technical feasibility dominate | may under-weight commercial exposure and award logic |
-| procurement-led | comparability, terms, and supplier governance dominate | must not collapse technical truth into spreadsheet theater |
-| IT-led | identity, network, and system-of-record touchpoints dominate | must stay coupled to physical commissioning reality |
+Engineering translates constraints; procurement guards comparability; finance tests cash timing; legal reviews commitment language. Supporting does not mean parallel ownership. Parallel ownership without a primary is how comparability dies.
 
-Hybrid is common. Hybrid without a named primary owner is how plants lose weeks.
+## Bad ownership signals
 
-## Decision checklist before you name the owner
+Watch for vendors receiving different answers from different functions, scope drifting without a documented decision, or “alignment” meetings that replay the same fight weekly. Those are symptoms, not quirks.
 
-Use this as a one-page internal record (illustrative):
+## How DBR77 Marketplace connects
 
-1. who signs off acceptance objects and in what order
-2. who can freeze scope for external quoting
-3. who owns interface decisions with MES / ERP / QMS / CMMS
-4. who schedules access windows and production risk windows
-5. who escalates when a supplier proposal changes assumptions
-
-If one person cannot cover items 1 through 3, split roles explicitly and name a single integrator-facing lead anyway.
-
-## When to add a steering cadence
-
-Add a lightweight steering forum when: capex crosses a threshold your plant treats as political; more than two functions can veto late; the integrator path touches customer or regulatory audit trails. Steering is not a second owner. It is visibility for the primary owner.
-
-## What good ownership looks like in supplier dialogue
-
-Good ownership shows up as: one outbound narrative on scope and constraints; comparable question sets across bidders; documented assumption changes instead of hallway edits.
-
-Bad ownership shows up as: engineering answers one thing, procurement another; operations learns interface decisions from the vendor.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because structured comparison only helps when someone inside the plant owns the decision record from brief through supplier dialogue.
-
-That is what keeps comparable offers from turning back into parallel internal stories once external conversations begin.
+Structured comparison only helps when someone inside the plant owns the record from first brief through supplier dialogue. Otherwise comparable offers decay back into parallel internal stories the moment conversations accelerate.
 
 For the closest alignment follow-through, see [How to Align Operations, Engineering, and Procurement Before Automation Buying](../19_how_to_align_operations_engineering_and_procurement_before_automation_buying/article_EN.md) and [How to Run a Final Internal Alignment Review Before Automation Kickoff](../42_how_to_run_a_final_internal_alignment_review_before_automation_kickoff/article_EN.md).
 
+## Authority without heroics
+
+The owner should not be the only person who understands the project—that is a bus-factor risk. The owner should be the person who can integrate inputs into one decision thread and escalate when functions deadlock. Pair them with a strong deputy for continuity during holidays, shift coverage, and the inevitable week when operations is fully consumed by a customer crisis.
+
+If your culture conflates ownership with doing all the work, fix that before automation. Integration projects punish hero culture with burnout and dropped handoffs.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"How to Choose the Right Internal Owner for an Automation Project" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
 ## Bottom line
 
-Name one primary internal owner who can bind operations, technical interfaces, and award logic. Split supporting roles on purpose, not by accident. Then engage the market once, with one coherent story.
+Pick one primary owner who can bind operations, technical truth, and award logic. Staff supporting functions clearly. Then engage the market once—with a single coherent thread.
 
 ---
 

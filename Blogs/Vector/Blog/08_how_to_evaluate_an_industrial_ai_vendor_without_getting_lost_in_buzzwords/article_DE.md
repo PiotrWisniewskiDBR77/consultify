@@ -1,82 +1,42 @@
-# Wie man einen Industrial-AI-Anbieter bewertet, ohne sich in Buzzwords zu verlieren
+# Wie man einen Industrie-KI-Anbieter bewertet, ohne in Buzzwords zu verlieren
 
-Target persona: CTO  
-Funnel stage: Consideration  
-Core problem: industrielle Kaufer horen oft polierte AI-Sprache, bekommen aber zu wenig Klarheit uber Deployment, Trainingspolitik, Domain-Fit und Governance  
-Main promise: Hersteller brauchen einen klaren Bewertungsfilter, der Marketing durchschneidet und Kaufqualitat schutzt
+Zielpersona: CTO  
+Funnel-Stufe: Überlegung  
+Kernproblem: Industriekäufer hören oft polierte KI-Sprache, bekommen aber zu wenig Klarheit zu Deployments, Trainingspolitik, Domain-Passung und Governance  
+Hauptversprechen: Hersteller brauchen eine klare Bewertungslinse, die Marketing durchschneidet und Einkaufsqualität schützt
 
-Der Einkauf von Industrial AI wird immer lauter.
+Jeder Anbieter hat eine Geschichte über Intelligenz, Automatisierung und Transformation. Weniger können in einfachen operativen Begriffen zeigen, wie sich ihr System innerhalb eines Werks-Kontrollmodells verhält. Industrielle Bewertung sollte sich wie Security- und Architektur-Review mit Use-Case-Rückgrat verhalten — nicht wie ein Demo-Schönheitswettbewerb, bei dem der schönste Absatz gewinnt.
 
-Jeder Anbieter spricht heute uber Intelligence, Automation, Copilots, Private Models und Transformation Impact. Das macht den Markt schwerer navigierbar statt leichter.
+Sie sind in Buzzwords verloren, wenn der Anbieter Claims nicht auf schriftliche Fakten zu Datenpfaden, Deployments-Modi, Training und Aufbewahrung, Subprozessoren, Protokollierung, Incident-Handling und der Prüfung hochkonsequenter Outputs abbilden kann. Verlangsamen Sie den Prozess, bis diese Punkte in einer Sprache beantwortet sind, die Ihre Security- und Operations-Leads zur MES-, ERP- oder QMS-Realität zurückverfolgen können. Bleibt das Gespräch auf Adjektiv-Niveau, kaufen Sie keine Industrie-KI. Sie kaufen eine Stimmung.
 
-## Warum Kaufer sich verlieren
+## Beweisanforderungen, bevor Sie sich für die Roadmap interessieren
 
-Buzzwords erzeugen eine Illusion von Fortschritt. Aber sie beantworten selten die Fragen, die im Werk wirklich zahlen:
+Fordern Sie Evidenz, keine Adjektive. Verlangen Sie ein Diagramm oder eine Erzählung jedes Hops von Quelldaten zur Inferenz und zurück, inklusive Admin-Konsolen und Support-Zugriff. Verlangen Sie vertragliche Klarheit, ob Kundeninhalte für Training, Fine-Tuning, Evaluation oder menschliche Produktverbesserungs-Reviews genutzt werden dürfen. Fragen Sie nach Subprozessoren und Regionsabdeckung für Speicher, Inferenz, Protokollierung und Ticketing. Fragen Sie nach Deployments-Optionen mit ausgeschriebenen technischen Unterschieden — Shared SaaS, isolierter Mandant, Private API, On-Prem oder kundenverwaltete Laufzeit. Fordern Sie Beispielartefakte: Aufbewahrungspläne, Zugriffslog-Formate, Änderungsnachweise für Modell- oder Prompt-Template-Updates. Fragen Sie nach Incident-Kategorien, Benachrichtigungsfenstern und forensischen Kooperationszusagen.
 
-- welches Problem lost das System?
-- wie wird es deployed?
-- welche Daten beruhrt es?
-- wer bleibt fur Outputs verantwortlich?
-- wie gut passt es zur industriellen Realitat?
+Wenn Antworten eine Kette von Nachfassgesprächen brauchen und dennoch verbal bleiben, werten Sie das als Reifegradsignal — nicht als Scheduling-Problem.
 
-Ohne diese Antworten wird der Bewertungsprozess zur Buhne.
+## Claim versus was industrielle Käufer hören sollten
 
-## Mit dem Use Case beginnen, nicht mit dem Label
+Wenn Sie „enterprise secure“ hören, sollten Sie hören: Identitätsmodell, Segmentierung, Verschlüsselung in Transit und at Rest, und wer Schlüssel hält. Wenn Sie „private KI“ hören, sollten Sie hören: Laufzeit-Isolation, Egress-Regeln und ob fremde Mandanten Inferenz-Infrastruktur teilen, was für Ihr Risikomodell zählt. Wenn Sie „wir trainieren nicht mit Ihren Daten“ hören, sollten Sie hören: Klauselumfang, technische Kontrollen, ausgeschlossene Subprozessoren und Audit-Rechte. Wenn Sie „industrial copilot“ hören, sollten Sie hören: konkrete Fertigungs-Workflows, Konsequenzbehandlung und Freigabeverhalten. Wenn Sie „SOC 2“ hören, sollten Sie hören: Scope Letter, Systeme im Scope, Timing und Ausnahmen.
 
-Die erste Frage an den Anbieter sollte nicht lauten "wie fortgeschritten ist eure AI?"
+Zertifikate und Logos stützen eine Geschichte. Sie ersetzen keine Architektur-Erzählung.
 
-Sie sollte lauten "welche hochwertige industrielle Entscheidung oder welchen Workflow verbessert ihr?" Das verschiebt die Diskussion von vager Capability zu praktischem Fit.
+## Use-Case-Rückgrat zuerst
 
-## Fruh nach Deployment fragen
+Die erste Frage ist nicht, wie fortschrittlich das Modell ist. Sie lautet: welche industrielle Entscheidung oder welcher Workflow verbessert sich, mit welchen Inputs und wer genehmigt das Ergebnis. Testen Sie dann, ob die Antworten des Anbieters konsistent bleiben, wenn Sie eine Schrott-Spitzen-Untersuchung anheben, die QMS- und Liniendaten verbindet, ein Kapazitätsszenario, das Finance und Operations berührt, oder ein Lieferantenproblem, das sich nicht in generischem Chat-Kontext besprechen lässt. Wenn die Geschichte in generische Chat-Beispiele kollabiert, schauen Sie noch auf Verpackung, nicht auf industrielles Produkt.
 
-Deployment sollte nicht bis zum letzten Security Review warten. Kaufer sollten fruh fragen:
+**Red Flags:** Trainingspolitik nutzt „usually“ statt vertraglich definierter Verhaltensweise; kein klarer Owner für Modell-Updates, Prompt-Templates oder Tool-Integrationen; Logging unterstützt keine Rekonstruktion einer Empfehlung, die eine Linien- oder Qualitätsentscheidung beeinflusste; Governance nur als „human in the loop“ ohne Rollen- oder Routing-Detail.
 
-- Cloud, Private API, isoliert oder On-Prem?
-- welche Zugriffsgrenzen gibt es?
-- was wird gespeichert?
-- was wird geloggt?
-- trainieren Kundendaten das Modell?
+DBR77 Vector richtet sich an Käufer, die Anbieter nach Deployments-Kontrolle, Datensouveränität, industriellem Reasoning, Auditierbarkeit und menschlicher Freigabe bewerten — nicht nach Slide-Ästhetik. Es sitzt als sichere Intelligenz hinter dem DBR77-Ökosystem, mit Ausschluss von Kundendaten aus dem Training und Optionen, die Werksgrenzen respektieren. Nutzen Sie dieselbe Beweislatte für Vector wie für jeden anderen Finalisten.
 
-Das sind keine technischen Nebenfragen. Das sind Kaufkriterien.
+Das Mittel gegen Buzzwords ist eine schriftliche Evidenz-Checkliste, gemappt auf Ihre Werksysteme und Datenklassen. Industrie-KI-Beschaffung ist Infrastrukturauswahl. Behandeln Sie vage Antworten als Entscheidungsrisiko, nicht als etwas, das Sie im Pilotplan glätten.
 
-## Domain-Fit prufen, nicht nur Demo-Fluency
+## Werks-Checkpoint
 
-Eine starke Demo kann trotzdem schwachen industriellen Fit verbergen.
+Behandeln Sie diese Bewertungslinse als wöchentliche Gewohnheit, nicht als einmalige RFP-Übung. Bevor Sie einen Anbieter voranbringen, fordern Sie Ihr Team auf, ein schriftliches Artefakt pro großem Claim zu liefern — Diagramm, Klausel, Log-Muster oder Workflow-Walkthrough. Wenn der Ordner leer bleibt, während der Kalender mit Demos füllt, optimieren Sie Theater. Fertigungs-Einkaufsteams gewinnen, wenn Beweis zur Standardsprache des Gesprächs wird.
 
-Hersteller sollten prufen, ob der Anbieter versteht: Produktionsgrenzen; operative Zielkonflikte; Prozesskontext; Anforderungen an human approval; reale Folgen falscher Outputs. Hier trennt sich Industrial AI von generischer AI-Tooling-Logik.
-
-## Governance bewerten, nicht nur Capability
-
-Viele Kaufer fokussieren sich darauf, was das System erzeugen kann.
-
-Weniger Aufmerksamkeit gilt: wie Outputs gepruft werden; wo human approval sitzt; wie Entscheidungen nachvollzogen werden; wie Fehler behandelt werden. Im Werk ist Governance Teil der Produktqualitat.
-
-## Eine einfache Checkliste nutzen
-
-Ein Industrial-AI-Anbieter sollte klar erklaren konnen:
-
-1. den genauen Use Case
-2. das Deployment-Modell
-3. die Trainingspolitik
-4. Zugriff und Auditability
-5. Domain-Fit
-6. menschliche Aufsicht
-7. die geschaftliche Folge, wenn der Output falsch ist
-
-Wenn die Antwort noch immer hauptsachlich aus Buzzwords besteht, sollte der Kaufer langsamer werden.
-
-## Warum Vector von dieser Logik profitiert
-
-DBR77 Vector ist fur Kaufer positioniert, die mehr wollen als glatte AI-Sprache: private Deployment-Optionen; kein Training auf Kundendaten; industrial reasoning; human approval bei kritischen Entscheidungen.
-
-Das macht eine Bewertung uber operative Kriterien einfacher als nur uber Prasentationsqualitat.
-
-## Fazit
-
-Der beste Weg, AI-Buzzword-Verwirrung zu vermeiden, ist die Bewertung von Anbietern uber Use Case, Deployment, Governance und industriellen Fit.
-
-In der Produktion ist Klarheit im Kaufprozess Teil der Risikokontrolle.
+Wenn Führung eine knappe Entscheidungsgewohnheit will, sollte sie lauten: benennen Sie, was wahr sein muss, bevor sich die Nutzung ausweitet, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance keine narrative Behaglichkeit, sondern eine operative Metrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Anbieter-Passung prüfen](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*
+*DBR77 Vector gibt Käufern einen klareren Industrie-KI-Bewertungspfad durch private Deployments-Optionen, Klarheit der Datenpolitik und höhere Governance-Erwartungen. [Anbieter-Passung prüfen](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*

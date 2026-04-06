@@ -458,18 +458,21 @@ router.post(
         const secret = await getRefreshExecutionSecret(connectorId, orgId);
         if (secret) {
           const tokenResult = await executeRefreshExecution(connectorId, orgId);
-          if (tokenResult.success) {
+          if (tokenResult.status === 'success') {
             await updateIntegrationStatus(intId, 'connected');
             await setConnectorAuthState({
               connectorId,
               organizationId: orgId,
-              targetState: 'connected_healthy',
+              targetState: 'healthy',
               transitionedBy: `reauth:${userId}`,
               reason: 'token_refresh_success',
             });
             refreshResult = { success: true };
           } else {
-            refreshResult = { success: false, error: tokenResult.error || 'Token refresh failed' };
+            refreshResult = {
+              success: false,
+              error: 'error' in tokenResult ? tokenResult.error || 'Token refresh failed' : 'Token refresh failed',
+            };
           }
         } else {
           refreshResult = { success: false, error: 'No refresh secret stored — manual OAuth required' };

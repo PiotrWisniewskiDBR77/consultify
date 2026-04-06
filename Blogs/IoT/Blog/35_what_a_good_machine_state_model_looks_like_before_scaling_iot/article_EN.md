@@ -5,72 +5,57 @@ Funnel stage: Evaluation
 Core problem: teams scale sensors before they agree what "running well" means in machine language, so every site invents its own labels under pressure  
 Main promise: a minimal state model you can govern: stable states, allowed transitions, evidence for each transition, and explicit unknowns
 
-Scaling IoT without a state model is like expanding a plant without line balance data. You will move faster and discover conflicts later. A state model is not a vendor feature list.
+Scaling IoT before you agree on machine state is how plants multiply sensors and arguments at the same time.
 
-It is the plant's agreement on how machine reality maps to the next operational decision. A good pre-scale **machine state model** has: a small set of **named states** operators and maintenance already use in conversation; **clear transitions** tied to signals or physical checks, not vibes; **one owner per transition** when the state implies a different next action; an **unknown** bucket that is allowed temporarily with a time-bound follow-up. If you cannot draw it on one page, it is not ready to scale.
+A state model is not a vendor feature list. It is the plant’s contract for how raw signals map to the next operational decision. Good models are small, boring, and enforceable.
 
-## States versus tags
+Before scale, walk the model against last month’s worst day. Replay the stops, holds, and constrained runs. If the states would have lied or forced fake precision, fix the model—not the people trying to run production.
 
-Tags are free-form labels. States are operational commitments.
+## States are commitments; tags are depth
 
-| Tags | States |
-|---|---|
-| many, overlapping | few, mutually exclusive for a given asset moment |
-| fun for analytics later | drive playbooks now |
-| easy to add in software | hard to align across shifts |
+Tags can proliferate for engineering analytics. States should stay few and mutually exclusive for a given moment on an asset. States drive playbooks now; tags can inform later studies. If you cannot draw the state diagram on one page, you are not ready to scale.
 
-Keep tags for engineering depth. Keep states boring enough for the floor.
+## A six-state starter you can adapt
 
-## Framework: the six-state starter set
+Name them for your culture, keep the logic: running to plan within agreed variance; running constrained by material, tooling, staffing, or upstream flow; stopped for planned work such as changeover; stopped unplanned with owner path; held for quality or regulatory reasons; unknown temporarily with a time-bound follow-up. Unknown is legitimate short term; it becomes a defect if it becomes permanent camouflage.
 
-Adapt names to your plant, keep the logic:
+## Every transition needs evidence and ownership
 
-1. **Running to plan** Within agreed variance bands for cycle, quality proxies, and constraints
+Transitions should tie to signals, physical checks, or operator confirmations—not vibes. When a state implies a different next action, someone must own that transition explicitly.
 
-2. **Running constrained** Running but limited by material, tooling, staffing, or upstream flow
+## Validate before scale
 
-3. **Degrading** Trend away from baseline without stop yet; maintenance priority rises
+Walk the model with operators on each shift. Compare model language to spoken language on the floor. Run replay against recent incidents and ask whether the states would have told the truth. Fix collisions where two states try to describe the same moment.
 
-4. **Stopped known** Reason code matches a known fault pattern or verified condition
+**Pre-scale validation:** one-page diagram; shift-by-shift vocabulary check; incident replay passes; unknown bucket has SLA; alerts and work orders reference states, not adjectives.
 
-5. **Stopped unknown** Stop without a trusted reason; investigation state
+## Link states to playbooks
 
-6. **Out of service** Planned work, changeover, or lockout; not a fault state
+Each state should imply a default next action or owner class: who is notified, what work order template applies, what escalation path opens. States without playbooks become decorative labels.
 
-This set is enough to align IoT, CMMS, and shift language before you multiply sites.
+## DBR77 IoT and state-first scaling
 
-## Checklist: validate the model before scale
+DBR77 IoT earns scale when deployment treats state models as governing objects—stable definitions operators share—before sensor counts become a proxy for progress.
 
-- [ ] operators can assign states without opening a manual
-- [ ] each state maps to a default next role: operator, maintenance, engineering
-- [ ] transitions log who confirmed physical reality when sensors disagree
-- [ ] standards are referenced for safety and quality gates between states
-- [ ] unknown stops have a maximum age before escalation
+A good machine state model is minimal, governed, and honest about unknowns. Build that agreement before you widen the footprint.
 
-## Comparison: sensor-first scaling versus state-first scaling
 
-| Sensor-first | State-first |
-|---|---|
-| more points, unclear meaning | fewer points, agreed meaning |
-| debates about thresholds in every meeting | debates once, then govern |
-| dashboard sprawl | shared language for planning |
 
-## When this fails
 
-**Fails** when leadership treats the model as IT documentation instead of a living operations contract.
+## Keep the article’s promise practical
 
-**Fails** when vendors define states that do not match how maintenance triages the asset.
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
 
-Agree signal trust and identity before you debate state names in [how to improve machine data quality before scaling IoT](../24_how_to_improve_machine_data_quality_before_scaling_iot/article_EN.md), then wire the vocabulary into shift handover in [how to use IoT data in shift handover without creating more reporting](../33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting/article_EN.md).
+## A leadership checkpoint for the next ops review
 
-## What this means for DBR77 IoT
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
 
-DBR77 IoT pays off when the plant loads a small, boring state vocabulary into the system before multiplying sensors and tags, so transitions and temporary unknowns stay reviewable at the asset instead of argued only from remote dashboards.
+## Bringing it home on the floor
 
-Harden the model on one line class, then scale points without changing the language every month.
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-## Bottom line
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-Agree the **state model before you multiply sensors**.
+---
 
-Small, boring, governed states beat a large cloud of clever tags nobody trusts on night shift.
+*DBR77 IoT supports state-first IoT scaling with clear machine-state visibility, operator context, and governed definitions before footprint grows. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

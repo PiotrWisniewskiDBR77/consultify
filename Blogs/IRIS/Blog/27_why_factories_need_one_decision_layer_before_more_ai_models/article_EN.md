@@ -5,55 +5,32 @@ Funnel stage: Decision
 Core problem: organizations buy additional models and copilots while priorities still fragment across inboxes, creating more confident contradictions instead of faster closure  
 Main promise: a clear argument for stabilizing one decision layer for prioritization, conflict resolution, and execution routing before expanding model count
 
-Factories need one decision layer before adding more AI models because models amplify whatever operating structure already exists. If priorities and definitions are fragmented, more models produce more conflicting recommendations, not better coordination. Adding models is easy. Adding coherence is hard. That is why sequencing matters.
+Factories need one decision layer before adding more AI models because models amplify whatever operating structure already exists. If priorities and definitions are fragmented, more models tend to produce more conflicting recommendations—not better coordination. Adding models is easy. Adding coherence is hard. Sequencing is not conservatism. It is risk management.
 
-## What a decision layer is (and is not)
+A decision layer is not a dashboard. It is the place where the plant answers what matters most right now, who owns the next step, what is blocked and why, and which tradeoffs are explicit. If those answers live in parallel channels, you do not have a decision layer. You have a crowd—and the crowd becomes expensive when every new assistant adds another voice.
 
-A decision layer is not a dashboard.
+Each model consumes partial data, partial context, and partial incentives. When outputs collide, humans become full-time reconcilers. That is costly. It also trains the organization to ignore assistance, because “AI” starts to mean “another opinion to argue with.”
 
-It is the place where the plant answers: what is most important right now?; who owns the next step?; what is blocked and why?; what tradeoffs are explicit?.
+A simple coherence test helps leadership be honest. Can two functions see the same prioritized queue for cross-cutting issues? Do conflicting priorities escalate through a known path? Are definitions for downtime, blocked, and critical aligned in the system of record? Is there a single audit trail from signal to decision to task to closure? If you answer “no” twice, stop buying models until you fix the layer.
 
-If those answers live in parallel channels, you do not have a decision layer. You have a crowd.
+A minimum viable decision layer is explicit, not fancy. It needs one intake grammar—required fields when an issue enters—one prioritization rubric (even a simple matrix beats hallway ranking), one escalation ladder with timers, and one execution router that hands work to owned workflows. Models should improve steps inside that layer, not invent new decision venues.
 
-## Why more models without a layer increases chaos
+Add a new model only when it improves a step inside this layer—better clustering inside the same queue, better suggested routing within the same ownership model, better summarization for handoffs that still end in the same system. Be wary of expansion that creates a second prioritization assistant elsewhere, or proposals that change state without writing to the system of record.
 
-Each model consumes: partial data; partial context; partial incentives. When outputs collide, humans become full-time reconcilers. That is expensive. It also trains the organization to ignore AI.
+IRIS fits this argument because a decision layer becomes operational only when prioritization, escalation, and routed work stay in one governed system story. That is different from the broader connected-execution story in [How AI Is Changing Factory Operations When Execution Is Connected](../21_how_ai_is_changing_factory_operations_when_execution_is_connected/article_EN.md)—this article is specifically about resolving competing priorities before model count grows.
 
-## A simple coherence test
+For scoring and routing across functions once the layer exists, see [How AI Can Prioritize Factory Issues Across Functions](../28_how_ai_can_prioritize_factory_issues_across_functions/article_EN.md).
 
-Answer yes or no: Can two functions see the same prioritized queue for cross-cutting issues?; Do conflicting priorities get escalated through a known path?; Are definitions for downtime, blocked, and critical aligned in the system of record?; Is there a single audit trail from signal to decision to task to closure?. If you answer "no" twice, stop buying models until you fix the layer.
+Models scale confusion when the plant lacks a decision layer. Build the layer first—then let models compete on usefulness inside it, not outside it.
 
-## The minimum viable decision layer
+## The operational bottom line
 
-Minimum does not mean weak. It means explicit:
+The promise of this article—a clear argument for stabilizing one decision layer for prioritization, conflict resolution, and execution routing before expanding model count—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “Why Factories Need One Decision Layer Before More AI Models,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-**One intake grammar** What fields are required when an issue enters the system?
+That standard is not about software perfection; it is about operational honesty: fewer mystery handoffs, fewer truths reconciled only in meetings, and more days where the system record matches what the floor would say if you stopped them mid-task.
 
-**One prioritization rubric** Even a simple severity times customer impact matrix beats hallway ranking.
-
-**One escalation ladder** Who gets called at each tier, and what is the timer?
-
-**One execution router** Tasks leave the decision layer into owned workflows.
-
-## Model expansion rule
-
-Add a new model only when it improves a step inside this layer, not when it creates a new decision venue.
-
-Examples of good expansion: better clustering of repeat issues inside the same queue; better suggested routing within the same ownership model; better summarization for handoffs that still end in the same system.
-
-Examples of risky expansion: a second prioritization assistant in a different tool; a model that proposes actions without writing to the system of record.
-
-## Why IRIS fits the decision-layer argument
-
-DBR77 IRIS matters here because a decision layer only becomes operational when prioritization, escalation, and routed work stay in one governed system story.
-
-That is different from the broader connected-execution point in [How AI Is Changing Factory Operations When Execution Is Connected](../21_how_ai_is_changing_factory_operations_when_execution_is_connected/article_EN.md): this article is specifically about resolving competing priorities before model count grows.
-
-If the question is how to score and route issues across functions once that layer exists, see [How AI Can Prioritize Factory Issues Across Functions](../28_how_ai_can_prioritize_factory_issues_across_functions/article_EN.md).
-
-## Final takeaway
-
-Models scale confusion when the plant lacks a decision layer. Build the layer first. Then let models compete on usefulness inside it, not outside it.
+Hold teams to a simple rule: if an improvement cannot be shown in exports from the execution record, it is not yet an operating improvement—only a narrative improvement. That rule keeps programs honest when demos look good but handovers still feel fragile.
+If the record is thin, fix the record before you expand the ambition.
 
 ---
 

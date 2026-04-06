@@ -1,66 +1,51 @@
-# Wie man Digital Twin in CAPEX-Stufentoren nutzt
+# Digital Twin in CAPEX-Stage-Gates nutzen
 
-Target persona: Kapitalprojekt-Sponsor / Technikleitung mit Finanz-Gegenpart  
-Funnel stage: Decision  
-Core problem: Stufentor-Reviews behandeln CAPEX oft als Dokumentenuebung, sodass Simulation zu spaet kommt oder in der falschen Form, um zu aendern, was finanziert wird  
-Main promise: eine Tor-fuer-Tor-Karte, welche Szenario-Beweise vor jeder Freigabe existieren sollen, damit Kapital mit nachvollziehbarem Entriskieren statt mit Narrativ-Dynamik vorankommt
+Zielpersona: CAPEX-Sponsor / Engineering-Direktor mit Finance-Gegenpart  
+Funnel-Stufe: Decision
+Kernproblem: Stage-Gate-Reviews behandeln CAPEX oft als Dokumentenübung – Simulation kommt zu spät oder in der falschen Form, um zu ändern, was finanziert wird  
+Hauptversprechen: eine Gate-für-Gate-Landkarte, welche Szenario-Evidenz vor jeder Freigabe existieren soll, damit Kapital mit nachvollziehbarer Ent-Risikoierung vorwärtsgeht statt mit Narrativ-Momentum
 
-nutzen Sie Digital Twin innerhalb von CAPEX-Stufentoren, indem Sie pro Tor ein Simulationslieferobjekt definieren, das eine einzige Finanzierungsfrage beantwortet, an eingefrorene Annahmen gebunden ist und Aufstieg blockiert, wenn Abwaertsszenarien ungeprueft sind. Fruehe Tore brauchen Machbarkeit und Optionsform. Mittlere Tore brauchen vergleichbare Stresstests. Spaete Tore brauchen Rampen-, Engpass- und Sensitivitaetsnachweise entlang des Ausgabenprofils. Kapitalprozesse lieben Papier.
+Nutzen Sie Digital Twin in CAPEX-Stage-Gates, indem Sie pro Gate ein Simulations-Deliverable definieren, das eine einzige Funding-Frage beantwortet, an eingefrorenen Annahmen hängt und Promotion blockiert, wenn Downside-Fälle unerforscht sind. Frühe Gates brauchen Machbarkeit und Optionsform. Mittlere Gates brauchen vergleichbare Stresstests. Späte Gates brauchen Rampe-, Constraint- und Sensitivitäts-Evidenz gekoppelt an das Ausgabenprofil.
 
-Sie hungern die Fabrik oft zu den Zeitpunkten entscheidungsreifer Szenarioarbeit aus, in denen Aenderung noch guenstig waere.
+Kapitalprozesse lieben Papierkram. Sie hungern die Fabrik oft an entscheidungsfähiger Szenario-Arbeit genau dann aus, wenn Änderung noch billig ist. Ohne expliziten Vertrag pro Gate recyceln Teams Folien, bis Geld ausgegeben ist, schieben Simulation auf, bis Optionen schmal sind, oder lassen jede Funktion ihre eigene Tabellen-Story ohne gemeinsamen Schock-Set mitbringen. Nichts davon ent-risikot Layout, Fluss oder CAPEX, bevor die Realität wechselt.
 
-## Warum Stufentore ohne Simulationsvertrag scheitern
+## Gate-Map: was vor Promotion bewiesen werden muss
 
-Ohne expliziten Vertrag pro Tor machen Teams eines von drei Dingen: ein Modell einmal laufen lassen, dann Folien wiederverwenden, bis das Geld verbaut ist; Simulation bis ins Detaildesign verschieben, wenn Optionen schon schmal sind; jeder Funktion ihre eigene Tabellenstory ohne gemeinsamen Schock-Satz erlauben.
+Bei Konzept oder Optionsrahmen: jagen Sie die richtige Klasse von Change – vergleichen Sie zwei bis drei Layout- oder Flusshypothesen unter derselben Nachfrage-Linse. Beim vorläufigen Business Case: welche Option überlebt gemeinsamen Stress – gepaarte Downside-Fälle auf der Shortlist mit Engpass- und Warteschlangen-Signalen. Bei Detailed-Design-Commitment: Fragilität vor Kauf lokalisieren – Sensitivität auf Top-Annahmen mit benannten Ownern. Bei Ausführungsbereitschaft: kann die Rampe ohne Service-Bruch starten – Rampe- und Übergabe-Szenarien mit Constraint-Zeit auf Risiko. Nach Genehmigung: Change Control – Delta-Szenarien, wenn Scope-, Mix- oder Supply-Annahmen wandern. Kann ein Gate keine Evidenz-Zeile zeigen, droht administratives Theater.
 
-Keines davon entriskiert Layout, Fluss oder CAPEX, bevor die Realitaet wechselt.
+## Stage-Gate-Simulations-Readiness
 
-## Tor-Karte: was Simulation vor jedem Aufstieg belegen muss
+Jedes Gate hat einen Annahmen-Owner für die Entscheidung – keine Committee-Wolke. Dasselbe Schock-Vokabular wiederholt sich Gate zu Gate. Verlierende Optionen gehen mit Gründen in Rente, nicht in den Anhang-Versteck. Finance sieht Cash-Timing-Unterschiede, nicht nur Durchschnittsdurchsatz. Procurement-Exposure erscheint, wenn Lieferanten-Variabilität zählt.
 
-Nutzen Sie das als Standardmuster und passen Sie Namen an Ihren Prozess an:
+## Wann dieses Muster funktioniert – und wann es scheitert
 
-| Tor-Moment | Finanzierungsfrage, die der Raum beantworten muss | Mindest-Simulationsnachweis |
-|---|---|---|
-| Konzept / Optionsrahmen | Jagen wir die richtige Veraenderungsklasse? | zwei bis drei Layout- oder Fluss-Hypothesen unter derselben Nachfragelinse verglichen |
-| Vorlaeufiger Business Case | welche Option ueberlebt gemeinsamen Stress? | gepaarte Abwaertsszenarien auf der Shortlist mit Engpass- und Warteschlangensignalen |
-| Detaildesign-Verpflichtung | wo konzentriert sich Fragilitaet vor dem Kauf? | Sensitivitaet zu den fuenf wichtigsten Annahmen mit benannten Ownern |
-| Ausfuehrungsreife | koennen wir die Rampe ohne Servicebruch fahren? | Rampen- und Uebergabeszenarien mit Risikozeit am Engpass |
-| Aenderungskontrolle nach Freigabe | passt ein Design-Drift noch zum Fall? | Delta-Szenarien nur, wenn Scope, Mix oder Versorgungsannahmen sich bewegen |
+Es funktioniert, wenn Kapital-Governance bereits benannte Gates hat und Sie ein Artefakt pro Gate anhängen können. Es scheitert, wenn Genehmigung ein Klumpen ohne echtes Down-Select ist – es gibt keinen Ort für vergleichende Disziplin.
 
-Zeigt ein Tor nicht auf eine Zeile dieser Karte, ist das Tor Verwaltungstheater.
 
-## Checkliste: Simulationsreife an Stufentoren
+## Was sich am Montag anders anfühlen sollte
 
-- [ ] jedes Tor hat einen Entscheidungsowner fuer Annahmen, keine Komiteewolke  
-- [ ] derselbe Schock-Wortschatz wird von Tor zu Tor wiederverwendet  
-- [ ] unterlegene Optionen werden mit Gruenden pensioniert, nicht im Anhang versteckt  
-- [ ] Finance sieht Cash-Timing-Unterschiede, nicht nur Durchschnittsdurchsatz  
-- [ ] Beschaffungsexposure erscheint, wenn Lieferantenvariabilitaet zaehlt
+Teams scheitern selten an Intelligenz; sie scheitern daran, dieselben Fragen mit frischerer Anspannung zu wiederholen. Wenn Simulationsarbeit in die Entscheidungslogik eingebunden ist, kommt der Montag mit weniger Kreisdebatten darüber, ob ein Layout „eigentlich funktionieren“ sollte. Stattdessen bleibt eine kurze Liste: welche Option dieselbe Stress-Vokabel überlebt hat, welche Annahmen noch Hypothesen-Labels tragen und was ein erneutes Fahren des Packs vor der nächsten Tranche erzwingt. Das ist Governance im Alltag – kein schwererer Prozess, sondern ein klarer Beleg, warum der Shopfloor dem Plan vertrauen kann.
 
-## Wann dieses Muster wirkt und wann es scheitert
+Bei Kapital- und Footprint-Entscheidungen ist der Beleg so wichtig wie das Ranking. Genehmigungen sollten Szenario-Identität und Spannen ohne Modell-Öffnen zeigen können. Wenn Führung die Downside-Story nicht in klarer Sprache erzählen kann, kauft die Organisation weiter Animation. Wenn Operations die Personal- und Fluss-Annahmen im Memo nicht wiedererkennt, ist der Twin noch eine Folie, kein Entscheidungssystem. Nutzen Sie den nächsten Leadership-Block als Portabilitätstest: könnte jemand außerhalb des Raums die Wahl allein aus dem Paket verteidigen? Wenn nein, ziehen Sie Annahmen-Ledger und Executive Summary zu, bevor Sie mehr Geld oder Fläche verlangen.
 
-**Wirkt**, wenn Kapital-Governance bereits benannte Tore hat und Sie pro Tor ein Artefakt anbinden koennen.
 
-**Scheitert**, wenn der Prozess eine einzige Sammelfreigabe ohne echtes Optionen-Downselect ist, weil es keinen Ort fuer vergleichende Disziplin gibt.
 
-## Was Digital Twin hier aendert
+## Ein letzter Klarheits-Check vor dem Termin
 
-Digital Twin ist ein Entscheidungssystem und Szenariotestumfeld. Es ist keine 3D-Show.
+Bevor jemand mit einem Kapital-Paket sitzt, fragen Sie, ob der Vergleich in dem einzigen Sinn fair war, der zählt: dieselben Schocks, dieselben Ausschlüsse, derselbe Zeithorizont. Wenn eine Option eine weichere Lieferanten-Story oder eine hübschere Rampe hatte, wählen Sie nicht – Sie krönen. Der Fix ist erneutes Fahren unter dem Standard-Pack und Veröffentlichen von Failure-Notes, wenn eine Idee nicht überlebt. Diese Gewohnheit spart mehr Geld als eine weitere Woche Mesh-Politur.
 
-An Toren eingesetzt macht es CAPEX zu einer Folge klarer Entriskierungsschritte, bevor physische Aenderung einrastet.
+Führung sollte außerdem einen Absatz erzwingen, der sagt, was sie die nächste Tranche pausieren ließe. Ohne diesen Satz altern Genehmigungen schlecht, sobald der Shopfloor vom Memo abweicht. Digital-Twin-Arbeit erfüllt ihren Job, wenn dieser Absatz leicht zu schreiben ist, weil die Szenarien die Risiken bereits benannt haben.
 
-## Was DBR77 Digital Twin ergaenzt
+## Was DBR77 Digital Twin ergänzt
 
-DBR77 Digital Twin unterstuetzt praktischen Szenariovergleich mit Weg von manuellen Eingaben zu tieferer Integration.
+DBR77 Digital Twin richtet CAPEX-Stage-Gate-Reviews auf ein nachvollziehbares Simulations-Deliverable pro Funding-Entscheidung aus: konsistente Optionsvergleiche mit Projekt-Reife; Nachvollziehbarkeit von Annahmeänderungen zu Outcome-Verschiebungen; kürzere Distanz zwischen Engineering-Insight und Sponsor-Klarheit.
 
-Fuer Stufentor-Nutzung hilft es Teams: Optionsvergleiche beim Reifen des Projekts konsistent zu halten; Rueckverfolgbarkeit von Annahmenwechsel zu Ergebnisverschiebung zu sichern; die Distanz von Engineering-Einsicht zu Sponsor-tauglicher Klarheit zu verkuerzen.
+Kombinieren Sie Gate-Memos mit dem Executive-Decision-Packet-Muster dieser Serie; vor bindendem Spend fahren Sie den Stärke-zum-Handeln-Test im Begleitartikel.
 
-## Bottom line
+## Kurz gesagt
 
-Stufentore schuetzen Kapital nur, wenn jedes Tor die richtige Art Nachweis verlangt.
-
-Ist Simulation optional, zahlt die Fabrik Optionen mit Nacharbeit und spaeten Ueberraschungen.
+Stage Gates schützen Kapital nur, wenn jedes Gate die richtige Art Evidenz verlangt. Ist Simulation optional, bezahlt die Fabrik Optionalität mit Rework und späten Überraschungen.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/digital-twin) oder [Use Cases ansehen](https://dbr77.com/demo).*
+*DBR77 Digital Twin hilft Sponsors, konsistente Szenario-Pakete an jedes Kapital-Gate zu hängen, damit Optionsvergleiche und Annahmen-Nachvollziehbarkeit den ganzen Funding-Pfad überstehen. [Demo buchen](https://dbr77.com/digital-twin) oder [Anwendungsfälle ansehen](https://dbr77.com/demo).*

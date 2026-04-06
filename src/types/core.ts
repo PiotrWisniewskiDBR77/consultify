@@ -934,20 +934,34 @@ export interface InitiativeTaskStats {
   blocked: number;
 }
 
+export type InitiativeKpiObservationPhase = 'realization' | 'post-implementation' | 'both';
+export type InitiativeKpiDefinitionSource = 'library' | 'initiative-custom';
+export type InitiativeKpiObservationStatus = 'active' | 'paused' | 'completed';
+export type InitiativeKpiMeasurementFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+
+export interface InitiativeKpiExpectation {
+  baselineValue?: number | null;
+  targetValue?: number | null;
+  measurementFrequency: InitiativeKpiMeasurementFrequency;
+}
+
 /** Initiative KPI - Key Performance Indicator */
 export interface InitiativeKPI {
   id: string;
   // V3: KPI can be global (no single initiative); relations live in mapping table.
   initiativeId?: string | null;
+  mappingId?: string | null;
   name: string;
   description?: string;
+  category?: string;
   targetValue: number | null;
   unit?: string;
-  measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  measurementFrequency: InitiativeKpiMeasurementFrequency;
   alertThreshold?: number;
   alertDirection: 'BELOW' | 'ABOVE';
   isPrimary: boolean;
   sortOrder: number;
+  currentValue?: number | null;
   latestValue?: number;
   latestMeasurementDate?: string;
   // Optional helper fields for trend calculation (R1).
@@ -965,6 +979,13 @@ export interface InitiativeKPI {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  definitionSource?: InitiativeKpiDefinitionSource;
+  observationPhase?: InitiativeKpiObservationPhase;
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: InitiativeKpiObservationStatus;
+  realizationExpectation?: InitiativeKpiExpectation;
+  postImplementationExpectation?: InitiativeKpiExpectation;
 }
 
 /** KPI Measurement - historical value record */

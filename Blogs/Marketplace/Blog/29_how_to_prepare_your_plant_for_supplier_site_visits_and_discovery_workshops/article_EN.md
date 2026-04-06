@@ -5,66 +5,57 @@ Funnel stage: Consideration (discovery that produces comparable inputs)
 Core problem: supplier visits produce impressions and photos, but not the constraints and samples that make proposals comparable  
 Main promise: a pre-visit pack and workshop agenda that turns plant time into structured facts suppliers can price responsibly
 
-A supplier visit without preparation is tourism. A discovery workshop without owners is a meeting that generates slides.
+An unprepared site visit is tourism. A workshop without owners is a meeting that generates slides nobody will use. Suppliers walk away with their own mental models; your team walks away with photos. Later, proposals diverge because each integrator priced a different plant.
 
-Manufacturers get better outcomes when plant time produces: named constraints; agreed samples and measurement methods; interface reality (IT, maintenance, safety); a written record the buyer team will actually use.
+Preparation turns floor time into inputs: named constraints, agreed samples, interface reality, and a written record that feeds comparability.
 
-Publish a pre-visit pack at least one week before the visit (earlier for complex lines): scope statement version and success criteria; line layout or area map with hazards called out; sample SKUs, packaging variants, and handling rules; downtime and access windows signed by the line leader; IT and network constraints summarized by IT owner; list of decisions the workshop must produce.
+## What unprepared visits cost you later
 
-Run the workshop with a timeboxed agenda and a single note-taker publishing a same-day summary.
+When suppliers leave with different memories of the same constraint, you will spend the next weeks reconciling proposals that are not wrong—just incompatible. Worse, you may award based on an interpretation nobody internally agreed to. Preparation is how you make the visit produce a shared fact base: what is measured, what is assumed, what is unknown, and how unknowns will be closed without breaking comparability.
 
-If the visit ends with only memories, you paid for travel and kept your risk.
+Treat the visit as production time. Protect the line, protect people, and protect truth-telling: operators should not feel punished for describing messy reality. The goal is not a polished tour; it is an accurate one.
 
-## Pre-visit pack checklist (minimum)
+## Publish a pre-visit pack
 
-| Item | owner | output |
-| --- | --- | --- |
-| current state short video or photos | operations | bounded context |
-| throughput and variability facts | engineering | baseline numbers |
-| quality defect examples | quality | concrete failure modes |
-| top three risks and fears | sponsor | honest constraints |
-| integration touchpoints list | IT + maintenance | named systems |
+Share enough before boots hit the floor that conversations start at truth: flow sketch, variability rules, space and utility constraints, safety context, IT and OT touchpoints, current pain in operator language, and what success must look like. The visit should validate and refine—not discover basics from scratch.
 
-If an item is missing, label it explicitly as an open assumption with an owner and date. Assumptions are inventory, not shame.
+## Assign owners for each topic
 
-## Workshop agenda template (half-day, illustrative)
+Mechanical reality, controls, quality, maintenance, IT, and safety each need a voice in the room. Silent functions become loud problems at commissioning.
 
-Safety briefing and route rules (15 minutes); line walk with silent observation first, questions second (45 to 60 minutes); constraints roundtable: materials, rates, changeovers, exceptions (45 minutes); integration deep dive: signals, MES handshake, support model (45 minutes); decision outputs: what suppliers must include in the next proposal revision (30 minutes).
+## Bring representative materials and data
 
-Close with three published outputs: updated assumptions log; open questions with owners; date for outbound clarification batch.
+If handling behavior matters, samples and measurement methods should be agreed. If rates matter, baseline observations should be discussed honestly. Substitutions belong documented, not implied.
 
-## What suppliers should leave with
+## Capture decisions same day
 
-Suppliers should leave with: the same versioned brief reference; photos and sketches that match your publication policy; explicit list of what they must not assume; a single point of contact for technical questions.
+End with a short published summary: facts confirmed, open questions, owners, and due dates. Memory is not a shared system.
 
-If each supplier gets different side conversations, you rebuild incomparability on purpose.
+## How DBR77 Marketplace connects
 
-## Reality check: discovery visits often fail because the plant assumes the supplier will "figure out the details on site"
-
-That assumption sounds practical. People walk the line. Questions get asked. Photos get taken. But unless the visit converts constraints, owners, and assumptions into one published record, the supplier leaves with impressions, not decision-grade inputs.
-
-## Common preparation failures
-
-| failure | symptom | fix |
-| --- | --- | --- |
-| no line leader present | generic proposals | reschedule |
-| no samples | guessed handling | commit SKUs |
-| IT absent | interface fantasy | require IT seat |
-| no published summary | memory drift | same-day notes |
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because supplier visits only improve decisions when plant observations turn into shared, inspectable inputs instead of private impressions.
-
-That is how discovery supports comparability instead of producing ten different memory versions of the same line walk.
+Structured challenge briefs and discovery outputs upstream make later comparison trustworthy. A strong pre-visit pack is quality insurance for the whole buying chain.
 
 For the follow-through after those meetings, see [How to Keep Automation Momentum After the First Vendor Meetings](../22_how_to_keep_automation_momentum_after_the_first_vendor_meetings/article_EN.md).
 
+## Workshops that respect operations
+
+Discovery should not hijack the line. Prepare windows, backups for continuity, and realistic expectations about what operators can contribute during a live shift. When workshops ignore production reality, suppliers learn the wrong plant—and price the wrong risk.
+
+Use the visit to confirm what is stable enough to quote and what still needs a bounded discovery step. The output should be a shared fact set, not competing memories.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"How to Prepare Your Plant for Supplier Site Visits and Discovery Workshops" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
 ## Bottom line
 
-Prepare the plant like you prepare for an internal audit with external witnesses.
-
-Facts, owners, and published summaries beat charisma and a camera roll.
+Prepare the plant like an audit with external witnesses: facts, owners, published summaries. Charisma and a camera roll are not comparability inputs.
 
 ---
 

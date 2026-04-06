@@ -5,59 +5,51 @@ Funnel stage: Consideration (procurement strategy under constraints)
 Core problem: policy-driven multi-bid processes delay decisions without improving comparability when the problem is already constrained  
 Main promise: clear criteria for when directed selection is rational, ethical, and faster without abandoning proof discipline
 
-Multi-supplier competitions are a tool. They are not a moral law. Sometimes a competition improves outcomes.
+Multi-supplier competitions are a tool. They are not a universal law. Sometimes more bids sharpen outcomes; sometimes they burn calendar while forcing integrators to perform on a decision that geography, technology, incumbent knowledge, or regulatory reality has already constrained. The failure mode is process for its own sake: busy scorecards, late clarity, and a plant that confuses activity with judgment.
 
-Sometimes it burns calendar while forcing integrators to bid theater on a decision that is already structurally constrained.
+Single sourcing can be rational when the feasible set is genuinely small—but only if proof discipline stays intact.
 
-Manufacturers should choose the process that matches uncertainty, risk, and internal readiness.
+## When a competition adds little new information
 
-Single sourcing is smarter when the scope is genuinely constrained by standards, physical reality, or a continuity decision, and you can still require structured proof, references, and a negotiated commercial model. A beauty contest is smarter when you need price tension, capability differentiation, or you have not yet made the brief comparable.
+Consider narrowing or directing selection when only one or two credible suppliers can execute the scope, the technology stack is effectively dictated by compatibility, timeline reality removes realistic alternates, or repeat scope with a qualified incumbent makes a full replay wasteful. The point is not to avoid scrutiny; it is to stop pretending that inviting six names creates options that do not exist.
 
-If you run a contest without comparability, you get expensive confusion. If you single source without proof, you get convenient risk.
+## Proof still matters
 
-## When single sourcing is often rational (manufacturer-first)
+Fewer bidders should still leave a written rationale: why the field is narrow, what criteria would have admitted others, what evidence supports fit and delivery credibility, and how commercial structure was tested. Directed selection without documentation looks like favoritism even when it is not.
 
-Directed selection can be rational when: you are extending an existing platform and interoperability is the constraint; you have a validated internal standard that defines allowable architectures; time-to-benefit dominates and the alternative is continued manual loss; you already ran a fair comparison in the recent past and the delta is incremental; supplier switching would create unacceptable continuity risk for production. This is not "we like them." This is "the feasible set is narrow and documented."
+## Ethics and governance without theater
 
-## When a full competition is still the better tool
+Use transparency appropriate to your policies: fair notice where required, clear technical gates, and documentation that a reviewer could follow without insider knowledge. Speed and integrity are not opposites when the record is clean.
 
-Stay competitive when: capability differences are large and unmapped; commercial models are not comparable yet; internal owners disagree on the real constraint; you have no credible baseline price or scope boundary; governance requires independent comparison for audit reasons.
+## When you should still run a wider process
 
-If those conditions are true, single sourcing is usually politics wearing a process costume.
+Widen the field when solution class is open, comparability is healthy, or internal alignment still needs market education. Competitions are valuable when they genuinely differentiate paths—not when they rehearse a foregone conclusion.
 
-## Proof discipline that must survive either path
+## How DBR77 Marketplace fits
 
-Whether you invite three bidders or one, keep: written acceptance criteria; a reference protocol for material claims; change control rules; a decision log that states exclusions and assumptions. Single sourcing should reduce bid count, not reduce inspectability.
-
-## Reality check: single sourcing usually becomes dangerous when convenience gets described as technical constraint
-
-The language can sound disciplined. The team says continuity. The sponsor says urgency. The incumbent says they already know the line. Those reasons may be real. But if the constraint cannot be documented in a way an internal reviewer could defend later, the process is drifting from directed selection into unexamined preference.
-
-## A decision checklist (five questions)
-
-Answer yes or no:
-
-1. Is the brief stable enough to evaluate fairly?
-2. Is the feasible supplier set narrow for documented technical reasons?
-3. Can we still benchmark total cost logic against a reference class project?
-4. Do we have governance approval for the sourcing route?
-5. Can we explain the decision to operations without embarrassment?
-
-If you cannot get to yes on questions one, four, and five, fix the process before arguing about supplier count.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because directed selection only stays defensible when the buyer keeps proof discipline even after supplier count narrows.
-
-That means fewer bidders should still leave behind clear criteria, comparable commercial logic, and a written reason why the feasible set became small.
+Directed selection stays defensible when challenge clarity, comparison artifacts, and commercial logic remain inspectable—even if supplier count is small.
 
 For the closest process-design counterpart, see [When to Use a Shortlist and When to Keep More Suppliers in Play](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_EN.md).
 
+## Documentation that protects everyone
+
+Single sourcing invites scrutiny—internal and external. Treat documentation as protection for the buyer and the supplier: a clear statement of constraints, a visible evaluation of alternatives considered, and a record of technical and commercial gates. That reduces whisper campaigns and makes audits boring, which is the goal.
+
+Also distinguish “only one realistic bidder” from “only one bidder we bothered to cultivate.” If the field is narrow because relationships were neglected, widen it before you rationalize.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"When Single Sourcing Is Smarter Than Running a Full Supplier Beauty Contest" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
 ## Bottom line
 
-Run a competition when comparability and differentiation require it.
-
-Single source when constraints are real, documented, and proof discipline stays intact. The goal is a good decision, not a busy process.
+Run a competition when differentiation and comparability require it. Single source when constraints are real, documented, and proof discipline remains. Optimize for a sound decision, not for bidder count.
 
 ---
 

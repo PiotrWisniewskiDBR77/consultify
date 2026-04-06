@@ -5,66 +5,49 @@ Funnel stage: Awareness to Consideration (governance and go, no-go)
 Core problem: teams push sourcing forward while internal misalignment guarantees late rework, supplier distrust, and contract regret  
 Main promise: a short red-flag list that authorizes a pause without turning buying into analysis paralysis
 
-Suppliers get blamed when projects hurt.
+Suppliers get blamed when projects hurt. Often the failure begins inside the manufacturer: competing success definitions, unnamed owners, scope that shifts with every steering call, or a brief that nobody will sign because everyone reads it differently. Pushing sourcing harder does not fix that—it prices the confusion into proposals and guarantees painful discovery on site.
 
-Often the failure starts earlier: the manufacturer organization is not ready to buy.
+A disciplined pause is not cowardice. It is capital protection.
 
-Not ready in a motivational sense. Ready in the boring, high-consequence sense: one brief, named owners, stable constraints, and a decision path that will not reverse silently halfway through supplier dialogue.
+## Red flags that deserve a hard stop
 
-That is the real use of an internal red-flag check. It gives leadership permission to stop momentum before momentum turns into rework, distrust, and contract regret. A pause is not failure. It is risk control.
+Pause when you cannot rank success criteria, when scope boundaries change weekly without version control, when operations and engineering tell different stories about the same line, when IT and maintenance are absent from interface decisions that will become theirs, when acceptance is still “we will know it when we see it,” or when procurement is asked to compress comparison after the organization never aligned on what “good” means.
 
-## Red flag 1: moving success criteria
+These are not abstract risks. They are the ingredients of late change orders, acceptance fights, and integrators who stop trusting your process.
 
-If success is defined as "faster" without a baseline, or "more flexible" without boundaries, suppliers will sell stories because stories are all they have to compare against. The buying team should pause until it can state the current metric, the target band, the measurement method, and the acceptance window in a way that all functions accept.
+## What a pause should produce
 
-## Red flag 2: hidden scope owners
+Use the window to publish a versioned brief, name a single owner for scope drift decisions, sketch acceptance in testable language, and align commercial guardrails. You are building the artifacts that make a market round legitimate.
 
-Automation touches materials, quality, maintenance, IT, safety, and HR training.
+## Plant-side reality
 
-If owners are missing, the organization usually discovers them during FAT, SAT, or go-live prep at the highest possible cost. Pause until a one-page RACI exists for integration tasks, operational ownership, and post-handover accountability.
+Under pressure, teams treat buying like a race. The floor experiences the result as chaos: unclear handoffs, missing spares thinking, training squeezed into overtime, and a line that technically “went live” without operational ownership. Pausing upstream is less expensive than heroics downstream.
 
-## Red flag 3: brief versioning chaos
+## How DBR77 Marketplace relates
 
-If suppliers are answering different questions, you are not selecting between offers. You are colliding narratives. Pause until one outbound clarification batch updates the brief, the comparison matrix freezes for a cycle, and everyone is evaluating the same scope version.
-
-## Red flag 4: production pressure without access reality
-
-If the line cannot commit to samples, downtime windows, or trial quantities, schedules are fiction no matter how polished the supplier plan looks. Pause until access assumptions are signed by the line leader and treated as real operating commitments.
-
-## Red flag 5: legal and commercial mismatch
-
-If contract templates forbid what engineering already promised verbally, the buying process is quietly building a dispute machine. Pause until commercial and technical owners reconcile exclusions, milestone logic, and non-negotiable assumptions in one defensible version.
-
-## Reality check: teams often recognize the red flag and still push forward because momentum looks more valuable than reset
-
-The meetings are already happening. Suppliers are already engaged. Leaders want progress to stay visible. That makes a pause feel expensive.
-
-In practice, the more expensive move is continuing with contradictions that will return later as rework, supplier distrust, or contract friction. The earlier the pause, the cheaper the correction.
-
-## A simple pause decision record (one page)
-
-When you pause, publish:
-
-- what red flag triggered the pause
-- what artifact must exist to resume
-- owner and date
-- what suppliers are told (one channel, calm language)
-
-Silence trains suppliers to guess. Clarity trains them to respect your process.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because a structured buying workflow does more than speed sourcing up. It exposes when the manufacturer is not yet ready to buy well.
-
-That does not remove the need to pause. It makes the pause easier to justify with artifacts instead of intuition, which is exactly what leadership needs when momentum is running ahead of discipline.
+Structured workflows expose readiness gaps early. That does not remove the need to pause—it gives leadership inspectable reasons to pause instead of gut feel alone.
 
 If the problem is cross-functional disagreement before supplier dialogue goes deeper, see [How to Align Operations, Engineering, and Procurement Before Automation Buying](../19_how_to_align_operations_engineering_and_procurement_before_automation_buying/article_EN.md).
 
+## How to communicate a pause without losing credibility
+
+Frame the pause as risk reduction, not retreat: here are the missing artifacts, here is the plan to create them, here is the re-entry gate. Sponsors who communicate this way keep political air cover while the team fixes the foundation. A pause announced as “we are not sure” without a plan reads as weakness and invites end-runs.
+
+Watch for false urgency manufactured by vendor calendars. Your line’s readiness matters more than a quarter-end proposal special.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"What Internal Red Flags Should Pause an Automation Buying Process" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
 ## Bottom line
 
-Pause when internal readiness is false.
-
-Resume only when the artifacts exist: stable success criteria, named owners, a versioned brief, realistic access assumptions, and aligned commercial logic. Buying discipline is plant discipline expressed before the contract is signed.
+Stop when internal readiness is false. Resume when stable success criteria, named owners, a versioned brief, realistic access assumptions, and aligned commercial logic exist. Buying discipline is plant discipline—before signature.
 
 ---
 

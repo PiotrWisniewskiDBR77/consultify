@@ -5,56 +5,61 @@ Funnel stage: Adoption
 Core problem: IoT lives as a project office, a vendor relationship, and a set of screens, but it never becomes the way the plant runs day to day  
 Main promise: an operating system pattern: cadence, roles, signal truth, escalation, integration honesty, and proof that survives turnover
 
-An operating system is not software branding. It is the rhythm and rules that make decisions predictable. Brownfield means you inherit constraints. IoT should respect them while still making the invisible visible.
+Calling IoT an “operating system” is easy. Behaving like one is not.
 
-Turn IoT into a repeatable operating system by wiring **weekly and monthly cadences** to signal quality, overrides, and integration backlog, by assigning **named owners** for connectivity, definitions, training, and change control, by enforcing **one plant dictionary and state model**, and by publishing **evidence categories** to leadership on the same schedule as safety and quality reviews. If IoT only appears when something breaks, it is still a project.
+An operating system, in plant language, is the cadence and rules that make decisions predictable: who owns connectivity health, how thresholds change, what happens when signals disagree with the floor, and how leadership reviews evidence on a clock. Brownfield factories inherit constraints; IoT should respect them while making invisible loss visible. If IoT only appears when something breaks, it is still a project—not part of how the plant breathes.
 
-## Framework: OS layers (five)
+Brownfield humility matters here: you will not get a perfect architecture on day one. You can still get a reliable rhythm—reviews, owners, honest integration status—that makes improvement cumulative instead of heroic.
 
-1. **Visibility layer** Real-time truth on constraint assets, not vanity coverage
+## Wire IoT into standing leadership rhythm
 
-2. **Decision layer** Escalation, work-order routing, and structured problem triggers
+Weekly and monthly reviews should treat signal quality, overrides, threshold changes, and integration backlog with the same seriousness as safety and quality topics—not as optional appendices when time allows. When IoT has its own special-only forum, it stays peripheral.
 
-3. **Integration layer** Honest now-next-never with MES, CMMS, and quality systems
+## Name owners for every boring job
 
-4. **People layer** Training, handover fields, override review, succession for champions
+Connectivity care, definitions, training, change control, vendor coordination, and security patching need people and backups. Hero dependency is a single point of failure no audit will ignore.
 
-5. **Proof layer** Verified versus illustrative metrics tied to audits and customer narrative
+## One dictionary, one state model, visible changes
 
-## Checklist: OS maturity signals
+Operators, maintenance, and engineering must share vocabulary. Threshold and override changes should leave trails the floor can read. Track false escalation rates wherever automatic routing exists. Retention tiers need annual review with named owners.
 
-- [ ] IoT agenda items appear on existing leadership meetings without a special project-only forum
-- [ ] new lines inherit playbook blocks instead of custom hero plans
-- [ ] threshold changes leave an audit trail operators can read
-- [ ] false escalation rate is tracked where automatic routing exists
-- [ ] retention and traceability tiers are owned and reviewed annually
+## Integration honesty beats integration hope
 
-## Comparison: IoT project versus IoT OS
+Publish now-next-never for MES, CMMS, and quality systems with reasons and dates. Buried debt becomes incidents; honest deferral becomes planning.
 
-| IoT project | IoT OS |
-|---|---|
-| vendor roadmap led | plant cadence led |
-| hero dependency | named roles plus backups |
-| success demos | routine evidence |
-| integration hope | integration honesty |
-| fragile after champion leaves | succession baked in |
+## Proof that survives champions leaving
 
-## Relationship to the wider DBR77 story
+Playbooks, replication packages, and budget lines should outlast any individual sponsor. Succession is a design requirement, not a compliment paid at a farewell lunch.
 
-IoT is the **measure** spine in the DBR77 system story. This article stays focused on **brownfield IIoT**.
+**OS maturity signals:** IoT appears on normal leadership agendas; new lines inherit playbook blocks; overrides and thresholds are reviewable; escalation quality is measured; retention is classified and owned.
 
-Execution systems and automation marketplaces are adjacent chapters, not distractions here.
+## The difference between project language and OS language
 
-The cadence stack connects to [what IoT governance should look like after the first year](../42_what_iot_governance_should_look_like_after_the_first_year/article_EN.md), [what to review after the first 6 months of IoT rollout](../31_what_to_review_after_the_first_6_months_of_iot_rollout/article_EN.md), [what an executive IoT scorecard should include after scale-up](../45_what_an_executive_iot_scorecard_should_include_after_scale_up/article_EN.md), champion continuity in [how to keep an IoT program alive when the first champion leaves](../37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves/article_EN.md), and new-line reuse through [how to create a site-ready IoT rollout playbook for new lines](../48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines/article_EN.md).
+Projects celebrate launches. Operating systems celebrate unremarkable Tuesdays when signals stayed trustworthy, reviews happened, and nobody needed a hero. If your IoT story only spikes during incidents, it is still a project.
 
-## What this means for DBR77 IoT
+## DBR77 IoT as plant OS
 
-DBR77 IoT is meant to sit inside the plant calendar: weekly signal truth, monthly integration honesty, named owners for definitions and training, and leadership evidence that reads like operations, not a vendor roadmap replay.
+DBR77 IoT becomes part of the operating system when cadence, roles, truth, escalation, integration honesty, and evidence categories are treated as infrastructure—not vendor roadmap items.
 
-Infrastructure posture beats slide-track urgency once the first scale wave lands.
+Turn IoT into how the plant runs: calendar discipline, named ownership, governed definitions, honest integration, and evidence leadership can trust after the hero moves on.
 
-## Bottom line
 
-Repeatability is boring on purpose.
 
-That boredom is what keeps output stable when markets, staff, and machines all move.
+
+## Keep the article’s promise practical
+
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
+
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT helps brownfield plants make IoT part of the operating system: cadence, visibility, operator context, escalation, and review-ready evidence. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

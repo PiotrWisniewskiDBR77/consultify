@@ -576,7 +576,7 @@ function rowToTriageSignal(row: any): RadarTriageSignal {
     confidence: 0,
     freshness: 0,
     actionability: 0,
-  });
+  }) as RadarBands;
   const triggeredRules = safeJsonParse(row.triggered_rules_json, []);
   return {
     signalId: row.signal_id,

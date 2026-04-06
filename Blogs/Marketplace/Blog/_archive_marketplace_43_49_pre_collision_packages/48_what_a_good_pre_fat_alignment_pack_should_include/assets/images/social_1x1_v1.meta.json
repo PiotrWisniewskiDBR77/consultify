@@ -1,0 +1,31 @@
+{
+  "article_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/48_what_a_good_pre_fat_alignment_pack_should_include",
+  "product": "Marketplace",
+  "scope_type": "blog",
+  "asset_slug": "48_what_a_good_pre_fat_alignment_pack_should_include",
+  "role": "social",
+  "archive_package": "_archive_marketplace_43_49_pre_collision_packages",
+  "aspect_ratio": "1:1",
+  "usage": [
+    "website",
+    "social",
+    "newsletter"
+  ],
+  "model": "cursor-builtin-generate-image",
+  "generation_notes": {
+    "contract": "DBR77_IMAGE_QC_STANDARD Mode 2; Marketplace ARCHIVE closeout batch",
+    "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | Cursor built-in GenerateImage + PIL where noted |\n| seed | n/a |\n| inference_steps | n/a |\n| delivered_px | 1024×1024 |",
+    "social_post_process": "PIL LANCZOS upscale from 768×768"
+  },
+  "prompt_source": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/48_what_a_good_pre_fat_alignment_pack_should_include/image-prompts.md",
+  "prompt_text": "Square macro: padlock hasp over stacked brass witness tags on felt—frozen acceptance objects metaphor without icons, numbers, or UI.",
+  "negative_prompt": "floating checkmarks, lock emoji styling, infographic",
+  "seed": "n/a",
+  "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+  "created_at": "2026-03-31T04:51:44+00:00",
+  "alt_text_en": "Hasp and witness tags for locking FAT scope before go-live.",
+  "caption_en": "Social for pre-FAT alignment freeze.",
+  "crop_safe_notes": "1:1; PIL LANCZOS upscale to 1024×1024.",
+  "output_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/48_what_a_good_pre_fat_alignment_pack_should_include/assets/images/social_1x1_v1.png"
+}

@@ -1,49 +1,36 @@
-# Jak wpisac niepodlegajace negocjacji wymagania AI do zamowien korporacyjnych
+# Jak zapisać niepodlegające negocjacji wymagania dotyczące AI w zamówieniach enterprise
 
-Docelowa osoba: lider zamowien z partnerami IT i prawnymi Etap lejka: Decyzja Rdzen problem: RFP kopiuje ogolny jezyk bezpieczenstwa, ktory dostawcy moga zaspokoic odpowiedziami z checkboxow, z nieokreslonym treningiem, podprocesorami i sciezkami danych Glowna obietnica: scisle aneks wymagan czyni polityke treningu, granice wdrozenia, prawa audytu i obowiazki incydentowe egzekwowalne przed podpisem
+Docelowa persona: lider zamówień z partnerami IT i prawnymi  
+Etap lejka: Decyzja  
+Główny problem: RFP kopiują ogólny język bezpieczeństwa, który dostawcy mogą zaspokoić checklistą, zostawiając trening, podwykonawców i ścieżki danych niezdefiniowane  
+Główna obietnica: ścisły aneks wymagań czyni politykę treningu, granice wdrożenia, prawa audytu i obowiązki przy incydentach egzekwowalnymi przed podpisem
 
-Zamowienia to miejsce gdzie abstrakcyjna polityka staje sie rzeczywistoscia umowy. Slaby jezyk daje slabe kontrole.
+Zamówienia to moment, w którym abstrakcyjna polityka staje się rzeczywistością umowy. Słaby język daje słabe kontrolki — a słabe kontrolki pojawiają się później jako pośpieszna praca prawna, awaryjne łatki architektoniczne oraz programy, które nie skalują się, bo nikt nie potrafi powiedzieć, co faktycznie jest na żywo.
 
-## Bezposrednia odpowiedz
+Zapisujcie niepodlegające negocjacji wymagania AI jako numerowany aneks obejmujący ograniczenie celu przetwarzania danych, zakaz lub wąskie zezwolenie na trening i przegląd ludzki, podwykonawców i powiadomienia o zmianach, obowiązki trybu wdrożenia, logowanie i współpracę forensyczną, wyłączenia odpowiedzialności lub wyjątki adekwatne do naruszeń poufności oraz niszczenie danych przy wyjściu z weryfikacją. Oznaczajcie każdą klauzulę jako zaliczona lub nie dla odpowiedzi dostawcy, a nie jako esej narracyjny. Jeśli nie ma tego w aneksie, nie ma tego w umowie.
 
-Zapisz niepodlegajace negocjacji wymagania AI jako ponumerowany aneks obejmujacy ograniczenie celu przetwarzania danych, zakaz lub waskie pozwolenie na trening i przeglad ludzki, podprocesory i powiadomienia o zmianie, obowiazki trybu wdrozenia, logowanie i wspolprace forensic, wyjatki od limitow odpowiedzialnosci dla naruszen poufnosci oraz niszczenie danych przy wyjsciu z weryfikacja. Oznacz kazda klauzule jako zaliczona lub nie przez odpowiedz dostawcy, nie esej narracyjny. Jesli nie ma tego w aneksie, nie ma tego w umowie.
+## Dwanaście klauzul, które należą do aneksu
 
-## Aneks wymagan: dwanascie klauzul
+Ograniczenie celu: AI przetwarza dane klienta wyłącznie dla wymienionych usług. Wyłączenie treningu: domyślnie brak treningu na treści klienta; każdy wyjątek wymaga zakresu opt-in i czasu trwania. Granice dostrajania: jeśli dozwolone, określcie zakazane klasy danych dla zbiorów strojenia. Przegląd ludzki: jeśli personel dostawcy może widzieć prompty lub rezultaty, zdefiniujcie przypadki, regiony i retencję. Podwykonawcy: lista zatwierdzonych podmiotów lub wymóg uprzedniej zgody z minimalną liczbą dni powiadomienia. Regiony: stała lista dozwolona dla przechowywania, inferencji, dostępu wsparcia i kopii zapasowych. Zobowiązanie wdrożeniowe: on-premise, prywatne API lub izolowany tenant zgodnie z umową — a nie „dostępne przy starcie, jeśli znów będziemy negocjować”. Linia bazowa bezpieczeństwa: odwołanie do ram kontroli enterprise po identyfikatorze, a nie sam mglisty język SOC. Logowanie: minimalne zdarzenia, retencja, dostęp klienta i format eksportu. Incydenty: kategorie, zegary powiadomień, współpraca przy przyczynie źródłowej i wsparcie regulacyjne tam, gdzie ma zastosowanie. Audyty: częstotliwość, zakres i terminy naprawy dla ustaleń krytycznych. Wyjście: zwrot danych, dowód wymazania i oczekiwania co do usunięcia tam, gdzie dane klienta mogą przetrwać.
 
-**Ograniczenie celu**: AI przetwarza dane klienta tylko do wymienionych uslug; **Wylaczenie treningu**: domyslnie brak treningu na tresci klienta; kazdy wyjatek wymaga opt-in zakresu i czasu; **Granice dostrajania**: jesli dozwolone, okresl klasy danych zakazane w zbiorach tuningu; **Przeglad ludzki**: jesli personel dostawcy moze widziec prompty lub wyjscia, okresl przypadki, regiony i retencje; **Podprocesory**: lista zatwierdzonych stron lub wymog wstepnej zgody z minimalnymi dniami powiadomienia; **Regiony**: stala lista dozwolona dla przechowywania, inferencji, dostepu wsparcia i kopii zapasowych; **Zobowiazanie wdrozeniowe**: on-premise, prywatne API lub izolowany tenant jako umowne, nie opcjonalne przy starcie; **Baza bezpieczenstwa**: odniesienie do ram kontroli przedsiebiorstwa po ID, nie tylko mgliste SOC; **Logowanie**: minimalne zdarzenia, retencja, dostep klienta i format eksportu; **Incydenty**: kategorie, zegar powiadomien, wspolpraca przy przyczynie i pomoc regulacyjna gdzie ma zastosowanie; **Audyty**: czestotliwosc, zakres i terminy naprawy dla usterek krytycznych; **Wyjscie**: zwrot danych, dowod kryptograficznego wymazania i usuniecie artefaktow modelu gdzie dane klienta mogly pozostac.
+## Punktujcie odpowiedzi dostawców na dowodach
 
-## Lista kontrolna: ocen odpowiedzi dostawcy
+Dla każdej klauzuli wymagajcie jawnego „zgodne” lub udokumentowanego wyjątku, odniesienia do kontroli technicznej lub diagramu załącznika oraz nazwanych podwykonawców tam, gdzie to istotne. Marketingowe załączniki narracyjne nie wliczają się do punktacji.
 
-Dla kazdej klauzuli wymagaj:
+Miękki język — „dostawca utrzyma rozsądne bezpieczeństwo” — zawodzi w przemyśle, bo nie daje się testować. Język egzekwowalny wiąże zobowiązania z załącznikami, corocznymi dowodami i zdefiniowanymi zakresami. Miękkie twierdzenia, że „dane klienta są chronione”, zawodzą, dopóki nie są spięte z konkretnymi wyłączeniami ruchu treningowego. „Prywatna chmura dostępna” zawodzi, dopóki inferencja produkcyjna nie jest ograniczona do nazwanego regionu, tenantu i modelu administracyjnego, którego oczekujecie.
 
-- [ ] jawnego potwierdzenia lub udokumentowanego wyjatku
-- [ ] odniesienia do kontroli technicznej lub diagramu zalacznika
-- [ ] nazwanych podprocesorow jesli istotne
+Odejdźcie, gdy dostawca odmawia wyłączeń treningu dla waszych najwyższych klas danych albo gdy podwykonawcy mogą się zmienić z dnia na noc bez okresu naprawczego, który możecie egzekwować.
 
-Zalaczniki marketingowe nie zaliczaja sie.
+Aneksy z dwunastoma klauzulami działają, gdy każda klauzula ma techniczny odpowiednik: wiersz diagramu, pole logu lub test, który możecie uruchomić przed podpisem. Vector to klasa oferty, pod którą te klauzule powstały: granice wdrożenia, które można przyczepić do języka umowy, wyłączenie danych klienta z treningu modelu oraz autorskie rozumowanie przemysłowe zamiast ogólnego czatu — żeby prawo i inżynieria podpisywały te same fakty.
 
-## Porownanie: miekki jezyk RFP kontra egzekwowalny
+Wymagania niepodlegające negocjacji to sposób, by producenci trzymali dostawców AI uczciwych po zakończeniu demo. Napiszcie aneks raz. Używajcie go w kategoriach z nakładkami klas danych.
 
-| Miekki | Egzekwowalny |
-|---|---|
-| "Dostawca utrzyma rozsadne bezpieczenstwo" | "Dostawca wdraza kontrole z Zalacznika A i dowodzi zgodnosci corocznie" |
-| "Dane klienta sa chronione" | "Tresc klienta w zakresie X nie sluzy do treningu globalnych modelow wg par. 4.2" |
-| "Dostepna prywatna chmura" | "Produkcyjna inferencja dziala tylko w regionie Y tenant Z bez krzyzowego admina" |
+## Punkt kontrolny zakładu
 
-## Kiedy odejsc
+Traktujcie „Jak zapisać niepodlegające negocjacji wymagania dotyczące AI w zamówieniach enterprise” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną.
 
-Odejdz gdy dostawca odmawia wylaczen treningu dla najwyzszych klas danych lub gdy podprocesory moga sie zmienic z dnia na noc bez okresu naprawczego.
-
-## Most produktowy
-
-DBR77 Vector jest pozycjonowany jako bezpieczna warstwa inteligencji za ekosystemem DBR77: autorskie AI przemyslowe z granicami wdrozenia nadajacymi sie do umocowania umownego, z wykluczeniem danych klienta z treningu modelu i rozumowaniem przemyslowym zamiast ogolnego czatu.
-
-Uzyj aneksu by zweryfikowac te pozycje lacznie w jezyku prawnym i technicznym.
-
-## Podsumowanie
-
-Wymagania niepodlegajace negocjacji to sposob by fabryki trzymaly dostawcow AI uczciwych po zakonczeniu demo. Napisz aneks raz. Stosuj ponownie miedzy kategoriami z nalozeniem klas danych.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Sprawdź bezpieczeństwo](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*
+*DBR77 Vector jest zgodny z rygorystycznym przeglądem w stylu aneksów dzięki deklarowanej postawie treningowej, granicom wdrożenia i pozycjonowaniu AI przemysłowego dla zespołów sourcingu enterprise. [Przegląd bezpieczeństwa](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*

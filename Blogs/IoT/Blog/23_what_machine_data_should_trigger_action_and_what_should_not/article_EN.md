@@ -5,74 +5,53 @@ Funnel stage: Consideration
 Core problem: brownfield IoT often floods teams with signals, so every spike feels urgent and the floor learns to ignore the stack  
 Main promise: a simple decision framework so only machine-backed conditions that change the next safe action earn alerts, while everything else stays visibility-only
 
-Most IoT failures on the shop floor are not sensor failures. They are priority failures.
+Most shop-floor IoT failures are priority failures, not sensor failures.
 
-When too many machine readings become "action," operators stop trusting any of them. The goal is not more data. It is clearer rules for when data should change behavior.
+When too many readings become “action,” humans do what humans always do under interruption overload: they triage by ignoring. The goal is not to shrink data; it is to separate learning streams from interruption streams with explicit rules the plant can defend in front of a running line.
 
-## The trap: treating visibility as urgency
+Promotion to action should feel like a management decision, not a software default. If every new tag arrives as urgent, the plant never builds baselines—and without baselines, “urgent” has no meaning.
 
-Real-time machine visibility is valuable because it shortens reaction time. But visibility is not the same as escalation.
+## Visibility is not urgency
 
-If vibration, temperature, cycle counters, and quality proxies all route into the same urgency channel, the plant trains people to treat alerts as noise. That is how a strong technical start becomes a weak operating habit.
+Real-time monitoring shortens reaction time only when the right events interrupt the right people. If temperature, vibration, cycle counters, and quality proxies all arrive as red banners, the organization trains itself to treat alerts as weather.
 
-## A practical split: signal classes
+## Three signal classes most plants can live with
 
-Use three classes when you design the first operating rules:
+Monitor-only signals support baselining and later tuning; they should not break concentration. Notify-with-context signals deserve a nudge when the condition is rare, explainable, and tied to a known playbook. Act-or-stop signals belong to conditions where delay clearly increases risk the plant already names—scrap, safety boundaries, or unplanned downtime patterns everyone agrees are unacceptable.
 
-1. **Monitor-only** Useful for learning, trending, and later tuning. No immediate human interruption.
+Early months should bias toward monitor-only more than teams expect. Patience in promotion is what makes later alerts believable.
 
-2. **Notify with context** Worth a nudge when the condition is rare, explainable, and tied to a known playbook.
+## Promote to action only with an operational contract
 
-3. **Act or stop** Reserved for conditions where delay increases scrap, safety risk, or unplanned downtime in a way the plant already agrees on.
+Before a signal earns escalation, the plant should agree there is an owner and a next step, a human can verify quickly on the floor, ignoring it for a shift would violate your own risk standard, thresholds tie to observed failure modes rather than generic defaults, and the response reduces variance instead of adding meetings.
 
-Most plants need far more monitor-only time than they expect in month one. That patience is what makes month six trustworthy.
+If the first three answers are shaky, keep the signal in learning mode until the story is clear.
 
-## Decision checklist: should this data trigger action now?
+## What usually should wait
 
-Ask these questions before promoting a signal to an action channel:
+Raw variance without baselines per line and shift, one-off anomalies without corroboration, interesting correlations without a maintenance or quality narrative, and vendor-default thresholds copied from unlike machines often belong in visibility-first mode. None of that wastes data; it protects attention.
 
-- does this condition already have an agreed owner and next step
-- can a human verify it quickly on the floor without guessing
-- would ignoring it for one shift create unacceptable risk by your own standard
-- is the threshold tied to a failure mode you have seen before, not only a model guess
-- does the action reduce variance, or does it only add meetings
+## What often earns earlier escalation
 
-If you cannot answer yes to the first three, keep it in monitor-only until the operating story is clear.
+Sustained breaches aligned with internal or OEM guidance, repeated stall patterns tied to known bottlenecks, precursors your plant has already lived through, and limits you already treat as non-negotiable tend to justify earlier action—because credibility comes from your history, not from novelty.
 
-## What usually should not trigger immediate action early
+## Classified signals versus dashboard culture
 
-In brownfield rollouts, these categories often belong in learning mode first: raw variance that is not yet baselined per line and shift; single-point anomalies without corroboration from a second signal or a physical check; "interesting" correlations that lack a maintenance or quality narrative; vendor default thresholds copied from a different machine class. None of this means the data is useless. It means the plant is not ready to bet a shift on it yet.
+Dashboard-first setups invite passive scanning. Alert-everything setups invite muting. Classified signals demand upfront discipline but produce calmer floors and clearer ownership. DBR77 IoT’s positioning aligns with that third path when pilots emphasize signal classes and deliberate promotion rather than raw feed volume.
 
-## What tends to deserve action sooner
+Tighten rules through review, not hope: ingest broadly where learning requires it, baseline honestly, promote a small action set per line, review what was ignored and why, expand only after trust holds across two review cycles.
 
-These patterns often earn earlier escalation when signal quality is honest: sustained threshold breach aligned with OEM or internal runbooks; repeated stall patterns tied to known bottlenecks; conditions that precede scrap or tool wear in your own history; safety or environmental limits your plant already treats as non-negotiable.
+For the human side of overload, read [why IIoT alerts fail on the shop floor and what works instead](../19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead/article_EN.md). For tuning discipline, continue with [how to reduce false alarms in IIoT systems](../28_how_to_reduce_false_alarms_in_iiot_systems/article_EN.md) and [when to expand from visibility to closed-loop response](../29_when_to_expand_from_visibility_to_closed_loop_response/article_EN.md).
 
-The credibility comes from alignment with how the plant already decides under pressure.
+Trigger action when data changes the next safe decision, has an owner, and passes a short reality test. Everything else can remain visible until the plant is ready to trust it.
 
-## Comparison: alert logic versus dashboard culture
 
-| Approach | What the floor experiences | Typical failure mode |
-|---|---|---|
-| Dashboard-first | more screens, passive scanning | attention drift, slow adoption |
-| Alert-everything | constant interruption | learned ignoring |
-| Classified signals | calm rhythm, clearer ownership | needs upfront discipline |
+## Bringing it home on the floor
 
-DBR77 IoT positioning fits the third path: fast pilot deployment and edge-first decision support that supports classified signals rather than another passive dashboard.
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-## How to tighten the rules without losing learning
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-Sequence that works in many plants: ingest broadly for visibility; baseline by machine, product, and shift; promote only a small set of actions per line; review weekly what was ignored and why; expand actions only when trust holds for two review cycles.
+---
 
-This keeps retrofit-friendly connectivity useful while the plant builds judgment.
-
-The shop-floor habit behind alert overload is unpacked in [why IIoT alerts fail on the shop floor and what works instead](../19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead/article_EN.md). For the tuning loop and gate discipline that make promoted signals survivable, continue with [how to reduce false alarms in IIoT systems](../28_how_to_reduce_false_alarms_in_iiot_systems/article_EN.md) and [when to expand from visibility to closed-loop response](../29_when_to_expand_from_visibility_to_closed_loop_response/article_EN.md).
-
-## What this means for DBR77 IoT
-
-DBR77 IoT is differentiated here when rollout reinforces signal classes and a deliberate path from monitor-only to action: owners, checklists, and review rhythm matter more than raw feed volume. Pilot speed and edge placement should shorten learning cycles for variance and context, not rush the floor into reacting before the operating contract for action is explicit.
-
-## Bottom line
-
-Trigger action only when machine data changes the next safe decision, has an owner, and passes a short reality checklist.
-
-Everything else should stay visible until the plant is ready to trust it. That is how IoT stays operational instead of theatrical.
+*DBR77 IoT helps plants classify machine signals and move deliberately from visibility to action with ownership, context, and shop-floor discipline. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

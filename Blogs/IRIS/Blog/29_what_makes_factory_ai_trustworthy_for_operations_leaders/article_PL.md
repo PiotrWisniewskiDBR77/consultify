@@ -1,70 +1,42 @@
-# Co sprawia, ze fabryczne AI jest godne zaufania dla liderow operacji
+# Co sprawia, że fabryczne AI jest godne zaufania dla liderów operacji
 
-Target persona: Dyrektor zakladu / Wiceprezes operacji / przywodztwo jakosci i BHP  
-Funnel stage: Decision  
-Core problem: liderzy wspieraja innowacje z zasady, ale nie obronia AI na hali bez identyfikowalnosci, ograniczonych dzialan i mierzalnych wynikow operacyjnych  
-Main promise: checklista liderska dla zaufanego AI przemyslowego: ugruntowane wyjscia, jawne limity, audyty, bramki ludzkie i dowod oparty o metryki cyklu
+Docelowa persona: Dyrektor zakładu / wiceprezes ds. operacji / kierownictwo jakości i BHP  
+Etap lejka: Decision  
+Główny problem: liderzy wspierają innowację z zasady, ale nie potrafią obronić AI przed halą bez identyfikowalności, ograniczonych działań i mierzalnych skutków operacyjnych  
+Główna obietnica: lista kontrolna zaufania dla przemysłowego AI: ugruntowane rezultaty, jawne limity, ślady audytu, bramy ludzkie i dowód powiązany z metrykami cyklu
 
-**Bezposrednia odpowiedz:** Fabryczne AI staje sie godne zaufania dla liderow operacji, gdy kazda rekomendacja jest na tyle zrozumiala, by dzialac, ograniczona przez opublikowane reguly, zapisana w tym samym systemie co zadania i akceptacje oraz oceniana metrykami operacji jak czas reakcji i jakosc domkniecia, a nie polyskiem demo. Zaufanie to nie atmosfera. To zestaw zachowan, ktore mozna sprawdzic.
+Zaufanie to nie „klimat”. W operacjach zaufanie to zestaw zachowań możliwych do inspekcji: wsparcie pokazujące swoją pracę na poziomie przełożonej zmiany, działania ograniczone opublikowanymi regułami, rekordy żyjące przy zadaniach oraz dowód powiązany z metrykami cyklu zamiast polerki demo. Liderzy muszą bronić AI przed ludźmi, którzy będą rozliczani, gdy coś pójdzie nie tak. Ta obrona musi być konkretna.
 
-## Sygnal zaufania 1: system pokazuje prace na glebokosci operatora
+Wiarygodne wsparcie zawiera wystarczający kontekst do działania: jakie sygnały zostały użyte, jakie założenia przyjęto, co jest niepewne. Nie potrzebujesz akademickiej wyjaśnialności. Potrzebujesz jasności na poziomie operatora — coś, co prowadzący zmianę może zakwestionować bez stopnia z data science.
 
-Operatorzy nie ufaja czarnym skrzynkom.
+Zaufanie rośnie, gdy zakład szybko odpowiada na pytania najgorszego przypadku: co jeśli ta sugestia jest błędna, jak szybko możemy cofnąć, kto zatwierdził nieodwracalny krok. Jeśli odpowiedzi są niejasne, liderzy nie powinni stawiać wiarygodności na tym narzędziu.
 
-Godne zaufania wsparcie obejmuje: jakie sygnaly byly uzyte; jakie zalozenia przyjeto; co jest niepewne. Nie potrzebujesz akademickiej wyjasnialnosci. Potrzebujesz kontekstu na poziomie nadzorcy.
+Bramy ludzkie powinny odpowiadać realnej odpowiedzialności: ekspozycja na BHP, zwolnienie jakości, wysyłka do klienta, duże zmiany na wyposażeniu. Jeśli wszystko wymaga akceptacji, AI wydaje się bezużyteczne. Jeśli nic nie wymaga akceptacji, liderzy noszą nieposiadane ryzyko. Środkowa ścieżka to opublikowane progi, które hala rozpoznaje.
 
-## Sygnal zaufania 2: dzialania sa ograniczone i odwracalne tam, gdzie to mozliwe
+Zaufanie zwykle pęka po pierwszej widocznej pomyłce — nie po debacie nad white paperem. Właściwy właściciel zostaje wciągnięty w pilną sprawę. Przełożony nie potrafi wyjaśnić, skąd się wzięła sugestia. Ślad audytu jest rozrzucony między czat, e-mail i notatki. Potem rozmowa przestaje być „AI z zasady” i staje się „czy ten przepływ pracy jest obronny pod presją?”.
 
-Zaufanie rosnie, gdy zaklad potrafi odpowiedziec:
+Ślady audytu należą do pozycji pracy. Zaufanie eroduje, gdy historia czatu jest oddzielona od rekordów operacyjnych, a decyzje odtwarza się z pamięci podczas audytów. Wiarygodny wzorzec to jedna pozycja pracy, jedna oś czasu, jeden rekord.
 
-- jaki jest najgorszy przypadek, jesli ta sugestia jest zla?
-- jak szybko mozemy confnac?
-- kto zaakceptowal nieodwracalny krok?
+Dowód powinien używać operacyjnych KPI: czas do pierwszego działania na powtarzających się problemach, wskaźnik ponownego otwarcia po domknięciu, trafność eskalacji, próbkowane minuty koordynacji przełożonych. Jeśli dostawcy pokazują tylko wykresy dokładności, poproś o metryki zakładu — bo zakład płaci w minutach, nie w rankingach leaderboardu.
 
-Jesli odpowiedzi sa niejasne, liderzy nie powinni bronic narzedzia.
+**Lista zaufania dla kierownictwa (pięć punktów):** opublikowane progi ludzkiego potwierdzenia; kody przyczyn dla nadpisań i odrzuceń; uprawnienia oparte na rolach dla wrażliwych pól; udokumentowany tryb awarii i awaryjny powrót; okno bazowe uchwycone przed roszczeniami o ekspansję.
 
-## Sygnal zaufania 3: bramki ludzkie pasuja do realnej odpowiedzialnosci
+IRIS ma znaczenie, bo zaufanie rośnie, gdy rekomendacje, akceptacje, nadpisania i metryki domknięcia żyją w jednym nadzorowanym środowisku operacyjnym — tak by kierownictwo mogło przeglądać AI jako infrastrukturę, nie izolowanego asystenta.
 
-Godne zaufania programy wyrownuja bramki z: narazeniem BHP; zwolnieniem jakosci; wysylka do klienta; duzymi zmianami sprzetu. Jesli wszystko wymaga akceptacji, AI wydaje sie bezuzyteczne. Jesli nic nie wymaga akceptacji, liderzy niosa ryzyko bez wlasciciela.
+Połącz to z [Kiedy AI powinno rekomendować, a kiedy ludzie powinni decydować w operacjach](../26_when_ai_should_recommend_and_when_humans_should_decide_in_operations/article_PL.md) przy mapowaniu granic decyzji.
 
-## Reality check: zaufanie zwykle peka po pierwszej zlej eskalacji
+Liderzy operacji ufają AI, gdy zachowuje się jak część infrastruktury zakładu: ograniczone, rejestrowane, mierzalne, dopasowane do rozliczalności. Wszystko inne to pilotaż czekający na kryzys.
 
-Wiekszosc zakladow nie traci zaufania dlatego, ze ktos przeczytal krytyczny white paper. Traci je po jednym widocznym bledzie operacyjnym, na przyklad gdy:
+## Podsumowanie operacyjne
 
-- niewlasciwy wlasciciel zostaje wciagniety w pilny problem
-- nadzorca nie potrafi wyjasnic, dlaczego sugestia zostala wygenerowana
-- zespol znajduje slad audytowy rozrzucony po czacie, mailu i notatkach systemowych
+Obietnica tego artykułu — lista kontrolna zaufania dla przemysłowego AI: ugruntowane rezultaty, jawne limity, ślady audytu, bramy ludzkie i dowód powiązany z metrykami cyklu — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Co sprawia, że fabryczne AI jest godne zaufania dla liderów operacji” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Od tego momentu liderzy przestaja dyskutowac o AI w teorii. Zaczynaja pytac, czy workflow da sie obronic pod presja.
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
-## Sygnal zaufania 4: audyt zyje z pozycja pracy
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie usprawnienie operacyjne — tylko narracyjne. Ta regula utrzymuje programy w rzetelności, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
-Zaufanie peka, gdy: historia czatu AI jest oddzielona od zapisow CMMS lub QMS; decyzje sa rekonstruowane z pamieci podczas audytow. Godny wzor jest prosty: jedna pozycja pracy, jedna os czasu, jeden zapis.
-
-## Sygnal zaufania 5: dowod uzywa KPI operacji, nie nowosci
-
-Liderzy powinni wymagac pomiaru takiego jak: czas do pierwszego dzialania przy powtarzalnych problemach; wskaznik ponownego otwarcia po domknieciu; trafnosc eskalacji (czy wlasciwy wlasciciel byl zaangazowany?); minuty koordynacji nadzorcy, probkowane co tydzien.
-
-Jesli dostawca pokazuje tylko wykresy trafnosci, popros o metryki zakladu.
-
-## Piecioelementowa checklista zaufania na przeglady liderskie
-
-1. Opublikowane progi dla potwierdzenia czlowieka
-2. Kody przyczyn dla nadrzedow i odrzucen
-3. Uprawnienia rolowe dla wrazliwych pol
-4. Udokumentowany tryb awarii i procedura zapasowa
-5. Okno bazowe zebrane przed roszczeniami o ekspansje
-
-## Dlaczego IRIS wspiera zaufane operacyjne AI
-
-DBR77 IRIS to AI-native system operacyjny zakladu z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zadan.
-
-Godnosc zaufania jest latwiejsza, gdy inteligencja i wykonanie dziela jedno rzadzone srodowisko.
-
-## Podsumowanie
-
-Liderzy operacji ufaja AI, gdy zachowuje sie jak czesc infrastruktury zakladu: ograniczone, zapisane, mierzalne i dopasowane do prawdziwej odpowiedzialnosci. Wszystko inne to pilot czekajacy na kryzys.
+Jeśli rekord jest ubogi, napraw rekord, zanim poszerzysz ambicję.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Obejrzyj prezentację](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*
+*DBR77 IRIS łączy wsparcie AI z zadaniami, akceptacjami i osiami czasu przyjaznymi audytowi w jednej warstwie plant operating system przez kluczowe funkcje. [Obejrzyj walkthrough](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*

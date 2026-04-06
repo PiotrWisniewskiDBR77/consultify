@@ -1,3 +1,4 @@
+import { stableHeuristicId } from './idFactory.js';
 import type { HeuristicInput, HeuristicOutput } from './types.js';
 
 let seqId = 0;
@@ -131,7 +132,7 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
   // Suggestions
   if (overdue.length > 0) {
     suggestions.push({
-      id: uid('sug-dec'),
+      id: stableHeuristicId('sug-dec', 'request-missing-info'),
       action: `Request missing info for ${overdue.length} overdue decisions`,
       reason: 'Decisions may be stalled due to insufficient preparation materials',
       expectedOutcome: 'Approvers can make informed decisions faster',
@@ -144,7 +145,7 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
 
   if (noOwner.length > 0) {
     suggestions.push({
-      id: uid('sug-dec'),
+      id: stableHeuristicId('sug-dec', 'assign-approvers'),
       action: `Assign approvers to ${noOwner.length} decisions`,
       reason: 'Orphaned decisions have no one to approve them',
       expectedOutcome: 'Clear decision routing',
@@ -157,7 +158,7 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
 
   if (overdue.length > 3) {
     suggestions.push({
-      id: uid('sug-dec'),
+      id: stableHeuristicId('sug-dec', 'assign-substitute-approvers'),
       action: 'Assign substitute approvers for overdue decisions',
       reason: 'Current approvers are a bottleneck — delegate to available decision-makers',
       expectedOutcome: 'Reduces decision queue by 50%+',
@@ -170,7 +171,7 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
 
   if (avgLatency > 14) {
     suggestions.push({
-      id: uid('sug-dec'),
+      id: stableHeuristicId('sug-dec', 'weekly-governance-cadence'),
       action: 'Change governance cadence to weekly decision reviews',
       reason: 'Bi-weekly or ad-hoc cadence causes structural latency',
       expectedOutcome: 'Decision latency drops below 7 days',

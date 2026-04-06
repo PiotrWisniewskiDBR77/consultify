@@ -1,74 +1,34 @@
 # Was ein KI-Agent heute in einer Fabrik leisten kann
 
-Target persona: Betriebsleiter / Engineering Manager  
-Funnel stage: Consideration  
-Core problem: Einkauf hoert "Agent"-Sprache von Anbietern, braucht aber eine geerdete Scope-Liste zu echten Grenzen: Sicherheit, Freigaben, Nachvollziehbarkeit, bestehende Systeme  
-Main promise: eine praktische Grenzkarte dessen, was ein KI-Agent heute zuverlaessig unterstuetzen kann, was Menschen bleibt und was eine vereinheitlichte Ausfuehrungsschicht voraussetzt
+Zielpersona: Operations Manager / Engineering Manager  
+Funnel-Stufe: Consideration  
+Kernproblem: Käufer hören „Agent“-Sprache von Anbietern, brauchen aber eine geerdete Scope-Liste, die zu echten Grenzen passt: Sicherheit, Freigaben, Nachverfolgbarkeit und bestehende Systeme  
+Hauptversprechen: Eine praktische Grenzkarte dessen, was ein KI-Agent jetzt zuverlässig unterstützen kann, was weiter den Menschen gehört und was überhaupt eine vereinheitlichte Ausführungsschicht braucht, um zu funktionieren
 
-Heute kann ein Fabrik-KI-Agent zuverlaessig Triage, Kontextzusammenstellung, Entwurf von Aufgabenvorschlaegen, schwellwertbasierte Routing-Vorschlaege und Follow-up-Pruefungen innerhalb regierter Workflows unterstuetzen. Er sollte nicht als autonomer physikalischer Betreiber des Werks ohne harte Leitplanken und menschliche Entscheidungstore behandelt werden. "Agent" wird ein lautes Wort. Im Betrieb ist die nuetzliche Frage enger: welche Arbeit kann ein Agent unter echten Fabrikrestriktionen leisten?
+„Agent“ wird ein lautes Wort. In Operations ist die nützliche Frage enger: welche Arbeit kann Software unter echten Fabrikgrenzen leisten—wo Sicherheit, Qualität und Rechenschaft nicht verhandelbar sind und das Werk sich zweideutiges Ownership nicht leisten kann?
 
-## Definieren Sie den Agenten als Workflow-Teilnehmer
+In diesem Artikel behandeln Sie einen Agenten als Workflow-Teilnehmer: liest Signale und Dokumente im Scope, schlägt strukturierte nächste Schritte vor, wirkt über erlaubte Schnittstellen und stoppt an definierten Freigabegrenzen. Das ist keine unbeaufsichtigte Steuerung physischer Assets und kein Ersatz für Governance.
 
-In diesem Artikel ist ein Agent Software, die: Signale und Dokumente im Scope lesen kann; strukturierte naechste Schritte vorschlagen kann; ueber erlaubte Schnittstellen mit Workflows interagieren kann; an definierten Freigabegrenzen stoppt. Das bedeutet nicht "unbeaufsichtigte Asset-Steuerung".
+Heute kann ein Fabrik-Agent zuverlässig disziplinierte Muster unterstützen, wenn Datenzugriff und Workflows real sind: Triage und Clustering, das Alarme, Notizen und Anfragen bündelt, damit Menschen Signal statt Rauschen prüfen; Kontextpakete mit Parametern, jüngsten Änderungen und verknüpfter Arbeitshistorie zu einem neuen Ticket; Routing-Entwurf mit vorgeschlagenem Owner, Prioritätsband und Frist zur menschlichen Bestätigung; Schwellenüberwachung, die ein reglementiertes Arbeitspaket öffnet, wenn vereinbarte Bedingungen verletzt werden; und Follow-up-Anstupser, die stecken gebliebene Aufgaben erkennen und Eskalationspfade vorschlagen, die weiter eine Person zur Annahme brauchen. Sehen Sie das als Muster, nicht als Garanten—Reife und Definitionen bestimmen, was in Ihrer Umgebung sicher ist.
 
-## Was ein Agent heute kann (illustrativer Scope)
+Manche Entscheidungen sollten in den meisten Werken menschlich bleiben: sicherheitskritische Overrides, Qualitätsfreigabe-Urteile mit regulatorischer Exposition, große Zeitplan- oder Kapitalverpflichtungen, personalbezogene Urteile und Lieferantenvertragsänderungen. Diese Grenzen betreffen Haftung und Rechenschaft genauso wie Technologie.
 
-Das sind uebliche, vertretbare Faehigkeiten bei brauchbarem Datenzugriff und klaren Workflows:
+Ein gesundes Programm erweitert zuerst Assistenz, verschärft Empfehlungen mit Freigaben und behandelt automatische Zustandsänderungen als selten, explizit und regelbasiert—mit Audit-Pfaden, Rollback und Ownern für Ausnahmen. Das Versagensmodell ist nicht vorsichtiger Rollout. Das Versagensmodus ist, Entwürfe als Entscheidungen zu behandeln: vorgeschlagener Owner für rechenschaftspflichtiges Ownership gehalten, selbstbewusste Oberfläche für Policy gehalten, schneller Routing-Vorschlag für eine freigegebene Aktion gehalten.
 
-**Triage und Clustering** Alarme, Qualitaetsnotizen und Wartungsmeldungen buendeln, damit Menschen Pakete pruefen, nicht Rauschen.
+Ein Agent wird operativ ernst nur, wenn das Werk praktische Fragen klar beantworten kann: welche Systeme darf der Agent berühren; was ist der Audit-Pfad für jeden Vorschlag und jede Aktion; welche Aktionen brauchen immer menschliche Freigabe; wie werden widersprüchliche Definitionen gelöst, bevor Automatisierung wächst; was passiert, wenn der Agent falsch liegt. Vage Antworten bedeuten: Agent bleibt im Assist-Modus, bis die Ausführungswirbelsäule glaubwürdig ist.
 
-**Kontextpakete** Relevante Parameter, juengste Aenderungen und verknuepfte Arbeitshistorie an ein neues Ticket haengen.
+IRIS zählt, weil nützliche Agenten einen reglementierten Ort brauchen, um Kontext anzuhängen, Arbeit zu entwerfen und an Freigabetoren zu stoppen—damit Agentenverhalten für Operations sichtbar bleibt statt über fragmentierte Tools und private Chats zu schweben.
 
-**Routing-Entwurf** Owner, Prioritaetsband und Faelligkeit regel- und historienbasiert vorschlagen, zur Bestaetigung durch Menschen.
+Zu Entscheidungsrechte-Schwellen siehe [Wann KI empfehlen soll und wann Menschen in Operations entscheiden sollten](../26_when_ai_should_recommend_and_when_humans_should_decide_in_operations/article_DE.md). Zu Vertrauenskriterien für Führung siehe [Was Fabrik-KI für Operations-Führungskräfte vertrauenswürdig macht](../29_what_makes_factory_ai_trustworthy_for_operations_leaders/article_DE.md).
 
-**Schwellwert-Ueberwachung** Kennzeichnen, wenn KPI oder Bedingung eine vereinbarte Grenze ueberschreitet, und ein regiertes Arbeitspaket oeffnen.
+Ein KI-Agent in einer Fabrik heute versteht man am besten als disziplinierten Workflow-Helfer, nicht als stillen Entscheider. Die Reife Ihrer Ausführungsschicht bestimmt, wie viel seiner Fähigkeit Sie sicher nutzen können—und wie viel der „Agent“-Story auf der Nachtschicht real ist, nicht nur in der Demo.
 
-**Follow-through-Nudges** Steckenbleibende Aufgaben erkennen und Eskalationspfade vorschlagen, die weiterhin eine Person akzeptieren muss.
+## Operatives Fazit
 
-Behandeln Sie das als illustrative Muster, nicht als Garantie fuer jede Umgebung.
+Das Versprechen dieses Artikels—eine praktische Grenzkarte dessen, was ein KI-Agent jetzt zuverlässig unterstützen kann, was den Menschen bleibt und was eine vereinheitlichte Ausführungsschicht braucht—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Was ein KI-Agent heute in einer Fabrik leisten kann“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
-## Was in den meisten Werken noch Menschen bleibt
-
-Selbst starke KI sollte leise nicht besitzen: sicherheitskritische Overrides; Qualitaetsfreigaben mit regulatorischer Exposition; Capex- oder grosse Planungscommitments; disziplinarische oder HR-verknuepfte Urteile; Lieferantenvertragsaenderungen. Das sind Verantwortungs- und Haftungsgrenzen, nicht nur Technologiegrenzen.
-
-## Drei Zonen: unterstuetzen, empfehlen, handeln
-
-| Zone | Was passiert | Typische Kontrollen |
-|---|---|---|
-| Unterstuetzen | bereitet Informationen vor | Logging, Scope-Limits |
-| Empfehlen | schlaegt Aktion vor | menschliche Bestaetigung, Reason Codes |
-| Handeln | aendert Systemzustand | strenge Rollen, Freigaben, Audit Trail |
-
-Gesunde Fabrikprogramme erweitern zuerst Unterstuetzen, ziehen Empfehlen mit Freigaben straff, und behandeln Handeln als selten und explizit.
-
-## Voraussetzungen, die Demo von Operations trennt
-
-Ein Agent wird operativ ernst nur wenn das Werk beantworten kann: Welche Systeme darf der Agent beruehren?; Wie lautet der Audit Trail je Vorschlag und Aktion?; Welche Aktionen erfordern immer menschliche Freigabe?; Wie werden widerspruechliche Definitionen vor Automatisierung geloest?; Wie wird Fehlverhalten behandelt, wenn der Agent falsch liegt?. Wenn die Antworten vage sind, bleibt der Agent im Unterstuetzen-Modus.
-
-## Reality check: die meisten Agentenprojekte scheitern, wenn Menschen Workflow-Geschwindigkeit mit Autonomie verwechseln
-
-Die erste Version wirkt oft beeindruckend, weil sie schnell entwirft, schnell routet und sicher klingt. Das Scheitern beginnt, wenn das Werk stillschweigend annimmt, dass:
-
-- ein entworfener Schritt schon ein genehmigter Schritt ist
-- ein vorgeschlagener Owner dasselbe ist wie Ergebnisverantwortung
-- ein smartes Interface die Notwendigkeit klarer Workflow-Regeln ersetzt
-
-So wird "Agent" von einem nuetzlichen Helfer zu einer neuen Quelle von Mehrdeutigkeit.
-
-## Warum IRIS fuer Agenten-Nutzen zaehlt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Aufgaben.
-
-Agenten werden nuetzlicher, wenn sie nicht ueber fragmentierten Tools schweben.
-
-Sie brauchen einen konsistenten Ort fuer Kontext, Aufgabenvorschlaege und Stop an Freigabetoren.
-
-## Fazit
-
-Ein KI-Agent in einer Fabrik heute ist am besten als disziplinierter Workflow-Helfer verstanden, nicht als stiller Entscheider.
-
-Die Reife Ihrer Ausfuehrungsschicht bestimmt, wie viel seiner Faehigkeit Sie sicher nutzen koennen.
+Halten Sie Teams an einer einfachen Regel: Wenn sich eine Verbesserung nicht in Exporten aus dem Ausführungsdatensatz zeigen lässt, ist es noch keine operative Verbesserung—nur eine narrative. Diese Regel hält Programme ehrlich, wenn Demos gut aussehen, Übergaben aber fragil bleiben.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [14-Tage-Trial starten](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*
+*DBR77 IRIS gibt KI-Agenten ein reglementiertes Ausführungsheim: vereinheitlichtes Tasking, Freigaben und nachverfolgbares Follow-up über Produktion, Lager, Qualität und Instandhaltung. [14-Tage-Trial starten](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*

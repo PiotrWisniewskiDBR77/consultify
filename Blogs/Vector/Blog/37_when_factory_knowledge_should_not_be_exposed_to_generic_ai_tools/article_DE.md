@@ -1,62 +1,36 @@
 # Wann Werkswissen nicht generischen KI-Tools ausgesetzt werden sollte
 
-Target persona: CTO / Leiter Werksingenieurwesen  
-Funnel stage: Awareness  
-Core problem: Bequeme Workflows trainieren Teams, Layouts, Ausbringungen, Lieferantenprobleme und unveroeffentlichte Aenderungen in Tools einzufuegen, die auf Consumer-Vertrauensmodellen basieren  
-Main promise: Eine klare Policy-Karte trennt, was in freigegebenen Kanaelen zusammengefasst werden darf, von dem, das in kontrollierten industriellen KI-Grenzen bleiben muss
+Zielpersona: CTO / Leiter Werksengineering  
+Funnel-Stufe: Awareness  
+Kernproblem: Bequeme Workflows trainieren Teams, Layouts, Ausbeuten, Lieferanten-Themen und unveröffentlichte Änderungen in Tools einzufügen, die für Consumer-Vertrauensmodelle gebaut sind  
+Hauptversprechen: Eine klare Policy-Map trennt, was in genehmigten Kanälen zusammengefasst werden darf, von dem, was in kontrollierten Industrie-KI-Grenzen bleiben muss
 
-Generische KI-Tools optimieren breite Nuetzlichkeit. Werkswissen optimiert Wettbewerbsueberleben.
+Generische KI-Tools optimieren für breite Nützlichkeit. Werkswissen optimiert für Wettbewerbsüberleben — die langsame Ansammlung dessen, was auf Ihren Linien, mit Ihren Lieferanten, unter Ihren Zwängen funktioniert. Wenn diese Welten über ein Einfügefeld zusammentreffen, ist das Risiko nicht immer offensichtlich, weil die Oberfläche gewöhnlich wirkt. Die Grenze hat sich trotzdem verschoben.
 
-Werkswissen sollte nicht in generische KI-Tools gelangen, wenn es unveroeffentlichte Designs, kundenspezifische Preise, identifizierbare HR- oder Gesundheitsdaten, proprietaere Prozessparameter, vertragsgebundene Lieferanten-Eskalationen oder alles enthaelt, was freigegebene Spezifikationen ohne Rueckverfolgung aendern wuerde. Selbst anonymisierte Snippets lassen sich im Expertenkontext des Werks oft re-identifizieren.
+Werkswissen sollte nicht in generische KI-Tools gelangen, wenn es unveröffentlichte Designs, kundenspezifische Preise, identifizierbare Personen oder sensible HR-Daten, proprietäre Prozessparameter, qualitätsbezogene Lieferanten-Eskalationen mit Vertragsbezug oder alles enthält, was eine freigegebene Spezifikation ohne Traceability ändern würde. Selbst „anonymisierte“ Schnipsel lassen sich im kontextstarken Team oft re-identifizieren. Standardhaltung: leiten Sie hochsignaliges operatives Wissen zu genehmigtem privatem oder On-Prem-Industrie-KI mit klarer Trainingsrichtlinie und Protokollierung.
 
-Standardhaltung: leiten Sie hochsignaliges Betriebswissen zu freigegebener privater oder on-prem industrieller KI mit expliziter Trainingspolitik und Logging.
+## Vier Wissensklassen, die die Regel ändern
 
-## Framework: vier Wissensklassen
+Öffentliches oder branchengenerisches Material verdient weiterhin unternehmensgenehmigte Tools, um versehentlichen Kontext-Leak in Folge-Prompts zu vermeiden. Internes, aber wenig sensibles Material kann Corporate-SaaS mit DLP-Regeln passen, wenn die Richtlinie es erlaubt. Operative Wahrheit — Chargen-IDs, Stillstandscodes, reale Zykluszeiten, Ausschussgründe mit Linienbezug — gehört hinter eine private KI-Grenze mit Integrationsverträgen, nicht in Paste-in-Chat. Strategisches und unveröffentlichtes Material — zukünftige Layout-Skizzen, Capex-Szenarien, Lieferantenverhandlungen, Roadmap-Features — verlangt typischerweise isoliertes Deployment, benannten Zugriff und keinen sekundären Trainingsgebrauch.
 
-### Klasse 1: oeffentlich oder branchengenerisch
+## Rote Flaggen im Prompt-Feld
 
-Beispiele: Zusammenfassungen veroeffentlichter Normen, generische Instandhaltungskonzepte ohne Werk-Identifier.
+Stoppen Sie, wenn der Paste Dateinamen mit Projekt- oder Kundenkodes, Screenshots von MES oder QMS mit Zeitstempeln und Liniennamen, Fotos von Whiteboards aus Führungsreviews oder alles enthält, was Sie ungeschwärzt nicht an einen Wettbewerber mailen würden. Das sind keine Paranoia-Checks. Das sind schnelle operative Tests, die langsame Reue verhindern.
 
-Haltung: weiterhin Corporate-Tools bevorzugen, um indirekten Kontext-Leak in Folgeprompts zu vermeiden.
+Generischer Chat-Komfort optimiert für Breite; industrielle Verantwortung optimiert für Grenzklarheit, vertraglich ausgeschlossenes Training für Kunden-Nutzlasten, Protokollierung passend zu Untersuchungen, Deployments-Optionen passend zur Werks-Segmentierung und Reasoning für Fertigungsentscheidungen statt offenem Chat.
 
-### Klasse 2: intern aber gering sensibel
+Wissensklassen-Routing scheitert, wenn der genehmigte Tool-Pfad nicht dieselbe Sensitivität hält wie die definierten Klassen. Vector existiert für Nutzlasten, die nie Consumer-Style-Routen fahren sollten: proprietäre Industrie-KI trainiert auf Werks-Transformationswissen, Deployments-Optionen, die operativen Kontext innerhalb kontrollierter Grenzen halten, Ausschluss von Kundendaten aus dem Modelltraining und Reasoning für industrielle Arbeit statt offenem Chat.
 
-Beispiele: generische Schulungsentwuerfe, Produktivitaetsnotizen ohne Geheimnisse. Haltung: Corporate-SaaS mit DLP-Regeln, wenn Policy erlaubt.
+Policy ist kein Misstrauen gegen Mitarbeitende. Es geht darum, Tool-Klasse an Wissens-Klasse anzupassen. Im Zweifel die höhere Grenze wählen — weil die Kosten zu lockerer Gelassenheit asymmetrisch sind.
 
-### Klasse 3: operative Wahrheit
+Der Praxistest ist, ob Vorgesetzte die Regel in einer Minute im Toolbox-Talk erklären können — nicht ob das PDF lang ist. Wenn die Regel nicht merkbar ist, überlebt sie keinen stressigen Freitag.
 
-Beispiele: Chargen-IDs, Stillstandscodes, reale Zykluszeiten, Scrap-Gruende mit Linienbezug. Haltung: private KI-Grenze mit Integrationsvertraegen, kein Chat-Paste.
+## Werks-Checkpoint
 
-### Klasse 4: strategisch und unveroeffentlicht
+Behandeln Sie „Wann Werkswissen nicht generischen KI-Tools ausgesetzt werden sollte“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Trainingsrichtlinien-Auszug, Log-Stichprobe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Industrie-KI reift, wenn Evidence Routine wird: dieselbe Disziplin, die Sie bereits vor einem Linien-Release, einem Lieferantenwechsel oder einem großen IT-Cutover erwarten. Das ist der Shift von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent. Behandeln Sie Ambiguität schließlich als Schulden: Jede unbeantwortete Frage zu Datenpfaden, Trainings-Defaults oder Approval-Routing ist etwas, das Ihr zukünftiges Ich unter Zeitdruck bezahlt — typischerweise während eines Audits, eines Vorfalls oder eines gehetzten Rollouts.
 
-Beispiele: zukuenftige Layout-Skizzen, CAPEX-Szenarien, Lieferantenverhandlungen, Roadmap-Features. Haltung: isoliertes Deployment, benannter Zugriff, kein sekundaeres Training.
-
-## Checkliste: rote Flaggen in der Prompt-Box
-
-Stoppen, wenn der Paste enthaelt:
-
-- Dateinamen mit Projekt- oder Kundenkodes
-- Screenshots von MES oder QMS mit Zeitstempeln und Liniennamen
-- Fotos von Whiteboards aus Fuehrungsreviews
-- alles, was Sie einem Wettbewerber unredigiert nicht mailen wuerden
-
-## Vergleich: generischer Chat-Komfort versus industrielle Verantwortung
-
-| Dimension | Generisches KI-Tool | Industrielle KI-Grenze |
-| --- | --- | --- |
-| Trainings-Defaults | fuer Endnutzer oft unklar | Kundenpayload vertraglich ausgeschlossen |
-| Logging | erfuellt evtl. kein Werksaudit | aligned zu Qualitaets- und Security-Untersuchungen |
-| Schlussfolgern | allgemein | Domain-Transformation |
-| Deployment | Multi-Tenant-Normen | on-prem / private API / Isolation |
-
-## Product bridge
-
-DBR77 Vector ist die sichere Intelligenzschicht hinter dem DBR77-Oekosystem: proprietaere industrielle KI trainiert auf echtem Fabriktransformationswissen, Deploymentsoptionen, die operative Payloads in kontrollierten Grenzen halten, Kundendaten trainieren das Modell nicht, und Schlussfolgern fuer industrielle Entscheidungen statt generischem Chat. Sie existiert fuer Wissensklassen, die nicht Consumer-Pfade nutzen sollten.
-
-## Final takeaway
-
-Policy ist kein Misstrauen gegen Mitarbeitende. Sie ist die Zuordnung von Tool-Klasse zu Wissens-Klasse. Im Zweifel die hoehere Grenze waehlen.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, nehmen Sie diese: Benennen Sie, was wahr sein muss, bevor sich die Nutzung ausweitet, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Komfort mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Produkte mit Vector erkunden](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*
+*DBR77 Vector gibt Teams einen genehmigten Pfad für industrielles Reasoning, ohne operative Wahrheit über generische Multi-Tenant-Tools zu routen. [Produkte mit Vector erkunden](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*

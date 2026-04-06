@@ -5,50 +5,51 @@ Funnel stage: Consideration (capital gate before commitment)
 Core problem: teams ask the board for money while comparability, ownership, and acceptance logic are still implicit  
 Main promise: a readiness gate you can defend in a fifteen-minute board conversation without hiding open risks
 
-Board approval is not a morale vote.
+Board time is short. Weak packets recycle vendor slides, bury award logic, and treat acceptance like a future argument. A board-ready decision is one you can explain as a coherent story: what you are buying, why this path, what it costs in cash and time, what must be true for success, what risks remain open, and who owns them.
 
-It is a transfer of accountability from the project team to the enterprise balance sheet.
+Readiness means those elements are explicit—not implied, not deferred to “the project team will sort it.”
 
-If the packet mixes enthusiasm with missing comparability, the board is being asked to fund theater.
+## The conversation you should be able to hold
 
-An automation project is ready for board approval when you can show, in one packet: aligned internal scope baseline, at least two comparable evaluation paths or a documented exception, named owner-side acceptance objects, a schedule with plant-owned dependencies, explicit risk ownership through go-live, and a capital request tied to milestones rather than vendor invoices alone.
+In plain language, you should answer: what operational outcome is targeted; how scope boundaries and exclusions read; what assumptions underpin returns; how offers were compared; why this supplier and model; what acceptance proves; what the plant must deliver; and what happens if schedule or scope moves. If any answer requires a sidebar, you are not ready for the room you booked.
 
-If any of those are missing, you are asking for a blank check dressed as a project.
+## Comparability is a governance topic
 
-## Readiness checklist (minimum)
+Committees should see that selection rested on structured criteria—not on the last demo. Award logic belongs in the packet, not only in procurement’s memory.
 
-| Gate | what "ready" looks like |
-| --- | --- |
-| Scope | inclusions and exclusions are written and signed internally |
-| Comparability | offers or scenarios are normalized to the same acceptance objects |
-| Ownership | operations, maintenance, IT, quality, and safety have named approvers |
-| Commercial | TCO logic is visible, not only capex line items |
-| Risk | top five risks have mitigations and owners on the plant side |
-| Schedule | validation windows exist on the plant calendar |
+## Risks named with owners
 
-## When to pause instead of presenting
+Open risks are fine when they have mitigation and accountability. Hidden risks become surprises that look like management failure.
 
-Pause board submission when: the preferred supplier changed scope after shortlist without a fresh comparison record; acceptance criteria exist only in the supplier template; internal alignment articles (19, 42) would fail if run honestly today. Pausing is cheaper than a board revisit after a failed FAT.
+## Economic story beyond ROI
 
-## Reality check: board packets often look stronger than they are because senior people can verbally rescue them
+Cash timing, operating effects, and sensitivity to throughput or mix belong in view. A single index is not enough for fiduciary judgment.
 
-That is exactly the danger. The sponsor knows the project. The plant lead can explain the nuance. The CFO can smooth over one missing detail. But if the packet depends on verbal rescue to make comparability, ownership, or acceptance logic understandable, the project is asking the board to approve confidence, not readiness.
+## How DBR77 Marketplace supports the packet
 
-## Bounded protocol: fifteen-minute board story
+Upstream structured evaluation makes board materials traceable to the same acceptance objects and comparison discipline executives expect—instead of rebuilding a story from PDFs.
 
-Problem and operational boundary in two sentences; What you compared and how offers were made comparable; What you are buying: acceptance objects in plain language; What the plant must deliver: interfaces, downtime, training, spare parts; Capital ask mapped to milestones and go-live readiness; Top three risks and who owns response. If step two is vague, you are not ready.
+For the closest companion articles, see [What a Board-Ready Automation Decision Packet Should Include](../44_what_a_board_ready_automation_decision_packet_should_include/article_EN.md), [What a Good Internal Business Case for Automation Should Make Visible](../39_what_a_good_internal_business_case_for_automation_should_make_visible/article_EN.md), and [How to Run a Final Internal Alignment Review Before Automation Kickoff](../42_how_to_run_a_final_internal_alignment_review_before_automation_kickoff/article_EN.md).
 
-## What this means for DBR77 Marketplace
+## The “fifteen-minute test”
 
-DBR77 Marketplace matters here because board approval gets safer when comparability, ownership, and acceptance logic are already structured before the capital ask leaves the project team.
+Imagine you have fifteen minutes and no slides. Can you explain the decision as a story a thoughtful outsider could follow: problem, options considered, why this path, what it costs, what must go right, what you will watch first after cutover? If you need a private appendix to answer basic questions, you are not ready for the room you booked.
 
-That is what keeps sourcing chaos from arriving in the board room disguised as urgency.
+Board readiness is also emotional readiness: sponsors should know where they are willing to be wrong and what early signal would trigger a course correction without panic.
 
-For the closest companion articles, see [What a Board-Ready Automation Decision Packet Should Include](../44_what_a_board_ready_automation_decision_packet_should_include/article_EN.md), [What a Good Internal Business Case for Automation Should Make Visible](../39_what_a_good_internal_business_case_for_automation_should_include/article_EN.md), and [How to Run a Final Internal Alignment Review Before Automation Kickoff](../42_how_to_run_a_final_internal_alignment_review_before_automation_kickoff/article_EN.md).
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"How to Decide if an Automation Project Is Ready for Board Approval" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
 
 ## Bottom line
 
-Board approval should feel boring because the work is already visible. If the packet needs verbal rescue, send it back to the team.
+Board readiness is narrative clarity plus inspectable logic. If you cannot defend comparability, acceptance, and ownership in a short, direct conversation, postpone the ask until you can.
 
 ---
 

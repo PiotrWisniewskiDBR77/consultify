@@ -1,60 +1,38 @@
-# Warum Werke eine Entscheidungsschicht brauchen, bevor sie mehr KI-Modelle hinzufuegen
+# Warum Werke eine Entscheidungsschicht brauchen, bevor sie mehr KI-Modelle hinzufügen
 
-Target persona: CTO / VP Operations / Sponsor Digital Transformation  
-Funnel stage: Decision  
-Core problem: Organisationen kaufen zusaetzliche Modelle und Copilots, waehrend Prioritaeten weiter ueber Postfaecher fragmentieren und eher widerspruechliche Empfehlungen statt schnellerem Abschluss erzeugen  
-Main promise: ein klares Argument dafuer, zuerst eine Entscheidungsschicht fuer Priorisierung, Konfliktloesung und Ausfuehrungs-Routing zu stabilisieren, bevor die Modellzahl waechst
+Zielpersona: CTO / VP Operations / Sponsor digitale Transformation  
+Funnel-Stufe: Decision  
+Kernproblem: Organisationen kaufen zusätzliche Modelle und Copilots, während Prioritäten weiter über Posteingänge fragmentieren—und mehr widersprüchliche Empfehlungen statt schnelleren Abschluss erzeugen  
+Hauptversprechen: Ein klares Argument dafür, eine Entscheidungsschicht für Priorisierung, Konfliktlösung und Ausführungs-Routing zu stabilisieren, bevor die Modellzahl wächst
 
-Werke brauchen eine Entscheidungsschicht, bevor sie mehr KI-Modelle hinzufuegen, weil Modelle die bestehende Betriebsstruktur verstaerken. Sind Prioritaeten und Definitionen fragmentiert, erzeugen mehr Modelle mehr widerspruechliche Empfehlungen, nicht bessere Koordination. Modelle hinzuzufuegen ist einfach. Kohaerenz hinzuzufuegen ist schwer. Deshalb zaehlt Sequenzierung.
+Fabriken brauchen eine Entscheidungsschicht, bevor sie mehr KI-Modelle hinzufügen, weil Modelle verstärken, was in der Betriebsstruktur schon existiert. Wenn Prioritäten und Definitionen fragmentiert sind, neigen mehr Modelle zu mehr widersprüchlichen Empfehlungen—nicht zu besserer Koordination. Modelle hinzuzufügen ist einfach. Kohärenz hinzuzufügen ist schwer. Sequenzierung ist kein Konservatismus. Es ist Risikomanagement.
 
-## Was eine Entscheidungsschicht ist (und was nicht)
+Eine Entscheidungsschicht ist kein Dashboard. Es ist der Ort, an dem das Werk antwortet, was jetzt am wichtigsten ist, wer den nächsten Schritt besitzt, was blockiert ist und warum und welche Kompromisse explizit sind. Wenn diese Antworten in parallelen Kanälen leben, haben Sie keine Entscheidungsschicht. Sie haben eine Menge—und die Menge wird teuer, wenn jeder neue Assistent eine weitere Stimme addiert.
 
-Eine Entscheidungsschicht ist kein Dashboard.
+Jedes Modell konsumiert partielle Daten, partielle Kontexte und partielle Anreize. Wenn Outputs kollidieren, werden Menschen zu Vollzeit-Vereinbarern. Das ist teuer. Es trainiert die Organisation auch, Assistenz zu ignorieren, weil „KI“ anfängt zu bedeuten „noch eine Meinung zum Streiten“.
 
-Es ist der Ort, an dem das Werk antwortet: was ist jetzt am wichtigsten?; wer besitzt den naechsten Schritt?; was ist blockiert und warum?; welche Zielkonflikte sind explizit?.
+Ein einfacher Kohärenztest hilft der Führung, ehrlich zu sein: Können zwei Funktionen dieselbe priorisierte Warteschlange für querliegende Themen sehen? Eskalieren widersprüchliche Prioritäten über einen bekannten Pfad? Sind Definitionen für Stillstand, blockiert und kritisch im System of Record ausgerichtet? Gibt es einen einzigen Audit-Pfad von Signal über Entscheidung und Auftrag bis Abschluss? Antworten Sie zweimal „nein“, hören Sie auf, Modelle zu kaufen, bis Sie die Schicht reparieren.
 
-Leben diese Antworten in parallelen Kanaelen, haben Sie keine Entscheidungsschicht. Sie haben eine Menge.
+Eine minimal lebensfähige Entscheidungsschicht ist explizit, nicht fancy. Sie braucht eine Intake-Grammatik—Pflichtfelder, wenn ein Thema eintritt—eine Priorisierungsmatrix (selbst eine einfache Matrix schlägt Flur-Ranking), eine Eskalationsleiter mit Timern und einen Ausführungsrouter, der Arbeit an besessene Workflows übergibt. Modelle sollten Schritte innerhalb dieser Schicht verbessern, keine neuen Entscheidungsorte erfinden.
 
-## Warum mehr Modelle ohne Schicht Chaos erhoeht
+Fügen Sie ein neues Modell nur hinzu, wenn es einen Schritt innerhalb dieser Schicht verbessert—besseres Clustering in derselben Warteschlange, besseres vorgeschlagenes Routing im selben Ownership-Modell, bessere Zusammenfassung für Übergaben, die im selben System enden. Vorsicht vor Expansion, die einen zweiten Priorisierungsassistenten woanders schafft, oder Vorschlägen, die Zustand ändern, ohne ins System of Record zu schreiben.
 
-Jedes Modell konsumiert: partielle Daten; partielle Kontexte; partielle Anreize. Wenn Outputs kollidieren, werden Menschen Vollzeit-Reconciler. Das ist teuer. Es trainiert die Organisation auch, KI zu ignorieren.
+IRIS passt zu diesem Argument, weil eine Entscheidungsschicht nur operativ wird, wenn Priorisierung, Eskalation und geroutete Arbeit in einer reglementierten Systemgeschichte bleiben. Das unterscheidet sich von der breiteren verbundenen-Ausführung-Geschichte in [Wie KI Fabrikoperations verändert, wenn Ausführung verbunden ist](../21_how_ai_is_changing_factory_operations_when_execution_is_connected/article_DE.md)—dieser Artikel handelt speziell davon, konkurrierende Prioritäten zu lösen, bevor die Modellzahl wächst.
 
-## Ein einfacher Kohaerenz-Test
+Zu Scoring und Routing über Funktionen, sobald die Schicht existiert, siehe [Wie KI Fabrikthemen über Funktionen hinweg priorisieren kann](../28_how_ai_can_prioritize_factory_issues_across_functions/article_DE.md).
 
-Antworten Sie ja oder nein: Koennen zwei Funktionen dieselbe priorisierte Warteschlange fuer querliegende Themen sehen?; Werden widerspruechliche Prioritaeten ueber einen bekannten Pfad eskaliert?; Sind Definitionen fuer Stillstand, Blockierung und kritisch im System of Record ausgerichtet?; Gibt es einen Audit Trail von Signal zu Entscheidung zu Aufgabe zu Abschluss?.
+Modelle skalieren Verwirrung, wenn dem Werk eine Entscheidungsschicht fehlt. Bauen Sie die Schicht zuerst—dann lassen Sie Modelle innerhalb um Nützlichkeit konkurieren, nicht außerhalb.
 
-Wenn Sie zweimal "nein" antworten, hoeren Sie auf, Modelle zu kaufen, bis die Schicht steht.
+## Operatives Fazit
 
-## Die minimal viable Entscheidungsschicht
+Das Versprechen dieses Artikels—Argument für eine stabile Entscheidungsschicht vor Modellwachstum—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Warum Werke eine Entscheidungsschicht brauchen, bevor sie mehr KI-Modelle hinzufügen“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
-Minimal heisst nicht schwach. Es heisst explizit:
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur in Meetings vereinbart, und mehr Tage, an denen der Systemdatensatz zu dem passt, was die Fläche sagen würde, wenn Sie sie mitten in der Aufgabe anhalten.
 
-**Eine Intake-Grammatik** Welche Felder sind Pflicht, wenn ein Thema ins System kommt? **Eine Priorisierungs-Rubrik** Selbst eine einfache Schwere-mal-Kundenimpact-Matrix schlaegt Flur-Ranking.
+Halten Sie Teams an einer einfachen Regel: Wenn sich eine Verbesserung nicht in Exporten aus dem Ausführungsdatensatz zeigen lässt, ist es noch keine operative Verbesserung—nur eine narrative. Diese Regel hält Programme ehrlich, wenn Demos gut aussehen, Übergaben aber fragil bleiben.
 
-**Eine Eskalationsleiter** Wer wird auf welcher Stufe gerufen, und welcher Timer gilt?
-
-**Ein Ausfuehrungs-Router** Aufgaben verlassen die Entscheidungsschicht in verantwortete Workflows.
-
-## Modell-Expansionsregel
-
-Fuegen Sie ein neues Modell nur hinzu, wenn es einen Schritt innerhalb dieser Schicht verbessert, nicht wenn es einen neuen Entscheidungsort schafft.
-
-Gute Expansion: besseres Clustering wiederkehrender Themen in derselben Warteschlange; besseres vorgeschlagenes Routing im selben Ownership-Modell; bessere Zusammenfassungen fuer Uebergaben, die im selben System enden.
-
-Riskante Expansion: ein zweiter Priorisierungs-Assistent in einem anderen Tool; ein Modell, das Aktionen vorschlaegt ohne Schreiben ins System of Record.
-
-## Warum IRIS die produktgeformte Version dieses Arguments ist
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Aufgaben.
-
-Das ist relevant, weil eine Entscheidungsschicht ohne Ausfuehrung nur ein weiteres Meeting ist.
-
-IRIS bindet Priorisierung an geroutete Arbeit und nachverfolgten Abschluss.
-
-## Fazit
-
-Modelle skalieren Verwirrung, wenn dem Werk eine Entscheidungsschicht fehlt. Bauen Sie die Schicht zuerst. Dann lassen Sie Modelle innerhalb konkurrieren, nicht daneben.
+Wenn der Datensatz dünn ist, reparieren Sie den Datensatz, bevor Sie den Ehrgeiz erweitern.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Walkthrough ansehen](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*
+*DBR77 IRIS implementiert die Kette von Entscheidung zu Ausführung in einer Schicht über Produktion, Lager, Qualität, Instandhaltung und Tasking, damit KI kohärent bleibt. [Walkthrough ansehen](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*

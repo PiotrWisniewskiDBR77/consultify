@@ -5,52 +5,53 @@ Funnel stage: Decision
 Core problem: central teams push uniform dashboards while sites need honest variance in assets, staffing, and integration paths, so standards feel fake or blocking  
 Main promise: a clean split: non-negotiable group standards for security, evidence, and escalation logic, plus explicit local freedom for sensor maps, job plans, and training rhythm
 
-Uniform pixels are not the same as uniform safety. Group IoT standards should protect trust and comparability. Local IoT work should protect feasibility on brownfield lines. **Standardize across sites:**
+Uniform pixels are not uniform safety. Group standards should protect trust, comparability, and auditability. Local work should protect feasibility on brownfield lines where the fastest honest path is rarely identical site to site.
 
-Identity, access, patching, and network segmentation minimums; evidence categories for monthly reviews and executive narrative; escalation philosophy: visibility versus interrupt, supervisor rules; data retention and audit expectations tied to standards. **Leave local:**
+Group teams often reach for dashboard sameness because it photographs well. Operations reaches for local tweaks because the mezzanine wiring and the third-shift culture are not corporate averages. When central control fights local feasibility without a written split, you get shadow standards—everyone complies officially and improvises quietly.
 
-Exact sensor placement and machine class maps; threshold tuning windows tied to baseline honesty; CMMS workflow shape and planner cadence; operator training pace and language. If central teams argue local items, you will get hidden workarounds.
+## Standardize what protects the enterprise
 
-## Framework: the two-door rule
+Identity, access, patching, and network segmentation minimums belong at group level—non-negotiable. Evidence categories for monthly reviews and executive narrative should be shared so leaders compare apples to apples. Escalation philosophy—visibility versus interrupt, supervisor rules—needs a common spine so behavior does not splinter quietly. Retention and audit expectations tied to quality and safety standards should travel as policy, not as informal preference.
 
-If a choice affects **cross-site risk or comparability of proof**, it is a group door.
+## Leave local what touches the floor’s reality
 
-If a choice affects **how a specific asset is run this week**, it is a local door. When in doubt, ask:
+Exact sensor placement and machine-class maps belong to the site. Threshold tuning windows should follow local baseline honesty, not a remote calendar. CMMS workflow shape and planner cadence reflect local maintenance culture. Operator training pace and language should match the plant, not a headquarters style guide. When central teams fight local items, shadow workarounds multiply.
 
-- would a bad choice here create a security or compliance incident that travels
-- would a bad choice here break portfolio learning at group review
+## Publish the split in writing
 
-Yes to either pushes the decision toward group standard.
+Ambiguity creates fake compliance. Document what is fixed, what is flexible, and how exceptions are logged with owners and expiry. Review the split when audits, incidents, or replication waves expose gaps—not only when a steering deck is due.
 
-## Comparison: cosmetic standardization versus operational standardization
+Pair with multi-site proof thinking in [how to prove IoT value across sites without forcing one template](../32_how_to_prove_iot_value_across_sites_without_forcing_one_template/article_EN.md).
 
-| Cosmetic | Operational |
-|---|---|
-| identical screen layouts | identical evidence categories |
-| forced sensor counts per line | forced security baselines |
-| copy-paste KPI names | aligned escalation definitions |
-| template theater | comparable pilot windows |
+## How to referee central-local tension in meetings
 
-## Checklist: publish the split in writing
+When a site asks for an exception, ask what operational outcome is at risk, what evidence shows the group standard truly fails there, and what date the site will rejoin the standard or retire the variance. Empathy without a paper trail becomes permanent fragmentation. A clear exception log turns disagreements into decisions.
 
-- [ ] group security standard is one page, signed by IT-OT and plant security
-- [ ] local exceptions log exists with owner and expiry
-- [ ] monthly rollup uses shared evidence buckets, not only OEE headlines
-- [ ] operator trust checks are allowed to differ by site culture, not deleted
-- [ ] integration targets categorized: now, next, never per site
+**Group-local split check:** security baselines identical; evidence categories aligned; escalation philosophy shared; local maps and thresholds documented; exceptions expire or become patterns.
 
-## Planning and governance touch
+## DBR77 IoT in the split
 
-Real-time visibility should inform **planning reviews** only after signal quality is honest. Until then, standardize the review questions, not the forecast math.
+DBR77 IoT fits when messaging emphasizes shared evidence and security while allowing retrofit and tuning honesty per site—governed flexibility instead of cosmetic sameness.
 
-Multi-site discipline connects to controlled line rollout in [how to roll out IoT across multiple lines without losing control](../26_how_to_roll_out_iot_across_multiple_lines_without_losing_control/article_EN.md), plant standard after a pilot in [how to go from one successful IoT pilot to a plant standard](../30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard/article_EN.md), and honest portfolio proof in [how to prove IoT value across sites without forcing one template](../32_how_to_prove_iot_value_across_sites_without_forcing_one_template/article_EN.md).
+Standardize trust, evidence, and safety boundaries. Localize footprints, thresholds, and training. Clear split beats fake template unity.
 
-## What this means for DBR77 IoT
 
-DBR77 IoT should reinforce group non-negotiables on identity, patching, retention, and evidence categories while sites keep sensor maps, tuning windows, and training pace local.
 
-Comparable proof should not require identical screen layouts on every brownfield line.
 
-## Bottom line
+## Keep the article’s promise practical
 
-Standardize **risk, evidence, and security**. Localize **maps, thresholds, and rhythms**. That split keeps multi-site IoT honest.
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
+
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT supports enterprise IoT standards with shared evidence and security baselines while fitting local brownfield deployment and tuning. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

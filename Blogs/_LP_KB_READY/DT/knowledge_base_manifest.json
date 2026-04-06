@@ -1,0 +1,1643 @@
+{
+  "schema_version": "1.0.0",
+  "product": "DT",
+  "source_root": "Blogs/DT/Blog",
+  "generated_at": "2026-04-01T10:43:22.232695+00:00",
+  "primary_persona_entry": "CFO / Plant Manager",
+  "sections": [
+    {
+      "section_id": "DT::layout_and_flow",
+      "label": "Layout And Flow",
+      "promise": "Show where scenario comparison reduces operational change risk before execution.",
+      "intro": "Show where scenario comparison reduces operational change risk before execution.",
+      "featured_slugs": [
+        "01_digital_twin_not_3d_model_decision_engine",
+        "05_how_to_compare_layout_variants_without_guesswork",
+        "11_how_to_identify_bottlenecks_before_they_happen",
+        "14_digital_twin_for_workforce_optimization",
+        "16_from_static_layout_to_living_factory_model",
+        "17_how_to_use_simulation_for_continuous_improvement"
+      ],
+      "deeper_slugs": [],
+      "section_cta": "Move from simulated improvement into governed operating execution."
+    },
+    {
+      "section_id": "DT::capex_and_investment",
+      "label": "CAPEX And Investment",
+      "promise": "Show how investment decisions become safer when scenarios are tested before commitment.",
+      "intro": "Show how investment decisions become safer when scenarios are tested before commitment.",
+      "featured_slugs": [
+        "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+        "03_before_you_buy_a_robot_simulate_it_first",
+        "09_how_cfos_can_use_simulation_to_validate_roi",
+        "15_how_digital_twin_reduces_capex_risk",
+        "18_the_roi_of_digital_twin_in_12_months",
+        "19_how_to_build_a_digital_twin_business_case_without_guesswork"
+      ],
+      "deeper_slugs": [],
+      "section_cta": "Translate investment logic into supplier and offer selection."
+    },
+    {
+      "section_id": "DT::governance_and_roi",
+      "label": "Governance And ROI",
+      "promise": "Show how simulation becomes part of executive decision discipline, not engineering theater.",
+      "intro": "Show how simulation becomes part of executive decision discipline, not engineering theater.",
+      "featured_slugs": [
+        "04_why_most_digital_twins_fail",
+        "20_how_to_run_your_first_simulation_project",
+        "30_how_to_turn_simulation_outputs_into_executive_decisions",
+        "33_how_to_use_digital_twin_for_factory_change_governance",
+        "45_how_to_assign_model_ownership_across_engineering_operations_and_finance",
+        "50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system"
+      ],
+      "deeper_slugs": [],
+      "section_cta": "Install stronger transformation governance around scenario-based decisions."
+    }
+  ],
+  "articles": [
+    {
+      "canonical_id": "DT::01_digital_twin_not_3d_model_decision_engine",
+      "slug": "01_digital_twin_not_3d_model_decision_engine",
+      "title": "Digital Twin as a Decision Engine, Not a Prettier Model",
+      "summary_line": "many leaders still confuse digital twin with visualization, which hides its real strategic value",
+      "product": "DT",
+      "target_persona": "CFO / Chairman",
+      "funnel_stage": "Awareness",
+      "core_problem": "many leaders still confuse digital twin with visualization, which hides its real strategic value",
+      "main_promise": "the value of a digital twin is decision-grade scenario testing before money, layout, or service levels are committed",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "digital twin in manufacturing",
+      "featured": true,
+      "mva_role": "flagship_awareness",
+      "locales": {
+        "EN": {
+          "path": "01_digital_twin_not_3d_model_decision_engine/article_EN.md",
+          "title": "Digital Twin as a Decision Engine, Not a Prettier Model"
+        },
+        "PL": {
+          "path": "01_digital_twin_not_3d_model_decision_engine/article_PL.md"
+        },
+        "DE": {
+          "path": "01_digital_twin_not_3d_model_decision_engine/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "slug": "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+      "title": "Why CAPEX Decisions Should Be Simulated Before They Are Approved",
+      "summary_line": "many CAPEX decisions are still approved using static assumptions, spreadsheets, and presentations instead of testing how the investment will behave in operational reality",
+      "product": "DT",
+      "target_persona": "CFO / CEO / COO",
+      "funnel_stage": "Consideration",
+      "core_problem": "many CAPEX decisions are still approved using static assumptions, spreadsheets, and presentations instead of testing how the investment will behave in operational reality",
+      "main_promise": "simulation improves CAPEX quality by exposing trade-offs, constraints, and scenario risk before money is committed",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "capex decisions should be simulated before approval",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "02_why_capex_decisions_should_be_simulated_before_they_are_approved/article_EN.md",
+          "title": "Why CAPEX Decisions Should Be Simulated Before They Are Approved"
+        },
+        "PL": {
+          "path": "02_why_capex_decisions_should_be_simulated_before_they_are_approved/article_PL.md"
+        },
+        "DE": {
+          "path": "02_why_capex_decisions_should_be_simulated_before_they_are_approved/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::03_before_you_buy_a_robot_simulate_it_first",
+      "slug": "03_before_you_buy_a_robot_simulate_it_first",
+      "title": "Before You Buy a Robot, Simulate It First",
+      "summary_line": "many automation decisions still start from vendor interest or technical ambition instead of testing whether the robot will improve the whole operational system",
+      "product": "DT",
+      "target_persona": "COO / Industrial Engineering Lead / CFO",
+      "funnel_stage": "Consideration",
+      "core_problem": "many automation decisions still start from vendor interest or technical ambition instead of testing whether the robot will improve the whole operational system",
+      "main_promise": "simulation helps manufacturers validate whether robotization actually improves flow, throughput, and ROI before capital is committed",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "before you buy a robot simulate it first",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "03_before_you_buy_a_robot_simulate_it_first/article_EN.md",
+          "title": "Before You Buy a Robot, Simulate It First"
+        },
+        "PL": {
+          "path": "03_before_you_buy_a_robot_simulate_it_first/article_PL.md"
+        },
+        "DE": {
+          "path": "03_before_you_buy_a_robot_simulate_it_first/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::04_why_most_digital_twins_fail",
+      "slug": "04_why_most_digital_twins_fail",
+      "title": "Why Most Digital Twins Fail",
+      "summary_line": "many Digital Twin initiatives underdeliver because they are treated as visualization projects, over-scoped transformation bets, or data-perfection programs rather than decision systems",
+      "product": "DT",
+      "target_persona": "COO / CTO / Transformation Lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "many Digital Twin initiatives underdeliver because they are treated as visualization projects, over-scoped transformation bets, or data-perfection programs rather than decision systems",
+      "main_promise": "Digital Twin projects succeed when they start from real decisions, manageable scope, and progressive data maturity",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "why most digital twins fail",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "04_why_most_digital_twins_fail/article_EN.md",
+          "title": "Why Most Digital Twins Fail"
+        },
+        "PL": {
+          "path": "04_why_most_digital_twins_fail/article_PL.md"
+        },
+        "DE": {
+          "path": "04_why_most_digital_twins_fail/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::05_how_to_compare_layout_variants_without_guesswork",
+      "slug": "05_how_to_compare_layout_variants_without_guesswork",
+      "title": "How to Compare Layout Variants Without Guesswork",
+      "summary_line": "many layout decisions are still made through visual preference, local intuition, or incomplete spreadsheet logic instead of scenario-tested operational comparison",
+      "product": "DT",
+      "target_persona": "COO / Industrial Engineering Lead / Plant Director",
+      "funnel_stage": "Consideration",
+      "core_problem": "many layout decisions are still made through visual preference, local intuition, or incomplete spreadsheet logic instead of scenario-tested operational comparison",
+      "main_promise": "Digital Twin helps teams compare layout variants through measurable outcomes instead of assumption-heavy debate",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "compare layout variants without guesswork",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "05_how_to_compare_layout_variants_without_guesswork/article_EN.md",
+          "title": "How to Compare Layout Variants Without Guesswork"
+        },
+        "PL": {
+          "path": "05_how_to_compare_layout_variants_without_guesswork/article_PL.md"
+        },
+        "DE": {
+          "path": "05_how_to_compare_layout_variants_without_guesswork/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::06_from_manual_inputs_to_live_data_a_practical_digital_twin_roadmap",
+      "slug": "06_from_manual_inputs_to_live_data_a_practical_digital_twin_roadmap",
+      "title": "From Manual Inputs to Live Data: A Practical Digital Twin Roadmap",
+      "summary_line": "many teams delay digital twin adoption because they think value starts only after full live integration, while the real opportunity is to begin with available inputs and mature progressively",
+      "product": "DT",
+      "target_persona": "CTO / IT & OT Lead / COO",
+      "funnel_stage": "Consideration",
+      "core_problem": "many teams delay digital twin adoption because they think value starts only after full live integration, while the real opportunity is to begin with available inputs and mature progressively",
+      "main_promise": "a usable roadmap ties each integration step to a decision that gets sharper, not to a generic connectivity finish line",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "practical digital twin roadmap from manual inputs to live data",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "06_from_manual_inputs_to_live_data_a_practical_digital_twin_roadmap/article_EN.md",
+          "title": "From Manual Inputs to Live Data: A Practical Digital Twin Roadmap"
+        },
+        "PL": {
+          "path": "06_from_manual_inputs_to_live_data_a_practical_digital_twin_roadmap/article_PL.md"
+        },
+        "DE": {
+          "path": "06_from_manual_inputs_to_live_data_a_practical_digital_twin_roadmap/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::07_how_simulation_reduces_change_risk_in_production_and_logistics",
+      "slug": "07_how_simulation_reduces_change_risk_in_production_and_logistics",
+      "title": "How Simulation Reduces Change Risk in Production and Logistics",
+      "summary_line": "changes in production and logistics are often implemented with too much hidden uncertainty, which leads to disruption, rework, and weaker stakeholder confidence",
+      "product": "DT",
+      "target_persona": "COO / Logistics Leader / Plant Director",
+      "funnel_stage": "Consideration",
+      "core_problem": "changes in production and logistics are often implemented with too much hidden uncertainty, which leads to disruption, rework, and weaker stakeholder confidence",
+      "main_promise": "simulation moves interaction risk into a controlled test before the live system pays for a wrong move",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "simulation reduces change risk in production and logistics",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "07_how_simulation_reduces_change_risk_in_production_and_logistics/article_EN.md",
+          "title": "How Simulation Reduces Change Risk in Production and Logistics"
+        },
+        "PL": {
+          "path": "07_how_simulation_reduces_change_risk_in_production_and_logistics/article_PL.md"
+        },
+        "DE": {
+          "path": "07_how_simulation_reduces_change_risk_in_production_and_logistics/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::08_digital_twin_vs_cad_what_decision_makers_need_to_know",
+      "slug": "08_digital_twin_vs_cad_what_decision_makers_need_to_know",
+      "title": "Digital Twin and CAD: Complementary Roles in Design and Approval",
+      "summary_line": "many decision-makers still confuse CAD and digital twin, which leads them to underestimate the decision value of simulation and scenario testing",
+      "product": "DT",
+      "target_persona": "CEO / CFO / COO",
+      "funnel_stage": "Consideration",
+      "core_problem": "many decision-makers still confuse CAD and digital twin, which leads them to underestimate the decision value of simulation and scenario testing",
+      "main_promise": "CAD freezes design intent; a decision-grade twin tests how that intent behaves under load before spend and floor time lock in",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "digital twin vs cad what decision makers need to know",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "08_digital_twin_vs_cad_what_decision_makers_need_to_know/article_EN.md",
+          "title": "Digital Twin and CAD: Complementary Roles in Design and Approval"
+        },
+        "PL": {
+          "path": "08_digital_twin_vs_cad_what_decision_makers_need_to_know/article_PL.md"
+        },
+        "DE": {
+          "path": "08_digital_twin_vs_cad_what_decision_makers_need_to_know/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::09_how_cfos_can_use_simulation_to_validate_roi",
+      "slug": "09_how_cfos_can_use_simulation_to_validate_roi",
+      "title": "How CFOs Can Use Simulation to Validate ROI",
+      "summary_line": "ROI cases for operational investments are often built on static assumptions that look solid financially but remain too weak operationally",
+      "product": "DT",
+      "target_persona": "CFO / CEO / Investment Committee",
+      "funnel_stage": "Decision",
+      "core_problem": "ROI cases for operational investments are often built on static assumptions that look solid financially but remain too weak operationally",
+      "main_promise": "simulation gives CFOs a stronger way to validate ROI by testing how assumptions behave before capital is committed",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "how cfos can use simulation to validate roi",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "09_how_cfos_can_use_simulation_to_validate_roi/article_EN.md",
+          "title": "How CFOs Can Use Simulation to Validate ROI"
+        },
+        "PL": {
+          "path": "09_how_cfos_can_use_simulation_to_validate_roi/article_PL.md"
+        },
+        "DE": {
+          "path": "09_how_cfos_can_use_simulation_to_validate_roi/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::10_the_cost_of_rework_when_you_skip_scenario_testing",
+      "slug": "10_the_cost_of_rework_when_you_skip_scenario_testing",
+      "title": "The Cost of Rework When You Skip Scenario Testing",
+      "summary_line": "many organizations still treat scenario testing as optional analysis, even though skipping it often pushes cost and risk into redesign, delay, and operational correction later",
+      "product": "DT",
+      "target_persona": "COO / CFO / Plant Director",
+      "funnel_stage": "Decision",
+      "core_problem": "many organizations still treat scenario testing as optional analysis, even though skipping it often pushes cost and risk into redesign, delay, and operational correction later",
+      "main_promise": "scenario testing reduces rework by exposing weak assumptions before physical change locks the organization into expensive adjustments",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "cost of rework when you skip scenario testing",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "10_the_cost_of_rework_when_you_skip_scenario_testing/article_EN.md",
+          "title": "The Cost of Rework When You Skip Scenario Testing"
+        },
+        "PL": {
+          "path": "10_the_cost_of_rework_when_you_skip_scenario_testing/article_PL.md"
+        },
+        "DE": {
+          "path": "10_the_cost_of_rework_when_you_skip_scenario_testing/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::11_how_to_identify_bottlenecks_before_they_happen",
+      "slug": "11_how_to_identify_bottlenecks_before_they_happen",
+      "title": "How to Identify Bottlenecks Before They Happen",
+      "summary_line": "many manufacturers only recognize bottlenecks after output slips, queues build, or teams begin firefighting, even though the real decision value lies in seeing constraints before they become operational pain",
+      "product": "DT",
+      "target_persona": "COO / Industrial Engineering Lead / Plant Director",
+      "funnel_stage": "Consideration",
+      "core_problem": "many manufacturers only recognize bottlenecks after output slips, queues build, or teams begin firefighting, even though the real decision value lies in seeing constraints before they become operational pain",
+      "main_promise": "Digital Twin helps teams identify emerging bottlenecks earlier by testing system behavior before the change hits reality",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "identify bottlenecks before they happen",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "11_how_to_identify_bottlenecks_before_they_happen/article_EN.md",
+          "title": "How to Identify Bottlenecks Before They Happen"
+        },
+        "PL": {
+          "path": "11_how_to_identify_bottlenecks_before_they_happen/article_PL.md"
+        },
+        "DE": {
+          "path": "11_how_to_identify_bottlenecks_before_they_happen/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::12_simulation_vs_reality_why_your_factory_planning_is_still_wrong",
+      "slug": "12_simulation_vs_reality_why_your_factory_planning_is_still_wrong",
+      "title": "Why Factory Plans Often Break Under Real Flow and Variability",
+      "summary_line": "many planning decisions still rely on simplified assumptions that look reasonable in static reviews but break under real variability, interaction, and operational pressure",
+      "product": "DT",
+      "target_persona": "COO / Plant Director / Industrial Engineering Lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "many planning decisions still rely on simplified assumptions that look reasonable in static reviews but break under real variability, interaction, and operational pressure",
+      "main_promise": "disciplined simulation closes the gap between plan and behavior before weak assumptions turn into physical rework",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "simulation vs reality factory planning",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "12_simulation_vs_reality_why_your_factory_planning_is_still_wrong/article_EN.md",
+          "title": "Why Factory Plans Often Break Under Real Flow and Variability"
+        },
+        "PL": {
+          "path": "12_simulation_vs_reality_why_your_factory_planning_is_still_wrong/article_PL.md"
+        },
+        "DE": {
+          "path": "12_simulation_vs_reality_why_your_factory_planning_is_still_wrong/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::13_five_scenarios_every_factory_should_simulate",
+      "slug": "13_five_scenarios_every_factory_should_simulate",
+      "title": "5 Scenarios Every Factory Should Simulate",
+      "summary_line": "many factories talk about simulation in abstract terms, but do not know which decisions are important enough to test before they commit time, layout, labor, or capital",
+      "product": "DT",
+      "target_persona": "COO / Plant Director / Industrial Engineering Lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "many factories talk about simulation in abstract terms, but do not know which decisions are important enough to test before they commit time, layout, labor, or capital",
+      "main_promise": "the fastest way to make Digital Twin practical is to start with a short list of high-value scenarios that reduce risk and improve decision quality",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "scenarios every factory should simulate",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "13_five_scenarios_every_factory_should_simulate/article_EN.md",
+          "title": "5 Scenarios Every Factory Should Simulate"
+        },
+        "PL": {
+          "path": "13_five_scenarios_every_factory_should_simulate/article_PL.md"
+        },
+        "DE": {
+          "path": "13_five_scenarios_every_factory_should_simulate/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::14_digital_twin_for_workforce_optimization",
+      "slug": "14_digital_twin_for_workforce_optimization",
+      "title": "Digital Twin for Workforce Optimization",
+      "summary_line": "workforce decisions are often made through rough staffing assumptions, manual balancing, and local experience, even though labor configuration has major impact on throughput, waiting time, and operating cost",
+      "product": "DT",
+      "target_persona": "COO / Operations Director / Industrial Engineering Lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "workforce decisions are often made through rough staffing assumptions, manual balancing, and local experience, even though labor configuration has major impact on throughput, waiting time, and operating cost",
+      "main_promise": "Digital Twin helps teams test workforce scenarios before they commit to shift, staffing, and allocation changes in reality",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "digital twin for workforce optimization",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "14_digital_twin_for_workforce_optimization/article_EN.md",
+          "title": "Digital Twin for Workforce Optimization"
+        },
+        "PL": {
+          "path": "14_digital_twin_for_workforce_optimization/article_PL.md"
+        },
+        "DE": {
+          "path": "14_digital_twin_for_workforce_optimization/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::15_how_digital_twin_reduces_capex_risk",
+      "slug": "15_how_digital_twin_reduces_capex_risk",
+      "title": "How Digital Twin Reduces CAPEX Risk",
+      "summary_line": "CAPEX projects often look convincing at approval stage, but still carry hidden operational risk because assumptions were never tested against realistic system behavior",
+      "product": "DT",
+      "target_persona": "CFO / COO / CEO",
+      "funnel_stage": "Decision",
+      "core_problem": "CAPEX projects often look convincing at approval stage, but still carry hidden operational risk because assumptions were never tested against realistic system behavior",
+      "main_promise": "Digital Twin reduces CAPEX risk by exposing weak assumptions, hidden bottlenecks, and downside scenarios before capital is committed",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "how digital twin reduces capex risk",
+      "featured": true,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "15_how_digital_twin_reduces_capex_risk/article_EN.md",
+          "title": "How Digital Twin Reduces CAPEX Risk"
+        },
+        "PL": {
+          "path": "15_how_digital_twin_reduces_capex_risk/article_PL.md"
+        },
+        "DE": {
+          "path": "15_how_digital_twin_reduces_capex_risk/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::16_from_static_layout_to_living_factory_model",
+      "slug": "16_from_static_layout_to_living_factory_model",
+      "title": "From Static Layout to Living Factory Model",
+      "summary_line": "many factories still make layout and flow decisions from static drawings that show structure, but not how the system behaves once demand, movement, and variability begin to interact",
+      "product": "DT",
+      "target_persona": "COO / Plant Director / Industrial Engineering Lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "many factories still make layout and flow decisions from static drawings that show structure, but not how the system behaves once demand, movement, and variability begin to interact",
+      "main_promise": "Digital Twin helps teams move from static layout thinking to a living factory model that supports better decisions before physical change happens",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "from static layout to living factory model",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "16_from_static_layout_to_living_factory_model/article_EN.md",
+          "title": "From Static Layout to Living Factory Model"
+        },
+        "PL": {
+          "path": "16_from_static_layout_to_living_factory_model/article_PL.md"
+        },
+        "DE": {
+          "path": "16_from_static_layout_to_living_factory_model/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::17_how_to_use_simulation_for_continuous_improvement",
+      "slug": "17_how_to_use_simulation_for_continuous_improvement",
+      "title": "How to Use Simulation for Continuous Improvement",
+      "summary_line": "many continuous-improvement efforts still depend on local observation and after-the-fact analysis, which slows down learning and makes change quality inconsistent across the factory",
+      "product": "DT",
+      "target_persona": "COO / Continuous Improvement Leader / Plant Director",
+      "funnel_stage": "Consideration",
+      "core_problem": "many continuous-improvement efforts still depend on local observation and after-the-fact analysis, which slows down learning and makes change quality inconsistent across the factory",
+      "main_promise": "simulation helps continuous improvement teams test changes before rollout, so improvement becomes more disciplined, faster, and easier to defend",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "simulation for continuous improvement",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "17_how_to_use_simulation_for_continuous_improvement/article_EN.md",
+          "title": "How to Use Simulation for Continuous Improvement"
+        },
+        "PL": {
+          "path": "17_how_to_use_simulation_for_continuous_improvement/article_PL.md"
+        },
+        "DE": {
+          "path": "17_how_to_use_simulation_for_continuous_improvement/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::18_the_roi_of_digital_twin_in_12_months",
+      "slug": "18_the_roi_of_digital_twin_in_12_months",
+      "title": "The ROI of Digital Twin in 12 Months",
+      "summary_line": "many leaders assume Digital Twin is strategically interesting but too long-term to justify near-term investment, which weakens urgency even when the value can appear much earlier",
+      "product": "DT",
+      "target_persona": "CFO / CEO / COO",
+      "funnel_stage": "Decision",
+      "core_problem": "many leaders assume Digital Twin is strategically interesting but too long-term to justify near-term investment, which weakens urgency even when the value can appear much earlier",
+      "main_promise": "Digital Twin can generate measurable ROI within 12 months when it is applied to high-value decisions around layout, flow, bottlenecks, and CAPEX risk",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "roi of digital twin in 12 months",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "18_the_roi_of_digital_twin_in_12_months/article_EN.md",
+          "title": "The ROI of Digital Twin in 12 Months"
+        },
+        "PL": {
+          "path": "18_the_roi_of_digital_twin_in_12_months/article_PL.md"
+        },
+        "DE": {
+          "path": "18_the_roi_of_digital_twin_in_12_months/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::19_how_to_build_a_digital_twin_business_case_without_guesswork",
+      "slug": "19_how_to_build_a_digital_twin_business_case_without_guesswork",
+      "title": "How to Build a Digital Twin Business Case Without Guesswork",
+      "summary_line": "many Digital Twin business cases still rely on broad strategic language or optimistic assumptions instead of connecting the investment to one tested, high-value factory decision",
+      "product": "DT",
+      "target_persona": "CFO / COO / transformation leader",
+      "funnel_stage": "Decision",
+      "core_problem": "many Digital Twin business cases still rely on broad strategic language or optimistic assumptions instead of connecting the investment to one tested, high-value factory decision",
+      "main_promise": "a stronger Digital Twin business case starts with one expensive decision, tests the scenario behind it, and translates that into credible operational and financial value",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "digital twin business case without guesswork",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "19_how_to_build_a_digital_twin_business_case_without_guesswork/article_EN.md",
+          "title": "How to Build a Digital Twin Business Case Without Guesswork"
+        },
+        "PL": {
+          "path": "19_how_to_build_a_digital_twin_business_case_without_guesswork/article_PL.md"
+        },
+        "DE": {
+          "path": "19_how_to_build_a_digital_twin_business_case_without_guesswork/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::20_how_to_run_your_first_simulation_project",
+      "slug": "20_how_to_run_your_first_simulation_project",
+      "title": "How to Run Your First Simulation Project",
+      "summary_line": "many manufacturers believe the first Digital Twin project must be large, data-heavy, and technically complex, which delays adoption and prevents them from proving value quickly",
+      "product": "DT",
+      "target_persona": "COO / plant leader / industrial engineering lead",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers believe the first Digital Twin project must be large, data-heavy, and technically complex, which delays adoption and prevents them from proving value quickly",
+      "main_promise": "the first simulation project should be small, decision-focused, and scoped around one high-value question the factory needs to answer now",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "how to run your first simulation project",
+      "featured": true,
+      "mva_role": "demo_trial_explainer",
+      "locales": {
+        "EN": {
+          "path": "20_how_to_run_your_first_simulation_project/article_EN.md",
+          "title": "How to Run Your First Simulation Project"
+        },
+        "PL": {
+          "path": "20_how_to_run_your_first_simulation_project/article_PL.md"
+        },
+        "DE": {
+          "path": "20_how_to_run_your_first_simulation_project/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::21_when_a_factory_should_simulate_before_it_reconfigures_flow",
+      "slug": "21_when_a_factory_should_simulate_before_it_reconfigures_flow",
+      "title": "When a Factory Should Simulate Before It Reconfigures Flow",
+      "summary_line": "flow reconfiguration is often approved from drawings and meetings, then corrected expensively on the floor because interactions and variability were never stress-tested",
+      "product": "DT",
+      "target_persona": "COO / plant manager / industrial engineering lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "flow reconfiguration is often approved from drawings and meetings, then corrected expensively on the floor because interactions and variability were never stress-tested",
+      "main_promise": "simulation belongs ahead of flow changes whenever the move crosses bottlenecks, shared resources, or demand variability that static plans cannot represent",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "simulate factory flow before reconfiguration",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "21_when_a_factory_should_simulate_before_it_reconfigures_flow/article_EN.md",
+          "title": "When a Factory Should Simulate Before It Reconfigures Flow"
+        },
+        "PL": {
+          "path": "21_when_a_factory_should_simulate_before_it_reconfigures_flow/article_PL.md"
+        },
+        "DE": {
+          "path": "21_when_a_factory_should_simulate_before_it_reconfigures_flow/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::22_how_to_test_capacity_decisions_before_the_next_demand_shift",
+      "slug": "22_how_to_test_capacity_decisions_before_the_next_demand_shift",
+      "title": "How to Test Capacity Decisions Before the Next Demand Shift",
+      "summary_line": "capacity decisions are often made from spreadsheets and average load, then surprised by mix spikes, ramp curves, or constraint migration when demand moves",
+      "product": "DT",
+      "target_persona": "COO / head of planning / operations director aligned with S&OP",
+      "funnel_stage": "Consideration",
+      "core_problem": "capacity decisions are often made from spreadsheets and average load, then surprised by mix spikes, ramp curves, or constraint migration when demand moves",
+      "main_promise": "a compact method to stress-test capacity choices with scenarios so the next demand shift does not become an unplanned firefight",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "test capacity decisions before demand change",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "22_how_to_test_capacity_decisions_before_the_next_demand_shift/article_EN.md",
+          "title": "How to Test Capacity Decisions Before the Next Demand Shift"
+        },
+        "PL": {
+          "path": "22_how_to_test_capacity_decisions_before_the_next_demand_shift/article_PL.md"
+        },
+        "DE": {
+          "path": "22_how_to_test_capacity_decisions_before_the_next_demand_shift/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::23_what_to_simulate_before_expanding_a_production_line",
+      "slug": "23_what_to_simulate_before_expanding_a_production_line",
+      "title": "What to Simulate Before Expanding a Production Line",
+      "summary_line": "line expansion is often sized from static capacity math and vendor proposals, while the real risk sits in coupling, ramp behavior, and how the new segment behaves under mix and variability",
+      "product": "DT",
+      "target_persona": "plant director / industrial engineering lead / program sponsor",
+      "funnel_stage": "Decision",
+      "core_problem": "line expansion is often sized from static capacity math and vendor proposals, while the real risk sits in coupling, ramp behavior, and how the new segment behaves under mix and variability",
+      "main_promise": "a compact simulation scope that tests expansion decisions before concrete, staffing, and supplier commitments lock in",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "simulate production line expansion",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "23_what_to_simulate_before_expanding_a_production_line/article_EN.md",
+          "title": "What to Simulate Before Expanding a Production Line"
+        },
+        "PL": {
+          "path": "23_what_to_simulate_before_expanding_a_production_line/article_PL.md"
+        },
+        "DE": {
+          "path": "23_what_to_simulate_before_expanding_a_production_line/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::24_how_to_compare_capex_options_when_every_scenario_looks_plausible",
+      "slug": "24_how_to_compare_capex_options_when_every_scenario_looks_plausible",
+      "title": "How to Compare CAPEX Options When Every Scenario Looks Plausible",
+      "summary_line": "when every CAPEX storyline passes a spreadsheet sniff test, teams default to politics, vendor charisma, or incremental habit instead of testing which option survives stress and downside cases",
+      "product": "DT",
+      "target_persona": "CFO / COO / capital committee sponsor",
+      "funnel_stage": "Decision",
+      "core_problem": "when every CAPEX storyline passes a spreadsheet sniff test, teams default to politics, vendor charisma, or incremental habit instead of testing which option survives stress and downside cases",
+      "main_promise": "a disciplined comparison method that breaks ties between plausible CAPEX paths using explicit stress tests, sensitivity rules, and disqualifying failure modes",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "compare CAPEX scenarios manufacturing",
+      "featured": false,
+      "mva_role": "decision_stage",
+      "locales": {
+        "EN": {
+          "path": "24_how_to_compare_capex_options_when_every_scenario_looks_plausible/article_EN.md",
+          "title": "How to Compare CAPEX Options When Every Scenario Looks Plausible"
+        },
+        "PL": {
+          "path": "24_how_to_compare_capex_options_when_every_scenario_looks_plausible/article_PL.md"
+        },
+        "DE": {
+          "path": "24_how_to_compare_capex_options_when_every_scenario_looks_plausible/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::25_when_manual_factory_decisions_become_too_expensive_to_trust",
+      "slug": "25_when_manual_factory_decisions_become_too_expensive_to_trust",
+      "title": "When Manual Factory Decisions Become Too Expensive to Trust",
+      "summary_line": "experienced teams can still make expensive flow, capacity, and CAPEX calls from memory, meetings, and static plans because the organization has not priced the cost of being wrong under real variability",
+      "product": "DT",
+      "target_persona": "CEO / COO / transformation sponsor",
+      "funnel_stage": "Awareness",
+      "core_problem": "experienced teams can still make expensive flow, capacity, and CAPEX calls from memory, meetings, and static plans because the organization has not priced the cost of being wrong under real variability",
+      "main_promise": "clear signals that manual decision habits have crossed the line from fast to costly, and what to do next without turning the plant into a science project",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "factory decision making risk",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "25_when_manual_factory_decisions_become_too_expensive_to_trust/article_EN.md",
+          "title": "When Manual Factory Decisions Become Too Expensive to Trust"
+        },
+        "PL": {
+          "path": "25_when_manual_factory_decisions_become_too_expensive_to_trust/article_PL.md"
+        },
+        "DE": {
+          "path": "25_when_manual_factory_decisions_become_too_expensive_to_trust/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::26_how_to_use_digital_twin_for_brownfield_change_planning",
+      "slug": "26_how_to_use_digital_twin_for_brownfield_change_planning",
+      "title": "How to Use Digital Twin for Brownfield Change Planning",
+      "summary_line": "brownfield projects combine live production, partial shutdowns, and legacy constraints, so static plans miss how temporary flows, reroutes, and shared resources behave under pressure",
+      "product": "DT",
+      "target_persona": "engineering program lead / operations PM / plant modernization owner",
+      "funnel_stage": "Consideration",
+      "core_problem": "brownfield projects combine live production, partial shutdowns, and legacy constraints, so static plans miss how temporary flows, reroutes, and shared resources behave under pressure",
+      "main_promise": "a practical planning sequence that uses Digital Twin as a scenario-testing layer for phased moves, safety buffers, and service risk before crews execute on a running site",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "brownfield factory simulation planning",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "26_how_to_use_digital_twin_for_brownfield_change_planning/article_EN.md",
+          "title": "How to Use Digital Twin for Brownfield Change Planning"
+        },
+        "PL": {
+          "path": "26_how_to_use_digital_twin_for_brownfield_change_planning/article_PL.md"
+        },
+        "DE": {
+          "path": "26_how_to_use_digital_twin_for_brownfield_change_planning/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::27_what_a_good_simulation_input_set_looks_like_before_live_integration",
+      "slug": "27_what_a_good_simulation_input_set_looks_like_before_live_integration",
+      "title": "What a Good Simulation Input Set Looks Like Before Live Integration",
+      "summary_line": "teams delay simulation because they believe live data integration is mandatory, while the bigger failure mode is vague inputs that cannot support a real decision comparison",
+      "product": "DT",
+      "target_persona": "digital transformation lead / IT-OT partner / engineering manager evaluating maturity path",
+      "funnel_stage": "Evaluation",
+      "core_problem": "teams delay simulation because they believe live data integration is mandatory, while the bigger failure mode is vague inputs that cannot support a real decision comparison",
+      "main_promise": "a concrete input-set standard that is good enough to test scenarios, trace assumptions, and justify the next integration step without pretending the plant is fully instrumented",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "digital twin simulation inputs",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "27_what_a_good_simulation_input_set_looks_like_before_live_integration/article_EN.md",
+          "title": "What a Good Simulation Input Set Looks Like Before Live Integration"
+        },
+        "PL": {
+          "path": "27_what_a_good_simulation_input_set_looks_like_before_live_integration/article_PL.md"
+        },
+        "DE": {
+          "path": "27_what_a_good_simulation_input_set_looks_like_before_live_integration/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::28_how_to_sequence_factory_changes_with_less_operational_risk",
+      "slug": "28_how_to_sequence_factory_changes_with_less_operational_risk",
+      "title": "How to Sequence Factory Changes With Less Operational Risk",
+      "summary_line": "factories often stack changes in optimistic calendars, which creates hidden coupling, unstable WIP, and emergency rework when phases overlap in reality",
+      "product": "DT",
+      "target_persona": "COO / plant manager / transformation PMO",
+      "funnel_stage": "Decision",
+      "core_problem": "factories often stack changes in optimistic calendars, which creates hidden coupling, unstable WIP, and emergency rework when phases overlap in reality",
+      "main_promise": "a sequencing method that uses dependency clarity, stabilization gates, and scenario testing to reduce operational risk without freezing improvement",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "factory change sequencing risk",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "28_how_to_sequence_factory_changes_with_less_operational_risk/article_EN.md",
+          "title": "How to Sequence Factory Changes With Less Operational Risk"
+        },
+        "PL": {
+          "path": "28_how_to_sequence_factory_changes_with_less_operational_risk/article_PL.md"
+        },
+        "DE": {
+          "path": "28_how_to_sequence_factory_changes_with_less_operational_risk/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::29_when_to_use_digital_twin_for_network_and_intralogistics_decisions",
+      "slug": "29_when_to_use_digital_twin_for_network_and_intralogistics_decisions",
+      "title": "When to Use Digital Twin for Network and Intralogistics Decisions",
+      "summary_line": "intralogistics and network choices are often optimized for average lanes and static storage assumptions, while real service risk comes from variability, dock coupling, and multi-site contention",
+      "product": "DT",
+      "target_persona": "supply chain director / logistics manager / plant COO with network scope",
+      "funnel_stage": "Consideration",
+      "core_problem": "intralogistics and network choices are often optimized for average lanes and static storage assumptions, while real service risk comes from variability, dock coupling, and multi-site contention",
+      "main_promise": "clear criteria for when scenario testing should inform layout of warehouses, milk runs, buffer placement, and cross-site allocation before capital and contracts commit",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "intralogistics simulation manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "29_when_to_use_digital_twin_for_network_and_intralogistics_decisions/article_EN.md",
+          "title": "When to Use Digital Twin for Network and Intralogistics Decisions"
+        },
+        "PL": {
+          "path": "29_when_to_use_digital_twin_for_network_and_intralogistics_decisions/article_PL.md"
+        },
+        "DE": {
+          "path": "29_when_to_use_digital_twin_for_network_and_intralogistics_decisions/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::30_how_to_turn_simulation_outputs_into_executive_decisions",
+      "slug": "30_how_to_turn_simulation_outputs_into_executive_decisions",
+      "title": "How to Turn Simulation Outputs Into Executive Decisions",
+      "summary_line": "simulation work often stops at technical charts, so leadership approves from habit or politics because the bridge from model output to decision record was never built",
+      "product": "DT",
+      "target_persona": "COO / CFO / executive committee participant",
+      "funnel_stage": "Decision",
+      "core_problem": "simulation work often stops at technical charts, so leadership approves from habit or politics because the bridge from model output to decision record was never built",
+      "main_promise": "a compact governance pattern that converts scenario results into an executive-ready choice with explicit trade-offs, assumptions, and next actions",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "executive decision simulation manufacturing",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "30_how_to_turn_simulation_outputs_into_executive_decisions/article_EN.md",
+          "title": "How to Turn Simulation Outputs Into Executive Decisions"
+        },
+        "PL": {
+          "path": "30_how_to_turn_simulation_outputs_into_executive_decisions/article_PL.md"
+        },
+        "DE": {
+          "path": "30_how_to_turn_simulation_outputs_into_executive_decisions/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::31_how_to_use_digital_twin_in_capex_stage_gates",
+      "slug": "31_how_to_use_digital_twin_in_capex_stage_gates",
+      "title": "How to Use Digital Twin in CAPEX Stage Gates",
+      "summary_line": "stage-gate reviews often treat CAPEX as a document exercise, so simulation arrives too late or in the wrong form to change what gets funded",
+      "product": "DT",
+      "target_persona": "capital project sponsor / engineering director with finance counterpart",
+      "funnel_stage": "Decision",
+      "core_problem": "stage-gate reviews often treat CAPEX as a document exercise, so simulation arrives too late or in the wrong form to change what gets funded",
+      "main_promise": "a gate-by-gate map of what scenario evidence should exist before each approval, so capital moves forward with traceable de-risking instead of narrative momentum",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "digital twin capital stage gates manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "31_how_to_use_digital_twin_in_capex_stage_gates/article_EN.md",
+          "title": "How to Use Digital Twin in CAPEX Stage Gates"
+        },
+        "PL": {
+          "path": "31_how_to_use_digital_twin_in_capex_stage_gates/article_PL.md"
+        },
+        "DE": {
+          "path": "31_how_to_use_digital_twin_in_capex_stage_gates/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::32_when_a_simulation_result_is_strong_enough_to_act_on",
+      "slug": "32_when_a_simulation_result_is_strong_enough_to_act_on",
+      "title": "When a Simulation Result Is Strong Enough to Act On",
+      "summary_line": "teams either freeze waiting for perfect data or act on pretty charts that collapse under the first real-world shock",
+      "product": "DT",
+      "target_persona": "plant manager / operations director balancing speed and safety",
+      "funnel_stage": "Consideration",
+      "core_problem": "teams either freeze waiting for perfect data or act on pretty charts that collapse under the first real-world shock",
+      "main_promise": "a practical strength test that separates \"directionally useful\" from \"commitment-ready\" so you move when evidence supports it and pause when it does not",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "when to trust factory simulation results",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "32_when_a_simulation_result_is_strong_enough_to_act_on/article_EN.md",
+          "title": "When a Simulation Result Is Strong Enough to Act On"
+        },
+        "PL": {
+          "path": "32_when_a_simulation_result_is_strong_enough_to_act_on/article_PL.md"
+        },
+        "DE": {
+          "path": "32_when_a_simulation_result_is_strong_enough_to_act_on/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::33_how_to_use_digital_twin_for_factory_change_governance",
+      "slug": "33_how_to_use_digital_twin_for_factory_change_governance",
+      "title": "How to Use Digital Twin for Factory Change Governance",
+      "summary_line": "change boards approve tasks and budgets while the real risk lives in interaction effects between layout, flow, staffing, and supply timing",
+      "product": "DT",
+      "target_persona": "COO / head of operations engineering with quality and maintenance stakeholders",
+      "funnel_stage": "Decision",
+      "core_problem": "change boards approve tasks and budgets while the real risk lives in interaction effects between layout, flow, staffing, and supply timing",
+      "main_promise": "a governance pattern that attaches scenario evidence to change decisions so approvals explain what was tested and what would force a reopen",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "digital twin change management manufacturing",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "33_how_to_use_digital_twin_for_factory_change_governance/article_EN.md",
+          "title": "How to Use Digital Twin for Factory Change Governance"
+        },
+        "PL": {
+          "path": "33_how_to_use_digital_twin_for_factory_change_governance/article_PL.md"
+        },
+        "DE": {
+          "path": "33_how_to_use_digital_twin_for_factory_change_governance/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::34_what_a_good_sensitivity_analysis_should_show_before_approval",
+      "slug": "34_what_a_good_sensitivity_analysis_should_show_before_approval",
+      "title": "What a Good Sensitivity Analysis Should Show Before Approval",
+      "summary_line": "sensitivity slides often show colorful tornado charts without explaining which levers actually move the decision or who owns them",
+      "product": "DT",
+      "target_persona": "industrial engineer / project engineer presenting to finance and operations sponsors",
+      "funnel_stage": "Consideration",
+      "core_problem": "sensitivity slides often show colorful tornado charts without explaining which levers actually move the decision or who owns them",
+      "main_promise": "a clear standard for what sensitivity must expose before sign-off so approvers see consequence, ownership, and failure order, not decoration",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "manufacturing sensitivity analysis approval",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "34_what_a_good_sensitivity_analysis_should_show_before_approval/article_EN.md",
+          "title": "What a Good Sensitivity Analysis Should Show Before Approval"
+        },
+        "PL": {
+          "path": "34_what_a_good_sensitivity_analysis_should_show_before_approval/article_PL.md"
+        },
+        "DE": {
+          "path": "34_what_a_good_sensitivity_analysis_should_show_before_approval/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::35_how_to_test_supplier_and_ramp_risk_in_factory_simulation",
+      "slug": "35_how_to_test_supplier_and_ramp_risk_in_factory_simulation",
+      "title": "How to Test Supplier and Ramp Risk in Factory Simulation",
+      "summary_line": "supplier delays and slow ramps are treated as one-off excuses instead of repeatable scenario inputs that change layout and staffing decisions",
+      "product": "DT",
+      "target_persona": "supply chain lead with plant operations counterpart",
+      "funnel_stage": "Consideration",
+      "core_problem": "supplier delays and slow ramps are treated as one-off excuses instead of repeatable scenario inputs that change layout and staffing decisions",
+      "main_promise": "a scenario pattern that models inbound variability and learning curves as first-class inputs so you see queue, constraint, and cash effects before you commit",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "supplier risk manufacturing simulation",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "35_how_to_test_supplier_and_ramp_risk_in_factory_simulation/article_EN.md",
+          "title": "How to Test Supplier and Ramp Risk in Factory Simulation"
+        },
+        "PL": {
+          "path": "35_how_to_test_supplier_and_ramp_risk_in_factory_simulation/article_PL.md"
+        },
+        "DE": {
+          "path": "35_how_to_test_supplier_and_ramp_risk_in_factory_simulation/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::36_when_to_simulate_phased_rollouts_instead_of_full_cutovers",
+      "slug": "36_when_to_simulate_phased_rollouts_instead_of_full_cutovers",
+      "title": "When to Simulate Phased Rollouts Instead of Full Cutovers",
+      "summary_line": "teams default to big-bang cutovers because phased plans look slower on paper, even when simulation would show lower service risk and cleaner learning curves",
+      "product": "DT",
+      "target_persona": "program manager / operations lead planning major line or system changes",
+      "funnel_stage": "Consideration",
+      "core_problem": "teams default to big-bang cutovers because phased plans look slower on paper, even when simulation would show lower service risk and cleaner learning curves",
+      "main_promise": "a decision grid that tells you when phased rollouts deserve scenario work and what signals to compare against a single cutover plan",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "phased rollout factory simulation",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "36_when_to_simulate_phased_rollouts_instead_of_full_cutovers/article_EN.md",
+          "title": "When to Simulate Phased Rollouts Instead of Full Cutovers"
+        },
+        "PL": {
+          "path": "36_when_to_simulate_phased_rollouts_instead_of_full_cutovers/article_PL.md"
+        },
+        "DE": {
+          "path": "36_when_to_simulate_phased_rollouts_instead_of_full_cutovers/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::37_how_to_use_digital_twin_in_monthly_operations_reviews",
+      "slug": "37_how_to_use_digital_twin_in_monthly_operations_reviews",
+      "title": "How to Use Digital Twin in Monthly Operations Reviews",
+      "summary_line": "monthly reviews drift into backward-looking KPI arguments while forward risks from layout, flow, and upcoming changes stay off the agenda",
+      "product": "DT",
+      "target_persona": "plant manager / site operations lead running recurring performance forums",
+      "funnel_stage": "Adoption",
+      "core_problem": "monthly reviews drift into backward-looking KPI arguments while forward risks from layout, flow, and upcoming changes stay off the agenda",
+      "main_promise": "a tight agenda pattern that uses Digital Twin as a forward-looking decision lens alongside last month reality, without turning the meeting into a model demo",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "monthly operations review digital twin",
+      "featured": false,
+      "mva_role": "adoption_stage",
+      "locales": {
+        "EN": {
+          "path": "37_how_to_use_digital_twin_in_monthly_operations_reviews/article_EN.md",
+          "title": "How to Use Digital Twin in Monthly Operations Reviews"
+        },
+        "PL": {
+          "path": "37_how_to_use_digital_twin_in_monthly_operations_reviews/article_PL.md"
+        },
+        "DE": {
+          "path": "37_how_to_use_digital_twin_in_monthly_operations_reviews/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::38_what_to_compare_before_you_expand_capacity_in_a_brownfield_factory",
+      "slug": "38_what_to_compare_before_you_expand_capacity_in_a_brownfield_factory",
+      "title": "What to Compare Before You Expand Capacity in a Brownfield Factory",
+      "summary_line": "brownfield expansion debates mix floor space, equipment, and labor fixes in one conversation, so the winning story is often the easiest slide, not the least fragile under stress",
+      "product": "DT",
+      "target_persona": "COO / plant director weighing footprint, equipment, and intralogistics investments",
+      "funnel_stage": "Decision",
+      "core_problem": "brownfield expansion debates mix floor space, equipment, and labor fixes in one conversation, so the winning story is often the easiest slide, not the least fragile under stress",
+      "main_promise": "a comparison checklist that forces layout, flow, constraint, and cash signals into one table before you expand walls or buy machines",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "brownfield factory capacity expansion simulation",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "38_what_to_compare_before_you_expand_capacity_in_a_brownfield_factory/article_EN.md",
+          "title": "What to Compare Before You Expand Capacity in a Brownfield Factory"
+        },
+        "PL": {
+          "path": "38_what_to_compare_before_you_expand_capacity_in_a_brownfield_factory/article_PL.md"
+        },
+        "DE": {
+          "path": "38_what_to_compare_before_you_expand_capacity_in_a_brownfield_factory/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::39_how_to_package_simulation_evidence_for_board_level_decisions",
+      "slug": "39_how_to_package_simulation_evidence_for_board_level_decisions",
+      "title": "How to Package Simulation Evidence for Board-Level Decisions",
+      "summary_line": "boards see polished narratives and sparse backup, so directors cannot trace how scenario work supports the motion and what would reopen it",
+      "product": "DT",
+      "target_persona": "CFO / board-facing sponsor preparing a capital or transformation decision",
+      "funnel_stage": "Decision",
+      "core_problem": "boards see polished narratives and sparse backup, so directors cannot trace how scenario work supports the motion and what would reopen it",
+      "main_promise": "an evidence bundle structure that is short for the room, deep in the appendix, and explicit about assumptions, limits, and invalidation logic",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "board presentation factory simulation evidence",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "39_how_to_package_simulation_evidence_for_board_level_decisions/article_EN.md",
+          "title": "How to Package Simulation Evidence for Board-Level Decisions"
+        },
+        "PL": {
+          "path": "39_how_to_package_simulation_evidence_for_board_level_decisions/article_PL.md"
+        },
+        "DE": {
+          "path": "39_how_to_package_simulation_evidence_for_board_level_decisions/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::40_when_to_refresh_a_digital_twin_model_after_operational_change",
+      "slug": "40_when_to_refresh_a_digital_twin_model_after_operational_change",
+      "title": "When to Refresh a Digital Twin Model After Operational Change",
+      "summary_line": "models drift quietly after go-live while teams still cite old scenario outputs, creating false confidence in planning meetings",
+      "product": "DT",
+      "target_persona": "digital twin owner / industrial engineering lead responsible for model currency",
+      "funnel_stage": "Consideration",
+      "core_problem": "models drift quietly after go-live while teams still cite old scenario outputs, creating false confidence in planning meetings",
+      "main_promise": "a trigger list and lightweight refresh sequence so the twin stays a trustworthy decision system as the plant evolves",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "digital twin model refresh manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "40_when_to_refresh_a_digital_twin_model_after_operational_change/article_EN.md",
+          "title": "When to Refresh a Digital Twin Model After Operational Change"
+        },
+        "PL": {
+          "path": "40_when_to_refresh_a_digital_twin_model_after_operational_change/article_PL.md"
+        },
+        "DE": {
+          "path": "40_when_to_refresh_a_digital_twin_model_after_operational_change/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::41_how_to_decide_when_a_simulation_is_good_enough_for_capital_commitment",
+      "slug": "41_how_to_decide_when_a_simulation_is_good_enough_for_capital_commitment",
+      "title": "How to Decide When a Simulation Is Good Enough for Capital Commitment",
+      "summary_line": "teams want a green light, but \"good enough\" is undefined, so approvals rest on narrative confidence instead of bounded evidence",
+      "product": "DT",
+      "target_persona": "VP operations / finance sponsor approving CAPEX tied to layout, flow, or capacity change",
+      "funnel_stage": "Decision",
+      "core_problem": "teams want a green light, but \"good enough\" is undefined, so approvals rest on narrative confidence instead of bounded evidence",
+      "main_promise": "a capital-readiness gate that ties simulation quality to decision risk, not to model beauty or animation polish",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "simulation good enough capital approval manufacturing",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "41_how_to_decide_when_a_simulation_is_good_enough_for_capital_commitment/article_EN.md",
+          "title": "How to Decide When a Simulation Is Good Enough for Capital Commitment"
+        },
+        "PL": {
+          "path": "41_how_to_decide_when_a_simulation_is_good_enough_for_capital_commitment/article_PL.md"
+        },
+        "DE": {
+          "path": "41_how_to_decide_when_a_simulation_is_good_enough_for_capital_commitment/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::42_what_a_factory_scenario_library_should_look_like_after_the_first_projects",
+      "slug": "42_what_a_factory_scenario_library_should_look_like_after_the_first_projects",
+      "title": "What a Factory Scenario Library Should Look Like After the First Projects",
+      "summary_line": "early wins live in personal folders, so the next site or project restarts discovery instead of reusing disciplined scenario logic",
+      "product": "DT",
+      "target_persona": "digital twin program lead / industrial engineering manager scaling simulation beyond pilots",
+      "funnel_stage": "Adoption",
+      "core_problem": "early wins live in personal folders, so the next site or project restarts discovery instead of reusing disciplined scenario logic",
+      "main_promise": "a lightweight library pattern that turns one-off runs into a reusable scenario-testing environment for layout, flow, and CAPEX decisions",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "factory digital twin scenario library",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "42_what_a_factory_scenario_library_should_look_like_after_the_first_projects/article_EN.md",
+          "title": "What a Factory Scenario Library Should Look Like After the First Projects"
+        },
+        "PL": {
+          "path": "42_what_a_factory_scenario_library_should_look_like_after_the_first_projects/article_PL.md"
+        },
+        "DE": {
+          "path": "42_what_a_factory_scenario_library_should_look_like_after_the_first_projects/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::43_how_to_retire_weak_options_early_in_digital_twin_decision_cycles",
+      "slug": "43_how_to_retire_weak_options_early_in_digital_twin_decision_cycles",
+      "title": "How to Retire Weak Options Early in Digital Twin Decision Cycles",
+      "summary_line": "teams keep every idea alive to avoid conflict, so late-stage meetings recycle dead options and compress real analysis time",
+      "product": "DT",
+      "target_persona": "project sponsor / solution architect running multi-option layout or flow programs",
+      "funnel_stage": "Evaluation",
+      "core_problem": "teams keep every idea alive to avoid conflict, so late-stage meetings recycle dead options and compress real analysis time",
+      "main_promise": "explicit early-exit rules that use Digital Twin as a scenario-testing environment to kill weak paths with evidence, not politics",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "digital twin option down selection manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "43_how_to_retire_weak_options_early_in_digital_twin_decision_cycles/article_EN.md",
+          "title": "How to Retire Weak Options Early in Digital Twin Decision Cycles"
+        },
+        "PL": {
+          "path": "43_how_to_retire_weak_options_early_in_digital_twin_decision_cycles/article_PL.md"
+        },
+        "DE": {
+          "path": "43_how_to_retire_weak_options_early_in_digital_twin_decision_cycles/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::44_when_to_use_digital_twin_in_post_investment_reviews_and_when_not_to",
+      "slug": "44_when_to_use_digital_twin_in_post_investment_reviews_and_when_not_to",
+      "title": "When to Use Digital Twin in Post-Investment Reviews and When Not To",
+      "summary_line": "reviews default to spend variance and timelines while the operating thesis that justified the investment stays unexamined",
+      "product": "DT",
+      "target_persona": "CFO / transformation lead running post-investment reviews after CAPEX or major change",
+      "funnel_stage": "Consideration",
+      "core_problem": "reviews default to spend variance and timelines while the operating thesis that justified the investment stays unexamined",
+      "main_promise": "a clear when-to-use map so Digital Twin supports honest post-investment learning without becoming forensic theater",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "post investment review digital twin manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "44_when_to_use_digital_twin_in_post_investment_reviews_and_when_not_to/article_EN.md",
+          "title": "When to Use Digital Twin in Post-Investment Reviews and When Not To"
+        },
+        "PL": {
+          "path": "44_when_to_use_digital_twin_in_post_investment_reviews_and_when_not_to/article_PL.md"
+        },
+        "DE": {
+          "path": "44_when_to_use_digital_twin_in_post_investment_reviews_and_when_not_to/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::45_how_to_assign_model_ownership_across_engineering_operations_and_finance",
+      "slug": "45_how_to_assign_model_ownership_across_engineering_operations_and_finance",
+      "title": "How to Assign Model Ownership Across Engineering, Operations, and Finance",
+      "summary_line": "the model becomes \"IT's project\" or \"engineering's hobby\" because no function owns assumptions, refresh, and decision use",
+      "product": "DT",
+      "target_persona": "COO / chief engineer establishing governance for a plant or network digital twin",
+      "funnel_stage": "Consideration",
+      "core_problem": "the model becomes \"IT's project\" or \"engineering's hobby\" because no function owns assumptions, refresh, and decision use",
+      "main_promise": "a simple RACI-style split that keeps Digital Twin a decision system with accountable inputs and approved outputs",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "digital twin governance manufacturing RACI",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "45_how_to_assign_model_ownership_across_engineering_operations_and_finance/article_EN.md",
+          "title": "How to Assign Model Ownership Across Engineering, Operations, and Finance"
+        },
+        "PL": {
+          "path": "45_how_to_assign_model_ownership_across_engineering_operations_and_finance/article_PL.md"
+        },
+        "DE": {
+          "path": "45_how_to_assign_model_ownership_across_engineering_operations_and_finance/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::46_what_an_executive_simulation_review_should_decide_in_30_minutes",
+      "slug": "46_what_an_executive_simulation_review_should_decide_in_30_minutes",
+      "title": "What an Executive Simulation Review Should Decide in 30 Minutes",
+      "summary_line": "executive blocks become model tours or technical deep dives, so no decision moves and capital timelines slip",
+      "product": "DT",
+      "target_persona": "CEO / COO / board member receiving digital twin evidence in a tight calendar slot",
+      "funnel_stage": "Decision",
+      "core_problem": "executive blocks become model tours or technical deep dives, so no decision moves and capital timelines slip",
+      "main_promise": "a 30-minute agenda that forces one or two clear decisions from scenario outputs, not admiration of visuals",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "executive factory simulation review agenda",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "46_what_an_executive_simulation_review_should_decide_in_30_minutes/article_EN.md",
+          "title": "What an Executive Simulation Review Should Decide in 30 Minutes"
+        },
+        "PL": {
+          "path": "46_what_an_executive_simulation_review_should_decide_in_30_minutes/article_PL.md"
+        },
+        "DE": {
+          "path": "46_what_an_executive_simulation_review_should_decide_in_30_minutes/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::47_when_to_link_digital_twin_to_real_time_data_and_when_static_is_enough",
+      "slug": "47_when_to_link_digital_twin_to_real_time_data_and_when_static_is_enough",
+      "title": "When to Link Digital Twin to Real-Time Data and When Static Is Enough",
+      "summary_line": "teams treat live feeds as maturity proof, triggering expensive integrations before decisions actually need them",
+      "product": "DT",
+      "target_persona": "plant IT / digital twin architect choosing integration depth",
+      "funnel_stage": "Consideration",
+      "core_problem": "teams treat live feeds as maturity proof, triggering expensive integrations before decisions actually need them",
+      "main_promise": "a decision-first rule set so Digital Twin stays a scenario-testing environment without unnecessary real-time complexity",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Layout And Flow",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "digital twin real time data manufacturing when",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "47_when_to_link_digital_twin_to_real_time_data_and_when_static_is_enough/article_EN.md",
+          "title": "When to Link Digital Twin to Real-Time Data and When Static Is Enough"
+        },
+        "PL": {
+          "path": "47_when_to_link_digital_twin_to_real_time_data_and_when_static_is_enough/article_PL.md"
+        },
+        "DE": {
+          "path": "47_when_to_link_digital_twin_to_real_time_data_and_when_static_is_enough/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::48_how_to_compare_resilience_not_just_throughput_in_factory_scenarios",
+      "slug": "48_how_to_compare_resilience_not_just_throughput_in_factory_scenarios",
+      "title": "How to Compare Resilience, Not Just Throughput, in Factory Scenarios",
+      "summary_line": "scenario reviews optimize average output while fragility under disruption, mix swings, and recovery time stays invisible until a crisis",
+      "product": "DT",
+      "target_persona": "operations director / supply chain lead stress-testing footprint and flow choices",
+      "funnel_stage": "Evaluation",
+      "core_problem": "scenario reviews optimize average output while fragility under disruption, mix swings, and recovery time stays invisible until a crisis",
+      "main_promise": "a resilience lens that sits beside throughput so Digital Twin remains a decision system for real operating risk",
+      "lp_section": "Layout And Flow",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "factory simulation resilience scenarios manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "48_how_to_compare_resilience_not_just_throughput_in_factory_scenarios/article_EN.md",
+          "title": "How to Compare Resilience, Not Just Throughput, in Factory Scenarios"
+        },
+        "PL": {
+          "path": "48_how_to_compare_resilience_not_just_throughput_in_factory_scenarios/article_PL.md"
+        },
+        "DE": {
+          "path": "48_how_to_compare_resilience_not_just_throughput_in_factory_scenarios/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::49_what_a_reusable_factory_assumption_ledger_should_include",
+      "slug": "49_what_a_reusable_factory_assumption_ledger_should_include",
+      "title": "What a Reusable Factory Assumption Ledger Should Include",
+      "summary_line": "assumptions live in slide footnotes and private chats, so every new scenario restarts arguments about what was \"agreed last time\"",
+      "product": "DT",
+      "target_persona": "digital twin steward / industrial engineer maintaining cross-project model truth",
+      "funnel_stage": "Adoption",
+      "core_problem": "assumptions live in slide footnotes and private chats, so every new scenario restarts arguments about what was \"agreed last time\"",
+      "main_promise": "a compact ledger pattern that makes Digital Twin a traceable decision system across gates and refreshes",
+      "lp_section": "Governance And ROI",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "CAPEX And Investment",
+      "bridge_product": "Consultify",
+      "bridge_section": "Governance And ROI",
+      "primary_keyword": "factory simulation assumption ledger manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "49_what_a_reusable_factory_assumption_ledger_should_include/article_EN.md",
+          "title": "What a Reusable Factory Assumption Ledger Should Include"
+        },
+        "PL": {
+          "path": "49_what_a_reusable_factory_assumption_ledger_should_include/article_PL.md"
+        },
+        "DE": {
+          "path": "49_what_a_reusable_factory_assumption_ledger_should_include/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "DT::50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system",
+      "slug": "50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system",
+      "title": "How to Turn Digital Twin Into a Repeatable CAPEX Decision System",
+      "summary_line": "each investment cycle reinvents workshops, stress stories, and evidence packaging, so the organization never builds compound learning",
+      "product": "DT",
+      "target_persona": "VP transformation / head of engineering and capex forum owner",
+      "funnel_stage": "Decision",
+      "core_problem": "each investment cycle reinvents workshops, stress stories, and evidence packaging, so the organization never builds compound learning",
+      "main_promise": "an operating pattern that makes Digital Twin the default scenario-testing environment for layout, flow, and capital choices",
+      "lp_section": "CAPEX And Investment",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Governance And ROI",
+      "bridge_product": "Marketplace",
+      "bridge_section": "CAPEX And Investment",
+      "primary_keyword": "digital twin CAPEX decision system manufacturing",
+      "featured": true,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system/article_EN.md",
+          "title": "How to Turn Digital Twin Into a Repeatable CAPEX Decision System"
+        },
+        "PL": {
+          "path": "50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system/article_PL.md"
+        },
+        "DE": {
+          "path": "50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system/article_DE.md"
+        }
+      }
+    }
+  ],
+  "cta_ladder": {
+    "low_commitment": {
+      "label": "see where guesswork creates risk",
+      "intent": "explore",
+      "target": "Layout And Flow"
+    },
+    "mid_commitment": {
+      "label": "book demo",
+      "intent": "demo",
+      "target": "CAPEX And Investment"
+    },
+    "high_commitment": {
+      "label": "review business case",
+      "intent": "decision",
+      "target": "Governance And ROI"
+    }
+  },
+  "cross_product_bridges": {
+    "Layout And Flow": {
+      "target_product": "IRIS",
+      "target_section": "Execution And Rollout",
+      "why_next": "Move from simulated improvement into governed operating execution."
+    },
+    "CAPEX And Investment": {
+      "target_product": "Marketplace",
+      "target_section": "CAPEX And Investment",
+      "why_next": "Translate investment logic into supplier and offer selection."
+    },
+    "Governance And ROI": {
+      "target_product": "Consultify",
+      "target_section": "Governance And ROI",
+      "why_next": "Install stronger transformation governance around scenario-based decisions."
+    }
+  }
+}

@@ -1,56 +1,34 @@
-# OEE ist nicht genug - was Sie stattdessen messen sollten
+# OEE reicht nicht—was Sie stattdessen messen sollten
 
-Target persona: Plant Manager  
-Funnel stage: Awareness  
-Core problem: viele Fabriken verlassen sich zu stark auf OEE als Hauptmetrik, obwohl sie selten zeigt, wo Entscheidungs- und Ausfuhrungsqualitat wirklich bricht  
-Main promise: Werke brauchen einen breiteren operativen Blick auf Reaktion, Flow, Ownership und Follow-through, statt OEE als ganze Wahrheit zu behandeln
+Zielpersona: Plant Manager  
+Funnel-Stufe: Awareness  
+Kernproblem: Viele Fabriken verlassen sich zu stark auf OEE als Haupt-Kennzahl, obwohl sie selten erklärt, wo Entscheidungsqualität und Ausführung wirklich brechen  
+Hauptversprechen: Werke brauchen einen breiteren Betriebsblick mit Reaktion, Fluss, Ownership und Follow-through statt OEE als ganze Wahrheit zu behandeln
 
-OEE ist nutzlich. Es ist nur nicht genug.
+OEE ist nützlich. Es ist auch gefährlich verführerisch. Eine einzige zusammengesetzte Zahl ist leicht zu kommunizieren, zu benchmarken und auf einen Bildschirm zu setzen. Sie kann auch zum Ersatz für Verständnis werden—eine Executive-Kurzform, die verbirgt, wie das Werk wirklich läuft. Wenn OEE das Gespräch dominiert, managen Teams oft die Kennzahl statt das Betriebssystem dahinter. Das Werk kann Leistung messen und trotzdem reaktiv bleiben, weil die Zahl Ergebnisse zusammenfasst, ohne den Entscheidungspfad zu zeigen, der sie erzeugt hat.
 
-Viele Fabriken behandeln OEE immer noch so, als ware es die zentrale operative Wahrheit. Das schafft einen blinden Fleck.
+OEE kann sagen, dass die Leistung schwach ist. Allein erklärt es nicht, wo die Reaktion zu langsam war, wer das Thema besaß, wie sich Verzögerung über Übergaben ausbreitete oder ob Follow-through wirklich geschah. Das sind Ausführungsfragen. Dort wird stärkere operative Kontrolle aufgebaut.
 
-## Warum OEE zu wichtig geworden ist
+Das tiefere Risiko ist Entscheidungsblindheit. Wenn eine Kennzahl zum moralischen Zentrum der Operations wird, optimiert die Organisation, was im Rollup sichtbar ist, und unterinvestiert in das, was der Rollup nicht sieht: Routing-Qualität, Eskalationsdisziplin, Wiederkehr, Aufgabenabschluss-Verzögerung und die Zeit zwischen Erkennung und besessener Aktion. Werke können OEE jagen und den Tag trotz in den Lücken zwischen Funktionen verlieren.
 
-OEE liefert eine kompakte Zahl. Das macht sie attraktiv fur: Reporting; Benchmarking; Management-Reviews. Aber eine kompakte Zahl ist nicht dasselbe wie ein vollstandiges Betriebsbild.
+Behalten Sie OEE, aber erweitern Sie den Betriebsblick. Fügen Sie Maße hinzu, die Aktionsqualität verbessern: Reaktionszeit auf Störung, Zeit bis Owner-Zuweisung, Verzögerung bis Aufgabenabschluss, Wiederkehr wiederholter Themen, Eskalationsgeschwindigkeit und Qualitätsverlust, zurückverfolgt auf Quellkategorien, in die das Werk wirklich eingreifen kann. Diese Kennzahlen ersetzen OEE nicht. Sie erklären es.
 
-## Was OEE nicht gut erklart
+Stärkere KPI-Logik behandelt OEE als einen Indikator unter mehreren, verankert in gemeinsamer Wahrheit und gebunden an Ausführungsdisziplin. Das Werk sollte beantworten können, wie schnell es Abweichung erkennt, wie schnell es Arbeit routet, wie schnell es handelt und wie zuverlässig es die Schleife schließt. Diese Antworten machen Kennzahlen von Dekoration zu Management-Infrastruktur.
 
-OEE kann zeigen, dass die Leistung schwach ist.
+IRIS ist für diesen Shift positioniert: eine Ausführungsschicht über operative Funktionen, gemeinsame Wahrheit statt Silo-Berichte, Tasking gebunden an Erkenntnis, menschliche Freigabe wo nötig. Die Absicht ist, das Werk von KPI-Beobachtung zu managter Ausführung zu bewegen—damit Zahlen zu besessener Arbeit führen, nicht nur zu Kommentar.
 
-Es erklart meist nicht klar: wo die Reaktion zu langsam war; wer den Owner hatte; wie sich die Verzogerung durch den Workflow bewegt hat; ob Follow-through wirklich stattgefunden hat. Darum kann ein Werk OEE messen und trotzdem reaktiv bleiben.
+Eine nützliche Flächenfolge der Erweiterung des Kennzahlensatzes ist, dass Meetings ihre Form ändern. Statt zu debattieren, ob OEE „höher“ sein sollte, diskutieren Teams, ob die Reaktion langsamer wurde, ob Ownership unklar war, ob Wiederkehr ein schwaches Standard signalisiert oder eine Übergabe scheiterte. Diese Gespräche sind weniger schmeichelhaft, aber handlungsfähiger—weil sie Verhalten und Schnittstellen adressieren, die das Werk reparieren kann.
 
-## Das eigentliche Problem ist Entscheidungsblindheit
+Führungskräfte sollten auch Widerstand gegen neue Maße erwarten, bis Definitionen stabil sind. Es geht nicht darum, Teams mit Dashboards zu ertränken. Es geht darum, ein kleines Set von Ausführungskennzahlen zu etablieren, die Varianz in den zusammengesetzten Indikatoren erklären, die die Führung schon beobachtet. Wenn diese Kennzahlen eine operative Wahrheit teilen, hört OEE auf, ein Rätsel zu sein, und wird zu einem Ergebnis, das man managen kann.
 
-Wenn eine Metrik die Diskussion dominiert, steuern Teams oft die Zahl statt das Betriebssystem dahinter.
+OEE reicht nicht, weil Fabriken nicht nur durch schwachen Output scheitern. Sie scheitern durch verspätete Wahrheit, schwaches Routing, unklares Ownership und schwaches Follow-through. Messen Sie diese Realitäten neben OEE, und das Werk beginnt, das System zu managen, das die Zahl produziert—nicht nur die Zahl selbst.
 
-Das fuhrt zu: Summary ohne Diagnose; Wahrnehmung ohne Routing; Reporting ohne Reaktion. Deshalb schafft OEE allein selten Kontrolle.
+## Operatives Fazit
 
-## Was Fabriken zusatzlich messen sollten
+Das Versprechen dieses Artikels—Werke brauchen einen breiteren Betriebsblick mit Reaktion, Fluss, Ownership und Follow-through statt OEE als ganze Wahrheit—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „OEE reicht nicht—was Sie stattdessen messen sollten“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
-Behalten Sie OEE, aber erganzen Sie Metriken, die die Aktionsqualitat verbessern, zum Beispiel: Reaktionszeit auf Storungen; Verzogerung bis zum Task-Abschluss; Wiederkehr derselben Probleme; Eskalationsgeschwindigkeit; Qualitatsverlust nach Ursache. Diese Kennzahlen sagen mehr daruber aus, wie das Werk wirklich lauft.
-
-## Warum operative Metriken wichtiger sind
-
-Ein Werk wird starker, wenn es beantworten kann: wie schnell erkennen wir eine Abweichung?; wie schnell routen wir sie?; wie schnell handeln wir?; wie oft schliessen wir die Schleife?. Das sind Entscheidungs- und Ausfuhrungsfragen. Daraus entsteht starkere operative Kontrolle.
-
-## Wie bessere KPI-Logik aussieht
-
-Nutzen Sie OEE als einen Indikator, nicht als Zentrum des Systems.
-
-Bauen Sie ein breiteres Betriebsmodell auf, in dem: Wahrheit geteilt ist; Ownership klar ist; Reaktion sichtbar ist; Follow-through verfolgt wird. So werden Metriken zu Betriebsdisziplin statt zu Dashboard-Dekoration.
-
-## Warum IRIS hier relevant ist
-
-DBR77 IRIS ist genau fur diesen Wandel positioniert: eine execution layer uber operative Funktionen hinweg; geteilte Wahrheit statt siloed reports; Tasking, das mit Insight verbunden ist; human approval dort, wo sie gebraucht wird.
-
-Das hilft Werken, von KPI-Beobachtung zu gemanagter Ausfuhrung uberzugehen.
-
-## Fazit
-
-OEE ist nicht genug, weil Fabriken nicht nur an schwachem Output scheitern.
-
-Sie scheitern auch an verspaterter Wahrheit, schwachem Routing, unklarer Ownership und mangelndem Follow-through. Auch das muss gemessen werden.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur in Meetings vereinbart, und mehr Tage, an denen der Systemdatensatz zu dem passt, was die Fläche sagen würde, wenn Sie sie mitten in der Aufgabe anhalten.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [Walkthrough ansehen](https://dbr77.com/demo).*
+*DBR77 IRIS hilft Werken, über reines OEE-Denken hinauszugehen—durch gemeinsame Wahrheit, Task-Routing und sichtbares Follow-up in einer Ausführungsschicht. [Interaktive Demo starten](https://dbr77.com/iris) oder [Walkthrough ansehen](https://dbr77.com/demo).*

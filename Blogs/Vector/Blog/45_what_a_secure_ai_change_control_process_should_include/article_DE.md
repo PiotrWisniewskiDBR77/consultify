@@ -1,56 +1,38 @@
 # Was ein sicherer KI-Change-Control-Prozess umfassen sollte
 
-Zielpersona: CTO / Enterprise-Architekt / IT-Operations-Leiter  
+Zielpersona: CTO / Enterprise-Architekt / Leitung IT-Betrieb  
+Funnel-Stufe: Decision  
+Kernproblem: KI-Systeme ändern sich wöchentlich über Prompts, Konnektoren und Modell-Routen, während Werke dieselbe Strenge wie bei MES- oder PLC-Änderungen erwarten  
+Hauptversprechen: ein straffes Änderungsmodell hält Innovationsgeschwindigkeit in sichtbaren Gates, ohne jeden Fix wie ein Wasserfall-Release zu behandeln
 
-Trichterphase: Decision Kernproblem: KI-Systeme aendern sich woechentlich durch Prompts, Konnektoren und Modell-Routen, waehrend Werke dieselbe Rigide wie bei MES- oder PLC-Aenderungen erwarten Hauptversprechen: ein straffes Aenderungsmodell haelt Innovationsgeschwindigkeit in sichtbaren Gates, ohne jeden Fix wie ein Wasserfall-Release zu behandeln Change Control ist keine Feindschaft gegen Iteration. So bleibt Iteration versicherbar, auditierbar und rueckgaengig machbar.
+Change Control ist keine Feindschaft gegen Iteration. Es ist, wie Iteration versicherbar, auditierbar und rückgängig machbar bleibt — weil die Fertigung schon weiß, was unkontrollierte Änderung kostet: überraschendes Verhalten, strittige Records und Untersuchungen, die nicht rekonstruieren, was sich bewegt hat.
 
-Ein sicherer KI-Change-Control-Prozess fuer die Fertigung sollte eine klassifizierte Aenderungs-Taxonomie, verpflichtende Impact-Bewertung pro Klasse, Peer- oder CAB-Review fuer produktionswirksame Aenderungen, versionierte Promotion-Pfade von Sandbox zu Produktion, automatisierte Regressionstests wo moeglich, Dual-Freigabe fuer privilegierte Konfiguration, unveraenderliche Logs mit Ticket-Bezug, Rollback-Artefakte je Release und nachgelagerte Verifikation mit Unterschrift der Workflow-Eigentuemer umfassen. Kundendaten duerfen nicht als Teil einer Aenderung in Trainingspfade gelangen, ausser wenn ein separates rechtliches und technisches Programm das regelt. Behandeln Sie Modell-Routen wie Netzwerk-Routen.
+Ein sicherer KI-Change-Control-Prozess für die Fertigung sollte eine klassifizierte Änderungstaxonomie, verpflichtende Impact-Bewertung je Klasse, Peer- oder CAB-Review für produktionswirksame Änderungen, versionierte Promotions-Pfade von Sandbox zu Produktion, automatisierte Regressionstests wo möglich, Doppel-Freigabe für privilegierte Konfiguration, unveränderliche Logs mit Ticket-Bezug, Rollback-Artefakte je Release und nachgelagerte Verifikation mit Unterschrift der Workflow-Owner umfassen. Kundendaten dürfen nicht als Teil einer Änderung in Trainingspfade gelangen, außer ein separates rechtliches und technisches Programm regiert das. Behandeln Sie Modell-Routen wie Netzrouten: unsichtbare Änderungen sind dennoch Änderungen.
 
-## Rahmen: fuenf Aenderungsklassen
+## Warum Werke Änderung merken — selbst wenn die UI gleich aussieht
 
-### Klasse 1: Dokumentation und Hilfetext
+Fertigungsteams erleben KI-Änderungen als Verhaltensänderungen: eine Zusammenfassung betont plötzlich andere Risiken, ein Empfehlungsmuster verschiebt sich nach einem Wochenend-Deployment, eine Integration beginnt unter Spitzenlast zu timen out. Ohne Ticket-Spur fühlen sich diese Verschiebungen wie „das Modell wurde komisch“ an — so stirbt Vertrauen. Mit derselben Spur werden dieselben Verschiebungen erklärbare Ereignisse: was änderte sich, wer genehmigte, was wurde danach beobachtet, und wie funktioniert Rollback, wenn die Linienwirkung real ist. Das ist der kulturelle Gewinn von Change Control — keine Bürokratie um ihrer selbst willen, sondern vorhersehbare Abläufe.
 
-Geringes Risiko ohne Verhaltensaenderung; dennoch fuer Traceability loggen.
+## Fünf Änderungsklassen, die Tempo gesund halten
 
-### Klasse 2: Prompt- und Template-Aenderungen innerhalb genehmigter Grenzen
+Dokumentation und Hilfetext in der niedrigsten Klasse, wenn sich kein Verhalten ändert — und selbst hier zählt ein Log-Eintrag, weil später jemand fragt, was zu einem Zeitpunkt wahr war. Prompt- und Template-Edits innerhalb genehmigter Grenzen: automatischer Diff, Reviewer aus Produkt oder Engineering und ein zeitlich begrenztes Beobachtungsfenster, damit Operations Regressionen früh meldet. Konnektor- oder Scope-Erweiterung: Architektur-Alignment, Datenpfad-Update und Security-Sign-off — weil Sie geändert haben, was das System erreichen kann, nicht nur was es sagt. Modellversions- oder Routing-Änderung: Performance- und Safety-Checks plus Kommunikation an betroffene Werke, besonders wenn Outputs Planung oder Qualitätsnarrative beeinflussen. Notfall-Break-Glass: zeitlich begrenzt, mit Pflicht-Post-Incident-Review, damit Dringlichkeit keine dauerhafte Umgehungskultur wird.
 
-Erfordert automatisches Diff, Reviewer aus Produkt oder Engineering und ein zeitlich begrenztes Beobachtungsfenster.
+Mindestinhalt eines Tickets: eine verständliche Änderungszusammenfassung, betroffene Workflows und Standorte, Risikoklasse und Rollback-Plan, Testnachweis oder Begründung, wenn Tests nicht automatisierbar sind, sowie Freigeber mit Zeitstempeln.
 
-### Klasse 3: Konnektor- oder Scope-Erweiterung
+Ad-hoc-Fixes wirken in Woche eins schnell; gated Promotion wirkt langsamer — und liefert in Jahr zwei rekonstruierbare Historie. Prompt-, Konnektor- und Modell-Routen-Edits sind Werksänderungen; Tickets brauchen dieselbe Wer-hat-wann-Rollback-Disziplin wie andere werksnahe Systeme.
 
-Erfordert Architektur-Abgleich, Datenpfad-Update und Security-Sign-off.
+**Kernpunkt:** wenn sich Ihr KI-Stack Verhalten ändern kann, ohne dass sich Records ändern, streiten Sie irgendwann über Kausalität statt die Linie zu reparieren.
 
-### Klasse 4: Modellversion oder Routing-Aenderung
+Vector passt in Umgebungen, in denen Promotion ernst ist: Deployments-Grenzen, die Sandboxes von Produktionspfaden trennen, Kundendaten nicht zum Modelltraining, proprietäres industrielles Reasoning auf Werks-Transformationswissen trainiert statt generischem Chat — damit Change Control stabile Objekte hat, an die Freigaben und Nachweise gebunden werden können.
 
-Erfordert Performance- und Safety-Checks plus Stakeholder-Kommunikation zu betroffenen Werken.
+Wenn Sie nicht beantworten können, was sich wann und warum änderte, haben Sie keine Enterprise-KI. Sie haben ein Live-Experiment mit Produktionsabzeichen.
 
-### Klasse 5: Notfall-Break-Glass
+## Werks-Checkpoint
 
-Zeitlich begrenzt, verpflichtendes Post-Incident-Review innerhalb von 72 Stunden.
+Behandeln Sie „Was ein sicherer KI-Change-Control-Prozess umfassen sollte“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Auszug aus der Trainingspolicy, Log-Probe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Fertigungs-KI reift, wenn Belege Routine werden: dieselbe Disziplin, die Sie schon vor Linienfreigabe, Lieferantenwechsel oder großem IT-Cutover erwarten. Das ist der Wechsel von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent.
 
-## Checkliste: Mindest-Ticketinhalt
-
-- Aenderungszusammenfassung in klarer Sprache
-- betroffene Workflows und Standorte
-- Risikoklasse und Rollback-Plan
-- Testnachweis oder Begruendung falls nicht automatisierbar
-- Genehmiger und Zeitstempel
-
-## Vergleich: Ad-hoc-Tweaks versus gated Promotion
-
-| Muster | Geschwindigkeitsgefuehl | Audit Jahr zwei |
-| --- | --- | --- |
-| Ad hoc | schnelle Woche eins | schmerzhaft, lueckenhafte Historie |
-| Gated Promotion | gemessen | rekonstruierbare Entscheidungen |
-
-## Produktbruecke
-
-DBR77 Vector ist die sichere Intelligenzschicht hinter dem DBR77-Oekosystem: proprietaere Industrie-KI fuer Umgebungen, in denen Deployments-Grenzen und Promotionsdisziplin zaehlen, trainiert auf Werks-Transformationswissen, ohne Kundendaten zum Modelltraining, mit industrieller Argumentation statt generischem Chat. Change Control mappt sauber, wenn Umgebungen und Routen Erstklass-Konzepte sind, kein Nachgedanke.
-
-## Abschlussfazit
-
-Wenn Sie nicht sagen koennen, was sich wann und warum aenderte, haben Sie keine Enterprise-KI. Sie haben ein Live-Experiment mit Produktionsabzeichen.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, dann diese: benennen Sie, was vor Ausweitung der Nutzung wahr sein muss, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Trost mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/vector) oder [Produkte mit Vector erkunden](https://dbr77.com/demo).*
+*DBR77 Vector passt zu Programmen, die Umgebungstrennung und Promotions-Disziplin brauchen — statt ungesteuerten Prompt-Churn in Produktion. [Demo buchen](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*

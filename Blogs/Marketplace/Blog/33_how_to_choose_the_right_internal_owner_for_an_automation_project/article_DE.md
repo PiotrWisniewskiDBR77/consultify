@@ -1,67 +1,54 @@
-# So waehlen Sie den richtigen internen Owner fuer ein Automatisierungsprojekt
+# Wie Sie den richtigen internen Owner für ein Automatisierungsprojekt wählen
 
-Target persona: Werksponsor / Programmlead mit Budgetverantwortung  
-Funnel stage: Consideration (fruehe Struktur vor Marktengagement)  
-Core problem: verteilte Ownership verwandelt Lieferantengespraeche in parallele Faeden, schwache Vergleichbarkeit und spaete Ueberraschungen an Freigaben  
-Main promise: praktische Owner-Auswahlregeln gekoppelt an Scope, Risiko, Schnittstellen und Entscheidungsrechte
+Zielpersona: Werks-Sponsor / Programm-Lead mit Budgetbefugnis  
+Funnel-Stufe: Überlegung (frühe Struktur vor Marktengagement)  
+Kernproblem: diffuses Ownership verwandelt Lieferantengespräche in parallele Fäden, schwache Vergleichbarkeit und späte Überraschungen an Freigabe-Gates  
+Hauptversprechen: ein praktisches Owner-Auswahl-Regelwerk, gekoppelt an Scope, Risiko, Schnittstellen und Entscheidungsrechte
 
-Jemand muss im Namen des Werks Nein sagen duerfen.
+Diffuses Ownership ist teuer. Engineering beantwortet eine Frage in einem Lieferanten-Thread, Procurement eine andere, Operations erfährt Schnittstellenentscheidungen aus der Integrator-Mail, und Finance sieht einen Preis, den niemand auf den Scope mappen kann. Sie haben kein Projekt — Sie haben einen Chatraum im Capex-Kostüm.
 
-Wenn alle verantwortlich sind, ist niemand rechenschaftspflichtig, wenn Schnittstellen rutschen oder Akzeptanzsprache vage bleibt. Interne Ownership ist kein Titelspiel.
+Benennen Sie einen primären internen Owner, der eine kohärente Story vom Brief bis zur Vergabe tragen kann — und teilen Sie unterstützende Rollen bewusst auf.
 
-Es ist die Entscheidung, eine klare Verantwortung fuer Zeitplan, Scope-Kohaerenz und Integratordialog zu vergeben.
+## Was der primäre Owner kontrollieren muss
 
-Waehlen Sie den internen Owner, indem Sie Projektrisiko und Schnittstellenlast einer Person zuordnen, die Betriebszeit, technische Wahrheit und Einkaufsdisziplin in einer Kette verbinden kann.
+Er soll Operations-Realität, technische Schnittstellen und Award-Logik binden können — oder sauber eskalieren, wenn er es nicht kann. Er besitzt den Entscheidungsrecord: versionierter Brief, Annahmen-Log, Vergleichs-Rückgrat und Klärungsdisziplin. Wenn niemand in einem Absatz sagen kann „das haben wir entschieden“, haben Sie den falschen Owner gewählt.
 
-Wenn die Arbeit ueberwiegend mechanisch ist mit stabilem Produktmix, fuehrt Operations oft gut.
+## Autorität an Risikoform anpassen
 
-Wenn die Arbeit schnittstellenlastig ueber MES, Qualitaetssysteme und IT verlaeuft, brauchen Sie typischerweise einen technischen Programmowner mit Operations als hartem Partner, nicht als passivem Reviewer.
+Schnittstellen-schwere Projekte brauchen einen Owner, der „Nein“ über Funktionen hinweg sagen kann. Arbeits- und Durchsatz-zentrierte Projekte brauchen jemanden, dem Operations vertraut, die Linie unter Druck zu vertreten. Stark kommerzielle oder Multi-Site-Portfolios brauchen möglicherweise einen Programm-Lead mit explizitem Sponsor-Backing. Titel sind weniger wichtig als Entscheidungsrechte und Shopfloor-Glaubwürdigkeit.
 
-## Owner-Archetypen (waehlen Sie einen Primaerowner)
+## Unterstützende Rollen sollten explizit sein
 
-| Archetyp | passt wenn | Risiken |
-| --- | --- | --- |
-| operationsgefuehrt | Durchsatz, Personal und Verfuegbarkeit dominieren | kann IT- und Datenabhaengigkeiten unterschaetzen |
-| engineeringgefuehrt | Layout, Sicherheit und technische Machbarkeit dominieren | kann kommerzielle Exposition und Award-Logik unterschaetzen |
-| procurementgefuehrt | Vergleichbarkeit, Bedingungen und Lieferantensteuerung dominieren | darf technische Wahrheit nicht in Tabellen-Theater kollabieren lassen |
-| ITgefuehrt | Identitaet, Netzwerk und System-of-Record-Punkte dominieren | muss an physische Inbetriebnahme gekoppelt bleiben |
+Engineering übersetzt Constraints; Procurement bewacht Vergleichbarkeit; Finance testet Cash-Timing; Legal prüft Commitment-Sprache. Unterstützen heißt nicht paralleles Ownership. Paralleles Ownership ohne Primären ist, wie Vergleichbarkeit stirbt.
 
-Hybrid ist ueblich. Hybrid ohne benannten Primaerowner kostet Werke Wochen.
+## Schlechte Ownership-Signale
 
-## Entscheidungscheckliste bevor Sie den Owner benennen
+Achten Sie darauf, wenn Lieferanten unterschiedliche Antworten aus unterschiedlichen Funktionen bekommen, der Scope ohne dokumentierte Entscheidung driftet oder „Alignment“-Meetings wöchentlich denselben Kampf wiederholen. Das sind Symptome, keine Marotten.
 
-Nutzen Sie das als einseitige interne Aufzeichnung (illustrativ):
+## Wie DBR77 Marketplace anschließt
 
-1. wer Akzeptanzobjekte in welcher Reihenfolge freigibt
-2. wer Scope fuer externe Angebote einfrieren darf
-3. wer Schnittstellenentscheidungen zu MES / ERP / QMS / CMMS besitzt
-4. wer Zugangs- und Produktionsrisikofenster plant
-5. wer eskaliert, wenn ein Lieferantenangebot Annahmen verschiebt
+Strukturierter Vergleich hilft nur, wenn jemand im Werk den Record vom ersten Brief durch den Lieferantendialog trägt. Sonst zerfallen vergleichbare Angebote zurück in parallele interne Stories, sobald Gespräche beschleunigen.
 
-Wenn eine Person Punkte 1 bis 3 nicht abdeckt, teilen Sie Rollen explizit und benennen trotzdem einen Integrator-Lead.
+Für das engste Alignment-Follow-through siehe [Wie man Operations, Engineering und Procurement vor dem Automatisierungskauf ausrichtet](../19_how_to_align_operations_engineering_and_procurement_before_automation_buying/article_DE.md) und [So führen Sie das finale interne Alignment-Review vor dem Automatisierungs-Kickoff durch](../42_how_to_run_a_final_internal_alignment_review_before_automation_kickoff/article_DE.md).
 
-## Wann ein Steuerungsrhythmus dazukommt
+## Autorität ohne Heroismus
 
-Ergaenzen Sie ein leichtes Steuerungsforum, wenn: Capex eine Schwelle ueberschreitet, die Ihr Werk politisch behandelt; mehr als zwei Funktionen spaet vetoen koennen; der Integratorpfad Kunden- oder Regulatorik-Auditspuren beruehrt. Steuerung ist kein zweiter Owner. Sie ist Sichtbarkeit fuer den Primaerowner.
+Der Owner sollte nicht die einzige Person sein, die das Projekt versteht — das ist Bus-Faktor-Risiko. Der Owner sollte die Person sein, die Inputs in einen Entscheidungsfaden integrieren und bei Funktions-Deadlocks eskalieren kann. Paaren Sie sie mit einem starken Stellvertreter für Kontinuität in Urlauben, Schichtabdeckung und der unvermeidlichen Woche, in der Operations von einer Kundenkrise voll absorbiert ist.
 
-## Wie sich gute Ownership im Lieferantendialog zeigt
+Wenn Ihre Kultur Ownership mit „alles selbst machen“ verwechselt, fixen Sie das vor Automatisierung. Integrationsprojekte bestrafen Hero-Kultur mit Burnout und verlorenen Übergaben.
 
-Gute Ownership zeigt sich als: eine ausgehende Erzaehlung zu Scope und Randbedingungen; vergleichbare Fragesaetze ueber Bieter; dokumentierte Annahmenaenderungen statt Flur-Edits.
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Schlechte Ownership zeigt sich als: Engineering sagt eines, Einkauf etwas anderes; Operations erfaehrt Schnittstellenentscheidungen vom Lieferanten.
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Wie Sie den richtigen internen Owner für ein Automatisierungsprojekt wählen“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-## Was das fuer DBR77 Marketplace bedeutet
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
 
-DBR77 Marketplace ist als Workflow fuer Automatisierungsentscheidungen gebaut, nicht als Katalogstoebern.
-
-Klare interne Ownership macht diesen Workflow nutzbar: strukturierte Felder, vergleichbare Angebote und Vertrauenssignale komprimieren Chaos nur, wenn jemand im Werk den Faden tragen kann.
-
-Marketplace unterstuetzt Integratorenauswahl und Angebotsvergleich, wenn die Buyer-Seite weiss, wer die Entscheidungsakte traegt.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
 ## Fazit
 
-Benennen Sie einen Primaer-internen Owner, der Operations, technische Schnittstellen und Award-Logik binden kann. Teilen Sie unterstuetzende Rollen mit Absicht, nicht aus Versehen. Dann gehen Sie einmal konsistent an den Markt.
+Wählen Sie einen primären Owner, der Operations, technische Wahrheit und Award-Logik binden kann. Staffen Sie unterstützende Funktionen klar. Dann gehen Sie einmal in den Markt — mit einem einzigen kohärenten Faden.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace hält einen kohärenten Käufer-Faden über strukturierte Scope- und Vergleichsfelder, sobald ein benannter interner Owner den Entscheidungsrecord tragen kann. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

@@ -1,72 +1,60 @@
-# Jakie ryzyko zmiany zamowienia sprawdzic zanim projekt automatyzacji ruszy
+# Jakie ryzyko zamówień zmian sprawdzić, zanim projekt automatyzacji wystartuje
 
-Target persona: lider zakupow / prawni i techniczni akceptujacy  
-Funnel stage: Decision (dyscyplina kontraktu i bazy)  
-Core problem: zespoly podpisuja optymistyczne bazy, potem walcza o to, co liczy sie jako zmiana, kto placi i czy poslizgi harmonogramu sa usprawiedliwione  
-Main promise: mapa ryzyka zmiany zamowienia przed startem powiazana z interfejsami zakresu, zalozeniami, dostepem i ukrytymi wadami
+Docelowa persona: Lider ds. zakupów / akceptujący prawni i techniczni  
+Etap lejka: Decyzja (dyscyplina kontraktu i linii bazowej)  
+Główny problem: zespoły podpisują optymistyczne linie bazowe, potem walczą o to, co liczy się jako zmiana, kto płaci oraz czy poślizgi harmonogramu są usprawiedliwione  
+Główna obietnica: mapa ryzyka zamówień zmian przed startem, powiązana z interfejsami zakresu, założeniami, dostępem i ukrytymi defektami
 
-Zmiany zamowienia to nie niespodzianki. To przewidywalny efekt niejasnych baz.
+Zamówienia zmian podążają za brakującą linią bazową. Jeśli interfejsy zakresu były rozmyte w ewaluacji, w integracji stają się fakturami. Jeśli założenia nigdy nie zostały zweryfikowane, „niespodzianki” były do przewidzenia. Jeśli zadania gotowości zakładu nie miały właścicieli, opóźnienia zamieniają się w spory o force majeure, które naprawdę dotyczą zapomnianych przesłanek.
 
-Jesli czytasz klauzule zmian przy pierwszej sporze, juz wybrales drogie forum.
+Zanim zielone światło dla montażu, sprawdź cztery szyny: zamrożoną granicę zakresu względem ocenianej oferty, jawną listę założeń z datami weryfikacji i właścicielami, zależności zakładu w kalendarzu z nazwaną odpowiedzialnością oraz zasady zmian mówiące, jak działają wnioski, wycena i akceptacje, gdy rzeczywistość odbiega.
 
-## Bezposrednia odpowiedz
+## Interfejsy to zwykle pole bitwy
 
-Przed startem zwaliduj ryzyko zmiany zamowienia sledzac cztery tory: pisany bazowy zakres, nazwane zalozenia z regulami falsyfikacji, okna dostepu i zaleznosci posiadane przez zaklad oraz mechanizmy komercyjne, ktore wyceniaja nieznane bez kolapsu odpowiedzialnosci za harmonogram.
+Przekazania mechaniczne, elektryczne, sterownicze, IT i BHP powinny mieć właścicieli, nie być domyślne. Szare strefy to miejsce, w którym rozmnażają się zamówienia zmian.
 
-Jesli ktorykolwiek tor brakuje, zakladaj wzrost objetosci zmian i logika przyznania powinna byla odzwierciedlic te niepewnosc inaczej.
+## Dostęp i realia zakładu
 
-## Tor 1: bazowy zakres jest dwukierunkowy
+Moc, przestrzeń, ścieżki sieciowe, logistyka podnoszenia i okna produkcyjne wpływają na to, co integratorzy mogą zrobić i kiedy. Jeśli założenia dostępu są złe, następują walki o harmonogram — nawet gdy nikt nie chciał wprowadzać w błąd.
 
-Potrzebujesz wlaczen i wylaczen, do ktorych obie strony moga sie odniesc. Lista kontrolna (ilustracyjna):
+## Ukryte defekty w linii bazowej
 
-- [ ] lista rezultatow mapuje na obiekty akceptacji
-- [ ] wylaczenia nazywaja zaopatrzenie, budowe, IT i granice szkolen
-- [ ] wlascicielstwo interfejsu jest jawne przy kazdym punkcie handshake
+Czasem „istniejący system” nie jest tak zrozumiany, jak sugerowały slajdy. Weryfikacja linii bazowej należy przed mobilizacją, nie jako płatna aktywność odkrywcza w środku projektu.
 
-Slabe bazy tworza spory typu "nie ma w mojej wycenie".
+## Eskalacja zanim wejdą emocje
 
-## Tor 2: zalozenia sa falsyfikowalne i wycenione
+Uzgadnij progi: kiedy ruch kosztu lub harmonogramu wywołuje przegląd kierowniczy, jak prezentuje się dowód i kto może co zatwierdzić. Spokojna mechanika bije negocjacje na korytarzu przy działającej linii.
 
-Zalozenia bez konsekwencji to dekoracje.
+## Praktyczny godzinny przegląd wewnętrzny
 
-Potwierdz, ze kontrakt stanowi: co sie dzieje, gdy zalozenie jest falszywe; kto weryfikuje i do kiedy; czy cena i czas sa ponownie otwarte czy ograniczone.
+Przeczytaj na głos zakres bazowy względem ocenianej oferty; wypisz główne założenia i oznacz daty weryfikacji; przypisz właścicieli zależnościom zakładu z blokami w kalendarzu; potwierdź eskalację przy przekroczeniu progów. Mała dyscyplina, duże oszczędności.
 
-## Tor 3: zaleznosci kontrolowane przez zaklad maja wlascicieli i daty
+## Jak łączy się DBR77 Marketplace
 
-Ryzyka posiadane przez zaklad (ilustracyjne): gotowosc posadzki i dostepnosc mediow; wydawanie credential i segmenty sieci; dostawa materialu na analogi FAT lub SAT; obsada na rownolegly bieg lub wsparcie przelaczenia.
+Gdy linie bazowe i założenia pozostają widoczne od porównania przez kontrakt, zmiany po przyznaniu klasyfikujecie względem tego, co już zdecydowaliście — zamiast ponownie sądzić starą niejasność pod nowym numerem faktury.
 
-Jesli nie sa zaplanowane z nazwiskami, integratorzy uzasadnionie zglaszaja wplyw.
+Najbliższe sąsiednie kontrole: [Co sprawdzić przed podpisaniem kontraktu automatyzacyjnego](../20_what_to_check_before_signing_an_automation_contract/article_PL.md), [Kiedy ponownie otworzyć decyzję o automatyzacji przed podpisaniem](../32_when_to_reopen_an_automation_decision_before_signing/article_PL.md) oraz [Jak powinna wyglądać czysta przekazanie od selekcji do realizacji](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_PL.md).
 
-## Tor 4: mechanizmy komercyjne pasuja do rzeczywistej niepewnosci
+## Zamówienia zmian jako informacja
 
-Porownaj dwie postawy (ilustracyjnie):
+Skok ruchu zmian wcześnie często jest diagnostyczny: niejasny zakres, niestabilne założenia lub słaba wewnętrzna gotowość. Traktuj wzorce poważnie. Celem nie jest zero zmian — realne projekty się uczą — lecz przewidywalna mechanika i uczciwa klasyfikacja, by kierownictwo widziało rzeczywistość.
 
-| postawa | kiedy pasuje | ryzyko zmiany |
-| --- | --- | --- |
-| cena stala na zamrozonej bazie | niska zmiennosc interfejsow, mocne discovery | nizsze jesli baza jest prawdziwa |
-| cena docelowa z zdefiniowanymi allowance | mierzalne nieznane pozostaja | srednie; potrzebuje zarzadzania |
-| czas i material z limitami | wysoka zawartosc uczenia | wyzsze; potrzebuje ciasnych strazy zakresu |
+Prowadź bieżący dziennik tematów zmian. Tematy pokazują, gdzie linia bazowa była słaba i gdzie brief następnego projektu powinien być lepszy.
 
-Niedopasowanie postawy do rzeczywistosci to fabryka zmian zamowienia.
+## Od decyzji do zachowania hali
 
-## Ograniczony protokol przed kickoff
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „jakie ryzyko zamówień zmian sprawdzić, zanim projekt automatyzacji wystartuje” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-Przeprowadz godzinny przeglad wewnetrzny (ilustracyjnie): odczytaj bazowy zakres na glos wobec ocenianej oferty; wypisz dziesiec glownych zalozen i oznacz daty weryfikacji; przypisz wlascicieli zaleznosciom zakladu z blokadami kalendarza; uzgodnij sciezke eskalacji, gdy zmiana przekracza prog kosztu lub harmonogramu.
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-## Co to znaczy dla DBR77 Marketplace
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
-DBR77 Marketplace ma na celu inspektowalnosc zakupow automatyzacji: workflow, zaufanie i porownywalne oferty.
-
-Inspektowalnosc przed kickoff oznacza, ze twoja baza jest na tyle strukturalna, ze zadania zmian mozna klasyfikowac zamiast argumentowac z pamieci. Marketplace to nie katalog robotow.
-
-To system pierwszy dla producenta, by redukowac chaos sourcingu i utrzymac rzeczywistosc po przyznaniu zgodna z tym, co porownywano.
+Na koniec powiąż tę dyscyplinę z rozliczalnością: nazwij, kto zweryfikuje założenia na hali i przy którym kamieniu milowym. Mity kwitną, gdy nikt nie posiada pomiaru; słabną, gdy weryfikacja jest częścią planu projektu, a nie dopiskiem.
 
 ## Podsumowanie
 
-Zmiany zamowienia podazaja za brakujacymi bazami.
-
-Sprawdz cztery tory zanim zezwolisz na instalacje, a nie przy pierwszej fakturze.
+Ryzyko zamówień zmian to w dużej mierze ryzyko linii bazowej. Wyrównaj zakres, założenia, prace zakładu i mechanikę zmian, zanim montaż wystartuje — nie wtedy, gdy wyląduje pierwsza niespodziewana faktura.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace utrzymuje pola linii bazowej i założeń widoczne, więc zmiany po przyznaniu można klasyfikować względem tego, co porównywano, zamiast ponownie sądzić ze slajdów. [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

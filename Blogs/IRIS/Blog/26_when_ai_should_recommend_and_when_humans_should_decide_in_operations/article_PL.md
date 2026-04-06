@@ -1,65 +1,38 @@
-# Kiedy AI powinno rekomendowac, a kiedy ludzie powinni decydowac w operacjach
+# Kiedy AI powinno rekomendować, a kiedy ludzie powinni decydować w operacjach
 
-Target persona: Dyrektor jakosci / Dyrektor operacji / Menedzer inzynierii  
-Funnel stage: Decision  
-Core problem: zaklady albo nadmiernie ufaja modelom, albo calkowicie banuja AI, bo brakuje prostej mapy praw decyzyjnych powiazanej z ryzykiem, identyfikowalnoscia i odpowiedzialnoscia  
-Main promise: jasny framework praw decyzyjnych oparty na klasie ryzyku, odwracalnosci i narazeniu regulacyjnym, plus sposob wdrozenia jako progi akceptacji w workflow
+Docelowa persona: Dyrektor jakości / Dyrektor operacji / Menedżer inżynierii  
+Etap lejka: Decision  
+Główny problem: zakłady albo nadmiernie ufają modelom, albo całkiem banują AI, bo brakuje prostej mapy praw decyzyjnych powiązanej z ryzykiem, identyfikowalnością i rozliczalnością  
+Główna obietnica: jasny framework praw decyzyjnych oparty na klasie ryzyka, odwracalności i ekspozycji regulacyjnej oraz sposób wdrożenia go jako progów akceptacji w przepływie pracy
 
-**Bezposrednia odpowiedz:** AI powinno domyslnie rekomendowac przy decyzjach operacyjnych z dwuznacznym kontekstem, miedzyfunkcyjnymi kompromisami lub narazeniem BHP i jakoscia. Ludzie powinni decydowac, gdy dzialanie jest trudne do cofniecia, wymaga rejestracji regulacyjnej lub przekracza uzgodniony prog ryzyka, nawet jesli model wyglada na pewnosc. To nie kwestia braku zaufania do AI.
+AI powinno domyślnie rekomendować, gdy kontekst jest dwuznaczny, kompromisy przecinają funkcje albo ekspozycja na bezpieczeństwo i jakość jest istotna. Ludzie powinni decydować, gdy działanie jest trudne do cofnięcia, wywołuje obowiązek dokumentacji regulacyjnej lub przekracza uzgodniony próg ryzyka — nawet jeśli model wygląda na pewnego. To nie brak zaufania do AI. To dopasowanie praw decyzyjnych do rozliczalności w środowiskach, gdzie „działaj szybko i przepraszaj” nie jest akceptowalną zasadą operacyjną.
 
-To dopasowanie praw decyzyjnych do odpowiedzialnosci w prawdziwych zakladach.
+W zdrowych programach przemysłowych AI zachowuje się jak silna funkcja sztabowa: przygotowuje opcje, podświetla ograniczenia, wyciąga historię. Ludzie zachowują autorytet tam, gdzie organizacja ponosi odpowiedzialność. Ten podział pozwala adopcji przetrwać pierwszy kontakt z audytami, klientami i presją nocnej zmiany.
 
-## Regula fabryki: rekomendacja jest domyslem, nie wyjatkiem
+Klasa ryzyka to tępy, ale użyteczny obiektyw. Praca niskiego ryzyka — kategoryzacja szumu, szkice notatek wewnętrznych — często może być swobodnie wspomagana. Praca średniego ryzyka — sugerowane pasma priorytetu, proponowany przydział zadań — zwykle należy do wzorca rekomenduj-i-potwierdź. Praca wysokiego ryzyka — zwolnienia zmieniające stan jakości widoczny dla klienta, działania zbliżające się do intencji blokady — zwykle wymaga jawnego decydowania ludzkiego z dowodem. Działania krytyczne — nadpisania bezpieczeństwa, podpisy wysyłki do klienta — powinny pozostać prowadzone przez ludzi z formalnymi zapisami, przy AI wspierającym dowód, nie posiadającym „stempla”.
 
-W zdrowych programach przemyslowych AI zachowuje sie jak starszy sztab: przygotowuje opcje; podswietla ograniczenia; pokazuje historie.
+Odwracalność ostrzy ten sam obraz. Łatwo odwracalne ruchy — przestawianie zadań nienaruszających chronionych stanów, przepisywanie pozycji pracy — mogą tolerować szybsze pętle. Powolne lub kosztowne cofnięcia — dysponowanie scrapu, duże zmiany prędkości linii, działania uruchamiające zobowiązania kapitałowe lub wobec klienta — powinny zaciskać bramki ludzkie nawet wtedy, gdy model brzmi pewnie.
 
-Ludzie zachowuja wladze tam, gdzie organizacja ponosi odpowiedzialnosc prawna.
+Filozofia staje się operacyjna dopiero, gdy staje się progami. Opublikuj reguły, które operator rozpozna: wyniki ciężkości wymuszające potwierdzenie przełożonego, chronione pola wymagające akceptacji opartej na roli, obiekty regulowane wymagające audytowalnych kroków ludzkich. Progi powinny być widoczne na hali — nie chowane w kodzie modelu, którego nikt nie potrafi wyjaśnić przy presji.
 
-## Praktyczny model klasy ryzyka
+Modele mieszane pękają, gdy AI rekomenduje w jednym narzędziu, ludzie decydują w drugim, a ślad audytu się rozdziela. Rekord decyzji powinien żyć z pozycją pracy, bo to pozycja pracy jest tym, czym zakład będzie się bronił jutro.
 
-Przypisz kazdemu typowi decyzji klase. Trzymaj to proste.
+Szkolenie powinno obejmować odmowę, nie tylko akceptację. Zespoły powinny ćwiczyć szybką akceptację dobrej rekomendacji, odrzucenie z kodem przyczyny i eskalację, gdy brakuje kontekstu. Kody przyczyn to sposób, by zakład się uczył bez zamieniania nadpisań w wstyd — ani w niewidzialny bunt.
 
-| Klasa ryzyku | Przyklady | Typowa rola AI |
-|---|---|---|
-| Niskie | kategoryzacja szumu, projekty not wewnetrznych | wspieraj swobodnie |
-| Srednie | propozycja pasma priorytetu, projekt routingu | rekomenduj, potwierdzenie czlowieka |
-| Wysokie | zwolnienie blokady jakosci, intencja ominiecia blokady | decyzja czlowieka, AI wspiera dowody |
-| Krytyczne | nadrzad BHP, podpis wysylki do klienta | decyzja czlowieka z formalnym zapisem |
+IRIS ma znaczenie, bo rekomendacja, akceptacja, odrzucenie i ślad audytu powinny żyć w jednej nadzorowanej historii przepływu pracy. To czyni prawa decyzyjne możliwymi do inspekcji na poziomie operatora zamiast rozpuszczać się w tekście polityki, którego nikt nie stosuje, gdy linia jest rozgrzana.
 
-To framework, nie dokument prawny. Twoj zespol compliance i tak powinien zwalidowac.
+O zakresie agenta zobacz [Co agent AI może dziś zrobić w fabryce](../22_what_an_ai_agent_can_do_in_a_factory_today/article_PL.md). O kryteriach zaufania dla liderów zobacz [Co sprawia, że fabryczne AI jest godne zaufania dla liderów operacji](../29_what_makes_factory_ai_trustworthy_for_operations_leaders/article_PL.md).
 
-## Uzyj odwracalnosci jako drugiej osi
+Właściwy podział to nie „AI kontra ludzie”. To „rekomendacja kontra decyzja”, zmapowane na ryzyko, odwracalność i nadzór. Zrób to mapowanie jawnie — albo zakład zrobi je nieformalnie na korytarzu, gdzie nikt nie zaudytuje wyniku.
 
-Nawet przy tej samej klasie ryzyku odwracalnosc ma znaczenie.
+## Podsumowanie operacyjne
 
-**Latwo odwracalne** Zmiana kolejnosci zadan, przypisanie niewrazliwej pozycji pracy, sugestia niewiazacego harmonogramu.
+Obietnica tego artykułu — jasny framework praw decyzyjnych z klasy ryzyka, odwracalności i ekspozycji regulacyjnej plus wdrożenie jako progi akceptacji w przepływie pracy — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Kiedy AI powinno rekomendować, a kiedy ludzie powinni decydować w operacjach” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-**Wolno lub drogo odwracalne** Dyspozycja zlomu, wysylka do klienta, duze zmiany predkosci linii, dzialania wyzwalajace CAPEX. Gdy cofniecie jest kosztowne, zaciskaj bramki ludzkie.
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie usprawnienie operacyjne — tylko narracyjne. Ta regula utrzymuje programy w rzetelności, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
-## Progi zamieniaja filozofie w workflow
-
-Uczyn reguly operacyjnymi: kazda sugestia powyzej wyniku ciezkosci wymaga potwierdzenia nadzorcy; kazda rekomendacja zmieniajaca chronione pole wymaga akceptacji roli; kazde dzialanie dotykajace obiektu regulowanego wymaga audytowalnego kroku czlowieka. Progi powinny byc widoczne dla operatorow, nie ukryte w kodzie modelu.
-
-## Przekazania: gdzie padaja modele mieszane
-
-Modele mieszane padaja, gdy: AI rekomenduje w jednym narzedziu; ludzie decyduja w drugim; audyt jest podzielony. Zapis decyzji powinien zyc z pozycja pracy.
-
-## Notatka szkoleniowa: ucz odmowy, nie tylko akceptacji
-
-Zespoly powinny cwiczyc: szybka akceptacje dobrej rekomendacji; odrzucenie rekomendacji z kodem przyczyny; eskalacje, gdy brakuje kontekstu. Kody przyczyn to sposob, w jaki zaklad sie uczy.
-
-## Dlaczego IRIS wspiera dyscypline praw decyzyjnych
-
-DBR77 IRIS to AI-native system operacyjny zakladu z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zadan.
-
-Ujednolicone wykonanie to to, co robi z rekomendacji, akceptacji i audytu jedna narracje zamiast trzech narzedzi.
-
-## Podsumowanie
-
-Wlasciwy podzial to nie "AI kontra ludzie".
-
-To "rekomendacja kontra decyzja" zmapowane na ryzyko, odwracalnosc i rzadzenie. Zrob te mape jawnie, albo zaklad zrobi ja nieformalnie na korytarzu.
+Jeśli rekord jest ubogi, napraw rekord, zanim poszerzysz ambicję.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Obejrzyj prezentację](https://dbr77.com/demo).*
+*DBR77 IRIS utrzymuje rekomendacje, decyzje ludzkie i ślady audytu przy tych samych pozycjach pracy przez produkcję, magazyn, jakość, utrzymanie ruchu i tasking. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Obejrzyj walkthrough](https://dbr77.com/demo).*

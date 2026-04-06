@@ -1,0 +1,29 @@
+{
+  "article_path": "Blogs/DBR77/Personas/02_cfo_safer_capex_and_clearer_roi_in_manufacturing",
+  "product": "DBR77",
+  "scope_type": "persona",
+  "asset_slug": "02_cfo_safer_capex_and_clearer_roi_in_manufacturing",
+  "role": "analytical",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "newsletter"
+  ],
+  "model": "cursor:composer-generate-image",
+  "model_params": {
+    "provider": "cursor:composer-generate-image",
+    "seed": "n/a",
+    "steps": "n/a"
+  },
+  "generation_notes": "Agent2 multi-product batch; GenerateImage; retries on timeout with shorter prompts where needed.",
+  "prompt_source": "Blogs/DBR77/Personas/02_cfo_safer_capex_and_clearer_roi_in_manufacturing/image-prompts.md",
+  "prompt_text": "Linear capex proof rail ingots slides execution plate bearing cup—wordless finance strip.",
+  "negative_prompt": "readable text, logos, legible UI, sci-fi HUD, stock governance theatre, infographic labels",
+  "seed": "n/a",
+  "run_id": "DBR77-agent2-batch-32",
+  "created_at": "2026-03-31T12:00:00+00:00",
+  "alt_text_en": "Linear capex proof rail ingots slides execution plate bearing cup—wordless finance strip.",
+  "caption_en": "Linear capex proof rail ingots slides execution plate bearing cup—wordless finance strip.",
+  "crop_safe_notes": "Native 1376×768 after normalize.",
+  "output_path": "Blogs/DBR77/Personas/02_cfo_safer_capex_and_clearer_roi_in_manufacturing/assets/images/analytical_16x9_v1.png"
+}

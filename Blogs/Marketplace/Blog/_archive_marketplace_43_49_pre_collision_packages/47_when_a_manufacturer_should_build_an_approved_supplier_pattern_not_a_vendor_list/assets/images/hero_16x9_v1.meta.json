@@ -1,0 +1,31 @@
+{
+  "article_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list",
+  "product": "Marketplace",
+  "scope_type": "blog",
+  "asset_slug": "47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list",
+  "role": "hero",
+  "archive_package": "_archive_marketplace_43_49_pre_collision_packages",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "social",
+    "newsletter"
+  ],
+  "model": "cursor-builtin-generate-image",
+  "generation_notes": {
+    "contract": "DBR77_IMAGE_QC_STANDARD Mode 2; Marketplace ARCHIVE closeout batch",
+    "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | Cursor built-in GenerateImage + PIL where noted |\n| seed | n/a |\n| inference_steps | n/a |\n| delivered_px | 1376×768 |",
+    "note": "Hero asset from earlier archive pass; meta aligned closeout 2026-03-31"
+  },
+  "prompt_source": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list/image-prompts.md",
+  "prompt_text": "Editorial photograph: executive at oak table reviewing thick pattern booklet with abstract geometric cutouts on pages (no words), closed slim roster binder aside, window light, calm governance moment, no phone directory metaphor, no tech lab.",
+  "negative_prompt": "rolodex cliché, fake UI, monitor wall, sci-fi, readable brand text",
+  "seed": "n/a",
+  "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+  "created_at": "2026-03-31T04:51:44+00:00",
+  "alt_text_en": "Executive reviews a physical supplier pattern booklet instead of an open vendor list.",
+  "caption_en": "Hero for approved supplier patterns versus endless rosters.",
+  "crop_safe_notes": "16:9; booklet and hands center-weighted.",
+  "output_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list/assets/images/hero_16x9_v1.png"
+}

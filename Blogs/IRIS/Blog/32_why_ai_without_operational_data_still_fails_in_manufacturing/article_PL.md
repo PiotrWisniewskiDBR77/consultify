@@ -1,72 +1,36 @@
-# Dlaczego AI bez danych operacyjnych nadal pada w produkcji
+# Dlaczego AI bez danych operacyjnych wciąż zawodzi w przemyśle
 
-Target persona: Lider IT-OT zakladu / wlasciciel danych / sponsor programu  
-Funnel stage: Awareness  
-Core problem: zespoly wdrazaja modele na wybielonych zestawach, podczas gdy zaklad nadal dziala na czesciowych logach, poznych wpisach i sprzecznych definicjach, wiec asysta nie domyka petli  
-Main promise: prosta lista tego, co liczy sie jako dane operacyjne dla AI fabryki, i czemu braki zamieniaja asystentow w drogie streszczenia
+Docelowa persona: Lider IT-OT zakładu / Właściciel danych / Sponsor programu  
+Etap lejka: Awareness  
+Główny problem: zespoły wdrażają modele na kuratowanych zbiorach, podczas gdy zakład wciąż działa na częściowych logach, opóźnionych wpisach i sprzecznych definicjach — więc asysta nie domyka pętli  
+Główna obietnica: bezpośrednia lista tego, co liczy się jako dane operacyjne dla fabrycznego AI, i dlaczego brakujące elementy zamieniają asystentów w drogie streszczacze
 
-AI bez danych operacyjnych nadal pada, bo modele potrzebuja tych samych obiektow co hala: zlecenia, trasy, zadania, akceptacje, przyczyny przestojow, blokady jakosci i pakiety pracy utrzymania powiazane z aktywami i zmianami. Jesli te rekordy sa niepelne, opoznione lub roznie zdefiniowane per funkcja, AI moze generowac plytny tekst i nadal nie prowadzi reakcji, odpowiedzialnosci ani domkniecia. To nie problem "rozmiaru jeziora danych". To problem "czy system zleci wiarygodny nastepny krok".
+AI bez danych operacyjnych zawodzi w przemyśle, bo modele potrzebują tych samych obiektów, z których hala korzysta w kolejnych dwóch godzinach: zleceń, tras, zadań, akceptacji, przyczyn przestojów, blokad jakości i pakietów pracy utrzymania powiązanych z aktywami i zmianami. Jeśli te rekordy są niekompletne, opóźnione albo inaczej definiowane w każdej funkcji, system potrafi generować płynny tekst i wciąż nie napędza reakcji, odpowiedzialność ani domknięcia. To w pierwszym rzędzie nie problem „rozmiaru jeziora danych”. To problem „czy zakład potrafi zadaniować wiarygodny następny krok”.
 
-## Co znaczy "dane operacyjne" w kontekscie zakladu
+Dane operacyjne to wszystko, czego przełożony potrzebuje bez spotkania na boku: tożsamość pracy, bieżący stan, aktualne odpowiedzialność, znaczniki czasu zgodne z rzeczywistością zmiany, kody przyczyn faktycznie wybierane pod presją oraz dowód domknięcia, który następna zmiana może sprawdzić. Jeśli asysta nie może wskazać tych pól, nie jest zakotwiczona w operacjach. Jest zakotwiczona w prezentacji.
 
-Dane operacyjne to wszystko, czego nadzor uzylby do nastepnych dwoch godzin bez bocznego spotkania.
+Typowy wzorzec porażki to czysta historia i brudna teraźniejszość: modele trenowane lub promptowane na zhormonizowanych eksportach, wdrożone w częściowe skany, brakujące przyczyny i notatki uwięzione w osobistych skrzynkach. Demo wygląda mądrze. Wtorkowa noc na hali nie jest pod wrażeniem.
 
-Minimalny wiarygodny zestaw: tozsamosc pracy: jakie zlecenie, partia lub job jest aktywny; stan: praca, oczekiwanie, blokada, wstrzymanie; odpowiedzialnosc: kto jest wlascicielem teraz; znaczniki czasu zgodne ze zmiana, nie z oknem ETL; kody przyczyn wybierane pod presja; dowod domkniecia: co sie zmienilo, kto zaakceptowal, kiedy sie skonczylo. Jesli AI nie wskaze tych pol, nie jest zakotwiczone w operacjach. Jest zakotwiczone w slajdach.
+Zanim poszerzysz zakres modelu, sprawdź gotowość operacyjną prostymi pytaniami. Czy potrafisz wymienić najważniejsze obiekty operacyjne w jednym słowniku? Czy te obiekty istnieją w systemie prawdy dla wykonania, a nie tylko raportowania? Czy zadaniowanie wyjątków jest obowiązkowe? Czy akceptacje zostawiają ślad audytowy? Czy mierzysz czas od wyzwolenia do przydzielonego właściciela? Czy zespoły poza dniem wpisują te same pola? Jeśli odpowiesz „nie” więcej niż dwa razy, napraw dyscyplinę danych zanim kupisz kolejny model.
 
-## Typowy blad: czysta historia, brudna terazniejszosc
+Dane w klasie raportowej produkują komentarz. Dane w klasie wykonania produkują skierowaną pracę: przestoje jako uzasadnione zdarzenia powiązane z aktywami i zadaniami, jakość jako blokady ze ścieżkami dysponowania, utrzymanie jako zlecenia z domknięciem, magazyn jako ruchy powiązane z sygnałami produkcji i właścicielami. AI na danych raportowych streszcza. AI na danych wykonania może proponować rozliczalne następne kroki — wewnątrz rządzonych przepływów pracy.
 
-Zaklady czesto trenuja lub promptuja na: eksportach z zeszlego kwartalu; harmonizowanych arkuszach KPI; recznie czyszczonych "zlotych tygodniach". A wdrazaja w: czesciowych skanach; brakujacych przyczynach przestoju; notatkach jakosci w skrzynkach osobistych. Model wyglada madro na demo. Pada we wtorkowa noc.
+Słabość często widać na bieżącej zmianie, nie w eksporcie z poprzedniego kwartału: aktywne zlecenie się zmieniło, a kontekst się spóźnia, przyczyny przestojów pod presją zostają puste, akceptacje są werbalnie, ale nie w rekordzie, któremu następna zmiana ufa. „Wystarczająco dobre do analityki” często wciąż nie wystarcza do asysty.
 
-## Checklist: gotowosc operacyjna pod asyste AI
+Częściowe dane mogą być akceptowalne w wąskim zakresie doradczym — zawsze z potwierdzeniem człowieka, zawsze ze skromnymi obietnicami. Trybem porażki jest udawanie, że wąskie zakresy to „AI dla całego zakładu”.
 
-Uzyj jako bramki przed rozszerzeniem zakresu modelu.
+IRIS jest zbudowany wokół rekordów klasy wykonania, bo asysta potrzebuje tego samego kręgosłupa co przełożeni: pozycje pracy, akceptacje, domknięcia w jednej warstwie — tak by dane operacyjne były codzienną infrastrukturą, a nie równoległym projektem analitycznym.
 
-1. czy potrafimy nazwac 20 kluczowych obiektow operacyjnych (zlecenie, aktyw, zadanie, hold, zlecenie pracy) w jednym slowniku?  
-2. czy te obiekty sa w jednym systemie prawdy dla wykonania, a nie tylko w raportowaniu?  
-3. czy zlecanie przy wyjatkach jest obowiazkowe, czy opcjonalne "jak ktos pamietal"?  
-4. czy akceptacje zostawiaja slad audytowy z aktorem i czasem?  
-5. czy mozemy zmierzyc czas reakcji od wyzwalacza do przypisanego wlasciciela?  
-6. czy noc i weekend wprowadzaja te same pola co dzien?
+Gdy ten kręgosłup już jest, kolejny krok opisuje [Jak AI może skracać przestoje, gdy istnieją pętle reakcji](../33_how_ai_can_reduce_downtime_when_response_loops_exist/article_PL.md).
 
-Jesli odpowiesz "nie" wiecej niz dwa razy, napraw dyscypline danych zanim kupisz kolejny model.
+Operacyjne AI potrzebuje operacyjnych obiektów, żywego odpowiedzialność i dyscypliny domknięcia. Model bez tego kręgosłupa staje się szybkim maszynistą od chaosu.
 
-## Porownanie: dane pod raport kontra dane pod wykonanie
+## Podsumowanie operacyjne
 
-| Sygnal | Pod raport | Pod wykonanie |
-|---|---|---|
-| przestoj | zbior miesieczny | zdarzenia z przyczyna, aktywem i zadaniami |
-| jakosc | licznik defektow | holdy z droga dysponowania i akceptacjami |
-| utrzymanie | sumy MPK | zlecenia pracy z czesciami, praca i domknieciem |
-| magazyn | migawka stanu | ruchy powiazane z sygnalami produkcji i wlascicielami |
+Obietnica tego artykułu — bezpośrednia lista tego, co liczy się jako dane operacyjne dla fabrycznego AI, i dlaczego brakujące elementy zamieniają asystentów w drogie streszczacze — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Dlaczego AI bez danych operacyjnych wciąż zawodzi w przemyśle” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-AI na danych pod raport produkuje komentarz.
-
-AI na danych pod wykonanie moze proponowac routowany naklad pracy z odpowiedzialnoscia.
-
-## Reality check: problem danych zwykle wychodzi na biezacej zmianie, nie w zeszlym kwartale
-
-Wiele programow wyglada zdrowo na historycznych eksportach. Slabosc wychodzi w zywych operacjach, gdy:
-
-- aktywne zlecenie sie zmienilo, ale model nadal widzi wczorajszy kontekst
-- przyczyny przestoju sa puste, bo zmiana dziala pod presja
-- akceptacja istnieje ustnie, ale nie w rekordzie, ktory nastepna zmiana moze sprawdzic
-
-Dlatego "wystarczajaco dobre do analityki" czesto nadal nie znaczy "wystarczajaco dobre do asysty".
-
-## Kiedy czesciowe dane sa akceptowalne
-
-Czesciowe dane moga dzialac w waskim doradczym zakresie: triaz powtarzalnych pytan z potwierdzeniem czlowieka; szkice checklist, gdzie krok jest recenzowany; ranking propozycji, ktore nigdy nie auto-przydzielaja. Trybem awarii jest udawanie, ze to "AI calego zakladu".
-
-## Dlaczego IRIS opiera sie na rekordach pod wykonanie
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy elementy pracy, akceptacje i domkniecia zyja w jednej warstwie, dane operacyjne przestaja byc projektem analitycznym i staja sie codziennym kregoslupem asysty.
-
-## Podsumowanie
-
-Operacyjne AI potrzebuje operacyjnych obiektow, zywej odpowiedzialnosci i dyscypliny domkniecia. Model bez tego kregoslupa to szybki maszynista dla chaosu.
+Trzymaj zespoły przy prostej zasadzie: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie jest usprawnienie operacyjne — tylko narracyjne. Ta zasada trzyma programy przy zdrowych rozsądku, gdy demo wygląda dobrze, a przekazania wciąż są kruche. Jeśli rekord jest cienki, napraw rekord zanim poszerzysz ambicję.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Obejrzyj prezentację](https://dbr77.com/demo).*
+*DBR77 IRIS kotwiczy asystę AI w ujednoliconych pozycjach pracy, akceptacjach i domknięciach, żeby modele łączyły się z tym samym operacyjnym kręgosłupem, z którego korzystają przełożeni. [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Obejrzyj walkthrough](https://dbr77.com/demo).*

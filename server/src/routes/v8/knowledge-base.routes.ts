@@ -121,9 +121,7 @@ publicKnowledgeBaseRoutes.get(
     }
 
     const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
-    const publicArticles = articles.filter(
-      (article: { is_public?: boolean }) => article.is_public !== false
-    );
+    const publicArticles = articles.filter((article) => (article as any)?.is_public !== false);
     return res.json({ data: { articles: publicArticles }, meta: kbMeta() });
   })
 );

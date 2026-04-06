@@ -5,65 +5,58 @@ Funnel stage: Decision (contract and baseline discipline)
 Core problem: teams sign optimistic baselines, then fight over what counts as a change, who pays, and whether schedule slips are excusable  
 Main promise: a pre-start change-order risk map tied to scope interfaces, assumptions, access, and latent defects
 
-Change orders are not surprises. They are the predictable output of unclear baselines.
+Change orders follow missing baselines. If scope interfaces were fuzzy in evaluation, they become invoices in integration. If assumptions were never verified, “surprises” were predictable. If plant readiness tasks had no owners, delays become arguments about force majeure that are really about forgotten prerequisites.
 
-If you only read change clauses at the first dispute, you already chose the expensive forum.
+Check four rails before green-lighting installation: frozen scope boundary against the evaluated offer, explicit assumption list with verify-by dates and owners, plant dependencies on a calendar with named accountability, and change rules that say how requests, pricing, and approvals work when reality diverges.
 
-Before start, validate change-order risk by tracing four rails: written baseline scope, named assumptions with falsification rules, access and dependency windows owned by the plant, and commercial mechanics that price unknowns without collapsing schedule accountability.
+## Interfaces are the usual battlefield
 
-If any rail is missing, assume change volume will rise and award logic should have reflected that uncertainty differently.
+Mechanical, electrical, controls, IT, and safety handoffs should be owned, not implied. Gray zones are where change orders breed.
 
-## Rail 1: baseline scope is bidirectional
+## Access and site reality
 
-You need inclusions and exclusions both sides can reference. Checklist (illustrative):
+Power, space, network paths, lifting logistics, and production windows affect what integrators can do when. If access assumptions are wrong, schedule fights follow—even when nobody meant to mislead.
 
-- [ ] deliverables list maps to acceptance objects
-- [ ] exclusions name supply, civil, IT, and training boundaries
-- [ ] interface ownership is explicit per handshake point
+## Latent defects in the baseline
 
-Weak baselines create "not in my quote" debates.
+Sometimes the “existing system” is not as understood as slides claimed. Baseline verification belongs before mobilization, not as a discovery activity billed mid-project.
 
-## Rail 2: assumptions are falsifiable and priced
+## Escalation before emotions
 
-Assumptions without consequences are decorations.
+Agree thresholds: when cost or schedule movement triggers executive review, how evidence is presented, and who can approve what. Calm mechanics beat hallway negotiations beside a running line.
 
-Confirm the contract states: what happens when an assumption is false; who verifies and by when; whether price and time are reopened or bounded.
+## A practical one-hour internal review
 
-## Rail 3: plant-controlled dependencies have owners and dates
+Read baseline scope aloud against the evaluated offer; list top assumptions and mark verify dates; assign owners to plant dependencies with calendar holds; confirm escalation when thresholds cross. Small discipline, large savings.
 
-Illustrative plant-owned risks: floor readiness and utility availability; credential issuance and network segments; material supply for FAT or SAT analogs; staffing for parallel run or cutover support.
+## How DBR77 Marketplace connects
 
-If these are not scheduled with names, integrators will reasonably claim impact.
-
-## Rail 4: commercial mechanics match real uncertainty
-
-Compare two postures (illustrative):
-
-| posture | when it fits | change risk |
-| --- | --- | --- |
-| fixed price on a frozen baseline | low interface volatility, strong discovery | lower if baseline is real |
-| target price with defined allowances | measurable unknowns remain | medium; needs governance |
-| time and materials with caps | high learning content | higher; needs tight scope guards |
-
-Mismatch between posture and reality is a change-order factory.
-
-## Bounded protocol before kickoff
-
-Run a one-hour internal review (illustrative): read baseline scope aloud against the evaluated offer; list top ten assumptions and mark verify dates; assign owners to plant dependencies with calendar holds; agree escalation path when a change crosses a cost or schedule threshold.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because change-order risk gets lower when the selected offer, contract baseline, and plant-owned dependencies still line up before kickoff.
-
-That makes post-award changes easier to classify as real scope movement instead of old ambiguity returning under a new invoice number.
+When baselines and assumptions stay visible from comparison through contract, post-award changes classify against what you already decided—instead of re-litigating old ambiguity under a new invoice number.
 
 For the closest neighboring controls, see [What to Check Before Signing an Automation Contract](../20_what_to_check_before_signing_an_automation_contract/article_EN.md), [When to Reopen an Automation Decision Before Signing](../32_when_to_reopen_an_automation_decision_before_signing/article_EN.md), and [What a Clean Handoff From Selection to Delivery Should Look Like](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_EN.md).
 
+## Change orders as information
+
+A spike in change traffic early is often diagnostic: unclear scope, unstable assumptions, or weak internal readiness. Treat patterns seriously. The goal is not zero changes—real projects learn—but predictable mechanics and honest classification so leadership sees reality.
+
+Keep a running log of change themes. Themes reveal where the baseline was weak and where the next project’s brief should improve.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"What Change Order Risk to Check Before an Automation Project Starts" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
+Finally, tie this discipline to accountability: name who will verify assumptions on the floor and by which milestone. Myths thrive when nobody owns measurement; they weaken when verification is part of the project plan, not an afterthought.
+
+
 ## Bottom line
 
-Change orders follow missing baselines.
-
-Check the four rails before you green-light installation, not when the first invoice arrives.
+Change-order risk is mostly baseline risk. Align scope, assumptions, plant work, and change mechanics before installation starts—not when the first surprise invoice lands.
 
 ---
 

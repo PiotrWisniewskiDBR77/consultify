@@ -1,69 +1,34 @@
-# Wie vollstaendiger operativer Abschluss in einer KI-nativen Fabrik aussehen soll
+# Wie vollständiger operativer Abschluss in einer KI-nativen Fabrik aussehen soll
 
-Target persona: Werksleiter / Sponsor Continuous Improvement / Customer-Quality-Lead  
-Funnel stage: Adoption  
-Core problem: Werke feiern assistierte Sichtbarkeit, waehrend Workorders, Holds und Exceptions mit unscharfen Enden offen bleiben und Kunden- und Audit-Vertrauen brechen  
-Main promise: eine Abschlussdefinition ueber Produktion, Lager, Qualitaet, Instandhaltung und Tasking mit messbaren Gates und einem einzigen Ausfuehrungsdatensatz
+Zielpersona: Werksleiter / Sponsor für kontinuierliche Verbesserung / Leitung Kundenqualität  
+Funnel-Stufe: Adoption  
+Kernproblem: Werke feiern assistierte Sichtbarkeit, während Arbeitsaufträge, Holds und Ausnahmen mit unscharfen Enden offen bleiben und Kunden- sowie Audit-Vertrauen zerbricht  
+Hauptversprechen: eine Abschlussdefinition über Produktion, Lager, Qualität, Instandhaltung und Tasking mit messbaren Gates und einem einzigen Ausführungsdatensatz
 
-Vollstaendiger operativer Abschluss in einer KI-nativen Fabrik bedeutet, dass jeder assistierte Pfad in einem verifizierten Zustand endet: physische Arbeit erledigt, Systemdatensaetze aligned, Freigaben erfasst, Abweichungen geloggt und Follow-up-Tasks entweder erledigt oder mit Ownern und Daten geplant. Abschluss ist falsch, wenn Bestand, Qualitaetsstatus oder IH-Historie zwischen Systemen divergieren. Assistenz ist Teil der Kette, keine parallele Story. Wenn Sie kein Abschluss-Paket fuer eine Zufallswoche in unter einer Stunde exportieren koennen, haben Sie keine volle Abschlussreife erreicht. Abschluss ist keine Stimmung. Es ist ein konsistenter Faktensatz.
+Abschluss ist keine Stimmung. Es ist ein zusammenpassender Faktensatz. Vollständiger operativer Abschluss in einer KI-nativen Fabrik heißt: Jeder assistierte Pfad endet in einem verifizierten Zustand – physische Arbeit erledigt, Systemdatensätze abgestimmt, Freigaben erfasst, Abweichungen protokolliert, Follow-up-Aufgaben entweder erledigt oder mit Ownern und Terminen geplant. Abschluss ist falsch, wenn Bestand, Qualitätsstatus oder Instandhaltungshistorie zwischen Systemen auseinanderlaufen. Assistenz ist Teil der Kette – keine parallele Geschichte, die niemand abgleicht. Wenn Sie kein Abschlusspaket für eine Zufallswoche in unter einer Stunde exportieren können, haben Sie keine Abschlussreife erreicht, sondern Sichtbarkeit mit losen Enden.
 
-## Definition: sechs Gates echten Abschlusses
+Denken Sie in Gates. Der operative Zustand soll in den definierten Laufmodus oder einen kontrollierten Stopp zurückkehren. Dokumentation und Parameter sind nach Vorgabe aktualisiert. Qualitätsdisposition ist über abhängige Datensätze hinweg konsistent. Lagerwahrheit stimmt für den betroffenen Umfang. Die Instandhaltungshistorie spiegelt wider, was geschah, von wem, mit Teilen und Zeit. Temporäre Maßnahmen tragen datierte Aufgaben mit Eskalation bei Verstoß. Überspringen Sie ein Gate, und die nächste Schicht erbt Risiko.
 
-Operationszustand: Linie, Zelle oder Asset zurueck im definierten Run-Mode oder kontrollierten Stop; Dokumentation: Arbeitsanweisungen, Parameter und Spuren wie gefordert aktualisiert; Qualitaets-Disposition: Batch- oder Los-Status konsistent zwischen QMS und Ausfuehrungsrecord; Lager-Wahrheit: WMS- und MES-Mengen fuer den betroffenen Scope abgeglichen; IH-Historie: CMMS spiegelt was getan wurde, von wem, mit Teilen und Zeit; Follow-through: temporaere Massnahmen tragen datierte Tasks mit Eskalation bei Bruch. Ein Gate zu ueberspringen bedeutet: die naechste Schicht erbt Risiko.
+Teilabschluss fühlt sich schnell an, bis jemand am Faden zieht: Aufgaben verbal erledigt bei ungeprüfter Standardarbeit, Holds nur in einem System gelöst, Assistenz ohne Datensatz verworfen, KPIs grün während Ausnahmen hängen. Vollabschluss wirkt naiv gemessen langsamer; über den ganzen Lebenszyklus eines Themas gemessen schneller.
 
-## Framework: Teilabschluss versus Vollabschluss
+Führen Sie wöchentlich eine Integritätsstichprobe durch: verfolgen Sie zufällige assistierte Items durch die Gates, messen Sie Diskrepanzminuten zwischen Systemen für Bestand und Qualität, listen Sie wiederkehrende Teilabschlussmuster und setzen Sie pro Muster einen Owner mit einem 30-Tage-Fix-Ziel.
 
-| Signal | Teilabschluss | Vollabschluss |
-|---|---|---|
-| Task-Status | verbal erledigt | gegen Standardarbeit verifiziert |
-| Assistenz | Vorschlag ohne Record verworfen | Dismiss oder Convert geloggt |
-| Holds | nur in einem System geloest | in abhaengigen Systemen geloest |
-| Metriken | KPIs gruen waehrend Exceptions haengen | Exceptions owned oder reklassifiziert |
+Ein 90-Tage-Reifepfad kann umfassen: Veröffentlichung der Abschlussdefinition Version eins mit Gate-Ownern, Ausrichtung von Verbesserungsmeetings an Gate-Failures statt Anekdoten, Einbindung von Assistenz-Dismiss- und Konvertierungsregeln in dieselben Gates, ein funktionsübergreifendes Üben zu einem simulierten Multi-System-Hold sowie eine Vorlage für Abschlusspakete für Kunden und Prüfer. Wenn Legacy-Grenzen vollständige Automatisierung blockieren, veröffentlichen Sie explizite Teilabschlussgrenzen und kompensierende Kontrollen – keine stillen Lücken.
 
-Teilabschluss wirkt schnell, bis Kunde oder Auditor den Faden zieht.
+Werke nennen ein Thema oft geschlossen, wenn der sichtbare Schmerz endet: Linie läuft, Warteschlange bewegt sich, der dringende Anruf ist vorbei. Teilabschluss lässt dennoch Risiko, wenn der Qualitätsstatus nur an einem Ort korrigiert wurde, temporäre Umgehungen keinen datierten Follow-up-Owner haben oder offene Abhängigkeiten in „erledigten“ Aufgaben versteckt sind. Abschluss muss ein Multi-System-Zustand sein – nicht der Moment, in dem der Stress sinkt.
 
-## Checkliste: woechentliche Abschluss-Integritaets-Stichprobe
+IRIS zielt abschlussorientiert, wenn Assistenz, Aufgaben, Freigaben und abhängige Zustände in einer Ausführungsgeschichte leben – sodass Lücken am selben Tag sichtbar werden, nicht erst nach der nächsten Beschwerde.
 
-- zehn zufaellige assistierte Items pro Werk  
-- jedes durch die sechs Gates tracen  
-- Mismatch-Minuten zwischen Systemen fuer Bestand und Qualitaet messen  
-- Top-3-wiederkehrende Teilabschluss-Themen listen  
-- einen Owner pro Thema mit 30-Tage-Fix-Ziel setzen
+Zu verbundener Ausführung und Audit siehe [Wie KI Fabrikoperations verändert, wenn Ausführung verbunden ist](../21_how_ai_is_changing_factory_operations_when_execution_is_connected/article_DE.md), [Wie Sie auditfähige Datensätze für KI-gestützte Fabrikentscheidungen erstellen](../46_how_to_create_audit_ready_records_for_ai_assisted_factory_decisions/article_DE.md) und [Wie Sie ein Ausnahmemodell für KI-gestützte Operations entwerfen](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_DE.md).
 
-## Schrittfolge: Reifepfad (90 Tage)
+Reife KI-native Operations beeindrucken nicht mit Volumen. Sie beeindrucken, wenn jeder assistierte Pfad mit einem verteidigbaren, exportierbaren Closed State enden kann.
 
-Abschlussdefinition v1 mit Gate-Ownern veroeffentlichen; IR-Reviews auf Gate-Fails ausrichten, nicht Anekdoten; Assistenz-Dismiss- und Convert-Regeln in dieselben Gates integrieren; Cross-Funktions-Drill: simulierter Hold mit Multi-System-Release; Abschluss-Paket-Template fuer Kunden und Auditoren veroeffentlichen.
+## Operatives Fazit
 
-## Wann "Vollabschluss" kurzfristig unrealistisch ist
+Das Versprechen dieses Artikels – eine Abschlussdefinition über Produktion, Lager, Qualität, Instandhaltung und Tasking mit messbaren Gates und einem einzigen Ausführungsdatensatz – wird erst operativ, wenn es die Arbeitsbewegung verändert: klareres Ownership, schnellere Erstzuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Wie vollständiger operativer Abschluss in einer KI-nativen Fabrik aussehen soll“ ist das der Akzeptanztest: die nächste Schicht soll lesen können, was passiert ist, was freigegeben wurde und was offen bleibt – ohne mündliche Rekonstruktion.
 
-Legacy kann Status ohne manuelle Bruecken nicht austauschen; regulatorische Validierung blockiert Integrationen.
-
-Dann explizite Teilabschluss-Grenzen und kompensierende Kontrollen publizieren, keine stillen Luecken.
-
-## Reality check: Werke nennen es meist geschlossen, wenn der sichtbare Schmerz aufhoert
-
-Das ist verstaendlich.
-
-Die Linie laeuft wieder. Die Warteschlange bewegt sich. Der dringende Anruf ist vorbei. Teilabschluss laesst trotzdem Risiko stehen, wenn:
-
-- der Qualitaetsstatus in einem System korrigiert wurde, aber nicht in den anderen
-- eine temporaere Umgehung keinen datierten Follow-up-Owner hat
-- die naechste Schicht eine offene Abhaengigkeit erbt, die als erledigte Aufgabe getarnt ist
-
-Darum muss Abschluss als Multi-System-Zustand definiert werden und nicht als der Moment, in dem der Stress sinkt.
-
-## Warum IRIS auf Abschluss-first Operations zielt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Eine Schicht macht Abschluss zu einer Story: Assistenz, Tasks, Freigaben und Systemzustaende stimmen ueberein oder die Luecke ist am selben Tag sichtbar.
-
-## Fazit
-
-Reife KI-native Operations beeindrucken nicht mit Volumen.
-
-Sie beeindrucken, wenn jeder assistierte Pfad mit einem verteidigbaren, exportierbaren Closed-State enden kann.
+Halten Sie Teams an einer einfachen Regel: Wenn sich eine Verbesserung nicht in Exporten aus dem Ausführungsdatensatz zeigen lässt, ist es noch keine Betriebsverbesserung – nur eine narrative. Diese Regel hält Programme ehrlich, wenn Demos gut aussehen, Übergaben aber fragil bleiben.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS vereint Produktion, Lager, Qualität, Instandhaltung und Tasking auf einer Ausführungsschicht, sodass Abschluss-Gates über Systeme hinweg am selben Tag ausgerichtet werden können, an dem Lücken sichtbar werden. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

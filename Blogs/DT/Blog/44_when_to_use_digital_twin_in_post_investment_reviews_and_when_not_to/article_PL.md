@@ -1,51 +1,45 @@
-# Kiedy uzywac Digital Twin w post-investment reviews i kiedy nie
+# Kiedy używać digital twin w przeglądach po inwestycji – a kiedy nie
 
-Target persona: CFO / transformation lead prowadzacy post-investment reviews po CAPEX albo major change  
-Funnel stage: Consideration  
-Core problem: reviews default do spend variance i timelines podczas gdy operating thesis ktory justified investment zostaje unexamined  
-Main promise: clear when-to-use map zeby Digital Twin support honest post-investment learning bez becoming forensic theater
+Docelowa persona: CFO / lider transformacji prowadzący przeglądy po CAPEX lub dużej zmianie  
+Etap lejka: Consideration
+Główny problem: przeglądy domyślnie skupiają się na wariancji wydatków i harmonogramach, podczas gdy teza operacyjna uzasadniająca inwestycję pozostaje niezbadana  
+Główna obietnica: jasna mapa „kiedy używać”, by digital twin wspierał uczciwe uczenie się po inwestycji bez zamieniania się w teatr forensyczny
 
-**Bezposrednia odpowiedz:** uzyj Digital Twin w post-investment reviews gdy potrzebujesz testowac czy approved operating thesis nadal holds under real ramp i supplier behavior, compare as-built flow do pre-approval scenarios albo decide czy adjust next tranche. Nie uzywaj gdy review jest tylko o procurement compliance, model nigdy nie byl tied do approval guardrails albo team lacks dated baseline do compare against. Digital Twin to decision system i scenario-testing environment, nie 3D showcase dla auditing slides. Post-investment reviews powinny answer jedno uncomfortable question. Czy reality diverged od story ktora funded, i co robimy next?
+Używaj digital twin w przeglądach po inwestycji, gdy musisz sprawdzić, czy zatwierdzona teza operacyjna nadal trzyma się przy realnej rampie i zachowaniu dostawców, porównać przepływ as-built ze scenariuszami sprzed zatwierdzenia albo zdecydować, czy dostosować następną transzę. Nie używaj, gdy przegląd dotyczy tylko zgodności zaopatrzenia, model nigdy nie był powiązany z progami zatwierdzenia albo zespołowi brakuje datowanego baseline do porównania.
 
-## Kiedy Digital Twin belongs w room
+Digital twin to system decyzyjny i środowisko testów scenariuszy – nie teatr zrzutów ekranu w przebraniu due diligence. Przeglądy po inwestycji powinny odpowiedzieć na jedno niewygodne pytanie: czy rzeczywistość rozjechała się od historii, którą sfinansowaliśmy, i co robimy dalej?
 
-Strong fit signals: approval memo referenced named scenarios i guardrails; structural albo flow assumptions byly explicit w business case; performance lags podczas gdy spend jest on track, sugerujac thesis mismatch; musisz decide czy fund corrective layout albo staffing actions.
+## Kiedy digital twin należy do sali
 
-W tych cases rerun standard scenario pack against refreshed inputs i publish delta memo jak any operational change event.
+Silne sygnały dopasowania: memo zatwierdzenia odwoływało się do nazwanych scenariuszy i progów; założenia strukturalne lub przepływu jawne w business case; wyniki odstają, podczas gdy wydatki trzymają plan – sugestia rozjazdu tezy; albo potrzeba decyzji, czy finansować korygujące działania layoutu lub obsady. Ponownie uruchom standardowy pakiet scenariuszy na odświeżonych wejściach i opublikuj memo delty jak przy każdym zdarzeniu zmiany operacyjnej. Połącz z artykułem o evidencji symulacji na poziomie rady oraz o odświeżaniu po zmianie, gdy kierownictwo potrzebuje dyscypliny pakowania lub wyzwalaczy odświeżenia.
 
-## Kiedy leave Digital Twin out
+## Kiedy zostaw digital twin poza salą
 
-Healthy exclusions: investment nigdy nie byl modeled jako flow albo constraint decision; legal albo contractual compliance jest sole agenda; data needed do refresh inputs nie bedzie available przez months i guessing zanieczyszcza review; leadership chce tylko narrative win, nie ranked set corrective options. Skipping twin tutaj to discipline, nie failure.
+Zdrowe wyłączenia: inwestycja nigdy nie była modelowana jako decyzja przepływu lub ograniczenia; jedyną agendą jest zgodność prawna lub umowna; danych do odświeżenia wejść nie będzie przez miesiące, a zgadywanie zatruje przegląd; kierownictwo chce narracyjnego zwycięstwa zamiast uszeregowanego zestawu opcji korygujących. Pominięcie bliźniaka to dyscyplina – nie porażka.
 
-## Framework: review intent versus tool fit
+## Intencja przeglądu kontra dopasowanie narzędzia
 
-| Review intent | Digital Twin fit |
-|---|---|
-| verify thesis versus floor reality | high |
-| compare as-built do approved scenarios | high |
-| explain schedule slips bez flow logic | low |
-| pure financial variance | low unless tied do throughput |
+Weryfikacja tezy wobec rzeczywistości hali albo porównanie as-built ze zatwierdzonymi scenariuszami – wysoki fit. Wyjaśnianie poślizgów harmonogramu bez logiki przepustowości – niski fit, chyba że powiązane z przepustowością. Czysta wariancja finansowa – niski fit, chyba że przepustowość i serwis wiszą na historii wariancji.
 
-## Checklist: minimum inputs dla credible PIR twin pass
+## Minimalne wejścia na wiarygodny przebieg PIR bliźniaka
 
-- [ ] dated baseline scenario IDs z approval  
-- [ ] as-built footprint i routing changes documented  
-- [ ] actual ramp curve albo order backlog behavior dla period  
-- [ ] staffing i shift model as run, nie as planned  
-- [ ] supplier i inbound behavior updates z evidence grade labels
+Datowane ID scenariuszy baseline z zatwierdzenia; udokumentowane zmiany footprint i kierowania zgłoszeń as-built; rzeczywista krzywa rampy lub zachowanie backlogu zamówień w okresie; model zmian i obsady tak jak faktycznie prowadzony – nie jak planowany; aktualizacje zachowania dostawców i przyjęć z etykietami stopnia evidencji.
 
-## Co Digital Twin zmienia tutaj
 
-Digital Twin zamienia post-investment conversation z backward spend tracking w forward correction design.
+## Jak to widać w memo bramkowych i rozmowach na hali
+
+Dobra praktyka digital twin tworzy ciągłość między salą konferencyjną a spacerem po hali. Memo bramkowe powinny czytać się jak dokumenty operacyjne: nazwane opcje, wspólne szoki, jawne wyłączenia i progi ochronne, które realnie ograniczają spend. Rozmowa na hali powinna echem powtarzać ten sam język – gdzie zbiera się czas, gdzie siedzą bufory, co się zmienia, gdy inbound się chwieje – by detal inżynierski nie był „tłumaczony” na stratę w pierwszym zajętym tygodniu.
+
+Debaty o layoutcie szczególnie potrzebują tego mostu. Geometria jest przekonująca na papierze; przepływ – pod stresem. Gdy tabela porównawcza obejmuje obciążenie intralogistyczne, migrację ograniczenia i zachowanie przy powrocie do normy – nie tylko nagłówkową stawkę – ograniczasz klasyczny tryb awarii, w którym najtańszy footprint kupuje najkruchszy wtorek. Finanse powinno widzieć, jak timing i kapitał obrotowy ruszają się z tymi wyborami, nie tylko jak różni się bilet CAPEX. Tak wyrównanie sprawia, że praca scenariuszowa zasługuje na stałe miejsce przy stole, a nie na jednorazowy blask konsultingu.
 
 ## Co dodaje DBR77 Digital Twin
 
-DBR77 Digital Twin wspiera practical scenario comparison i refresh discipline zeby post-investment passes reuse ten sam stress logic ktory justified spend.
+DBR77 Digital Twin przenosi ID scenariuszy i logikę stresu naprzód, by przeglądy po inwestycji testowały dryf tezy wobec baseline zatwierdzenia zamiast startować od pamięci.
 
-## Bottom line
+## Podsumowanie
 
-Uzyj twin gdy funded story byla operational. Skip gdy review nie jest o flow, constraints albo scenario truth.
+Używaj bliźniaka, gdy sfinansowana historia była operacyjna. Pomijaj go, gdy przegląd nie dotyczy przepływu, ograniczeń ani prawdy scenariuszy.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*
+*DBR77 Digital Twin pomaga ponownie połączyć przeglądy po inwestycji z tą samą logiką stresu i tymi samymi ID scenariuszy, które obowiązywały przy zatwierdzeniu. [Umów demo](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*

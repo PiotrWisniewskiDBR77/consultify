@@ -1,60 +1,52 @@
-# Co powinien zawierac boardowy pakiet decyzyjny do automatyzacji
+# Co powinien zawierać pakiet decyzyjny ws. automatyzacji gotowy na zarząd
 
-Target persona: partner finansowy / sponsor programu skladajacy materialy komitetu  
-Funnel stage: Decision (dokumentacja kapitalowa)  
-Core problem: pakiety dla zarzadu recykuluja slajdy dostawcow i ukrywaja logike przyznania, akceptacji i zobowiazan zakladu  
-Main promise: powtarzalna struktura pakietu, ktora przetrwa pytania bez spotkania obok
+Docelowa persona: Partner finansowy / sponsor programu przygotowujący materiały na komitet  
+Etap lejka: Decyzja (dokumentacja kapitałowa)  
+Główny problem: pakiety recykulują slajdy dostawców i ukrywają logikę wyboru, akceptacji oraz zobowiązania zakładu  
+Główna obietnica: powtarzalna struktura pakietu, która wytrzyma pytania bez „spotkania obok”
 
-Pakiet dla zarzadu to nie pokaz pieknosci dostawcy.
+Pakiet na zarząd powinien pozwolić uważnemu czytelnikowi odtworzyć decyzję bez dzwonienia potem do trzech osób. Gdy pakiet jest chudy, komitet zatwierdza optymizm. Gdy pakiet jest uczciwy, zatwierdza rozliczalność. Powtarzalna struktura ogranicza panikę przed każdą radą i zapobiega narracjom „specjalnie pod zarząd”, które zaprzeczają temu, co naprawdę porównywały zakupy.
 
-To minimalny dowod, ze przedsiebiorstwo rozumie, co kupuje i co nadal nalezy do niego po zlozeniu zamowienia.
+## Rdzeń treści
 
-## Bezposrednia odpowiedz
+Dołączcie jednostronicowe podsumowanie dla kierownictwa: efekt, cash, harmonogram i główne ryzyka. Dodajcie sformułowanie wyzwania i granicę zakresu z wyraźnymi wyłączeniami. Podajcie podsumowanie porównania: kryteria, logika shortlisty, dlaczego wybrana ścieżka wygrała. Zamieńcie kształt komercyjny na wysokim poziomie: kamienie milowe, logika płatności, granice gwarancji i wsparcia. Udokumentujcie obiekty akceptacji i koncepcję dowodu. Nazwijcie wewnętrznych właścicieli i zobowiązania zakładu. Pokażcie wrażliwość na kluczowe założenia. Wskażcie odniesienie do zapisu decyzji — gdzie leży pełne porównanie.
 
-Boardowy pakiet decyzyjny do automatyzacji powinien zawierac: streszczenie dla kierownictwa z prosba decyzyjna, baze zakresu i wylaczenia, notatke porownawcza jak znormalizowano oferty, logike rekomendowanego przyznania z zapisem sprzeciwow, zarys akceptacji oraz FAT lub SAT powiazany z kamieniami milowymi, harmonogram zaleznosci zakladu z wlascicielami, rejestr ryzyk z mitygacjami, podsumowanie kapitalu i TCO z notami wrazliwosci oraz haczyk po aprobacie do mobilizacji z odniesieniem do wewnetrznych artefaktow wyrownania.
+## Czego unikać
 
-Brak logiki przyznania lub zaleznosci zakladu to najczestszy cichy tryb awarii.
+Materiałów marketingowych dostawcy bez tłumaczenia strony kupującego; logiki wyboru, która żyje tylko w skrzynce mailowej; języka akceptacji w stylu „udany rozruch”; opisu prac po stronie zakładu jako „do ustalenia”.
 
-## Spis tresci pakietu (propozycja)
+## Sprawcie, by pytania były przewidywalne
 
-| Sekcja | cel |
-| --- | --- |
-| Prosba decyzyjna | kapital, timeline i co odblokowuje aprobata |
-| Zakres i interfejsy | co sie rusza, co nie, punkty styku IT i jakosci |
-| Porownywalnosc | wersja macierzy ocen, streszczenie dziennika wyjasnien |
-| Uzasadnienie przyznania | dlaczego ten dostawca, co zmieniloby odpowiedz |
-| Akceptacja | obiekty, dowody i kto podpisuje |
-| Plan zakladu | przestoje, szkolenia, czesci, okna walidacji |
-| Ryzyko i eskalacja | glowne pozycje, wlasciciele, zasady pauzy |
-| Podsumowanie komercyjne | kamienie milowe, srodki naprawcze, sciezka zmiany zakresu w naglowku |
+Jeśli potraficie wyprzedzić pytania komitetu, odpowiedzcie na papierze. Niespodzianki w sali oznaczają, że pakiet budowano pod teatr zatwierdzenia, a nie pod rządzenie.
 
-## Blok porownania: dobry pakiet a pakiet ze slajdow
+## Jak DBR77 Marketplace się mapuje
 
-| Sygnal | pakiet board-ready | pakiet ze slajdow dostawcy |
-| --- | --- | --- |
-| Akceptacja | nazwane obiekty i dowody | efektowne zdjecia efektow |
-| Wlascicielstwo | RACI dla zakladu | organigram integratora |
-| Ryzyko | jawne mitygacje | "robilismy to wczesniej" |
-| Kapital | mapowanie na kamienie milowe | czasowanie jednej faktury |
+Ustrukturyzowane porównanie i kręgosłup akceptacji wcześniej w procesie powinny czysto przełożyć się na materiały komitetu — tak by finanse i operacje nie odbudowywały historii pod presją terminu.
 
-## Kiedy pakiet jest niepelny, ale do naprawy
+Najbliższe artykuły towarzyszące: [Jak ocenić, czy projekt automatyzacji jest gotowy do akceptacji przez zarząd](../43_how_to_decide_if_an_automation_project_is_ready_for_board_approval/article_PL.md), [Co dobry wewnętrzny biznes case na automatyzację powinien uczynić widocznym](../39_what_a_good_internal_business_case_for_automation_should_make_visible/article_PL.md), [Co dobra oferta automatyzacyjna powinna uczynić widocznym](../17_what_a_good_automation_offer_should_make_visible/article_PL.md) oraz [Co FAT i SAT powinny naprawdę udowodnić przed startem produkcyjnym](../25_what_fat_and_sat_should_actually_prove_before_go_live/article_PL.md).
 
-Mozesz naprawic w czterdziestu osmiu godzinach, jesli luki sa urzedowe: brak dat przy zaleznosciach, niepodpisana wewnetrzna strona zakresu, przestarzaly numer wersji macierzy.
+## Dyscyplina załączników
 
-Nie naprawisz w czterdziestu osmiu godzinach, jesli porownywalnosc pekla przy poznych wyjasnieniach.
+Pakiety pęcznieją, gdy zespołom brakuje pewności. Lepiej ścisły rdzeń i załącznik z detalem: pełna macierz porównań, rejestr założeń, skrót uwag do kontraktu, notatki z warsztatów. Komitet nie powinien potrzebować załącznika, by zrozumieć decyzję — ale finanse i inżynieria powinny wiedzieć, że istnieje i jest spójny ze streszczeniem.
 
-## Co to znaczy dla DBR77 Marketplace
+Wersjonujcie pakiet. Zarządy wracają do pytań tygodnie później; „który pakiet zatwierdzono” nie powinno być dwuznaczne.
 
-DBR77 Marketplace to workflow decyzji automatyzacyjnych, warstwa zaufania przy wyborze integratora oraz system porownywania ofert ze sprawdzalna struktura.
+## Od decyzji do zachowania hali
 
-Pakiet dla zarzadu powinien czytac sie jak eksport tej dyscypliny: te same obiekty akceptacji, ten sam kregoslup porownania, ta sama logika przyznania. Marketplace to nie katalog robotow.
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „co powinien zawierać pakiet decyzyjny ws. automatyzacji gotowy na zarząd” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-To sposob, w jaki producenci redukuja chaos sourcingu zanim komitet kapitalowy zobaczy prosbe.
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
+
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
+
+Na koniec powiąż tę dyscyplinę z rozliczalnością: nazwij, kto zweryfikuje założenia na hali i przy którym kamieniu milowym. Mity kwitną, gdy nikt nie posiada pomiaru; słabną, gdy weryfikacja jest częścią planu projektu, a nie dopiskiem.
 
 ## Podsumowanie
 
-Jesli zarzad nie moze przejsc od porownania do akceptacji do pracy zakladu, pakiet nie jest gotowy. Zrob te sciezke celowo jawna.
+Pakiet powinien umożliwiać sprzeciw bez chaosu: recenzenci mogą nie zgadzać się co do osądu, wciąż zgadzając co do faktów. Ten standard oddziela rządzenie od dopingowania.
+
+Budujcie pakiety, które niosą logikę wyboru, akceptację i zobowiązania zakładu w tym samym zestawie plików co historię ekonomiczną. Jeśli zarząd potrzebuje spotkania obok sali, by zrozumieć decyzję, pakiet nie zdał egzaminu.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace daje ustrukturyzowane porównanie i kręgosłup akceptacji, który czysto wchodzi w materiały komitetu — bez odbudowywania historii z PDF-ów. [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

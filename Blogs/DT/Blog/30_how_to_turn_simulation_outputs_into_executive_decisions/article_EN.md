@@ -5,53 +5,34 @@ Funnel stage: Decision
 Core problem: simulation work often stops at technical charts, so leadership approves from habit or politics because the bridge from model output to decision record was never built  
 Main promise: a compact governance pattern that converts scenario results into an executive-ready choice with explicit trade-offs, assumptions, and next actions
 
-turn simulation outputs into executive decisions by packaging one decision sentence, a small set of comparable scenarios, ranked trade-offs in business language, assumption ownership, invalidation triggers, and a chosen path with a dated review point. If the packet cannot fit on one to two pages, it is not ready for the committee. This article owns the executive packet; the CAPEX stage-gates article in this series owns gate-by-gate simulation contracts, and the act-on-strength article owns when outputs are commitment-ready. Executives do not lack intelligence. They lack time and a trustworthy decision packet.
+Turn simulation outputs into executive decisions by packaging one decision sentence, a small set of comparable scenarios, ranked trade-offs in business language, assumption ownership, invalidation triggers, and a chosen path with a dated review point. If the packet cannot fit on one to two pages, it is not ready for the committee.
 
-## Why raw model output fails in the boardroom
+Executives do not lack intelligence. They lack time and a trustworthy decision packet. Raw charts are necessary internally; they are insufficient for approval when they omit what is being chosen, what is being sacrificed, what would cause a reopen, and who owns the assumptions that matter. Without those elements, the room defaults to confidence tone and familiarity.
 
-Technical charts are necessary internally.
+## Why technical output fails in the boardroom
 
-They are insufficient for approval because they rarely answer: what exactly is being chosen; what is being sacrificed; what would cause a reopen; who owns the assumptions that matter most.
+Approval requires consequence clarity: the single choice on the table, the real alternatives leadership would fund, the scenario lens for demand, supply, and internal shocks, trade-offs in throughput, cost, risk, flexibility, and time, an assumption ledger with names, invalidation triggers tied to measurable signals, and a chosen path with a review date. That structure is how simulation becomes governance—not a science fair.
 
-Without those elements, the room defaults to confidence tone and vendor familiarity.
+## Translate model signals into executive meaning
 
-## Executive decision packet: required sections
+Queue time at a constraint is service risk and overtime pressure. WIP level is working capital and floor congestion. Bottleneck migration is where the next firefight starts. Ramp duration is when benefits become real in the operating rhythm. Sensitivity to supplier delay is exposure procurement should acknowledge. The goal is not to hide detail; it is to make consequence visible.
 
-Use this structure every time: **Decision sentence:** the single choice the committee is making now; **Options compared:** only real alternatives leadership would fund; **Scenario lens:** which demand, supply, and internal shocks were tested; **Trade-off summary:** throughput, cost, risk, flexibility, time in plain language; **Assumption ledger:** top assumptions with names and confidence tags; **Invalidation triggers:** what new facts force a revisit; **Chosen path and review date:** what happens next and when outcomes are checked. This is how simulation becomes governance, not a science fair.
+## Decision-ready checklist
 
-## Translation table: from model metric to executive meaning
+Two leaders can explain the choice without opening the model. Losing options have clear reasons for losing. Stress cases change the ranking in a way the team expected. Finance sees how cash timing differs between options. Operations sees how stability differs. If any test fails, refine the packet before asking for a signature.
 
-| Model output | Executive translation (examples) |
-|---|---|
-| queue time at constraint | service risk and overtime pressure |
-| WIP level | working capital and floor congestion |
-| bottleneck migration | where the next firefight will start |
-| ramp duration | when benefits become real in P&L |
-| sensitivity to supplier delay | exposure that procurement should acknowledge |
 
-The goal is not to hide detail. The goal is to make consequence visible.
+## What should feel different on Monday
 
-## Checklist: signs the output is decision-ready
+Teams rarely fail because they lack intelligence; they fail because the next meeting repeats the same questions with fresher anxiety. When simulation work is wired into how you decide, Monday shows up with fewer circular arguments about whether a layout "ought to work." Instead, you carry a short list: which option survived the same stress vocabulary, which assumptions still carry hypothesis labels, and what would force you to rerun the pack before the next tranche. That is the practical face of governance—not a heavier process, but a clearer receipt for why the floor should trust the plan.
 
-- [ ] two leaders can explain the choice without opening the model  
-- [ ] the losing options have clear reasons for losing  
-- [ ] stress cases change the ranking in a way the team expected  
-- [ ] finance recognizes how cash timing differs between options  
-- [ ] operations recognizes how stability differs between options
-
-If any box fails, refine the packet before asking for a signature.
-
-## What Digital Twin changes here
-
-Digital Twin is a decision system for scenario testing. Executives need consequence clarity, not a rotating floor tour.
-
-When outputs are packaged with discipline, it becomes a repeatable way to de-risk layout, flow, and CAPEX decisions before reality changes.
+For capital and footprint choices, the receipt matters as much as the ranking. Approvals should be able to point to scenario identity and ranges without opening a model. If executives cannot explain the downside story in plain language, the organization is still buying animation. If operations cannot recognize the staffing and flow assumptions embedded in the memo, the twin is still a slide, not a decision system. Use the next leadership block to test whether the narrative is portable: could someone not in the room defend the choice from the packet alone? If not, tighten the assumption ledger and the executive summary before you ask for more money or more floor space.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin preserves the same comparison discipline while compressing model insight into approval-ready executive packets.
+DBR77 Digital Twin preserves comparison discipline while compressing model insight into approval-ready executive packets: consistent comparisons across projects, traceability from assumption to outcome, shorter distance between engineering insight and approval-quality clarity.
 
-For executive use, it helps organizations: keep comparisons consistent across projects; preserve traceability from assumption to outcome; shorten the distance between engineering insight and approval-quality clarity.
+Pair this pattern with the CAPEX stage-gates article for gate-by-gate simulation contracts and the act-on-strength article for when outputs justify commitment.
 
 ## Bottom line
 

@@ -1,65 +1,56 @@
-# Kiedy polaczyc wiele potrzeb automatyzacji w jednym procesie zakupu, a kiedy nie
+# Kiedy połączyć wiele potrzeb automatyzacji w jeden proces zakupowy, a kiedy nie
 
-Target persona: sponsor / wlasciciel portfolio miedzy liniami i cyklami capex  
-Funnel stage: Consideration do Evaluation (ksztaltowanie portfolio przed projektem RFQ)  
-Core problem: laczenie redukuje liczbe transakcji, ale czesto niszczy porownywalnosc, ukrywa slabe zakresy i sprzega harmonogramy, ktore powinny pozostac niezalezne  
-Main promise: siatka decyzji bundle versus split oparta na interfejsach, sprzezeniu ryzyka i logice przyznania
+Docelowa persona: Sponsor / właściciel portfolio między liniami i cyklami capexu  
+Etap lejka: Rozważanie do oceny (kształtowanie portfolio przed projektem RFQ)  
+Główny problem: łączenie w pakiet obniża liczbę transakcji, ale często niszczy porównywalność, ukrywa słabe zakresy i sprzęga harmonogramy, które powinny zostać niezależne  
+Główna obietnica: siatka decyzji „pakiet vs podział” oparta na interfejsach, sprzężeniu ryzyka i logice przyznania
 
-Laczenie czuje sie efektywnie.
+Łączenie w jeden pakiet czuje się efektywnie: jeden komitet sterujący, jeden cykl zakupów, jedna narracja na zarząd. Może też stworzyć potwora — sprzężone harmonogramy, splątaną rozliczalność i propozycje tak duże, że porównywalność zapada się w streszczenia dla kierownictwa, których nikt nie obroni technicznie.
 
-Jest efektywne, gdy zwieksza porownywalnosc i redukuje szwy integracji. Jest drogie, gdy laczy niepowiazane ryzyka w jedno gardlo.
+Dzielcie, gdy pakiety prac są na tyle niezależne, że da się je porównać i przyznać czysto. Łączcie, gdy interfejsy, ryzyko i mobilizacja naprawdę wymagają jednego wątku.
 
-## Bezposrednia odpowiedz
+## Łączcie, gdy sprzężenie jest realne
 
-Polacz wiele potrzeb automatyzacji w jednym procesie zakupu, gdy dziela interfejsy, ograniczenia czasowe lub zdolnosci dostawcy w sposob, w jaki pojedynczy integrator moze posiadac spojna dostawe z jednym zapisem akceptacji.
+Rozważajcie jeden proces, gdy systemy dzielą interfejsy, kolejność ma znaczenie dla bezpieczeństwa lub ciągłości produkcji, istnieją ekonomie integracji albo jeden integrator musi posiadać sprzeczne zależności między gniazdami. Test jest prosty: czy podział i tak wymusi ukrytej koordynacji?
 
-Podziel na rownolegle lub sekwencyjne zakupy, gdy zakresy maja roznych wlascicieli technicznych, rozne kalendarze gotowosci, rozne profile ryzyka lub gdy laczenie wymusiloby pojedyncze przyznanie na niepowiazane zaklady.
+## Dzielcie, gdy porównywalność lub ryzyko tego wymaga
 
-## Wymiar 1: sprzezenie interfejsu
+Osobne zakupy, gdy zakresy różnią się klasą technologii, rozjeżdżają się gotowością harmonogramów, różnią się sponsorzy albo słabe pakiety schowałyby się w większej liczbie. Wciskanie niepowiązanych potrzeb w jedno RFQ często daje jedną lśniącą historię i kilka niedookreślonych pakietów roboczych.
 
-Wysokie sprzezenie (ilustracyjne): wspolne zdarzenia MES i logika routingu miedzy gniazdami; wspolny kregoslup intralogistyki zasilajacy wiele stanowisk.
+## Definiujcie pakiety robocze nawet wewnątrz pakietu
 
-Niskie sprzezenie: niezalezne linie z oddzielnymi modelami probek jakosci i bez wspolnej filozofii sterowania. Wysokie sprzezenie sprzyja jednemu watkowi. Niskie sprzezenie sprzyja rozdzielnym decyzjom.
+Jeśli łączycie, nadal nazywajcie pakiety z obiektami akceptacji, właścicielami i granicami komercyjnymi. Inaczej „jeden projekt” staje się jednym sporem.
 
-## Wymiar 2: sprzezenie harmonogramu
+## Logika przyznania musi przetrwać krytykę
 
-Zapytaj, czy poslizg projektu A powinien prawnie i operacyjnie ciagnac projekt B. Jesli tak, laczenie moze odzwierciedlac rzeczywistosc. Jesli nie, laczenie moze stworzyc sztuczne zakladnictwo.
+Komitet powinien widzieć, gdzie pieniądze mapują się na efekty per pakiet — nawet jeśli podpisy siedzą pod jedną umową parasolową.
 
-## Wymiar 3: integralnosc porownywalnosci
+## Jak DBR77 Marketplace pomaga
 
-Laczenie dziala, gdy nadal mozesz zdefiniowac: obiekty akceptacji na pakiet pracy w obrebie koperty; reguly zmiany zamowienia, ktore nie rozmywaja odpowiedzialnosci miedzy pakietami.
+Ustrukturyzowane porównanie per pakiet roboczy utrzymuje programy złożone z wielu elementów pod kontrolą inspekcji: podziały akceptacji i rozliczalności pozostają widoczne zamiast rozpuszczać się w jednym nagłówku.
 
-Jesli pakiet staje sie pojedynczym mglistym "programem automatyzacji", tracisz inspektowalnosc.
+Najbliżsi sąsiedzi upstream: [Jak określić zakres projektu automatyzacji bez przesady](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_PL.md) oraz [Kiedy stosować shortlistę, a kiedy utrzymać więcej dostawców w grze](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_PL.md).
 
-## Wymiar 4: dopasowanie zdolnosci dostawcy
+## Zarządzanie portfolio bez przypadkowego sprzężenia
 
-Niektorzy dostawcy exceluja w zintegrowanych gniazdach. Inni exceluja w wasnych rezultatach. Laczenie powinno pasowac do zdolnosci, nie tylko do wygody.
+Łączenie w pakiet zmienia ścieżki eskalacji: jedno opóźnienie może falować przez pakiety. Jeśli łączycie, zbudujcie jawne zasady rozsprzęgania — gdzie harmonogramy mogą się rozjeżdżać, gdzie budżety są odseparowane i jak obsługujecie częściowe ukończenie. Inaczej problem w jednej komórce staje się zakładnikiem dla niepowiązanej pracy.
 
-## Szybkie porownanie (ilustracyjne)
+Komunikujcie kierownictwu, że „jeden projekt” na papierze może wciąż być kilkoma historiami akceptacji na hali. Przejrzystość zapobiega fałszywym oczekiwaniom i pojedynczemu słabemu pakietowi ukrytemu pod dużą liczbą w nagłówku.
 
-| sygnal | sprzyj bundle | sprzyj split |
-| --- | --- | --- |
-| wspolne punkty handshake | tak | nie |
-| rozni wlasciciele wewnetrzni i kalendarze | nie | tak |
-| rozne poziomy niepewnosci | nie | tak |
-| potrzeba jednego gardla dla szwow integracji | tak | nie |
+## Od decyzji do zachowania hali
 
-## Ograniczony protokol
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „kiedy połączyć wiele potrzeb automatyzacji w jeden proces zakupowy, a kiedy nie” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-Przygotuj dwustronicowa notatke wewnetrzna (ilustracyjnie): wypisz potrzeby z wlascicielami i datami gotowosci; oznacz krawedzie interfejsu miedzy potrzebami; zdecyduj bundle, split lub sekwencje fazowa z jawnymi regula stopu.
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-## Co to znaczy dla DBR77 Marketplace
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
-DBR77 Marketplace to workflow decyzji automatyzacji i system porownywania ofert.
-
-Dyscyplina portfolio jest czescia tego workflow: najpierw struktura, potem wejscie na rynek. Marketplace to nie katalog robotow.
-
-To pierwsza warstwa zaufania przy wyborze integratora i porownywalnosci.
+Na koniec powiąż tę dyscyplinę z rozliczalnością: nazwij, kto zweryfikuje założenia na hali i przy którym kamieniu milowym. Mity kwitną, gdy nikt nie posiada pomiaru; słabną, gdy weryfikacja jest częścią planu projektu, a nie dopiskiem.
 
 ## Podsumowanie
 
-Lacz dla spojnej integracji i porownywalnosci. Rozdziel, by chronic niepowiazane ryzyka i kalendarze. Nie lacz tylko po to, by zmniejszyc papierologie.
+Łączcie przy realnym sprzężeniu; dzielcie dla jasności i izolacji ryzyka. Nie pozwólcie, by liczba transakcji napędzała architekturę — niech robią to interfejsy, harmonogramy i obronna porównywalność.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*
+*DBR77 Marketplace wspiera ustrukturyzowane porównanie per pakiet roboczy, więc programy łączone w pakiet wciąż dają inspektowalne podziały akceptacji i rozliczalności. [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*

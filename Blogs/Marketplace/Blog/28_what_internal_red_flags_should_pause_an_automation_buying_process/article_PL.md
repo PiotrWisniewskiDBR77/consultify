@@ -1,79 +1,52 @@
-# Jakie wewnetrzne czerwone flagi powinny wstrzymac proces zakupu automatyzacji
+# Jakie wewnętrzne czerwone flagi powinny wstrzymać proces zakupu automatyzacji
 
-Target persona: COO / sponsor sterujacy  
-Funnel stage: Awareness do Consideration (rzadzenie i go, no-go)  
-Core problem: zespoly pchaja sourcing naprzod, podczas gdy wewnetrzne niewyrownanie gwarantuje pozne przerobki, brak zaufania do dostawcow i zal kontraktu  
-Main promise: krotka lista czerwonych flag, ktora upowaznia do pauzy bez zamieniania zakupow w analize paralysis
+Docelowa persona: COO / Sponsor komitetu sterującego  
+Etap lejka: Od świadomości do rozważania (zarządzanie i bramki go/no-go)  
+Główny problem: zespoły pcha sourcing naprzód, podczas gdy wewnętrzne niedopasowanie gwarantuje późną przeróbkę, brak zaufania dostawcy i żal kontraktowy  
+Główna obietnica: krótka lista czerwonych flag, które uzasadniają pauzę — bez zamiany zakupów w wieczną analizę
 
-Dostawcy obwiniani sa, gdy projekty bola.
+Dostawcy bywają winieni, gdy projekty bolą. Często porażka zaczyna się wewnątrz producenta: konkurujące definicje sukcesu, nienazwani właściciele, zakres zmieniający się przy każdym spotkaniu sterującym albo brief, którego nikt nie podpisze, bo każdy czyta go inaczej. Mocniejsze pchanie sourcingu tego nie naprawia — wycenia zamęt w propozycjach i gwarantuje bolesne odkrycie na miejscu.
 
-Czesto porazka zaczela sie wczesniej: organizacja producenta nie byla gotowa kupowac. Nie "gotowa" w sensie motywacyjnym.
+Dyscyplinowana pauza to nie tchórzostwo. To ochrona kapitału.
 
-Gotowa w nudnym sensie: jeden brief, nazwani wlasciciele, stabilne ograniczenia i sciezka decyzji, ktora nie odwraca sie w ciszy.
+## Czerwone flagi zasługujące na twardy stop
 
-## Bezposrednia odpowiedz
+Wstrzymaj, gdy nie potrafisz uszeregować kryteriów sukcesu, gdy granice zakresu zmieniają się co tydzień bez kontroli wersji, gdy operacje i inżynieria opowiadają różne historie o tej samej linii, gdy IT i utrzymanie są nieobecne przy decyzjach interfejsowych, które i tak staną się ich, gdy akceptacja wciąż brzmi „poznamy, gdy zobaczymy”, albo gdy procurement ma ściskać porównanie po tym, jak organizacja nigdy nie uzgodniła, co znaczy „dobrze”.
 
-Wstrzymaj zakupy automatyzacji, gdy ktorakolwiek prawda zachodzi: metryka sukcesu nie jest testowalna albo zmienia sie co tydzien; operacje i inzynieria nie zgadzaja sie co do realnego waskiego gardla; zakupy porownuja oferty, ktore nie sa na tej samej wersji zakresu; IT i utrzymanie sa nieobecne przy decyzjach integracji, ktore na nich spadna; sponsor nie obroni wykluczen na pismie. Pauza to nie porazka. To kontrola ryzyka.
+To nie abstrakcyjne ryzyka. To składniki późnych zamówień zmian, walk o akceptację i integratorów, którzy przestają ufać waszemu procesowi.
 
-## Czerwona flaga 1: ruchome kryteria sukcesu
+## Co pauza powinna wyprodukować
 
-Jesli sukces to "szybciej" bez baseline albo "bardziej elastycznie" bez granic, dostawcy sprzedadza historie. Wstrzymaj, dopoki nie wypowiesz:
+Wykorzystaj okno, by opublikować wersjonowany brief, nazwać jednego właściciela decyzji o dryfie zakresu, naszkicować akceptację w języku możliwym do przetestowania i wyrównać barierki komercyjne. Budujesz artefakty, które czynią rundę rynkową legitymijną.
 
-- metryke stanu biezacego
-- pasmo celu
-- metode pomiaru
-- okno akceptacji
+## Rzeczywistość po stronie zakładu
 
-## Czerwona flaga 2: ukryci wlasciciele zakresu
+Pod presją zespoły traktują zakupy jak wyścig. Hala doświadcza efektu jako chaos: niejasne przekazania, brak myślenia o częściach zamiennych, szkolenie wciskane w nadgodziny oraz linia, która technicznie „wystartowała produkcyjnie” bez operacyjnego odpowiedzialności. Pauza upstream jest tańsza niż bohaterstwo downstream.
 
-Automatyzacja dotyka materialow, jakosci, utrzymania, IT, bezpieczenstwa i szkolen HR.
+## Jak łączy się DBR77 Marketplace
 
-Jesli wlasciciele znikaja, odkryjesz ich podczas SAT po wysokim koszcie.
+Ustrukturyzowane przepływ pracy ujawniają luki gotowości wcześnie. To nie usuwa potrzeby pauzy — daje kierownictwu możliwe do inspekcji powody do pauzy zamiast samego przeczucia.
 
-Wstrzymaj, dopoki nie ma jednostronicowego RACI dla zadan integracji i operacyjnego wlasnictwa.
+Jeśli problemem jest spor międzyfunkcyjny zanim dialog z dostawcą pójdzie głębiej, zobacz [Jak dopasować operacje, inżynierię i zakupy przed zakupem automatyzacji](../19_how_to_align_operations_engineering_and_procurement_before_automation_buying/article_PL.md).
 
-## Czerwona flaga 3: chaos wersjonowania briefu
+## Jak komunikować pauzę bez utraty wiarygodności
 
-Jesli dostawcy odpowiadaja na rozne pytania, nie wybierasz. Zderzasz narracje.
+Ujmij pauzę jako redukcję ryzyka, nie odwrót: oto brakujące artefakty, oto plan ich stworzenia, oto brama powrotu. Sponsorzy, którzy tak komunikują, utrzymują polityczną osłonę, podczas gdy zespół naprawia fundament. Pauza ogłoszona jako „nie jesteśmy pewni” bez planu brzmi jak słabość i zaprasza do obejść.
 
-Wstrzymaj, dopoki jedna partia wyjasnien wychodzaca nie zaktualizuje briefu i kolumn macierzy nie zamrozisz na cykl.
+Uważaj na fałszywą pilność wytwarzaną przez kalendarze dostawców. Gotowość waszej linii ma większe znaczenie niż kwartalna „specjalna” propozycja.
 
-## Czerwona flaga 4: presja produkcji bez realnosci dostepu
+## Od decyzji do zachowania hala
 
-Jesli linia nie moze zadeklarowac prob, okien przestojow lub ilosci probnych, harmonogramy sa fikcja.
+Chodzi o dociśnięcie tej części podróży zakupowej — w praktyce wewnętrzne czerwone flagi — by realizacja była przewidywalna. W zakładach przemysłowych niejasność nie zostaje abstrakcją: staje się czekaniem, przeróbką, cichymi obejściami i sporami przy sprzęcie, gdy linia potrzebowała jasności tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widoczną odpowiedzialność, dostawcy odpowiadają mniejszą liczbą niespodzianek, a funkcje wewnętrzne marnują mniej czasu na uzgadnianie konkurujących opowieści.
 
-Wstrzymaj, dopoki zalozenia dostepu nie sa podpisane przez lidera linii.
+To nie teoria tylko dla funkcji sztabowych. Menedżerowie zakładów czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: pochłonięte nadgodziny, napięta czujność jakości i utrzymanie wciągane w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja produkcyjna — mniej dramatu przy montażu, mniej nagłych rozmów o zmianach i szybsza droga do stabilnego wyjścia. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-## Czerwona flaga 5: rozjazd prawny i komercyjny
-
-Jesli szablony kontraktu zabraniaja tego, co inzynieria juz obiecal werbalnie, budujesz maszyne sporow.
-
-Wstrzymaj, dopoki komercja i technika nie pogodza wykluczen i logiki kamieni milowych.
-
-## Reality check: zespoly czesto rozpoznaja czerwona flage i mimo to ida dalej, bo momentum wyglada cenniej niz reset
-
-Spotkania juz sie dzieja. Dostawcy sa juz zaangazowani. Liderzy chca, zeby postep pozostawal widoczny. To sprawia, ze pauza wydaje sie droga.
-
-W praktyce drozszy ruch to kontynuowanie z wewnetrznymi sprzecznosciami, ktore pozniej wroca jako przerobki, brak zaufania dostawcy albo tarcie kontraktowe.
-
-## Prosty zapis decyzji o pauzie (jedna strona)
-
-Gdy wstrzymujesz, opublikuj: jaka czerwona flaga wyzwolila pauze; jaki artefakt musi istniec, by wznowic; wlasciciel i data; co dostawcy sa powiadomieni (jeden kanal, spokojny jezyk). Cisza uczy dostawcow zgadywac. Jasnosc uczy szanowac Twoj proces.
-
-## Co to znaczy dla DBR77 Marketplace
-
-DBR77 Marketplace ma redukowac chaos sourcingowy przez mozliwa do inspekcji decyzje automatyzacji. Inspekcjonowalnosc zaczyna sie wewnatrz zakladu.
-
-Jesli wewnetrzne sygnaly sa czerwone, strukturalne porownanie tego nie naprawi. Moze tylko wczesniej uwidocznic rozjazd, co i tak ma wartosc. Marketplace to nie katalog robotow.
-
-To workflow i warstwa zaufania, ktora dziala najlepiej, gdy gotowosc producenta jest uczciwa.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy duży wynik zakupowy jako coś, co operacje i utrzymanie mogłyby zaudytować. Jeśli nie da się tego prześledzić do zachowania na hali, dociśnij język, aż się da. Ta jedna dyscyplina zapobiega wielu porażkom, które w retrospekcji wyglądają na techniczne, choć od początku były problemem decyzyjnym.
 
 ## Podsumowanie
 
-Wstrzymaj, gdy wewnetrzna gotowosc jest falszywa.
-
-Wznow, gdy istnieja artefakty: stabilne kryteria sukcesu, nazwani wlasciciele, wersjonowany brief, realistyczny dostep, zgodna logika komercyjna. Dyscyplina zakupu to dyscyplina zakladu.
+Zatrzymaj się, gdy wewnętrzna gotowość jest pozorna. Wznów, gdy istnieją stabilne kryteria sukcesu, nazwani właściciele, wersjonowany brief, realistyczne założenia dostępu i wyrównana logika komercyjna. Dyscyplina zakupów to dyscyplina zakładu — przed podpisem.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace działa najlepiej, gdy wyzwanie jest jasno napisane; pauza naprawy wewnętrznych czerwonych flag często poprawia wyzwanie bardziej niż kolejna rozmowa z dostawcą. [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

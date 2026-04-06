@@ -1,74 +1,56 @@
-# Jakie dane maszyny powinny wywolywac akcje, a jakie nie
+# Jakie dane z maszyn powinny wywoływać działanie, a jakie nie
 
 Docelowa persona: Plant Manager / Reliability Lead / Operations Director  
 Etap lejka: Consideration  
+Główny problem: brownfieldowe IoT często zalewa zespoły sygnałami, więc każdy skok wydaje się pilny, a hala uczy się ignorować stos  
+Główna obietnica: prosty szkielet decyzyjny, by tylko warunki poparte maszyną, które zmieniają następne bezpieczne działanie, zasługiwały na alarmy, podczas gdy reszta zostaje przy samej widoczności
 
-Glowny problem: brownfield IoT czesto zalewa zespoly sygnalami, wiec kazdy skok wydaje sie pilny, a hala uczy sie ignorowac caly stos Glowna obietnica: prosty framework decyzyjny, by tylko warunki potwierdzone maszyna, ktore zmieniaja kolejny bezpieczny krok, zashugiwaly na alert, a reszta zostawala przy widocznosci Wiekszosc porazek IoT na hali to nie awarie czujnikow. To porazki priorytetow.
+Większość porażek IoT na hali to porażki priorytetów, nie czujników.
 
-Gdy zbyt wiele odczytow maszyny staje sie "akcja", operatorzy przestaja ufac ktoremukolwiek z nich. Celem nie jest wiecej danych. Celem sa jasniejsze zasady, kiedy dane powinny zmieniac zachowanie.
+Gdy zbyt wiele odczytów staje się „działaniem”, ludzie robią to, co zawsze robią przy przeciążeniu przerwaniami: triage przez ignorowanie. Celem nie jest kurczenie danych; celem jest rozdzielenie strumieni uczenia od strumieni przerwań jawnymi regułami, które zakład obroni przed pracującą linią.
 
-## Pulapka: mylenie widocznosci z pilnoscia
+Awans do działania powinien czuć się jak decyzja zarządcza, nie jak domyślne ustawienie oprogramowania. Jeśli każdy nowy tag przychodzi jako pilny, zakład nigdy nie buduje baseline’ów — a bez nich „pilne” nie ma znaczenia.
 
-Widocznosc maszyny w czasie rzeczywistym ma wartosc, bo skraca czas reakcji. Ale widocznosc to nie eskalacja.
+## Widoczność to nie pilność
 
-Gdy drgania, temperatura, liczniki cykli i proxy jakosci trafia do tego samego kanalu pilnosci, zaklad uczy sie traktowac alerty jako szum. Tak dobry start techniczny staje sie slaba nawykiem operacyjnym.
+Monitoring w czasie rzeczywistym skraca czas reakcji tylko wtedy, gdy właściwe zdarzenia przerywają właściwym ludziom. Jeśli temperatura, wibracje, liczniki cyklu i proxy jakości przychodzą jako czerwone bannery, organizacja uczy się traktować alarmy jak pogodę.
 
-## Praktyczny podzial: klasy sygnalow
+## Trzy klasy sygnałów, z którymi większość zakładów może żyć
 
-Uzyj trzech klas przy pierwszych zasadach operacyjnych:
+Sygnały tylko do monitorowania wspierają baseline i późniejsze strojenie; nie powinny rozpraszać. Sygnały „powiadom z kontekstem” zasługują na szturchnięcie, gdy warunek jest rzadki, wyjaśnialny i powiązany ze znanym playbookiem. Sygnały „działaj lub zatrzymaj” należą do warunków, gdzie opóźnienie wyraźnie zwiększa ryzyko, które zakład już nazywa — złom, granice bezpieczeństwa lub wzorce nieplanowanych przestojów, co do których wszyscy zgadzają się, że są niedopuszczalne.
 
-1. **Tylko monitor** Przydatne do uczenia, trendow i pozniejszego strojenia. Bez natychmiastowego przerywania pracy ludziom.
+Wczesne miesiące powinny być bardziej nastawione na monitor-only niż zespoły oczekują. Cierpliwość w awansie to to, co czyni późniejsze alarmy wiarygodnymi.
 
-2. **Powiadom z kontekstem** Warte sygnalu, gdy warunek jest rzadki, daje sie wytlumaczyc i ma znany playbook.
+## Awansuj do działania tylko z kontraktem operacyjnym
 
-3. **Dzialaj lub zatrzymaj** Zarezerwowane dla warunkow, gdzie opoznienie zwieksza odpad, ryzyko bezpieczenstwa albo nieplanowany downtime w sposob, na ktory zaklad juz sie zgadza.
+Zanim sygnał zasłuży na eskalację, zakład powinien uzgodnić, że jest właściciel i następny krok, człowiek może szybko zweryfikować na hali, ignorowanie przez zmianę naruszyłoby własny standard ryzyka, progi wiążą się z obserwowanymi trybami awarii zamiast generycznych domyślnych, a reakcja redukuje wariancję zamiast dodawać spotkania.
 
-Wiekszosc zakladow potrzebuje wiecej czasu "tylko monitor" niz oczekuja w pierwszym miesiacu. Ta cierpliwosc buduje zaufanie w szostym miesiacu.
+Jeśli pierwsze trzy odpowiedzi są chwiejne, trzymaj sygnał w trybie uczenia, dopóki historia nie będzie jasna.
 
-## Checklista decyzyjna: czy ten sygnal ma teraz wywolywac akcje
+## Co zwykle powinno poczekać
 
-Zadaj pytania zanim awansujesz sygnal do kanalu akcji:
+Surowa wariancja bez baseline’ów na linię i zmianę, jednorazowe anomalie bez korelacji, ciekawe korelacje bez narracji utrzymania lub jakości oraz domyślne progi dostawcy skopiowane z innych maszyn często należą do trybu widoczności najpierw. Nic z tego nie marnuje danych; chroni uwagę.
 
-- czy ten warunek ma juz ustalonego ownera i nastepny krok
-- czy czlowiek moze to szybko zweryfikowac na hali bez zgadywania
-- czy zignorowanie przez jedna zmiane tworzy nieakceptowalne ryzyko wedlug waszego standardu
-- czy prog jest zwiazany z trybem awarii, ktory juz widzieliscie, a nie tylko zgadnieciem modelu
-- czy akcja zmniejsza wariancje, czy tylko dodaje spotkania
+## Co często zasługuje na wcześniejszą eskalację
 
-Jesli nie ma twardego "tak" na pierwsze trzy, zostaw w monitorze do czasu, az opowiesc operacyjna bedzie jasna.
+Utrzymywane przekroczenia zgodne z wewnętrznymi wytycznymi lub OEM, powtarzające się wzorce zatrzymań powiązane ze znanymi wąskimi gardłami, prekursory, przez które zakład już przeszedł, oraz limity, które już traktujecie jako niepodlegające negocjacji, zwykle uzasadniają wcześniejsze działanie — bo wiarygodność pochodzi z waszej historii, nie z nowości.
 
-## Co zwykle nie powinno od razu wywolywac akcji
+## Sklasyfikowane sygnały kontra kultura dashboardu
 
-W brownfield rollout te kategorie czesto najpierw zostaja w trybie uczenia: surowa wariancja jeszcze nie zbaseline'owana na linie i zmiane; pojedyncze anomalie bez potwierdzenia drugim sygnalem albo checkiem fizycznym; "ciekawe" korelacje bez narracji maintenance albo jakosci; domyslne progi vendora skopiowane z innej klasy maszyn. To nie znaczy, ze dane sa bezuzyteczne. Znaczy, ze zaklad nie jest gotowy postawic na to zmiane.
+Setup dashboard-first zaprasza do pasywnego skanowania. Setup „alarmuj wszystko” zaprasza do wyciszania. Sklasyfikowane sygnały wymagają dyscypliny z góry, ale dają spokojniejszą halę i jaśniejszą własność. Pozycjonowanie DBR77 IoT jest z tą trzecią ścieżką zgodne, gdy piloty kładą nacisk na klasy sygnałów i świadomy awans zamiast surowego wolumenu strumienia.
 
-## Co czesciej zashuguje na wczesniejsza akcje
+Dociągaj reguły przez przegląd, nie przez nadzieję: zbieraj szeroko tam, gdzie uczenie tego wymaga, baseline’uj uczciwie, awansuj mały zestaw działań na linię, przeglądaj, co zignorowano i dlaczego, rozszerzaj dopiero, gdy zaufanie utrzyma się przez dwa cykle przeglądu.
 
-Te wzorce czesciej dostaja wczesniejsza eskalacje, gdy jakosc sygnalu jest uczciwa: utrzymany przekroczony prog zgodny z OEM albo wewnetrznym runbookiem; powtarzajace sie zatrzymania zwiazane ze znanymi waskimi gardlami; warunki poprzedzajace odpad lub zuzywanie narzedzia w waszej historii; limity bezpieczenstwa lub srodowiskowe, ktore zaklad juz traktuje jako niepodlegajace negocjacji.
+Po ludzkiej stronie przeciążenia przeczytaj [dlaczego alarmy IIoT zawodzą na hali i co działa zamiast tego](../19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead/article_PL.md). Po dyscyplinie strojenia kontynuuj [jak redukować fałszywe alarmy w systemach IIoT](../28_how_to_reduce_false_alarms_in_iiot_systems/article_PL.md) oraz [kiedy rozszerzyć się z widoczności na zamkniętą pętlę reakcji](../29_when_to_expand_from_visibility_to_closed_loop_response/article_PL.md).
 
-Wiarygodnosc bierze sie ze zgodnosci z tym, jak zaklad juz decyduje pod presja.
+Wywołuj działanie, gdy dane zmieniają następną bezpieczną decyzję, mają właściciela i przechodzą krótki test rzeczywistości. Wszystko inne może pozostać widoczne, dopóki zakład nie będzie gotów im ufać.
 
-## Porownanie: logika alertow versus kultura dashboardu
+## Domknięcie na hali
 
-| Podejscie | Co przez to czuje hala | Typowa porazka |
-|---|---|---|
-| Dashboard-first | wiecej ekranow, pasywne skanowanie | rozproszenie uwagi, wolna adopcja |
-| Alert wszystko | ciagle przerywanie | nauczone ignorowanie |
-| Sklasyfikowane sygnaly | spokojniejszy rytm, jasniejszy ownership | wymaga dyscypliny na starcie |
+Ta rada nic nie znaczy, jeśli zostaje w sali sterującej. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia mniej przypomina salę sądową, a bardziej zsynchronizowany zespół — wciąż głośny i zajęty, ale ułożony wokół tych samych faktów.
 
-Pozycjonowanie DBR77 IoT pasuje do trzeciej sciezki: szybki pilot i edge-first wsparcie decyzji dla sklasyfikowanych sygnalow, a nie kolejny pasywny dashboard.
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie języka to objaw, że pętla wciąż jest zbyt cienka.
 
-## Jak zaciesnic zasady bez utraty uczenia
+---
 
-Sekwencja, ktora dziala w wielu zakladach: zbieraj szeroko dla widocznosci; baseline po maszynie, produkcie i zmianie; awansuj tylko maly zestaw akcji na linie; co tydzien przegladaj, co bylo ignorowane i dlaczego; rozszerzaj akcje tylko, gdy zaufanie przetrwa dwa cykle przegladu.
-
-To utrzymuje retrofit-friendly lacznosc uzyteczna, gdy zaklad buduje osad.
-
-## Co to znaczy dla DBR77 IoT
-
-DBR77 IoT wspiera: widocznosc maszyny w czasie rzeczywistym z retrofit-ready startem; szybki pilot, by uczyc sie prawdziwej wariancji; edge-first wsparcie decyzji, by wlasciwy kontekst byl blisko zdarzenia; miejsce na wzrost od widocznosci do kontrolowanej odpowiedzi bez big-bang stacku.
-
-Uzyj tego, by wiekszosc danych zostala w trybie uczenia, dopoki kontrakt operacyjny na akcje jest jawny.
-
-## Bottom line
-
-Wywoluj akcje tylko wtedy, gdy dane maszyny zmieniaja kolejna bezpieczna decyzje, maja ownera i przechodza krotka checkliste rzeczywistosci. Wszystko inne zostaw widoczne, dopoki zaklad jest gotowy zaufac. Tak IoT zostaje operacyjne, a nie teatralne.
+*DBR77 IoT pomaga klasyfikować sygnały maszyn i świadomie przechodzić od widoczności do działania z własnością, kontekstem i dyscypliną hali. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

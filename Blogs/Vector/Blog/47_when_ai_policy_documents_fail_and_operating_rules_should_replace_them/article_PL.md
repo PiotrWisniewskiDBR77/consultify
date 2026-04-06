@@ -1,56 +1,36 @@
-# Kiedy dokumenty polityki AI zawodza i zasady operacyjne powinny je zastapic
+# Kiedy dokumenty polityki AI zawodzą, a zasady operacyjne powinny je zastąpić
 
-Docelowa persona: COO / chief of staff CEO / szef kontroli wewnetrznej  
-Etap lejka: Swiadomosc  
+Docelowa persona: COO / chief of staff CEO / szef kontroli wewnętrznej  
+Etap lejka: Świadomość  
+Główny problem: wypolerowane polityki leżą nieczytane, podczas gdy zespoły prowadzą prawdziwą pracę przez przeglądarki, cieniste integracje i nieformalne prompty  
+Główna obietnica: zasady operacyjne zamieniają intencję w obserwowalne zachowania, tickety i metryki, które zakład potrafi wykonać
 
-Rdzeniowy problem: wypolerowane polityki leza nieczytane podczas gdy zespoly prowadza prace przez przegladarki, cien integracji i nieformalne prompty Glowna obietnica: zasady operacyjne zamierzenia zamieniaja w obserwowalne zachowania, tickety i metryki ktore zaklad moze wykonac Polityki ktorej nikt nie operuje to dekoracja. Zasady operacyjne to to co nadzor wymusza w poniedzialkowy poranek.
+Polityki, których nikt nie operuje, to dekoracja. Zasady operacyjne to to, co nadzór egzekwuje w poniedziałek rano: co wolno w tym narzędziu, dla tej klasy danych, przy tej ścieżce akceptacji, gdy linia stoi i zegar głośno tyka.
 
-## Bezposrednia odpowiedz
+Dokumenty polityki AI zawodzą w produkcji, gdy są zbyt ogólne, by klasyfikować przepływy pracy, gdy brakuje właścicieli i metryk, gdy zaprzeczają rzeczywistości zamówień albo gdy nie da się ich zweryfikować na żywych konfiguracjach. Zasady operacyjne powinny je zastąpić lub uzupełnić, gdy potrzebujecie jasnego tak/nie dla klasy przepływów pracy, nazwanych akceptujących, obowiązkowych kontroli logów, rejestrów wyjątków z datą wygaśnięcia oraz kwartalnego uzgodnienia z tym, co faktycznie jest wdrożone. Zasady wygrywają, gdy wpisują się w ten sam rytm co odprawy BHP i jakości, a nie wyłącznie w coroczny kalendarz compliance. Governance, którego nie da się przećwiczyć, nie przetrzyma stresu.
 
-Dokumenty polityki AI zawodza w produkcji gdy sa zbyt ogolne by klasyfikowac przeplywy, gdy brakuje wlascicieli i metryk, gdy zaprzeczaja rzeczywistosci zakupow lub gdy nie da sie ich sprawdzic wobec konfiguracji na zywo. Zasady operacyjne powinny zastapic lub uzupelnic je gdy potrzebujesz jasnego tak-nie dla klasy przeplywu, nazwanych aprobujacych, obowiazkowych kontrol logow, rejestru wyjatkow z data wygasniecia oraz kwartalnego zestawienia z tym co faktycznie wdrozono. Zasady wygrywaja gdy pasuja do tego samego rytmu co odprawy BHP i jakosci, nie kalendarz zgodnosci rocznej. Zarzadzanie ktorego nie da sie przecwiczyc nie przetrwa stresu.
+## Cztery tryby awarii governance opartego wyłącznie na polityce
 
-## Ramy: cztery tryby porazki samej polityki
+Abstrakcja bez klasyfikacji: „będziemy odpowiedzialnie używać AI” nie mówi utrzymaniu, czy szkice wymagają podpisu. Mandaty bez właściciela: zadania przypisane „organizacji” to zadania przypisane nikomu. Rozjazd z zamówieniami: polityka zakazuje chmury, podczas gdy umowy już obejmują SaaS AI — rodzi to cynizm, nie przestrzeganie. Nieweryfikowalne twierdzenia: jeśli audyt wewnętrzny nie może pobrać dowodów wobec polityki, polityka to teatr.
 
-### Tryb 1: abstrakcja bez klasyfikacji
+## Migracja od polityki do zasady operacyjnej
 
-"Bedziemy uzywac AI odpowiedzialnie" nie mowi utrzymaniu czy szkic wymaga aprobaty.
+Wyciągnijcie dziesięć decyzji, które operatorzy naprawdę podejmują co tydzień. Dla każdej napiszcie jedną regułę z nazwanym właścicielem odpowiedzialnym. Dołączcie regułę do szablonu ticketu lub checklisty w narzędziach przy fabryce, tam gdzie to możliwe. Opublikujcie jedno źródło prawdy dla zatwierdzonych narzędzi i trybów wdrożenia. Przeglądajcie przestrzeganie najpierw co miesiąc, potem co kwartał — tak by dryf był widoczny, póki jest mały.
 
-### Tryb 2: mandaty bez wlasciciela
+Dobra zasada operacyjna zawiera warunek wyzwalający w języku operacji, dozwolone klasy narzędzi i tryby wdrożenia dla tego wyzwalacza, ścieżkę akceptacji z oczekiwaniami czasowymi, wymagania co do logowania lub eksportu pod dowód oraz eskalację, gdy regula blokuje pilną pracę bez bezpiecznej alternatywy.
 
-Zadania przypisane "organizacji" to zadania przypisane nikomu.
+Zasady operacyjne wygrywają, gdy nazywają dozwolone klasy narzędzi, kontenery danych i ścieżki akceptacji, które da się przetestować w ciągu tygodnia. Vector wspiera przejście od teatru polityki do wykonywalnych kontroli: granice wdrożenia opisane jako konkretne trasy i środowiska, dane klienta nieużywane do treningu modelu, autorskie rozumowanie przemysłowe trenowane na wiedzy o transformacji fabryk zamiast ogólnego czatu — tak by COO i kadra zakładu mogła ćwiczyć te same ograniczenia, które wymusza architektura.
 
-### Tryb 3: rozjazd z zakupem
+Politykę zachowajcie dla regulatora, jeśli musicie. Fabrykę prowadźcie na zasadach, które ludzie potrafią przećwiczyć, zmierzyć i zaudytować. Jeśli zdania nie da się przetestować w tydzień, prawdopodobnie nie powinno rządzić AI na produkcji.
 
-Polityki zakazujace chmury podczas gdy umowy juz zawieraja SaaS AI buduje cynizm nie zgodnosc.
+Dobre zasady operacyjne czytają się jak instrukcje pracy: wyzwalacz, kroki, właściciel i dowód — bo tak faktycznie działa zakład.
 
-### Tryb 4: nieweryfikowalne twierdzenia
+## Punkt kontrolny zakładu
 
-Jesli audyt wewnetrzny nie moze pobrac prob dowodu wobec polityki, polityka to teatr.
+Traktujcie „Kiedy dokumenty polityki AI zawodzą, a zasady operacyjne powinny je zastąpić” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację przepływu pracy lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną. Traktujcie niejasność jak dług: każda nierozstrzygnięta kwestia ścieżek danych, domyślnego treningu czy kierowania ścieżek akceptacji to coś, za co zapłacicie pod presją czasu — zwykle przy audycie, incydencie lub pośpiesznym wdrożeniu.
 
-## Sekwencja krokow: migracja z polityki do zasad operacyjnych
-
-Wyciagnij dziesiec decyzji ktore operatorzy naprawde potrzebuja co tydzien; Napisz jedna zasade na decyzje z nazwana rola odpowiedzialna; Przypnij kazda zasade do szablonu ticketu lub listy kontrolnej w narzedziach przylegajacych do MES gdzie to mozliwe; Opublikuj jedno zrodlo prawdy dla zatwierdzonych narzedzi i trybow wdrozenia; Przegladaj przestrzeganie miesiecznie na poczatku, potem kwartalnie.
-
-## Lista kontrolna: co dobra zasada operacyjna zawiera
-
-- warunek wyzwalajacy jezykiem operacyjnym
-- dozwolone narzedzia i tryby wdrozenia dla tego wyzwalacza
-- sciezka aprobaty i oczekiwanie czasowe
-- wymagane logowanie lub eksport dla dowodu
-- eskalacja gdy zasada blokuje pilna prace
-
-## Most produktowy
-
-DBR77 Vector to bezpieczna warstwa inteligencji za ekosystemem DBR77: proprietarny AI przemyslowy z granicami wdrozenia ktore mozna opisac jako konkretne zasady operacyjne zamiast mglistych zasad, trenowany na wiedzy transformacji fabryk, bez uzywania danych klienta do treningu modelu oraz z rozumowaniem przemyslowym zamiast generycznego czatu. Zasady trzymaja sie gdy wybor platformy odpowiada temu co hala wolno robic.
-
-## Podsumowanie
-
-Trzymaj polityke dla regulatorow jesli musisz.
-
-Prowadz fabryke zasadami operacyjnymi ktore da sie cwiczyc, mierzyc i audytowac.
-
-Jesli zdania nie da sie przetestowac w tydzien, prawdopodobnie nie powinno rzadzic AI na produkcji.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie w stałym rytmie, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector wspiera przełożenie intencji governance na tryby wdrożenia i klasy przepływów pracy, które mapują się na zasady operacyjne do powtarzalnego ćwiczenia. [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

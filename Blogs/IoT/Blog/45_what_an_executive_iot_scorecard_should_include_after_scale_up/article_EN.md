@@ -5,60 +5,53 @@ Funnel stage: Decision
 Core problem: after scale-up, leadership sees pretty utilization charts while the floor still argues about signal truth, integration debt, and override patterns  
 Main promise: a scorecard built from evidence categories: connectivity truth, signal quality, operational impact, governance health, and honest integration status
 
-Executives do not need more green tiles. They need a compact view of whether IoT is infrastructure or theater. Scale-up is the moment that distinction becomes visible.
+After scale-up, the executive question changes. Early on, leadership asks whether the pilot is interesting. Later, it asks whether IoT is behaving like infrastructure—or like a fragile science fair that got bigger.
 
-After scale-up, an executive IoT scorecard should include **five evidence blocks**: constraint asset uptime truth versus narrative, **signal quality and false escalation rate** where measured, **maintenance and operations alignment** on work-order routing, **governance cadence completion** (reviews done, not planned), and **integration now, next, never** with reasons. It should not be only OEE deltas without context.
+Pretty utilization tiles can hide the truth: constraint assets still partially blind, thresholds nobody trusts, CMMS drowning in auto-tickets, overrides aging without review, and an integration backlog discussed only when something breaks. The scorecard’s job is to make those realities visible in one calm page, not to win a dashboard beauty contest.
 
-## Framework: the five-block scorecard
+## Why OEE alone fails leadership
 
-1. **Connectivity and coverage truth** Which constraint assets are actually instrumented versus assumed
+OEE summaries can still be useful as a headline, but without context they recreate old fights in new software. Executives need to see whether the plant agrees on signal truth, whether maintenance and operations route work the same way twice, and whether reviews happen on a calendar. If those foundations wobble, OEE becomes a number people argue about instead of a lever people use.
 
-2. **Signal quality and trust** Baseline stability, known bad actors, override rate trends tied to standards
+## Block one: connectivity and coverage truth
 
-3. **Operational impact** Confirmed downtime reduction or faster confirmation on a defined asset set, labeled verified or illustrative
+Ask plainly which constraint resources are actually instrumented end-to-end versus assumed on a slide. Coverage maps should distinguish “planned,” “installed,” and “trusted by the floor.” The gap between installed and trusted is where scale-up risk lives.
 
-4. **Governance health** Change control discipline, training completion, audit readiness for definitions and retention
+## Block two: signal quality and escalation discipline
 
-5. **Integration and technical debt** Honest backlog: what is live, what is queued, what is intentionally not integrated
+Where you measure false escalations, ignored alerts, or acknowledgement times, put those numbers beside connectivity counts. Credibility is an operational metric. If supervisors are muting channels or operators treat alerts as weather, your scale story is weaker than the connection total implies.
 
-## Checklist: monthly versus quarterly executive views
+## Block three: maintenance and operations alignment
 
-**Monthly (operational truth):**
+Score whether IoT-driven triage matches planner reality: duplicate tickets, watchlists that never age, interrupt caps ignored. Alignment is not friendship; it is whether the same evidence produces the same routing decisions week to week.
 
-- [ ] false escalation or nuisance alert trend on piloted asset classes
-- [ ] top three override reasons with owners and expiry status
-- [ ] pilot ROI evidence packet status (verified numbers only in the verified bucket)
+## Block four: governance cadence that actually runs
 
-**Quarterly (strategic posture):**
+Track completion of reviews—signal dictionary changes, override audits, threshold tuning sessions—not only whether they appear on a charter. Planned governance that never happens is a liability during audits and turnover.
 
-- [ ] multi-line or multi-site standard compliance summary
-- [ ] edge versus cloud decision log for new signal classes
-- [ ] vendor and patching posture tied to uptime reality
+## Block five: integration now, next, never
 
-## Comparison: KPI theater versus evidence scorecard
+Publish honest status for MES, CMMS, and quality links with reasons and dates. “In progress” without a boundary is how debt hides. Executives should see what is intentionally deferred as clearly as what is live.
 
-| KPI theater | Evidence scorecard |
-|---|---|
-| one blended plant OEE | constraint-asset truth set |
-| success stories only | verified and illustrative split |
-| integration assumed | now, next, never explicit |
-| no override narrative | override pattern review cited |
-| vanity uptime | corroborated event timelines |
+## Keep the narrative to one page
 
-## Planning and governance link
+If the IoT story requires a deck of appendices, the operating system is still immature. A strong executive summary states what improved, what remains fragile, what is deferred on purpose, and what risks require a decision this quarter.
 
-The scorecard should connect to **planning conversations** without pretending IoT replaces MRP discipline. Real-time visibility changes how fast you confirm problems.
+**Scorecard sanity check:** evidence categories stay stable month to month; low scores have named owners; integration debt is visible without euphemism; operator trust is discussed with observable behaviors, not slogans.
 
-It does not automatically rewrite the plan unless your operating model says so.
+## DBR77 IoT at executive altitude
 
-Cadence and evidence buckets align with [what to review after the first 6 months of IoT rollout](../31_what_to_review_after_the_first_6_months_of_iot_rollout/article_EN.md), mature into [what IoT governance should look like after the first year](../42_what_iot_governance_should_look_like_after_the_first_year/article_EN.md), borrow multi-site honesty from [how to prove IoT value across sites without forcing one template](../32_how_to_prove_iot_value_across_sites_without_forcing_one_template/article_EN.md), and use [what to standardize across sites in IoT and what to leave local](../38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local/article_EN.md) when the scorecard spans plants.
+DBR77 IoT belongs on executive scorecards when proof ties to behavior—signal trust, response, routing, review—not to raw footprint. That is the difference between infrastructure and theater.
 
-## What this means for DBR77 IoT
+After scale-up, score IoT the way you score any critical plant system: coverage you can trust, signals people act on, aligned workflows, living governance, and integration honesty. Pretty charts without those blocks mislead everyone—including the people signing the checks.
 
-DBR77 IoT is meant to populate executive views with the same evidence operators defend: connectivity truth on constraint assets, measured trust in alerts, integration backlog stated honestly, and governance items that show up as completed reviews, not agenda placeholders.
 
-Post-scale leadership should be reading plant habits, not a fresh storyline each quarter.
+## Bringing it home on the floor
 
-## Bottom line
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-If your post-scale scorecard could be built from a slide template alone, it will not survive the first serious audit or the first bad quarter. Build it from evidence categories the floor can defend.
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT helps leadership score IoT on operational evidence: signal trust, floor behavior, maintenance alignment, and integration honesty—not vanity metrics. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

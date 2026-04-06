@@ -7,6 +7,7 @@
 
 import { Layers, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
@@ -226,79 +227,29 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
 
   const handleAction = useCallback(
     async (row: ManagerProblemRow, action: ProblemAction) => {
-      try {
-        const et = row.sourceEntityType === 'TASK' ? 'TASK' : 'INITIATIVE';
-        const eid = row.sourceEntityId;
+      if (action.id === 'open_entity') {
+        onOpenEntity?.(row.sourceEntityType, row.sourceEntityId);
+        return;
+      }
 
-        switch (action.id) {
-          case 'replan':
-            await V8ExecutionControlApi.interveneReplan({
-              entityId: eid,
-              newDeadline: '',
-              reason: `Manager action: replan ${row.title}`,
-            });
-            break;
-          case 'reassign':
-          case 'distribute_work':
-          case 'assign_owner':
-          case 'assign_sponsor':
-          case 'assign_maker':
-            break;
-          case 'escalate':
-            await V8ExecutionControlApi.interveneEscalate({
-              entityId: eid,
-              severity: row.severity,
-              message: `Escalation: ${row.title}. ${row.rootCause}`,
-            });
-            break;
-          case 'approve':
-            if (row.sourceEntityType === 'DECISION') {
-              await V8ExecutionControlApi.submitLaneDecision(moduleId, {
-                suggestionId: row.sourceEntityId,
-                state: 'approved',
-              });
-            }
-            break;
-          case 'reject':
-            if (row.sourceEntityType === 'DECISION') {
-              await V8ExecutionControlApi.submitLaneDecision(moduleId, {
-                suggestionId: row.sourceEntityId,
-                state: 'rejected',
-              });
-            }
-            break;
-          case 'defer':
-            if (row.sourceEntityType === 'DECISION') {
-              await V8ExecutionControlApi.submitLaneDecision(moduleId, {
-                suggestionId: row.sourceEntityId,
-                state: 'deferred',
-              });
-            }
-            break;
-          case 'open_entity':
-            onOpenEntity?.(row.sourceEntityType, row.sourceEntityId);
-            break;
-          case 'create_mitigation':
-          case 'mark_mitigated':
-            if (row.sourceEntityType === 'RAID_ITEM') {
-              await V8ExecutionControlApi.updateRaidMitigation(
-                row.sourceEntityId,
-                {
-                  raidItemId: row.sourceEntityId,
-                  mitigationStatus: action.id === 'mark_mitigated' ? 'MITIGATED' : 'IN_PROGRESS',
-                }
-              );
-            }
-            break;
-          default:
-            break;
-        }
-      } catch {
-        // silently fail — action may not be supported yet
+      try {
+        const resp = await V8ExecutionControlApi.executeManagerProblemAction(
+          moduleId,
+          { problemId: row.id, actionId: action.id },
+          projectId
+        );
+        const result = (resp as { data?: { message?: string } }).data || resp;
+        toast.success(result.message || t('execution.manager.actionApplied', 'Action applied'));
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : t('execution.manager.actionFailed', 'Action failed');
+        toast.error(message);
       }
       refresh();
     },
-    [moduleId, refresh, onOpenEntity]
+    [moduleId, onOpenEntity, projectId, refresh, t]
   );
 
   const handlePreviewAction = useCallback(
@@ -422,6 +373,8 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
                 const row = rows.find((item) => item.id === problemId);
                 if (row) {
                   setSelectedId(problemId);
+                  setAiProblemId(undefined);
+                  setWorkspaceMode(null);
                 }
               }}
             />

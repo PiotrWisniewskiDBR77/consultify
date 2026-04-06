@@ -1,52 +1,40 @@
-# Dlaczego domain knowledge wygrywa z wiekszymi modelami generycznymi w produkcji
+# Dlaczego wiedza domenowa bija większe modele ogólne w produkcji
 
-Target persona: CTO  
-Funnel stage: Consideration  
-Core problem: wielu kupujacych zaklada, ze wieksze modele generyczne automatycznie przewyzszaja domain-specific industrial AI, mimo ze ta praca zalezy od bogatego kontekstu produkcyjnego  
-Main promise: w produkcji domain knowledge czesto ma wieksze znaczenie niz rozmiar modelu, bo uzyteczne decyzje zaleza od kontekstu, konsekwencji i dopasowania operacyjnego
+Docelowa persona: CTO  
+Etap lejka: Rozważanie  
+Główny problem: wielu nabywców traktuje rozmiar modelu w nagłówku lub prestiż benchmarków jako proxy wydajności produkcyjnej, nawet gdy praca jest zakotwiczona w zakładowych definicjach, ograniczeniach i dowodach  
+Główna obietnica: w produkcji zakotwiczone w domenie dopasowanie i wierność odniesieniom często mają większe znaczenie niż surowa skala, bo użyteczne odpowiedzi muszą być zgodne z waszą wewnętrzną prawdą, nie tylko z płynnym ogólnym językiem
 
-Wieksze modele przyciagaja uwage. To nie znaczy, ze sa lepszym wyborem dla produkcji.
+Liczby parametrów w nagłówku i plotki z rankingów tworzą prostą narrację: większy znaczy lepszy. Na hali ta narracja szybko pęka. Wiele pytań o wysokiej wartości nie wygrywa największy model ogólny. Wygrywają systemy, które szanują waszą nomenklaturę, BOM-y i marszruty, reguły jakości oraz sposób, w jaki błędy realnie objawiają się w waszym procesie.
 
-W przemysle najwazniejsze czesto nie jest samo scale, ale trafnosc rozumowania.
+Większe modele ogólne poprawiają średnią wydajność na szerokich zadaniach w stylu internetowym. Nie wchłaniają automatycznie waszych zakładowych odniesień, podpisanych procedur ani nieformalnych ograniczeń, które niosą eksperci. W decyzjach produkcyjnych marginalne zyski ze skali często przegrywają z błędami wynikającymi z braku lub błędnej interpretacji kontekstu. Zakotwiczone w domenie AI przemysłowe ma zamykać tę lukę, kotwicząc rozumowanie w praktyce produkcyjnej i transformacji oraz dopasowując ewaluację do przypadków testowych istotnych dla zakładu — nie tylko do jakości uzupełniania ogólnego.
 
-## Dlaczego rozmiar bywa przeceniany
+## Mit rozmiaru modelu w zakupach przemysłowych
 
-Duze modele generyczne sa budowane pod szeroka zdolnosc jezykowa. To daje im zakres. Ale decyzje produkcyjne czesto zaleza od: kontekstu procesu; kompromisow operacyjnych; realnych ograniczen; swiadomosci konsekwencji. Tych rzeczy nie gwarantuje sam rozmiar modelu.
+Mit brzmi tak: jeśli wdrożymy największy model ogólny, mamy „AI dla produkcji” załatwione. To pomija zależność od odniesień. Poprawność w pracy zakładu jest często definiowana wobec wewnętrznych masterów: numery części, poziomy rewizji, plany kontroli, reguły specyficzne dla klienta i umowy z dostawcami. Większy model nie daje automatycznego dostępu do tych odniesień, chyba że architektura celowo je dostarcza, ogranicza i waliduje. Skala bez dopasowania może podnieść pewność szybciej niż poprawność — a pewność jest niebezpieczną częścią.
 
-## Domain knowledge zmienia jakosc outputu
+## Dlaczego zakotwiczenie w domenie zmienia profil błędów
 
-W przemysle uzyteczna odpowiedz nie jest tylko plynna.
+W ustawieniach przemysłowych użyteczna odpowiedź to nie tylko płynna. Jest stabilna wobec pytań: czy jest zgodna z zatwierdzoną marszrutą i punktami inspekcji; czy używa nazewnictwa i jednostek tak, jak oczekują utrzymanie i jakość; czy zostawia oczywiste haczyki do przeglądu SME, gdy dane są cienkie; oraz czy widocznie zawodzi, gdy brakuje kontekstu, zamiast wymyślać gładki most. Te zachowania śledzą zakotwiczenie w domenie i dyscyplinę ewaluacji bardziej niż liczbę parametrów.
 
-Jest swiadoma: co ma znaczenie operacyjne; jakie istnieja ryzyka; jakie sa kompromisy; co nadal powinno byc sprawdzone przez czlowieka.
+## Ogólna skala nadal może brzmieć autorytatywnie i być płytka
 
-Taka uzytecznosc bierze sie z domain fit, a nie tylko z liczby parametrow.
+Większy model ogólny może produkować wypolerowany język, a nadal pomylić, która rewizja dokumentu jest wiążąca dla klienta, która ścieżka odchylenia ma zastosowanie, gdy wymiar jest poza specyfikacją, albo jak pola ERP czy QMS kodują rozpatrywane ograniczenie. Pewność i prawda operacyjna rozejść się. Ta rozbieżność jest kosztowna, gdy zespoły działają na podstawie dobrze napisanego akapitu, który nigdy nie był sprawdzony wobec dowodów zakładu.
 
-## Modele generyczne moga brzmiec dobrze, a nadal byc plytkie
+## Produkcja potrzebuje rozumowania skalibrowanego na zakład, nie tylko uzupełniania
 
-Wiekszy model generyczny moze tworzyc dopracowany jezyk, a mimo to pomijac: zaleznosci procesowe; realia fabryki; tarcie wdrozeniowe; konsekwencje biznesowe. Dlatego pewnosc i uzytecznosc to nie to samo.
+AI przemysłowe powinno pomagać rozumować wobec waszych ograniczeń — nie tylko generować gładszy tekst o produkcji w ogóle. To wskazuje na interpretację zakotwiczoną w kontekście produkcyjnym, strukturyzację decyzji tak, by luki i konflikty wychodziły wcześnie, oraz plany testów używające realnych wewnętrznych scenariuszy zamiast promptów demo. Te wymagania mapują się na dopasowanie do domeny i praktykę walidacji wewnętrznej. Są tylko słabo przewidywane przez to, jak duży jest model bazowy na publicznych benchmarkach.
 
-## Produkcja potrzebuje reasoning, nie tylko completion
+## Co porównywać zamiast rozmiaru modelu w nagłówku
 
-Industrial AI powinno pomagac zespolom lepiej myslec o decyzjach, a nie tylko generowac gladniejszy tekst.
+Shortlistując podejścia, stresujcie dopasowanie zamiast prestiżu. Patrzcie na wierność odniesieniom: jak dobrze rezultaty szanują wasze mastery, nazewnictwo i jednostki bez ciągłej korekty. Uruchomcie zakładowe przypadki testowe: tę samą garstkę trudnych wewnętrznych pytań na kandydatów i obserwujcie, kto zawodzi po cichu, a kto sygnalizuje niepewność. Zbadajcie obciążenie SME: czy skala zmniejsza przeróbkę ekspertów, czy tylko przyspiesza pierwsze szkice nadal wymagające ciężkiej naprawy. Zapytajcie, czy krok w rozmiarze modelu ogólnego zmienia wyniki na waszym zestawie pytań — czy głównie ton. Utrzymujcie governance, wdrożenie i kategorię dostawcy w osobnym przeglądzie; nie zastępują one rozumowania zakotwiczonego w domenie.
 
-To oznacza, ze model powinien wspierac: interpretacje kontekstu; strukturyzowanie decyzji; trafnosc przemyslowa; governable recommendations. To jest blizsze domain knowledge niz samej skali.
+Rozmiar w nagłówku to jeden czynnik. Rzadko wyjaśnia całość użyteczności w produkcji.
 
-## Co kupujacy powinien porownywac zamiast rozmiaru
+DBR77 Vector jest pozycjonowany wokół autorskiego rozumowania przemysłowego i kontekstu produkcyjnego, nie wokół wygrywania wyścigu ogólnej skali. Ta pozycja zakłada, że nabywcy będą mierzyć AI przemysłowe wobec dowodów i dopasowania istotnych dla zakładu, obok granic wdrożenia i treningu omawianych gdzie indziej w bibliotece Vector.
 
-Producent powinien porownywac: industrial fit; swiadomosc konsekwencji; uzytecznosc wewnatrz realnych workflow; kompatybilnosc z governance; kontrole wdrozenia. To mowi wiecej niz naglowkowy rozmiar modelu.
-
-## Dlaczego Vector jest pozycjonowany wokol tej idei
-
-DBR77 Vector nie jest ramowany jako wiekszy model generyczny.
-
-Jest pozycjonowany wokol: industrial reasoning; wyzszych oczekiwan governance; prywatnych opcji wdrozenia; braku treningu na danych klienta. To lepiej pasuje do produkcji niz prestiz modelu generycznego.
-
-## Wniosek
-
-W produkcji domain knowledge czesto wygrywa z wiekszymi modelami generycznymi, bo prawdziwe wyzwanie nie polega na brzmieniu inteligentnie.
-
-Polega na tym, by decyzje stawaly sie bardziej uzyteczne, defensible i swiadome kontekstu.
+W produkcji wiedza domenowa i wierność odniesieniom często biją większe modele ogólne, bo trudna część to zgodność z tym, jak wasz zakład naprawdę działa — nie brzmienie inteligentnie o fabrykach w abstrakcji. Trzymajcie każdą opcję przy tych samych wewnętrznych przypadkach testowych. Niech skala zasłuży sobie miejsce tam, nie tylko na tablicy liderów.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector daje producentom rozumowanie przemysłowe i silniejsze dopasowanie do domeny zamiast polegania wyłącznie na prestiżu ogólnego modelu. [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

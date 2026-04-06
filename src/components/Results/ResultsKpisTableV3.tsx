@@ -39,6 +39,23 @@ const TREND_LABELS: Record<KPITrend, string> = {
   stable: 'Stable',
 };
 
+const formatObservationPhase = (
+  phase?: ResultsKPI['observationPhase'],
+  t?: (key: string, defaultValue: string) => string
+) => {
+  if (phase === 'realization') return t?.('results.phase.realization', 'Realization') || 'Realization';
+  if (phase === 'both') return t?.('results.phase.both', 'Both phases') || 'Both phases';
+  return t?.('results.phase.postImplementation', 'Post-implementation') || 'Post-implementation';
+};
+
+const formatDefinitionSource = (
+  source?: ResultsKPI['definitionSource'],
+  t?: (key: string, defaultValue: string) => string
+) =>
+  source === 'library'
+    ? t?.('results.kpi.source.linked', 'Linked KPI') || 'Linked KPI'
+    : t?.('results.kpi.source.manual', 'Manual KPI') || 'Manual KPI';
+
 const StatusPill: React.FC<{ status: KPIStatus; label: string }> = ({ status, label }) => {
   const s = STATUS_STYLES[status] || STATUS_STYLES['no-data'];
   return (
@@ -380,6 +397,23 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
             label: `${t('results.columns.frequency', 'Frequency')}: ${kpi.measurementFrequency || '—'}`,
             className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
           },
+          {
+            label: formatDefinitionSource(kpi.definitionSource, t),
+            className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+          },
+          {
+            label: formatObservationPhase(kpi.observationPhase, t),
+            className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+          },
+          ...(kpi.needsEntry
+            ? [
+                {
+                  label: t('results.needsEntry.badge', 'Needs entry'),
+                  dot: 'bg-amber-500',
+                  className: 'bg-amber-500/10 text-amber-400 dark:text-amber-300',
+                } as MetaPill,
+              ]
+            : []),
         ];
         const metaTrailing = (
           <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
@@ -404,6 +438,18 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
           `${t('results.columns.baseline', 'Baseline')}: ${
             kpi.baselineValue != null
               ? `${kpi.baselineValue.toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ''}`
+              : '—'
+          }`,
+          `${t('results.columns.phase', 'Phase')}: ${formatObservationPhase(kpi.observationPhase, t)}`,
+          `${t('results.columns.source', 'Source')}: ${formatDefinitionSource(kpi.definitionSource, t)}`,
+          `${t('results.kpi.realizationTarget', 'Realization target')}: ${
+            kpi.realizationExpectation?.targetValue != null
+              ? `${kpi.realizationExpectation.targetValue.toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ''}`
+              : '—'
+          }`,
+          `${t('results.kpi.postImplementationTarget', 'Post-implementation target')}: ${
+            kpi.postImplementationExpectation?.targetValue != null
+              ? `${kpi.postImplementationExpectation.targetValue.toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ''}`
               : '—'
           }`,
           `${t('results.columns.owner', 'Owner')}: ${kpi.ownerName || '—'}`,
@@ -527,8 +573,37 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                   ? () => navigate(`/initiatives?open=${initiativeTargetId}&mode=doc`)
                   : undefined,
               },
+              {
+                label: `${t('results.columns.phase', 'Phase')}: ${formatObservationPhase(kpi.observationPhase, t)}`,
+                tone: 'text-slate-600 dark:text-slate-300',
+              },
+              {
+                label: `${t('results.columns.source', 'Source')}: ${formatDefinitionSource(kpi.definitionSource, t)}`,
+                tone: 'text-slate-600 dark:text-slate-300',
+              },
+              {
+                label: `${t('results.kpi.realizationTarget', 'Realization target')}: ${
+                  kpi.realizationExpectation?.targetValue ?? '—'
+                }${kpi.unit ? ` ${kpi.unit}` : ''}`,
+                tone: 'text-slate-600 dark:text-slate-300',
+              },
+              {
+                label: `${t('results.kpi.postImplementationTarget', 'Post-implementation target')}: ${
+                  kpi.postImplementationExpectation?.targetValue ?? '—'
+                }${kpi.unit ? ` ${kpi.unit}` : ''}`,
+                tone: 'text-slate-600 dark:text-slate-300',
+              },
             ]
-          : [];
+          : [
+              {
+                label: `${t('results.columns.phase', 'Phase')}: ${formatObservationPhase(kpi.observationPhase, t)}`,
+                tone: 'text-slate-600 dark:text-slate-300',
+              },
+              {
+                label: `${t('results.columns.source', 'Source')}: ${formatDefinitionSource(kpi.definitionSource, t)}`,
+                tone: 'text-slate-600 dark:text-slate-300',
+              },
+            ];
         const actionRows: ActionRow[] = [
           {
             buttons: [

@@ -1,52 +1,54 @@
-# Jak przeprowadzic ostatni wewnetrzny przeglad wyrownania przed kickoff automatyzacji
+# Jak przeprowadzić końcowy wewnętrzny przegląd wyrównania przed kickoffem automatyzacji
 
-Target persona: wlasciciel zakupu z funkcjonalnymi akceptujacymi  
-Funnel stage: Decision (ostatnia wewnetrzna brama przed mobilizacja dostawcy)  
-Core problem: zespoly podpisuje kontrakty, nadal trzymajac rozne modele mentalne zakresu, akceptacji i wlascicielstwa operacyjnego  
-Main promise: ograniczony czasowo przeglad wyrownania, ktory daje podpisany wewnetrzny zapis, a nie kolejne spotkanie
+Docelowa persona: Właściciel zakupów z funkcjonalnymi akceptorami  
+Etap lejka: Decyzja (ostatnia wewnętrzna brama przed mobilizacją dostawcy)  
+Główny problem: zespoły podpisują umowy, wciąż niosąc różne modele mentalne zakresu, akceptacji i właścicielstwa operacyjnego  
+Główna obietnica: krótki, ograniczony czasowo przegląd wyrównania, który daje podpisany zapis wewnętrzny — a nie kolejne spotkanie
 
-Kickoff to moment, w ktorym niejasnosc staje sie droga. Przed kickoff niejasnosc to jeszcze problem planowania.
+Umowy da się podpisać wtedy, gdy operacje, inżynieria i zakupy wciąż mają w głowie inny film. Mobilizacja te różnice drogo odsłania. Końcowy wewnętrzny przegląd wyrównania to nie kolejny warsztat sterujący — to krótka, timeboxowana brama, która wymusza jeden zapis: co kupiliśmy, co musimy dostarczyć jako zakład, jak udowodnimy akceptację i kto posiada każdy niewygodny interfejs.
 
-Po kickoff niejasnosc staje sie zmianami zamowienia, sporami o harmonogram i obwinianiem.
+## Dlaczego ta brama jest po wyborze — a przed wejściem ekip na halę
 
-## Bezposrednia odpowiedz
+Gdy zakupy ogłaszają zwycięzcę, wielu ludzi przestaje słuchać. Zakładają, że trudna część się skończyła. W rzeczywistości organizacja zaraz wyda pieniądze tam, gdzie drobne nieporozumienia rosną do kosztownego przerobu. Końcowy przegląd wewnętrzny istnieje po to, by zsynchronizować model mentalny, póki jeszcze można poprawić tekst umowy, przydzielić właścicieli i skorygować niebezpieczne założenie bez stania przy w połowie zamontowanej linii.
 
-Przeprowadz ostatni wewnetrzny przeglad wyrownania przed kickoff automatyzacji, timeboxujac jedna sesje z obowiazkowym rezultatem: jednostronicowy zapis decyzji potwierdzajacy baze zakresu, obiekty akceptacji, wlascicieli i daty zaleznosci zakladu, progi eskalacji oraz kto mowi w imieniu zakladu w komunikacji z dostawca. Jesli zapisu nie da sie napisac, opoznij kickoff.
+Prowadźcie go jako strukturalne czytanie dokumentów, a nie klub debat. Ton powinien być operacyjny: co zrobimy w poniedziałek rano, gdy integrator poprosi o dostęp, dane, próbki lub podpisy? Jeśli sala nie potrafi odpowiedzieć konkretnie, nie jesteście wyrównani.
 
-## Agenda A: zakres i interfejsy (trzydziesci minut, ilustracyjnie)
+## Co przegląd musi potwierdzić
 
-Potwierdz: wlaczenia i wylaczenia zgadzaja sie z oceniana oferta; tabela interfejsow ma nazwanych wlascicieli po obu stronach; otwarte zalozenia sa wypisane z wlascicielami weryfikacji.
+Przeczytajcie na głos zakres i wyłączenia w zestawieniu z ocenianą ofertą. Zweryfikujcie właścicieli założeń i daty. Potwierdźcie obiekty akceptacji i dowód. Przejdźcie RACI dla operacji, utrzymania, IT, jakości i BHP. Sprawdźcie ścieżki eskalacji i rytm komunikacji. Jeśli któryś punkt pada, poprawcie tekst, zanim wjadą ciężarówki.
 
-## Agenda B: rozsadek komercyjny i kamieni milowych (dwadziescia minut, ilustracyjnie)
+## Wyniki, a nie turystyka dyskusyjna
 
-Potwierdz: kamienie milowe mapuja na obiekty akceptacji; triggery platnosci nie zachecaja do pomijania weryfikacji; sciezka zmiany zamowienia jest zrozumiana, nie zidealizowana.
+Zakończcie jednostronicowym podpisanym notatką lub checklistą w pliku projektu. Sponsor podpisuje zapis, nie mglistą prezentację.
 
-## Agenda C: gotowosc operacji (dwadziescia minut, ilustracyjnie)
+## Zapraszajcie do sprzeciwu celowo
 
-Potwierdz: okna walidacji sa w kalendarzu zakladu; plan szkolenia jest powiazany z obiektami akceptacji; istnieje plan czesci zamiennych i oprzyrzadowania na minimalnym wiarygodnym poziomie.
+Jeśli ktoś nie może zaakceptować akceptacji albo zobowiązań zakładu, ten głos należy się przed kickoffem — a nie w szeptach podczas SAT.
 
-## Agenda D: ryzyko i eskalacja (dziesiec minut, ilustracyjnie)
+## Jak DBR77 Marketplace się łączy
 
-Uzgodnij: ilosciowe lub jakosciowe progi pauzy i eskalacji; kto organizuje decyzje kryzysowa w ciagu dwudziestu czterech godzin, jesli commissioning staje.
+Zewnętrzne, ustrukturyzowane porównanie powinno mieć lustrzane odbicie wewnętrznie: jednostronicowy zapis utrzymuje kickoff zgodny z tym, co porównano i zatwierdzono.
 
-## Artefakt wyjsciowy (niepodlegajacy negocjacji)
+Najbliższe sąsiednie kontrole: [Jak dopasować operacje, inżynierię i zakupy przed zakupem automatyzacji](../19_how_to_align_operations_engineering_and_procurement_before_automation_buying/article_PL.md), [Jak powinna wyglądać czysta przekazka od wyboru dostawcy do realizacji](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_PL.md) oraz [Jakie ryzyko zamówień zmian sprawdzić, zanim projekt automatyzacji wystartuje](../35_what_change_order_risk_to_check_before_an_automation_project_starts/article_PL.md).
 
-Opublikuj wewnetrznie tego samego dnia: jednostronicowy zapis; liste otwartych problemow z wlascicielami i terminami. Brak artefaktu oznacza, ze przeglad sie nie odbyl.
+## Sprawcie, by sprzeciw był bezpieczny przez sześćdziesiąt minut
 
-## Co to znaczy dla DBR77 Marketplace
+Końcowy przegląd powinien szanować pytanie „co sprawi, że to się nie uda?”. Jeśli ludzie nie powiedzą teraz, powiedzą później przez pasywny opór albo nagłe eskalacje. Zapisujcie obawy jako działania: właściciel, data i czy blokuje mobilizację.
 
-DBR77 Marketplace to workflow decyzji automatyzacji, warstwa zaufania przy wyborze integratora i system porownywania ofert.
+Zakończcie jawnym zobowiązaniem: kto odpowiada za zadania zakładu w pierwszych dwóch tygodniach i jak status będzie raportowany. Zobowiązanie bez linii raportowania to życzenie.
 
-Wewnetrzne wyrownanie to lustrzane odbicie: strukturalny zapis, ktory utrzymuje mobilizacje zgodna z tym, co porownano i zaakceptowano. Marketplace to nie katalog robotow.
+## Od decyzji do zachowania hali
 
-To system pierwszy dla producenta, by redukowac chaos sourcingu i chronic rzeczywistosc operacyjna.
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „jak przeprowadzić końcowy wewnętrzny przegląd wyrównania przed kickoffem automatyzacji” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
+
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
+
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
 ## Podsumowanie
 
-Kickoff powinien zaczac od jednej spojnej wewnetrznej opowiesci.
-
-Jesli nie mozesz jej napisac na jednej stronie, nie jestes gotowy wydac pieniedzy.
+Przeprowadźcie końcową wewnętrzną bramę, która produkuje podpisany zapis wyrównania. Spotkania bez wyników to sposób, w jaki cichy sprzeciw przetrwa do mobilizacji.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom demo producenta](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*
+*DBR77 Marketplace odzwierciedla zewnętrzne, ustrukturyzowane porównanie wewnętrzną dyscypliną jednostronicowego zapisu, żeby kickoff odpowiadał temu, co porównano i zatwierdzono. [Uruchom demo producenta](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*

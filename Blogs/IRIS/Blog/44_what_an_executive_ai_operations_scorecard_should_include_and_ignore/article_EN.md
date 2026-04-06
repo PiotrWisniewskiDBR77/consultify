@@ -5,70 +5,33 @@ Funnel stage: Evaluation
 Core problem: leadership sees model demos and adoption percentages while the plant still loses hours to unclear ownership and slow closure  
 Main promise: a short scorecard that ties AI assistance to response, throughput protection, audit readiness, and human follow-through, while filtering vanity metrics
 
-An executive AI operations scorecard should include median time-to-owner for assisted items, assisted task closure rate inside SLA, repeat incident rate after assistance touched routing, override rate with categorized reasons, and training coverage by role. It should ignore raw model accuracy without operational context, leaderboard-style suggestion counts, and "AI hours saved" claims that lack a baseline method. If the scorecard cannot be built from exports in under thirty minutes, it will not survive real operations. Executives do not need more charts. They need fewer numbers that still predict behavior.
+Executives do not need more charts. They need fewer numbers that still predict behavior. An executive AI operations scorecard should be buildable from exports in under thirty minutes—because if it cannot be produced honestly on a bad week, it will not survive real operations. Include median time-to-owner for assisted items, closure rate inside SLA with required fields present, repeat incident patterns after assistance touched routing, override rate with categorized reasons, and training coverage by role. These metrics connect leadership view to floor mechanics.
 
-## Include: five operational outcomes (minimum viable executive view)
+Ignore vanity lanes that hide risk: raw suggestion volume without acceptance discipline, accuracy metrics disconnected from safety and quality holds, “automation rate” that counts UI clicks instead of operational states, satisfaction surveys without linkage to incident records, and token-style IT metrics in the operations review pack. Modern metrics feel good. They do not run a line.
 
-Time-to-owner: from signal to named accountable human; closure quality: percent closed within SLA with required fields present; throughput protection: unplanned stop minutes linked to assisted decisions; repeat patterns: same failure theme returning within fourteen days; governance health: threshold changes with approvals and version IDs logged. These five survive audits and shift changes.
+Use weekly views for supervisors: catch drift in time-to-owner and closure SLA early, spot override themes that imply training or threshold edits, respond to repeat incidents immediately. Use monthly views for capital and policy: trend staffing impacts, trigger process redesign when SLAs chronically fail, update governance when override patterns stabilize into policy gaps.
 
-## Ignore: five vanity lanes that hide risk
+Scorecard integrity requires discipline: every metric names its system-of-record field, baselines are dated and frozen, exclusions are explicit, red thresholds assign an action owner, and the executive slice stays to one page with details in annex.
 
-Suggestion volume without acceptance or dismissal discipline; accuracy metrics disconnected from safety and quality holds; "automation rate" that counts UI clicks, not operational states; satisfaction surveys without linkage to incident records; cost-per-token style IT metrics in the operations review pack. Vanity lanes feel modern. They do not run a line.
+Compare demo scorecards to operating scorecards. Demo scorecards use curated screenshots and highlight reels. Operating scorecards use exports, medians and tail behavior, and accountability owned by line and function leaders. Buyers and operators learn to spot the difference quickly.
 
-## Framework: weekly versus monthly views
+The scorecard works when weekly operations reviews already exist, assistance ties to tasks with owners, and finance accepts operational definitions for throughput measures. It misleads when assistance runs outside the execution record, SLA definitions differ by shift, or incidents close verbally without system linkage.
 
-| Metric | Weekly use | Monthly use |
-|---|---|---|
-| time-to-owner | catch drift early | trend and staffing decisions |
-| closure SLA | tactical follow-through | process redesign triggers |
-| override reasons | training and threshold edits | policy updates |
-| repeat incidents | immediate containment | engineering backlog priority |
-| governance log volume | spot-check discipline | executive attestation |
+IRIS keeps executive metrics credible when assisted tasks, approvals, closures, and overrides come from the same execution layer the floor uses—so leadership sees fields, not stories.
 
-Weekly is for supervisors. Monthly is for capital and policy.
+For adjacent cadence and controls, see [How to Review AI-Assisted Operations After the First 90 Days](../40_how_to_review_ai_assisted_operations_after_the_first_90_days/article_EN.md) and [How to Scale AI Assistance Without Losing Operational Control](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_EN.md).
 
-## Checklist: scorecard integrity rules
+A scorecard also helps leadership avoid the two classic failure modes of AI programs: celebrating activity while closure worsens, or punishing the floor for model mistakes that were actually threshold misconfiguration. When metrics are tied to fields—time-to-owner, SLA closure, categorized overrides—those failure modes become visible early. Without field-tied metrics, the organization argues about narratives until an incident forces honesty.
 
-- every metric names the system of record field used  
-- baselines are dated and frozen for comparison windows  
-- exclusions are explicit (planned downtime, trials, legacy lines)  
-- red thresholds trigger an action owner, not a discussion theme  
-- one page maximum for the executive slice; details live in annex
+Finally, keep the executive slice intentionally small. The goal is not to dazzle with breadth. The goal is to create a weekly rhythm where a short set of numbers drives a short set of decisions: tighten a threshold, add training, shift staffing, pause act mode, or expand only after the scorecard says the plant earned it. That is how scorecards become management tools instead of wallpaper.
 
-## Comparison: demo scorecard versus operating scorecard
+If leadership cannot explain how a metric changes a threshold, a training plan, or a staffing pattern, remove it. Keep the view short, exportable, and owned.
 
-| Element | Demo scorecard | Operating scorecard |
-|---|---|---|
-| data source | curated screenshots | exports and logs |
-| success story | highlight reel | median and tail behavior |
-| accountability | project team | line and function owners |
-| decision use | funding narrative | threshold and staffing edits |
+## The operational bottom line
 
-Buyers learn to spot the difference quickly.
+The promise of this article—a short scorecard that ties AI assistance to response, throughput protection, audit readiness, and human follow-through, while filtering vanity metrics—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “What an Executive AI Operations Scorecard Should Include and Ignore,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-## When this scorecard works
-
-- the plant already runs a disciplined weekly operations review  
-- assistance is tied to tasks with owners, not only notifications  
-- finance accepts operational definitions for throughput measures
-
-## When this scorecard misleads
-
-- assistance runs in a side channel outside the execution record  
-- SLA definitions differ between shifts  
-- incidents are closed verbally without system linkage
-
-## Why IRIS aligns scorecards with execution reality
-
-DBR77 IRIS matters here because executive scorecards only stay credible when assisted tasks, approvals, closures, and overrides come from the same execution layer the floor already works in.
-
-That keeps the leadership view tied to operational reality instead of to a demo annex.
-
-If you want the adjacent review cadence and scale controls, see [How to Review AI-Assisted Operations After the First 90 Days](../40_how_to_review_ai_assisted_operations_after_the_first_90_days/article_EN.md) and [How to Scale AI Assistance Without Losing Operational Control](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_EN.md).
-
-## Final takeaway
-
-If leadership cannot explain how a metric changes a threshold, a training plan, or a staffing pattern, remove it from the scorecard. Keep the view short, exportable, and owned.
+That standard is not about software perfection; it is about operational honesty: fewer mystery handoffs, fewer truths reconciled only in meetings, and more days where the system record matches what the floor would say if you stopped them mid-task.
 
 ---
 

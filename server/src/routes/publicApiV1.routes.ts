@@ -126,13 +126,14 @@ router.get(
       return;
     }
 
-    const items = await calendarInteropService.getCalendarItems({
-      organizationId: actor.organizationId,
+    const items = await calendarInteropService.getCalendarItems(actor.organizationId, {
       sourceId,
-      limit,
     });
 
-    res.json({ data: items, meta: { version: 'public-v1', contract: 'po1_calendar_items_v1' } });
+    res.json({
+      data: items.slice(0, limit),
+      meta: { version: 'public-v1', contract: 'po1_calendar_items_v1' },
+    });
   })
 );
 

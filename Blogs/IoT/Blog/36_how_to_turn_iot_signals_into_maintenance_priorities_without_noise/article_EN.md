@@ -5,63 +5,51 @@ Funnel stage: Consideration
 Core problem: every new sensor trend becomes a P1 ticket, so technicians chase data and backlog the work that actually protects output  
 Main promise: a maintenance priority ladder fed by IoT: evidence rules, joint triage with operations, and a hard cap on concurrent "urgent" IoT items
 
-Maintenance already lives with noise. IoT should reduce guesswork, not add a second alarm culture.
+Maintenance already lives with noise. IoT should shrink uncertainty, not add a parallel alarm culture where every fresh trend becomes an emergency.
 
-The win is a smaller set of higher-confidence priorities tied to failure modes the plant recognizes.
+The win is a smaller set of higher-confidence priorities tied to failure modes the plant recognizes and job plans it can actually execute.
 
-Turn IoT into maintenance priorities by routing signals through a **triage ladder**: **Log and baseline** until variance is understood for that asset and season; **Promote to watchlist** when a trend repeats across shifts with corroboration; **Create a scheduled work candidate** when risk crosses a plant-defined threshold and a job plan exists; **Create an interrupt candidate** only when delay clearly raises safety, quality, or unplanned downtime risk by your standard. Everything else stays visible for engineering learning.
+On a busy week, the CMMS inbox is already a moral dilemma: what gets labor today, what waits, what gets merged. IoT should sharpen that judgment, not add a parallel panic channel where every fresh trend demands immediate attention. When planners feel compelled to create tickets “because the system said so,” technicians learn to deprioritize the system. That is how real failures slip back into verbal escalations.
 
-## Joint triage: operations plus maintenance
+## Run signals through a triage ladder
 
-Operations owns throughput and immediate safe run. Maintenance owns asset health and job planning.
+Start by logging and baselining until variance is understood for that asset, product, and season. Promote to a watchlist when a trend repeats across shifts with corroboration. Create a scheduled work candidate when risk crosses a plant-defined threshold and a job plan exists. Create an interrupt candidate only when delay clearly raises safety, quality, or unplanned downtime risk by your own standard. Everything else remains visible for engineering learning, not for planner spam.
 
-IoT priority decisions should have a **short joint checkpoint** weekly, not endless email threads.
+## Joint triage with operations
 
-Agree in that forum: which watchlist signals graduate; which planned jobs get pulled forward; which signals get demoted after a bad correlation month.
+Maintenance priority is never only a maintenance opinion. Operations confirms whether the signal matches floor reality, whether production constraints change urgency, and whether a workaround already contains risk. Without that conversation, IoT becomes a ticket machine disconnected from output.
 
-## Priority scoring framework (simple)
+Treat triage as a standing handshake, not a meeting-only ritual. Supervisors should know which IoT classes are informational, which require same-shift confirmation, and which automatically enqueue planner review. When those classes drift without documentation, each shift invents its own urgency.
 
-Score each candidate 0-3 on each row, sum mentally, do not pretend false precision:
+## Cap concurrent IoT “urgents”
 
-| Factor | Question |
-|---|---|
-| Consequence | Does delay change scrap, safety exposure, or customer delivery within days |
-| Corroboration | Is there a second signal, physical symptom, or history match |
-| Job readiness | Do we have parts, access window, and a written task list |
-| Signal quality | Is the sensor trusted after recent calibration or cross-check |
+If everything is critical, labor allocation becomes random. Agree on a maximum number of concurrent IoT-driven interrupts by crew, and force the rest into scheduled windows or watchlists until capacity exists.
 
-High sums are not automatic P1. They are automatic **review this week** items.
+**CMMS hygiene:** auto-tickets carry corroboration notes; duplicates merge; watchlist items age out or promote on review; planners audit weekly for ticket sprawl.
 
-## Checklist: keep CMMS clean
+## DBR77 IoT in the priority ladder
 
-- [ ] IoT cannot open P1 without a named human approver in month one through three
-- [ ] every IoT-sourced work order carries the signal snapshot link or ID
-- [ ] demotions are logged as openly as promotions
-- [ ] standards: align priority language with safety and quality gates
-- [ ] cap concurrent IoT interrupts per crew so legacy backlog does not starve
+DBR77 IoT fits when signals feed a ladder—context, corroboration, joint triage—rather than raw automation into work orders. Retrofit visibility should sharpen priorities, not flood them.
 
-## Comparison: ticket sprawl versus ladder discipline
+Turn IoT into maintenance priorities with evidence rules, shared triage, and hard caps on panic. Technicians should see fewer, better jobs—not more tickets with better charts.
 
-| Ticket sprawl | Ladder discipline |
-|---|---|
-| every spike becomes work | spikes become evidence |
-| technicians distrust IoT | technicians see fewer, better calls |
-| planning collapses | planning keeps the narrative |
 
-## When this fails
 
-**Fails** if purchasing and scheduling are not honest about parts and windows. IoT will keep screaming and people will mute it.
 
-The ladder assumes honest baselines from [how to improve machine data quality before scaling IoT](../24_how_to_improve_machine_data_quality_before_scaling_iot/article_EN.md) and shared state language on the floor from [how to use IoT data in shift handover without creating more reporting](../33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting/article_EN.md).
+## Keep the article’s promise practical
 
-## What this means for DBR77 IoT
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
 
-DBR77 IoT should feed maintenance triage with signal snapshots and context operators trust: promote and demote candidates from corroborated evidence, not from every new trend line.
+## A leadership checkpoint for the next ops review
 
-Tune the ladder with one crew and vintage mix before you ask every planner to adopt the same interrupt bar.
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
 
-## Bottom line
+## Bringing it home on the floor
 
-IoT should **sharpen maintenance priority**, not multiply it.
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-Evidence, corroboration, and job readiness beat a stream of red badges.
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT helps maintenance turn machine signals into prioritized work with context, corroboration, and disciplined routing—not ticket noise. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

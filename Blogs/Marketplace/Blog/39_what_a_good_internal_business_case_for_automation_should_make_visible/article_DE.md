@@ -1,59 +1,60 @@
-# Was ein gutes internes Business Case fuer Automatisierung sichtbar machen sollte
+# Was ein guter interner Business Case für Automatisierung sichtbar machen sollte
 
-Target persona: Sponsor / Finance-Partner mit Operations-Leadership  
-Funnel stage: Awareness bis Consideration (Investitionsklarheit vor Marktengagement)  
-Core problem: Business Cases verstecken Annahmen in einer ROI-Zahl, die kollabiert, sobald Durchsatz, Mix oder Personalwahrheit sich bewegt  
-Main promise: eine sichtbare Business-Case-Struktur, die Cash, Risiko, Zeit und Ownership trennt, damit Freigaben echt sind
+Zielpersona: Sponsor / Finance-Partner mit Operations-Führung  
+Funnel-Stufe: Von Wahrnehmung zu Überlegung (Investmentklarheit vor Marktengagement)  
+Kernproblem: Business Cases verstecken Annahmen in einer einzigen ROI-Zahl, die kollabiert, sobald sich Durchsatz-, Mix- oder Personalwahrheit bewegt  
+Hauptversprechen: eine sichtbare Case-Struktur, die Cash, Risiko, Zeit und Ownership trennt, damit Freigaben real sind
 
-Ein Business Case ist kein Zauber.
+Eine einzelne ROI-Zahl ist eine Zusammenfassung, kein Argument. Wenn Annahmen darin versteckt sind, bricht die Story bei jedem Shift in Durchsatz, Mix, Personal oder Ausfallzeit zusammen—und Finance lernt auf die harte Tour, dass der „freigegebene“ Case eine Hypothese in Gewissheitskleidung war.
 
-Es ist ein gemeinsames Modell dafuer, was wahr bleiben muss, damit die Investition Sinn ergibt.
+Ein starker interner Case macht Treiber sichtbar: Cash-Timing, operative Hebel, Risikobänder, Time-to-Value und wer welche Annahme besitzt.
 
-Wenn Leadership die Annahmen nicht sehen kann, genehmigt es kein Projekt. Es genehmigt eine Stimmung.
+## Headline-Return von Treibern trennen
 
-Ein gutes internes Business Case fuer Automatisierung soll Baseline-Betriebsfakten, benannte Annahmen mit Ownern, Cash-Timing ueber Jahr eins hinaus, Risiko und Mitigations-Owner, Change-Order-Sensitivitaet und was passiert bei Zeitplan- oder Scope-Slip sichtbar machen. Sichtbarkeit schlaegt Praezisions-Theater.
+Zeigen Sie, was Geld bewegt: Arbeitsminuten, Ausschuss und Nacharbeit, Ausfallzeiten, Energie, Verbrauchsmaterial, Qualitätsvorfälle und Kapazitätsfreigabe. Binden Sie jede Zeile an einen Owner und einen Evidence-Typ—Messung, Historie oder explizite Hypothese.
 
-Ein Richtungsmodell mit expliziten Annahmen schlaegt oft eine falsch exakte Zahl.
+## Cash und CapEx sind unterschiedliche Gespräche
 
-## Sichtbares Element 1: Baseline-Fakten an der Linie, nicht an Finance-Slides
+Mappen Sie Kapital auf Meilensteine und Akzeptanz. Mappen Sie operative Effekte auf monatliches Verhalten, das das Werk beobachten kann. Freigaben sollten beides verstehen—nicht in einen undurchsichtigen Index verschmelzen.
 
-Illustrative Baseline-Anker: aktuelles Durchsatzband und Engpass-Story; Ausschuss- oder Rework-Treiber, die Sie anfassen wollen; Personalmodell und Ueberstundenmuster (illustrative Kategorien); Ruestschmerz in messbaren Begriffen wo moeglich. Wenn Baseline-Fakten vage sind, sind Einsparungen imaginaer.
+## Risiko gehört auf dieselbe Seite
 
-## Sichtbares Element 2: Annahmen-Ledger mit Ownern und Falsifikationsdaten
+Benennen Sie Integrationsrisiko, Zeitplan-Sensitivität, Readiness-Lücken und Change-Order-Exposure als Szenarien—nicht als Fußnoten. Ein Case, der nur im Sonnenpfad funktioniert, wird unter Stress wiederholt.
 
-Jede Annahme braucht: wer Verifikation besitzt; bis wann; welche Messung sie falsifizieren wuerde.
+## Time-to-Value ist Teil der Ökonomie
 
-| schwache Annahme | sichtbare Annahme |
-| --- | --- |
-| "Automatisierung reduziert Arbeit" | welche Rollen, welche Tasks, welches Schichtmuster, wie verifiziert |
-| "Qualitaet verbessert sich" | welche Defektklasse, Baseline-Rate, Detektionsmethode |
+Verzögerung kostet manuellen Betrieb, Opportunity und Managementaufmerksamkeit. Zeigen Sie, wie Zeitplan-Unsicherheit Returns beeinflusst—ohne zu tun, als seien Daten Garantien.
 
-## Sichtbares Element 3: Cash-Story mit Meilensteinen, nicht als Klumpen
+## Ownership und Readiness
 
-Zeigen: Capex-Timing; Operating-Cost-Shifts; Schulungs- und Ersatzteilkadenz (illustrativ); Sensitivitaet bei langsamerer Ramp.
+Sagen Sie, wer das Projekt führt, wer Scope-Drift freigibt und was auf dem Shopfloor wahr sein muss, bevor Wert ankommt. Kapital ohne operatives Ownership ist eine Folie—kein Plan.
 
-## Sichtbares Element 4: Risiko-Tabelle mit Mitigations im Werk
+## Wie DBR77 Marketplace anschließt
 
-Integrator-Lieferrisiko einbeziehen, aber auch werksseitige Risiken: Zugangsfenster; IT-Readiness; Materialverfuegbarkeit fuer Validierungslaeufe.
+Externe Vergleichbarkeit paart sich mit interner Disziplin: sichtbare Annahmen und Entscheidungsrecords auf beiden Seiten der Wand, damit Freigaben auf inspizierbarer Logik ruhen.
 
-## Sichtbares Element 5: Entscheidungsregel, wenn der Case mid-flight schwaecher wird
+Der engste Economics-Companion: [Wie Sie Total Cost of Ownership in Automatisierungsprojekten validieren](../31_how_to_validate_total_cost_of_ownership_in_automation_projects/article_DE.md).
 
-Veroeffentlichen, was Pause oder Rescope triggert (illustrative Beispiele): Akzeptanz ohne Scope-Aenderung nicht erreichbar, die ROI-Logik bricht; interne Readiness scheitert zweimal an einem benannten Gate; Lieferanten-Evidenz aendert sich material.
+## Freigaben, die den ersten Monat überstehen
 
-## Was das fuer DBR77 Marketplace bedeutet
+Komitees freigeben Stories. Operations lebt in Realität. Ein Business Case sollte die Lücke schließen, indem er zeigt, was in den ersten 30–60 Tagen nach Cutover wahr sein muss: konsumiertes Training, Stabilisierungsplan, Ersatzteilverlauf und wer Performance-Tuning besitzt. Fehlen diese operativen Wahrheiten, ist die Freigabe theoretisch.
 
-DBR77 Marketplace unterstuetzt Automatisierungseinkauf als Workflow mit Vergleichbarkeit und Vertrauenssignalen.
+Nutzen Sie den Case auch für nicht-finanzielle Erfolge: Safety-Haltung, Ergonomie, Arbeitslastverschiebung, Qualitätsstabilität. Nicht alles Wertvolle passt in eine ROI-Zeile.
 
-Ein sichtbarer Business Case ist die interne Seite derselben Idee: inspectable Entscheidungen statt Slogan-ROI. Marketplace ist kein Roboterkatalog.
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Es ist ein herstellernahes System, Sourcing-Chaos zu reduzieren, indem Buyer-Logik mit Realitaet im Einklang bleibt.
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Was ein guter interner Business Case für Automatisierung sichtbar machen sollte“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
+
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
+
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
+
+Verknüpfen Sie diese Disziplin schließlich mit Rechenschaft: Benennen Sie, wer Annahmen auf dem Shopfloor und zu welchem Meilenstein verifiziert. Mythen gedeihen, wenn niemand Messung besitzt; sie verlieren an Kraft, wenn Verifikation Teil des Projektplans ist — kein Nachgedanken.
 
 ## Fazit
 
-Machen Sie Annahmen, Cash-Timing, Risiken und Pause-Regeln sichtbar.
-
-So verdienen Sie Freigaben, die den ersten Kontakt mit dem Werk ueberleben.
+Machen Sie Cash, Risiko, Zeit und Verantwortung sichtbar. Wenn der Case Annahmen-Prüfung nicht übersteht, ist er noch nicht für den Ausschuss reif — egal wie selbstbewusst die Überschrift wirkt.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace paart externe Angebotsvergleichbarkeit mit derselben inspizierbaren Disziplin intern: sichtbare Annahmen und Entscheidungsrecords. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

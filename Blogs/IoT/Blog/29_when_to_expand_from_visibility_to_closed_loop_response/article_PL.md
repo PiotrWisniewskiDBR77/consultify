@@ -1,50 +1,54 @@
-# Kiedy przejsc od widocznosci do zamknietej petli odpowiedzi
+# Kiedy rozszerzyć się z widoczności na zamkniętą pętlę reakcji
 
 Docelowa persona: Plant Manager / Engineering lead / Safety and quality sponsor  
 Etap lejka: Decision  
+Główny problem: kierownictwo chce nagłówków automatyzacji, podczas gdy zakład wciąż nie ma zaufanych sygnałów, właścicieli i dyscypliny rollbacku  
+Główna obietnica: model ekspansji z bramkami, który przechodzi od „widzieć” do „działać” dopiero wtedy, gdy ludzkie pętle udowodniły osąd pod obciążeniem
 
-Glowny problem: leadership chce naglowkow o automatyzacji, podczas gdy zaklad nadal nie ma zaufanych sygnalow, ownerow i dyscypliny rollback Glowna obietnica: model rozwoju z bramkami, ktory przechodzi od "widziec" do "dzialac" tylko wtedy, gdy ludzkie petle udowodnily osad pod obciazeniem Zamknieta petla odpowiedzi to nie kolejny slajd po dashboardach. To wyzsza klasa ryzyka.
+Zamknięta pętla reakcji to nie slajd po dashboardach. To wyższa klasa ryzyka.
 
-Przejscie od widocznosci do automatycznej albo polautomatycznej akcji bez przygotowania to sposob, by zamienic pilot na pamietny incydent.
+Automatyzacja lub półautomatyzacja reakcji bez przygotowania to sposób, by znośny pilot stał się historią incydentu, której nikt nie chce w post mortem. Widoczność jest przesłanką; nie jest pozwoleniem.
 
-## Co tu naprawde znaczy zamknieta petla
+Dostawcy mogą etykietować funkcje jako „gotowe na closed-loop”. Wasz zakład powinien to przetłumaczyć na: „testowaliśmy rollback pod obciążeniem, ze staffingiem nocnej zmiany i z integracjami, które naprawdę prowadzimy”. Jeśli którykolwiek fragment tego zdania jest chwiejny, wciąż macie projekt widoczności z ambitnym marketingiem.
 
-W praktycznym jezyku zakladu znaczy to: warunek maszyny albo systemu wyzwala zdefiniowana odpowiedz; odpowiedz ma ownera, time box i krok weryfikacji; tryby awarii sa udokumentowane, lacznie z powrotem do stanu bezpiecznego.
+## Zdefiniuj closed-loop językiem zakładu
 
-Jesli czegos z tego braku, nadal masz widocznosc z dodatkowa pewnoscia siebie.
+Closed-loop znaczy: warunek wyzwala zdefiniowaną reakcję, reakcja ma właściciela i ramy czasowe, weryfikacja jest jawna, a tryby awarii obejmują bezpieczny powrót. Jeśli którykolwiek element brakuje, wciąż macie widoczność z dodatkową pewnością siebie — nie kontrolę closed-loop.
 
-## Model bramek: cztery bramki przed rozszerzeniem
+## Przechodź bramki pod realnym naciskiem produkcji
 
-| Bramka | Pytanie | Minimalny dowod |
-|---|---|---|
-| G1 Zaufanie do sygnalu | czy operatorzy i maintenance zgadzaja sie co do wiarygodnosci | niski rate falszywych alarmow przez 4-8 tygodni |
-| G2 Ownership | czy jest nazwany czlowiek dla kazdej galezi | lista sprawdzona na nocnych zmianach |
-| G3 Playbook | czy odpowiedz jest skryptowana z limitami | pisane kroki, nie plemienna pamiec |
-| G4 Rollback | czy szybko wrocisz do bezpiecznej pracy recznej | jeden drill zakonczony |
+Po pierwsze, zaufanie do sygnału: operatorzy i utrzymanie zgadzają się, że sygnał jest wiarygodny, z utrzymanym niskim okresem fałszywych alarmów wystarczająco długim, by coś znaczył. Po drugie, własność: każda gałąź ma nazwanego człowieka, przetestowanego w nocy i weekendy. Po trzecie, playbook: kroki odpowiedzi są zapisane, ograniczone i przeszkolone — nie pamięć plemienna. Po czwarte, rollback: szybki powrót do bezpiecznej pracy ręcznej, zademonstrowany w drillu.
 
-Nie otwieraj kolejnej bramki, dopoki poprzednia nie trzyma przy realnym obciazeniu produkcyjnym.
+Nie otwieraj następnej bramki, dopóki poprzednia nie trzyma się, gdy zakład naprawdę produkuje.
 
-## Sekwencja krokow: wiarygodna sciezka
+## Sekwencjonuj ścieżkę dojrzałości
 
-Widocznosc z klasyfikacja tylko monitor; wspomagana odpowiedz: rekomendacje z obowiazkowym potwierdzeniem czlowieka; ograniczona auto-odpowiedz na waskie warunki z ciasnymi limitami; szersza automatyzacja dopiero po kwartalnym przegladzie na podstawie historii incydentow.
+Zacznij od widoczności i klasyfikacji tylko do monitorowania. Przejdź do wspomaganej reakcji, gdzie rekomendacje wymagają potwierdzenia człowieka. Dodaj ograniczoną auto-odpowiedź tylko dla wąskich warunków z ciasnymi limitami i jasnym rollbackiem. Szersza automatyzacja należy po kwartalnym przeglądzie i historii incydentów mówiącej, że organizacja to udźwignie.
 
-## Kiedy czekac, nawet gdy vendor naciska szybciej
+Czekaj — nawet gdy dostawcy pchają szybciej — jeśli baseline’y dryfują co tydzień bez wyjaśnienia, rotacja łamie ciągłość szkolenia, integracja sprawiłaby, że rollback jest wolny, albo kontekst BHP i jakości jest niespójnie dołączany. Czekanie to dojrzałość, nie strach.
 
-Czekaj, gdy:
+Klasyfikuj sygnały zanim zautomatyzujesz odpowiedzi, używając [jakie dane z maszyn powinny wywoływać działanie, a jakie nie](../23_what_machine_data_should_trigger_action_and_what_should_not/article_PL.md). Utrzymuj miesięczną dyscyplinę alarmów zgodną z każdą bramką przez [jak redukować fałszywe alarmy w systemach IIoT](../28_how_to_reduce_false_alarms_in_iiot_systems/article_PL.md).
 
-- baseline wciaz sie ruszaja co tydzien bez wyjasnienia
-- rotacja na linii lamie ciaglosc szkolen
-- zaleznosci integracyjne sprawiaja, ze rollback jest wolny albo niejasny
-- kontekst safety albo jakosci nie jest konsekwentnie dolaczany do zdarzen
+## DBR77 IoT i zasłużona automatyzacja
 
-Czekanie to nie strach. To dojrzalosc operacyjna.
+DBR77 IoT wspiera ekspansję z bramkami, gdy widoczność pozostaje domyślna, dopóki zaufanie, własność, playbooki i drille rollbacku nie przetrwają realnego obciążenia. Szybkie piloty powinny skracać cykle uczenia, nie usuwać bramek. Kroki closed-loop to zdolność zasłużona dowodem z człowiekiem w pętli, nie przełącznik.
 
-## Co to znaczy dla DBR77 IoT
+Przechodź od widzenia do działania dopiero po tym, jak zaufanie, własność, playbooki i rollback przejdą nacisk produkcji. Automatyzacja to przywilej zdobyty dowodem.
 
-DBR77 IoT wspiera: widocznosc w czasie rzeczywistym jako warstwe fundamentu; edge-first wsparcie decyzji tam, gdzie odpowiedz z niskim opoznieniem ma znaczenie; retrofit-friendly deployment, by najpierw udowodnic zachowanie z czlowiekiem w petli.
+## Niech obietnica artykułu zostanie praktyczna
 
-Uzyj szybkich pilotow do kompresji uczenia, nie do kompresji dyscypliny safety.
+Przełóż powyższe idee w jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo ćwiczenie, które faktycznie realizują. Duże programy zacinają się, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
 
-## Bottom line
+## Punkt kontrolny kierownictwa na następny przegląd operacji
 
-Rozszerzaj sie z widocznosci na zamknieta petle dopiero po zaufaniu do sygnalu, ownershipu, playbookach i drillu rollback pod realnym cisnieniem produkcji. Automatyzacja to przywilej zasluzony proof, nie domyslne ustawienie.
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
+
+## Domknięcie na hali
+
+Ta rada nic nie znaczy, jeśli zostaje w sali sterującej. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia mniej przypomina salę sądową, a bardziej zsynchronizowany zespół — wciąż głośny i zajęty, ale ułożony wokół tych samych faktów.
+
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie języka to objaw, że pętla wciąż jest zbyt cienka.
+
+---
+
+*DBR77 IoT pomaga rozszerzać się z widoczności na zamkniętą pętlę reakcji dzięki jasnym bramkom, dowodowi z człowiekiem w pętli i dyscyplinie rollbacku. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

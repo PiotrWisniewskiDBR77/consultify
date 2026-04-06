@@ -1,4 +1,4 @@
-import { FileText, X } from 'lucide-react';
+import { FileText, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +56,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
 
   const [rows, setRows] = useState<TableRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshingReportId, setRefreshingReportId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
@@ -92,16 +93,65 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     return end.toISOString().slice(0, 10);
   });
   const [title, setTitle] = useState('');
+  const [reportTemplate, setReportTemplate] = useState('benefits-review');
+  const [aiNarrativeHint, setAiNarrativeHint] = useState('');
+  const [aiDraftLoading, setAiDraftLoading] = useState(false);
+
+  const formatTemplateLabel = useCallback(
+    (templateKey?: string | null) => {
+      switch (templateKey) {
+        case 'control-pack':
+          return t('results.kpiReports.templates.controlPack', 'Control pack');
+        case 'portfolio-review':
+          return t('results.kpiReports.templates.portfolio', 'Portfolio KPI review');
+        case 'executive-monthly':
+          return t('results.kpiReports.templates.executive', 'Executive monthly review');
+        case 'custom':
+          return t('common.custom', 'Custom');
+        default:
+          return t('results.kpiReports.templates.benefits', 'Benefits review');
+      }
+    },
+    [t]
+  );
 
   const columns: TableColumn[] = useMemo(
     () => [
-      { id: 'type', label: t('common.type', 'Type'), width: '12%' },
-      { id: 'name', label: t('common.name', 'Name'), width: '44%' },
+      {
+        id: 'type',
+        label: t('common.type', 'Type'),
+        width: '18%',
+        render: (row) => (
+          <div>
+            <div className="text-sm font-medium text-slate-900 dark:text-white">
+              {formatTemplateLabel(row.type)}
+            </div>
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">KPI scorecard</div>
+          </div>
+        ),
+      },
+      {
+        id: 'name',
+        label: t('common.name', 'Name'),
+        width: '44%',
+        render: (row) => (
+          <div>
+            <div className="text-sm font-medium text-slate-900 dark:text-white">{row.name}</div>
+            <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span>{row.kpiCount ?? 0} KPI</span>
+              <span>·</span>
+              <span>{row.initiativeCount ?? 0} {t('results.tabs.initiatives', 'Initiatives')}</span>
+              <span>·</span>
+              <span>{row.openActionCount ?? 0} {t('results.kpiReports.openActions', 'open actions')}</span>
+            </div>
+          </div>
+        ),
+      },
       { id: 'period', label: t('common.period', 'Period'), width: '16%' },
       { id: 'status', label: t('common.status', 'Status'), width: '16%' },
       { id: 'updatedAt', label: t('common.updated', 'Updated'), width: '18%' },
     ],
-    [t]
+    [formatTemplateLabel, t]
   );
 
   const fetchReports = useCallback(async () => {
@@ -115,7 +165,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
           id: r.reportId || r.id,
           reportId: r.reportId || r.id,
           snapshotId: r.snapshotId,
-          type: 'KPI',
+          type: r.templateKey || 'benefits-review',
           name: r.title || r.name,
           period:
             r.periodStart && r.periodEnd
@@ -123,6 +173,10 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               : r.periodStart || '—',
           status: r.status || 'DRAFT',
           updatedAt: r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : '—',
+          aiNarrativeHint: r.aiNarrativeHint || '',
+          initiativeCount: r.initiativeCount ?? null,
+          kpiCount: r.kpiCount ?? null,
+          openActionCount: r.openActionCount ?? null,
         }))
       );
     } catch {
@@ -132,7 +186,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               id: r.id,
               reportId: r.reportId,
               snapshotId: r.snapshotId,
-              type: 'KPI',
+              type: 'benefits-review',
               name: r.title,
               period: `${r.periodStart} → ${r.periodEnd}`,
               status: r.status,
@@ -211,20 +265,81 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     });
   }, [availableKpis, kpiSearch]);
 
+  const generateAiDraft = useCallback(async () => {
+    setAiDraftLoading(true);
+    try {
+      const selectedInitiativesLabel = availableInitiatives
+        .filter((initiative) => selectedInitiativeIds.includes(initiative.id))
+        .map((initiative) => initiative.name)
+        .slice(0, 12);
+      const selectedKpisLabel = availableKpis
+        .filter((kpi) => selectedKpiIds.includes(kpi.id))
+        .map((kpi) => `${kpi.name}${kpi.initiativeName ? ` (${kpi.initiativeName})` : ''}`)
+        .slice(0, 20);
+      const contextText = [
+        `Template: ${reportTemplate}`,
+        `Period start: ${periodStart}`,
+        `Period end: ${periodEnd || 'n/a'}`,
+        `Lifecycle filter: ${selectedLifecycleFilter}`,
+        `Initiatives: ${selectedInitiativesLabel.join(', ') || 'none'}`,
+        `KPIs: ${selectedKpisLabel.join(', ') || 'none'}`,
+        `Queue summary: requires review ${reviewContext.requiresReview}, discrepancy ${reviewContext.discrepancy}, needs entry ${reviewContext.needsEntry}`,
+      ].join('\n');
+      const systemInstruction = [
+        'You are drafting a KPI performance review title and short reporting brief.',
+        'Return ONLY valid JSON.',
+        'Schema: {"title": string, "brief": string}',
+        'The title must be concise and executive-friendly.',
+        'The brief must be 1-2 sentences and mention scope, key risks, and intended report purpose.',
+      ].join('\n');
+      const aiRes: any = await Api.post('/ai/refine-text?timeoutMs=20000', {
+        text: contextText,
+        mode: 'generate',
+        systemInstruction,
+        fieldLabel: 'KPI report draft',
+        language: 'en',
+      });
+      const raw = String(aiRes?.text || '').trim();
+      const parsed = JSON.parse(raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1] || raw);
+      if (parsed?.title) setTitle(String(parsed.title));
+      if (parsed?.brief) setAiNarrativeHint(String(parsed.brief));
+    } catch {
+      toast.error(t('results.kpiReports.create.aiFailed', 'Failed to generate AI draft'));
+    } finally {
+      setAiDraftLoading(false);
+    }
+  }, [
+    availableInitiatives,
+    availableKpis,
+    periodEnd,
+    periodStart,
+    reportTemplate,
+    reviewContext.discrepancy,
+    reviewContext.needsEntry,
+    reviewContext.requiresReview,
+    selectedInitiativeIds,
+    selectedKpiIds,
+    selectedLifecycleFilter,
+    t,
+  ]);
+
   const handleCreate = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!periodStart) return;
       setCreating(true);
       try {
+        const filters = {
+          lifecycleFilter: selectedLifecycleFilter,
+          initiativeIds: selectedInitiativeIds,
+          ...(reportTemplate !== 'benefits-review' ? { templateKey: reportTemplate } : {}),
+          ...(aiNarrativeHint.trim() ? { aiNarrativeHint: aiNarrativeHint.trim() } : {}),
+        };
         const payload = {
           periodStart,
           periodEnd: periodEnd || null,
           title: title.trim() || undefined,
-          filters: {
-            lifecycleFilter: selectedLifecycleFilter,
-            initiativeIds: selectedInitiativeIds,
-          },
+          filters,
           initiativeIds: selectedInitiativeIds.length ? selectedInitiativeIds : undefined,
           kpiIds: selectedKpiIds.length ? selectedKpiIds : undefined,
         };
@@ -242,6 +357,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         setCreateOpen(false);
         setTitle('');
         setKpiSearch('');
+        setAiNarrativeHint('');
         await fetchReports();
         if (resolvedReportId) navigate(`/reports/builder/${resolvedReportId}`);
       } finally {
@@ -252,6 +368,8 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
       periodStart,
       periodEnd,
       title,
+      reportTemplate,
+      aiNarrativeHint,
       selectedInitiativeIds,
       selectedKpiIds,
       fetchReports,
@@ -346,13 +464,45 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         onClick: () => navigate(`/reports/builder/${row.reportId}`),
       },
       {
+        id: 'refresh',
+        label:
+          refreshingReportId === row.reportId
+            ? t('common.loading', 'Loading...')
+            : t('results.kpiReports.refresh', 'Refresh snapshot'),
+        onClick: async () => {
+          if (!row.snapshotId || refreshingReportId === row.reportId) return;
+          setRefreshingReportId(row.reportId);
+          try {
+            let res: any;
+            try {
+              res = await V8ResultsApi.refreshKpiReport(String(row.snapshotId));
+            } catch (error) {
+              if (!shouldFallbackToLegacyResults(error)) {
+                throw error;
+              }
+              res = await Api.post(`/results/kpi-reports/${row.snapshotId}/refresh`, {});
+            }
+            toast.success(t('results.kpiReports.refreshDone', 'Snapshot refreshed'));
+            await fetchReports();
+            const nextReportId = res?.data?.reportId || res?.reportId;
+            if (nextReportId) {
+              navigate(`/reports/builder/${nextReportId}`);
+            }
+          } catch {
+            toast.error(t('results.kpiReports.refreshFailed', 'Failed to refresh snapshot'));
+          } finally {
+            setRefreshingReportId(null);
+          }
+        },
+      },
+      {
         id: 'tasks',
         label: t('results.kpiReports.tasks.create', 'Create tasks from action plan'),
         onClick: () => void loadActionsForRow(row),
         divider: true,
       },
     ],
-    [navigate, t, loadActionsForRow]
+    [navigate, t, loadActionsForRow, refreshingReportId, fetchReports]
   );
 
   return (
@@ -409,7 +559,10 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm"
-            onClick={() => setCreateOpen(false)}
+            onClick={() => {
+              setCreateOpen(false);
+              setAiNarrativeHint('');
+            }}
           />
           <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
@@ -422,7 +575,10 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 </h2>
               </div>
               <button
-                onClick={() => setCreateOpen(false)}
+                onClick={() => {
+                  setCreateOpen(false);
+                  setAiNarrativeHint('');
+                }}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors"
               >
                 <X size={18} />
@@ -432,16 +588,80 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
                 <label className={labelCls}>{t('common.name', 'Name')}</label>
-                <input
-                  className={inputCls}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t(
-                    'results.kpiReports.create.titlePlaceholder',
-                    'e.g. Monthly KPI Review'
-                  )}
-                />
+                <div className="flex gap-2">
+                  <input
+                    className={inputCls}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder={t(
+                      'results.kpiReports.create.titlePlaceholder',
+                      'e.g. Monthly KPI Review'
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void generateAiDraft()}
+                    disabled={aiDraftLoading || selectedKpiIds.length === 0}
+                    className="inline-flex items-center gap-1 rounded-lg border border-primary-500/30 bg-primary-500/10 px-3 text-xs font-medium text-primary-600 dark:text-primary-300 disabled:opacity-50"
+                  >
+                    <Sparkles size={14} />
+                    {aiDraftLoading
+                      ? t('common.loading', 'Loading...')
+                      : t('results.kpiReports.create.aiDraft', 'AI draft')}
+                  </button>
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <label className={labelCls}>
+                    {t('results.kpiReports.create.template', 'Template')}
+                  </label>
+                  <select
+                    className={inputCls}
+                    value={reportTemplate}
+                    onChange={(e) => setReportTemplate(e.target.value)}
+                  >
+                    <option value="benefits-review">
+                      {t('results.kpiReports.templates.benefits', 'Benefits review')}
+                    </option>
+                    <option value="control-pack">
+                      {t('results.kpiReports.templates.controlPack', 'Control pack')}
+                    </option>
+                    <option value="portfolio-review">
+                      {t('results.kpiReports.templates.portfolio', 'Portfolio KPI review')}
+                    </option>
+                    <option value="executive-monthly">
+                      {t('results.kpiReports.templates.executive', 'Executive monthly review')}
+                    </option>
+                    <option value="custom">{t('common.custom', 'Custom')}</option>
+                  </select>
+                </div>
+                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.kpiReports.create.scope', 'Snapshot scope')}
+                  </div>
+                  <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                    {selectedInitiativeIds.length} {t('results.tabs.initiatives', 'Initiatives')} ·{' '}
+                    {selectedKpiIds.length} KPI
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {t(
+                      'results.kpiReports.create.snapshotHint',
+                      'The report is created as a snapshot with optional refresh later.'
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {aiNarrativeHint ? (
+                <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3 text-sm text-slate-700 dark:text-slate-200">
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-primary-500">
+                    {t('results.kpiReports.create.aiBrief', 'AI brief')}
+                  </div>
+                  {aiNarrativeHint}
+                </div>
+              ) : null}
 
               <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-3">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">

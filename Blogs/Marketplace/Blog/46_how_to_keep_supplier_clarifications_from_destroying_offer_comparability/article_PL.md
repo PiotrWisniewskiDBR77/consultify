@@ -1,55 +1,64 @@
-# Jak nie dac wyjasnieniom dostawcow zniszczyc porownywalnosc ofert
+# Jak nie pozwolić, by wyjaśnienia dostawców zniszczyły porównywalność ofert
 
-Target persona: wlasciciel zakupu prowadzacy wielodostawcza ocene  
-Funnel stage: Evaluation (porownanie ofert)  
-Core problem: wyjasnienia staja sie prywatnymi watkami, ktore asymetrycznie zmieniaja zakres  
-Main promise: protokol wyjasnien, ktory chroni jeden kregoslup porownania
+Docelowa persona: Właściciel zakupów prowadzący wielodostawczą ocenę  
+Etap lejka: Ocena (porównanie ofert)  
+Główny problem: wyjaśnienia zamieniają się w prywatne wątki, które asymetrycznie zmieniają zakres  
+Główna obietnica: protokół wyjaśnień, który chroni jeden wspólny kręgosłup porównania
 
-Wyjasnienia sa potrzebne.
+Wyjaśnienia są potrzebne — i niebezpieczne. Prywatne odpowiedzi pozwalają jednemu dostawcy optymalizować pod ukryte fakty, podczas gdy inni wyceniają inny świat. Asymetryczne poprawki zakresu zamieniają „porównanie” w archeologię: nie wybieracie już między ofertami — odtwarzacie kilka równoległych negocjacji.
 
-Niekontrolowane wyjasnienia to sposob, w jaki porownywalnosc cicho ginie.
+Chrońcie jeden kręgosłup porównania: te same pytania, opublikowane odpowiedzi, wersjonowany zakres i znormalizowane odpowiedzi.
 
-## Bezposrednia odpowiedz
+## Dlaczego prywatne wyjaśnienia czują się szybsze — a kosztują więcej
 
-Nie daj wyjasnieniom dostawcow zniszczyc porownywalnosci ofert, prowadzac caly materialny Q i A przez jeden log kontrolowany przez nabywce, kierujac odpowiedzi do wszystkich oferentow, gdy odpowiedz zmienia zalozenia oceny, wersjonujac zestaw pytan i macierz, gdy obiekty akceptacji sie przesuwaja, oraz zakazujac liczenia obietnic technicznych z kanalow pobocznych, dopoki nie trafia do wspolnego zapisu.
+Prywatne wątki czują się responsywne. Dostawca dostaje odpowiedź w godzinach, praca idzie dalej, a kupujący czuje się pomocny. Ukryty koszt przychodzi przy normalizacji: inni oferenci wyceniali inne ograniczenia, zespoły wewnętrzne pamiętają różne fakty, a zakupy muszą wybierać między nieuczciwym porównaniem a bolesnym resetem. „Szybka” ścieżka często daje wolniejszą decyzję, bo zapis nie utrzyma czystego przyznania.
 
-Jesli tylko jeden dostawca uslyszal "prawdziwa" odpowiedz, nie masz juz porownania. Masz ulubience w stroju karty wynikow.
+Asymetria też koroduje zaufanie. Dostawcy rozmawiają. Gdy jeden konkurent wygląda na faworyzowany informacją, której inni nie widzieli, cały proces robi się polityczny — nawet jeśli nikt nie chciał faworyzować. Publiczny rejestr to nie biurokracja; to infrastruktura uczciwości.
 
-## Protokol wyjasnien (ograniczony)
+## Jak wygląda zdyscyplinowane wyjaśnienie w realnym tygodniu oceny
 
-Jedno wejscie e-mail lub portal na wlasnosc zakupow; Triage: materialne kontra tylko administracyjne etykiety; Materialne odpowiedzi publikowane do wszystkich aktywnych oferentow z ID odniesienia; Macierz zaktualizowana lub jawnie oznaczona jako niezmieniona z podbiciem wersji; Cotygodniowy odczyt dla wewnetrznych akceptujacych: co sie ruszylo i dlaczego.
+Zbierajcie pytania w jednym intake, triażujcie, co zmienia porównywalność, a co jest czysto edukacyjne, publikujcie odpowiedzi ze stemplem wersji i dajcie oferentom ograniczone okno na odświeżenie propozycji, gdy przesuną się istotne fakty. Jeśli tylko jedna oferta musi się zmienić, udokumentujcie dlaczego i czy inni dostają równoważną szansę korekty. Chodzi o jedną narrację czasu: co wiedzieliśmy kiedy, co się zmieniło i względem czego wszyscy wyceniali przy deadlinie.
 
-## Checklista: materialne kontra administracyjne
+Gdy pytanie ujawnia, że brief był zły, traktujcie to jak zdarzenie zakresowe, nie jak przypis. Wersjonujcie brief, w razie potrzeby resetujcie rundę porównania i przyjmijcie krótkie opóźnienie jako tańsze niż skorumpowany zapis decyzji.
 
-| Materialne (broadcast) | administracyjne (moze byc bezposrednio) |
-| --- | --- |
-| zmienia dowod akceptacji | poprawia pisownie numerow czesci |
-| zmienia zalozenia przepustowosci, zasiegu lub ochrony | potwierdza sale spotkan |
-| zmienia odpowiedzialnosc za interfejs | potwierdza kolejnosc stron PDF |
-| zmienia znaczenie kamienia milowego | potwierdza adres do faktury |
+## Publikujcie odpowiedzi, które zmieniają porównywalność
 
-Przy watpliwosciach traktuj jako materialne.
+Jeśli wyjaśnienie przesuwa założenia, interfejsy lub granice, każdy poważny oferent powinien to zobaczyć — albo udokumentujcie kontrolowany wyjątek i sposób, w jaki oferty zostaną znormalizowane.
 
-## Typowy tryb awarii
+## Logujcie wszystko w jednym miejscu
 
-Inzynier A odpowiada dostawcy B w czacie. Dostawca B poprawia cene i harmonogram. Dostawca C nigdy nie wiedzial, ze zalozenie sie przesunelo. Arkusz nadal pokazuje trzy porownywalne wiersze.
+Data, pytanie, odpowiedź, właściciel i wpływ na pola oceny. Wątki mailowe nie są systemem zapisu.
 
-## Reality check: chaos wyjasnien zwykle zaczyna sie od jednej "malej" odpowiedzi, ktorej nikt nie uznaje za wartej rozeslania
+## Żadnych prywatnych przeprojektowań
 
-Wlasnie dlatego szkoda przychodzi po cichu. Odpowiedz brzmi oczywiscie. Dostawca brzmi rozsadnie. Korekta wyglada na drobna. Ale jesli jeden oferent aktualizuje cene, zakres albo harmonogram wobec zmienionego zalozenia, ktorego inni nigdy nie dostali, porownywalnosc juz zostala zlamana, zanim ktokolwiek to przyzna.
+Gdy dostawca proponuje zmianę zakresu, traktujcie to jak formalną zmianę: oceńcie wpływ, opublikujcie nową wersję briefu, w razie potrzeby zresetujcie rundę porównania.
 
-## Co to znaczy dla DBR77 Marketplace
+## Timebox na rundy wyjaśnień
 
-DBR77 Marketplace to workflow decyzji automatyzacyjnych, warstwa zaufania przy wyborze integratora oraz system porownywania ofert.
+Nieograniczone Q&A zaprasza do dryfu. Ograniczone rundy wymuszają dyscyplinę: zbierz, opublikuj, znormalizuj, oceń.
 
-Dyscyplina wyjasnien to warstwa higieny, ktora utrzymuje zaufanie do tego porownania, gdy rosnie objetosc maili. Marketplace to nie katalog robotow.
+## Jak DBR77 Marketplace pasuje
 
-To sposob, w jaki producenci zapobiegaja temu, by chaos sourcingu przepisywal zasady w locie.
+Ustrukturyzowane porównanie zakłada kręgosłup; dyscyplina wyjaśnień utrzymuje ten kręgosłup uczciwym, gdy dostawcy naciskają na skróty.
+
+Najbliższe sąsiednie lektury: [Jak utrzymać prędkość zakupów bez utraty jakości technicznej](../38_how_to_keep_procurement_speed_without_losing_technical_quality/article_PL.md), [Co uwzględnić w RFQ/RFP automatyzacyjnym](../15_what_to_include_in_an_automation_rfq_or_rfp/article_PL.md), [Co powinien zawierać pakiet decyzyjny ws. automatyzacji gotowy na zarząd](../44_what_a_board_ready_automation_decision_packet_should_include/article_PL.md) oraz [Jak napisać lepszy brief wyzwania automatyzacyjnego](../14_how_to_write_a_better_automation_challenge_brief/article_PL.md).
+
+## Wyjaśnienia to product management zakupów
+
+Traktujcie rundy wyjaśnień jak release’y: co się zmieniło, jaka wersja, co jest wstecznie zgodne z porównaniem, a co wymaga od dostawców odświeżenia liczb. Ta mentalność powstrzymuje „drobne poprawki” przed cichym ponownym przetargiem.
+
+Gdy dostawcy pchają na prywatne kanały, przekierujcie do rejestru. Jednego dnia wydaje się wolniej; później oszczędza to tygodnie uzgadniania.
+
+## Od decyzji do zachowania hali
+
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „jak nie pozwolić, by wyjaśnienia dostawców zniszczyły porównywalność ofert” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
+
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
 ## Podsumowanie
 
-Porownywalnosc wymaga wspolnego zapisu prawdy. Prywatna prawda nie jest porownywalna.
+Wyjaśnienia powinny ostrzyć porównanie, a nie je rozsadzać. Jeden kręgosłup, opublikowane fakty, wersjonowany zakres — tak przetrwa integralność oceny.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace zakłada ustrukturyzowany kręgosłup porównania; dyscyplina wyjaśnień to sposób, w jaki ten kręgosłup pozostaje uczciwy, gdy dostawcy naciskają na prywatne skróty. [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

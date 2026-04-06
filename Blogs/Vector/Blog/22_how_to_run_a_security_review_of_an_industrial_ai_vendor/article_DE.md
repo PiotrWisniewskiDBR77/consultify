@@ -1,85 +1,50 @@
-# Wie man eine Sicherheitspruefung eines industriellen KI-Anbieters durchfuehrt
+# Wie man ein Security-Review eines Industrie-KI-Anbieters durchführt
 
-Target persona: CTO / CISO-ausgerichtete Fuehrungskraft  
-Funnel stage: Consideration  
-Core problem: Sicherheitspruefungen von KI-Anbieter:innen bleiben oft in vagen Zusagen stecken, weil Teams keine strukturierte Sequenz entlang Deployment, Datenfluss und Trainingspolitik haben  
-Main promise: Hersteller koennen eine glaubwuerdige Sicherheitspruefung mit einer wiederholbaren Sequenz fahren, die Evidenz liefert, nicht nur Folien
+Zielpersona: CTO / CISO-ausgerichtete Führungskraft  
+Funnel-Stufe: Überlegung  
+Kernproblem: Security-Reviews von KI-Anbieter stocken oft bei vagen Zusicherungen, weil Teams eine strukturierte Sequenz zu Deployments, Datenfluss und Trainingspolitik fehlt  
+Hauptversprechen: Hersteller können ein glaubwürdiges Vendor-Security-Review mit wiederholbarer Sequenz führen, die Evidenz liefert — keine Slide-Claims
 
-Eine Sicherheitspruefung ist kein Bauchgefuehl-Workshop.
+Ein Security-Review soll kein Gefühlsexperiment sein. Es soll ein strukturierter Durchlauf sein, der Marketing-Sprache in verifizierbare Grenzen verwandelt — weil in der Fertigung „vertraut uns“ keine Kontrolle ist und Demos keine Architektur sind.
 
-Sie ist ein strukturierter Durchlauf, der Marketing-Sprache in pruefbare Grenzen uebersetzt.
+Führen Sie das Review in dieser Reihenfolge: definieren Sie die beabsichtigte Deployments-Grenze, mappen Sie Datenflüsse End-to-End, verifizieren Sie Trainings- und Aufbewahrungs-Politik in Vertrag und Architektur, testen Sie Zugriffskontrolle und Protokollierung, validieren Sie dann Governance-Hooks wie Freigaben und Export-Kontrollen. Wenn der Anbieter diese Schichten nicht spezifisch beantworten kann, ist das Review nicht fertig. Es ist pausiert.
 
-Fuehren Sie die Pruefung in dieser Reihenfolge: definieren Sie die geplante Deployments-Grenze, mappen Sie Datenfluesse Ende-zu-Ende, verifizieren Sie Trainings- und Aufbewahrungsregeln in Vertrag und Architektur, pruefen Sie Zugriffskontrolle und Protokollierung, validieren Sie Governance-Hooks wie Freigaben und Exportkontrollen.
+## Warum Sequenz zählt
 
-Wenn der Anbieter diese Schichten nicht konkret beantworten kann, ist die Pruefung nicht abgeschlossen.
+KI-Security-Reviews scheitern, wenn Teams zuerst zu Features springen. Features schützen keine Daten. Grenzen tun es. Eine disziplinierte Sequenz hält das Gespräch verankert bei dem, was Security-Teams wirklich für die Freigabe brauchen: wohin Nutzlasten gehen, wer sie berühren darf, was persistiert und was sich ohne Vorankündigung ändern kann.
 
-## Warum die Reihenfolge zaehlt
+## Schritt 1: Deployments-Grenze einfrieren
 
-KI-Sicherheitspruefungen scheitern, wenn Teams mit Features starten. Features schuetzen keine Daten. Grenzen tun es.
+Bevor Sie über Modelle streiten, benennen Sie die Grenze, die Sie brauchen: On-Premise, Private-Cloud-Mandant, isoliertes VPC mit begrenzten Outbound-Pfaden, air-gapped Evaluation oder ein anderes explizites Muster. Fragen Sie den Anbieter, welche Modi heute real sind versus Roadmap. Erfassen Sie Lücken als explizite Risiken, nicht als Fußnoten. Wenn die Grenze vage ist, wird alles Downstream vage.
 
-Eine disziplinierte Sequenz haelt das Gespraech dort, wo Sicherheitsteams wirklich unterschreiben muessen.
+## Schritt 2: Datenflüsse mappen
 
-## Schritt 1: Deployments-Grenze festlegen
+Fordern Sie eine Datenfluss-Beschreibung, die abdeckt: was ins System eintritt, wo es verarbeitet wird, was protokolliert wird, was aufbewahrt wird und was die Grenze verlassen kann. Industrielle Käufer sollten auf Diagramme in klarer Sprache bestehen — nicht nur generische Trust-Badges. Wenn das Diagramm nicht mit Ihrem Segmentierungsmodell in Einklang zu bringen ist, haben Sie noch keine deploybare Geschichte.
 
-Bevor Sie ueber Modelle diskutieren, definieren Sie die benoetigte Grenze: On-Premise; privater Cloud-Mandant; isoliertes VPC ohne ausgehende Trainingspfade; air-gapped Evaluation. Fragen Sie, welche Modi heute real sind und welche Roadmap sind. Erfassen Sie Luecken als explizite Risiken, nicht als Fussnoten.
+## Schritt 3: Trainingspolitik von Privacy-Policy trennen
 
-## Schritt 2: Datenfluesse mappen
+Fragen Sie direkt, ob Prompts, Dokumente oder Outputs genutzt werden dürfen, um Anbieter-Modelle zu verbessern; ob Default-Off für Kundendaten im Training gilt; und wie das technisch — nicht nur vertraglich — durchgesetzt wird. Wenn Antworten zwischen Sales und Security divergieren, stoppen und angleichen. Trainingspolitik ist, wo „privat“ oft leise auseinanderläuft.
 
-Fordern Sie eine Datenflussbeschreibung mit: was in das System eintritt; wo verarbeitet wird; was protokolliert wird; was aufbewahrt wird; was die Grenze verlassen kann.
+## Schritt 4: Identität, Zugriff und Audit-Logs verifizieren
 
-Industrielle Kaeufer:innen sollten klare Diagramme in einfacher Sprache verlangen, nicht nur generische Cloud-Siegel.
-
-## Schritt 3: Trainingspolitik von Datenschutz-Klauseln trennen
-
-Fragen Sie direkt:
-
-- duerfen Prompts, Dokumente oder Ausgaben zur Verbesserung von Anbieter-Modellen genutzt werden?
-- gibt es eine Standard-Aus-Konfiguration fuer Kundendaten im Training?
-- wie wird das technisch, nicht nur vertraglich, erzwungen?
-
-Wenn Antworten aus Vertrieb und Security divergieren, stoppen Sie und gleichen Sie aus.
-
-## Schritt 4: Identitaet, Zugriff und Audit-Logs verifizieren
-
-Bestaetigen Sie: SSO und rollenbasierten Zugriff; Aufgabentrennung fuer Admin-Aktionen; Aufbewahrungsfenster fuer Logs; Exportierbarkeit fuer internes SIEM. Fertigungsumgebungen brauchen Nachpruefbarkeit, nicht Black-Box-Bequemlichkeit.
+Bestätigen Sie SSO und rollenbasierten Zugriff, Trennung von Pflichten für Admin-Aktionen, Aufbewahrungsfenster für Logs und Exportierbarkeit für internes SIEM-Review. Fertigungsumgebungen brauchen Prüfbarkeit, keine Black-Box-Bequemlichkeit — besonders wenn Support-Zugriff existiert.
 
 ## Schritt 5: Governance und menschliche Freigabe
 
-Definieren Sie, welche Ausgaben informativ sind und welche handlungsorientiert. Fragen Sie, wie das Produkt unterstuetzt:
+Definieren Sie, welche Outputs informativ versus handlungsorientiert sind. Fragen Sie, wie das Produkt Freigabe-Warteschlangen, Versionierung von Empfehlungen und Rollback- oder Override-Muster unterstützt. Hier divergiert Industrie-KI vom generischen Chat: Das System muss zu Rechenschaft passen — nicht nur zu Durchsatz.
 
-- Freigabe-Warteschlangen
-- Versionierung von Empfehlungen
-- Rollback- oder Override-Muster
+## Schritt 6: Integrations-Touchpoints
 
-Hier trennt sich industrielle KI vom generischen Chat.
+Wenn das System Werksysteme verbinden wird, reviewen Sie API-Auth-Modelle, Least-Privilege-Scopes, Change-Control-Erwartungen und Incident-Response-Playbooks. Behandeln Sie Integrationen als Erweiterung der Angriffsfläche — und als Erweiterung operativer Konsequenz.
 
-## Schritt 6: Integrationspunkte
+Bevor Sie das Review schließen, sollten Sie eine schriftliche Deployments-Architektur für Ihren gewählten Modus haben, Trainingspolicy-Sprache, die technischen Kontrollen entspricht, eine Logging- und Aufbewahrungs-Erklärung, die Sie IT-Security geben können, und einen Pilot-Scope, der keine Produktionsgeheimnisse ab Tag eins braucht.
 
-Wenn Anbindung an Werksysteme geplant ist, pruefen Sie: API-Authentifizierungsmodelle; Least-Privilege-Scopes; Erwartungen an Change Control; Incident-Response-Playbooks. Behandeln Sie Integrationen als Vergroesserung der Angriffsflaeche.
+Häufige Fehler: „Enterprise-grade“ ohne Grenzdetail akzeptieren, UI-Demos statt Datenpfade reviewen, Procurement die Security-Review in eine Checkbox-Woche komprimieren lassen und den Trainingspolicy-Tiefgang überspringen, weil er juristisch wirkt.
 
-## Evidenz-Checkliste
+Ein strukturiertes Vendor-Security-Review bleibt produktiv, wenn Antworten auf Deployments-Ort, Datenpfade, Trainingspolitik und Rückverfolgbarkeit mappen statt auf Slogans. Vector ist für diese Prüfung positioniert: proprietäre Industrie-KI mit On-Premise-, Private-API- oder isolierten Optionen, Kundendaten ausgeschlossen vom Modelltraining und Reasoning ausgerichtet auf Werks-Transformationswissen statt generische Chat-Muster.
 
-Bevor Sie abschliessen, sollten Sie haben:
-
-- eine schriftliche Deployments-Architektur fuer den gewaehlten Modus
-- Trainings-Sprache, die zu technischen Kontrollen passt
-- eine Logging- und Aufbewahrungsstellung fuer IT-Security
-- einen Pilotumfang ohne Produktionsgeheimnisse am ersten Tag
-
-## Typische Pruef-Fehler
-
-"enterprise-grade" ohne Grenzdetail akzeptieren; UI-Demos statt Datenpfade pruefen; zulassen, dass Einkauf die Sicherheitspruefung auf eine Checkbox-Woche komprimiert; den Trainings-Tiefenpass auslassen, weil er juristisch wirkt.
-
-## Produktbruecke
-
-DBR77 Vector ist um industrielle Deployments-Grenzen positioniert: proprietare industrielle KI mit On-Premise-, Private-API- oder isolierter Bereitstellung, ohne Training des Modells mit Kundendaten, mit Werks-Transformations-Wissen statt generischer Chat-Muster. Diese Positionierung sollte das Sicherheitsgespraech frueh konkret machen.
-
-## Fazit
-
-Ein serioeser industrieller KI-Anbieter sollte eine strukturierte Sicherheitspruefung erwarten.
-
-Wenn die Pruefung duenn bleibt, erzwingt das Deployment spaeter Tiefe, meist unter Druck. Klarheit ist vor der Verpflichtung billiger.
+Ein seriöser Industrie-KI-Anbieter sollte ein strukturiertes Security-Review willkommen heißen. Wenn das Review flach bleibt, wird das Deployment irgendwann Tiefe erzwingen — meist unter Druck. Klarheit ist besser vor Commitment zu verdienen.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*
+*DBR77 Vector ist für security-geführte Evaluierungen gebaut: klare Deployments-Modi, kein Kundendaten-Modelltraining und industrielles Reasoning, ausgerichtet auf geführtes Werks-Nutzungsmodell. [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*

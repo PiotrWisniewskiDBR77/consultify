@@ -1,63 +1,56 @@
-# Wann Sie mehrere Automatisierungsbedarfe in einem Einkaufsprozess buendeln sollten und wann nicht
+# Wann man mehrere Automatisierungsbedarfe in einen Einkaufsprozess bündeln sollte — und wann nicht
 
-Target persona: Sponsor / Portfolio-Owner ueber Linien und Capex-Zyklen  
-Funnel stage: Consideration bis Evaluation (Portfolio-Formung vor RFQ-Design)  
-Core problem: Buendeln reduziert Transaktionszahl, zerstoert aber oft Vergleichbarkeit, versteckt schwache Scopes und koppelt Zeitplaene, die unabhaengig bleiben sollten  
-Main promise: eine Entscheidungsmatrix fuer Bundle versus Split entlang Schnittstellen, Risikokopplung und Award-Logik
+Zielpersona: Sponsor / Portfolio-Owner über Linien und CapEx-Zyklen  
+Funnel-Stufe: Überlegung bis Bewertung (Portfolio-Formung vor RFQ-Design)  
+Kernproblem: Bündeln reduziert Transaktionszahl, zerstört aber oft Vergleichbarkeit, verbirgt schwache Scopes und koppelt Zeitpläne, die unabhängig bleiben sollten  
+Hauptversprechen: eine Entscheidungsmatrix Bündel versus Split basierend auf Schnittstellen, Risikokopplung und Award-Logik
 
-Buendeln fuehlt sich effizient an.
+Bündeln fühlt sich effizient an: ein Steering, ein Einkaufszyklus, eine Board-Story. Es kann auch ein Monster schaffen — gekoppelte Zeitpläne, verhedderte Accountability und Angebote so groß, dass Vergleichbarkeit in Executive Summaries kollabiert, die technisch niemand verteidigen kann.
 
-Es ist effizient, wenn es Vergleichbarkeit erhoeht und Integrationssnaehte reduziert. Es ist teuer, wenn es unverbundene Risiken in eine Kehle zwingt.
+Splitten, wenn Arbeitspakete unabhängig genug sind, um sauber verglichen und vergeben zu werden. Bündeln, wenn Schnittstellen, Risiko und Mobilisierung wirklich einen einzigen Faden brauchen.
 
-Buendeln Sie mehrere Automatisierungsbedarfe in einem Einkaufsprozess, wenn sie Schnittstellen, Timing-Constraints oder Lieferantenfaehigkeiten teilen, sodass ein Integrator kohaerente Lieferung mit einem Akzeptanzrecord besitzen kann.
+## Bündeln, wenn Kopplung real ist
 
-Teilen Sie in parallele oder sequenzierte Einkaeufe, wenn Scopes unterschiedliche technische Owner, unterschiedliche Readiness-Kalender, unterschiedliche Risikoprofile haben oder Buendeln einen Single-Award ueber unverbundene Wetten erzwingen wuerde.
+Einen Prozess erwägen, wenn Systeme Schnittstellen teilen, Sequencing für Sicherheit oder Produktionskontinuität zählt, Integrationsökonomien existieren oder ein Integrator widersprüchliche Abhängigkeiten zwischen Zellen besitzen muss. Der Test ist simpel: Würde Splitten sowieso versteckte Koordination erzwingen?
 
-## Dimension 1: Schnittstellenkopplung
+## Splitten, wenn Vergleichbarkeit oder Risiko es verlangt
 
-Hohe Kopplung (illustrativ): geteilte MES-Events und Routing-Logik ueber Zellen; geteilte Materialfluss-Spine, die mehrere Stationen speist.
+Getrennte Buys, wenn Scopes sich in Technologieklasse unterscheiden, Readiness-Zeitpläne divergieren, Sponsoren unterschiedlich sind oder schwache Pakete in einer größeren Zahl verschwinden würden. Unverwandte Bedarfe in ein RFQ zu pressen produziert oft eine glänzende Story und mehrere unterdefinierte Arbeitspakete.
 
-Niedrige Kopplung: unabhaengige Linien mit separaten Qualitaets-Stichprobenmodellen und ohne gemeinsame Steuerungsphilosophie. Hohe Kopplung beguenstigt einen Thread. Niedrige Kopplung beguenstigt trennbare Entscheidungen.
+## Arbeitspakete auch im Bündel definieren
 
-## Dimension 2: Zeitplankopplung
+Wenn Sie bündeln, benennen Sie Pakete trotzdem mit Abnahmeobjekten, Ownern und kommerziellen Grenzen. Sonst wird „ein Projekt“ zu einem Streit.
 
-Fragen Sie, ob ein Slip in Projekt A Projekt B rechtlich und operativ mitziehen soll. Wenn ja, kann Buendeln Realitaet abbilden. Wenn nein, kann Buendeln kuenstliche Geiselnahme erzeugen.
+## Award-Logik muss Prüfung überstehen
 
-## Dimension 3: Vergleichbarkeitsintegritaet
+Ausschüsse sollten sehen, wo Geld auf Outcomes pro Paket mappt — auch wenn Unterschriften unter einem Dachvertrag sitzen.
 
-Buendeln funktioniert, wenn Sie weiter definieren koennen: Akzeptanzobjekte pro Arbeitspaket im Umschlag; Change-Order-Regeln, die Accountability zwischen Paketen nicht verwischen.
+## Wie DBR77 Marketplace hilft
 
-Wird das Buendel zu einem vagen "Automatisierungsprogramm," verlieren Sie Inspectability.
+Strukturierter Vergleich pro Arbeitspaket hält gebündelte Programme inspizierbar: Abnahme- und Accountability-Splits bleiben sichtbar statt in einer Headline zu zerfließen.
 
-## Dimension 4: Lieferantenfaehigkeits-Fit
+Für die nächsten Upstream-Nachbarn siehe [Wie man ein Automatisierungsprojekt scoped, ohne es zu überkomplizieren](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_DE.md) und [Wann man eine Shortlist nutzt und wann man mehr Lieferanten im Spiel hält](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_DE.md).
 
-Manche Lieferanten sind stark in integrierten Zellen. Andere in schmalen Deliverables. Buendeln sollte Faehigkeit treffen, nicht nur Bequemlichkeit.
+## Portfolio-Governance ohne Kopplungsunfälle
 
-## Schnellvergleich (illustrativ)
+Bündeln ändert Eskalationspfade: ein Delay kann über Pakete hinweg wellen. Wenn Sie bündeln, bauen Sie explizite Entkopplungsregeln — wo Zeitpläne divergieren dürfen, wo Budgets ring-fenced sind und wie Teilfertigung behandelt wird. Sonst wird ein Problem in einer Zelle zur Geiselnahme für unverwandte Arbeit.
 
-| Signal | fuer Bundle | fuer Split |
-| --- | --- | --- |
-| geteilte Handshake-Punkte | ja | nein |
-| unterschiedliche interne Owner und Kalender | nein | ja |
-| unterschiedliche Unsicherheitsniveaus | nein | ja |
-| Bedarf an einer Kehle fuer Integrationssnaehte | ja | nein |
+Kommunizieren Sie nach oben: „Ein Projekt“ auf Papier kann auf dem Shopfloor mehrere Abnahme-Stories sein. Transparenz verhindert falsche Erwartungen und verhindert, dass ein schwaches Paket in einer großen Headline-Zahl verschwindet.
 
-## Begrenztes Protokoll
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Fahren Sie ein zweiseitiges internes Memo (illustrativ): Bedarfe mit Ownern und Readiness-Daten listen; Schnittstellenkanten zwischen Bedarfen markieren; Bundle, Split oder phasierte Sequenz mit expliziten Stop-Regeln entscheiden.
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Wann man mehrere Automatisierungsbedarfe in einen Einkaufsprozess bündeln sollte — und wann nicht“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-## Was das fuer DBR77 Marketplace bedeutet
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
 
-DBR77 Marketplace ist Workflow fuer Automatisierungsentscheidungen und System zum Angebotsvergleich.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
-Portfolio-Disziplin ist Teil dieses Workflows: zuerst Struktur, dann Marktengagement. Marketplace ist kein Roboterkatalog.
-
-Es ist eine herstellernahe Vertrauensschicht fuer Integratorenauswahl und Vergleichbarkeit.
+Verknüpfen Sie diese Disziplin schließlich mit Rechenschaft: Benennen Sie, wer Annahmen auf dem Shopfloor und zu welchem Meilenstein verifiziert. Mythen gedeihen, wenn niemand Messung besitzt; sie verlieren an Kraft, wenn Verifikation Teil des Projektplans ist — kein Nachgedanken.
 
 ## Fazit
 
-Buendeln fuer kohaerente Integration und Vergleichbarkeit. Teilen, um unverbundene Risiken und Kalender zu schuetzen. Nicht nur zur Papierreduktion buendeln.
+Bündeln bei echter Kopplung; splitten für Klarheit und Risiko-Isolation. Lassen Sie nicht die Transaktionszahl die Architektur treiben — Schnittstellen, Zeitpläne und verteidigbare Vergleichbarkeit sollen es tun.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt strukturierten Vergleich pro Arbeitspaket, sodass gebündelte Programme weiterhin inspizierbare Abnahme- und Accountability-Splits produzieren. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

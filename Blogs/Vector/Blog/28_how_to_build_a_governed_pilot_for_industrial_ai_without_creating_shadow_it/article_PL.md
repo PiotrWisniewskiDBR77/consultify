@@ -1,90 +1,36 @@
-# Jak zbudowac rzadzony pilot AI przemyslowego bez tworzenia shadow IT
+# Jak zbudować pilotaż przemysłowego AI z jasnymi ramami, bez tworzenia shadow IT
 
-Target persona: sponsor programu / lider digital factory  
-Funnel stage: Decision  
-Core problem: pilota czesto startuja jako nieoficjalne proby narzedzi omijajace security i reguly integracji, co pozniej zapada sie pod skala lub presja audytu  
-Main promise: producenci moga prowadzic szybki pilot, ktory nadal ma jawna charter, klase danych, granice wdrozenia, plan logowania i kryteria wyjscia, wiec pozostaje legalny
+Docelowa persona: sponsor programu / lider cyfrowej fabryki  
+Etap lejka: Decyzja  
+Główny problem: piloty często startują jako nieformalne testy narzędzi omijające zasady bezpieczeństwa i integracji — by później runąć pod skalą lub presją audytu  
+Główna obietnica: producenci mogą prowadzić szybki pilot z jawną kartą, klasą danych, granicą wdrożenia, planem logowania i kryteriami wyjścia, tak by pozostał uzasadniony
 
-Rzadzony pilot to nadal pilot. To nie biurokracja przebrana za innowacje.
+Pilotaż z jasnymi ramami to nadal pilotaż. To nie biurokracja w przebraniu innowacji. To eksperyment ograniczony w czasie z jawnymi granicami — tak by prędkość nie zamieniła się w shadow IT, które zespół bezpieczeństwa odkryje miesiące później, ani w „produkcyjne” przepływy na nieformalnych kontach i niejasnej retencji.
 
-## Bezposrednia odpowiedz
+Budujcie pilotaż jako podpisaną mini-kartę: nazwany sponsor, dozwolone klasy danych, ustalona granica wdrożenia, zakres integracji, zasady logowania i retencji, metryki sukcesu, warunki zatrzymania oraz ścieżka do governance produkcyjnego. Jeśli tych elementów brakuje, budujecie shadow IT z lepszą narracją — a shadow IT zawsze się kiedyś rozlicza, zwykle drogo.
 
-Zbuduj pilot jako podpisana mini-charter: nazwany sponsor, dozwolone klasy danych, ustalona granica wdrozenia, zakres integracji, reguly logowania i retencji, metryki sukcesu, warunki stop oraz sciezka do governance produkcyjnego. Jesli te elementy brakuje, budujesz shadow IT z lepsza narracja.
+## Dlaczego przy AI pojawia się shadow IT
 
-## Dlaczego shadow IT pojawia sie wokol AI
+Piloty AI kuszą, bo wydają się niskim zobowiązaniem. Karty kredytowe, darmowe poziomy i konta osobiste ułatwiają obejście. Konsekwencje produkcyjne są jednak realne: te same payloady, które przy integracji z ERP wywołałyby przegląd, mogą przejść przez przeglądarkę bez alarmu — dopóki ktoś nie poprosi o dowód.
 
-Pilota AI kusza, bo wydaja sie malo angazujace. Karty kredytowe, darmowe poziomy i konta osobiste ulatwiaja obejscie. Konsekwencje produkcyjne sa nadal realne.
+## Praktyczna sekwencja, która utrzymuje legitymację
 
-## Sekwencja krokow: dziewiec krokow
+Nazwijcie sponsora executive, by odpowiedzialność miała „zęby”. Zdefiniujcie decyzję, którą pilot wspiera; unikajcie charty „testujemy AI”. Klasyfikujcie dane wprost: co jest dozwolone, zabronione i tylko syntetyczne. Wybierzcie granicę wdrożenia przed modelem, dopasowując granicę do klasy. Zamroźcie zakres integracji — jeśli jeszcze nie wolno zapisów zwrotnych do MES, zapiszcie to, by nikt „dla pomocy” nie przedłużył. Ustalcie logowanie i rytm przeglądu; cotygodniowy przegląd logów bije panikę po incydencie. Zdefiniujcie mierzalne efekty z małym zestawem KPI istotnych dla operacji, nie tylko dla teatru innowacji. Opublikujcie warunki stopu: jeśli pojawią się ustalenia bezpieczeństwa lub stagnacja dokładności, pilot się zatrzymuje. Zaplanujcie bramkę produkcyjną: co musi być prawdą przed poszerzeniem, w tym podpis zamówień i bezpieczeństwa.
 
-### Krok 1: Wyznacz sponsora wykonawczego
+**Z ramami vs. shadow IT:** pilotaż objęty ramami ma kartę na piśmie, świadomość IT i bezpieczeństwa, kontrolowane tożsamości i zmapowane ścieżki danych. Pilotaż w modelu shadow IT ma nieformalne konta, niejasną retencję, niezmapowany egress i niespodziewane integracje.
 
-Odpowiedzialnosc wymaga jednego wlasciciela z prawem do powiedzenia stop.
+Zamówienia mogą pomóc bez wiecznego hamowania przez wstępnie zatwierdzoną kopertę pilota: limit wydatków, stały czas trwania, nazwany dostawca i tryb wdrożenia oraz wymagane artefakty bezpieczeństwa. Prędkość i dyscyplina mogą współistnieć, gdy koperta jest realna.
 
-### Krok 2: Zdefiniuj decyzje, ktora pilot wspiera
+Karta pilota rozpada się w shadow IT, gdy narzędzia nie da się od pierwszego tygodnia wpisać w zatwierdzone koperty tożsamości, danych i zamówień. Vector jest przeznaczony dla programów z jasnymi ramami governance: jawne granice wdrożenia, autorskie rozumowanie przemysłowe trenowane na wiedzy o transformacji fabryk oraz brak treningu wspólnego modelu na danych klienta — tak by publikowana karta miała klasę platformy pasującą do formalnych bramek zamiast nieformalnych obejść.
 
-Unikaj "testujemy AI". Okresl klase decyzji operacyjnej.
+Najszybszy pilot to nie ten z najmniejszą liczbą reguł. To ten, który przetrwa pierwszy przegląd bezpieczeństwa i pierwszą rozmowę o skali. Governance na początku jest tańsza niż rekonstrukcja później.
 
-### Krok 3: Jawnie sklasyfikuj dane
+## Punkt kontrolny zakładu
 
-Wypisz co jest dozwolone, zabronione i tylko syntetyczne.
+Traktujcie „Jak zbudować pilotaż przemysłowego AI z jasnymi ramami, bez tworzenia shadow IT” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną.
 
-### Krok 4: Wybierz granice wdrozenia przed modelem
-
-Dopasuj granice do klasyfikacji.
-
-### Krok 5: Zamroz zakres integracji
-
-Jesli writeback do MES nie jest jeszcze dozwolony, zapisz to.
-
-### Krok 6: Ustal logowanie i rytm przegladu
-
-Tygodniowy przeglad logow pokonuje panike po incydencie.
-
-### Krok 7: Zdefiniuj mierzalne wyniki
-
-Latencja, jakosc rekomendacji, zaoszczedzony czas, wskazniki bledow. Wybor waskiego zestawu.
-
-### Krok 8: Opublikuj warunki stop
-
-Jesli pojawia sie ustalenia security lub stagnacja trafnosci, pilot staje.
-
-### Krok 9: Zaplanuj bramke produkcyjna
-
-Udokumentuj, co musi byc prawda przed skalowaniem, wlacznie z akceptacja zakupow i security.
-
-## Lista kontrolna: wzorce rzadzone versus cien
-
-Rzadzone pilota maja:
-
-- charter na pismie
-- swiadomosc IT i security
-- kontrolowane tozsamosci
-- zdefiniowane sciezki danych
-
-Cien pilota maja:
-
-- nieformalne konta
-- niejasna retencje
-- nienamapowany egress
-- niespodziewane integracje
-
-## Jak zakupy moga pomoc bez wiecznego hamowania
-
-Zakupy powinny umozliwiac wstepnie zatwierdzona koperte pilota: limit wydatkow; staly czas trwania; nazwany dostawca i tryb wdrozenia; wymagane artefakty security. Predkosc i dyscyplina moga wspolistniec.
-
-## Most produktowy
-
-DBR77 Vector pasuje do rzadzonych programow przemyslowych, bo jest pozycjonowany wokol jawnych granic wdrozenia, wlasnosciowego rozumowania przemyslowego i jasnej postawy, ze dane klienta nie trenuja modelu, w zgodzie z ekosystemem DBR77 jako bezpieczna warstwa inteligencji.
-
-Uzyj tej przejrzystosci, by pilot od pierwszego dnia miescil sie w legalnych granicach.
-
-## Podsumowanie
-
-Najszybszy pilot to nie ten z najmniejsza liczba regul.
-
-To ten, ktory przetrwa pierwszy przeglad security i pierwsza rozmowe o skali. Governance wczesniej jest tansze niz rekonstrukcja pozniej.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector wspiera piloty potrzebujące jawnych granic wdrożenia i rozumowania przemysłowego bez treningu na danych klienta, zmniejszając dystans między eksperymentem a uzasadnioną skalą. [Umów demo](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

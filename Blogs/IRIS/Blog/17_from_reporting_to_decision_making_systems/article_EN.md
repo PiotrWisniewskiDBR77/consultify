@@ -5,65 +5,31 @@ Funnel stage: Decision
 Core problem: many factories have reporting layers, but still cannot respond with enough speed and discipline because reports describe the past without driving the next move  
 Main promise: modern plants need systems that do more than report; they need systems that interpret reality, route ownership, and help decisions turn into execution
 
-Reporting matters. It just does not run the factory.
+Reporting matters. It is also not the same thing as running the factory. Many plants have spent years improving dashboards, metrics, and visibility—and still struggle with slow response, unclear ownership, repeated escalation, and weak follow-through. The signal is often visible. The next move is not. That gap is not a failure of charts. It is a failure of operating structure.
 
-Many plants have spent years improving dashboards, metrics, and visibility. And still they struggle with: slow response; unclear ownership; repeated escalation; weak follow-through. That is because reporting and decision-making are not the same thing. The signal may be visible. The next move is often not.
+Reports describe. Decision systems direct. A report can show what happened, what changed, and where performance is drifting. The plant still needs a system that helps answer what this means now, who should act, what should happen next, and whether the response worked. That is the difference between seeing and steering. It is also the difference between a plant that explains losses and a plant that reduces them.
 
-## Reports describe. Decision systems direct.
+Visibility can create a false sense of progress. More dashboards can mean a clearer picture of how little control the plant actually has—especially when action still depends on manual coordination outside the system. In that world, visibility becomes a mirror for fragmentation: everything is seen, little is reliably executed.
 
-A report can show: what happened; what changed; where performance is drifting. That is useful. But the plant still needs a system that helps answer: what does this mean?; who should act?; what should happen next?; did the response work?. That is the difference between seeing and steering.
+Decision-making requires context, ownership, and timing. A stronger operational system does not stop at metrics. It adds business context, priority logic, routed ownership, tasking, and follow-up—so the organization can move from observation to action at shift speed. If a supervisor must call three people to interpret a deviation, the factory is not operating through a decision system yet. It is operating through personal bandwidth.
 
-## Why visibility alone creates a false sense of progress
+Factories stay stuck in reporting mode partly because reports are easier to buy and easier to deploy than true execution logic. It is simpler to show the issue than to redesign the response model behind it. That simplicity becomes expensive: slower handovers, recurring coordination loops, and the same operational argument repeated across shifts.
 
-Factories often assume that more dashboards mean better control.
+The next step after reporting is not more reporting. It is a system that can connect live signal, interpretation, recommendation, approval, action, and closure. That is the leap many plants have not made—and it is the leap that separates digital maturity from digital decoration.
 
-Sometimes they only mean better awareness of how little control the plant actually has.
+Reports do not carry ownership by themselves. A dashboard can make the factory look informed while the real response still happens through phone calls, chat threads, spreadsheets, and end-of-shift explanations. When that happens, the reporting layer is describing work that is still coordinated manually.
 
-If action still depends on manual coordination outside the system, visibility is not enough.
+Decision-making systems change the operating rhythm. The next move becomes clearer. Cross-functional response gets faster. Escalation becomes more disciplined. Leadership receives more than post-fact explanation. Operational maturity begins to compound because the plant can manage work as work—not as a sequence of presentations.
 
-## Decision-making needs context, ownership, and timing
+IRIS is positioned as more than a dashboard or reporting layer. It is built as a unified execution environment where live operational truth can trigger context, recommendation, human approval, tasking, and follow-through. That is the shift from reporting to decision-making in a form the floor can recognize.
 
-A stronger operational system does not stop at metrics.
+Factories do not become better-run because they report better. They become better-run when the system helps people decide and act better in real time. That is the real move—and it is the standard reporting alone cannot meet.
 
-It adds: business context; priority logic; routed ownership; tasking and follow-up. That is what lets the plant move from observation to action. It also matters at shift speed.
+## The operational bottom line
 
-If a supervisor still has to call three people to understand what a deviation means, the factory is not operating through a decision system yet.
+The promise of this article—modern plants need systems that do more than report; they need systems that interpret reality, route ownership, and help decisions turn into execution—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “From Reporting to Decision-Making Systems,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-## Why factories stay stuck in reporting mode
-
-They stay there because reports are easier to buy and easier to deploy than true execution logic.
-
-It is simpler to show the issue than to redesign the response model behind it. But that simplicity becomes expensive over time.
-
-It shows up as slower handovers, recurring coordination loops, and the same operational argument being repeated across shifts.
-
-## The next step after reporting is not more reporting
-
-It is a system that can connect: live signal; interpretation; recommendation; approval; action; closure. This is the operating leap many plants have not made yet.
-
-## Reality check: reports do not carry ownership by themselves
-
-This is where many plants overestimate their maturity. A dashboard can make the factory look informed while the real response still happens in phone calls, chat messages, spreadsheets, and end-of-shift explanations.
-
-When that happens, the reporting layer is describing work that is still being coordinated manually.
-
-## What decision-making systems change
-
-When the plant works through a decision system instead of a reporting layer alone: the next move becomes clearer; cross-functional response gets faster; escalation becomes more disciplined; leadership gets more than post-fact explanation. This is where operational maturity starts compounding.
-
-## Why IRIS is relevant here
-
-DBR77 IRIS is positioned as more than a dashboard or reporting layer.
-
-It is built as a unified execution environment where live operational truth can trigger context, recommendation, human approval, tasking, and follow-through.
-
-That is why it fits the shift from reporting to decision-making systems.
-
-## Final takeaway
-
-Factories do not become better-run because they report better.
-
-They become better-run when the system helps people decide and act better in real time. That is the real move from reporting to decision-making.
+Hold teams to a simple rule: if an improvement cannot be shown in exports from the execution record, it is not yet an operating improvement—only a narrative improvement. That rule keeps programs honest when demos look good but handovers still feel fragile.
 
 ---
 

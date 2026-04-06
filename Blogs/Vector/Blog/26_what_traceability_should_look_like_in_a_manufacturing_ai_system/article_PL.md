@@ -1,84 +1,42 @@
-# Jak powinna wygladac sledzalnosc w systemie AI dla produkcji
+# Jak powinna wyglądać śledzalność w systemie AI dla produkcji
 
-Target persona: jakosc / governance IT  
-Funnel stage: Consideration  
-Core problem: zespoly prosza o sledzalnosc, ale akceptuja logi, ktore nie pozwalaja odtworzyc decyzji pod presja, co zawodzi w audytach i przegladow po incydentach  
-Main promise: producenci moga zdefiniowac sledzalnosc jako minimalny zestaw rekordow laczacy wejscia, wersje modelu, prompty, wyniki, recenzentow i dzialania systemu
+Docelowa persona: jakość / governance IT  
+Etap lejka: Rozważanie  
+Główny problem: zespoły proszą o śledzalność, ale akceptują logi, które nie pozwalają odtworzyć decyzji pod presją — i wtedy audyty oraz przeglądy po incydentach się wywracają  
+Główna obietnica: producenci mogą opisać śledzalność jako minimalny zestaw rekordów łączący wejścia, wersję modelu, prompty, wyniki, recenzentów i działania systemu
 
-Sledzalnosc to nie checkbox o nazwie logowanie.
+Śledzalność to nie checkbox o nazwie „logowanie”. To zdolność do odtworzenia tego, co się stało, kto to widział i co się zmieniło w efekcie — pod presją czasu, przy niepełnej pamięci i bez polegania na dobrej woli dostawcy, żeby „coś tam złożył z dokumentów”.
 
-To zdolnosc do odtworzenia tego, co sie stalo, kto to widzial i co sie zmienilo w efekcie.
+Śledzalność AI w produkcji powinna obejmować niezmienne znaczniki czasu, tożsamości użytkowników i systemów, artefakty wejściowe i reguły redakcji, wersję modelu i konfiguracji, prompt oraz kontekst retrieval tam, gdzie jest używany, wygenerowane wyniki, zapisy ludzkiej akceptacji oraz wszelkie dalsze wywołania API lub zapisy do systemów fabrycznych. Jeśli dla pojedynczego incydentu nie da się odbudować tego łańcucha, śledzalność jest niepełna — a niepełna śledzalność zamienia każde poważne pytanie w walkę narracjami.
 
-## Bezposrednia odpowiedz
+## Dlaczego śledzalność to wymóg produkcyjny
 
-Sledzalnosc AI w produkcji powinna obejmowac niezmienne znaczniki czasu, tozsamosc uzytkownikow i systemow, artefakty wejsciowe i reguly redakcji, wersje modelu i konfiguracje, prompt i kontekst retrieval tam gdzie uzyty, wygenerowane wyniki, zapisy ludzkiej aprobaty oraz wszelkie nastepne wywolania API lub zapisy do systemow fabrycznych.
+Fabryki mierzą się ze sporami jakościowymi z klientem, zapytaniami regulatorów, wewnętrzną analizą przyczyn źródłowych i pytaniami o odpowiedzialność dostawców. Generyczne logi czatu rzadko to wystarczają, bo rejestrują rozmowę, a nie przyczynowość. Śledzalność przemysłowa dotyczy łańcucha decyzji: jakie wejścia ukształtowały rekomendację, która wersja systemu ją wygenerowała, kto ją zatwierdził i co działo się potem.
 
-Jesli nie mozesz odbudowac tego lancucha dla pojedynczego incydentu, sledzalnosc jest niepelna.
+## Minimalny zestaw rekordów: co znaczy „dobrze”
 
-## Dlaczego sledzalnosc jest wymogiem produkcyjnym
+Każdy istotny krok potrzebuje stabilnego identyfikatora zdarzenia i zsynchronizowanego źródła czasu. Rejestrujcie ludzi i konta serwisowe osobno, z mapowaniem kont serwisowych na zespoły właścicielskie. Przechowujcie referencje do wejść — niekoniecznie surowe sekrety — z regułami redakcji dla rysunków i arkuszy kosztów. Zapisujcie, która kompilacja modelu, flagi funkcji i indeksy retrieval były aktywne. W układach wzbogacanych o wyszukiwanie logujcie pobrany kontekst, z hashami tam, gdzie magazyn jest wrażliwy. Przechowujcie wynik tak, jak został dostarczony, a nie tylko streszczenie. Jeśli wyniki są akceptowane, odrzucane lub edytowane, zapisujcie kto zdecydował i co się zmieniło. Jeśli API zapisuje do MES, QMS lub ticketingu, logujcie identyfikatory transakcji i payloady na odpowiednim poziomie szczegółowości.
 
-Fabryki mierza sie z: sporami jakosciowymi z klientem; zapytaniami regulatorowymi; wewnetrzna analiza przyczyn; pytaniami o odpowiedzialnosc dostawcy. Generyczne logi czatu rzadko to zaspokajaja.
+## Transkrypt czatu a przemysłowy pakiet śledzenia
 
-## Minimalny zestaw rekordow: osiem elementow
+Transkrypt czatu pokazuje rozmowę. Przemysłowy pakiet śledzenia pokazuje przyczynowość. Kupujący powinni domagać się drugiej klasy dla procesów produkcyjnych — bo tam „o tym rozmawialiśmy” nie zastępuje „potrafimy to udowodnić”.
 
-### 1. Identyfikacja zdarzenia i czas
+## Jak zwalidować śledzalność na pilocie
 
-Kazdy znaczacy krok potrzebuje stabilnego ID zdarzenia i zsynchronizowanego zrodla czasu.
+Przeprowadźcie ćwiczenie stołowe: wybierzcie hipotetyczny quality escape i poproście dostawcę o demonstrację odtworzenia z logów. Zmierzcie, ile czasu neutralny recenzent potrzebuje, żeby przejść łańcuch. Jeśli odtworzenie wymaga narzędzi tylko u dostawcy lub ręcznych „bohaterskich” działań, oznaczcie to wcześnie — zanim narzędzie wejdzie na stałe w codzienną pracę.
 
-### 2. Tozsamosc aktora
+Śledzalność powinna łączyć się z politykami retencji, przeglądami dostępu, eksportem do SIEM i procedurami legal hold. W przeciwnym razie logi stają się teatrem zapisu-wyłącznie: uspokajają, dopóki ktoś ich naprawdę nie potrzebuje.
 
-Rejestruj ludzi i konta serwisowe osobno. Konta serwisowe powinny mapowac na zespoly wlascicielskie.
+Śledzalność to nie komfort narracyjny; to minimalny zestaw rekordów i test odtworzenia, który już zarysowaliście. Mapujcie Vector tak samo jak dowolny historian lub usługę sąsiadującą z MES: granice wdrożenia, wyłączenie danych klienta z treningu wspólnego modelu, rozumowanie przemysłowe osadzone w wiedzy o transformacji fabryk oraz dowody wspierające poziom śledzenia, jakiego oczekujecie od każdego systemu referencji.
 
-### 3. Artefakty wejsciowe
+Śledzalność to sposób, w jaki AI zasługuje na miejsce obok operacji o konsekwencjach. Definiujcie ją jako struktury danych i procesy, a nie mglistą obietnicę „prowadzenia historii”.
 
-Przechowuj referencje do wejsc, niekoniecznie surowe sekrety. Zdefiniuj reguly redakcji dla rysunkow i arkuszy kosztow.
+## Punkt kontrolny zakładu
 
-### 4. Wersja modelu i konfiguracji
+Traktujcie „Jak powinna wyglądać śledzalność w systemie AI dla produkcji” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną.
 
-Zapisz aktywna kompilacje modelu, flagi funkcji i indeksy retrieval.
-
-### 5. Pakiet promptu i kontekstu
-
-Dla systemow w stylu RAG loguj pobrany kontekst, z hashami gdy magazyn jest wrazliwy.
-
-### 6. Obiekt wyjsciowy
-
-Przechowuj tekst lub obiekt strukturalny tak jak dostarczony, nie tylko streszczenie.
-
-### 7. Rekord decyzji czlowieka
-
-Jesli zatwierdzono, odrzucono lub edytowano, zapisz kto zdecydowal i co sie zmienilo.
-
-### 8. Efekty nastepcze
-
-Jesli API zapisuje do MES, QMS lub ticketingu, loguj ID transakcji i payloady na odpowiednim poziomie szczegolow.
-
-## Porownanie: transkrypt czatu versus pakiet sledzenia przemyslowego
-
-Transkrypt czatu pokazuje rozmowe. Pakiet sledzenia przemyslowego pokazuje przyczynowosc. Kupujacy powinni domagac sie drugiej klasy dla procesow produkcyjnych.
-
-## Jak walidowac sledzalnosc w pilocie
-
-Przeprowadz cwiczenie tabletop: wybierz hipotetyczny quality escape; popros dostawce o demonstracje odtworzenia z logow; zmierz czas, jaki neutralny recenzent potrzebuje na przejscie lancucha.
-
-Jesli odtworzenie wymaga narzedzi tylko u dostawcy lub recznych bohaterskich dzialan, oznacz to.
-
-## Powiazanie z governance
-
-Sledzalnosc powinna laczyc sie z: politykami retencji; przegladem dostepu; eksportem do SIEM; procedurami legal hold. W przeciwnym razie logi staja sie teatrem write-only.
-
-## Most produktowy
-
-DBR77 Vector znajduje sie w ekosystemie DBR77 jako AI przemyslowe z granicami wdrozenia i mysla o rzadzalnej uzytecznosci, gdzie oczekiwania co do sledzalnosci sa zgodne z powazna adopcja produkcyjna, a nie z jednorazowymi sesjami czatu.
-
-Kupujacy powinni mapowac wdrozenia Vector na ten sam minimalny zestaw rekordow, jakiego domagaliby sie od dowolnego przemyslowego systemu referencji.
-
-## Podsumowanie
-
-Sledzalnosc to sposob, w jaki AI zasluguje na miejsce obok konsekwentnych operacji.
-
-Definiuj ja jako struktury danych i procesy, nie jako mglista obietnice prowadzenia historii.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector odpowiada oczekiwaniom poważnej adopcji przemysłowej tam, gdzie śledzalność, granice wdrożenia i rządzone wsparcie decyzyjne ważą więcej niż jednorazowa historia czatu. [Umów demo](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

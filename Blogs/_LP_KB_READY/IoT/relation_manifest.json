@@ -1,0 +1,2636 @@
+{
+  "product": "IoT",
+  "same_lp_edges": [
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "11_real_time_production_visibility_in_practice",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "11_real_time_production_visibility_in_practice",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "to_slug": "11_real_time_production_visibility_in_practice",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "11_real_time_production_visibility_in_practice",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "11_real_time_production_visibility_in_practice",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_when_real_time_visibility_should_change_the_production_plan",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_when_real_time_visibility_should_change_the_production_plan",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_when_real_time_visibility_should_change_the_production_plan",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_when_real_time_visibility_should_change_the_production_plan",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_when_real_time_visibility_should_change_the_production_plan",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "to_slug": "01_why_factories_still_dont_use_machine_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "to_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "to_slug": "09_oee_is_not_enough",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "to_slug": "10_why_your_maintenance_strategy_is_failing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Downtime And OEE",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_how_to_review_operator_overrides_in_iot_workflows",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_how_to_review_operator_overrides_in_iot_workflows",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_how_to_review_operator_overrides_in_iot_workflows",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_how_to_review_operator_overrides_in_iot_workflows",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_how_to_review_operator_overrides_in_iot_workflows",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "to_slug": "03_from_sensors_to_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "to_slug": "04_machine_data_is_useless_without_context",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "to_slug": "05_edge_vs_cloud_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "to_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_iot_governance_should_look_like_after_the_first_year",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_iot_governance_should_look_like_after_the_first_year",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_iot_governance_should_look_like_after_the_first_year",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_iot_governance_should_look_like_after_the_first_year",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_iot_governance_should_look_like_after_the_first_year",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "to_slug": "06_how_to_start_iiot_without_breaking_production",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "to_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "to_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "to_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    }
+  ],
+  "cross_product_edges": [
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "40_when_real_time_visibility_should_change_the_production_plan",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "41_how_to_review_operator_overrides_in_iot_workflows",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "42_what_iot_governance_should_look_like_after_the_first_year",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "to_slug": "04_from_insight_to_task_to_action_closing_the_execution_loop",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    },
+    {
+      "from_slug": "49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Vector / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "to_slug": "03_first_30_minutes_in_consultify",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Execution And Rollout",
+      "weight": 80
+    }
+  ],
+  "featured_edges": [
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "to_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "09_oee_is_not_enough",
+      "to_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "10_why_your_maintenance_strategy_is_failing",
+      "to_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "11_real_time_production_visibility_in_practice",
+      "to_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "12_5_operational_problems_every_factory_has",
+      "to_slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Downtime And OEE",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "06_how_to_start_iiot_without_breaking_production",
+      "to_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "to_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "to_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "to_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within Execution And Rollout",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "02_what_data_should_you_collect_from_machines",
+      "to_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "03_from_sensors_to_decisions",
+      "to_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "04_machine_data_is_useless_without_context",
+      "to_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "05_edge_vs_cloud_in_manufacturing",
+      "to_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "to_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    },
+    {
+      "from_slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "to_slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "edge_type": "featured_cluster",
+      "reason": "featured to deeper within AI And Decision Making",
+      "weight": 85
+    }
+  ],
+  "mva_edges": [
+    {
+      "from_slug": "01_why_factories_still_dont_use_machine_data",
+      "to_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    },
+    {
+      "from_slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "to_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    },
+    {
+      "from_slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "to_slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    }
+  ]
+}

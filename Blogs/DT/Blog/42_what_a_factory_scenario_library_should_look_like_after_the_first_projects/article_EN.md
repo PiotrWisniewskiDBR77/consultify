@@ -5,52 +5,40 @@ Funnel stage: Adoption
 Core problem: early wins live in personal folders, so the next site or project restarts discovery instead of reusing disciplined scenario logic  
 Main promise: a lightweight library pattern that turns one-off runs into a reusable scenario-testing environment for layout, flow, and CAPEX decisions
 
-after the first projects, a factory scenario library should contain a named base case, a standard stress pack used in every major review, scenario tags tied to decision type (capacity, intralogistics, staffing, supplier), frozen assumption snapshots with dates, and a short usage note per scenario that states what question it answers. Digital Twin is not a 3D showcase; it is a decision system that gets faster when scenarios are catalogued instead of buried. Libraries beat hero files.
+After the first projects, a factory scenario library should contain a named base case, a standard stress pack used in every major review, scenario tags tied to decision type—capacity, intralogistics, staffing, supplier—frozen assumption snapshots with dates, and a short usage note per scenario stating what question it answers.
 
-They make the twin legible to finance and operations, not only to the model builder.
+Digital twin is not a showcase; it is a decision system that accelerates when scenarios are catalogued instead of buried. Libraries beat hero files. They make the twin legible to finance and operations—not only to the model builder. Pair library discipline with the simulation input-set article before live feeds absorb weak assumptions, and with the first simulation project article so pilots hand off into a catalogued set instead of a private folder.
 
-Pair library discipline with the **simulation input-set** article before live feeds absorb weak assumptions, and with the **first simulation project** article so pilots hand off into a catalogued set instead of a private folder.
+## Version one structure
 
-## What belongs in version one of the library
+Include a base case: the agreed operating story for normal planning cycles. Add peak and recovery: demand spikes plus the ramp story you actually believe. Maintain a constraint-shift set for bottleneck moves you fear after the next change wave. Keep supplier and inbound variants aligned to behavior you have seen before. Include kill scenarios—stories that should disqualify weak layout options early. Each entry carries owner, last refresh event, and links to assumption ledger fields it depends on.
 
-Minimum viable structure: **Base case:** the agreed operating story for normal planning cycles; **Peak and recovery:** demand spikes plus the ramp story you actually believe; **Constraint shift set:** bottleneck moves you fear after the next change wave; **Supplier and inbound variants:** lead-time and lot behavior you have seen before; **Kill scenarios:** the stories that should disqualify weak layout options early.
+## Taxonomy that survives handovers
 
-Each entry should carry: owner, last refresh event, and link to the assumption ledger fields it depends on.
+Tag by decision type—CAPEX, footprint, staffing, seasonal, disruption—horizon—next quarter, next ramp, next fiscal year—and evidence grade: verified, illustrative, or hypothesis. Hypothesis scenarios are allowed; they must be labeled so they never masquerade as audited truth.
 
-## Taxonomy: tags that survive handovers
+## Library health after project two or three
 
-Use a simple tag grid: `decision_type`: CAPEX, footprint, staffing, seasonal, disruption; `horizon`: next quarter, next ramp, next fiscal year; `evidence_grade`: verified, illustrative, hypothesis. Hypothesis scenarios are allowed. They must be labeled so they never masquerade as audited truth.
+Every major approval references a scenario ID—not only a slide title. The standard stress pack reruns on structural change per governance rules. New scenarios fork from a dated base rather than mutating silently. Finance can open the library and see ranges, not only point outputs. Operations knows which scenario answers which recurring meeting question.
 
-## Checklist: library health after project two or three
+## Folder chaos versus library discipline
 
-- [ ] every major approval referenced a scenario ID, not only a slide title  
-- [ ] the standard stress pack reruns on structural change per your governance rule  
-- [ ] new scenarios fork from a dated base rather than mutating silently  
-- [ ] finance can open the library and see ranges, not only point outputs  
-- [ ] operations knows which scenario answers which recurring meeting question
+Ad-hoc exports in email produce untraceable decisions. Shared drives without IDs breed duplicate conflicting models. Tagged libraries with snapshots enable comparable before-and-after reviews. Scenarios tied to gate memos produce audit-friendly capital stories.
 
-## Comparison: folder chaos versus library discipline
 
-| Pattern | Outcome |
-|---|---|
-| ad-hoc exports in email | untraceable decisions |
-| shared drive without IDs | duplicate conflicting models |
-| tagged library with snapshots | comparable before-and-after reviews |
-| scenario tied to gate memo | audit-friendly capital story |
+## What should feel different on Monday
 
-## What Digital Twin changes here
+Teams rarely fail because they lack intelligence; they fail because the next meeting repeats the same questions with fresher anxiety. When simulation work is wired into how you decide, Monday shows up with fewer circular arguments about whether a layout "ought to work." Instead, you carry a short list: which option survived the same stress vocabulary, which assumptions still carry hypothesis labels, and what would force you to rerun the pack before the next tranche. That is the practical face of governance—not a heavier process, but a clearer receipt for why the floor should trust the plan.
 
-Digital Twin stays a scenario-testing environment when the library is the interface to decisions.
+For capital and footprint choices, the receipt matters as much as the ranking. Approvals should be able to point to scenario identity and ranges without opening a model. If executives cannot explain the downside story in plain language, the organization is still buying animation. If operations cannot recognize the staffing and flow assumptions embedded in the memo, the twin is still a slide, not a decision system. Use the next leadership block to test whether the narrative is portable: could someone not in the room defend the choice from the packet alone? If not, tighten the assumption ledger and the executive summary before you ask for more money or more floor space.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin supports practical scenario comparison and a path from manual inputs to richer integration, which makes a disciplined library easier to sustain across projects.
+DBR77 Digital Twin supports practical scenario comparison and a path from manual inputs toward richer integration—making a disciplined library easier to sustain across projects.
 
 ## Bottom line
 
-After the first wins, invest in cataloguing.
-
-The next decision should feel like reuse with evidence, not a fresh science fair.
+After the first wins, invest in cataloguing. The next decision should feel like reuse with evidence—not a fresh science fair.
 
 ---
 

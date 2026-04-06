@@ -1,53 +1,38 @@
 # Der Aufstieg der Entscheidungsautomatisierung in der Fertigung
 
-Target persona: COO / VP Operations / Werksleiter  
-Funnel stage: Awareness  
-Core problem: Fuehrung hoert "Automatisierung" als Roboter, waehrend die groessere Verschiebung die Automatisierung von Priorisierung, Routing und wiederkehrenden Entscheidungen in Ausfuehrungs-Workflows ist  
-Main promise: eine nuechterne Definition von Entscheidungsautomatisierung, was menschlich bleiben soll, und wie man Theater von betrieblicher Veraenderung trennt
+Zielpersona: COO / VP Operations / Werksleiter  
+Funnel-Stufe: Awareness  
+Kernproblem: Führung hört „Automatisierung“ als Roboter, während die größere Verschiebung die Automatisierung von Priorisierung, Routing und wiederkehrenden Entscheidungen innerhalb von Execution-Workflows ist  
+Hauptversprechen: Eine nüchterne Definition von Entscheidungsautomatisierung, was menschlich bleiben soll, und wie man Theater von operativem Wandel unterscheidet
 
-Entscheidungsautomatisierung in der Fertigung bedeutet, dass Systeme veroeffentlichte Regeln auf wiederkehrende operative Wahlen anwenden: was als naechstes, wen benachrichtigen, wann eskalieren, welchen Aktionsentwurf vorbereiten, mit menschlicher Freigabe an definierten Schwellen. Sie steigt, weil Werke in koordinationsbedingten Kosten ertrinken, nicht weil sich jede Entscheidung einem Modell ueberlassen laesst oder sollte. Ein Executive-Framing-Artikel. Trotzdem mit Bodenmechanik.
+Entscheidungsautomatisierung in der Fertigung bedeutet, dass Systeme veröffentlichte Regeln auf wiederkehrende operative Wahlen anwenden: was als Nächstes bearbeitet wird, wen zu benachrichtigen, wann zu eskalieren und welchen Aktionsentwurf vorzubereiten ist—mit menschlicher Freigabe an definierten Schwellen. Sie steigt, weil Werke im Koordinationskosten ertrinken, nicht weil jede Entscheidung einem Modell übergeben werden kann oder soll. Das ist ein Executive-Thema mit Shop-Floor-Folgen: Wer Entscheidungsautomatisierung mit physischer Automatisierung verwechselt, finanziert falsche Projekte und verpasst den größeren Hebel.
 
-## Entscheidungsautomatisierung versus physische Automatisierung
+Für Führungskräfte ist der entscheidende Shift: weniger „was kann die Technik“, mehr „welche Entscheidungen wollen wir in welcher Geschwindigkeit wiederholbar machen — und wer haftet, wenn die Regel falsch war“. Ohne diese Klarheit wird jede Automatisierungsdiskussion zur Modelldebatte, obwohl das eigentliche Thema Verantwortung und Nachweis ist.
 
-| Dimension | Physische Automatisierung | Entscheidungsautomatisierung |
-|---|---|---|
-| Output | Bewegung, Transfer, Montage | priorisierte Arbeit, geroutete Aufgaben, Eskalationen |
-| Risikoprofil | Sicherheit und Mechanik | Verantwortung, Qualitaetsfreigabe, Kundenimpact |
-| Governance | Engineering Change Control | Schwellentabellen, Audit Trails, Rollen-Ownership |
-| Nachweis | Zykluszeit und Wiederholbarkeit | Reaktionszeit, Abschlussqualitaet, Override-Raten |
+Physische Automatisierung bewegt Material und formt Teile. Entscheidungsautomatisierung bewegt Work Items, Prioritäten und Accountability-Signale. Das Risikoprofil verschiebt sich von mechanischer Sicherheit zu Governance: Schwellentabellen, Audit-Trails, Rollen-Ownership und Nachweis in Reaktionszeit und Abschlussqualität statt nur Zyklus-Wiederholbarkeit. Führungskräfte, die beides verwechseln, lesen falsch, was sich ändert.
 
-Fuehrung, die beides verwechselt, finanziert falsche Projekte.
+Gute Automatisierungskandidaten wiederholen sich wöchentlich oder täglich, sind durch klare Felder begrenzt, schnell reversibel oder schnell eingrenzbar und sind schon in Workflow-Form dokumentiert—auch wenn unordentlich. Schlechte Kandidaten sind einmalige Kapitalurteile, Kundenkonzessionen mit rechtlichem Risiko und Safety-Ausnahmen ohne formalen Ausnahmeprozess. Reife wiegt mehr als Ambition.
 
-## Welche Entscheidungen Kandidaten sind
+Denken Sie in Reifegraden ohne Sprünge: dokumentierte Entscheidungen mit inkonsistenter Evidence; geführte Entscheidungen mit Checklisten aber manuellem Routing; assistierte Entscheidungen mit KI-Entwürfen und menschlicher Bestätigung; automatisierte Entscheidungen innerhalb expliziter Regeln mit menschlichem Audit der Ausnahmen. Viele Werke sollten lange im assistierten Modus leben, bevor sie volle Automatisierung beanspruchen. Übersprungene Stufen erzeugen Vertrauensschulden, die zuerst auf Nachtschicht sichtbar werden.
 
-Gute Kandidaten teilen Merkmale: wiederholen sich woechentlich oder taeglich; sind durch klare Datenfelder begrenzt; sind rueckgaengig oder in Minuten bis Stunden kontrollierbar; sind bereits in einem Workflow dokumentiert, auch wenn er unordentlich ist.
+Echte Entscheidungsautomatisierung veröffentlicht rollengebundene Schwellen, misst Override- und Rejection-Rates, reviewed False Positives mit benannten Ownern und definiert Rollback, wenn Regeln fehlziehen. Theater zeigt Demos ohne Produktionsrecords, behauptet „das Modell entschied“ ohne Feldzitate und lässt niemanden für Regel-Updates nach Linienwechsel verantwortlich.
 
-Beispiele, die bei Reife oft passen: routinemaessige Instandhaltungszuweisung nach Skill- und Schichtregeln; Routing einer Qualitaetssperre zur richtigen Freigabeinstanz; Eskalation bei Lagerfehlmenge, wenn Produktionsstart in einem definierten Fenster liegt; Entwurf standardisierter Folgeaufgaben nach bekanntem Alarmmuster.
+IRIS behandelt Entscheidungen als Teil von Execution, weil Automatisierung erst real wird, wenn ein gerankter nächster Schritt mit Owner, Timer und Audit-Trail im Workflow landet—Automatisierung rechenschaftspflichtig gegen Operations statt gegen Folienbullets.
 
-Schlechte Kandidaten: einmalige CAPEX-Entscheidungen; Kundenkonzessionen mit Rechtsexposure; Sicherheitsausnahmen ohne formalen Ausnahmeprozess.
+Zur Moduslogik hinter Automatisierung siehe [Wann KI im Werk beobachten, beraten oder handeln soll](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_DE.md). Zu Freigabegrenzen siehe [Wie eine menschliche Freigaberichtlinie in Factory-KI aussehen sollte](../39_what_a_human_approval_policy_should_look_like_in_factory_ai/article_DE.md).
 
-## Eine einfache Reifeleiter (vier Stufen)
+Executives sollten auch den kulturellen Shift erkennen, den Entscheidungsautomatisierung impliziert. Wird Routing expliziter, werden informelle Abkürzungen schwieriger—und erfahrene Menschen erleben das als Autonomieverlust. Das Gegengewicht ist Klarheit: veröffentlichte Regeln, sichtbare Ausnahmen und ein fairer Prozess, Schwellen zu ändern, wenn die Realität wechselt. Automatisierung ohne Governance wirkt wie Starrheit. Automatisierung mit Governance wirkt wie Erleichterung nach endlosem Verhandeln.
 
-Erfasst: Entscheidungen passieren, Evidence ist uneinheitlich; gefuehrt: Checklisten und Dashboards, Menschen routen alles; assistiert: KI entwirft und rankt, Menschen bestaetigen; automatisiert: System handelt innerhalb Regeln, Menschen pruefen Ausnahmen. Die meisten Werke sollten lange auf 3 leben, bevor sie 4 beanspruchen. Stufen zu ueberspringen erzeugt Vertrauensschulden.
+Operativ ist Entscheidungsautomatisierung der Punkt, an dem „Digital Transformation“ kein Slogan mehr ist, sondern ein messbarer Rhythmus: weniger mehrdeutige Queues, schnellere erste Zuweisung, weniger wiederholte Eskalationen und sauberere Audits, weil der Entscheidungsrecord nicht nachträglich rekonstruiert wird. Darum lohnt es sich—nicht Automatisierung um ihrer selbst willen, sondern Koordination, die Schichtwechsel übersteht.
 
-## Governance-Signale, die echte Programme von Theater trennen
+Entscheidungsautomatisierung ist Koordinationsautomatisierung. Machen Sie es mit Schwellen, Freigaben und Audit-Trails—oder nennen Sie es nicht Operations.
 
-Echte Entscheidungsautomatisierung hat: veroeffentlichte Schwellen gekoppelt an Rollen; messbare Override- und Ablehnungsraten; periodische Review falscher Treffer mit benannten Ownern; explizite Rollback-Pfade, wenn Regeln fehlziehen.
+## Operatives Fazit
 
-Theater hat: Demos ohne Produktionsaufzeichnungen; "das Modell entschied" ohne Feldzitate; keinen Owner fuer Regel-Updates nach Linienaenderung.
+Das Versprechen dieses Artikels—eine nüchterne Definition von Entscheidungsautomatisierung, was menschlich bleiben soll, und wie man Theater von operativem Wandel unterscheidet—wird erst operativ, wenn es die Art ändert, wie Arbeit fließt: klarere Ownership, schnellere erste Zuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „Der Aufstieg der Entscheidungsautomatisierung in der Fertigung“ ist das der Akzeptanztest: Die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
-## Warum IRIS Entscheidungen als Teil der Ausfuehrung behandelt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Entscheidungsautomatisierung zaehlt nur, wenn das Ergebnis ein getaskter naechster Schritt mit Ownership ist, keine Folienzeile.
-
-## Fazit
-
-Entscheidungsautomatisierung ist Koordinationsautomatisierung.
-
-Machen Sie sie mit Schwellen, Freigaben und Audit Trails, oder nennen Sie es nicht Betrieb.
+Halten Sie Teams an einer einfachen Regel: Wenn sich eine Verbesserung nicht in Exporten aus dem Ausführungsdatensatz zeigen lässt, ist es noch keine operative Verbesserung—nur eine Erzählung davon. Diese Regel hält Programme ehrlich, wenn Demos gut aussehen, Übergaben aber noch fragil wirken.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Walkthrough ansehen](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*
+*DBR77 IRIS hält Entscheidungsoutputs in Tasks, Freigaben und Audit-Trails, damit Automatisierung gegen Operations-Führung rechenschaftspflichtig bleibt. [Walkthrough ansehen](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*

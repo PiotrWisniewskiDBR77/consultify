@@ -1,64 +1,64 @@
-# Jak utrzymac spojnosc definicji sygnalow IoT miedzy zmianami
+# Jak utrzymać spójne definicje sygnałów IoT między zmianami
 
-Docelowa persona: Lider engineering / Lider CI / Sponsor operacji zmianowych  
+Docelowa persona: Engineering lead / Continuous improvement lead / Shift operations sponsor  
 Etap lejka: Consideration  
+Główny problem: każda zmiana inaczej nazywa stany, zaokrągla znaczniki czasu i interpretuje progi w rozmowie, więc przekazanie staje się opinią zamiast dowodem  
+Główna obietnica: wspólny słownik sygnałów plus reguły przekazania, które pozostają stabilne, gdy zmieniają się ludzie, dostawcy lub ekrany
 
-Glowny problem: kazda zmiana nazywa stany inaczej, zaokragla czas inaczej i interpretuje progi w rozmowie, wiec handover staje sie opinia zamiast dowodu Glowna obietnica: wspolny slownik sygnalow plus reguly handover, ktore trzymaja sie stabilnie, gdy zmieniaja sie ludzie, vendor albo ekrany Handover miedzy zmianami peka najpierw, gdy definicje dryfuja. IoT samo z siebie nie naprawia slownika. Pokazuje, czy zaklad zgadza sie, co dany sygnal znaczy.
+IoT samo z siebie nie tworzy wspólnego języka. Wzmacnia słownictwo, które zakład już ma.
 
-## Bezposrednia odpowiedz
+Jeśli pierwsza zmiana nazywa warunek „oczekiwanie”, a druga to samo „bezczynność”, analityka nie zgodzi się z porannym spotkaniem — i żadna strona nie kłamie. Definicje to infrastruktura. Gdy dryfują, przekazanie staje się opowieścią, a projekty usprawnień gonią duchy.
 
-Utrzymuj spojnosc definicji sygnalow IoT miedzy zmianami przez **jeden slownik zakladowy**, **zamrozone nazwy pol w handover** oraz **miesieczny audyt probki**, gdzie operatorzy tlumacza ten sam tag wlasnymi slowami.
+Dryft rzadko przychodzi ze złości. Przychodzi z wygody: szybsze słowo w radiu, przemianowana kolumna arkusza, próg „tylko na ten tydzień”. Governance zamienia te drobne edycje w kontrolowaną zmianę.
 
-Jesli dwie zmiany uzywaja roznych slow dla tego samego stanu maszyny, to nie masz tylko problemu modelu stanu.
+Ten artykuł paruje się z [jak używać danych IoT przy przekazaniu zmiany bez tworzenia kolejnego raportowania](../33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting/article_PL.md), słownictwem stanów w [jak wygląda dobry model stanu maszyny przed skalowaniem IoT](../35_what_a_good_machine_state_model_looks_like_before_scaling_iot/article_PL.md) oraz rytmem governance w [jak powinna wyglądać governance IoT po pierwszym roku](../42_what_iot_governance_should_look_like_after_the_first_year/article_PL.md).
 
-Masz blad komunikacji, ktory zatruje priorytet maintenance i eskalacje.
+## Opublikuj jeden zakładowy słownik
 
-## Framework: stos definicji
+Autorytatywne znaczenia stanów, przyczyn i krytycznych progów powinny żyć tam, gdzie operatorzy faktycznie patrzą — na odprawach, tablicach linii i w szkoleniach — nie w folderach inżynierii. Jeśli ludzie nie znajdą słownika, wymyślą własny.
 
-1. **Warstwa semantyczna** Znaczenie w prostym jezyku: running, faulted, starved, blocked, changeover, warmup, hold dla jakosci
+## Zamroź nazwy pól przekazania
 
-2. **Warstwa techniczna** Nazwa tagu, jednostka, kadencja probkowania oraz edge versus cloud jako source of truth
+Etykiety używane przy zmianie zmiany powinny rzadko się zmieniać i tylko przez kontrolę zmian. Swobodne zmiany nazw łamią historię i mylą załogi. Traktuj zmiany nazw jak każde inne MOC: ogłoś, przeszkol, oznacz datą.
 
-3. **Warstwa operacyjna** Czego oczekuja superviserzy w eskalacji, czego planner w routingu work order, czego jakosc w traceability
+## Szkol każdą zmianę na tych samych słowach
 
-4. **Warstwa szkoleniowa** Krotki glosariusz w jezyku hali, powiazany z ekranami, ktore operatorzy naprawde widza
+Prowadź praktyczne ćwiczenia z realistycznymi scenariuszami. Poproś każdą zmianę, by nazwała stan i przyczynę językiem słownika. Gdy słowa się rozjeżdżają, napraw szkolenie lub uprość definicje, zanim obwinisz ludzi.
 
-5. **Warstwa governance** Kto akceptuje rename, jak trzymana jest historia wersji, jak override wiaza sie z definicjami
+## Audyt próbkowy co miesiąc
 
-## Checklista: minimalne pola slownika na krytyczny sygnal
+Zabierz operatorów na bok w różne dni i zmiany. Poproś, by wyjaśnili ten sam tag własnymi słowami. Gdy wyjaśnienia się rozjeżdżają, zaktualizuj szkolenie, zaciśnij definicje albo napraw etykiety UI, które wprowadzają w błąd.
 
-- [ ] nazwa biznesowa uzywana w handover (nie tylko skrot PLC)
-- [ ] jednostka numeryczna i regula zaokraglenia
-- [ ] oczekiwany zakres w normalnej produkcji i w idle
-- [ ] znane przyczyny false-positive i jak je logowac
-- [ ] powiazanie z klasa priorytetu maintenance, jesli sygnal moze pchac prace
-- [ ] klasa retencji dla dowodu i oczekiwan audytowych
+## Współpodpisuj zmiany progów
 
-## Porownanie: plemienne nazewnictwo versus slownik zakladu
+Gdy limity się przesuwają, utrzymanie i operacje powinny dzielić odpowiedzialność za „dlaczego”. Ciche poprawki inżynierskie uczą hali, że system jest arbitralny.
 
-| Plemienne nazewnictwo | Slownik zakladu |
-|---|---|
-| "to cos od vibracji" | nazwany sygnal z ownerem |
-| rozne arkusze Excel na zmiane | jedna zatwierdzona lista |
-| zmiany progow na czacie | logowana kontrola zmian |
-| szkolenie tylko przez shadowing | glosariusz plus podpis |
+**Check stabilności definicji:** nazwany właściciel słownika; pola przekazania zamrożone; zmiany nazw przez kontrolę zmian; miesięczne audyty próbkowe w kalendarzu; aktualizacje progów współpodpisane i zakomunikowane językiem zmiany.
 
-## Jakosc sygnalu i standardy
+## Tłumacz nazwy inżynierskie na język hali
 
-Definicje to drzwi do jakosci sygnalu.
+Jeśli słownik używa żargonu, którego operatorzy nie wypowiadają na głos, nie będą go używać. Współtwórz etykiety z załogami i trzymaj inżynierskie synonimy w polu zapasowym, jeśli analityka ich potrzebuje.
 
-Slabe definicje tworza halas w alertach, powtarzajace sie override i slaby dowod w przegladowych u klienta albo regulatora.
+## DBR77 IoT i wspólny język
 
-Wiaz prace nad definicjami ze standardami, ktore zaklad juz posiada: interlocki safety, holdy jakosci, klasy maintenance.
+DBR77 IoT wspiera spójność tam, gdzie konfiguracja traktuje definicje jako obiekty rządzenia — listy przyczyn, modele stanów, własność progów — nie jako developerski dodatek doklejony po starcie.
 
-## Co to znaczy dla DBR77 IoT
+Wspólny język to wspólna prawda. Utrzymuj definicje sygnałów spójnie dzięki jednemu słownikowi, zamrożonym polom przekazania i miesięcznym rzeczywistościowym sprawdzeniom, które szanują głos każdej zmiany.
 
-DBR77 IoT to **nie kolejny dashboard**.
+## Niech obietnica artykułu zostanie praktyczna
 
-To **widocznosc maszyny w czasie rzeczywistym**, **lacznosc retrofit-ready**, **szybki pilot** i **wsparcie decyzji edge-first**, ktore zostaje czytelne miedzy zmianami, gdy definicje sa zdyscyplinowane wczesniej.
+Przełóż powyższe idee w jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo drill, który faktycznie realizują. Duże programy zacinają się, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
 
-## Bottom line
+## Punkt kontrolny kierownictwa na następny przegląd operacji
 
-Spojnosc to nie hobby dokumentacyjne.
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
 
-To sposob, w jaki handover, eskalacja i dowod trzymaja linie, gdy nocna zmiana nie czyta historii czatu porannej.
+## Domknięcie na hali
+
+Żadna z tych rad nie ma znaczenia, jeśli zostaje w slajdach sterujących. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia bardziej przypomina zsynchronizowany zespół niż salę sądu — wciąż głośno i intensywnie, ale wokół tych samych faktów.
+
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie językowe to objaw, że pętla jest wciąż zbyt cienka.
+
+---
+
+*DBR77 IoT pomaga zakładom utrzymywać spójne definicje IoT dzięki rządzonym listom przyczyn, stanom maszyn i językowi zwróconemu do operatorów na wszystkich zmianach. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

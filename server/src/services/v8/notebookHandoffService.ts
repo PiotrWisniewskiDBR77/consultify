@@ -527,7 +527,7 @@ export function validateHandoffPayload(
   target: 'radar' | 'inicjatywy' | 'teresa',
   payload: Record<string, unknown>
 ): { valid: boolean; missingFields: string[] } {
-  const config = P07_HANDOFF_TARGETS[target];
+  const config = P07_HANDOFF_TARGETS[target] as any;
   const missingFields: string[] = [];
 
   const requireNestedKeys = (

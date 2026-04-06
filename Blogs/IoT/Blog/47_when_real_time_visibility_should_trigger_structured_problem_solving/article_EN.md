@@ -5,53 +5,57 @@ Funnel stage: Decision
 Core problem: teams see the anomaly on screen but revert to hallway decisions, so the same failure mode returns next week with no evidence trail  
 Main promise: a trigger map: which real-time conditions open a structured loop, who owns the charter, and how IoT evidence attaches to the record
 
-Real-time visibility is not a substitute for thinking.
+Real-time visibility can speed up arguments. Structured problem solving ends them with evidence.
 
-It is a starter pistol for disciplined problem solving when the stakes justify the overhead.
+The mistake is treating every yellow blip as charter-worthy. The other mistake is never opening a charter when risk, repeats, or traceability demand a record. IoT should help the plant know which game it is playing in the moment: quick containment, standard work, or disciplined analysis.
 
-Trigger structured problem solving when real-time visibility shows **repeat loss on a constraint asset**, **a safety or quality boundary approach**, **a multi-shift disagreement about machine truth**, or **a customer or regulatory traceability gap** that informal chat cannot close.
+Structured solving is not bureaucracy for its own sake. It is how plants stop paying tuition for the same lesson every month because nobody wrote down what changed.
 
-Do not force a full charter for **one-off transients** already covered by standard work or **known warm-up behavior** with an existing SOP.
+## When a structured loop is justified
 
-Faster confirmation habits pair with [how to use IoT for faster problem confirmation on the shop floor](../39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor/article_EN.md). When floor trust is thin, [what to do when operators do not trust IoT signals yet](../27_what_to_do_when_operators_do_not_trust_iot_signals_yet/article_EN.md) is upstream of any charter that depends on screen truth.
+Open a charter when repeat loss hits a constraint asset despite existing standard work; when safety or quality boundaries approach levels the plant treats as serious; when shifts disagree about machine truth in ways that threaten plan or compliance; or when customer or regulatory traceability needs a defensible chain informal chat cannot provide.
 
-## Framework: the four-trigger map
+## When to stay in standard work
 
-1. **Economic trigger** Confirmed output or uptime loss on a named constraint with two or more occurrences in a review window
+Skip the heavy loop for one-off transients already covered by SOPs, known warm-up behavior with an existing playbook, or issues where containment is complete and recurrence is not indicated. Structure is costly; spend it where informal resolution failed or stakes are high.
 
-2. **Risk trigger** Trend toward interlock, hold, or scrap threshold per plant standards
+## Attach IoT evidence deliberately
 
-3. **Trust trigger** Conflicting narratives between shifts about the same signal or override pattern
+Bundle stable versus current windows, reasons and overrides, linked maintenance actions, and corroboration notes. The record should allow someone unfamiliar with the drama to reconstruct what the line knew and when.
 
-4. **Compliance trigger** Evidence or retention rules require a reconstructable timeline
+## Name owners and time boxes
 
-## Step sequence: from visibility to structured loop
+Charters without owners become meetings. Assign a lead, define a review date, and track countermeasures like any other operational commitment.
 
-**Stabilize and contain** using existing escalation and override rules; **Capture the IoT slice**: timestamps, signals, operator notes, photos if allowed; **Charter the problem** with a single owner, scope boundary, and time box; **Run the method** your plant uses: A3, 8D light, DMAIC slice, or equivalent; **Close with standards update** if definitions, training, or thresholds must change; **Log integration** if the fix requires CMMS, engineering change, or IT-OT work.
+**Structured loop trigger check:** charter owner named; time box defined; evidence bundle attached; countermeasures tracked; closure reviewed on calendar.
 
-## Comparison: hallway problem solving versus chartered loop
+## Keep charters small enough to finish
 
-| Hallway solving | Chartered loop |
-|---|---|
-| fast today | slower start, faster recurrence reduction |
-| weak evidence | attached IoT slice |
-| personality dependent | owner and time box |
-| hidden in chat | auditable record |
+Large charters die of calendar starvation. If the trigger fired, scope the charter to one constraint asset or one failure family, attach IoT evidence as a bundle, and set a hard review date. A closed small charter beats an open grand one.
 
-## Relationship to production planning
+## DBR77 IoT as evidence backbone
 
-Structured problem solving is not the same as **replanning the schedule**.
+DBR77 IoT supports structured solving when visibility exports context the floor already trusts—states, reasons, timestamps—into improvement records instead of orphan screenshots.
 
-Visibility should change the schedule only under the rules in [when real-time visibility should change the production plan](../40_when_real_time_visibility_should_change_the_production_plan/article_EN.md).
+Use real-time visibility to trigger structured problem solving when repeats, risk, or traceability demand a record—not for every fluctuation. Discipline preserves energy for problems that deserve it.
 
-This article covers when visibility should open a **root-cause and countermeasure** path even if today's plan stays frozen for good reasons.
 
-## What this means for DBR77 IoT
 
-DBR77 IoT gives structured methods a time-stamped backbone: capture the IoT slice once, attach it to the charter, and keep triggers explicit so teams do not drown in projects or relive the same week from memory.
 
-Evidence should travel with the problem record, not live only in chat and hero stories.
+## Keep the article’s promise practical
 
-## Bottom line
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
 
-If every blip becomes a project, you will drown. If no blip becomes a project, you will relive the same week forever. Use triggers, owners, and evidence discipline to choose.
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT anchors structured problem solving with timestamped machine truth, operator context, and escalation history you can attach to improvement records. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

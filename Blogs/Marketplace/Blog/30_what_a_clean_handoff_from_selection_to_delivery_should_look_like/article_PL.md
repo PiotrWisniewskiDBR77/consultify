@@ -1,80 +1,50 @@
-# Jak powinno wygladac czyste przekazanie od selekcji do dostawy
+# Jak powinna wyglądać czysta przekazka od wyboru dostawcy do realizacji
 
-Target persona: menedzer projektu / sponsor operacji  
-Funnel stage: Decision do dostawy (przejscie do realizacji)  
-Core problem: zwyciezca selekcji pojawia sie na miejscu, podczas gdy operacje, IT i utrzymanie nadal mysla, ze projekt to "sprawa zakupow"  
-Main promise: pakiet przekazania i rytm spotkan, ktore czynia wlascicielstwo, interfejsy i ciaglosc akceptacji jawnymi
+Docelowa persona: Kierownik projektu / Sponsor operacji  
+Etap lejka: Od decyzji do realizacji (przejście do wykonania)  
+Główny problem: zwycięzca wyboru wjeżdża na halę, podczas gdy operacje, IT i utrzymanie wciąż traktują projekt jako „sprawę zakupów”  
+Główna obietnica: pakiet przekazki i rytm spotkań, które czynią widocznym odpowiedzialność, interfejsy i ciągłość akceptacji
 
-Selekcja konczy sie nazwiskiem na slajdzie. Dostawa zaczyna sie linia, ktora jutro nadal musi pracowac. Luka to miejsce, gdzie ciekna budzety i ufnosc. Czyste przekazanie to nie dluzszy aneks do kontraktu.
+Wybór kończy się nazwiskiem na slajdzie. Realizacja zaczyna się od linii, która musi ruszyć jutro rano. W szczelinie między tymi momentami uciekają budżety, niszczy się zaufanie, a integratorzy uczą się, że organizacja wciąż negocjuje sama ze sobą. Czysta przekazka to nie dłuższy aneks do umowy — to krótki, opublikowany zestaw artefaktów i właścicieli, który zapobiega zamianie projektu w mecz ping-ponga.
 
-To krotki zestaw artefaktow i wlascicieli, ktory zapobiega zamianie projektu w ping-pong miedzy kupujacym a integratorem.
+## Co powinien zawierać pakiet
 
-## Bezposrednia odpowiedz
+Opublikujcie zintegrowany plan z kamieniami milowymi powiązanymi z obiektami akceptacji, a nie tylko z datami. Dołączcie RACI z nazwanymi operacjami, utrzymaniem, IT, jakością i BHP — nie ogólnym „wsparciem zakładu”. Zamroźcie kontekst konfiguracji: wersję oświadczenia o zakresie sprzętu, identyfikatory buildów oprogramowania i firmware tam, gdzie mają zastosowanie, oraz listy interfejsów. Zdefiniujcie rytm komunikacji, kanały i ścieżki eskalacji. Dodajcie ścieżkę gotowości operacyjnej na 30–60 dni: konsumpcję szkoleń, myślenie o częściach zamiennych, odpowiedzialność dokumentacji oraz okna walidacji zgodne z realnym ciśnieniem produkcyjnym.
 
-Czyste przekazanie obejmuje: jeden zintegrowany plan projektu z kamieniami milowymi powiazanymi z obiektami akceptacji; RACI z nazwanymi wlascicielami operacji, utrzymania, IT, jakosci i bezpieczenstwa; zamrozona baseline konfiguracji (sprzet, ID buildow oprogramowania, wersja oswiadczenia o zakresie); protokol komunikacji: kadencja, kanaly, sciezka eskalacji; plan gotowosci operacji na 30 do 60 dni (szkolenia, czesci, konsumpcja dokumentacji).
+## Zróbcie kickoff z „zębami”
 
-Opublikuj to na jednym wewnetrznym spotkaniu przekazania i jednym kickoff u dostawcy z tym samym szkieletem slajdow.
+Spotkanie startowe ma potwierdzić tę samą historię, którą zakupy opowiedziały kierownictwu: zakres, założenia, oś akceptacji i zobowiązania zakładu. Jeśli operacje słyszą inny film niż inżynieria, naprawcie to zanim mobilizacja zacznie palić pieniądze.
 
-Jesli po tygodniu istnieja dwie rozne historie, juz zaplaciles za przerobki.
+## Utrzymujcie ciągłość akceptacji
 
-## Lista kontrolna pakietu przekazania (minimum)
+FAT i SAT muszą sięgać po kryteriach uzgodnionych przed przyznaniem — nie wymyślanych pod presją przy linii. Ciągłość to sposób, by ustrukturyzowane porównanie przetrwało pierwszy kontakt z rzeczywistością.
 
-| Artefakt | cel |
-| --- | --- |
-| ID oswiadczenia o zakresie + wykluczenia | zapobiega cichym przesunieciom |
-| rejestr interfejsow | zapobiega fikcji IT |
-| rejestr ryzyk z wlascicielami | zapobiega osieroconym problemom |
-| zarys planu testow przez FAT i SAT | zapobiega poznym niespodziankom |
-| plan szkolen z audytoriami | zapobiega go-live bez wsparcia |
-| lista czesci zamiennych i czasy realizacji | zapobiega dramatom przestojow na starcie |
+## Jak w to wpisuje się DBR77 Marketplace
 
-Brakujace artefakty powinny byc wymienione jako jawne ryzyka z datami, nie jako nadzieja.
+Jakość przekazki zależy od tego, czy wybrane oferty, warunki umowy i oczekiwania akceptacji pozostają nienaruszone w realizacji. Ustrukturyzowane porównanie ma stać się ciągłością dowozu, a nie ćwiczeniem z pamięci.
 
-## Agenda spotkania przekazania (90 minut, ilustracyjnie)
+Najbliższe artykuły o ciągłości: [Co FAT i SAT powinny faktycznie udowodnić przed startem produkcyjnym](../25_what_fat_and_sat_should_actually_prove_before_go_live/article_PL.md), [Kiedy ponownie otworzyć decyzję automatyzacyjną przed podpisaniem](../32_when_to_reopen_an_automation_decision_before_signing/article_PL.md) oraz [Co sprawdzić przed podpisaniem umowy na automatyzację](../20_what_to_check_before_signing_an_automation_contract/article_PL.md).
 
-Co wybrano i czemu (podsumowanie logu decyzji); jakie zmiany sa dozwolone i jak (kontrola zmian); kto jest wlascicielem czego wewnetrznie (spacer po RACI); czego dostawcy potrzebuja z zakladu co tydzien (mapa zaleznosci); jak wyglada "zielono" przy FAT i SAT (kotwice akceptacji).
+## Przekazka jako zarządzanie zmianą
 
-Zakoncz zadaniami: imiona, daty, jedna wychodzaca notatka do dostawcy potwierdzajaca to samo rozumienie.
+Wybór tworzy też zwycięzców wewnątrz organizacji: ktoś czuje się wysłuchany, ktoś zaskoczony. Przekazka to moment, by wszyscy wrócili do jednego planu. Opublikujcie paket, przeczytajcie go w pokoju cross-funkcyjnym i zostawcie miejsce na zastrzeżenia na piśmie — nie jako rozmowy przy kawie, które wrócą przy SAT.
 
-## Co zmienia sie po przekazaniu (zachowanie, nie papier)
+Traktujcie pakiet jako żywy, podlegający kontroli wersji. Jeśli integracja zmienia plan, aktualizujcie zapis i komunikujcie delty tak, jak zmianę na linii — świadomie, z właścicielami.
 
-Po przekazaniu wlasciciel zakupu przestaje byc jedynym gardlem. Operacje mowia w tygodniowej kadencji integracji. Utrzymanie akceptuje rzeczywistosc dostepu i LOTO. IT zobowiazuje sie do harmonogramu sieci i uprawnien.
+## Od decyzji do zachowania na hali
 
-Zakupy monitoruja dyscypline komercyjnych zmian, nie codzienna inzynierska drobnice.
+Sens dopracowania tego etapu — „Jak powinna wyglądać czysta przekazka od wyboru dostawcy do realizacji” w praktyce — to przewidywalna realizacja. Na produkcji niejasność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spory przy sprzęcie wtedy, gdy linia potrzebowała jasności wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodami i trzymają widoczne odpowiedzialność, dostawcy zaskakują rzadziej, a funkcje mniej godzą sprzeczne narracje.
 
-## Reality check: przekazanie zwykle zawodzi wtedy, gdy organizacja zaklada, ze zwycieski dostawca "ma juz projekt"
+To nie teoria tylko dla „biura”. Kierownicy zakładów czują skutki, gdy artefakty zakupu nie pokrywają się z halą: pochłonięte nadgodziny, rozciągnięta czujność jakości i utrzymanie improwizujące przy połowicznie zdefiniowanych interfejsach. Dyscyplina zakupu to inwestycja produkcyjna — mniej dramatu przy montażu, mniej nagłych zmian i szybsza droga do stabilnego outputu. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-To zalozenie brzmi efektywnie.
+Jeśli macie zabrać jeden nawyk, niech to będzie to: każdy ważny wynik zakupów powinien dać się zauditować przez operacje i utrzymanie. Jeśli nie da się go prześledzić do zachowania na hali, zaostrz język. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a zaczęły się od decyzji.
 
-Zwykle jest jednak momentem, w ktorym wlascicielstwo zaczyna sie rozmywac. Dostawca oczekuje wejsc od zakladu. Zaklad oczekuje, ze dostawca poprowadzi kazdy kolejny krok. Zakupy zakladaja, ze realizacja juz przejela sprawe.
-
-Jesli nikt nie opublikuje ponownie wlascicielstwa po selekcji, projekt dziedziczy zwyciezce, ale nie dzialajacy model operacyjny.
-
-## Typowe bledy przekazania
-
-| blad | koszt | naprawa |
-| --- | --- | --- |
-| brak miejsca IT | poslizgi interfejsow | wymagaj obecnosci |
-| szkolenia traktowane jako opcja | skok obciazenia wsparciem | wiaz szkolenia z kamieniami milowymi |
-| brudokumentowana baseline | spory o zakres | zamroz ID buildow |
-| podwojne narracje | brak zaufania | jeden zestaw kickoff |
-
-## Co to znaczy dla DBR77 Marketplace
-
-DBR77 Marketplace wspiera zakupy automatyzacji nastawione na producenta jako workflow od jasnosci wyzwania po strukturalne porownanie.
-
-Przekazanie to moment, w ktorym porownywalnosc staje sie rzeczywistoscia realizacji.
-
-Gdy selekcja jest czysto udokumentowana, dostawa startuje z mniejsza liczba ukrytych podmian. Marketplace to nie katalog robotow.
-
-To warstwa zaufania i workflow, ktora powinna byc zgodna z tym, jak powazne zaklady prowadza projekty po przyznaniu.
+Na koniec podepnijcie to pod odpowiedzialność: kto zweryfikuje założenia na hali i przy którym kamieniu milowym. Mitom sprzyja brak właściciela pomiaru; słabną, gdy weryfikacja jest w planie projektu, a nie dodatkiem.
 
 ## Podsumowanie
 
-Selekcja bez przekazania to decyzja bez wlascicieli.
-
-Opublikuj pakiet, wyrownaj kickoff i spraw, by ciaglosc FAT i SAT byla przewidywalna zamiast heroiczna.
+Wybór bez przekazki to decyzja bez właścicieli. Opublikujcie paket, wyrównajcie kickoff i sprawcie, by akceptacja była przewidywalna, a nie bohaterska.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom demo producenta](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*
+*DBR77 Marketplace wspiera ustrukturyzowane porównanie na etapie wyboru; ta sama dyscyplina powinna przejść w opublikowany pakiet przekazki, by zwycięska ścieżka pozostała możliwa do audytu po przyznaniu. [Uruchom demo producenta](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*

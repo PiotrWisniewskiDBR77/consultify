@@ -1,86 +1,56 @@
-# Kiedy otworzyc ponownie decyzje automatyzacji przed podpisaniem
+# Kiedy ponownie otworzyć decyzję o automatyzacji przed podpisaniem
 
-Target persona: wlasciciel zakupu / akceptujacy prawni i techniczni  
-Funnel stage: Decision (ostatnia brama przed zobowiazaniem)  
-Core problem: zespoly traktuja selekcje jako zamknieta, a przeglad kontraktu jako papier, pomijajac pozne fakty zmieniajace ryzyko, cene lub wykonalnosc  
-Main promise: zestaw regul ponownego otwarcia, ktory chroni decyzje bez zachecania do nieskonczonego chaosu
+Docelowa persona: Właściciel zakupu / Akceptujący prawni i techniczni  
+Etap lejka: Decyzja (ostatnia brama przed zobowiązaniem)  
+Główny problem: zespoły traktują selekcję jako zakończoną, a przegląd kontraktu jako papierologię — i przegapiają późne fakty zmieniające ryzyko, cenę lub wykonalność  
+Główna obietnica: zestaw zasad ponownego otwarcia, który chroni decyzje bez zachęcania do wiecznej zawieruchy
 
-Podpisywanie powinno byc nudne.
+Selekcja wydaje się skończona, gdy komitet klaszcze. Przegląd kontraktu to miejsce, gdzie często pojawiają się późne fakty: język zakresu, który nie odpowiada ocenianej ofercie, założenia, które nie przetrwały walidacji, ograniczenie zakładu, którego nikt nie zmierzył, właściciel interfejsu, który właśnie dowiedział się, że to on nosi ryzyko. Traktowanie tych momentów jako „papierologii” to sposób, by podpisać złą wersję decyzji.
 
-Jesli podpisywanie czuje sie jak ulga, mozesz thumic pytanie, ktore zasluzulo na swiatlo dzienny. Ponowne otwarcie decyzji to nie slabosc.
+Ponowne otwarcie przed podpisem to nie niezdecydowanie — to ostatnia czysta szansa na uczciwość.
 
-To moment, w ktorym odmawiasz zamiany niejasnosci w wiazacy zobowiazanie.
+## Otwórz ponownie, gdy fakty są materialne
 
-## Bezposrednia odpowiedz
+Wróć do przyznania, gdy bazowy zakres się przesuwa, zmienia się wykonalność techniczna, struktura komercyjna rozjeżdża się od tego, co porównywano, kryteria akceptacji w tekście kontraktu dryfują względem ewaluacji lub pojawiają się nowe zależności unieważniające logikę harmonogramu. Standard to materialność: czy rozsądny nabywca wybrałby inaczej, gdyby ta informacja była w pokoju?
 
-Otworz decyzje przed podpisaniem, gdy zmienia sie materialny fakt albo gdy tekst kontraktu nie moze podtrzymac tego, co biznes uwaza, ze kupil.
+## Nie otwieraj ze względu na „smak”
 
-Materialne znaczy: wplywa na bezpieczenstwo, akceptacje, harmonogram, ekspozycje kosztowa lub operacyjne wlascicielstwo.
+Unikaj resetu, bo nowy dyrektor woli inną markę albo późne spotkanie wprowadziło niepodważalny niepokój. Ponowne otwarcie bez reguł staje się młynem — a młyn uczy organizację przyspieszać podpisy, by uciszyć szum.
 
-Jesli zmiana nie jest materialna, uzyj kontroli zmian po przyznaniu zamiast restartowac teatr selekcji.
+## Trzymaj to w ramach
 
-## Wyzwalacz A: zakres lub interfejsy przesunely sie po selekcji
+Jeśli otwierasz ponownie, zaktualizuj ustrukturyzowane pola: zakres, założenia, logikę ceny, kamienie milowe, akceptację. Opublikuj ponownie zapis porównania. Daj dostawcom uczciwą, ograniczoną czasowo szansę na odpowiedź, jeśli ich ścieżka się zmienia. Celem jest skorygowana decyzja, nie nieskończona pętla.
 
-Przyklady (ilustracyjne): zalozenia handshake MES sie zmienily; mix SKU przesunal sie na tyle, ze zmienia obchodzenie; relokacja linii lub zmiana ukladu wplywa na zasieg i ogrodzenie.
+## Tekst kontraktu musi odpowiadać ocenianej rzeczywistości
 
-Otworz ponownie, jesli sciezka integratora zostala wybrana pod innym wszechswiatem technicznym.
+Jeśli umowa zmiękcza wyłączenia, rozmywa akceptację lub poluzowuje zasady zmian względem tego, co porównywano, masz nowy projekt. Nazwij to i zdecyduj.
 
-## Wyzwalacz B: warunki komercyjne rozmijaja sie z oceniana oferta
+## Jak pomaga DBR77 Marketplace
 
-Przyklady: kamienie platnosci nie zgadzaja sie juz z obiektami akceptacji; triggery startu gwarancji sie przesunely; srodki naprawcze wydajnosci zostaly zwezone lub ograniczone bez jawnej akceptacji ryzyka.
+Ponowne otwarcie jest możliwe do ogarnięcia, gdy artefakty porównawcze są na tyle aktualne, by je inspekcjonować i aktualizować. Ustrukturyzowane pola zamieniają późny przegląd w ograniczoną kontrolę zamiast archeologii skrzynki.
 
-Otworz ponownie, jesli ekonomia zmienila sie bez zapisanego rekordu decyzji.
+Najbliżsi sąsiedzi kontraktu i realizacji: [Co sprawdzić przed podpisaniem kontraktu automatyzacyjnego](../20_what_to_check_before_signing_an_automation_contract/article_PL.md), [Co dobra oferta automatyzacyjna powinna uczynić widocznym](../17_what_a_good_automation_offer_should_make_visible/article_PL.md) oraz [Jak powinna wyglądać czysta przekazka od wyboru dostawcy do realizacji](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_PL.md).
 
-## Wyzwalacz C: pojawia sie nowy dowod (referencja, incydent, audyt)
+## Kultura: nagradzaj uczciwość przy bramce
 
-Przyklady: rozmowa referencyjna ujawnia wzor, ktorego nie oceniales; audyt wewnetrzny sygnalizuje konflikt lub ograniczenie zgodnosci; zmiana obsady lub podwykonawcy po stronie dostawcy wplywa na wiarygodnosc dostawy.
+Zespoły unikają ponownego otwarcia, bo czuje się to jak przyznanie błędu. Przeformułuj: wykrycie niezgodności przed podpisem to sukces, nie porażka. Organizacje, które karzą późną prawdę, uczą ludzi chować niespodzianki aż do rozruchu — wtedy kara jest zbiorcza. Uczynij korekty przed podpisem znakiem dojrzałego governance.
 
-Otworz ponownie, jesli fakty istotne dla zaufania przyszly po ostatnim cyklu porownania.
+Udokumentuj, co się zmieniło i dlaczego. Przyszłe Ty — i przyszli audytorzy — zechcą jedną spójną narrację.
 
-## Wyzwalacz D: gotowosc wewnetrzna zawiodla po selekcji
+## Od decyzji do zachowania hali
 
-Przyklady: okna dostepu nie sa juz osiagalne; IT nie spelni harmonogramow sieci i uprawnien; zobowiazania szkoleniowe i kadrowe zniknely.
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „kiedy ponownie otworzyć decyzję o automatyzacji przed podpisaniem” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-Otworz ponownie, jesli zalozenia dostawy nalezace do zakladu przestaly byc prawdziwe.
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-## Reality check: zespoly czesto unikaja ponownego otwarcia, bo myla dyscypline decyzyjna z politycznym wstydem
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
-Na tym etapie nikt nie chce wygladac tak, jakby proces cofal sie do tylu. Dlatego pozne zmiany sa minimalizowane jako:
-
-- jezyk prawny
-- mala korekta komercyjna
-- cos do zalatwienia po przyznaniu
-
-Ten odruch jest zrozumialy.
-
-To rowniez najprostsza droga, by czysty problem przed podpisem zamienic w brudny obowiazek po podpisie.
-
-## Jak otworzyc ponownie bez chaosu
-
-Uzyj ograniczonego protokolu ponownego otwarcia: opublikuj, co sie zmienilo, na jednej stronie; wypowiedz, co trzeba ponownie zwalidowac: techniczne, komercyjne lub oba; ogranicz czasowo przeglad (ilustracyjnie: piec do dziesieciu dni roboczych dla wiekszosci srednich projektow); zadecyduj: popraw z wybranym dostawca, uruchom waskie porownanie ponownie lub wstrzymaj. Utrzymuj jeden kanal wychodzacy. Partiuj pytania.
-
-Nie karz dostawcow za pozne odkrycie po Twojej stronie, chyba ze oni je spowodowali.
-
-## Czego nie robic
-
-| antywzor | czemu boli |
-| --- | --- |
-| ciche edycje na torze prawnym | tworzy spory po podpisie |
-| restart pelnego konkursu pieknosci dla malych delt | pali zaufanie i kalendarz |
-| podpis by "utrzymac ped" | zamienia balagan w kontraktowy balagan |
-
-## Co to znaczy dla DBR77 Marketplace
-
-DBR77 Marketplace ma czynic zakupy automatyzacji mozliwymi do inspekcji przez workflow, zaufanie i porownanie. Inspekcjonowalnosc powinna przezyc ostatni metr przed podpisem.
-
-Jesli artefakty porownawcze sa aktualne, ponowne otwarcie to zdyscyplinowana aktualizacja, nie kryzys polityczny. Marketplace to nie katalog robotow.
-
-To system nastawiony na producenta, ktory redukuje chaos sourcingowy i utrzymuje decyzje zgodne z rzeczywistoscia.
+Na koniec powiąż tę dyscyplinę z rozliczalnością: nazwij, kto zweryfikuje założenia na hali i przy którym kamieniu milowym. Mity kwitną, gdy nikt nie posiada pomiaru; słabną, gdy weryfikacja jest częścią planu projektu, a nie dopiskiem.
 
 ## Podsumowanie
 
-Otworz przed podpisaniem, gdy zmieniaja sie materialne fakty albo tekst kontraktu nie odpowiada ocenianej ofercie. Po podpisie nadal masz kontrole zmian. Przed podpisem masz najczystsza szanse na uczciwosc.
+Otwórz ponownie przed podpisem, gdy zmieniają się materialne fakty albo tekst kontraktu przestaje odpowiadać ocenianej ofercie. Po podpisie wciąż masz kontrolę zmian; przed podpisem wciąż masz najczystszą szansę na zgodność prawdy z atramentem.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace utrzymuje artefakty porównawcze na bieżąco, więc późne ponowne otwarcie to ograniczona aktualizacja pól strukturalnych, nie reset do archeologii skrzynki. [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

@@ -1,86 +1,44 @@
-# Jak budowac operacje fabryki wspierane przez AI krok po kroku
+# Jak budować operacje fabryczne wspomagane AI krok po kroku
 
-Target persona: Wlasciciel programu / Lider IT-OT zakladu / sponsor COO  
-Funnel stage: Decision  
-Core problem: programy AI zacinaja sie, bo zespoly probuja skalowac inteligencje zanim ustabilizuja mechanike wykonania, odpowiedzialnosc i pomiar  
-Main promise: osmiokrokowa sciezka od dyscypliny bazowej do zmierzonego wsparcia AI w jednym operacyjnym workflow, z jawnymi bramkami i kryteriami dowodu
+Docelowa persona: właściciel programu / lider IT-OT zakładu / sponsor COO  
+Etap lejka: Decision  
+Główny problem: programy AI zacinają się, bo zespoły próbują skalować inteligencję zanim ustabilizują mechanikę wykonania, odpowiedzialność i pomiar  
+Główna obietnica: ośmiokrokowa ścieżka od dyscypliny bazowej do zmierzonego wsparcia AI wewnątrz jednego operacyjnego przepływu pracy, z jawnymi bramkami i kryteriami dowodu
 
-**Bezposrednia odpowiedz:** Buduj operacje wspierane przez AI, stabilizujac jeden miedzyfunkcyjny workflow w ujednoliconej warstwie wykonania, definiujac progi i akceptacje, potem dodajac AI do triazu i wsparcia routingu, a dopiero potem poszerzajac zakres na podstawie czasu cyklu i metryk domkniecia. To sekwencja wdrozeniowa, nie deck filozoficzny.
+Buduj operacje wspomagane AI, stabilizując jeden międzyfunkcyjny przepływ pracy w ujednoliconej warstwie wykonania, definiując progi i akceptacje, potem dodając AI do triage i wsparcia przydziału zadań — i dopiero wtedy poszerzając zakres na podstawie zmierzonego czasu cyklu i metryk domknięcia. To sekwencja wdrożeniowa, nie deck filozoficzny. Pomijanie kroków to sposób, w jaki pilotaże stają się trwałymi anegdotami.
 
-## Krok 1: wybierz jeden workflow, ktory boli pieniedzmi lub czasem
+Zacznij od wyboru jednego przepływu pracy, który boli w czasie lub pieniądzu: powtarzające się blokady jakości ze wolnym domknięciem, opóźnienie reakcji utrzymania na krytycznych aktywach, działania magazynowe, które zatrzymują produkcję, albo zmiany planu eksplodujące w hałas między zespołami. Unikaj „wszystkiego”, procesów bez właściciela i takich, które nie powtarzają się wystarczająco często, by się uczyć.
 
-Dobrzy kandydaci: powtarzajace sie blokady jakosci z wolnym domknieciem; opoznienia reakcji utrzymania na krytycznych aktywach; dzialania magazynowe, ktore zatrzymuja produkcje; zmiany planu, ktore eksploduja jako miedzyzespolowy szum.
+Przetłumacz ból na pozycje pracy, nie slajdy. Zdefiniuj wyzwalacze, wymagane pola przy wejściu, stany takie jak otwarte, w toku, oczekuje na akceptację, zamknięte oraz kryteria domknięcia. Jeśli nie opiszesz przepływ pracy na jednej stronie, nie jesteś gotowy na AI — jesteś gotowy na warsztat.
 
-Slabi kandydaci: "wszystko"; proces bez wlasciciela; proces, ktory nie powtarza sie co miesiac.
+Wyrównaj definicje między zaangażowanymi funkcjami. Uzgodnij pasma priorytetu, klasy ciężkości lub ryzyka oraz to, co liczy się jako zablokowane względem oczekiwania. Wsparcie wzmacnia niezgodność; jej nie przebacza.
 
-## Krok 2: zdefiniuj workflow jako pozycje pracy, nie jako slajdy
+Wdroż przepływ pracy w jednym domu wykonania. Standard to jedna historia uporządkowanej kolejki, nie trzy równoległe skrzynki. Minimalna dyscyplina obejmuje widoczne odpowiedzialność, znaczniki czasu, bramki akceptacji tam, gdzie wymagane, oraz reguły eskalacji dla zablokowanych stanów.
 
-Przeloz bol na: definicje wyzwalaczy; wymagane pola przy przyjeciu; stany (otwarte, w toku, oczekuje na akceptacje, zamkniete); kryteria domkniecia. Jesli nie zmiescisz tego na jednej stronie, nie jestes gotowy na AI.
+Większość pilotów AI pada zanim model ma szansę pomóc. Intake wciąż jest rozdzielony między e-mail, czat, Excel i nawyk. Nikt nie zgadza się co do zablokowanego, pilnego czy zamkniętego. Przełożeni ręcznie przerzucają kierowanie zadań, bo przepływ pracy nigdy nie został ustabilizowany. W tym stanie AI nie przyspiesza pracy — przyspiesza zamęt wewnątrz przepływu pracy, którego nie da się zmierzyć.
 
-## Krok 3: uzgodnij definicje miedzy zaangazowanymi funkcjami
+Pracuj bez AI przez okno bazowe — często dwa do czterech tygodni produkcyjnych — i mierz czas do pierwszego działania, czas do domknięcia, wskaźnik ponownego otwarcia i ręczne przerzuty. Linia bazowa jest kotwicą dowodu. Bez niej sukces staje się opowieścią.
 
-Zrob krotkie warsztaty z produkcja, jakoscia, utrzymaniem, magazynem wedle potrzeby.
+Potem dodaj AI w tym samym przepływ pracy: grupowanie i deduplikacja, sugerowany przydział zadań i pasma priorytetu, szkice streszczeń na przekazania oraz alerty progów powiązane z jawnymi regułami. Zachowaj potwierdzenie ludzkie dla wszystkiego powyżej uzgodnionego ryzyka.
 
-Uzgodnij znaczenie dla: pasma priorytetu; klasy ryzyka lub ciezkosci; co liczy sie jako zablokowane versus oczekiwanie. AI poglebi niezgodnosc, jesli to pominiesz.
+Oceniaj sukces porównaniami przed/po na tych samych KPI — nie „użytkownikom się podoba”, lecz mediana czasu cyklu, wskaźnik ponownego otwarcia i próbkowany czas koordynacji przełożonych.
 
-## Krok 4: wdroz workflow w jednym domu wykonania
+Poszerzaj zakres przez klonowanie wzorca, nie przez dokładanie modeli. Następny przepływ pracy powinien ponownie użyć wzorców nadzoru, logiki akceptacji i metod pomiaru. Liczba modeli to nie postęp. Ponowne użycie wzorca to postęp.
 
-Celem jest jedna narracja kolejki priorytetow, nie trzy rownolegle skrzynki.
+Zanim poszerzysz zakres, nalegaj na kilka rzeczy niepodlegających negocjacji: zmierzone i zaakceptowane metryki bazowe, właściciele nazwani na piśmie, ślady audytu dla akceptacji i zmian, udokumentowany tryb awarii dla błędnej asysty oraz szkolenie sięgające ról hali — nie tylko IT.
 
-Minimum: widoczna odpowiedzialnosc; znaczniki czasu; bramki akceptacji tam, gdzie wymagane; reguly eskalacji dla zawieszonych stanow.
+IRIS pasuje do tej ścieżki budowy, bo kroki czwarty i szósty potrzebują jednego domu wykonania dla pozycji pracy, akceptacji i domykania działań — nie kolejnej nakładki, która rozdziela rekord.
 
-## Reality check: wiekszosc pilotow AI pada, zanim model zdazy pomoc
+O logice sekwencji przed startem budowy zobacz [Od ludzi do operacji wspomaganych AI: co zmienia się najpierw](../23_from_humans_to_ai_assisted_operations_what_changes_first/article_PL.md). O wdrożeniu z małą destrukcją po gotowości buildu zobacz [Jak wdrożyć operacje wspomagane AI bez destabilizacji zakładu](../30_how_to_roll_out_ai_assisted_operations_without_disrupting_the_plant/article_PL.md).
 
-Zalamanie zwykle pojawia sie wczesniej, niz zespoly zakladaja. Mowia, ze pilotuja AI, ale w praktyce:
+Operacje wspomagane AI skalują się, gdy zakład skaluje dyscyplinę wykonania. Zbuduj jeden przepływ pracy porządnie, mierz uczciwie, potem pozwól AI przyspieszać to, co już jest ustrukturyzowane.
 
-- intake nadal jest rozbity miedzy email, chat, Excel i lokalne nawyki
-- nikt nie zgadza sie, co znaczy zablokowane, pilne albo zamkniete
-- nadzorcy nadal recznie przeroutowuja prace, bo workflow nigdy nie zostal dostatecznie ustabilizowany
+## Podsumowanie operacyjne
 
-W takim stanie AI nie przyspiesza workflow.
+Obietnica tego artykułu — ośmiokrokowa ścieżka od dyscypliny bazowej do zmierzonego wsparcia AI w jednym operacyjnym przepływ pracy z jawnymi bramkami i kryteriami dowodu — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Jak budować operacje fabryczne wspomagane AI krok po kroku” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Przyspiesza chaos wewnatrz workflow, ktory nigdy nie zostal zdefiniowany wystarczajaco ciasno, by go mierzyc.
-
-## Krok 5: pracuj bez AI przez zdefiniowane okno bazowe
-
-Wybierz okno, ktore mozesz obronic: czesto dwa do cztery tygodnie produkcyjne.
-
-Mierz: czas do pierwszego dzialania; czas do domkniecia; wskaznik ponownego otwarcia; liczbe recznych przeroutowan. Ta linia bazowa to kotwica dowodu.
-
-## Krok 6: dodaj wsparcie AI w tym samym workflow
-
-Wprowadz AI tylko do: grupowania i deduplikacji; sugerowanego routingu i pasma priorytetu; projektow streszczen do przekazan; alertow progowych powiazanych z jawnymi regulami. Zachowaj potwierdzenie czlowieka dla wszystkiego powyzej uzgodnionego ryzyka.
-
-## Krok 7: zrob porownanie A/B lub przed/po na tych samych KPI
-
-Nie oceniaj sukcesu przez "uzytkownik lubi".
-
-Oceniaj przez: zmiane medianowego czasu cyklu; zmiane wskaznika ponownego otwarcia; czas koordynacji nadzorcy (probka).
-
-## Krok 8: poszerzaj przez klonowanie wzorca, nie przez dodawanie modeli
-
-Nastepny workflow powinien ponownie uzyc: wzorcow rzadzenia; logiki akceptacji; metody pomiaru. Liczba modelow to nie postep. Ponowne uzycie wzorca to postep.
-
-## Checklist bramek zanim poszerzysz zakres
-
-1. Metryki bazowe zebrane i zaakceptowane przez przywodztwo operacji
-2. Wlasciciele nazwani na pismie dla kategorii workflow
-3. Istnieje audyt dla akceptacji i zmian
-4. Udokumentowany tryb awarii (co gdy AI sie myli)
-5. Szkolenie dla rol hali, nie tylko dla IT
-
-## Dlaczego IRIS pasuje do tej sciezki budowy
-
-DBR77 IRIS to AI-native system operacyjny zakladu z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zadan.
-
-Krok 4 i krok 6 to dokladnie moment, w ktorym ujednolicona warstwa przestaje byc opcjonalna.
-
-## Podsumowanie
-
-Operacje wspierane przez AI skaluja sie, gdy zaklad skaluje dyscypline wykonania.
-
-Zbuduj jeden workflow czysto, mierz uczciwie, potem pozwol AI przyspieszyc to, co juz jest ustrukturyzowane.
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*
+*DBR77 IRIS jest zbudowany, by gościć przepływ pracy, operacje bazowe i wsparcie AI w jednej warstwie wykonania przez produkcję, magazyn, jakość, utrzymanie ruchu i tasking. [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*

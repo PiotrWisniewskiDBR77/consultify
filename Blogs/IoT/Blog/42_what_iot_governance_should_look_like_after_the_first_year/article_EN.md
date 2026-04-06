@@ -5,55 +5,59 @@ Funnel stage: Adoption
 Core problem: year one is excitement and pilots, year two is when informal rules crack under audits, turnover, and real integration pressure  
 Main promise: a year-two governance pack: cadence, ownership, standards map, evidence rules, and explicit scale criteria that survive normal plant chaos
 
-Year one proves curiosity. Year two proves discipline.
+Year one is momentum: demos, first lines, quick wins. Year two is gravity: audits, personnel moves, integrations that were “almost done,” and the discovery that informal rules do not survive normal manufacturing chaos.
 
-Governance is how IoT stops being a project and becomes infrastructure.
+If governance still lives in slide decks and private chats, the program will look successful in meetings and fragile everywhere else. IoT becomes infrastructure only when it inherits the same boring reliability as safety systems: named owners, calendars that run, and standards people can cite without calling a hero.
 
-After the first year, IoT governance should look like a **small set of non-negotiables** plus a **monthly operating rhythm** that reviews signal quality, overrides, incidents tied to data, and integration backlog honesty. If governance still lives in slides, year two will eat the program.
+Year two is when the plant discovers whether IoT is maintained like a utility or admired like a poster.
 
-## Framework: the governance stack
+## The governance stack in plain terms
 
-1. **Standards layer** Safety, quality, and regulatory minimums referenced explicitly in IoT rules
+Security, identity, access, and patching boundaries are non-negotiable. Signal dictionaries and threshold change control belong to named stewards—not to whoever is fastest with a laptop. Override and escalation reviews sit on the calendar beside other operational disciplines. Integration backlog is published as now, next, and never with reasons, not as vague optimism.
 
-2. **Ownership layer** Primary and backup owners for connectivity, data quality, floor training, and vendor management
+Evidence rules for leadership narrative should tie to observable behaviors: acknowledgement times, false escalation rates where measured, replication package health—not only to green tiles.
 
-3. **Evidence layer** What counts as proof in operations reviews and what is only illustrative
+## Monthly rhythm that actually runs
 
-4. **Change-control layer** How thresholds, alert routes, and integrations change without silent drift
+Review signal quality trends and alarm fatigue indicators. Audit overrides and threshold changes for patterns. Walk integration debt explicitly. Confirm training completion and operator trust behaviors supervisors can see. Assign owners to findings before the room clears.
 
-5. **Scale layer** Written criteria for adding lines, sites, or new signal classes
+Planned governance that never executes is worse than no plan—it signals that IoT is optional.
 
-## Comparison: year-one heroics versus year-two systems
+## Scale criteria that prevent political expansion
 
-| Year-one heroics | Year-two systems |
-|---|---|
-| fast fixes on chat | logged change control |
-| tribal thresholds | reviewed baselines |
-| vendor-led roadmap | plant-led backlog |
-| success stories only | honest incident learning |
+Define what “ready to add another line or site” means: signal trust, playbook maturity, rollback drills where automation exists, replication package version health. Without criteria, scale becomes a contest of who shouts loudest in the steering meeting.
 
-## Checklist: minimum viable year-two calendar
+**Year-two health signals:** reviews occur on schedule; dictionary ownership is real; integration backlog is visible; security patches have accountable owners; exceptions expire or become standards.
 
-- [ ] monthly signal quality sample review with operators
-- [ ] monthly override pattern review with operations and EHS
-- [ ] quarterly integration backlog review with IT-OT and engineering
-- [ ] semi-annual standards alignment check when regulations or customer rules shift
-- [ ] annual vendor and contract review tied to patching and uptime reality
+## Make governance boring on purpose
 
-## Planning and executive narrative
+Boring governance is a compliment. It means thresholds change through a known path, overrides expire, and integration status does not depend on who is in the room. Exciting governance is usually a sign of missing owners.
 
-Executives should receive **evidence categories**, not only KPI deltas.
+Pick one recurring failure mode from year one—missed reviews, silent threshold edits, or orphaned integrations—and design a single corrective habit with a calendar anchor. Momentum in year two comes from habits that run without heroics.
 
-Tie narrative to: confirmed downtime reduction on constraint assets where measured; reduction in false escalations or override repeat codes where tracked; integration progress stated as now, next, never with reasons.
+## DBR77 IoT as plant infrastructure
 
-Year-two cadence builds on ownership clarity in [who should own IIoT rollout inside the factory](../18_who_should_own_iiot_rollout_inside_the_factory/article_EN.md), early operating proof in [what the first 30 days of IIoT should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md), and the six-month evidence review in [what to review after the first 6 months of IoT rollout](../31_what_to_review_after_the_first_6_months_of_iot_rollout/article_EN.md).
+DBR77 IoT supports year-two maturity when deployments treat dictionaries, review cadence, and integration honesty as first-class deliverables—not afterthoughts to connectivity counts.
 
-## What this means for DBR77 IoT
+After year one, govern IoT like infrastructure: small non-negotiables, a monthly operating rhythm, owned standards, honest integration status, and explicit scale rules. Excitement opens the door; discipline keeps the plant inside.
 
-DBR77 IoT should support a mature stack: standards referenced in IoT rules, dual ownership for connectivity and data quality, change control on thresholds and alert routes, and written scale criteria so year two audits habits instead of restarting the story.
 
-Executives see evidence categories from running operations, not a fresh positioning deck each quarter.
 
-## Bottom line
 
-After year one, governance should be **boring on purpose**: cadence, owners, standards, evidence, and controlled change. That is how IoT stays alive when the novelty wears off.
+## Keep the article’s promise practical
+
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
+
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT supports year-two IoT governance with review-ready visibility, operator context, and integration-friendly expansion paths. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

@@ -5,49 +5,36 @@ Funnel stage: Decision
 Core problem: AI rollouts create friction when they change daily rhythms, split attention, or introduce parallel systems during peak production pressure  
 Main promise: a rollout pattern that runs alongside production: shadow mode, narrow workflow scope, shift-based training, fallback procedures, and explicit change windows
 
-Roll out AI-assisted operations without disrupting the plant by keeping production authority unchanged at first, running AI in shadow or advisory mode inside one workflow, training by shift with floor captains, and using published fallback rules when the system is uncertain or unavailable. Disruption is not "people resisting change." Disruption is often bad timing plus unclear authority.
+Disruption is often mislabeled as resistance. More often, it is bad timing plus unclear authority. Roll out AI-assisted operations by keeping human final authority during the early window, running assistance in shadow or advisory mode inside one workflow, training in small shift-based units with credible floor leaders, and publishing fallback rules when the system is uncertain or unavailable. The goal is progress without turning production into a rehearsal stage.
 
-## Principle 1: do not change who is in charge during the first window
+Do not change who is in charge during the first window. Humans keep final say; AI produces suggestions and structured drafts; exceptions default to the existing manual path. Break that principle and you fight production reality instead of improving it.
 
-During early rollout: humans keep final authority; AI produces suggestions and structured drafts; exceptions default to the existing manual path. If you break this principle, you will fight production reality.
+Choose a workflow with spare supervisory capacity—not launch week, not major audit week, not a brutal changeover series without coverage. Scheduling discipline is not cowardice. It is how plants protect throughput while learning.
 
-## Principle 2: choose a workflow with spare supervisory capacity
+A low-disruption sequence looks like this: map the workflow end-to-end on paper with named owners; mirror it in the execution system without AI; run parallel entry for a short period so the old path and new path coexist; enable AI only for triage and summaries before widening scope; expand only after closure metrics stabilize; document fallback—if assistance is down, which fields remain mandatory and who decides?
 
-Pick a lane where supervisors can absorb learning: not launch week; not major customer audit week; not a big changeover series without extra coverage. This is scheduling discipline, not cowardice.
+Shadow mode means AI ranks and suggests while operators can ignore outputs without penalty while you measure agreement. Live mode means suggestions become default routing with human confirmation at thresholds. Skipping shadow mode is a common way to collapse trust quickly.
 
-## Step sequence: a low-disruption rollout path
+Training should respect the floor: shift-based sessions led by respected captains, tied to a small number of concrete screens and actions, including practice on reject, override, and escalate. If training does not scale, workarounds will.
 
-Map the chosen workflow end-to-end on paper with owners; mirror the workflow in the execution system without AI; run one to two weeks of parallel entry: old path plus new path; enable AI assistance only for triage and summaries, not autonomous actions; widen AI scope only after stable closure metrics; document fallback: if AI down, which fields are still mandatory?.
+Communicate what changes, what does not, who to call at night, and when assistance is intentionally off. Silence creates rumor; rumor creates disruption.
 
-## Shadow mode versus live mode
+Measure disruption directly: near-miss deviations, spikes in verbal overrides, overtime in supervision, quality holds linked to communication errors. If those drift, pause expansion—not to punish the program, but to protect the plant.
 
-**Shadow mode** AI ranks and suggests, operators ignore without penalty while you measure agreement.
+IRIS supports low-disruption rollout when parallel entry, visible ownership, and fallback paths live in one governed execution layer—instead of bolting another assistant onto fragmented daily work.
 
-**Live mode** AI suggestions become default routing, still with human confirm at thresholds. Plants skip shadow mode and then wonder why trust collapses.
+For sequencing logic, see [From Humans to AI-Assisted Operations: What Changes First](../23_from_humans_to_ai_assisted_operations_what_changes_first/article_EN.md). For the build pattern before rollout, see [How to Build AI-Assisted Factory Operations Step by Step](../25_how_to_build_ai_assisted_factory_operations_step_by_step/article_EN.md).
 
-## Training that respects the floor
+A calm rollout preserves authority, uses shadow modes, trains in small units, and measures disruption signals. Speed without discipline is how plants learn to hate AI—before it ever gets a fair chance to help.
 
-Effective training is: shift-based, not one giant auditorium session; led by a respected floor captain, not only IT; tied to three concrete screens and three concrete actions; includes practice on reject, override, and escalate.
+## The operational bottom line
 
-## Change windows and communication
+The promise of this article—a rollout pattern that runs alongside production: shadow mode, narrow workflow scope, shift-based training, fallback procedures, and explicit change windows—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “How to Roll Out AI-Assisted Operations Without Disrupting the Plant,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-Publish: what is changing; what is not changing; who to call at night; when AI assistance is off. Silence creates rumor. Rumor creates disruption.
+That standard is not about software perfection; it is about operational honesty: fewer mystery handoffs, fewer truths reconciled only in meetings, and more days where the system record matches what the floor would say if you stopped them mid-task.
 
-## Measure disruption directly
-
-Track operational disruption indicators: near-miss process deviations reported; increase in verbal overrides versus baseline; overtime spikes in supervision; quality holds attributed to communication errors. If these drift, pause expansion.
-
-## Why IRIS supports low-disruption rollout
-
-DBR77 IRIS matters here because low-disruption rollout depends on parallel entry, visible ownership, and a fallback path that people can actually follow under shift pressure.
-
-One governed execution layer makes that easier than bolting another assistant onto fragmented daily work.
-
-If you need the earlier sequencing logic, see [From Humans to AI-Assisted Operations: What Changes First](../23_from_humans_to_ai_assisted_operations_what_changes_first/article_EN.md); if you need the build pattern before rollout, see [How to Build AI-Assisted Factory Operations Step by Step](../25_how_to_build_ai_assisted_factory_operations_step_by_step/article_EN.md).
-
-## Final takeaway
-
-A calm rollout preserves authority, uses shadow modes, trains in small units, and measures disruption signals. Speed without discipline is how plants learn to hate AI.
+Hold teams to a simple rule: if an improvement cannot be shown in exports from the execution record, it is not yet an operating improvement—only a narrative improvement. That rule keeps programs honest when demos look good but handovers still feel fragile.
+If the record is thin, fix the record before you expand the ambition.
 
 ---
 

@@ -1,0 +1,1 @@
+/**/ typeof jsonpCallback_748739880 === 'function' && jsonpCallback_748739880({"integration":{"id":"56b4c46e4ce233d10a7de955","type":"eloqua","retention":"1 month","optionalFields":["tags"],"trackUnknowns":true,"eloqua":{"endpoint":"https://secure.p01.eloqua.com","site":2826},"rateLimit":false},"endpoints":{"lead":"/lead/map"},"bcGuid":"c8618176-09a5-4649-b6ba-eb072a6799de"});

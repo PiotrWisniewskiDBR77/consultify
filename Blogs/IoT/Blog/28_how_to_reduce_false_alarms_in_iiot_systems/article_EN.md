@@ -5,56 +5,53 @@ Funnel stage: Adoption
 Core problem: alarm counts look like "activity" while the floor learns to mute channels and real faults hide in the noise  
 Main promise: a disciplined false-alarm reduction loop: corroboration, hysteresis, duty cycles, and accountable tuning
 
-False alarms are not a cosmetic annoyance. They are a reliability defect. Every ignored alarm trains the organization that signals are optional.
+A false alarm is not a cosmetic annoyance. It is a reliability defect.
 
-## Start with a definition everyone accepts
+Every ignored notification trains the organization that signals are optional. When real faults arrive, they land in a inbox people no longer believe. Alarm discipline is how IIoT stays operational instead of becoming another channel the floor routes around.
 
-Write a one-paragraph plant standard: what counts as a false alarm versus a valid early warning that felt inconvenient; what counts as a missed detection. Without shared definitions, tuning debates become politics.
+The floor’s coping strategies are predictable: mute channels, delay acknowledgement, treat red as “probably nothing.” Once those habits set, tuning becomes politically hard because nobody wants to admit how much ignoring already happens. Start the reduction loop early and keep it visible so improvement feels like engineering, not blame.
 
-## The reduction loop (seven steps)
+## Agree on definitions before you debate thresholds
 
-Run this loop monthly until alarm fatigue metrics stabilize:
+Write a short plant standard for what counts as a false alarm versus a valid early warning that felt inconvenient, and what counts as a missed detection. Without shared language, tuning becomes politics dressed as engineering.
 
-1. **Inventory** List top 20 alarms by count and by operator ignore rate.
+## Run a monthly reduction loop until fatigue stabilizes
 
-2. **Classify root cause** Tag each: threshold, sensor noise, missing context, human habit, comms glitch.
+Inventory the top alarms by count and by operator ignore rate. Classify root causes: threshold issues, sensor noise, missing context, human habit, communications glitches. Add corroboration where feasible before promoting high urgency. Use dwell and hysteresis so brief spikes do not become incidents. Attach context—product, shift, recent change, last maintenance window—so events arrive as stories, not pings. Co-sign threshold changes with maintenance and operations. Track false alarm rate, acknowledgement time on true events, and repeat incidents so improvement is measurable, not felt.
 
-3. **Corroborate** Require two independent hints for promotion to high-urgency, where feasible.
+Edge filtering and buffering can remove chatter if rules stay transparent and logged. Edge should clarify why something fired, not obscure it.
 
-4. **Add hysteresis and dwell** Require sustained breach or N-of-M samples before escalation.
+What earns interruption belongs upstream in [what machine data should trigger action and what should not](../23_what_machine_data_should_trigger_action_and_what_should_not/article_EN.md). Moving past visibility belongs in [when to expand from visibility to closed-loop response](../29_when_to_expand_from_visibility_to_closed_loop_response/article_EN.md).
 
-5. **Attach context** Product, shift, recent change, and last maintenance window travel with the event.
+**Before you change a threshold:** physical verification or a second signal supports the change; an owner and review date exist; operators were notified in shift language; work-order linkage still makes sense; rollback is documented.
 
-6. **Tune with owners** Maintenance and operations co-sign threshold changes.
+## DBR77 IoT as alarm engineering
 
-7. **Measure** Track false alarm rate, time to acknowledge true events, and repeat incidents.
+DBR77 IoT aligns when alarm programs are treated as engineering: inventory, classification, corroboration, dwell, context, co-signed tuning, and shared metrics. Retrofit connectivity should prioritize the noisiest actors first; local gating earns its place when transparency remains. Volume is the wrong success metric.
 
-## Checklist before changing a threshold
+False alarms yield to discipline: measure, classify, corroborate, dwell, contextualize, co-sign, and review monthly until attention budgets recover. That is how alarms regain seriousness.
 
-- [ ] physical verification or second signal supports the change
-- [ ] change has an owner and a review date
-- [ ] operators were notified in shift language, not email jargon
-- [ ] CMMS or work-order linkage still makes sense after the change
-- [ ] rollback path is documented
+## Celebrate closures, not volume
 
-## Comparison: naive versus mature alarm policy
+When a monthly loop removes a chronic nuisance alarm, tell the floor what changed and why. People support tuning they can see. Silent changes feel arbitrary.
 
-| Naive | Mature |
-|---|---|
-| one spike equals alarm | dwell plus corroboration |
-| vendor defaults | plant baselines by product and shift |
-| alert volume as KPI | useful detection with sustainable attention |
 
-## Edge-first note
 
-Local filtering and short-term buffering can remove chatter without hiding real excursions if rules are transparent and logged. Edge should make explanations easier, not obscure why an alarm fired.
 
-What earns interruption in the first place sits upstream in [what machine data should trigger action and what should not](../23_what_machine_data_should_trigger_action_and_what_should_not/article_EN.md); moving past visibility belongs in [when to expand from visibility to closed-loop response](../29_when_to_expand_from_visibility_to_closed_loop_response/article_EN.md).
+## Keep the article’s promise practical
 
-## What this means for DBR77 IoT
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
 
-DBR77 IoT aligns with alarm programs built as engineering: inventory, classification, corroboration, dwell, context, co-signed tuning, and metrics maintenance and operations share. Retrofit connectivity should prioritize the noisiest actors first; local gating earns its place when rules stay transparent and logged. Volume is the wrong success metric here.
+## A leadership checkpoint for the next ops review
 
-## Bottom line
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
 
-Reduce false alarms with a monthly loop: inventory, classify, corroborate, dwell, context, co-signed tuning, and measurement. Alarm discipline is how IIoT stays operational on the shop floor.
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT supports disciplined alarm design with transparent rules, operator context, and tuning ownership so signals stay credible on the shop floor. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

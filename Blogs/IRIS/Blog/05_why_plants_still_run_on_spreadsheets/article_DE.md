@@ -1,84 +1,32 @@
-# Warum Werke immer noch mit Spreadsheets laufen
+# Warum Werke weiter mit Tabellen laufen
 
 Zielpersona: Plant Manager / COO  
 Funnel-Stufe: Consideration  
-Kernproblem: viele Fabriken haben mehrere Systeme und verlassen sich trotzdem weiter auf Spreadsheets, weil formale Tools funktionsübergreifende Koordination, gemeinsame Definitionen und täglichen Entscheidungsfluss nicht gut genug abdecken  
-Hauptversprechen: Werke hören dann auf, sich auf Spreadsheets zu stützen, wenn eine operative Schicht einfacher und nützlicher wird als manuelle Workarounds
+Kernproblem: Viele Fabriken haben mehrere Systeme, hängen aber weiter an Tabellenkalkulationen, weil formale Tools funktionsübergreifende Koordination, gemeinsame Definitionen und den täglichen Entscheidungsfluss nicht gut genug abdecken  
+Hauptversprechen: Werke geben Tabellen auf, wenn eine Betriebsschicht einfacher und nützlicher wird als manuelle Workarounds
 
-Fabriken behalten Spreadsheets nicht, weil sie Spreadsheets lieben.
+Kein Werk behält Tabellen, weil die Führung Raster-Software liebt. Werke behalten Tabellen, weil sie Probleme lösen, die der offizielle Stack nicht sauber löst: partielle Wahrheiten zusammenführen, Maßnahmen über Grenzen hinweg verfolgen, Prozesslücken im Tempo eines Dienstagnachmittags flicken und Teams einen neutralen Treffpunkt geben, wenn jedes System einen anderen Dialekt spricht. Die Tabelle ist oft die inoffizielle Betriebsschicht—der Ort, an dem das Werk die echte Arbeit leistet, den Tag kohärent zu machen.
 
-Sie behalten sie, weil Spreadsheets noch immer reale operative Lücken lösen. Das ist die unbequeme Wahrheit.
+Das sollte beunruhigen, nicht weil Excel böse ist, sondern weil Workarounds dauerhaft werden können. Die Datei wird geteilt. Der Tracker wird aktualisiert. Das Meeting beginnt weiter pünktlich. Aus der Distanz kann der Workaround kontrolliert wirken. Aus der Nähe verbirgt er oft Versionschaos, verzögerte Updates, unklares Ownership und fragile Entscheidungslogik. Die Kosten sind nicht nur doppelter Aufwand. Es ist verringertes Vertrauen in eine einzige operative Wahrheit—die Währung, die jedes Werk ausgibt, wenn es schnell vorankommen will, ohne sich zu verheddern.
 
-Viele Werke haben bereits Software für Produktion, Maintenance, Lager oder Reporting. Und trotzdem findet die eigentliche tägliche Koordination oft in Excel, Shared Sheets, exportierten Dateien und manuell gepflegten Trackern statt. Das ist nicht nur ein Technologieproblem. Es ist ein Workflow-Problem.
+Tabellen überleben dort, wo formale Systeme zu früh enden. Teams greifen zu ihnen, wenn Daten aus verschiedenen Quellen kombiniert, Maßnahmen über Funktionen hinweg verfolgt, temporäre Definitionen gebaut werden müssen, die der Enterprise-Stack nicht schnell ausdrücken kann, oder Silos ohne Projekt überbrückt werden sollen. Flexibilität ist Teil der Geschichte, aber der tiefere Grund ist Geschwindigkeit und soziale Akzeptanz: Wenn der offizielle Weg langsamer ist als der Workaround, gewinnt der Workaround. Das Werk ist nicht faul. Es ist unter Druck rational.
 
-## Reality check: Spreadsheet-Abhaengigkeit wirkt oft harmlos, weil Teams sich an den Workaround gewoehnen, bevor sie seine operativen Kosten messen
+Funktionsübergreifende Arbeit erzeugt den stärksten Tabellendruck. Produktion braucht eine Sicht. Instandhaltung eine andere. Qualität fügt Grenzen hinzu. Lager ändert, was auf der Linie möglich ist. Die Führung will eine Zusammenfassung, die kein natives Tool ohne Export-Akrobatik liefert. Wenn keine gemeinsame Betriebsschicht existiert, wird die Tabelle der gemeinsame Boden mit geringster Reibung—selbst wenn alle wissen, dass sie brüchig ist.
 
-Die Datei ist geteilt. Der Tracker wird aktualisiert. Das Meeting findet weiter puenktlich statt.
+Tabellenlastige Operations wirken oft beherrschbar, bis man einen echten Vorfall nachverfolgt. Dann sieht man Doppelpflege, widersprüchliche Versionen und die stille Annahme, jemand Senior werde die Wahrheit abgleichen, bevor etwas Teures passiert. Das ist nicht nur Ineffizienz. Es ist operatives Risiko: Die wichtigste Koordination des Werks liegt manchmal in einer Datei, die driftieren, ohne Historie bearbeitet werden kann oder von einer Personengewohnheit abhängt.
 
-Das kann den Workaround kontrolliert wirken lassen, obwohl das Werk taeglich fuer Verzoegerung, Versionsverwirrung und schwache Ownership bezahlt.
+Werke wählen Tabellen selten strategisch statt Software. Öfter erscheinen Tabellen zwischen Systemen: Exporte von hier, Zusammenführungen dort, Instandhaltungsnotizen in einem separaten Tracker, Vorbereitungshetze vor dem Meeting, um Zahlen auszurichten. Tabellenabhängigkeit ist meist ein Symptom von Fragmentierung, nicht von schlechter Absicht. Menschen lösen so, wie sie müssen.
 
-## Spreadsheets überleben dort, wo Systeme zu kurz greifen
+Führungskräfte kennen das Risiko oft—und behalten die Tabelle, weil die Alternative schwerer wirkt: zu groß, zu starr, zu teuer, zu störend. Der Workaround bleibt, nicht weil er gut ist, sondern weil er sofort da ist. Der Ausweg ist nicht, die Tabelle zu beschämen. Der Ausweg ist, die legitime Arbeit, die sie leistet—gemeinsame Wahrheit, funktionsübergreifende Koordination, besessenes Follow-up—in einer echten Betriebsschicht einfacher zu machen als in einer Datei.
 
-Spreadsheet-Nutzung sagt meist etwas Wichtiges:
+IRIS ist relevant, weil es diese gemeinsame Schicht über Produktion, Lager, Qualität, Instandhaltung und Tasking werden soll. Der Wert ist nicht nur Digitalisierung. Es ist die Reduktion von Schattenkoordination durch eine Datenlage, eine Ausführungsumgebung, einen Ort für Tasking und Follow-up und eine gemeinsame operative Wahrheit, die vor jeder Entscheidung nicht neu zusammengebaut werden muss.
 
-Das formale System deckt den realen operativen Bedarf nicht gut genug ab.
+Werke laufen weiter mit Tabellen, weil viele Systeme weiter vor echter operativer Koordination Halt machen. Die Antwort ist, die Lücke zu ersetzen, die die Tabelle abdeckt—nicht die Tabelle als moralisches Versagen—durch eine bessere Betriebsschicht. Dann beginnen manuelle Workarounds endlich zu verschwinden, weil das Werk nicht mehr zwischen Geschwindigkeit und Struktur wählen muss.
 
-Teams greifen zu Spreadsheets, wenn sie: Daten aus verschiedenen Quellen zusammenführen müssen; Aktionen über Funktionen hinweg verfolgen müssen; temporäre Definitionen schaffen müssen; Prozesslücken schnell füllen müssen.
+## Operatives Fazit
 
-Mit anderen Worten: Das Spreadsheet wird zur inoffiziellen Betriebsschicht.
-
-## Das Problem ist nicht nur Flexibilität
-
-Oft heißt es, Spreadsheets überleben, weil sie flexibel sind. Das stimmt, ist aber unvollständig.
-
-Spreadsheets überleben, weil sie: schnell startklar sind; leicht zu bearbeiten sind; sozial akzeptiert sind; beim Überbrücken von Silos helfen.
-
-Wenn das offizielle System langsamer ist als der Workaround, gewinnt der Workaround.
-
-## Funktionsübergreifende Arbeit erzeugt den größten Spreadsheet-Druck
-
-Die meisten Spreadsheets existieren nicht, weil einer Funktion Daten fehlen. Sie existieren, weil das Werk über Grenzen hinweg koordinieren muss. Produktion braucht eine Sicht. Maintenance eine andere. Quality fügt Kontext hinzu. Warehouse verändert die Constraints. Leadership will eine Zusammenfassung.
-
-Wenn keine gemeinsame operative Schicht existiert, werden Spreadsheets zum Treffpunkt.
-
-## Manuelle Tracker erzeugen versteckte Kosten
-
-Spreadsheet-lastige Operationen wirken von außen oft beherrschbar.
-
-Im Werk erzeugen sie versteckte Kosten durch: doppelte Arbeit; Versionsverwirrung; verzögerte Updates; schwache Ownership; fragile Entscheidungslogik. Die Kosten sind nicht nur Ineffizienz. Es ist auch sinkendes Vertrauen in die operative Wahrheit.
-
-## Spreadsheets sind oft ein Symptom fragmentierter Systeme
-
-Werke wählen Spreadsheets selten auf saubere strategische Weise statt Software. Häufiger entstehen Spreadsheets zwischen Systemen. Das MES exportiert hierhin. Die Warehouse-Datei landet woanders. Maintenance-Notizen leben in einem separaten Tracker. Jemand führt alles vor dem Meeting zusammen.
-
-Darum ist Spreadsheet-Abhängigkeit meist ein Zeichen von Fragmentierung, nicht von Faulheit.
-
-## Warum Werke sie behalten, obwohl sie das Risiko kennen
-
-Die meisten Leaders wissen bereits, dass spreadsheet-lastige Operationen fragil sind. Sie behalten sie trotzdem, weil die Alternative oft schwerer wirkt.
-
-Ein neues System kann klingen wie: zu groß; zu starr; zu teuer; zu störend. Also bleibt das Spreadsheet. Nicht weil es gut ist. Sondern weil es sofort verfügbar ist.
-
-## Was Spreadsheets in der Praxis ersetzt
-
-Werke geben Spreadsheets nicht auf, weil es ihnen jemand sagt. Sie geben sie auf, wenn eine bessere operative Option erscheint.
-
-Diese Option muss sein: leichter zu vertrauen; leichter zu aktualisieren; leichter teamübergreifend zu teilen; näher an der realen täglichen Arbeit. Darum ist ein Plant Operating System wichtig.
-
-Es ersetzt manuelle Koordination nicht durch Zwang, sondern indem es nützlicher wird als der Workaround.
-
-## Was IRIS verändert
-
-IRIS ist hier relevant, weil es als gemeinsame Schicht über Produktion, Lager, Qualität, Maintenance und Tasking hinweg aufgebaut ist. Sein Wert ist nicht nur Digitalisierung.
-
-Sein Wert ist die Reduktion von Shadow Coordination durch: eine Datenebene; eine Execution-Umgebung; einen Ort für Tasking und Follow-up; eine gemeinsame operative Wahrheit. Genau das versuchen Spreadsheets seit Jahren manuell zu simulieren.
-
-## Bottom line
-
-Werke laufen immer noch auf Spreadsheets, weil viele Systeme vor echter operativer Koordination stoppen. Die Antwort ist nicht, das Spreadsheet zu beschämen.
-
-Die Antwort ist, die Lücke, die es abdeckt, durch eine bessere operative Schicht zu ersetzen. Dann verschwinden manuelle Workarounds endlich.
+Das Versprechen dieses Artikels—Werke geben Tabellen auf, wenn eine Betriebsschicht einfacher und nützlicher wird als manuelle Workarounds—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Warum Werke weiter mit Tabellen laufen“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [Walkthrough ansehen](https://dbr77.com/demo).*
+*IRIS ersetzt tabellenlastige Schattenkoordination durch eine gemeinsame Betriebsschicht für Daten, Tasking, Follow-up und Ausführung. [Interaktive Demo starten](https://dbr77.com/iris) oder [Walkthrough ansehen](https://dbr77.com/demo).*

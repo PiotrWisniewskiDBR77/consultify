@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Healthcare and life sciences &#8211; HxGN Spotlight</title>
+	<atom:link href="https://blog.hexagon.com/industry/healthcare-and-life-sciences/feed/" rel="self" type="application/rss+xml" />
+	<link>https://blog.hexagon.com</link>
+	<description>Hexagon’s platform for original stories from opinion leaders and customers</description>
+	<lastBuildDate>Fri, 28 Jun 2019 18:57:24 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.1</generator>
+	<item>
+		<title>Enhancing Smart Factories with Asset Management</title>
+		<link>https://blog.hexagon.com/enhancing-smart-factories-with-asset-management/</link>
+		
+		<dc:creator><![CDATA[Brian Tidwell]]></dc:creator>
+		<pubDate>Thu, 13 Jun 2019 13:00:00 +0000</pubDate>
+				<category><![CDATA[HxGN TV]]></category>
+		<category><![CDATA[Video]]></category>
+		<category><![CDATA[HxGN LIVE 2019]]></category>
+		<category><![CDATA[Jeff Livingston]]></category>
+		<category><![CDATA[Manufacturing Intelligence]]></category>
+		<category><![CDATA[Paragon Medical]]></category>
+		<category><![CDATA[Scott Mahrle]]></category>
+		<category><![CDATA[Smart Factories]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=11567</guid>
+
+					<description><![CDATA[The need for asset management has become increasingly more apparent in the manufacturing industry. In this episode, Jeff Livingston from Paragon Medical will talk about asset management and its importance to their production process.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>How to Detect Environmental Disturbances during Inspection (TV512)</title>
+		<link>https://blog.hexagon.com/detect-environmental-disturbances-inspection-tv512/</link>
+		
+		<dc:creator><![CDATA[Brian Tidwell]]></dc:creator>
+		<pubDate>Wed, 14 Jun 2017 21:30:03 +0000</pubDate>
+				<category><![CDATA[HxGN TV]]></category>
+		<category><![CDATA[Video]]></category>
+		<category><![CDATA[China]]></category>
+		<category><![CDATA[Crash Detection]]></category>
+		<category><![CDATA[Environmental Disturbances]]></category>
+		<category><![CDATA[Ireland]]></category>
+		<category><![CDATA[Kyle Pheland]]></category>
+		<category><![CDATA[Manufacturing Intelligence]]></category>
+		<category><![CDATA[Medical Reconstructive Devices]]></category>
+		<category><![CDATA[Optimisation]]></category>
+		<category><![CDATA[Poland]]></category>
+		<category><![CDATA[Puerto Rico]]></category>
+		<category><![CDATA[Sensors]]></category>
+		<category><![CDATA[Temperature Monitoring]]></category>
+		<category><![CDATA[Zimmer Biomet]]></category>
+		<guid isPermaLink="false">http://hxgntv.staging.wpengine.com/?p=1840</guid>
+
+					<description><![CDATA[Manufacturers are challenged to make the correct product every time, on time. Factors such [...]]]></description>
+		
+		
+		
+			</item>
+	</channel>
+</rss>

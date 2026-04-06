@@ -1,66 +1,36 @@
-# Kiedy wiedza fabryki nie powinna trafiac do generycznych narzedzi AI
+# Kiedy wiedza zakładu nie powinna trafiać do ogólnych narzędzi AI
 
-Target persona: CTO / lider inzynierii zakladu  
-Funnel stage: Awareness  
-Core problem: workflow wygody ucza zespoly wklejania layoutow, wydajnosci, problemow z dostawcami i niewydanych zmian do narzedzi zbudowanych na modelu zaufania konsumenckiego  
-Main promise: jasna mapa polityki oddziela, co mozna streszczac w zatwierdzonych kanalach, od tego, co musi zostac w kontrolowanych granicach AI przemyslowego
+Docelowa persona: CTO / lider inżynierii zakładu  
+Etap lejka: Świadomość  
+Główny problem: wygodne przepływy uczą zespoły wklejać layouty, wydajności, problemy z dostawcami i niewydane zmiany do narzędzi zbudowanych pod modele zaufania konsumenckiego  
+Główna obietnica: jasna mapa polityki rozdziela, co można streszczać w zatwierdzonych kanałach, od tego, co musi zostać w kontrolowanych granicach AI przemysłowego
 
-Generyczne narzedzia AI sa optymalizowane pod szeroka uzytecznosc. Wiedza fabryki jest optymalizowana pod przetrwanie konkurencyjne.
+Ogólne narzędzia AI są optymalizowane pod szeroką użyteczność. Wiedza fabryczna jest optymalizowana pod przetrwanie konkurencyjne — powolne gromadzenie tego, co działa na waszych liniach, u waszych dostawców, pod waszymi ograniczeniami. Gdy te światy spotykają się przez pole wklejania, ryzyko nie zawsze jest oczywiste, bo interfejs wydaje się zwyczajny. Granica i tak się przesunęła.
 
-## Bezposrednia odpowiedz
+Wiedza zakładu nie powinna trafiać do ogólnych narzędzi AI, gdy obejmuje niewydane projekty, ceny specyficzne dla klienta, dane osobowe lub wrażliwe HR, proprietarne parametry procesu, eskalacje jakości dostawców spięte z umowami albo cokolwiek, co zmieniłoby wydaną specyfikację bez śladu. Nawet „zanonimizowane” fragmenty często da się zreidentyfikować w kontekście wiedzy zespołu. Domyślna postawa: kierujcie wysokosygnałową wiedzę operacyjną do zatwierdzonego prywatnego lub on-prem AI przemysłowego z jasną polityką treningu i logowaniem.
 
-Wiedza fabryki nie powinna trafiac do generycznych narzedzi AI, gdy zawiera niewydane projekty, ceny specyficzne dla klienta, dane zdrowotne lub HR identyfikowalne, proprietary parametry procesu, eskalacje jakosci dostawcow powiazane z umowami lub cokolwiek, co zmieniloby wydana specyfikacje bez sladu. Nawet fragmenty anonimizowane czesto daja sie ponownie zidentyfikowac w kontekscie ekspertow z zakladu.
+## Cztery klasy wiedzy, które zmieniają regułę
 
-Domyslna postawa: kieruj wysokosygnalowa wiedze operacyjna do zatwierdzonego prywatnego lub on-prem AI przemyslowego z jasna polityka treningu i logowaniem.
+Materiał publiczny lub ogólnobranżowy nadal zasługuje na narzędzia zatwierdzone przez firmę, by uniknąć przypadkowego przecieku kontekstu w kolejnych promptach. Materiał wewnętrzny, ale mało wrażliwy, może pasować do korporacyjnego SaaS z regułami DLP, jeśli polityka na to pozwala. Prawda operacyjna — identyfikatory partii, kody przestojów, rzeczywiste cykle, przyczyny złomu spięte z liniami — należy za prywatną granicę AI z umowami integracyjnymi, a nie do czatu przez wklejanie. Materiał strategiczny i niewydany — przyszłe szkice layoutów, scenariusze capex, negocjacje z dostawcami, funkcje z roadmapy — zwykle wymaga izolowanego wdrożenia, nazwanego dostępu i braku wtórnego użycia do treningu.
 
-## Framework: cztery klasy wiedzy
+## Czerwone flagi w polu promptu
 
-### Klasa 1: publiczna lub ogolnoprzemyslowa
+Zatrzymajcie się, jeśli wklejanka zawiera nazwy plików z kodami projektu lub klienta, zrzuty MES lub QMS ze znacznikami czasu i nazwami linii, zdjęcia tablic z przeglądów kierownictwa albo cokolwiek, czego nie wysłalibyście do konkurenta bez redakcji. To nie testy paranoidalne. To szybkie testy operacyjne, które zapobiegają powolnemu żalowi.
 
-Przyklady: streszczenia opublikowanych norm, ogolne koncepcje utrzymania bez identyfikatorow zakladu.
+Wygoda ogólnego czatu optymalizuje szerokość; odpowiedzialność przemysłowa optymalizuje jasność granicy, umowne wyłączenie treningu dla payloadów klienta, logowanie dopasowane do śledztw, opcje wdrożenia zgodne z segmentacją zakładu oraz rozumowanie nastawione na decyzje produkcyjne zamiast otwartego czatu.
 
-Postawa: nadal preferuj narzedzia zatwierdzone korporacyjnie, by uniknac posredniego wycieku kontekstu w kolejnych promptach.
+Routing klas wiedzy zawodzi, gdy zatwierdzona ścieżka narzędzia nie utrzyma tej samej wrażliwości co zdefiniowane klasy. Vector jest dla payloadów, które nigdy nie powinny jechać trasami w stylu konsumenckim: autorskie AI przemysłowe trenowane na wiedzy o transformacji fabryk, opcje wdrożenia utrzymujące kontekst operacyjny w kontrolowanych granicach, wyłączenie danych klienta z treningu modelu oraz rozumowanie nastawione na pracę przemysłową zamiast otwartego czatu.
 
-### Klasa 2: wewnetrzna ale niskiej wrazliwosci
+Polityka nie polega na braku zaufania do pracowników. Chodzi o dopasowanie klasy narzędzia do klasy wiedzy. W razie wątpliwości wybierzcie wyższą granicę — bo koszt zbyt swobodnego podejścia jest asymetryczny.
 
-Przyklady: ogolne szkice szkolen, notatki produktywnosci bez tajemnic. Postawa: corporate SaaS z regulami DLP jesli polityka pozwala.
+Praktyczny test brzmi: czy przełożeni potrafią wyjaśnić regułę w minutę na toolbox talk — a nie czy PDF jest długi. Jeśli reguła nie jest zapamiętywalna, nie przetrwa zajętego piątku.
 
-### Klasa 3: prawda operacyjna
+## Punkt kontrolny zakładu
 
-Przyklady: ID partii, kody przestojow, rzeczywiste cykle, przyczyny scrapu powiazane z liniami.
+Traktujcie „Kiedy wiedza zakładu nie powinna trafiać do ogólnych narzędzi AI” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną. Wreszcie traktujcie niejasność jak dług: każde nieodpowiedziane pytanie o ścieżki danych, domyślne treningi to coś, za co zapłacicie pod presją czasu — zwykle podczas audytu, incydentu lub pędzonego wdrożenia.
 
-Postawa: granica prywatnego AI z kontraktami integracji, nie wklejanie do czatu.
-
-### Klasa 4: strategiczna i niewydana
-
-Przyklady: przyszle szkice layoutu, scenariusze CAPEX, negocjacje z dostawcami, funkcje roadmapy. Postawa: izolowane wdrozenie, nazwany dostep, brak drugorzednego treningu.
-
-## Checklist: czerwone flagi w polu promptu
-
-Stop, jesli wklejka zawiera:
-
-- nazwy plikow z kodami projektu lub klienta
-- zrzuty MES lub QMS z timestampami i nazwami linii
-- zdjecia tablic z przegladow przywodztwa
-- cokolwiek, czego nie wyslalbys konkurentowi bez redakcji
-
-## Porownanie: wygoda generycznego czatu versus odpowiedzialnosc przemyslowa
-
-| Wymiar | Generyczne narzedzie AI | Granica AI przemyslowego |
-| --- | --- | --- |
-| Domyslne treningi | czesto niejasne dla uzytkownikow | wykluczenia payloadu klienta umownie |
-| Logowanie | moze nie spelniac audytu zakladu | dopasowane do dochodzen jakosciowych i security |
-| Styl rozumowania | ogolnego przeznaczenia | transformacja domenowa |
-| Wdrozenie | normy multi-tenant | on-prem / private API / izolacja |
-
-## Product bridge
-
-DBR77 Vector to bezpieczna warstwa inteligencji za ekosystemem DBR77: proprietary industrial AI trenowane na rzeczywistej wiedzy transformacji fabryk, opcje wdrozen utrzymujace payloady operacyjne w kontrolowanych granicach, dane klienta nigdy nie trenuja modelu oraz rozumowanie pod decyzje przemyslowe zamiast generycznego czatu. Istnieje dla klas wiedzy, ktore nie powinny isc sciezkami w stylu konsumenckim.
-
-## Final takeaway
-
-Polityka to nie brak zaufania do pracownikow. To dopasowanie klasy narzedzia do klasy wiedzy. Przy watpliwosci wybierz wyzsza granice.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector daje zespołom zatwierdzoną ścieżkę rozumowania przemysłowego bez prowadzenia operacyjnej prawdy przez ogólne narzędzia wielodostępne. [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

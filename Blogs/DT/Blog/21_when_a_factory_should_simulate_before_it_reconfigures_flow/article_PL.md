@@ -1,78 +1,45 @@
-# Kiedy fabryka powinna symulowac przed przebudowa przeplywu
+# Kiedy fabryka powinna symulować, zanim przeprojektuje przepływ
 
-Target persona: COO / dyrektor zakladu / lider inzynierii przemyslowej  
-Funnel stage: Consideration  
-Core problem: przebudowe przeplywu czesto zatwierdza sie na rysunkach i spotkaniach, a potem drogo poprawia na hali, bo oddzialywania i zmiennosc nigdy nie byly sprawdzone  
-Main promise: symulacja jest przed zmiana przeplywu wtedy, gdy ruch przekracza waskie gardla, wspoldzielone zasoby lub zmiennosc popytu, ktorej statyczny plan nie oddaje
+Docelowa persona: COO / menedżer zakładu / lider inżynierii przemysłowej  
+Etap lejka: Consideration
+Główny problem: przeprojektowanie przepływu często zatwierdza się na rysunkach i spotkaniach, a drogo koryguje na hali, bo interakcje i zmienność nigdy nie przeszły stress testu  
+Główna obietnica: symulacja ma być przed zmianą przepływu, gdy ruch przecina wąskie gardła, współdzielone zasoby lub zmienność popytu, której statyczne plany nie oddadzą
 
-Powinienes symulowac przed przebudowa przeplywu, gdy zmiana moze przesunac ograniczenia, zmienic przekazania albo sposob gromadzenia pracy miedzy stanowiskami.
+Symuluj przed przeprojektowaniem przepływu, gdy zmiana może przesunąć ograniczenia, zmienić przekazania albo sposób, w jaki praca gromadzi się między stanowiskami. Jeśli zmiana jest kosmetyczna lub odizolowana, lżejszy przegląd może wystarczyć. Jeśli zmienia zachowanie systemu pod obciążeniem, symulacja to najtańsze miejsce na błędy — zanim beton i praca się zobowiążą.
 
-Jesli zmiana jest kosmetyczna lub izolowana, lzejszy przeglad moze wystarczyc.
+Zaczynaj od symulacji, gdy nowy przepływ dzieli wąskie gardło lub bufor z innymi liniami, gdy zmieniają się staffing, wzorce zmian lub logika wsadów, gdy przebalansowujesz pracę pod nowy takt lub mix, gdy zmieniają się ścieżki intralogistyki lub rozmiar supermarketu, albo gdy case zakłada konkretny throughput lub lead time. Jeśli nic z tego się nie rusza, lekki sanity check może wystarczyć. Powtarzalny błąd to stosowanie wyjątku „mała zmiana” do ruchów, które realnie rozdzielają czas oczekiwania.
 
-Jesli zmienia zachowanie systemu pod obciazeniem, symulacja to najtansze miejsce na wykrycie bledow.
+## Rysunki to nie zachowanie
 
-## Odpowiedz wprost
+CAD i wydruki layoutu odpowiadają na geometrię. Nie odpowiadają wiarygodnie na to, gdzie formują się kolejki, gdy wraca zmienność, jak mały ruch przesuwa ograniczenie systemu, czy szybszy lokalny krok nie głodzi upstream ani jak przezbrojenia rozchodzą się przez złącza. W tym kontekście digital twin to nie trójwymiarowa witryna — to system decyzyjny testujący logikę przepływu przed wydatkiem.
 
-Symuluj najpierw, gdy prawdziwe jest co najmniej jedno z ponizszych: nowy przeplyw wspoldzieli waskie gardlo lub bufor z innymi liniami; zmienia sie obsada, zmianowosc lub logika wsadow; rebalansujesz prace pod nowy takt lub mix; zmienia sie intralogistyka lub wielkosc supermarketu; biznes case zaklada konkretna przepustowosc lub czas realizacji.
+## Jak wyglądają „wystarczająco dobre” wejścia
 
-Jesli nic z tego nie rusza, lzejszy sanity check moze wystarczyc, ale pelne scenariusze sa mniej krytyczne.
+Nie potrzebujesz live z MES, by zebrać wartość. Zwykle potrzebujesz wiarygodnej sekwencji procesu z realistycznymi zakresami czasu cyklu; założeń przezbrojeń i awarii jako zakresów, nie pojedynczych punktów; scenariuszy popytu lub mixu zamówień obejmujących szczyt i spadek; reguł staffingowych zgodnych z tym, jak linia naprawdę pracuje. Zespoły pomijające zakresy i jadące tylko na średnim popycie często zatwierdzają przepływy, które padają w pierwszym intensywnym tygodniu.
 
-## Czemu rysunki nie wystarcza do zmian przeplywu
+## Co porównać
 
-CAD i uklady odpowiadaja na geometrie.
+Odpal bieżący baseline, proponowany przepływ przy oczekiwanym popycie oraz proponowany przy strese popytu lub najgorszym mixie. Dodaj wariant hybrydowy, gdy polityka ma znaczenie — np. stara polityka buforów przy nowym layoutcie — by debata nie zamknęła się w fałszywej dychotomii.
 
-Nie odpowiadaja niezawodnie na to: gdzie tworza sie kolejki, gdy wraca zmiennosc; jak "maly" ruch przesuwa ograniczenie systemu; czy szybszy lokalny krok nie powoduje glodu upstream; jak przez prace propaguja sie przezbrojenia lub przerwy wsadowe. Digital Twin w tym kontekscie nie jest pokazem 3D.
+## Kiedy symulacja nie powinna blokować drobnej zmiany
 
-To system decyzyjny, ktory pozwala testowac logike przeplywu zanim zobowiazesz beton i prace.
+Symulacja to narzędzie ryzyka, nie obowiązek moralny. Jeśli zmiana jest mała, odwracalna w godzinach i nie dotyka wspólnych ograniczeń, udokumentowany pilot na spokojnej zmianie może być szybszy niż modelowanie. Błąd to stosowanie tego wyjątku do zmian, które realnie przesuwają zachowanie systemu.
 
-## Prosta bramka decyzyjna
 
-Uzyj jej przed zatwierdzeniem budzetu na przebudowe:
+## Governance pasujące do tempa fabryki
 
-| Sygnal | Symulowac najpierw? |
-| --- | --- |
-| Dotyka obecnego waskiego gardla | Tak |
-| Dodaje lub usuwa punkt scalania | Tak |
-| Zmienia limity WIP lub polityke buforow | Tak |
-| Przesuwa tylko w jednej wyspie przy stabilnym popycie | Moze |
-| Czyste 5S lub oznakowanie bez zmiany logiki przeplywu | Zwykle nie |
+Dobre governance dopasowuje się do zegara zakładu. Comiesięczne przeglądy operacyjne powinny traktować ryzyko do przodu jako pełnoprawnego obywatela agendy, nie jako dodatek, gdy skończą się slajdy. Fora kapitałowe powinny traktować ID scenariuszy i stopnie założeń jako część artefaktu akceptacji, nie jako przypis modelarza. Przeglądy po inwestycji powinny odnaleźć baseline historii, którą sfinansowano, i sprawdzić, czy rzeczywistość odbiegła w sposób zmieniający następną transzę.
 
-## Jak wygladaja "wystarczajaco dobre" dane wejsciowe
+Gdy własność jest jasna – kto utrzymuje strukturę, kto certyfikuje prawdę hali, kto podpisuje pakiety scenariuszy – zdarzenia odświeżenia przestają być osobistymi przysługami i stają się przewidywalnym utrzymaniem. Tak digital twin przetrwa rotację: następny steward dziedziczy szablony, pakiety i rejestry zamiast dziedziczyć ustne mity. Jeśli program nie przetrwa zmiany kierownictwa, to wciąż projekt, nie infrastruktura.
 
-Nie potrzebujesz na start pelnych strumieni z MES.
+## Co dodaje DBR77 Digital Twin
 
-Zwykle potrzebujesz: wiarygodnej sekwencji procesu z realistycznymi zakresami czasu cyklu; zalozen przezbrojen i awarii jako zakresow, nie pojedynczych punktow; scenariuszy popytu lub mixu zamowien od szczytu po spadek; regul obsady zgodnych z tym, jak linia jest realnie prowadzona.
-
-Illustrative: zespoly, ktore pomijaja zakresy i licza tylko sredni popyt, czesto zatwierdzaja przeplywy, ktore padaja w pierwszym naprawde zajetym tygodniu.
-
-## Co porownywac w blizniaku
-
-Odpal co najmniej trzy rodziny scenariuszy: baseline obecny przeplyw; proponowany przeplyw przy oczekiwanym popycie; proponowany przy obciazeniowym popycie lub najgorszym mixie.
-
-Dodaj czwarty, gdy gra polityczna: hybryda ze stara polityka bufora przy zmianie ukladu.
-
-## Kiedy symulacja nie powinna blokowac drobnej zmiany
-
-Symulacja to narzedzie ryzyka, nie obowiazek moralny.
-
-Jesli zmiana jest mala, odwracalna w godzinach i nie dotyka wspoldzielonych ograniczen, udokumentowany pilot na spokojnej zmianie moze byc szybszy niz model.
-
-Blad to stosowanie tego wyjatku do zmian, ktore realnie ruszaja zachowanie systemu.
-
-## Co daje DBR77 Digital Twin
-
-DBR77 Digital Twin jest pod porownywanie scenariuszy i operacyjne ograniczanie ryzyka, nie pod teatr wizualny.
-
-Przy przebudowie przeplywu pomaga porownac warianty, naprezyc zalozenia i ujednolicic operacje i inzynierie wokol definicji "dobrze", zanim hala stanie sie poligonem.
+DBR77 Digital Twin jest zbudowany pod porównanie scenariuszy i ograniczanie ryzyka operacyjnego, a nie pod wizualny teatr. Przy przeprojektowaniu przepływu pomaga porównywać warianty, stresować założenia i układać operacje z inżynierią wokół tego, co znaczy „dobrze”, zanim halą stanie się laboratorium.
 
 ## Podsumowanie
 
-Symuluj przed przebudowa przeplywu, gdy zmiana moze przesunac ograniczenia lub sposob oczekiwania pracy w systemie.
-
-Jesli zmienia tylko wyglad lub lokalne porzadki, lzejsza kontrola wystarczy.
-
-Jesli zmienia zachowanie pod zmiennoscia, blizniak to miejsce na drogie spory zanim pojawia sie one w rzeczywistosci.
+Symuluj przed przeprojektowaniem przepływu, gdy zmiana może przesunąć ograniczenia albo sposób, w jaki praca czeka w systemie. Jeśli zmienia tylko wygląd lub lokalny porządek, lżejsze governance wystarczy. Jeśli zmienia zachowanie przy zmienności, twin to miejsce, gdzie drogie spory powinny się odbyć.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Zobacz przypadki użycia](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*
+*DBR77 Digital Twin pomaga testować warianty przepływu i stres popytu, zanim zobowiązanie na przeprojektowanie stanie się twarde. [Zobacz przypadki użycia](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*

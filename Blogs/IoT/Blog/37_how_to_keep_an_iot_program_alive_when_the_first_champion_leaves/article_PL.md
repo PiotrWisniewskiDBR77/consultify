@@ -1,54 +1,58 @@
-# Jak utrzymac program IoT przy zyciu, gdy odchodzi pierwszy champion
+# Jak utrzymać program IoT przy życiu, gdy odchodzi pierwszy champion
 
-Docelowa persona: Kierownik zakladu / Sponsor IT-OT / Wlasciciel programu  
+Docelowa persona: Plant manager / IT-OT sponsor / Program owner  
 Etap lejka: Adoption  
+Główny problem: pierwszy champion niósł nieformalne decyzje, relacje z dostawcą i zaufanie operatorów, więc program wygląda osobiście, a nie instytucjonalnie  
+Główna obietnica: zestaw ciągłości: udokumentowane decyzje, współdzielona własność, reguły sygnałów zwalidowane przez operatorów oraz pozycje budżetowe, które przetrwają zmianę osób
 
-Glowny problem: pierwszy champion niosl nieformalne decyzje, relacje z vendorami i zaufanie operatorow, wiec program wyglada osobiscie, a nie instytucjonalnie Glowna obietnica: zestaw ciaglosci: udokumentowane decyzje, wspoldzielona odpowiedzialnosc, zwalidowane przez operatorow reguly sygnalow i pozycje budzetowe, ktore przetrwaja zmiane osoby Championy przyspieszaja start. Instytucje przetrwaja przekazania.
+Każdy dojrzały program w końcu przetrwa pierwszego bohatera.
 
-Jesli program IoT ginie, gdy jedna osoba zmienia role, nigdy nie zostal zoperacjonalizowany.
+Do tego czasu IoT często żyje w wątkach Slacka, prywatnych arkuszach i głowach dwóch osób, do których dzwonią, gdy próg „czuje się źle”. To może działać w rolloutzie. Pada w momencie transferu, wypalenia albo awansu. Zakład boleśnie odkrywa, że „mamy IoT” znaczyło „mamy Morgan”.
 
-## Bezposrednia odpowiedz
+Ciągłość nie jest romantyczna. To nieglamurna praca przekształcania osądu w artefakty: logi, właścicieli, kalendarze i linie budżetowe, które przetrwają zmianę nazwisk.
 
-Utrzymaj program przy zyciu przez **przeniesienie wiedzy z pamieci do artefaktow** zanim champion wyjdzie: log decyzji dla progow, eskalacji i override; nazwani wspolwlasciciele dla lacznosci OT, jakosci danych i szkolenia na hali; kalendarz przegladu kwartalnego powiazany z planowaniem, nie z heroizmem; mapa budzetu i kontraktow vendora z triggerami odnowien. Celem jest nudna ciaglosc, a nie zastepczy heros.
+Jeśli plan ciągłości brzmi „zatrudnij kogoś jak Morgan”, opisujesz ryzyko rekrutacji, a nie system. Instytucje dokumentują to, co Morgan robił co tydzień — nie tylko to, co Morgan nosił w głowie.
 
-## Trzy podzialy odpowiedzialnosci
+## Co znika najpierw, gdy champion odchodzi
 
-Unikaj wlasciciela na jednym watku.
+Uzasadnienie progów paruje. Ścieżki eskalacji się strzępią. Kontakty do dostawcy starzeją. Szkoleniowe decki istnieją, ale nikt nie wie, której wersji hala faktycznie używa. Operatorzy cicho wracają do starych nawyków, bo nikt publicznie nie stroi systemu. Finanse widzi odnowienie i nie potrafi powiedzieć, czy narracja wartości wciąż się trzyma.
 
-| Tor | Posiada |
-|---|---|
-| Operacje | co sygnaly znacza dla decyzji o pracy i przekazania |
-| Maintenance | interpretacja kondycji aktywa i powiazanie z CMMS |
-| Engineering / IT-OT | standardy lacznosci, patch security, granice integracji |
+Nic z tego nie jest nieuniknione. Tak bywa, gdy wiedza celowo została osobista.
 
-Championy czesto rozmywaly te tory. Instytucjonalne IoT potrzebuje wyraznych szwow.
+## Przenieś wiedzę do obiektów, które można znaleźć
 
-## Sekwencja krokow: sprint ciaglosci 30 dni
+Prowadź żywy log decyzji dla progów, eskalacji i obejść: co się zmieniło, dlaczego, kto zatwierdził, kiedy wracamy do tematu. Trzymaj to tam, gdzie utrzymanie i operacje faktycznie patrzą — nie w folderze inżyniera. Nazwij współwłaścicieli łączności OT, jakości danych i szkolenia na hali, by nieobecność była widoczna przed urlopem, nie w kryzysie.
 
-Wyeksportuj robocze notatki championa do logu decyzji z datami i uzasadnieniem; Pol dnia warsztatu z operatorami: ktore sygnaly nadal czuc jako prawdziwe; Przypisz wspolwlascicieli z nazwiskami zapasowymi, nie tylko primary; Zamroz miesiac "bez nowych alarmow", stabilizujac ownership; Prezentuj jednostronicowa charter programu dla leadership zakladu z kosztami i kadencja przegladu.
+Wiąż kwartalne przeglądy z kalendarzem operacyjnym zakładu obok bezpieczeństwa i jakości, nie z energią championa. Zmapuj kontrakty dostawcy, dostęp i wyzwalacze odnowień tam, gdzie finanse i IT-OT widzą to oboje.
 
-## Checklista: instytucjonalne sygnaly
+## Waliduj sygnały z operatorami na każdej zmianie
 
-- [ ] progi maja nazwanych reviewerow i date ostatniego przegladu
-- [ ] override maja wygasanie i audit trail dostepny dla supervisorow
-- [ ] materialy szkoleniowe zyja w LMS zakladu albo rownowazniku, nie na prywatnych dyskach
-- [ ] odniesienia do standardow sa jawne dla bramek safety i jakosci
-- [ ] zakres pilota i kryteria skali sa zapisane, by nastepny wlasciciel mogl je obronic
+Pamięć instytucjonalna nie jest kompletna, dopóki druga i trzecia zmiana nie potrafi wyjaśnić tego samego tagu tak samo. Prowadź krótkie audyty próbkowe: pokaż scenariusz, poproś o stan i przyczynę w języku słownika, napraw kolizje od razu. Jeśli słownictwo dryfuje, IoT staje się wieżą Babel, którą dziedziczy następny właściciel.
 
-## Kiedy dziala i kiedy nie
+## Uruchom trzydziestodniowy sprint ciągłości przed rotacją, gdy możesz
 
-**Dziala**, gdy leadership finansuje program jako infrastrukture, a nie projekt poboczny.
+Wyeksportuj log decyzji i przejdź go z nowymi właścicielami. Przećwicz przegląd eskalacji i obejść tak, jakby champion już odszedł. Potwierdź własność patchowania, kopii zapasowych i odzyskiwania dla bram i aktywów na brzegu. Uzgodnij z finansami linie odnowień i wewnętrzne budżety pracy, by program nie stał się niespodziewaną fakturą.
 
-**Nie dziala**, gdy wyjscie staje sie cyklem winy, a operatorzy ucza sie, ze IoT znow jest opcjonalne.
+Sprint to brak zaufania do ludzi. To szacunek dla rzeczywistości.
 
-## Co to znaczy dla DBR77 IoT
+**Instytucjonalne sygnały:** udokumentowani właściciele istnieją dla każdej nudnej roboty; materiały szkoleniowe żyją w systemie zakładu z kontrolą wersji; dostęp do dostawcy ma nazwane zapasowe osoby; definicje KPI mają stewarda, który przetrwa każdy przydomek projektu.
 
-DBR77 IoT jest pod **szybki pilot** i **lacznosc retrofit-ready**, co zmniejsza zaleznosc od plemiennej wiedzy jednego integratora.
+## Kiedy artefakty was nie uratują
 
-**Widocznosc maszyny w czasie rzeczywistym** i **wsparcie decyzji edge-first** zostaja wartosciowe przy rotacji ownership, jesli reguly sa udokumentowane.
+Jeśli własność jest nominalna — tytuły na schemacie bez alokacji czasu — dokumentacja staje się teatrem. Jeśli polityka każe za uczciwe strojenie, log będzie kłamał. Napraw incentywy i autorytet, zanim dopieszczasz szablony.
 
-## Bottom line
+## DBR77 IoT poza bohaterem
 
-Przetrwaj odejscie championa przez **artefakty, wspolwlascicieli i kalendarz**.
+DBR77 IoT wspiera ciągłość, gdy wdrożenia dostarczają playbooków, współstewardshipu i rytmu przeglądu zaprojektowanego na przetrwanie zmiany kadrowej — nie tylko zwycięstw demo.
 
-IoT staje sie realne, gdy zaklad moze je prowadzic bez jednego nazwanego magika.
+Championi rozżarzają pęd. Instytucje przetrwają przekazania. Utrzymuj IoT przy życiu, czyniąc decyzje, właścicieli, kalendarze i pieniądze widocznymi dla zakładu — nie dla jednej skrzynki.
+
+## Domknięcie na hali
+
+Żadna z tych rad nie ma znaczenia, jeśli zostaje w slajdach sterujących. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia bardziej przypomina zsynchronizowany zespół niż salę sądu — wciąż głośno i intensywnie, ale wokół tych samych faktów.
+
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie językowe to objaw, że pętla jest wciąż zbyt cienka.
+
+---
+
+*DBR77 IoT pomaga instytucjonalizować IoT dzięki playbookom, współdzielonej własności i rytmom przeglądu, które przetrwają pojedynczego championa. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

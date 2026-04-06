@@ -1,56 +1,42 @@
-# Jak wdrozyc operacje wspierane przez AI bez zaklocania zakladu
+# Jak wdrożyć operacje wspomagane AI bez destabilizacji zakładu
 
-Target persona: PMO transformacji / Kierownik zakladu / Lider IT-OT  
-Funnel stage: Decision  
-Core problem: wdrozenia AI tworza tarcie, gdy zmieniaja codzienne rytmy, rozpraszaja uwage lub wprowadzaja rownolegle systemy w szczycie cisnienia produkcyjnego  
-Main promise: wzor wdrozenia rownolegly do produkcji: tryb cienia, waski zakres workflow, szkolenie per zmiana, procedury zapasowe i jawne okna zmian
+Docelowa persona: PMO transformacji / Plant Manager / lider IT-OT  
+Etap lejka: Decision  
+Główny problem: wdrożenia AI generują tarcie, gdy zmieniają dzienne rytmy, rozdzielają uwagę albo wprowadzają równoległe systemy w szczycie presji produkcyjnej  
+Główna obietnica: wzorzec wdrożenia równoległy do produkcji: tryb cienia, wąski zakres przepływu pracy, szkolenie oparte na zmianach, procedury awaryjne i jawne okna zmian
 
-**Bezposrednia odpowiedz:** Wdroz operacje wspierane przez AI bez zaklocania zakladu, zachowujac na poczatku niezmieniona wladze produkcji, uruchamiajac AI w trybie cienia lub doradczym w jednym workflow, szkolac per zmiana z kapitanami hali i uzywajac opublikowanych regul zapasowych, gdy system jest niepewny lub niedostepny. Zaklocenie to nie "ludzie opieraja sie zmianie". Zaklocenie to czesto zly timing plus niejasna wladza.
+Destabilizacja bywa błędnie etykietowana jako opór. Częściej to zły timing plus niejasna władza. Wdrażaj operacje wspomagane AI, utrzymując końcową władzę ludzką we wczesnym oknie, uruchamiając wsparcie w trybie cienia lub doradczym wewnątrz jednego przepływu pracy, szkoląc w małych jednostkach zmianowych z wiarygodnymi liderami hali i publikując reguły awaryjne, gdy system jest niepewny lub niedostępny. Celem jest postęp bez zamiany produkcji w scenę próbną.
 
-## Zasada 1: nie zmieniaj tego, kto rzadzi, w pierwszym oknie
+Nie zmieniaj tego, kto rządzi, w pierwszym oknie. Ludzie zachowują ostateczne słowo; AI produkuje sugestie i ustrukturyzowane szkice; wyjątki domyślnie idą istniejącą ścieżką ręczną. Złamanie tej zasady to walka z rzeczywistością produkcyjną zamiast jej usprawniania.
 
-We wczesnym wdrozeniu: ludzie zachowuja ostateczna wladze; AI daje sugestie i ustrukturyzowane projekty; wyjatki domyslnie ida stara reczna sciezka. Jesli lamiesz te zasade, walczysz z rzeczywistoscia produkcji.
+Wybierz przepływ pracy, w którym nadzór ma jeszcze zapas — nie tydzień startu, nie tydzień dużego audytu, nie seria brutalnych przezbrojeń bez pokrycia. Dyscyplina harmonogramowania to nie tchórzostwo. To sposób, w jaki zakłady chronią przepustowość podczas nauki.
 
-## Zasada 2: wybierz workflow ze swoboda nadzoru
+Sekwencja małej destrukcji wygląda tak: zmapuj przepływ pracy end-to-end na papierze z nazwanymi właścicielami; odbij go w systemie wykonania bez AI; przez krótki czas prowadź równoległy wpis, by stara i nowa ścieżka współistniały; włącz AI tylko do triage i streszczeń zanim poszerzysz zakres; rozszerzaj dopiero po ustabilizowaniu metryk domknięcia; udokumentuj awaryjnie — jeśli wsparcie padnie, które pola pozostają obowiązkowe i kto decyduje?
 
-Wybierz tor, gdzie nadzorcy moga wchlonac nauke: nie tydzien startu; nie tydzien duzego audytu klienta; nie duza seria przezbrojen bez dodatkowego pokrycia. To dyscyplina harmonogramowania, nie brak odwagi.
+Tryb cienia oznacza, że AI rankuje i sugeruje, podczas gdy operatorzy mogą ignorować wynik bez kary, dopóki mierzysz zgodność. Tryb na żywo oznacza, że sugestie stają się domyślnym kierowaniem zadań z ludzkim potwierdzeniem przy progach. Pominięcie trybu cienia to częsty sposób na szybkie załamanie zaufania.
 
-## Sekwencja krokow: sciezka wdrozenia o niskim zakloceniu
+Szkolenie powinno szanować halę: sesje zmianowe prowadzone przez szanowanych kapitanów, powiązane z małą liczbą konkretnych ekranów i działań, w tym ćwiczenia odrzucenia, nadpisania i eskalacji. Jeśli skalowanie szkoleń nie działa, obejścia zadziałają.
 
-Zmapuj wybrany workflow koniec do konca na papierze z wlascicielami; odbij workflow w systemie wykonania bez AI; prowadz jeden do dwoch tygodni rownoleglego wpisu: stara sciezka plus nowa; wlacz wsparcie AI tylko do triazu i streszczen, nie do dzialan autonomicznych; poszerzaj zakres AI dopiero po stabilnych metrykach domkniecia; udokumentuj zapas: gdy AI padnie, ktore pola nadal sa obowiazkowe?.
+Komunikuj, co się zmienia, co nie, kogo wołać w nocy i kiedy wsparcie jest celowo wyłączone. Cisza rodzi plotki; plotki rodzą destabilizację.
 
-## Tryb cienia versus tryb na zywo
+Mierz destabilizację wprost: niemal odchylenia, skoki werbalnych nadpisań, nadgodziny nadzoru, blokady jakości powiązane z błędami komunikacji. Jeśli to dryfuje, wstrzymaj ekspansję — nie by karać program, lecz chronić zakład.
 
-**Tryb cienia** AI rankuje i sugeruje, operatorzy ignoruja bez kary, podczas gdy mierzysz zgodnosc.
+IRIS wspiera spokojne wdrożenie, gdy równoległy wpis, widoczne odpowiedzialność i ścieżki awaryjne żyją w jednej nadzorowanej warstwie wykonania — zamiast doklejać kolejnego asystenta do rozfragmentowanej codziennej pracy.
 
-**Tryb na zywo** Sugestie AI staja sie domyslnym routingu, nadal z potwierdzeniem czlowieka przy progach.
+O logice sekwencji zobacz [Od ludzi do operacji wspomaganych AI: co zmienia się najpierw](../23_from_humans_to_ai_assisted_operations_what_changes_first/article_PL.md). O wzorcu budowy przed wdrożeniem zobacz [Jak budować operacje fabryczne wspomagane AI krok po kroku](../25_how_to_build_ai_assisted_factory_operations_step_by_step/article_PL.md).
 
-Zaklady pomijaja tryb cienia, a potem dziwia sie, ze zaufanie sie zapada.
+Spokojne wdrożenie zachowuje władzę, używa trybów cienia, szkoli w małych jednostkach i mierzy sygnały destabilizacji. Prędkość bez dyscypliny to sposób, w jaki zakłady uczą się nie lubić AI — zanim dostanie szansę realnie pomóc.
 
-## Szkolenie, ktore szanuje hale
+## Podsumowanie operacyjne
 
-Skuteczne szkolenie to: per zmiana, nie jedna gigantyczna sala; prowadzone przez szanowanego kapitana hali, nie tylko IT; zwiazane z trzema konkretnymi ekranami i trzema konkretnymi dzialaniami; obejmuje cwiczenie odrzutu, nadrzedu i eskalacji.
+Obietnica tego artykułu — wzorzec wdrożenia równoległy do produkcji: tryb cienia, wąski zakres przepływu pracy, szkolenie oparte na zmianach, procedury awaryjne i jawne okna zmian — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Jak wdrożyć operacje wspomagane AI bez destabilizacji zakładu” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-## Okna zmian i komunikacja
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
-Opublikuj: co sie zmienia; co sie nie zmienia; kogo wolac w nocy; kiedy wsparcie AI jest wylaczone. Cisza tworzy plotki. Plotki tworza zaklocenie.
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie usprawnienie operacyjne — tylko narracyjne. Ta regula utrzymuje programy w rzetelności, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
-## Mierz zaklocenie wprost
-
-Sledz wskazniki zaklocen operacyjnych: zgloszone niemalze odchylenia procesu; wzrost werbalnych nadrzedow wzgledem bazy; skoki nadgodzin nadzoru; blokady jakosci przypisane bledom komunikacji. Jesli to dryfuje, wstrzymaj ekspansje.
-
-## Dlaczego IRIS wspiera wdrozenie o niskim zakloceniu
-
-DBR77 IRIS to AI-native system operacyjny zakladu z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zadan.
-
-Ujednolicona warstwa upraszcza rownolegly wpis i zapas w porownaniu z dokreceniem kolejnego asystenta.
-
-## Podsumowanie
-
-Spokojne wdrozenie zachowuje wladze, uzywa trybu cienia, szkoli w malych jednostkach i mierzy sygnaly zaklocen.
-
-Predkosc bez dyscypliny to sposob, w jaki zaklady ucza sie nie lubic AI.
+Jeśli rekord jest ubogi, napraw rekord, zanim poszerzysz ambicję.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*
+*DBR77 IRIS wspiera równoległe wzorce wdrożenia, utrzymując zadania, akceptacje i wsparcie AI w jednej warstwie wykonania z jasnymi rekordami operacyjnymi. [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*

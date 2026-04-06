@@ -262,7 +262,8 @@ const SuggestionCard: React.FC<{
   busy?: boolean;
   onApprove?: () => void;
   onDefer?: () => void;
-}> = ({ suggestion, decisionState, busy = false, onApprove, onDefer }) => (
+  approveLabel?: string;
+}> = ({ suggestion, decisionState, busy = false, onApprove, onDefer, approveLabel = 'Approve' }) => (
   <div className="rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]">
     <div className="mb-2 flex flex-wrap items-center gap-2">
       <span className="text-[12px] font-semibold text-slate-900 dark:text-white">
@@ -313,7 +314,7 @@ const SuggestionCard: React.FC<{
             disabled={busy}
             className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold text-cyan-700 transition-colors hover:bg-cyan-500/15 disabled:opacity-40 dark:text-cyan-200"
           >
-            Approve
+            {approveLabel}
           </button>
         ) : null}
       </div>
@@ -472,7 +473,13 @@ const ActionPlanView: React.FC<{
   onDeferSuggestion: (suggestionId: string) => void;
 }> = ({ analysis, busySuggestionId, onApproveSuggestion, onDeferSuggestion }) => {
   const decisionsBySuggestion = useMemo(
-    () => new Map(analysis.decisions.map((decision) => [decision.suggestionId, decision.state])),
+    () =>
+      analysis.decisions.reduce((map, decision) => {
+        if (!map.has(decision.suggestionId)) {
+          map.set(decision.suggestionId, decision.state);
+        }
+        return map;
+      }, new Map<string, string>()),
     [analysis.decisions]
   );
 
@@ -508,6 +515,7 @@ const ActionPlanView: React.FC<{
               suggestion={suggestion}
               decisionState={decisionsBySuggestion.get(suggestion.id)}
               busy={busySuggestionId === suggestion.id}
+              approveLabel="Apply"
               onApprove={() => onApproveSuggestion(suggestion.id)}
               onDefer={() => onDeferSuggestion(suggestion.id)}
             />
@@ -719,6 +727,9 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
       setBusySuggestionId(suggestionId);
       setError(null);
       try {
+        if (state === 'approved') {
+          await V8ExecutionControlApi.applyManagerSuggestion(laneId, { suggestionId }, projectId);
+        }
         await V8ExecutionControlApi.submitLaneDecision(laneId, { suggestionId, state });
         await fetchData();
       } catch (err) {
@@ -727,7 +738,7 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
         setBusySuggestionId(null);
       }
     },
-    [fetchData, laneId]
+    [fetchData, laneId, projectId]
   );
 
   if (!isOpen) return null;

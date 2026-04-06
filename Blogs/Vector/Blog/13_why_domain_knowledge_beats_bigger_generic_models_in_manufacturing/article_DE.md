@@ -1,52 +1,40 @@
-# Warum Domain Knowledge in der Produktion wichtiger sein kann als grossere generische Modelle
+# Warum Domain-Wissen in der Fertigung größeren generischen Modellen schlägt
 
-Target persona: CTO  
-Funnel stage: Consideration  
-Core problem: viele Kaufer nehmen an, dass grossere generische Modelle automatisch besser sind als domain-spezifische Industrial AI, obwohl industrielle Arbeit von kontextreichem Denken abhangt  
-Main promise: in der Produktion zahlt Domain Knowledge oft mehr als Modellgrosse, weil nutzliche Entscheidungen von Kontext, Konsequenz und operativem Fit abhangen
+Zielpersona: CTO  
+Funnel-Stufe: Überlegung  
+Kernproblem: Viele Käufer behandeln Headline-Modellgröße oder Benchmark-Prestige als Proxy für Fertigungsleistung, obwohl die Arbeit in werkspezifischen Definitionen, Grenzen und Evidenz verankert ist  
+Hauptversprechen: In der Fertigung zählen oft domain-verankerte Passung und Referenztreue mehr als rohe Skala, weil nützliche Antworten mit Ihrer internen Wahrheit übereinstimmen müssen — nicht nur mit flüssiger Allgemeinsprache
 
-Grossere Modelle ziehen Aufmerksamkeit an. Das bedeutet nicht, dass sie fur die Produktion die bessere Wahl sind.
+Headline-Parameterzahlen und Leaderboard-Gerede erzeugen eine einfache Geschichte: größer ist besser. Auf der Shopfloor bricht diese Geschichte schnell. Viele hochwertige Fragen werden nicht vom größten generischen Modell gewonnen. Sie werden von Systemen gewonnen, die Ihre Nomenklatur, Ihre Stücklisten und Routings, Ihre Qualitätsregeln und die Art, wie Fehler tatsächlich in Ihrem Prozess auftauchen, respektieren.
 
-In industriellen Umgebungen zahlt oft nicht rohe Scale, sondern die Relevanz des Denkens.
+Größere generische Modelle verbessern die Durchschnittsleistung über breite internetartige Aufgaben. Sie nehmen nicht automatisch Ihre werkspezifischen Referenzen, Ihre freigegebenen Verfahren oder die informellen Grenzen auf, die Experten tragen. Bei Fertigungsentscheidungen verlieren marginale Skalengewinne oft gegen Fehler aus fehlendem oder falsch interpretiertem Kontext. Domain-verankerte Industrie-KI soll diese Lücke schließen, indem sie Reasoning in Fertigungs- und Transformationspraxis verankert und Evaluation an werksrelevante Testfälle anpasst — nicht nur an generische Vervollständigungsqualität.
 
-## Warum Grosse uberschatzt werden kann
+## Der Modellgrößen-Mythos im industriellen Einkauf
 
-Grosse generische Modelle sind fur breite Sprachfahigkeit gebaut. Das gibt ihnen Reichweite. Aber Produktionsentscheidungen hangen oft ab von: Prozesskontext; operativen Zielkonflikten; realen Grenzen; Konsequenzbewusstsein. Diese Dinge entstehen nicht automatisch durch Modellgrosse.
+Der Mythos klingt so: Wenn wir das größte allgemeine Modell deployen, haben wir „KI für die Fertigung“ abgedeckt. Was das überspringt, ist Referenzabhängigkeit. Korrektheit in Werksarbeit ist häufig gegen interne Master definiert: Teilenummern, Revisionsstände, Kontrollpläne, kundenspezifische Regeln und Lieferantenvereinbarungen. Ein größeres Modell gewährt keinen automatischen Zugang zu diesen Referenzen, es sei denn, Ihre Architektur liefert, begrenzt und validiert sie bewusst. Skala ohne Passung kann Vertrauen schneller steigern als Korrektheit — und Vertrauen ist der gefährliche Teil.
 
-## Domain Knowledge verandert die Output-Qualitat
+## Warum Domain-Verankerung das Fehlerprofil ändert
 
-In industriellen Umgebungen ist eine nutzliche Antwort nicht nur flussig.
+In industriellen Settings ist eine nützliche Antwort nicht nur flüssig. Sie ist stabil gegen Fragen wie: stimmt sie mit freigegebenem Routing und Prüfpunkten überein; nutzt sie Benennung und Einheiten so, wie Wartung und Qualität es erwarten; lässt sie offensichtliche Haken für SME-Review, wenn Daten dünn sind; und scheitert sie sichtbar, wenn Kontext fehlt, statt eine glatte Brücke zu erfinden. Diese Verhaltensweisen folgen Domain-Verankerung und Evaluationsdisziplin mehr als Parameterzahl.
 
-Sie versteht: was operativ wichtig ist; welche Risiken bestehen; welche Zielkonflikte relevant sind; was weiterhin durch einen Menschen gepruft werden sollte.
+## Generische Skala kann autoritativ klingen und flach sein
 
-Diese Art von Nutzlichkeit kommt aus Domain-Fit und nicht nur aus Parameterzahl.
+Ein größeres generisches Modell kann polierte Sprache produzieren und trotzdem verfehlen, welche Dokumentrevision für einen Kunden bindend ist, welcher Abweichungspfad greift, wenn ein Maß außerhalb der Toleranz liegt, oder wie ERP- oder QMS-Felder die betreffende Grenze kodieren. Vertrauen und operative Wahrheit divergieren. Diese Divergenz ist teuer, wenn Teams auf einem gut geschriebenen Absatz handeln, der nie gegen Werks-Evidenz geprüft wurde.
 
-## Generische Modelle konnen richtig klingen und trotzdem flach bleiben
+## Die Fertigung braucht werkskalibriertes Reasoning, nicht nur Vervollständigung
 
-Ein grosseres generisches Modell kann glatte Sprache erzeugen und trotzdem Folgendes ubersehen: Prozessabhangigkeiten; Fabrikrealitat; Umsetzungsreibung; geschaftliche Konsequenz. Darum sind Sicherheit im Ton und echter Nutzen nicht dasselbe.
+Industrie-KI sollte Teams helfen, gegen Ihre Grenzen zu denken — nicht nur glatteren Text über Fertigung im Allgemeinen zu generieren. Das weist auf Interpretation hin, die im Fertigungskontext verankert ist, Entscheidungen so zu strukturieren, dass Lücken und Konflikte früh sichtbar werden, und Testpläne, die reale interne Szenarien statt Demo-Prompts nutzen. Diese Anforderungen mappen auf Domain-Passung und interne Validierungspraxis. Sie sind nur schwach vorhersehbar davon, wie groß das Basismodell in öffentlichen Benchmarks ist.
 
-## Die Produktion braucht Reasoning, nicht nur Completion
+## Was Sie statt Headline-Modellgröße vergleichen sollten
 
-Industrial AI sollte Teams helfen, besser uber Entscheidungen nachzudenken, nicht nur besseren Text zu erzeugen.
+Wenn Sie Ansätze shortlisten, stressen Sie Passung statt Prestige. Schauen Sie auf Referenztreue: wie gut respektieren Outputs Ihre Master, Benennung und Einheiten ohne ständige Korrektur. Fahren Sie Werks-Testfälle: dieselbe Handvoll harter interner Fragen über Kandidaten und beobachten Sie, wer still scheitert versus wer Unsicherheit markiert. Prüfen Sie SME-Last: ob Skala Experten-Nacharbeit reduziert oder nur erste Entwürfe beschleunigt, die weiter schwere Reparatur brauchen. Fragen Sie, ob ein Schritt in generischer Modellgröße Ergebnisse auf Ihrem Fragen-Set ändert — oder meist den Ton. Halten Sie Governance, Deployments und Anbieterkategorie in einem separaten Review; sie ersetzen domain-verankertes Reasoning nicht.
 
-Das bedeutet, das Modell sollte unterstutzen: Kontextinterpretation; Entscheidungsstrukturierung; industrielle Relevanz; governable recommendations. Das liegt naher an Domain Knowledge als an roher Scale.
+Headline-Größe ist ein Input. Sie erklärt selten die ganze Fertigungs-Nützlichkeit.
 
-## Was Kaufer statt Grosse vergleichen sollten
+DBR77 Vector ist um proprietäres industrielles Reasoning und Fertigungskontext positioniert — nicht darum, ein generisches Skalenrennen zu gewinnen. Diese Positionierung setzt voraus, dass Käufer Industrie-KI an werksrelevanter Evidenz und Passung messen — neben Deployments- und Trainingsgrenzen, die anderswo in der Vector-Bibliothek behandelt werden.
 
-Hersteller sollten vergleichen: Industrial Fit; Konsequenzbewusstsein; Nutzlichkeit in echten Workflows; Governance-Kompatibilitat; Deployment-Kontrolle. Das sagt mehr als die Schlagzeilen uber Modellgrosse.
-
-## Warum Vector um diese Idee herum positioniert ist
-
-DBR77 Vector ist nicht als grosseres generisches Modell gerahmt.
-
-Es ist positioniert rund um: industrial reasoning; starkere Governance-Erwartungen; private Deployment-Optionen; kein Training auf Kundendaten. Das passt besser zur Produktion als das Prestige generischer Modelle.
-
-## Fazit
-
-In der Produktion schlagt Domain Knowledge oft grossere generische Modelle, weil die eigentliche Herausforderung nicht darin liegt, intelligent zu klingen.
-
-Sie liegt darin, Entscheidungen nutzlicher, belastbarer und kontextbewusster zu machen.
+In der Fertigung schlagen Domain-Wissen und Referenztreue oft größere generische Modelle, weil der harte Teil darin besteht, sich mit dem auszurichten, wie Ihr Werk wirklich läuft — nicht intelligent über Fabriken im Abstrakten zu klingen. Halten Sie jede Option an denselben internen Testfällen fest. Lassen Sie Skala dort ihren Platz verdienen — nicht allein auf einem Leaderboard.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Produkte mit Vector erkunden](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*
+*DBR77 Vector gibt Herstellern industrielles Reasoning und stärkere Domain-Passung statt allein auf generisches Modell-Prestige zu setzen. [Produkte mit Vector erkunden](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*

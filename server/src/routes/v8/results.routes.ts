@@ -12,10 +12,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import type { KpiPermissionRole } from '../../services/v8/kpiWorkflowCanon.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
-import { createKpiReportSnapshot } from '../../services/results/kpiReportSnapshotService.js';
+import {
+  createKpiReportSnapshot,
+  getKpiReportSnapshot,
+} from '../../services/results/kpiReportSnapshotService.js';
 import {
   getResultsDashboard,
   getResultsKpiCatalog,
@@ -38,6 +40,58 @@ function resultsMeta() {
 
 function resultsWriteMeta() {
   return { version: 'v8' as const, contract: V8_RESULTS_WRITE_CONTRACT };
+}
+
+async function createV8KpiReportArtifact(params: {
+  organizationId: string;
+  userId: string;
+  created: Awaited<ReturnType<typeof createKpiReportSnapshot>>;
+}) {
+  const { organizationId, userId, created } = params;
+  const report = await ReportBuilderService.createReport({
+    organizationId,
+    sourceType: 'RESULTS_KPI_REPORT',
+    sourceId: created.snapshotId,
+    sourceName: created.snapshot.title,
+    title: created.snapshot.title,
+    description: `KPI review for ${created.snapshot.periodStart}${created.snapshot.periodEnd ? ` → ${created.snapshot.periodEnd}` : ''}`,
+    createdBy: userId,
+  });
+
+  await Promise.all([
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'executive_summary',
+      created.markdown.executive_summary,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'kpi_overview',
+      created.markdown.kpi_overview,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'deviation_cases',
+      created.markdown.deviation_cases,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'action_plan',
+      created.markdown.action_plan,
+      userId
+    ),
+    ReportBuilderService.updateSectionContent(
+      report.report.id,
+      'appendix',
+      created.markdown.appendix,
+      userId
+    ),
+  ]);
+  await ReportBuilderService.updateReportStatus(report.report.id, 'GENERATED', userId);
+  return report.report.id;
 }
 
 /** P04-B: role for `canPerformKpiAction` (header override; default viewer). */
@@ -962,52 +1016,50 @@ router.post(
       kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
     });
 
-    const report = await ReportBuilderService.createReport({
-      organizationId,
-      sourceType: 'RESULTS_KPI_REPORT',
-      sourceId: created.snapshotId,
-      sourceName: created.snapshot.title,
-      title: created.snapshot.title,
-      description: `KPI review for ${created.snapshot.periodStart}${created.snapshot.periodEnd ? ` → ${created.snapshot.periodEnd}` : ''}`,
-      createdBy: userId,
-    });
-
-    await Promise.all([
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'executive_summary',
-        created.markdown.executive_summary,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'kpi_overview',
-        created.markdown.kpi_overview,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'deviation_cases',
-        created.markdown.deviation_cases,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'action_plan',
-        created.markdown.action_plan,
-        userId
-      ),
-      ReportBuilderService.updateSectionContent(
-        report.report.id,
-        'appendix',
-        created.markdown.appendix,
-        userId
-      ),
-    ]);
-    await ReportBuilderService.updateReportStatus(report.report.id, 'GENERATED', userId);
+    const reportId = await createV8KpiReportArtifact({ organizationId, userId, created });
 
     return res.json({
-      data: { snapshotId: created.snapshotId, reportId: report.report.id },
+      data: { snapshotId: created.snapshotId, reportId },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+router.post(
+  '/kpi-reports/:snapshotId/refresh',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const snapshotId = typeof req.params.snapshotId === 'string' ? req.params.snapshotId.trim() : '';
+    if (!snapshotId) {
+      return res.status(400).json({
+        error: 'snapshotId is required',
+        code: 'RESULTS_KPI_REPORT_SNAPSHOT_ID_REQUIRED',
+      });
+    }
+
+    const existing = await getKpiReportSnapshot({ organizationId, snapshotId });
+    if (!existing?.snapshot) {
+      return res.status(404).json({
+        error: 'KPI report snapshot not found',
+        code: 'RESULTS_KPI_REPORT_SNAPSHOT_NOT_FOUND',
+      });
+    }
+
+    const refreshed = await createKpiReportSnapshot({
+      organizationId,
+      periodStart: existing.snapshot.periodStart,
+      periodEnd: existing.snapshot.periodEnd,
+      title: existing.snapshot.title,
+      createdBy: userId,
+      filters: existing.filters && typeof existing.filters === 'object' ? existing.filters : null,
+      kpiIds: Array.isArray(existing.snapshot.kpis)
+        ? existing.snapshot.kpis.map((kpi: any) => String(kpi.id || '').trim()).filter(Boolean)
+        : null,
+    });
+
+    const reportId = await createV8KpiReportArtifact({ organizationId, userId, created: refreshed });
+    return res.json({
+      data: { snapshotId: refreshed.snapshotId, reportId },
       meta: resultsWriteMeta(),
     });
   })

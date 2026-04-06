@@ -1,77 +1,32 @@
-# Co powinien rozstrzygnac przeglad architektury prywatnego AI przed wdrozeniem
+# Co powinien ustalić przegląd architektury prywatnego AI przed wdrożeniem
 
-Target persona: CTO / architekt korporacyjny  
-Funnel stage: Decision  
-Core problem: wdrozenia zacinaja sie lub sa blokowane, gdy decyzje architektoniczne odklada sie na po umowe, z nieokreslonymi sciezkami danych i modelem akceptacji  
-Main promise: skupiony przeglad architektury daje podpisane decyzje o granicach, tozsamosci, logowaniu, polityce treningu i umowach integracyjnych przed ruchem produkcyjnym
+Docelowa persona: CTO / architekt enterprise  
+Etap lejka: Decyzja  
+Główny problem: wdrożenia zacinają się lub są blokowane, gdy decyzje architektoniczne odkłada się na po kontrakcie, a ścieżki danych i modele akceptacji pozostają niezdefiniowane  
+Główna obietnica: skoncentrowany przegląd architektury daje podpisane decyzje o granicach, tożsamości, logowaniu, polityce treningu i umowach integracyjnych przed ruchem produkcyjnym
 
-Wdrozenie prywatnego AI to nie wybor modelu. To decyzja integracji i plaszczyzny kontroli.
+Prywatne wdrożenie AI to nie wybór modelu. To decyzja integracyjna i o płaszczyźnie kontroli. Koszt odkładania architektury to nie „więcej spotkań”. To nierozliczone ryzyko: payloady przemieszczają się, zanim granice staną się realne, akceptacje istnieją tylko jako intencja, a operacje odkrywają prawdę pod presją.
 
-## Bezposrednia odpowiedz
+Przegląd architektury prywatnego AI powinien ustalić topologię wdrożenia, tożsamość i segmentację, reguły rezydencji danych i egress, granice treningu i dostrajania, logowanie i retencję pod odtwarzalność, miejsce ludzkiej akceptacji, podwykonawców oraz umowy interfejsów z systemami fabrycznymi. Zapisujcie każdy punkt jako pisemną decyzję z właścicielem, a nie jako aspirację ze slajdu. Niepodpisana architektura to nierozliczone ryzyko — a programy produkcyjne i tak za to zapłacą.
 
-Przeglad architektury prywatnego AI powinien rozstrzygnac topologie wdrozenia, tozsamosc i segmentacje, rezydencje danych i reguly egress, granice treningu i dostrajania, logowanie i retencje pod odtwarzalnosc, miejsce akceptacji czlowieka, podprocesory oraz kontrakty interfejsow systemow fabrycznych. Zapisz kazdy punkt jako decyzje na pismie z wlascicielem, nie jako aspiracje na slajdzie. Niepodpisana architektura to nieoplacone ryzyko.
+## Rejestr decyzji: co musi być podpisane
 
-## Rejestr decyzji: dziewiec decyzji
+Topologia wdrożenia: wybór między środowiskiem on-premise, dedykowanym prywatnym API, izolowanym tenantem lub hybrydą; udokumentujcie, gdzie wykonywana jest inferencja i gdzie mieszkają konsole administracyjne. Tożsamość i dostęp: mapujcie role jak operator, inżynier, integrator i wsparcie dostawcy; zdefiniujcie break-glass i czasowe eskalacje uprawnień. Rezydencja danych i egress: wypiszcie dozwolone regiony i zabronione przepływy, włącznie z backupem i ścieżkami obserwowalności. Granica polityki treningu: określcie, czy payloady klienta mogą trenować, stroić lub zasilać zbiory ewaluacyjne; podajcie identyfikatory klauzul umownych. Logowanie i retencja: zdefiniujcie, co jest logowane na żądanie, identyfikatory korelacji oraz retencję dopasowaną do śledztw. Miejsce ludzkiej akceptacji: wskażcie klasy wyników wymagające nazwanych akceptorów oraz oczekiwania co do poziomu usługi. Podwykonawcy i kontrola zmian: lista zatwierdzonych podwykonawców i okna powiadomień o zmianach. Umowy interfejsów fabrycznych: dla każdego styku MES, QMS lub jeziora danych udokumentujcie odczyt kontra zapis, limity częstotliwości i rollback. Dopasowanie incydentów i DR: wyrównajcie odtwarzanie środowiska AI z instrukcjami postępowania IT zakładu.
 
-### Decyzja 1: Topologia wdrozenia
+Przegląd jest kompletny, gdy zatwierdzony jest diagram architektury w jednej linii, klasy danych są zmapowane na ochronę przechowywania i tranzytu, test dowodzi odtworzenia logów dla przykładowej rekomendacji, a zamówienia trzymają zgodny język umowny. Wstrzymajcie wdrożenie, gdy dokumentacja dostawcy zaprzecza diagramowi albo gdy dostęp wsparcia może dotrzeć do danych produkcyjnych bez śladu w ticketach.
 
-Wybierz miedzy runtime on-premise, dedykowane prywatne API, izolowany tenant lub hybryda.
+Wasz rejestr dziewięciu decyzji powinien być zamykany podpisami dopiero wtedy, gdy każdy punkt mapuje się na nazwane środowisko, trasę i właściciela — a nie wtedy, gdy deck slajdów „czuje się” pewnie. Użyjcie przeglądu, by zestawić Vector z rzeczywistością zakładu: autorskie AI przemysłowe z prywatnymi i izolowanymi wzorcami wdrożenia, wyłączenie danych klienta z treningu modelu oraz rozumowanie dopasowane do transformacji produkcyjnej zamiast ogólnego czatu — żeby wybory wdrożeniowe pozostały odwracalne, zanim produkcyjne sprzężenie stwardnieje.
 
-Udokumentuj gdzie dziala inferencja i gdzie sa konsole administracyjne.
+Przeglądy architektury służą usunięciu niejasności, zanim ruszą pieniądze i dane. Ustalajcie granice wcześniej. Wdrażajcie z mniejszą liczbą niespodzianek.
 
-### Decyzja 2: Tozsamosc i dostep
+Jeśli decyzji nie da się zapisać, to jeszcze nie decyzja — to nadzieja. Nadzieje są drogie w środowiskach produkcyjnych.
 
-Mapuj role: operator, inzynier, integrator, wsparcie dostawcy. Zdefiniuj break-glass i czasowe podwyzszenie uprawnien.
+## Punkt kontrolny zakładu
 
-### Decyzja 3: Rezydencja danych i egress
+Traktujcie „Co powinien ustalić przegląd architektury prywatnego AI przed wdrożeniem” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną. Wreszcie traktujcie niejasność jak dług: każde nieodpowiedziane pytanie o ścieżki danych, domyślne treningi to coś, za co zapłacicie pod presją czasu — zwykle podczas audytu, incydentu lub pędzonego wdrożenia.
 
-Wymien dozwolone regiony i zakazane przeplywy. Uwzglednij kopie zapasowe i observability.
-
-### Decyzja 4: Granica polityki treningu
-
-Okresl czy payload klienta moze trenowac, dostrajac lub zasilac zbiory ewaluacyjne. Powolaj sie na identyfikatory klauzul umownych.
-
-### Decyzja 5: Logowanie i retencja
-
-Zdefiniuj co jest logowane na zadanie, identyfikatory korelacji i retencje pod sledztwa.
-
-### Decyzja 6: Miejsce akceptacji czlowieka
-
-Okresl ktore klasy wyjsc wymagaja nazwanych akceptorow i SLA.
-
-### Decyzja 7: Podprocesory i kontrola zmian
-
-Wymien zatwierdzone podprocesory i okna powiadomien o zmianach.
-
-### Decyzja 8: Kontrakty interfejsow fabrycznych
-
-Dla kazdego MES, QMS lub jeziora danych udokumentuj odczyt kontra zapis, limity i rollback.
-
-### Decyzja 9: Uzgodnienie incydentow i DR
-
-Dopasuj odzyskiwanie runtime AI do runbookow IT zakladu.
-
-## Lista kontrolna: kryteria zakonczenia przegladu
-
-Przeglad jest kompletny gdy:
-
-- [ ] zatwierdzono diagram architektury w jednej linii
-- [ ] zmapowano klasy danych na szyfrowanie w spoczynku i w tranzycie
-- [ ] test udowadnia odtworzenie logow dla przykladowej rekomendacji
-- [ ] zamowienia maja zgodny jezyk umowny
-
-## Kiedy wstrzymac wdrozenie
-
-Wstrzymaj gdy dokumentacja dostawcy zaprzecza diagramowi lub gdy dostep wsparcia do danych produkcyjnych jest bez ticketowanego sladu.
-
-## Most produktowy
-
-DBR77 Vector jest pozycjonowany jako bezpieczna warstwa inteligencji za ekosystemem DBR77: autorskie AI przemyslowe ze wzorcami wdrozenia pod prywatna i izolowana prace, z wykluczeniem danych klienta z treningu modelu i rozumowaniem pod transformacje produkcyjna zamiast ogolnego czatu. Przeglad to miejsce weryfikacji tej narracji wobec faktow zakladu.
-
-## Podsumowanie
-
-Przeglady architektury maja usuwac niejasnosci zanim pojda pieniadze i dane. Rozstrzygaj granice wczesnie. Wdrazaj z mniejsza liczba niespodzianek.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector wspiera rozmowy architektoniczne z jasnymi trybami wdrożenia, postawą treningową i rozumowaniem przemysłowym dopasowanym do podpisanych decyzji o granicach. [Umów demo](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

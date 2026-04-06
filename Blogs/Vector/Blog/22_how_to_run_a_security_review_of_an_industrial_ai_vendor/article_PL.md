@@ -1,80 +1,50 @@
-# Jak przeprowadzic przeglad bezpieczenstwa dostawcy AI przemyslowego
+# Jak przeprowadzić przegląd bezpieczeństwa dostawcy AI przemysłowego
 
-Target persona: CTO / executive zgodny z CISO  
-Funnel stage: Consideration  
-Core problem: przeglady bezpieczenstwa dostawcow AI czesto utykaja na ogolnikach, bo zespoly nie maja strukturalnej sekwencji powiazanej z wdrozeniem, przeplywem danych i polityka treningu  
-Main promise: producenci moga przeprowadzic wiarygodny przeglad bezpieczenstwa dostawcy dzieki powtarzalnej sekwencji, ktora daje dowody, a nie tylko slajdy
+Docelowa persona: CTO / kadra dopasowana do CISO  
+Etap lejka: Rozważanie  
+Główny problem: przeglądy bezpieczeństwa dostawców AI często stają na mglistych zapewnieniach, bo zespołom brakuje uporządkowanej sekwencji powiązanej z wdrożeniem, przepływem danych i polityką treningu  
+Główna obietnica: producenci mogą przeprowadzić wiarygodny przegląd bezpieczeństwa dostawcy w powtarzalnej sekwencji, która produkuje dowody, nie twierdzenia ze slajdów
 
-Przeglad bezpieczenstwa nie jest cwiczeniem z intuicji.
+Przegląd bezpieczeństwa nie powinien być ćwiczeniem z uczuć. Powinien być uporządkowanym przejściem, które zamienia język marketingu na weryfikowalne granice — bo w produkcji „ufajcie nam” to nie kontrola, a demo to nie architektura.
 
-To uporzadkowany przebieg, ktory zamienia jezyk marketingu na weryfikowalne granice.
+Prowadźcie przegląd w tej kolejności: zdefiniujcie zamierzoną granicę wdrożenia, zmapujcie przepływy danych end-to-end, zweryfikujcie politykę treningu i retencji w umowie i architekturze, przetestujcie kontrolę dostępu i logowanie, a następnie zwalidujcie haki governance, takie jak akceptacje i kontrole eksportu. Jeśli dostawca nie potrafi odpowiedzieć na te warstwy konkretnie, przegląd się nie kończy. Jest wstrzymany.
 
-## Bezposrednia odpowiedz
+## Dlaczego kolejność ma znaczenie
 
-Wykonaj przeglad w tej kolejnosci: zdefiniuj zamierzona granice wdrozenia, zmapuj przeplywy danych end-to-end, zweryfikuj polityke treningu i retencji w umowie i architekturze, przetestuj kontrol dostepu i logowanie, nastepnie potwierdz haki governance takie jak aprobata i kontrola eksportu.
+Przeglądy bezpieczeństwa AI zawodzą, gdy zespoły najpierw skaczą do funkcji. Funkcje nie chronią danych. Granice chronią. Dyscyplinowana sekwencja utrzymuje rozmowę zakotwiczoną w tym, czego zespoły bezpieczeństwa faktycznie potrzebują do podpisu: dokąd idą payloady, kto może ich dotknąć, co persystuje i co może się zmienić bez ostrzeżenia.
 
-Jesli dostawca nie odpowie na te warstwy konkretnie, przeglad nie jest zamkniety.
+## Krok 1: Zamroźcie granicę wdrożenia
 
-## Dlaczego kolejnosc ma znaczenie
+Zanim spieracie się o modele, wypowiedzcie granicę, której potrzebujecie: on-prem, tenant w prywatnej chmurze, izolowane VPC z ograniczonymi ścieżkami egress, ocena air-gapped lub inny jawny wzorzec. Zapytajcie dostawcę, które tryby są realne dziś, a które są roadmapą. Ujmijcie luki jako jawne ryzyka, nie przypisy. Jeśli granica jest mglista, wszystko dalej też będzie mgliste.
 
-Przeglady AI pod wzgledem bezpieczenstwa przegrywaja, gdy zespoly zaczynaja od funkcji. Funkcje nie chronia danych. Granice chronia.
+## Krok 2: Zmapujcie przepływy danych
 
-Dyscyplinowana sekwencja utrzymuje rozmowe przy tym, co zespoly bezpieczenstwa musza zaakceptowac.
+Poproście o opis przepływu danych obejmujący: co wchodzi do systemu, gdzie jest przetwarzane, co jest logowane, co jest utrzymywane i co może opuścić granicę. Nabywcy przemysłowi powinni nalegać na diagramy prostym językiem — nie same ogólne odznaki zaufania. Jeśli diagramu nie da się pogodzić z waszym modelem segmentacji, nie macie jeszcze historii gotowej do wdrożenia.
 
-## Krok 1: Zamroz granice wdrozenia
+## Krok 3: Oddzielcie politykę treningu od polityki prywatności
 
-Zanim zdebatujecie modele, okreslcie potrzebna granice: on-premise; prywatny tenant chmury; izolowane VPC bez outboundowych sciezek treningu; ocena air-gapped. Pytaj dostawce, ktore tryby sa realne dzis, a ktore sa roadmapa. Luki zapisuj jako jawne ryzyko, nie przypisy.
+Pytajcie wprost, czy prompty, dokumenty lub rezultaty mogą służyć do ulepszania modeli dostawcy; czy domyślna postawa dla danych klienta w treningu to wyłączenie; oraz jak jest to egzekwowane technicznie, nie tylko umownie. Jeśli odpowiedzi różnią się między sprzedażą a bezpieczeństwem, zatrzymajcie się i pogodźcie. Polityka treningu to miejsce, gdzie „prywatne” często po cichu się rozplata.
 
-## Krok 2: Zmapuj przeplywy danych
+## Krok 4: Zweryfikujcie tożsamość, dostęp i logi audytowe
 
-Popros o opis przeplywu obejmujacy: co wchodzi do systemu; gdzie jest przetwarzane; co jest logowane; co jest przechowywane; co moze opuscic granice.
+Potwierdźcie SSO i dostęp oparty na rolach, separację obowiązków dla działań admina, okna retencji logów oraz możliwość eksportu do wewnętrznego SIEM. Środowiska produkcyjne potrzebują możliwości przeglądu, nie czarnej skrzynki wygody — zwłaszcza gdy istnieje dostęp wsparcia.
 
-Kupujacy przemyslowi powinni domagac sie diagramow w prostym jezyku, a nie tylko ogolnych odznak zaufania chmurowego.
+## Krok 5: Governance i ludzka akceptacja
 
-## Krok 3: Rozdziel polityke treningu od polityki prywatnosci
+Zdefiniujcie, które rezultaty są informacyjne, a które zorientowane na działanie. Zapytajcie, jak produkt wspiera kolejki akceptacji, wersjonowanie rekomendacji oraz wzorce wycofania lub nadpisania. Tu AI przemysłowe rozjeżdża się z generycznym czatem: system musi pasować do rozliczalności, nie tylko do przepustowości.
 
-Pytaj wprost:
+## Krok 6: Punkty styku integracji
 
-- czy prompty, dokumenty lub wyniki moga sluzyc do ulepszania modeli dostawcy?
-- czy domyslnie wylacza sie dane klienta z treningu?
-- jak jest to egzekwowane technicznie, nie tylko umownie?
+Jeśli system połączy się z systemami fabryki, przeglądajcie modele uwierzytelniania API, zakresy least privilege, oczekiwania co do kontroli zmian oraz playbooki reakcji na incydenty. Traktujcie integracje jako rozszerzenie powierzchni ataku — i rozszerzenie konsekwencji operacyjnych.
 
-Jesli odpowiedzi sprzedazy i security sie roznia, zatrzymaj sie i uzgodnij.
+Zanim zamkniecie przegląd, powinniście mieć: pisaną architekturę wdrożenia dla wybranego trybu, język polityki treningu zgodny z kontrolami technicznymi, oświadczenie o logowaniu i retencji, które możecie przekazać IT security, oraz zakres pilota, który nie wymaga sekretów produkcyjnych od pierwszego dnia.
 
-## Krok 4: Potwierdz tozsamosc, dostep i logi audytowe
+Typowe błędy to akceptowanie „enterprise-grade” bez szczegółów granicy, przeglądanie demo UI zamiast ścieżek danych, pozwalanie zamówieniom ścisnąć przegląd bezpieczeństwa do tygodnia checkboxów oraz pomijanie głębokiego nurku w politykę treningu, bo wydaje się prawnicza.
 
-Potwierdz: SSO i dostep oparty na rolach; podzial obowiazkow dla akcji admina; okna retencji logow; eksportowalnosc do wewnetrznego SIEM.
+Strukturalny przegląd bezpieczeństwa dostawcy pozostaje produktywny, gdy odpowiedzi mapują się na lokalizację wdrożenia, ścieżki danych, politykę treningu i śledzialność zamiast na slogany. Vector jest pozycjonowany pod ten rodzaj kontroli: autorskie AI przemysłowe z opcjami on-prem, prywatnego API lub izolowanymi, dane klienta wyłączone z treningu modelu oraz rozumowanie nastawione na wiedzę o transformacji fabryk zamiast na generyczne wzorce czatu.
 
-Srodowiska produkcyjne potrzebuja mozliwosci przegladu, nie wygodnej czarnej skrzynki.
-
-## Krok 5: Governance i ludzka aprobata
-
-Zdefiniuj, ktore wyniki sa informacyjne, a ktore prowadza do dzialan.
-
-Pytaj, jak produkt wspiera: kolejki aprobat; wersjonowanie rekomendacji; wzorce cofniecia lub nadpisania. Tu AI przemyslowe rozjezdza sie z generycznym czatem.
-
-## Krok 6: Punkty integracji
-
-Jesli system polaczy sie z systemami fabrycznymi, przejrzyj: modele uwierzytelniania API; zakres least-privilege; oczekiwania change control; playbooki incident response. Traktuj integracje jako roszerzenie powierzchni ataku.
-
-## Lista dowodowa
-
-Zanim zamkniesz przeglad, powinienes miec: pisemna architekture wdrozenia dla wybranego trybu; jezyk polityki treningu zgodny z kontrolami technicznymi; oswiadczenie o logowaniu i retencji, ktore mozesz przekazac IT security; zakres pilota bez tajemnic produkcyjnych w dzien pierwszy.
-
-## Typowe bledy przegladu
-
-Akceptowanie "enterprise-grade" bez szczegolow granic; ocena demo UI zamiast sciezek danych; pozwolenie zakupom na scisniecie przegladu do tygodnia checkboxow; pomijanie glebokiej polityki treningu, bo wydaje sie prawnicza.
-
-## Most produktowy
-
-DBR77 Vector jest pozycjonowany wokol granic wdrozenia przemyslowego: wlasnosciowe AI przemyslowe z opcjami on-premise, prywatnego API lub izolowanego wdrozenia, z wylaczeniem danych klienta z treningu modelu i rozumowaniem opartym na wiedzy transformacji fabrycznej, a nie na generycznych wzorcach czatu. To pozycjonowanie powinno wczesnie usztywnic rozmowe o bezpieczenstwie.
-
-## Podsumowanie
-
-Powazny dostawca AI przemyslowego powinien witac strukturalny przeglad bezpieczenstwa.
-
-Jesli przeglad pozostaje plytki, wdrozenie i tak wymusi glebie, zwykle pod presja. Lepiej zdobyc przejrzystosc przed zobowiazaniem.
+Poważny dostawca AI przemysłowego powinien witająco przyjmować strukturalny przegląd bezpieczeństwa. Jeśli przegląd pozostaje płytki, wdrożenie w końcu wymusi głębię — zwykle pod presją. Lepiej wypracować jasność przed zobowiązaniem.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Sprawdź bezpieczeństwo](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*
+*DBR77 Vector jest zbudowany pod oceny prowadzone przez bezpieczeństwo: jasne tryby wdrożenia, brak treningu modelu na danych klienta oraz rozumowanie przemysłowe dopasowane do zarządzanego użycia w fabryce. [Przegląd bezpieczeństwa](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*

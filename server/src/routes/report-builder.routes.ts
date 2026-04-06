@@ -6,22 +6,7 @@
  */
 
 import bcrypt from 'bcryptjs';
-import {
-  AlignmentType,
-  BorderStyle,
-  Document,
-  Footer,
-  Header,
-  HeadingLevel,
-  Packer,
-  PageNumber,
-  Paragraph,
-  Table,
-  TableCell,
-  TableRow,
-  TextRun,
-  WidthType,
-} from 'docx';
+import * as docxModule from 'docx';
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
@@ -38,6 +23,23 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { default as defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { exportReportToNotion } from '../services/ai/integrationHubService.js';
+
+const {
+  AlignmentType,
+  BorderStyle,
+  Document,
+  Footer,
+  Header,
+  HeadingLevel,
+  Packer,
+  PageNumber,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+} = docxModule as any;
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import { getOrCreateBrandVoice, updateBrandVoice } from '../services/brandVoiceProfileService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
@@ -3043,8 +3045,8 @@ const writeReportBuilderWordDoc = async (report: any, sections: any[], filePath:
 /**
  * Parse inline markdown (bold, italic, code, links) into TextRun children.
  */
-const parseInlineMarkdown = (text: string): TextRun[] => {
-  const runs: TextRun[] = [];
+const parseInlineMarkdown = (text: string): any[] => {
+  const runs: any[] = [];
   const regex = /(\*\*\*(.*?)\*\*\*|\*\*(.*?)\*\*|\*(.*?)\*|`(.*?)`|\[(.*?)\]\((.*?)\))/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -3075,7 +3077,7 @@ const parseInlineMarkdown = (text: string): TextRun[] => {
 /**
  * Parse a markdown table block (array of lines starting with |) into a docx Table.
  */
-const parseMarkdownTable = (tableLines: string[]): Table => {
+const parseMarkdownTable = (tableLines: string[]): any => {
   const rows: string[][] = [];
   for (const line of tableLines) {
     const trimmed = line.trim();
@@ -3116,10 +3118,10 @@ const parseMarkdownTable = (tableLines: string[]): Table => {
   });
 };
 
-const markdownToDocxParagraphs = (markdown: string): (Paragraph | Table)[] => {
+const markdownToDocxParagraphs = (markdown: string): any[] => {
   const text = String(markdown || '');
   const lines = text.split('\n');
-  const out: (Paragraph | Table)[] = [];
+  const out: any[] = [];
   let i = 0;
 
   while (i < lines.length) {
@@ -3206,7 +3208,7 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
     .filter((s) => s && s.enabled)
     .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
 
-  const children: (Paragraph | Table)[] = [];
+  const children: any[] = [];
 
   // Cover page
   children.push(
@@ -3506,7 +3508,7 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
-    const roleKey = req.user?.role ? String(req.user.role) : null;
+    const roleKey = (req as any).user?.role ? String((req as any).user.role) : null;
     const { template, language, version, confidentiality } = req.query;
     const useV2 = version === '2' || version === 'v2';
 
@@ -3692,7 +3694,6 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     await recordCanonicalExportTrace({
       organizationId,
       userId,
-      roleKey,
       reportId: id,
       format: 'pptx',
     }).catch(() => null);

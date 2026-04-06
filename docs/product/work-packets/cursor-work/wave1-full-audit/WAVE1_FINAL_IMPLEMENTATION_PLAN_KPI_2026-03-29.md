@@ -16,6 +16,7 @@ It does not widen scope into:
 
 ## 2. Canonical Source Stack
 
+- `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
 - KPI and results docs indexed in `docs/product/DOCUMENTATION_REGISTRY.md`
 - `docs/product/RESULTS_V8_SSOT.md`
 - `docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
@@ -24,6 +25,11 @@ It does not widen scope into:
 - `docs/product/work-packets/cursor-work/wave1-full-audit/module-packets/WAVE1_REVIEW_PACKET_KPI_2026-03-29.md`
 - `docs/product/work-packets/cursor-work/wave1a-remediation/WAVE1A_EXECUTION_BRIEF_KPI_FINANSE_2026-03-29.md`
 - `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_GAP_BACKLOG_2026-03-29.md`
+
+Interpretation note:
+
+This document remains the bounded historical final plan for the active Wave 1 KPI lane.
+The broader cross-module target state now lives in `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`.
 
 ## 3. Benchmark Family From `Softs`
 

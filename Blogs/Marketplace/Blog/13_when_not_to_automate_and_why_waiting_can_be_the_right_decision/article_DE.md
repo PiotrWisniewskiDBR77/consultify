@@ -1,70 +1,60 @@
 # Wann man nicht automatisieren sollte (und warum Warten die richtige Entscheidung sein kann)
 
-Target persona: Werksleitung / Operations-Sponsor  
-Funnel stage: Awareness  
-Core problem: Hersteller spueren Druck, schnell zu automatisieren, auch wenn Eingaben, Verantwortung oder Prozessstabilitaet noch nicht reif sind, was teure Fehlstarts erzeugt  
-Main promise: ein ruhiger Entscheidungsrahmen fuer Aufschub ohne Glaubwuerdigkeitsverlust, mit Schutz fuer Kapital und Betriebsstabilitaet
+Zielpersona: Werksleitung / Operations-Sponsor  
+Funnel-Stufe: Wahrnehmungsphase  
+Kernproblem: Hersteller spüren Druck, schnell zu automatisieren, obwohl Inputs, Ownership oder Prozessstabilität nicht bereit sind — was teure Fehlstarts erzeugt  
+Hauptversprechen: Ein ruhiger Entscheidungsrahmen, Automatisierung zu verschieben, ohne Glaubwürdigkeit zu verlieren — bei Schutz von Kapital und operativer Stabilität
 
-Nicht jedes Fertigungsproblem ist ein Automatisierungsproblem. Manchmal ist Warten der richtige Schritt.
+Es gibt einen Unterschied zwischen langsam zu handeln und schlecht zu handeln. Warten kann eine aktive Entscheidung sein — um Durchsatz, Menschen und Kapital vor einem Projekt zu schützen, das Lieferanten zum Raten zwingt und Ihre Fläche Chaos absorbieren lässt. Nicht jeder Engpass soll im nächsten Budgetzyklus ein Roboterprojekt werden. Manche sollten zuerst Messung, Stabilisierung und Alignment-Arbeit werden.
 
-Das ist unbequem in einem Markt, der Geschwindigkeit als Tugend behandelt. Hersteller-first heisst aber nicht, Roboter zu sammeln.
+Das Ziel ist nicht, Verbesserung zu vermeiden. Das Ziel ist, Verwirrung zu Enterprise-Preisen zu vermeiden.
 
-Es geht darum, Durchsatz, Qualitaet, Sicherheit und Kapital vor Projekten zu schuetzen, die starten, bevor das Werk bereit ist.
+## Wenn Aufschub Disziplin ist, nicht Drift
 
-## Wann Warten rational ist, nicht passiv
+Verschieben Sie, wenn Fortfahren bedeuten würde, unterschiedliche Realitäten zu preisen, Angebote zu vergleichen, die noch nicht vergleichbar sind, oder Scope zu unterschreiben, während Operations und Engineering noch unterschiedliche Mentalmodelle von Erfolg tragen. Ein praktischer Test: Können Sie die Herausforderung in einem kurzen Briefing beschreiben, ohne große Unbekannte in Fußnoten zu schmuggeln? Gibt es einen einzigen Verantwortlichen für Scope und Abnahme? Ist der Prozess stabil genug, dass „vorher und nachher“ etwas bedeutet?
 
-Warten ist nicht dasselbe wie Verbesserung vermeiden.
+Schwache Antworten bedeuten nicht immer „nie“. Sie bedeuten oft „noch nicht — und das muss zuerst passieren“.
 
-Warten ist sinnvoll, wenn ein Fortschritt den Lieferanten raten lassen wuerde, das Operationsteam ungeplante Stoerungen absorbieren muesste oder der Einkauf Angebote vergleichen muesste, die noch nicht vergleichbar sind. Ein pragmatischer Test:
+## Werksseitige Realität: Automatisierung verstärkt die Baseline
 
-- koennen Sie die Herausforderung auf einer Seite beschreiben, ohne grosse Unbekannte zu verstecken?
-- gibt es einen klar verantwortlichen Eigentuemer fuer Umfang und Abnahme?
-- ist der Prozess stabil genug, dass Automatisierung eine echte Basis hat?
+Ein chaotischen Prozess zu automatisieren beruhigt ihn nicht; sie codiert ihn in Hardware, Software und Abhängigkeiten, die schwerer anzupassen sind als eine Arbeitsanweisung. Wenn Mix-Regeln, Fluss oder Übergaben wöchentlich noch churnen, sind Sie meist besser dran zu stabilisieren und zu messen, bevor Sie Kapital einfrieren.
 
-Wenn diese Antworten schwach sind, kann Automatisierung noch moeglich sein. Sie ist oft noch nicht klug.
+## Was statt des PO-Drucks zu tun ist
 
-## Signale, dass Automatisierung verschoben werden sollte
+Nutzen Sie das Fenster, um die Inputs aufzubauen, die ein guter Kauf braucht: Baseline-Leistung und Wiederholbarkeit; ein internes Briefing, das die Funktionen unterzeichnen können; Abnahmesprache, die zur Produktion passt; ausgerichtete Operations, Engineering und Beschaffung zu Schnittstellen und Randbedingungen. Wenn Unsicherheit wirklich technisch ist, kann ein begrenzter Proof-Schritt passen — weiterhin als Entscheidungsinstrument, nicht als vage Exploration.
 
-Diese Signale sind illustrativ, keine universellen Gesetze. Sie sind stark genug, um eine Pause zu rechtfertigen:
+Dokumentieren Sie den Aufschub: warum, bis wann und was wahr sein muss, um wieder einzusteigen. Das bewahrt Glaubwürdigkeit gegenüber der Führung und verhindert, dass das Team dieselbe Unbehagen-Woche für Woche neu verhandelt.
 
-| Signal | Warum es zaehlt |
-| --- | --- |
-| Prozessfluktuation | Automatisierung verstaerkt Instabilitaet |
-| Fehlende Baseline-Daten | Ziele sind nicht verteidigbar, Angebote nicht fair vergleichbar |
-| Ungeklaerte Produktmix-Regeln | Variabilitaet wird teure Change Requests |
-| Zersplitterte Verantwortung | Entscheidungen stocken, Umfang driftet |
-| Standort-Reife-Luecken | Strom, Platz, IT/OT-Zugang, Sicherheitskontext sind offen |
+## Sourcing-Disziplin gilt weiter
 
-Verschiebung ist eine Entscheidung.
+Auch wenn Sie Kapital pausieren, können Sie den Workflow stärken, den Sie später brauchen werden: klarere Herausforderungen, sichtbare Annahmen, vergleichbare Antwortstrukturen. So startet der nächste Zyklus schärfer, nicht lauter.
 
-Sie sollte mit Gruenden dokumentiert werden, nicht als Scheitern gefluestert werden.
+Für konkrete nächste Schritte in der Dokumentation siehe [Wie man ein besseres Automatisierungs-Herausforderungsbriefing schreibt](../14_how_to_write_a_better_automation_challenge_brief/article_DE.md) und [Was in eine Automatisierungs-RFQ oder -RFP gehört](../15_what_to_include_in_an_automation_rfq_or_rfp/article_DE.md).
 
-## Was statt sofortigem Kauf zu tun ist
+## Eine kompakte Pause-Checkliste
 
-Wenn Automatisierung verschoben wird, kann das Werk dennoch vorankommen: Prozess stabilisieren und Wiederholbarkeit messen; Abnahmekriterien in operativer Sprache definieren; Operations, Engineering und Einkauf in einem Brief ausrichten; begrenzten Pilot oder Nachweisschritt, wenn Unsicherheit technisch ist; vergleichbares RFQ-Paket vorbereiten, wenn die Eingaben existieren. Das haelt Schwung ohne vorzeitige Kapitalbindung.
+Nutzen Sie sie nahe einer Go/No-Go-Gate: Prozess-Churn unter Kontrolle; Baseline verstanden; Mix- und Variabilitätsregeln geschrieben; ein Owner und Genehmiger benannt; Site-, Sicherheits-, IT/OT-Zugang realistisch beschrieben; Erfolgskriterien testbar. Wenn mehrere Punkte scheitern, ist Pause oft billiger als Rettung.
 
-## Bezug zur Sourcing-Disziplin
+## Wie DBR77 Marketplace „noch nicht“ unterstützt
 
-Verschobene Automatisierung ist leichter zu verteidigen, wenn Einkauf als Workflow behandelt wird, nicht als Shopping.
+Struktur hilft auch, wenn Sie noch nicht vergeben wollen. Konsistente Herausforderungsdefinition und ein auf Vergleichbarkeit ausgerichteter Workflow halten zukünftige Angebote aligned, wenn das Werk bereit ist zu kaufen — ohne eine vorzeitige Marktrunde zu erzwingen.
 
-Dazu gehoeren: klare Herausforderungsdefinition; sichtbare Annahmen; vergleichbare Angebotsstrukturen; explizite Meilensteine. Wenn diese Elemente fehlen, kaufen viele Teams trotzdem. Sie kaufen nur Verwirrung.
+## Glaubwürdigkeit beim Warten
 
-## Was das fuer DBR77 Marketplace bedeutet
+Ein dokumentierter Aufschub schützt Sponsoren. Er zeigt, dass die Organisation Disziplin statt Theater wählte: hier fehlen Inputs, hier ist der Arbeitsplan, hier ist das Datum oder Gate zum Wiedereinstieg. Das ist weitaus stärker als ein vages „wir sind nicht bereit“, das Druck und Hintertür-Lieferanten-Bypass einlädt. Behandeln Sie Warten als Projekt mit eigenen Ownern und Meilensteinen — Stabilisierung, Messung, Briefing-Qualität — damit Schwung ohne Kapitalverpflichtung weiterläuft.
 
-DBR77 Marketplace ist fuer die Phase gebaut, in der Automatisierungsentscheidungen Struktur brauchen, nicht Hype.
+Warten scheitert auch, wenn es zu dauerhafter Mehrdeutigkeit wird. Koppeln Sie Aufschub an explizite Re-Entry-Kriterien: was messbar, was aligned, was geschrieben sein muss. Ohne das wird „später“ zur Gewohnheit, die den ursprünglichen technischen Grund überdauert.
 
-Es unterstuetzt Hersteller, indem es Teams hilft: Herausforderungen konsistent zu beschreiben; Angebote in Dimensionen zu vergleichen, die fuer die Ausfuehrung zaehlen; Sourcing-Chaos durch einen vertrauensorientierten Auswahl-Workflow zu reduzieren.
+## Vom Entscheid zum Werksverhalten
 
-Wenn Sie noch nicht bereit sind zu automatisieren, unterstuetzt die Plattform dennoch die Vorbereitung, die kuenftige Projekte vergleichbarer und weniger riskant macht.
+Aufschub ist keine Pause in der Realität — es ist eine Pause in der Kapitalverpflichtung, während das Werk weiter das aktuelle Modell fährt. Deshalb zählt interne Klarheit weiter: Selbst wenn Sie noch nicht kaufen, stärken Sie Messung, Stabilität und Briefing-Qualität, damit der nächste Zyklus schneller und sauberer ist. Warten ohne Artefakte ist nur Verzögerung; Warten mit Plan ist Portfoliodisziplin.
 
-## Bottom line
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Dokumentieren Sie, was „bereit“ in operativen Begriffen bedeutet — Owner, Baselines, Schnittstellen, Abnahme-Skizzen — damit Wiedereinstieg ein Entscheidungsgate ist, keine Stimmung.
 
-Automatisierung ist keine moralische Pflicht. Es ist eine Kapital- und Operationsentscheidung.
+## Kurz gesagt
 
-Warten ist richtig, wenn Eingaben, Verantwortung und Stabilitaet noch nicht reif sind. Das Ziel ist nicht endloses Aufschieben.
-
-Das Ziel ist, nicht fuer ein Projekt zu zahlen, das startet, bevor die Entscheidung gut getroffen werden kann.
+Automatisierung ist eine Kapital- und Operationsentscheidung, kein Reflex. Warten ist richtig, wenn Inputs, Ownership und Stabilität nicht bereit sind — damit der nächste Versuch eine Entscheidung ist, kein Glücksspiel.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt die strukturierte Vorbereitungsphase durch konsistente Herausforderungsdefinition und einen Workflow, der zukünftige Angebote vergleichbar hält, wenn das Werk bereit ist zu kaufen. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

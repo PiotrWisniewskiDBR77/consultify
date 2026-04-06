@@ -4,6 +4,12 @@
 > Parent program: `docs/product/work-packets/POST_V81_BACKLOG_DEBT_REDUCTION_PROGRAM.md`
 > Last updated: 2026-03-28
 
+Historical note:
+
+- this tracker records the accepted V8/V8.1 bounded backlog program,
+- follow-on full-system KPI evolution is now governed by `docs/product/KPI_FULL_SYSTEM_CANON_V8.md` plus the active Results and reporting canon docs,
+- do not treat the bounded `Results / KPI / ROI` acceptance recorded here as the upper limit of the product target state.
+
 ---
 
 ## 1. How To Use

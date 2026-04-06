@@ -1,68 +1,38 @@
-# Wie man ein Cross-Site-Playbook fuer KI-unterstuetzte Werksoperationen baut
+# So bauen Sie ein standortübergreifendes Playbook für KI-gestützte Fabrikoperations auf
 
-Target persona: VP Operations / Regional Manufacturing Director / Program-PMO-Lead  
-Funnel stage: Adoption  
-Core problem: jedes Werk improvisiert Modi, Schwellen und Training, sodass Konzern keine Outcomes vergleichen oder sichere Muster wiederverwenden kann  
-Main promise: ein Playbook mit globalen Non-Negotiables, lokalen Anpassungszonen, Evidence-Standards und einem Quartals-Sync-Rhythmus, der Follow-through haelt
+Zielpersona: VP Operations / Regional Manufacturing Director / Program PMO Lead  
+Funnel-Stufe: Adoption  
+Kernproblem: Jeder Standort improvisiert Modi, Schwellen und Training—Konzern kann Ergebnisse nicht vergleichen oder sichere Muster nicht wiederverwenden  
+Hauptversprechen: ein Playbook mit globalen Non-Negotiables, lokalen Anpassungszonen, Evidence-Standards und einem vierteljährlichen Sync-Rhythmus, der Follow-through erhält
 
-Bauen Sie ein Cross-Site-Playbook, indem Sie trennen, was identisch sein muss (Safety-Regeln, Audit-Felder, Freigabe-Klassen, Daten-Definitionen fuer geteilte KPIs) von dem, was differieren darf (Linien-Topologie, Besetzung, Lieferanten-Mix, Schwellenzahlen). Veroeffentlichen Sie ein Workflow-Template, ein Review-Evidence-Pack und eine Eskalations-Map. Fuehren Sie monatliche Cross-Site-Readouts zu Abschlussmetriken, nicht zu Modell-Accuracy. Wenn zwei Werke dasselbe KPI ohne Meeting nicht erklaeren koennen, ist das Playbook noch eine Folie. Skalierung ist nicht Copy-Paste. Skalierung ist kontrollierte Variation mit gemeinsamem Nachweis.
+Skalierung über Standorte ist kein Copy-Paste. Es ist kontrollierte Variation mit gemeinsamem Nachweis. Bauen Sie ein standortübergreifendes Playbook, indem Sie trennen, was identisch sein muss—Sicherheitsregeln, Audit-Felder, Freigabeklassen, gemeinsame KPI-Definitionen—von dem, was transparent abweichen darf, etwa Linien-Topologie, Personaldeckung, Lieferantenmix und an Reife angepasste Schwellenzahlen. Veröffentlichen Sie ein Workflow-Template, ein Evidence-Pack für Reviews und eine Eskalationskarte. Führen Sie monatliche Readouts zu Abschlussmetriken, nicht zu Modellgenauigkeit. Wenn zwei Standorte dasselbe KPI nicht ohne Meeting erklären können, ist das Playbook noch ein Folien-Deck.
 
-## Layer 1: globale Non-Negotiables (gleicher Text, gleiche Felder)
+Der vierteljährliche Sync ist mehr als Status: er ist die Stelle, an der Abweichungen entweder genehmigt und versioniert werden — oder zurückgezogen werden, bevor sie zur stillen Standardpraxis werden. Ohne diesen Rhythmus driftet Multi-Site schneller, als regionale Führung es merkt, weil jede Fabrik „nur lokal“ optimiert.
 
-Diese wandern woertlich: Mindest-Audit-Felder fuer assistierte Tasks und Overrides; Freigabe-Klassen, die lokal nicht umgangen werden duerfen; Incident-Linkage-Regeln, wenn Assistenz Routing beruehrt hat; Trainings-Gates vor Act-Modi; Definition von "closed" fuer geteilte KPIs. Behandeln Sie sie wie Qualitaetssystem-Klauseln.
+Globale Non-Negotiables sollten wie Qualitätsklauseln lesen: Mindest-Audit-Felder für assistierte Tasks und Overrides, Freigabeklassen, die lokal nicht umgangen werden dürfen, Incident-Verknüpfungsregeln, wenn Assistenz Routing berührt hat, Trainings-Gates vor Act-Modi und eine gemeinsame Definition von „geschlossen“. Lokale Anpassungszonen müssen dokumentiert und versioniert sein: wer ein Tuning besitzt, Wirksamkeitsdaten, Rollback-Notizen. Opazität macht Multi-Site-Programme zu unvergleichbaren Geschichten.
 
-## Layer 2: lokale Anpassungszonen (dokumentiert, versioniert)
+Ein praktisches Playbook umfasst Scope für verwandte Workflows, Modus-Policy mit Promotionskriterien, Exception-Taxonomie und Eskalationsleitern, Pflicht-Übergabefelder der Schicht, Review-Kalender bei 30, 90 und 180 Tagen, Change Control für Schwellen-Propagation und Grenzen für Vendor-Tools, die die Ausführungsschicht speisen.
 
-Werke duerfen innerhalb Grenzen tunen: Schwellenzahlen an Geraeteklasse und Reife gebunden; Schichtmuster fuer Arbitrator-Coverage; Sprache und Job-Aids fuer Operateure; Integrations-Tiefe mit Legacy-MES oder -WMS. Jedes lokale Tuning braucht Owner, Wirksamkeitsdatum und Rollback-Note.
+Machen Sie einen ersten Workshop-Tag, der Alignment erzwingt: drei KPIs mit identischen Definitionen, zwei Pilot-Workflows mit echten Signal-IDs, gemeinsame Override-Reason-Codes, benannte Site-Sponsoren und Nacht-Stellvertreter, ein Konfliktlösungsmuster mit Uhren und ein 30-Tage-Vergleich nur mit Exporten.
 
-## Framework: Playbook-Kapitel-Gliederung
+Template-Rollouts optimieren identische Screens, bis Standorte Realität verbergen. Playbook-Rollouts optimieren identischen Nachweis, bis Audits einfach werden. Templates fühlen sich schnell an, bis Exceptions untertauchen. Playbooks fühlen sich schwer an, bis Führung Abschluss ehrlich vergleichen kann.
 
-1. Scope-Statement: welche Workflows sind standortuebergreifend in Familie  
-2. Mode-Policy: watch, advise, act Regeln und Promotionskriterien  
-3. Exception-Taxonomie und Eskalationsleiter  
-4. Uebergabefelder bei jedem Schichtwechsel Pflicht  
-5. Review-Kalender: 30-, 90-, 180-Tage-Evidence-Packs  
-6. Change Control: wer Schwellen-Edits publiziert und wie Versionen propagieren  
-7. Supplier- und IT-Grenzen fuer Vendor-Tools, die die Ausfuehrungsschicht speisen
+Das Playbook funktioniert, wenn Standorte bereits einen disziplinierten Operations-Review-Cadence teilen, IT-OT versionierte Regeln veröffentlichen kann und Regionalführung transparente Schwellenunterschiede akzeptiert. Es scheitert, wenn Konzern identische Zahlen ohne identische Constraints verlangt, Standorte gemeinsame Override-Codes verweigern oder Vendor-Tools den Ausführungsdatensatz umgehen.
 
-## Checkliste: erste Cross-Site-Workshop-Agenda (ein Tag)
+IRIS unterstützt ein echtes Multi-Site-Playbook, wenn Standorte ein gemeinsames Ausführungsmodell für Verhalten, Abschluss und Evidence teilen—auch wenn lokale Schwellen differieren—damit Reviews Disziplin statt Definitionsdebatten vergleichen.
 
-- drei geteilte KPIs mit identischen Definitionen ausrichten  
-- zwei Pilot-Workflows end-to-end mit echten Signal-IDs mappen  
-- Override-Reason-Codes vereinbaren (gleiche Liste, gleiches Training)  
-- Site-Sponsoren und Deputies fuer Nacht-Coverage zuweisen  
-- ein Konfliktloesungsmuster waehlen (Arbitrator oder Komitee mit Uhr)  
-- ersten 30-Tage-Vergleich nur mit Exports planen
+Für Skalierung, Review und Vendor-Grenzen siehe [How to Scale AI Assistance Without Losing Operational Control](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_DE.md), [How to Review AI-Assisted Operations After the First 90 Days](../40_how_to_review_ai_assisted_operations_after_the_first_90_days/article_DE.md) und [When Vendor AI Tools Should Feed the Execution Layer and When Not To](../48_when_vendor_ai_tools_should_feed_the_execution_layer_and_when_not_to/article_DE.md).
 
-## Vergleich: Template-Rollouts versus Playbook-Rollouts
+Ein Playbook schützt Standorte auch vor konzernweitem „Metrik-Neid“. Wenn eine Fabrik härtere Constraints fährt, können Abschlusszeiten auf einem naiven Dashboard schlechter aussehen—es sei denn, das Playbook erzwingt explizite Grenzdokumentation. Transparenz schlägt falsche Vergleichbarkeit. Ziel sind keine identischen Performance-Zahlen, sondern vergleichbare Disziplin: gleiche Record-Shape, gleiche Audit-Felder, gleiche Bedeutung von geschlossen, auch wenn Schwellen aus guten Gründen differieren.
 
-| Element | Template-Rollout | Playbook-Rollout |
-|---|---|---|
-| Intent | identische Screens | identischer Nachweis und Safety |
-| Flexibilitaet | niedrig | begrenztes lokales Tuning |
-| Failure-Mode | Shadow-Workarounds | sichtbarer Versions-Drift, steuerbar |
-| Executive-Read | Adoption-Prozent | Vergleichbarkeit von Abschluss und Response |
+Regionalführung sollte das Playbook als Verhandlungsinstrument behandeln. Es macht Trade-offs explizit: was für Kunden- und Audit-Sicherheit non-negotiable ist, was sich mit Standortreife flexibel anpassen darf und was nie ohne versionierte Veröffentlichung weichen darf. Das reduziert passiv-aggressiven Drift, bei dem Standorte auf dem Papier compliant sind und in der Praxis improvisieren.
 
-Templates wirken schnell, bis Werke Realitaet verstecken. Playbooks wirken schwer, bis Audits einfach werden.
+Ein standortübergreifendes Playbook ist ein Vertrag für Evidence, kein Mandat für Gleichheit. Standardisieren Sie, was Menschen, Kunden und Audits schützt. Lokalisieren Sie, was reale Constraints widerspiegelt—mit Versionsdisziplin.
 
-## Wann dieses Playbook funktioniert
+## Operatives Fazit
 
-Werke teilen bereits einen finanztauglichen Operations-Review-Rhythmus; IT-OT kann versionierte Regel-Publikation unterstuetzen; Regionalleiter akzeptieren unterschiedliche Schwellen mit Transparenz.
-
-## Wann dieses Playbook scheitert
-
-Konzern will identische Zahlen ohne identische Constraints; Werke weigern gemeinsame Override-Codes, weil "wir sind anders"; Vendor-Tools umgehen den Ausfuehrungsdatensatz.
-
-## Warum IRIS ein echtes Multi-Site-Playbook stuetzt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Ein Ausfuehrungsmodell standortuebergreifend macht Cross-Site-Reviews zu Vergleichen von Verhalten und Abschluss, nicht zu Definitionsstreit.
-
-## Fazit
-
-Ein Cross-Site-Playbook ist ein Evidence-Vertrag, kein Identitaetszwang. Standardisieren Sie, was Menschen, Kunden und Audits schuetzt. Lokalisieren Sie, was echte Constraints widerspiegelt, mit Versionsdisziplin.
+Das Versprechen dieses Artikels—ein Playbook mit globalen Non-Negotiables, lokalen Anpassungszonen, Evidence-Standards und einem vierteljährlichen Sync-Rhythmus, der Follow-through erhält—wird erst operativ, wenn es ändert, wie Arbeit fließt: klareres Ownership, schnellere Erstzuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „How to Build a Cross-Site Playbook for AI-Assisted Factory Operations“ ist das der Akzeptanztest: die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS gibt Multi-Site-Programmen ein Ausführungsmodell für Tasks, Freigaben und Reviews, damit Vergleiche dieselbe Record-Shape nutzen. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

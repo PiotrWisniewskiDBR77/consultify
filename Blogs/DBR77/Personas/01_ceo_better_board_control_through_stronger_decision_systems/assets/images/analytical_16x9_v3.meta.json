@@ -1,0 +1,23 @@
+{
+  "article_path": "Blogs/DBR77/Personas/01_ceo_better_board_control_through_stronger_decision_systems",
+  "product": "DBR77",
+  "scope_type": "persona",
+  "asset_slug": "01_ceo_better_board_control_through_stronger_decision_systems",
+  "role": "analytical",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "newsletter"
+  ],
+  "model": "openai:gpt-image-1.5",
+  "prompt_source": "Blogs/DBR77/Personas/01_ceo_better_board_control_through_stronger_decision_systems/image-prompts.md",
+  "prompt_text": "visualize the path from truth to board-level control. no readable text; physical board-to-control metaphor; Mode 2 Target aspect ratio: 16:9 Critical render rule: do not generate any readable text, letters, numbers, captions, labels, logos, watermarks, slide titles, document copy, dashboard copy, UI text, headline text, wall text, or typographic overlays anywhere in the image. If a screen, board, document, dashboard, scorecard, or interface is visible, it must contain only abstract non-readable blocks, simple shapes, and soft placeholder marks. Never place large title words, marketing slogans, section headers, or composited text for later overlay; leave that area visually quiet and empty instead. Use unlabeled structure, simple shapes, tokens, lanes, connectors, and status cues instead of screenshot-like dashboards or reports. Analytical image rule: avoid screenshot aesthetics, whiteboard snapshots, slide decks, tables with headers, and infographic panels with text. Prefer a premium enterprise visual metaphor built from cards, modules, flows, physical markers, subtle charts without labels, and clean operational structure. Do not label stages directly inside the image; represent system stages through position, grouping, material contrast, and abstract markers only.",
+  "negative_prompt": "org chart with names, KPI typography, board deck mockup, portrait CEO face as main subject",
+  "seed": "n/a",
+  "run_id": "n/a",
+  "created_at": "2026-03-31T16:19:58.483921+00:00",
+  "alt_text_en": "visualize the path from truth to board-level control.",
+  "caption_en": "visualize the path from truth to board-level control.",
+  "crop_safe_notes": "Composed for 16:9. Use the social role for square-first reuse.",
+  "output_path": "Blogs/DBR77/Personas/01_ceo_better_board_control_through_stronger_decision_systems/assets/images/analytical_16x9_v3.png"
+}

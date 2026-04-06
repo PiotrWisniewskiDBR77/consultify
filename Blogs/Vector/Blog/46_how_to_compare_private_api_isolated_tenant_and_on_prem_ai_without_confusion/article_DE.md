@@ -1,54 +1,34 @@
-# Wie Sie private API, isolierten Tenant und On-Prem-KI ohne Verwirrung vergleichen
+# So vergleichen Sie Private API, isolierten Tenant und On-Prem-KI ohne Verwirrung
 
-Zielpersona: CTO / Infrastruktur-Leiter / Einkaufs-Recht  
+Zielpersona: CTO / Infrastruktur-Leitung / Procurement Counsel  
+Funnel-Stufe: Consideration  
+Kernproblem: Anbieter verwenden Wörter wie privat und isoliert, während Datenpfade, Admin-Zugriff und Trainingsgrenzen materiell differieren  
+Hauptversprechen: ein Vergleichsraster an Kontrollfragen entfernt Label-Verwirrung und stützt verteidigbare Shortlists
 
-Trichterphase: Consideration Kernproblem: Lieferanten nutzen Woerter wie privat und isoliert, waehrend Datenpfade, Admin-Zugriff und Trainingsgrenzen materiell differieren Hauptversprechen: ein Vergleichsraster an Kontrollfragen entfernt Label-Verwirrung und stuetzt verteidigbare Shortlists Das Label ist nicht die Architektur.
+Das Label ist nicht die Architektur. Die Architektur ist, wo Inferenz läuft, wo Daten transitieren, wer Konfiguration berühren kann und was mit Kundeninhalten unter Stress passiert. Bis diese Fakten feststehen, ist „privat“ nur ein Wort — und Procurement kann Optionen nicht ehrlich vergleichen.
 
-Die Architektur ist, wo Inferenz laeuft, wo Daten transitieren und wer Konfiguration beruehren darf.
+Vergleichen Sie Private API, isolierten Tenant und On-Prem-KI ohne Verwirrung, indem Sie jede Option nach Inferenz-Ort, Datenresidenz und Egress, administrativen Tenancy-Grenzen, Subprozessoren und Support-Zugriff, Schlüssel- und Secret-Verwahrung, Netzsegmentierung, Besitz von Upgrade und Patch, Kostenmodell und erforderlichem Betriebs-Know-how bewerten. Private API kann weiterhin auf Multi-Tenant-Infrastruktur mit logischer Trennung laufen. Isolierter Tenant sollte dedizierte Ressourcen und vertraglich getrennte Control-Plane-Pfade bedeuten — verifizieren Sie die Behauptung, nehmen Sie sie nicht an. On-Premise legt Laufzeit und oft Artefakt-Verwahrung in Ihren Perimeter, verschiebt aber die Betriebslast auf Ihr Team. Stellen Sie jedem Anbieter dieselben Fragen, lesen Sie dann die Deltas.
 
-Vergleichen Sie private API, isolierten Tenant und On-Prem-KI ohne Verwirrung, indem Sie jede Option nach Inferenz-Ort, Datenresidenz und Egress, administrativen Tenant-Grenzen, Subprozessoren und Support-Zugriff, Schluessel- und Secret-Verwahrung, Netzsegmentierung, Besitz von Upgrade und Patch, Kostenmodell und benoetigtem BetriebSkill bewerten. Private API kann weiterhin Multi-Tenant-Infrastruktur mit logischer Trennung sein. Isolierter Tenant sollte dedizierte Ressourcen und vertraglich getrennte Control-Plane-Pfade bedeuten. On-Prem platziert Runtime und oft Artefakt-Verwahrung innerhalb Ihres Perimeters, verlagert aber mehr Betriebslast auf Ihr Team.
+## Was die drei Muster typischerweise implizieren
 
-Stellen Sie jedem Lieferanten dieselben zwoelf Fragen, lesen Sie dann die Deltas.
+Private-API-Muster führen Inferenz oft in von Ihnen gewählten Anbieter-Regionen aus, mit moderatem Egress-Risiko je nach Vertrag und Architektur. Isolierte-Tenant-Muster können Vermischungsrisiko senken, wenn die Architektur wirklich zum Label passt. On-Premise-Muster können bestimmte Egress-Risiken senken, wenn air-gapped oder eng segmentierte Pfade existieren — sie verlangen aber Ihre Resilienz-Geschichte und Betriebsreife. Admin-Konsolen-Exposition, Patch-Verantwortung und Identity-Integration unterscheiden sich materiell zwischen den Modi; vergleichen Sie sie explizit, nicht implizit.
 
-## Vergleich: drei Deployments-Muster im Ueberblick
+## Zwölf Kontrollfragen, die fest bleiben sollten
 
-| Frage | Private API (dedizierter Vertrag) | Isolierter Tenant | On-Prem |
-| --- | --- | --- | --- |
-| wo laeuft Inferenz | Lieferanten-Region Ihrer Wahl | Lieferanten-Stack, tenant-dediziert | Ihre Anlage oder Private Cloud unter Ihrer Kontrolle |
-| typisches Egress-Risiko | moderat, vertragsabhaengig | niedriger wenn Architektur zum Label passt | niedrigster wenn Air-Gap-Pfade existieren |
-| Admin-Konsolen-Exposition | gemeinsame Plattform mit RBAC | dedizierte Control Plane erwartet | Ihre IAM-Integration |
-| wer patcht Runtime | Lieferant | Lieferant, tenant-scoped | Sie oder Managed Service |
-| Skill-Bedarf Ihres Teams | niedrig bis mittel | mittel | hoch ohne Partner |
+Listen Sie jede Region auf, in der Nutzlasten und Logs ruhen können. Zeigen Sie das Netzdiagramm vom Werksystem bis zum Modell-Endpunkt. Definieren Sie Trainings- und Fine-Tuning-Policy in einem Satz mit technischer Durchsetzung. Benennen Sie Subprozessoren, die Nutzlasten oder Logs berühren. Beschreiben Sie Vendor-Support-Zugriff: Break-Glass, Logging, Zeitlimits. Mappen Sie Identity-Provider-Integration und Rollenmodell. Nennen Sie Recovery-Verpflichtungen für die KI-Service-Schicht. Klären Sie Erwartungen zu Benachrichtigung bei Modell- oder Routing-Updates. Dokumentieren Sie, ob fremder Kunden-Traffic physische Hosts teilt, was für Ihr Risikomodell zählt. Dokumentieren Sie Backup, Restore und Disaster-Szenarien. Alignen Sie Vertragsklauseln zum tatsächlich ausgerollten Diagramm. Benennen Sie den internen Owner für quartalsweise Abstimmung.
 
-## Checkliste: zwoelf Kontrollfragen
+Hybride Programme können On-Premise-Inferenz für höchstsensible Workflows mit Private API für niedrigere Klassen kombinieren — vereint unter einem Governance-Modell. Hybrid ist in Ordnung, wenn es explizit ist, nicht zufällig.
 
-1. Listen Sie jede Region, in der Payloads und Logs ruhen koennen.
-2. Zeigen Sie das Netzdiagramm vom Werksystem zum Modell-Endpunkt.
-3. Definieren Sie Trainings- und Fine-Tuning-Policy in einem Satz mit technischer Durchsetzung.
-4. Benennen Sie Subprozessoren, die Payloads oder Logs beruehren.
-5. Beschreiben Sie Lieferanten-Support-Zugriff: Break-Glass, Logging, Zeitlimits.
-6. Mappen Sie IdP-Integration und Rollenmodell.
-7. Nennen Sie RPO und RTO fuer die KI-Service-Schicht.
-8. Nennen Sie Aenderungs-SLAs fuer Modell- oder Routing-Updates.
-9. Klaeren Sie, ob Traffic anderer Kunden physische Hosts teilt.
-10. Dokumentieren Sie Backup, Restore und Disaster-Szenarien.
-11. Passen Sie Vertragsklauseln zum tatsaechlich deployed Diagramm.
-12. Benennen Sie den internen Eigentuemer fuer quartalsweise Abstimmung.
+Label-Verwirrung endet, wenn die zwölf Kontrollfragen fest bleiben und jede Option gegen dasselbe Raster gescored wird. Vector ist bewusst vielgestaltige Industrie-KI im DBR77-Ökosystem: On-Premise-, Private-API- und isolierte Deployments-Muster, Kundendaten nicht zum Modelltraining, proprietäres Reasoning auf Werks-Transformationswissen trainiert statt generischem Chat — damit Käufer Modi nach Kontrollen und Betriebskosten statt nach Slogans vergleichen.
 
-## Wann Hybrid ehrlich ist
+Verwirrung endet, wenn Fragen fest bleiben und Antworten spezifisch sind. Wenn zwei Optionen bei Kontrollen gleich scoren, vergleichen Sie Betriebskosten und interne Skills ehrlich. Wenn sie unterschiedlich scoren, war das Label nie der Punkt.
 
-Manche Programme kombinieren zu Recht On-Prem-Inferenz fuer hoechstsensitive Workflows mit private API fuer niedrigere Klassen, vereinheitlicht unter einem Governance-Modell. Hybrid ist in Ordnung, wenn explizit, nicht zufaellig.
+## Werks-Checkpoint
 
-## Produktbruecke
+Behandeln Sie „So vergleichen Sie Private API, isolierten Tenant und On-Prem-KI ohne Verwirrung“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Auszug aus der Trainingspolicy, Log-Probe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Fertigungs-KI reift, wenn Belege Routine werden: dieselbe Disziplin, die Sie schon vor Linienfreigabe, Lieferantenwechsel oder großem IT-Cutover erwarten. Das ist der Wechsel von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent.
 
-DBR77 Vector ist die sichere Intelligenzschicht hinter dem DBR77-Oekosystem: proprietaere Industrie-KI mit Deployment-Optionen inklusive on-premise, private API und isolierten Deployments, trainiert auf Werks-Transformationswissen, ohne Kundendaten zum Modelltraining, mit industrieller Argumentation statt generischem Chat. Vergleiche werden schneller klar, wenn die Produktstory bei Fertigungs-Control-Planes startet, nicht bei Consumer-Chat-Annahmen.
-
-## Abschlussfazit
-
-Verwirrung endet, wenn Fragen fix bleiben und Antworten konkret werden.
-
-Wenn zwei Optionen bei Kontrollen gleich scoren, vergleichen Sie ehrlich Betriebskosten und interne Skills. Wenn sie unterschiedlich scoren, war das Label nie der Punkt.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, dann diese: benennen Sie, was vor Ausweitung der Nutzung wahr sein muss, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Trost mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*
+*DBR77 Vector richtet sich an Käufer, die On-Premise, Private API und isolierte Deployments mit industriellem Reasoning und klaren Trainingsgrenzen vergleichen. [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*

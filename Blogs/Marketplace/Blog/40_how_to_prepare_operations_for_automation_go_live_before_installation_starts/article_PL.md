@@ -1,56 +1,56 @@
-# Jak przygotowac operacje na go-live automatyzacji zanim ruszy instalacja
+# Jak przygotować operacje na go-live automatyzacji, zanim ruszy instalacja
 
-Target persona: kierownik zakladu / kierownictwo operacji z partnerami utrzymania i szkolen  
-Funnel stage: Evaluation do Adoption (gotowosc, gdy dostawa jest jeszcze wczesniej w strumieniu)  
-Core problem: operacje sa traktowane jako odbiorca commissioning zamiast wspolwlasciciela akceptacji i ryzyka przelaczenia  
-Main promise: lista gotowosci dzialajaca rownolegle do instalacji, a nie po niej
+Docelowa persona: Kierownik zakładu / kierownictwo operacji z partnerami z utrzymania i szkoleń  
+Etap lejka: Ocena do adopcji (gotowość, gdy realizacja jest wciąż „wyżej” w strumieniu)  
+Główny problem: operacje traktuje się jak odbiorcę rozruchu zamiast jak współwłaściciela akceptacji i ryzyka przełączenia  
+Główna obietnica: lista gotowości prowadzona równolegle do instalacji, a nie po niej
 
-Go-live to nie zdarzenie w harmonogramie dostawcy. To moment, w ktorym linia posiada rezultaty.
+Jeśli operacje angażują się na poważnie dopiero przy rozruchu, dostajecie bohaterskie przełączenia: obejścia interlocków „tylko na dziś”, szkolenia ściskane w nadgodziny i akceptacja podpisywana, gdy standardowa praca wciąż żyje w czyjejś głowie. Go-live staje się numerem cyrkowym zamiast przejściem.
 
-Jesli operacje przygotuja sie pozno, akceptacja staje sie walka, a harmonogram zakladnikiem.
+Gotowość powinna iść równolegle do instalacji: ścieżki szkoleniowe, konsumpcja dokumentacji, myślenie o częściach zamiennych, okna walidacji zgodne z produkcyjną rzeczywistością oraz jawne właścicielstwo zachowań pierwszego dnia obok nowego systemu.
 
-## Bezposrednia odpowiedz
+## Współwłasność akceptacji wcześnie
 
-Przygotuj operacje na go-live przed startem instalacji, blokujac plany obsady i szkolen, definiujac reguly rownoleglego biegu, planujac okna walidacji z poziomami ryzyka produkcji, wczesnie przypisujac sygnatariuszy akceptacji, wyrownujac czesci zamienne i oprzyrzadowanie oraz publikujac sciezki eskalacji przy przestojach w rampie. Gotowosc to praca zakladu. Instalacja to praca dostawcy. Interfejs miedzy nimi musi miec wlasciciela wczesnie.
+Operacje powinny widzieć kryteria akceptacji przed przyznaniem, a nie odkrywać je przy SAT. Jeśli operatorzy nie mogą prowadzić standardowej pracy bez heroizmu, system nie jest gotów — niezależnie od entuzjazmu integratora.
 
-## Lista A: ludzie i umiejetnosci
+## Utrzymanie i IT w tym samym rytmie
 
-Elementy (ilustracyjne): nazwani operatorzy zapasowi dla nowych trybow; kryteria ukonczenia szkolen powiazane z obiektami akceptacji, a nie listami obecnosci; plan umiejetnosci utrzymania dla diagnostyki pierwszego poziomu.
+Filozofia części zamiennych, zadania prewencyjne, ścieżki eskalacji oraz dostęp sieciowy lub sterowania planujcie, gdy sprzęt jest jeszcze na placu — nie wtedy, gdy przestój jest drogi.
 
-## Lista B: material i prawda produktu pod walidacje
+## Przełączenie to decyzja produkcyjna
 
-Elementy (ilustracyjne): reprezentatywny zestaw SKU na przebiegi testowe; uzgodniona sciezka zlomu dla partii walidacyjnych; plan probek jakosci zgodny z regulami dowodu akceptacji.
+Nazwijcie okna produkcyjne, myślenie o rollbacku i komunikację wewnątrz zmian. Traktujcie go-live jak kontrolowaną zmianę w działającej fabryce, a nie przecięcie wstęgi.
 
-## Lista C: okna ryzyka produkcji
+## Dokumentacja nie jest deliverable, jeśli nikt jej nie czyta
 
-Opublikuj jezyk kalendarza zrozumialy dla calego zakladu (poziomy ilustracyjne):
+Zaplanujcie czas na strukturalną konsumpcję: kto kogo szkoli, jak sprawdzacie kompetencje, gdzie żyją aktualizacje. Papier w segregatorze to nie gotowość.
 
-| poziom | znaczenie | przykladowe kontrole |
-| --- | --- | --- |
-| zielony | normalny priorytet produkcji | ograniczony dostep dostawcy |
-| zolty | kontrolowana walidacja | nazwane okna zamrozenia SKU |
-| czerwony | proba przelaczenia lub przebiegi w typie SAT | dyrekcja na wezwaniu |
+## Jak DBR77 Marketplace wiąże się dalej
 
-## Lista D: udzial IT i MES jako partnerow operacji
+Artefakty ustrukturyzowanego wyboru powinny dawać operacjom realne obiekty akceptacji do planowania — a nie obietnice na slajdach, które parują na hali.
 
-Potwierdz: kto waliduje zdarzenia identyfikowalnosci pod obciazeniem testowym; jak obslugiwane sa petle rework w okresie probnym.
+Najbliższe elementy ciągłości: [Co FAT i SAT powinny naprawdę udowodnić przed startem produkcyjnym](../25_what_fat_and_sat_should_actually_prove_before_go_live/article_PL.md), [Jak powinna wyglądać czysta przekazka od wyboru dostawcy do realizacji](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_PL.md) oraz [Jak ustawić kryteria akceptacji, zanim rozpocznie się realizacja automatyzacji](../36_how_to_set_acceptance_criteria_before_automation_delivery_begins/article_PL.md).
 
-## Lista E: wlascicielstwo pierwszych trzydziestu dni operacji
+## Operatorzy jako partnerzy, nie widzowie
 
-Zdefiniuj: kto autoryzuje zmiany parametrow po go-live; co wyzwala kontrolowany stop zamiast polaczenia do dostawcy.
+Gdy operatorzy pomagają definiować akceptację i kontrole szkoleniowe, przyjmują system zamiast go tolerować. Wczesny udział to nie „miło mieć”; to sposób na uniknięcie „mówiliśmy wam” przy SAT. Dajcie zespołom czas poza linią na uczenie się strukturalnie — nie jako nagrodę, ale jako zaplanowaną pracę operacyjną.
 
-## Co to znaczy dla DBR77 Marketplace
+Planujcie krzywą uczenia się uczciwie. System poprawny na papierze może wciąż paść w pierwszych tygodniach, gdy standardowa praca jest niejasna albo kierownictwo oczekuje natychmiastowej szczytowej wydajności.
 
-DBR77 Marketplace to workflow decyzji automatyzacji i warstwa zaufania przy wyborze integratora.
+## Od decyzji do zachowania hali
 
-Gotowosc operacyjna nalezy do tej samej opowiesci: porownywalnosc jest zmarnowana, jesli zaklad nie moze przyjac tego, co wybral. Marketplace to nie katalog robotow.
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „jak przygotować operacje na go-live automatyzacji, zanim ruszy instalacja” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-To system pierwszy dla producenta, by redukowac chaos sourcingu i wyrownac rzeczywistosc dostawy z zapisem decyzji.
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
+
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
+
+Na koniec powiąż tę dyscyplinę z rozliczalnością: nazwij, kto zweryfikuje założenia na hali i przy którym kamieniu milowym. Mity kwitną, gdy nikt nie posiada pomiaru; słabną, gdy weryfikacja jest częścią planu projektu, a nie dopiskiem.
 
 ## Podsumowanie
 
-Zacznij gotowosc operacji, gdy zaczyna sie instalacja, a nie gdy zaczyna sie commissioning. Pozna gotowosc to sposob, w jaki go-live staje sie obwinianiem.
+Przygotujcie operacje, zanim instalacja się skończy. Akceptacja, szkolenia, części zamienne i dyscyplina przełączenia należą do planu od początku — nie jako panika w tygodniu go-live.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace utrzymuje artefakty wyboru i przekazania w ustrukturyzowanej formie, więc operacje mogą planować okna walidacji wobec realnych obiektów akceptacji, a nie obietnic ze slajdów. [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

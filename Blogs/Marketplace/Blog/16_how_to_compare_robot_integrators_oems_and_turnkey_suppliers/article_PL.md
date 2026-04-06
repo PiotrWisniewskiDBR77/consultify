@@ -1,83 +1,58 @@
-# Jak porownywac integratorow robotow, OEM i dostawcow pod klucz
+# Jak porównywać integratorów robotów, OEM-ów i dostawców turnkey
 
-Target persona: komitet zakupowy / inzynieria i przywodztwo zakupow  
-Funnel stage: Decision  
-Core problem: producenci porownuja dostawcow jak jedna kategorie, choc modele dostaw, przydzial ryzyka i mechanika zmian roznia sie zasadniczo  
-Main promise: ramy porownawcze mapujace typy dostawcow na to, co optymalizuja, co uwidaczniaja i co musi nalezec do kupujacego
+Docelowa persona: Komitet zakupowy / Kierownictwo inżynieryjne i zakupów  
+Etap lejka: Decyzja  
+Główny problem: producenci porównują dostawców jak jedną kategorię, choć modele dostawy, własność ryzyka i mechanika zmian materialnie się różnią  
+Główna obietnica: ramy porównania mapujące typy dostawców na to, co optymalizują, co eksponują i co musi pozostać po stronie kupującego
 
-Integratorzy robotow, OEM i dostawcy pod klucz moga dostarczyc automatyzacje. Nie dostarczaja tej samej decyzji.
+Integratorzy, OEM-y i dostawcy turnkey mogą postawić automatyzację na hali. Nie sprzedają tego samego rodzaju projektu. Jeśli sortujesz propozycje tylko po cenie i czasie realizacji, przegapisz różnice strukturalne, które decydują, czy szósty tydzień poczujesz się jak partnerstwo, czy jak spór.
 
-Jesli porownujesz ich tylko po cenie i lead time, przegapisz roznice strukturalne, ktore decyduja o tym, jak projekt czuje sie po pierwszym tygodniu.
+Lekiem jest porównywanie pól, nie etykiet — i uczciwość wobec tego, co wasz zakład musi posiadać w każdym modelu.
 
-## Trzy archetypy dostawcow (uzyteczne, nie idealne)
+## Dostawa pod integratora: dopasowanie i dług jasności
 
-Rzeczywisci dostawcy moga laczyc modele. Te archetypy i tak pomagaja zadawac lepsze pytania.
+Praca pod kątem integratora często optymalizuje dopasowanie inżynierskie do bałaganiarskiej rzeczywistości zakładu. Dostajesz elastyczność i szycie interfejsów na miarę; poniesiesz też wyższy ciężar wewnętrznej jasności. Konflikt pojawia się na krawędziach zakresu, w lukach założeń i niespodziankach integracji, gdzie brief był miękki. Ta ścieżka nagradza silne zarządzanie po stronie kupującego.
 
-### Dostawa pod integratora
+## Dostawa pod OEM: siła wzorca i napięcie na granicy
 
-**Co czesto optymalizuje**: elastyczne dopasowanie inzynierskie do realiow zakladu.
+Ścieżki OEM często optymalizują wokół zplatformizowanych systemów i powtarzalnych podsystemów. Granice bywają czytelniejsze, wzorce testów fabrycznych silniejsze, kontrola zmian ciaśniejsza. Konflikt pojawia się, gdy wasze ograniczenia łamią szablon — nietypowa zmienność, kruche peryferyjne integracje lub warunki hali, które nie pasują do narracji katalogowej.
 
-**Czego oczekiwac**: wiecej customizacji, wiecej pracy interfejsowej, wieksza zaleznosc od wewnetrznej jasnosci.
+## Dostawa turnkey i pakietowa: jedna odpowiedzialność, gdy „pudełko” jest czyste
 
-**Gdzie pojawia sie konflikt**: dryf zakresu, luki w zalozeniach, niespodzianki integracyjne.
+Pakiety turnkey mogą koncentrować odpowiedzialność za zdefiniowany efekt — gdy wyłączenia są uczciwe, a interfejsy stabilne. Konflikt skupia się w szarych strefach: bałaganiaste przekazania upstream/downstream, niejasna widoczność podwykonawców lub język „jednego gardła”, który nie przetrwa pierwszej prawdy hali.
 
-### Dostawa pod OEM
+## Ośmiu pól, które trzymaj stałe dla każdego typu
 
-**Co czesto optymalizuje**: standaryzowane platformy maszyn i powtarzalne podsystemy.
+Zadawajcie każdemu dostawcy te same pytania w tej samej strukturze. Co jest w zakresie i poza nim, w prostym języku? Jakie założenia leżą pod wydajnością i harmonogramem? Jak udowodnicie zdolność — gdzie, z jakimi próbkami, przy jakiej logice odbioru? Kto posiada integrację na warstwie mechanicznej, elektrycznej, sterowania i danych? Jak zgłasza się zmiany, jak się je wycenia i zatwierdza? Jak rozdzielane są opóźnienia, ograniczenia dostaw i nieznane techniczne? Co znaczą dokumentacja, szkolenie i „komplet” operacyjnie? Co po starcie produkcyjnym — oczekiwania wobec reakcji, części, eskalacji?
 
-**Czego oczekiwac**: wyrazniejsze granice produktu, mocniejsze wzorce testow fabrycznych, ciasniejsza kontrole zmian.
+Jeśli dostawca nie potrafi uczynić tych odpowiedzi czytelnymi, traktuj to jako sygnał — nie dziwactwo formatowania.
 
-**Gdzie pojawia sie konflikt**: dopasowanie do niestandardowych ograniczen hali, obsluga zmiennosci, odpowiedzialnosc za peryferyjna integracje.
+## Dopasuj model do kształtu problemu
 
-### Dostawa pod klucz / pakiet
+Wysokie obciążenie integracyjne z dojrzałym wewnętrznym zarządzaniem może faworyzować głębię integratora, jeśli utrzymasz dyscyplinę zakresu. Powtarzalne, sprzętocentryczne problemy z kontrolowaną zmiennością mogą faworyzować mocne strony OEM. Efekty z czystymi granicami i stabilnymi interfejsami mogą pasować do turnkey — pod warunkiem mierzalnych wyłączeń.
 
-**Co czesto optymalizuje**: jedno gardlo odpowiedzialnosci za zdefiniowany pakiet rezultatu. **Czego oczekiwac**: skonsolidowana odpowiedzialnosc, gdy granice sa czyste.
+Typowy tryb awarii to wybór z znajomości marki, podczas gdy kształt problemu wskazuje gdzie indziej.
 
-**Gdzie pojawia sie konflikt**: szara strefa wlasnosci przy nieuporzadkowanym upstream/downstream, niejasne wylaczenia, widocznosc podwykonawcow.
+## Prowadź spotkania porównawcze, które nagradzają substancję
 
-## Porownuj na osmiu polach decyzyjnych
+Użyjcie jednego briefu i jednego szkieletu odpowiedzi. Strukturyzujcie Q&A wokół założeń i wyłączeń. Wymagajcie krótkiego oświadczenia o zależnościach i ryzykach. Zapisujcie różnice w macierzy, którą posiada zakupy. Nie pozwólcie, by wygrał najlepszy prezenter domyślnie.
 
-Uzyj tych samych pol dla kazdego typu dostawcy.
+## Jak DBR77 Marketplace pomaga
 
-| Pole | Co porownywac |
-| --- | --- |
-| Granica zakresu | wlaczenia/wylaczenia w prostym jezyku |
-| Zalozenia | throughput, mix, uptime, srodowisko, IT/OT |
-| Dowod wydajnosci | logika FAT/SAT, probki, testy akceptacyjne |
-| Wlasnosc integracji | kto robi co w sasiednich systemach |
-| Mechanika zmian | jak zmiany zakresu sa wyceniane i zatwierdzane |
-| Alokacja ryzyk | opoznienia, lancuch dostaw, niewiadome techniczne |
-| Dokumentacja i szkolenia | co znaczy "komplet" operacyjnie |
-| Wsparcie po starcie | oczekiwania reakcji i sciezka czesci zamiennych |
+Ustrukturyzowane porównanie uwidacznia różnice typów dostawcy w założeniach, zakresie i własności — nie tylko w estetyce slajdów.
 
-Jesli dostawca nie odpowiada jasno w tych polach, traktuj to jako sygnal, nie drobny problem formatu.
+Powiązane lektury: zestaw to z [Czym powinna charakteryzować się dobra oferta na automatyzację](../17_what_a_good_automation_offer_should_make_visible/article_PL.md) oraz [Co sprawdzić przed podpisaniem umowy na automatyzację](../20_what_to_check_before_signing_an_automation_contract/article_PL.md).
 
-## Praktyczna regula: dopasuj model dostawcy do ksztaltu problemu
+## Archetypy dostawców i wasza wewnętrzna zdolność
 
-To osad, nie prawo.
+„Właściwy” typ zależy od tego, co organizacja potrafi rządzić. Ścieżki pod integratora pożerają jasność kupującego; pod OEM — dopasowanie szablonu; turnkey — czystą definicję granic. Jeśli zakład nie wyprodukuje stabilnego briefu i właścicieli interfejsów, najbardziej elegancki język turnkey i tak się strzępi. Dopasowujcie model nie tylko do problemu technicznego, lecz do dojrzałości zarządczej, jaką faktycznie utrzymacie podczas integracji.
 
-**Wysokie obciazenie integracja specyficzna dla zakladu** czesto sprzyja sile integratora, jesli governance jest mocne; **Powtarzalne rozwiazanie sprzetowe** czesto pasuje do sily OEM, jesli zmiennosc jest kontrolowana; **Zakup rezultatu o czystej granicy** moze pasowac do pod klucz, jesli wylaczenia sa uczciwe i mierzalne.
+Gdy modele się mieszają — a często się mieszają — zapiszcie, które elementy podlegają którym zasadom: gdzie kończą się platformy standardowe, gdzie zaczyna się inżynieria na zamówienie i jak wygląda wsparcie po starcie. Mieszana dostawa bez jawnych zasad bywa najgorszym z obu światów: niestandardowa złożoność z niejasną odpowiedzialnością.
 
-Trybem porazki jest wybor po znajomosci marki zamiast po ksztalcie problemu.
+## W skrócie
 
-## Jak przeprowadzic uczciwe spotkanie porownawcze
-
-Wyslij ten sam brief i ten sam szkielet odpowiedzi; przeprowadz strukturyzowane Q and A na zalozeniach i wylaczeniach; wymagaj krotkiego oswiadczenia o ryzyku i zaleznosciach po kazdej stronie; udokumentuj roznice w macierzy porownawczej prowadzonej przez zakupy; unikaj pozwalania, by wygral najlepszy prezenter domyslnie.
-
-## Co to oznacza dla DBR77 Marketplace
-
-DBR77 Marketplace wspiera zakupy producenta-first, traktujac automatyzacje jako workflow, nie przegladanie katalogu.
-
-Pomaga zespolom porownywac oferty z wieksza struktura i bardziej widocznymi zalozeniami, co ma znaczenie wlasnie wtedy, gdy typy dostawcow sie roznia.
-
-Wspiera tez wybor integratorow oparty na zaufaniu: celem jest obronna porownywalnosc, nie konkurs piekna.
-
-## Bottom line
-
-Integratorzy, OEM i pod klucz nie sa wymiennymi etykietami. Implikuja rozne wzorce odpowiedzialnosci. Porownuj pola, nie slogany.
-
-Jesli porownanie jest czyste, decyzja latwiej sie tlumaczy w zakladzie i latwiej bronic pozniej.
+Te archetypy dostawców implikują różne wzorce własności. Porównujcie te same pola decyzyjne dla każdej ścieżki — wtedy wyjaśnicie przyznanie wewnątrz zakładu i obronicie je, gdy realizacja robi się trudna.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace wspiera ustrukturyzowane porównanie ofert i wybór integratora nastawiony na zaufanie, tak by różnice typów dostawcy były widoczne w założeniach i zakresie, nie tylko w prezentacjach. [Porównaj oferty](https://dbr77.com/marketplace) lub [Umów demo dla producenta](https://dbr77.com/demo).*

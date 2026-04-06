@@ -1,57 +1,54 @@
-# Jak ocenic, czy projekt automatyzacji jest gotowy do akceptacji przez zarzad
+# Jak ocenić, czy projekt automatyzacji jest gotowy do akceptacji przez zarząd
 
-Target persona: dyrektor zakladu / sponsor CFO z ekspozycja na zarzad  
-Funnel stage: Consideration (brama kapitalowa przed zobowiazaniem)  
-Core problem: zespoly prosza zarzad o pieniadze, podczas gdy porownywalnosc, wlascicielstwo i logika akceptacji sa nadal domyslne  
-Main promise: brama gotowosci, ktora obronisz w pietnastominutowej rozmowie z zarzadem bez ukrywania otwartych ryzyk
+Docelowa persona: Dyrektor zakładu / sponsor po stronie CFO z ekspozycją na zarząd  
+Etap lejka: Rozważanie (brama kapitałowa przed zobowiązaniem)  
+Główny problem: zespoły proszą o pieniądze, gdy porównywalność, właścicielstwo i logika akceptacji są wciąż domyślne  
+Główna obietnica: brama gotowości, którą obronisz w piętnastominutowej rozmowie z zarządem bez ukrywania otwartych ryzyk
 
-Akceptacja przez zarzad to nie glosowanie nad morale.
+Czas na zarządzie jest krótki. Słabe pakiety recykulują slajdy dostawców, grzebią logikę wyboru i traktują akceptację jak przyszły spór. Decyzja gotowa na zarząd to taka, którą da się opowiedzieć jako spójną historię: co kupujecie, dlaczego ta ścieżka, ile to kosztuje w gotówce i czasie, co musi być prawdą, by się udało, jakie ryzyka zostają otwarte i kto je posiada.
 
-To przeniesienie odpowiedzialnosci z zespolu projektowego na bilans przedsiebiorstwa.
+Gotowość znaczy, że te elementy są jawne — nie domyślne, nie odłożone na „zespół projektowy to ogarnie”.
 
-Jesli pakiet miesza entuzjazm z brakiem porownywalnosci, prosisz o finansowanie teatru.
+## Rozmowa, którą powinniście być w stanie poprowadzić
 
-## Bezposrednia odpowiedz
+Prostym językiem odpowiedzcie: jaki efekt operacyjny jest celem; jak brzmią granice zakresu i wyłączenia; na jakich założeniach stoi zwrot; jak porównywano oferty; dlaczego ten dostawca i model; co udowadnia akceptacja; co musi dostarczyć zakład; co się dzieje, gdy harmonogram lub zakres się ruszą. Jeśli któraś odpowiedź wymaga „obok”, nie jesteście gotowi na salę, którą zarezerwowaliście.
 
-Projekt automatyzacji jest gotowy do akceptacji przez zarzad, gdy w jednym pakiecie pokazesz: wyrownana wewnetrzna baze zakresu, co najmniej dwie porownywalne sciezki oceny lub udokumentowany wyjatek, nazwane po stronie nabywcy obiekty akceptacji, harmonogram z zaleznosciami zakladu, jawna odpowiedzialnosc za ryzyko do go-live oraz wniosek kapitalowy powiazany z kamieniami milowymi, a nie samymi fakturami dostawcy.
+## Porównywalność to temat zarządczy
 
-Jesli ktoregos z tych elementow brakuje, prosisz o czek in blanco w przebraniu projektu.
+Komitet powinien widzieć, że wybór opierał się na ustrukturyzowanych kryteriach — nie na ostatnim demo. Logika przyznania należy do pakietu, nie tylko do pamięci zakupów.
 
-## Checklista gotowosci (minimum)
+## Ryzyka nazwane z właścicielami
 
-| Brama | jak wyglada "gotowe" |
-| --- | --- |
-| Zakres | wlaczenia i wylaczenia sa zapisane i podpisane wewnetrznie |
-| Porownywalnosc | oferty lub scenariusze sa znormalizowane do tych samych obiektow akceptacji |
-| Wlascicielstwo | operacje, utrzymanie, IT, jakosc i BHP maja nazwanych akceptujacych |
-| Komercja | logika TCO jest widoczna, nie tylko pozycje capex |
-| Ryzyko | piec glownych ryzyk ma mitygacje i wlascicieli po stronie zakladu |
-| Harmonogram | okna walidacji sa w kalendarzu zakladu |
+Otwarte ryzyka są w porządku, gdy mają łagodzenie i rozliczalność. Ukryte ryzyka stają się niespodziankami, które wyglądają na błąd zarządzania.
 
-## Kiedy wstrzymac zlozenie zamiast prezentowac
+## Historia ekonomiczna poza samym ROI
 
-Wstrzymaj zlozenie do zarzadu, gdy: preferowany dostawca zmienil zakres po shortliscie bez swiezego zapisu porownania; kryteria akceptacji istnieja tylko w szablonie dostawcy; uczciwy dzisiejszy przebieg wewnetrznego wyrownania (wzorce z 19 i 42) nie przeszedlby bez nowych luk. Wstrzymanie jest tansze niz powrot do zarzadu po nieudanym FAT.
+Timing gotówki, skutki operacyjne i wrażliwość na przepustowość lub mix powinny być w polu widzenia. Jeden wskaźnik nie wystarczy do osądu powierniczego.
 
-## Reality check: pakiety dla zarzadu czesto wygladaja mocniej, niz sa naprawde, bo seniorzy potrafia je uratowac werbalnie
+## Jak DBR77 Marketplace wspiera pakiet
 
-To jest dokladnie zagrozenie. Sponsor zna projekt. Lider zakladu potrafi dopowiedziec niuanse. CFO potrafi wygladzic jeden brakujacy detal. Ale jesli pakiet potrzebuje werbalnego ratunku, zeby uczynic porownywalnosc, wlascicielstwo albo logike akceptacji zrozumiala, projekt prosi zarzad o zatwierdzenie pewnosci, a nie gotowosci.
+Ustrukturyzowana ocena wcześniej sprawia, że materiały na zarząd da się prześledzić do tych samych obiektów akceptacji i tej samej dyscypliny porównań, jakiej oczekują kierownictwa — zamiast odbudowywać historię z PDF-ów.
 
-## Protokol z ograniczeniem czasu: pietnastominutowa narracja dla zarzadu
+Najbliższe artykuły towarzyszące: [Co powinien zawierać pakiet decyzyjny ws. automatyzacji gotowy na zarząd](../44_what_a_board_ready_automation_decision_packet_should_include/article_PL.md), [Co dobry wewnętrzny biznes case na automatyzację powinien uczynić widocznym](../39_what_a_good_internal_business_case_for_automation_should_make_visible/article_PL.md) oraz [Jak przeprowadzić końcowy wewnętrzny przegląd wyrównania przed kickoffem automatyzacji](../42_how_to_run_a_final_internal_alignment_review_before_automation_kickoff/article_PL.md).
 
-Problem i granica operacyjna w dwoch zdaniach; Co porownywales i jak oferty uczyniono porownywalnymi; Co kupujesz: obiekty akceptacji prostym jezykiem; Co musi dostarczyc zaklad: interfejsy, przestoje, szkolenia, czesci zamienne; Prosba kapitalowa powiazana z kamieniami milowymi i gotowoscia do go-live; Trzy glowne ryzyka i kto odpowiada na reakcje. Jesli krok dwa jest mglisty, nie jestes gotowy.
+## Test „piętnastu minut”
 
-## Co to znaczy dla DBR77 Marketplace
+Wyobraźcie sobie piętnaście minut i zero slajdów. Czy da się wyjaśnić decyzję tak, by rozumiał ją przemyślany outsider: problem, rozważane opcje, dlaczego ta ścieżka, koszt, co musi pójść dobrze, czego pierwsze będziecie pilnować po przełączeniu? Jeśli do podstawowych pytań potrzebujecie prywatnego załącznika, nie jesteście gotowi na salę, którą zarezerwowaliście.
 
-DBR77 Marketplace to workflow decyzji automatyzacyjnych, warstwa zaufania przy wyborze integratora oraz system porownywania ofert, zeby chaos sourcingu nie docieral do sali zarzadu.
+Gotowość na zarząd to też gotowość emocjonalna: sponsorzy powinni wiedzieć, gdzie dopuszczają pomyłkę i jaki wczesny sygnał wywoła korektę kursu bez paniki.
 
-Gotowosc do zarzadu to wewnetrzne odbicie: dowod, ze porownywalnosc i logika przyznania byly dyscyplinowane przed prosba o kapital. Marketplace to nie katalog robotow.
+## Od decyzji do zachowania hali
 
-To system z priorytetem dla producenta, zeby ustrukturyzowana ocena dawala zapisy obronne przed zarzadem.
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „jak ocenić, czy projekt automatyzacji jest gotowy do akceptacji przez zarząd” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
+
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
+
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
 ## Podsumowanie
 
-Akceptacja przez zarzad powinna byc nudna, bo praca jest juz widoczna. Jesli pakiet wymaga ratowania werbalnego, wroc z nim do zespolu.
+Gotowość na zarząd to jasność narracji plus logika, którą da się sprawdzić. Jeśli w krótkiej, bezpośredniej rozmowie nie obronicie porównywalności, akceptacji i właścicielstwa, odłóżcie prośbę, aż będziecie mogli.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*
+*DBR77 Marketplace porządkuje ocenę i porównywalność wcześniej w procesie, więc pakiety na zarząd opierają się na tych samych obiektach akceptacji i dyscyplinie porównań, jakiej oczekuje kierownictwo. [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*

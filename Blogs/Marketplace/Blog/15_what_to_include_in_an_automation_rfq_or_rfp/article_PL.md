@@ -1,82 +1,60 @@
-# Co powinno znalezc sie w RFQ/RFP automatyzacji
+# Co umieścić w zapytaniu ofertowym lub przetargu (RFQ/RFP) na automatyzację
 
-Target persona: lider zakupow / buyer techniczny  
-Funnel stage: Consideration  
-Core problem: pakiety RFQ sa czesto niepelne lub nierowne, co zmusza dostawcow do wyceny roznych rzeczywistosci i niszczy porownywalnosc  
-Main promise: praktyczna mapa tresci RFQ/RFP, ktora standaryzuje to, co musi byc widoczne zanim oferty beda oceniane
+Docelowa persona: Lider zakupów / Kupujący techniczny  
+Etap lejka: Rozważanie  
+Główny problem: pakiety RFQ bywają niekompletne lub nierówne, co zmusza dostawców do wyceny różnych rzeczywistości i niszczy porównywalność  
+Główna obietnica: praktyczna mapa treści RFQ/RFP, która standaryzuje to, co musi być widoczne, zanim oferty trafią do oceny
 
-RFQ automatyzacji to nie formalnosc.
+RFQ na automatyzację to moment, w którym intencja staje się porównywalna — albo nie. Cienkie pakiety zapraszają do racjonalnego zachowania dostawców: wypełniają luki założeniami. Założenia to sposób, w jaki dwie „podobne” ceny stają się dwoma różnymi projektami, a zespół odkrywa rozjazd dopiero wtedy, gdy shortlista jest już politycznie zamrożona.
 
-To moment, w ktorym producent zamienia intencje w porownywalne propozycje. Gdy RFQ jest cienki, dostawcy robia jedyne racjonalne: zapelniaja luki zalozeniami.
+Traktuj RFQ jako silnik porównywalności, nie ćwiczenie z szablonu.
 
-Zalozenia sa tym, jak dwie "podobne" ceny staja sie dwoma roznymi projektami.
+## RFQ kontra RFP: niech etykiety mają sens
 
-## RFQ kontra RFP: utrzymaj rozroznenie uzyteczne
+Nazewnictwo różni się między firmami. Praktycznie: RFQ, gdy potrzeba jest zdefiniowana, ale warianty rozwiązań wciąż konkurują; RFP, gdy modele dostawy, partnerzy lub ścieżki architektury są realnie otwarte. W obu przypadkach potrzebujesz tych samych pól widoczności. Format bez treści daje tylko ładniejszą niekompatybilność.
 
-Te etykiety roznia sie miedzy firmami.
+## Co należy do pakietu
 
-Uzyj praktycznego podzialu: **RFQ** bardziej do zdefiniowanej potrzeby z miejscem na warianty rozwiazania; **RFP** bardziej do szerszej oceny, gdy strategia, partnerzy i modele dostawy nadal konkuruja.
+**Reguły handlowe i procesowe** stawiają barierki: harmonogram decyzji i kamienie milowe, zarys płatności i gwarancji, poufność i obchodzenie danych, struktura złożenia. Struktura bije branding — wymuś sekcje, by recenzenci porównywali substancję.
 
-W obu przypadkach producent i tak potrzebuje tych samych pol widocznosci.
+**Definicja wyzwania** to narracja należąca do kupującego: efekty i kryteria sukcesu, opis procesu z wyraźnymi granicami, reguły zmienności i reprezentatywne próbki, ograniczenia takie jak przestrzeń, media, tempo i środowisko.
 
-Jesli egzekwujesz tylko format, a nie tresc, nadal dostaniesz nieporownywalne odpowiedzi.
+**Interfejsy techniczne i zależności** nazywają sprzęt i systemy upstream/downstream, ograniczenia IT/OT i wymagane integracje, kontekst BHP i znane odniesienia normatywne, oczekiwania co do utrzymania i części zamiennych.
 
-## Pakiet RFQ: co powinno byc w srodku
+**Wymagania wobec odpowiedzi dostawcy** tworzą porównywalność. Poproś o spójne sekcje: oświadczenie o zakresie z włączeniami i wyłączeniami; opis rozwiązania na użytecznej głębokości, nie tylko marketing; jawne założenia; harmonogram z zależnościami; strukturę handlową pokazującą, co rusza ceną; krótki, konkretny widok ryzyka; ograniczone, weryfikowalne referencje doświadczenia.
 
-Traktuj to jako minimalny pakiet porownywalnosci.
+Swobodne eseje produkują porównanie opowieści, nie ofert.
 
-### A. Reguly komercyjne i procesowe
+## Samokontrola przed wysłaniem
 
-Timeline decyzji i oczekiwania co do kamieni milowych; na wysokim poziomie platnosci i gwarancje; oczekiwania co do poufnosci i danych; reguly formatu oferty (struktura wazniejsza niz branding).
+Jeśli kryteria sukcesu są mgliste, zmienność niedookreślona, interfejsy niejasne, odbiór wciąż rozmyty, a struktura odpowiedzi luźna, spodziewaj się zamętu po złożeniu. Szybki wewnętrzny przegląd tych wymiarów łapie słabość, gdy poprawki są tanie.
 
-### B. Definicja wyzwania (narracja nalezaca do kupujacego)
+## Co daje dyscyplina
 
-Rezultat i kryteria sukcesu; opis procesu z granicami; reguly zmiennosci i reprezentatywne probki; ograniczenia: przestrzen, media, tempo, srodowisko.
+Mocne RFQ nie eliminują negocjacji. Redukują ukryty przerób, ostrzą doprecyzowania i chronią, gdy kierownictwo pyta, dlaczego jedna liczba jest niższa — czy odbija prawdziwą efektywność, czy węższy wszechświat pracy.
 
-### C. Interfejsy techniczne i zaleznosci
+## Jak DBR77 Marketplace się wpisuje
 
-Urzadzenia i systemy upstream/downstream; ograniczenia IT/OT i wymagane integracje; kontekst BHP i odniesienia do norm (w zakresie wiedzy); oczekiwania utrzymaniowe i czesci zamienne.
+Jakość RFQ decyduje, czy późniejsze porównanie będzie czyste, czy polityczne. Ustrukturyzowana widoczność założeń, granic, zależności i logiki handlowej upstream sprawia, że downstreamowa ocena jest obronna.
 
-### D. Wymagania co do odpowiedzi dostawcy (tu powstaje porownywalnosc)
+Sąsiednie kroki w sekwencji: zobacz [Jak napisać lepszy brief wyzwania automatyzacyjnego](../14_how_to_write_a_better_automation_challenge_brief/article_PL.md) oraz [Jak określić zakres projektu automatyzacji bez przesady](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_PL.md).
 
-Wymagaj odpowiedzi w spojnych sekcjach: oswiadczenie o zakresie (wlaczenia/wylaczenia); opis rozwiazania na wlasciwej glebokosci (nie tylko marketing); lista zalozen (jawna); harmonogram z zaleznosciami; struktura komercyjna (co zmienia cene); rejestr ryzyk lub top ryzyka (krotko, konkretnie); referencje lub doswiadczenie (ograniczone, weryfikowalne).
+## RFQ jako filtr jakości dostawcy
 
-Jesli odpowiedzi to dowolnosc esejow, zespol porownuje historie, nie oferty.
+Mocny pakiet sygnalizuje dojrzałość. Mówi dostawcom, że nie nagrodzicie niejasności miejscem na shortliście. Słaby pakiet uczy rynek zgadywać — a zgadywanie daje rozrzut. Myśl o RFQ jako pierwszym mechanizmie egzekucji: jeśli dostawca nie potrafi trzymać się struktury odpowiedzi, to dane o tym, jak zachowa się przy zacieśniających się interfejsach podczas integracji.
 
-## Prosta rama oceny jakosci RFQ
+Dopasuj też RFQ do wewnętrznych zatwierdzeń. Jeśli finanse potrzebują logiki kamieni milowych, a operacje szkiców odbioru, wbuduj to w to, co dostawcy muszą odpowiedzieć. Inaczej zakupy optymalizują pakiet, którego kierownictwo nie obroni — i cykl restartuje się w najgorszym momencie.
 
-Przed wyslaniem przyznaj kazdemu elementowi ocene 0 do 2:
+## Od decyzji do zachowania hala
 
-| Element | 0 slabe | 1 ok | 2 mocne |
-| --- | --- | --- | --- |
-| Kryteria sukcesu | niejasne | czesciowo mierzalne | mierzalne i przypisane |
-| Zmiennosc | brak | czesciowa | jawne reguly |
-| Interfejsy | niejasne | wypisane | uprioritetowane |
-| Akceptacja | niezdefiniowana | szkic | koncepcja testowalna |
-| Struktura odpowiedzi | brak | luzna | wymuszane sekcje |
+Chodzi o dociśnięcie tego etapu podróży zakupowej — w praktyce „co umieścić w RFQ/RFP na automatyzację” — po to, by realizacja była przewidywalna. W zakładach przemysłowych niejasność nie zostaje abstrakcją: zamienia się w czekanie, przerób, ciche obejścia i spory przy urządzeniu, gdy linia potrzebowała jasności tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą odbiór z dowodem i utrzymują widoczne odpowiedzialność, dostawcy odpowiadają z mniejszą liczbą niespodzianek, a funkcje wewnętrzne mniej czasu spędzają na godzeniu sprzecznych narracji.
 
-Jesli w wiekszosci jestes w pasmie 0-1, spodziewaj sie zamieszania po przeslaniu ofert.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny produkt zakupowy tak, by operacje i utrzymanie mogły go zrewidować. Jeśli nie da się go prześledzić do zachowania na hali, dociśnij język, aż się da. Ta jedna dyscyplina zapobiega wielu awariom, które z perspektywy czasu wyglądają technicznie, choć od początku były problemem decyzyjnym.
 
-## Co daje dobra dyscyplina
+## W skrócie
 
-Silna dyscyplina RFQ nie usuwa negocjacji. Redukuje ukryte przerobki. Ulatwia zadawanie lepszych pytan w rundach wyjasnien.
-
-Chroni producenta, gdy kierownictwo pyta, czemu jedna oferta jest "tansza".
-
-## Co to oznacza dla DBR77 Marketplace
-
-DBR77 Marketplace ma redukowac chaos sourcingu.
-
-Standaryzowane porownanie ofert jest latwiejsze, gdy RFQ juz wymusza widocznosc: zalozenia; granice zakresu; zaleznosci; logike komercyjna. Marketplace to nie katalog robotow.
-
-To workflow wspierajacy wybor integratorow oparty na zaufaniu i czystsze porownanie miedzy dostawcami.
-
-## Bottom line
-
-Twoj RFQ to silnik porownywalnosci.
-
-Jesli chcesz lepszych decyzji, zaprojektuj pakiet tak, by dostawcy nie mogli ukryc roznic, ktore beda mialy znaczenie na hali.
+Zaprojektuj pakiet tak, by dostawcy nie mogli ukryć różnic, które znaczą się na waszej hali. Tak RFQ zasługuje na swoje miejsce.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace wspiera przejście od projektowania RFQ do ustrukturyzowanego porównania, ograniczając chaos sourcingu przez łatwiejsze uwidacznianie założeń i granic zakresu między dostawcami. [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

@@ -5,60 +5,31 @@ Funnel stage: Consideration
 Core problem: teams either isolate assistance in a narrow pilot forever, or connect everything at once and lose traceability on ownership and approvals  
 Main promise: a decision grid based on data maturity, SLA risk, change-control load, and audit needs so scope moves in controlled steps
 
-Keep AI assistance inside one workflow when definitions are unstable, training is incomplete, approvals are not mapped, or incident volume is already above team capacity. Connect more workflows only when the first workflow shows stable closure metrics for two review cycles, override reasons are trending down or explainable, and you can reuse the same audit fields without custom exceptions. Connection without closure discipline multiplies chaos faster than it multiplies value. Breadth is easy to demo. Depth is what keeps the plant safe.
+Breadth is easy to demo. Depth is what keeps the plant safe. Keep AI assistance inside one workflow when definitions are still disputed, training is incomplete, approval paths are not mapped, or incident volume already exceeds team capacity. Connect another workflow only when the first shows stable closure metrics across two review cycles, override reasons trend down or become explainable, and you can reuse the same audit fields without custom exceptions. Connection without closure discipline multiplies chaos faster than it multiplies value.
 
-## Grid: stay narrow versus expand connectors
+Read the signals honestly. Stay narrow when KPI definitions fight across functions, time-to-owner rises week over week, override themes keep surprising you, change control is informal, or auditors cannot get exports on demand. Expand when definitions are published and field-mapped, ownership metrics hold or improve, overrides repeat with trainable codes, publishes are versioned with owners, and audit asks are routine.
 
-| Signal | Stay narrow | Expand connectors |
-|---|---|---|
-| KPI definitions | disputed across functions | published and field-mapped |
-| time-to-owner | rising week over week | flat or improving |
-| override themes | new surprises each week | repeating, trainable codes |
-| change control | informal edits | versioned publishes with owners |
-| audit asks | cannot produce exports | exports ready on demand |
+Before each new connector, run an expansion gate: freeze a fourteen-day baseline on the live workflow, review the top exception themes with owners, confirm approval paths cover nights and weekends, map data lineage for the next workflow including refresh rate and owner, define rollback that detaches assistance without losing history, and publish a go-live window with shift communication. Skip a gate and pay in escalations.
 
-If three or more "stay narrow" signals are true, pause expansion.
+Compare integration sprints to integration ladders. Sprints concentrate risk and noisy learning. Ladders bound blast radius, make learning attributable, build audit trails per step, and resist vendor pressure with evidence. Ladders feel slow until the first serious incident proves their value.
 
-## Step sequence: expansion gate (use before each new workflow)
+Minimum readiness for a second workflow includes shared roles tested on all shifts, aligned override taxonomies or documented mappings, incident linkage tested on a real event, training sign-offs current, and executive scorecard fields stable enough to compare.
 
-Freeze baseline for the live workflow for fourteen days; run exception review: top fifteen themes with owners; confirm approval paths cover night and weekend coverage; map data lineage for the next workflow: source field, refresh rate, owner; define rollback: how to detach assistance without losing history; publish a go-live window and communication to affected shifts. Skip a gate and you will pay in escalations.
+Staying narrow is the wrong strategy only when isolation forces duplicate entry operators already reject, safety or quality explicitly requires cross-function routing you are blocking, or a bundled integration cannot be decoupled. In those cases, widen with explicit exception paths and extra audit fields—not silently.
 
-## Comparison: integration sprint versus integration ladder
+IRIS supports a disciplined ladder when closure behavior, override patterns, and audit fields stay measurable workflow by workflow inside one execution layer—so the next connection is an evidence decision, not an optimism decision.
 
-| Element | Sprint | Ladder |
-|---|---|---|
-| risk | concentrated blast radius | bounded per step |
-| learning | noisy | attributable |
-| audit trail | often reconstructed | built per step |
-| vendor pressure | high | moderate |
-
-Ladders feel slow until the first serious incident.
-
-## Checklist: minimum readiness to connect a second workflow
-
-- shared user roles tested on all shifts  
-- identical override taxonomy or a documented mapping  
-- incident linkage rule tested on at least one real event  
-- training sign-off list current within thirty days  
-- executive scorecard fields unchanged by the new connector
-
-## When staying narrow is the wrong strategy
-
-The isolated workflow creates duplicate data entry that operators already reject; safety or quality explicitly requires cross-function routing you are blocking; the vendor contract forces a bundled integration you cannot decouple.
-
-In those cases, widen with a formal exception path and extra audit fields, not silently.
-
-## Why IRIS supports a disciplined ladder
-
-DBR77 IRIS matters here because expansion decisions get safer when closure behavior, override patterns, and audit fields stay measurable workflow by workflow inside one execution layer.
-
-That lets the plant connect the next workflow by evidence rather than by vendor pressure or optimism.
-
-If you need the neighboring mode and response-loop context, see [When AI Should Watch, Advise, or Act in the Factory](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_EN.md), [How AI Can Reduce Downtime When Response Loops Exist](../33_how_ai_can_reduce_downtime_when_response_loops_exist/article_EN.md), and [How to Scale AI Assistance Without Losing Operational Control](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_EN.md).
-
-## Final takeaway
+For modes and response loops, see [When AI Should Watch, Advise, or Act in the Factory](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_EN.md), [How AI Can Reduce Downtime When Response Loops Exist](../33_how_ai_can_reduce_downtime_when_response_loops_exist/article_EN.md), and [How to Scale AI Assistance Without Losing Operational Control](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_EN.md).
 
 Connect the next workflow only when the last one closes cleanly enough to trust. If you cannot trust closure yet, you should not trust breadth.
+
+## The operational bottom line
+
+The promise of this article—a decision grid based on data maturity, SLA risk, change-control load, and audit needs so scope moves in controlled steps—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “When to Keep AI Assistance Inside One Workflow and When to Connect More,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
+
+That standard is not about software perfection; it is about operational honesty: fewer mystery handoffs, fewer truths reconciled only in meetings, and more days where the system record matches what the floor would say if you stopped them mid-task.
+
+Hold teams to a simple rule: if an improvement cannot be shown in exports from the execution record, it is not yet an operating improvement—only a narrative improvement. That rule keeps programs honest when demos look good but handovers still feel fragile.
 
 ---
 

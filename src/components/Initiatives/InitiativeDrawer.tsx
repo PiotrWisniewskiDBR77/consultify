@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Clock,
   DollarSign,
-  ExternalLink,
   FileText,
   Flag,
   Maximize2,
@@ -767,16 +766,9 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           </div>
         </div>
 
-        {/* Team - link to full view */}
         <div className="text-center py-6 text-slate-500">
           <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
-          <p className="text-sm mb-2">{t('initiatives.drawer.manageTeam')}</p>
-          <button
-            onClick={() => onOpenWider(initiative)}
-            className="text-xs text-purple-400 hover:text-purple-300"
-          >
-            {t('initiatives.drawer.openFullCard')}
-          </button>
+          <p className="text-sm">{t('initiatives.drawer.manageTeam')}</p>
         </div>
       </div>
     );
@@ -973,16 +965,6 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
 
-          {/* Footer - Open wider button */}
-          <div className="shrink-0 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-white/30 dark:bg-navy-900/30">
-            <button
-              onClick={() => onOpenWider(initiative)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition-colors"
-            >
-              <ExternalLink size={16} />
-              {t('initiatives.drawer.openFullCard')}
-            </button>
-          </div>
         </div>
       </div>
     </>

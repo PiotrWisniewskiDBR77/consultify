@@ -1,69 +1,60 @@
-# Wie Sie Ihr Werk auf Lieferanten-Site-Visits und Discovery-Workshops vorbereiten
+# Wie Sie Ihr Werk auf Lieferanten-Site-Besuche und Discovery-Workshops vorbereiten
 
-Target persona: Werksleiter / Projektmanager  
-Funnel stage: Consideration (Discovery, das vergleichbare Inputs liefert)  
-Core problem: Lieferantenbesuche liefern Eindruecke und Fotos, aber nicht die Constraints und Samples, die Angebote vergleichbar machen  
-Main promise: ein Pre-Visit-Pack und Workshop-Agenda, das Werkzeit in strukturierte Fakten verwandelt, die Lieferanten verantwortungsvoll preisen koennen
+Zielpersona: Werksleitung / Projektleitung  
+Funnel-Stufe: Überlegungsphase (Discovery mit vergleichbaren Inputs)  
+Kernproblem: Lieferantenbesuche hinterlassen Eindrücke und Fotos, aber nicht die Randbedingungen und Muster, die Angebote vergleichbar machen  
+Hauptversprechen: ein Pre-Visit-Pack und eine Workshop-Agenda, die Werkzeit in strukturierte Fakten verwandeln, die ein Lieferant verantwortungsvoll preisen kann
 
-Ein Lieferantenbesuch ohne Vorbereitung ist Tourismus. Ein Discovery-Workshop ohne Owner ist ein Meeting, das Folien erzeugt.
+Ein unvorbereiteter Besuch ist Tourismus. Ein Workshop ohne Topic-Owner ist ein Meeting, das Folien erzeugt, die niemand nutzt. Lieferanten gehen mit eigenen mentalen Modellen; Ihr Team mit Fotos. Später divergieren Angebote, weil jeder Integrator ein anderes Werk bepreist hat.
 
-Hersteller bekommen bessere Outcomes, wenn Werkzeit liefert: benannte Constraints; vereinbarte Samples und Messmethoden; Schnittstellenrealitaet (IT, Maintenance, Safety); eine schriftliche Aufzeichnung, die das Einkaufsteam wirklich nutzt.
+Vorbereitung macht aus Hallenzeit Inputs: benannte Randbedingungen, vereinbarte Muster, Schnittstellrealität und ein schriftlicher Record, der Vergleichbarkeit speist.
 
-Publizieren Sie ein Pre-Visit-Pack mindestens eine Woche vor dem Besuch (frueher bei komplexen Linien): Scope-Statement-Version und Erfolgskriterien; Linienlayout oder Bereichskarte mit markierten Gefahren; Sample-SKUs, Verpackungsvarianten und Handling-Regeln; Stillstand- und Zugangsfenster, signiert vom Linienleiter; IT- und Netzwerk-Constraints, zusammengefasst vom IT-Owner; Liste der Entscheidungen, die der Workshop produzieren muss.
+## Was unvorbereitete Besuche später kostet
 
-Fuehren Sie den Workshop mit timeboxed Agenda und einem Notetaker, der am selben Tag ein Summary publiziert.
+Wenn Lieferanten mit unterschiedlichen Erinnerungen an dieselbe Randbedingung abreisen, verbringen Sie die folgenden Wochen damit, Angebote zu harmonisieren, die nicht falsch sind—nur inkompatibel. Schlimmer: Sie vergeben vielleicht auf eine Interpretation, die intern niemand abgestimmt hat. Vorbereitung sorgt dafür, dass der Besuch eine gemeinsame Faktenbasis erzeugt: was gemessen ist, was angenommen ist, was unbekannt ist und wie Unbekanntes geschlossen wird, ohne Vergleichbarkeit zu brechen.
 
-Wenn der Besuch nur mit Erinnerungen endet, haben Sie Reise bezahlt und Risiko behalten.
+Behandeln Sie den Besuch als Produktionszeit. Schützen Sie Linie und Menschen und die Wahrheit: Operatoren sollten sich nicht bestraft fühlen, wenn sie messige Realität beschreiben. Ziel ist kein polierter Rundgang, sondern ein treues Bild.
 
-## Pre-Visit-Pack-Checkliste (Minimum)
+## Veröffentlichen Sie ein Pre-Visit-Pack
 
-| Item | Owner | Output |
-| --- | --- | --- |
-| Kurzvideo oder Fotos Ist-Zustand | Operations | begrenzter Kontext |
-| Durchsatz- und Variabilitaetsfakten | Engineering | Baseline-Zahlen |
-| Qualitaetsdefektbeispiele | Quality | konkrete Failure Modes |
-| Top-drei Risiken und Aengste | Sponsor | ehrliche Constraints |
-| Integrations-Touchpoint-Liste | IT + Maintenance | benannte Systeme |
+Teilen Sie genug, bevor Stiefel den Boden berühren, damit Gespräche bei der Wahrheit beginnen: Flussskizze, Variabilitätsregeln, Platz- und Medienrestriktionen, Safety-Kontext, IT- und OT-Touchpoints, aktueller Schmerz in Operatorsprache und wie Erfolg aussehen muss. Der Besuch soll validieren und verfeinern—nicht Grundlagen von null entdecken.
 
-Wenn ein Item fehlt, labeln Sie es explizit als offene Annahme mit Owner und Datum. Annahmen sind Inventar, keine Schande.
+## Weisen Sie Owner pro Thema zu
 
-## Workshop-Agenda-Vorlage (Halbtag, illustrativ)
+Mechanik, Steuerung, Qualität, Instandhaltung, IT und Safety brauchen eine Stimme im Raum. Schweigende Funktionen werden bei der Inbetriebnahme zu lauten Problemen.
 
-Safety Briefing und Routenregeln (15 Minuten); Linienwalk: erst stille Beobachtung, dann Fragen (45 bis 60 Minuten); Constraints-Runde: Materialien, Raten, Ruestungen, Ausnahmen (45 Minuten); Integrations-Deepdive: Signale, MES-Handshake, Support-Modell (45 Minuten); Decision Outputs: was Lieferanten in die naechste Angebotsrevision aufnehmen muessen (30 Minuten).
+## Bringen Sie repräsentative Materialien und Daten
 
-Schliessen Sie mit drei publizierten Outputs: aktualisiertes Annahmen-Log; offene Fragen mit Ownern; Datum fuer ausgehendes Klaerungsbatch.
+Wenn Handling-Verhalten zählt, sollten Muster und Messmethoden vereinbart sein. Wenn Raten zählen, sollten Baseline-Beobachtungen ehrlich besprochen werden. Ersätze dokumentieren, nicht implizieren.
 
-## Was Lieferanten mitnehmen sollten
+## Fassen Sie am selben Tag Entscheidungen zusammen
 
-Lieferanten sollten gehen mit: derselben versionierten Brief-Referenz; Fotos und Skizzen passend zu Ihrer Publication Policy; expliziter Liste, was sie nicht annehmen duerfen; einem technischen Single Point of Contact.
+Enden Sie mit einem kurzen, veröffentlichten Summary: bestätigte Fakten, offene Fragen, Owner und Fälligkeiten. Erinnerung ist kein gemeinsames System.
 
-Wenn jeder Lieferant andere Side-Conversations bekommt, bauen Sie Inkomparabilitaet absichtlich.
+## Wie DBR77 Marketplace anschließt
 
-## Reality check: Discovery-Besuche scheitern oft, weil das Werk annimmt, der Lieferant werde "die Details vor Ort schon herausfinden"
+Strukturierte Challenge-Briefs und Discovery-Outputs früher in der Kette machen späteren Vergleich vertrauenswürdig. Ein starkes Pre-Visit-Pack ist Qualitätsversicherung für die ganze Einkaufskette.
 
-Diese Annahme klingt praktisch. Menschen laufen die Linie ab. Fragen werden gestellt. Fotos werden gemacht. Aber solange der Besuch Constraints, Owner und Annahmen nicht in einen publizierten Record uebersetzt, geht der Lieferant mit Eindruecken hinaus, nicht mit entscheidungsreifen Inputs.
+Für das Follow-up nach diesen Meetings siehe [Wie Sie Automatisierungs-Momentum nach den ersten Lieferantentreffen halten](../22_how_to_keep_automation_momentum_after_the_first_vendor_meetings/article_DE.md).
 
-## typische Vorbereitungsfehler
+## Workshops, die Operations respektieren
 
-| Fehler | Symptom | Fix |
-| --- | --- | --- |
-| kein Linienleiter anwesend | generische Vorschlaege | termin verschieben |
-| keine Samples | geratenes Handling | SKUs committen |
-| IT fehlt | Schnittstellen-Fiktion | IT-Sitzplatz erzwingen |
-| kein publiziertes Summary | Memory-Drift | Same-Day-Notes |
+Discovery darf die Linie nicht kapern. Bereiten Sie Fenster, Backups für Kontinuität und realistische Erwartungen vor, was Operatoren während einer Live-Schicht leisten können. Wenn Workshops Produktionsrealität ignorieren, lernen Lieferanten das falsche Werk—und preisen das falsche Risiko.
 
-## Was das fuer DBR77 Marketplace bedeutet
+Nutzen Sie den Besuch, um zu bestätigen, was stabil genug zum Angeboten ist und was noch einen begrenzten Discovery-Schritt braucht. Output soll ein gemeinsamer Faktensatz sein, keine konkurrierenden Erinnerungen.
 
-DBR77 Marketplace ist fuer hersteller-first Automatisierungseinkauf als Workflow gebaut. Gutes Discovery macht Angebote vergleichbar. Vergleichbare Angebote machen Auswahl vertrauenswuerdig. Marketplace ist kein Roboterkatalog.
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Es ist ein System, das Sourcing-Chaos reduziert, indem Werkrealitaet zu inspizierbaren Inputs wird.
+Der Sinn, diesen Teil der Einkaufsreise zu schärfen—„Wie Sie Ihr Werk auf Lieferanten-Site-Besuche und Discovery-Workshops vorbereiten“ in der Praxis—ist vorhersagbare Ausführung. Auf Industrieanlagen bleibt Mehrdeutigkeit nicht abstrakt: sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen am Equipment, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Akzeptanz an Evidence binden und Ownership sichtbar halten, liefern Lieferanten weniger Überraschungen und Funktionen verbringen weniger Zeit mit dem Abgleich konkurrierender Stories.
+
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Halle passen: aufgefangene Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die bei halb definierten Schnittstellen improvisiert. Starke Einkaufsdisziplin ist damit eine Produktionsinvestition—weniger Drama bei Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel: das Dokument verlangsamen, bis es zur Linie passt; ein unpassendes Dokument zu beschleunigen verschiebt nur den Schmerz stromabwärts.
+
+Wenn Sie einen Gewohnheit mitnehmen, dann diese: behandeln Sie jedes wesentliche Einkaufsergebnis so, dass Operations und Instandhaltung es auditieren könnten. Wenn sie es nicht bis zu einem Verhalten auf dem Shopfloor zurückverfolgen können, schärfen Sie die Sprache. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
 ## Fazit
 
-Bereiten Sie das Werk vor wie fuer ein internes Audit mit externen Zeugen.
-
-Fakten, Owner und publizierte Summaries schlagen Charisma und eine Kamerarolle.
+Bereiten Sie das Werk wie ein Audit mit externen Zeugen vor: Fakten, Owner, veröffentlichte Summaries. Charisma und eine Fotorolle sind keine Vergleichbarkeitsinputs.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace profitiert, wenn Challenge-Brief und Discovery-Outputs strukturiert sind; ein starkes Pre-Visit-Pack ist Upstream-Qualität für vertrauenswürdigen Vergleich. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

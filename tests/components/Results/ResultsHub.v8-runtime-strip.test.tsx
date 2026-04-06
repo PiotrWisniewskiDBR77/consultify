@@ -48,6 +48,14 @@ vi.mock('../../../src/components/Results/ResultsKpiReportsView', () => ({
   ResultsKpiReportsView: () => <div>results-kpi-reports-view</div>,
 }));
 
+vi.mock('../../../src/components/Results/KpiOverviewView', () => ({
+  KpiOverviewView: () => <div>kpi-overview-view</div>,
+}));
+
+vi.mock('../../../src/components/Results/KpiQueueView', () => ({
+  KpiQueueView: () => <div>kpi-queue-view</div>,
+}));
+
 vi.mock('../../../src/components/Results/ResultsKpisTableV3', () => ({
   ResultsKpisTableV3: ({ kpis, onDeleteKpi, onOpenKpi }: any) => (
     <div>
@@ -227,6 +235,7 @@ describe('ResultsHub V8 runtime strip', () => {
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
@@ -235,6 +244,32 @@ describe('ResultsHub V8 runtime strip', () => {
 
     expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpis');
     expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpi-mappings');
+  });
+
+  it('opens KPI as overview-first cockpit and switches to queue/catalog surfaces', async () => {
+    render(
+      <MemoryRouter>
+        <ResultsHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalled();
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
+      expect(screen.getByText('kpi-overview-view')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Queue' }));
+    expect(screen.getByText('kpi-queue-view')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
+    expect(screen.getByText('results-kpis-table')).toBeInTheDocument();
   });
 
   it('deletes KPI from the hub through the governed V8 seam first', async () => {
@@ -269,6 +304,7 @@ describe('ResultsHub V8 runtime strip', () => {
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
 
     await waitFor(() => {
       expect(screen.getByText('delete-first-kpi')).toBeInTheDocument();
@@ -317,6 +353,7 @@ describe('ResultsHub V8 runtime strip', () => {
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
 
     await waitFor(() => {
       expect(screen.getByText('delete-first-kpi')).toBeInTheDocument();
@@ -367,6 +404,8 @@ describe('ResultsHub V8 runtime strip', () => {
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
     });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'add-action' }));
     fireEvent.click(screen.getByRole('button', { name: 'create-kpi-success' }));

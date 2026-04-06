@@ -1,79 +1,52 @@
 # Warum die meisten Automatisierungsprojekte nie starten
 
-Zielpersona: Purchasing Director  
-Funnel-Stufe: Awareness  
-Kernproblem: Automatisierungsprojekte stocken lange vor der Umsetzung, weil Sourcing und Entscheidungsfindung zu fragmentiert sind  
-Hauptversprechen: Automatisierung startet schneller, wenn Challenge-Definition, Vergleich und Vendor-Workflow von Tag eins an strukturiert sind
+Zielpersona: Einkaufsleitung  
+Funnel-Stufe: Wahrnehmungsphase  
+Kernproblem: Automatisierungsprojekte bleiben lange vor der Umsetzung stecken, weil Beschaffung und Entscheidungsfindung zu fragmentiert sind  
+Hauptversprechen: Automatisierung startet schneller, wenn Herausforderungsdefinition, Vergleich und Lieferantenfluss von Tag eins strukturiert sind
 
-Die meisten Automatisierungsprojekte scheitern nicht auf dem Shopfloor. Sie scheitern, bevor das Projekt überhaupt richtig beginnt.
+Stellen Sie sich eine Linie vor, die Entlastung braucht. Alle sind einverstanden, dass sich etwas ändern sollte. Jemand bucht ein paar Integratorengespräche. Es kommen Folien. Dann ziehen sich die Wochen: Klärungen, neue Briefings, eine Beschaffungsvorlage, die nicht ganz passt, und ein wachsender Stapel Angebote, die alle behaupten, „es“ zu lösen, während sie „es“ unterschiedlich definieren. Auf der Fläche ist noch nichts gescheitert. Das Projekt hat noch nicht wirklich begonnen — und genau das ist das Scheitern.
 
-Nicht weil Herstellern der Ehrgeiz fehlt. Nicht weil die Technologie nicht existiert. Nicht weil der Return unmöglich wäre. Sie stocken, weil der Entscheidungsweg zu unordentlich ist.
+Die meisten Automatisierungsinitiativen sterben nicht bei der Inbetriebnahme. Sie sterben im Nebel zwischen Absicht und einer Entscheidung, die jemand verantworten kann. Die Organisation ist beschäftigt, Lieferanten sind eingebunden, Kalender voll — und trotzdem liegt keine einzige vergleichbare Frage auf dem Tisch. Das ist keine Vorsicht. Das ist ein fehlender Workflow.
 
-## Der versteckte Bottleneck ist nicht Robotik. Es ist Clarity.
+## Der Engpass ist Klarheit, nicht Neugier
 
-Sobald ein Werk entscheidet, dass es „automatisieren sollte“, tauchen sofort mehrere Probleme auf: welcher Prozess sollte zuerst automatisiert werden?; was genau ist das Business Problem?; auf welchen Scope sollen Vendoren antworten?; wie vergleicht man Lösungen, die völlig unterschiedlich beschrieben sind?. Genau hier stirbt das Momentum.
+Wenn ein Werk sagt, es wolle automatisieren, fehlt selten Technologie. Es fehlt die Übersetzung operativer Schmerz in eine Herausforderung, auf die mehrere Lieferanten mit denselben Rahmenbedingungen antworten können. Bis das passiert, zieht jedes Gespräch den Scope in eine andere Richtung. Operations hört Durchsatz. Engineering hört Schnittstellen. Einkauf hört Lieferzeit und Zahlung. Finance hört CapEx. Ohne gemeinsames Briefing und gemeinsamen Vergleichsrahmen optimiert jede Funktion für eine andere Geschichte — und die Mitte hält nicht.
 
-Die Organisation ist prinzipiell bereit, praktisch aber nicht strukturiert genug, um sich zu bewegen.
+Die versteckten Kosten sind Schwung, der wie Aktivität wirkt. E-Mail-Ketten mehren sich. Ein Lieferant bekommt eine private Klärung, die die anderen nie sehen. Ein „kleiner“ Scope-Tweak in Woche sechs macht das aus Woche zwei zitierte Angebot wertlos. Das Team hat das Gefühl, sich zu bewegen, doch die Entscheidungsfläche wird tatsächlich unübersichtlicher.
 
-## Vendor Chaos erzeugt Decision Paralysis
+## Was die Fläche spürt, während der Einkauf stockt
 
-Automation Sourcing sieht oft so aus:
+Auf der Fläche läuft der alte Prozess weiter. Überstunden fangen Spitzen ab. Vorgesetzte erklären denselben Workaround erneut. Die Qualität hält, weil Menschen aufpassen. Der Schmerz reicht, um ein Projekt zu rechtfertigen, ist aber nicht scharf genug für einen klaren Bruch — vor allem wenn die Führung eine einfache Frage noch nicht in einem Satz beantworten kann: Was kaufen wir, für welches operatives Ergebnis, unter welchen Randbedingungen, und wie erkennen wir, dass es funktioniert hat?
 
-- unvollständige Anforderungen
-- vendor-spezifische Annahmen
-- inkonsistente Angebote
-- unklare Ownership zwischen Operations, Engineering, Procurement und Leadership
+Diese Lücke zwischen gefühltem Schmerz und schriftlicher Herausforderung ist der Ort, an dem Projekte warten. Teams unterschätzen sie, weil Meetings weiter stattfinden. Was stoppt, ist Vergleichbarkeit: die Fähigkeit, Angebote nebeneinanderzulegen und Unterschiede zu sehen, die zählen — nicht Unterschiede in der Story.
 
-Alle arbeiten, aber der Prozess produziert keine sauberen Entscheidungen.
+## Warum „später“ zum Standard wird
 
-Das schafft eine gefährliche Situation. Das Unternehmen fühlt sich aktiv, aber echter Fortschritt bleibt langsam. Meetings nehmen zu. Klärungen nehmen zu. Der Business Case wird schwerer zu verteidigen. Das Interesse verliert an Energie.
+Verzögerung wirkt rational, wenn der Vergleich trüb ist. Niemand will einen großen Scheck unterschreiben, während der Inhalt der Box noch unklar ist. Also wählt die Organisation mehr Discovery, mehr Demos, mehr interne Abstimmung — ohne die Definition dessen zu schärfen, was entschieden werden muss. In dieser Umgebung wird Automatisierung eine Kategorie zum Diskutieren statt ein Kauf zum Abschluss.
 
-## Reality check: das Projekt wirkt oft noch lebendig, lange nachdem der Entscheidungsprozess schon feststeckt
+Die Ironie: Viel Kalender verbrennt sich, bevor Metall ausgeliefert wird. Scouting, Normalisierung, Verhandlung und Nacharbeit an Anforderungen binden oft mehr Führungsaufmerksamkeit als die Umsetzung je wird. Wenn Sie Tempo dort wollen, wo es zählt, müssen Sie vorne in Struktur investieren: eine Herausforderungsnarrative, ein Satz Felder, den alle beantworten, und ein Pfad von Shortlist bis Vergabe.
 
-Genau deshalb unterschätzen Teams das Problem so leicht. Der Kalender ist voll. Vendoren antworten. Interne Menschen diskutieren Optionen. Aber unter dieser Aktivität:
+## Von Expertise zu Workflow
 
-- ist die Challenge noch immer nicht in einer vergleichbaren Form beschrieben
-- hat niemand eingefroren, worauf Lieferanten tatsächlich antworten
-- kann das Unternehmen noch immer nicht erklären, was eine "go"-Entscheidung rechtfertigen würde
+Starke Ingenieure und Einkäufer scheitern weiter, wenn der Prozess um sie herum ad hoc ist. Expertise hilft, Antworten zu bewerten; sie erzeugt nicht von selbst vergleichbare Fragen. Hersteller brauchen einen wiederholbaren Weg vom Problem zur klar umgrenzten Herausforderung, von dort zu einem Äpfel-mit-Äpfeln-Vergleich und von dort zu einem Entscheidungsprotokoll, das die erste Woche nach Unterschrift übersteht.
 
-Das ist kein frühes Momentum. Das ist ungemanagter Drift vor dem Kauf.
+Das ist weniger Charisma im Raum und mehr Disziplin im Schriftlichen: was im Scope ist, was nicht, welche Annahmen Lieferanten offenlegen müssen und wie Abnahme belegt wird. Wenn diese Elemente früh existieren, wird Lieferantenenergie zu Fortschritt. Wenn nicht, tragen selbst gute Lieferanten zum Rauschen bei.
 
-## Warum Geschwindigkeit meistens verschwindet
+## Wie DBR77 Marketplace die Lücke füllt
 
-Hersteller gehen oft davon aus, dass die langsame Phase der Automatisierung die Implementierung ist.
+DBR77 Marketplace ist kein Roboterkatalog. Es ist ein Workflow für Automatisierungsentscheidungen — Teams helfen, die Herausforderung klar zu definieren, Angebote strukturiert zu vergleichen und den Lieferantenfluss ohne Fadenverlust zu durchlaufen. Es geht nicht darum zu zeigen, was am Markt existiert; es geht darum, die Mehrdeutigkeit zu reduzieren, die Hersteller im Kreis laufen lässt statt zu wählen.
 
-In Wirklichkeit steckt viel verlorene Zeit früher: Technologie-Scouting; Angebotsklärung; Vergleich; Alignment; Vertragsphase.
+Für Organisationen, die Automatisierung schon für wichtig halten, aber kein weiteres Quartal in zerstreuten Sourcing-Schleifen verbringen wollen, ist der Gewinn einfach: weniger parallele Realitäten, mehr verteidigbare Vergleiche, schnellerer Weg zur Ausführung.
 
-Darum „starten“ viele Projekte nie. Sie leben technisch, sind aber kommerziell und organisatorisch blockiert.
+## Die Frage, die das Tempo ändert
 
-## Automatisierungsentscheidungen brauchen Workflow, nicht nur Expertise
+Stellen Sie sie, bevor Sie fragen, welche Marke oder welchen Integrator zu bevorzugen ist: Wie beschreiben wir dieses operative Problem so, dass jeder ernsthafte Lieferant denselben Job preist und plant? Beantworten Sie das mit einem straffen Briefing und einem fairen Vergleichsrahmen, und das Projekt kann endlich den Warteraum verlassen. Überspringen Sie das — und Sie bleiben vielleicht für immer beschäftigt, ohne je richtig zu starten.
 
-Das ist die Kernerkenntnis. Unternehmen brauchen nicht mehr zufällige Inspiration zur Automatisierung.
+## Kurz gesagt
 
-Sie brauchen einen Workflow, der sie von: Problem; zu scoped challenge; zu vergleichbaren Angeboten; zu einer belastbaren Entscheidung. führt.
-
-Ohne diese Struktur geraten selbst starke Teams in Procurement Fatigue und vendor-getriebene Narrative.
-
-## Warum Marketplace existiert
-
-DBR77 Marketplace ist kein Robotik-Katalog. Es ist ein Workflow für Automatisierungsentscheidungen. Sein Wert liegt nicht darin, „zu zeigen, was es gibt“.
-
-Sein Wert liegt darin, Herstellern zu helfen: die Challenge zu definieren; standardisierte Angebote zu vergleichen; Sourcing Ambiguity zu reduzieren; schneller in die Execution zu kommen.
-
-Das ist besonders wichtig für Unternehmen, die wissen, dass Automatisierung zählt, aber keine Monate in verstreuten Sourcing-Schleifen verlieren wollen.
-
-## Die bessere Frage
-
-Statt zu fragen, „Welchen Roboter sollten wir kaufen?“ sollten die meisten Hersteller zuerst fragen,
-
-„Wie machen wir aus diesem operativen Problem eine Challenge, die Vendoren klar beantworten können?“ Dort beginnt die Projektgeschwindigkeit.
-
-## Warum das jetzt wichtig ist
-
-Der Druck zur Automatisierung verschwindet nicht: Arbeit bleibt knapp; Kostendruck bleibt hoch; Wettbewerbsanforderungen steigen.
-
-Gewinnen werden also nicht zwangsläufig die Unternehmen mit dem größten Ehrgeiz. Gewinnen werden die mit dem saubersten Weg von Bedarf zu Handlung. Darum starten die meisten Automatisierungsprojekte nie. Und darum ist strukturiertes Sourcing kein Procurement-Detail mehr. Es ist ein strategischer Vorteil.
+Automatisierungsprojekte scheitern meist vor der Umsetzung, weil das Beschaffungssystem keine saubere Entscheidung liefern kann. Strukturieren Sie die Herausforderung, standardisieren Sie den Vergleich und halten Sie Lieferanteninteraktionen an einem einzigen Protokoll dessen fest, was „gut“ bedeutet. So wird Absicht zu einem Projekt, das wirklich startet.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace strukturiert Herausforderungsdefinition, Angebotsvergleich und Lieferantenfluss, um Chaos in der Automatisierungsbeschaffung zu reduzieren. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

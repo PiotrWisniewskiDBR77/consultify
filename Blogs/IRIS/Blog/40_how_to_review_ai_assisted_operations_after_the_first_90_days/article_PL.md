@@ -1,50 +1,36 @@
-# Jak ocenic operacje wspierane przez AI po pierwszych 90 dniach
+# Jak przeglądać operacje wspomagane AI po pierwszych 90 dniach
 
-Target persona: Wlasciciel programu / Dyrektor zakladu / Sponsor ciaglego doskonalenia  
-Funnel stage: Decision  
-Core problem: przeglady 90-dniowe staja sie retrospektywami na slajdach bez decyzji, bo zespoly nie wiazja przegladu z metrykami domkniecia, override i granicami zakresu  
-Main promise: agenda przegladu z wymaganym dowodem, czterema jawnymi decyzjami i lista dzialan na 30 dni z przypisanymi wlascicielami
+Docelowa persona: właściciel programu / dyrektor zakładu / sponsor ciągłego doskonalenia  
+Etap lejka: Decision  
+Główny problem: przeglądy dziewięćdziesięciodniowe zamieniają się w retrospektywy na slajdach bez decyzji, bo nikt nie wiąże przeglądu z metrykami domknięcia, nadpisaniami i granicami zakresu  
+Główna obietnica: agenda przeglądu z wymaganym dowodem, czterema jawnymi decyzjami i trzydziestodniową listą działań z właścicielami
 
-Ocen operacje wspierane przez AI po pierwszych 90 dniach audytujac rekord wykonania, nie narracje pilota: mierz czasy reakcji, jakosc domkniecia, wzorce override per zmiane, powiazania z incydentami i pokrycie szkoleniami. Potem zdecyduj, czy poszerzac zakres, zaciskac progi, zmieniac tryby, czy wstrzymac zachowania w trybie dzialaj. Zakorcz lista dzialan z datami i jednym odpowiedzialnym wlascicielem na pozycje. Jesli przeglad nie zmienia progow ani odpowiedzialnosci, to bylo spotkanie, nie przeglad. 90 dni wystarczy, zeby sie uczyc. To tez wystarczy, zeby utrwalic zle nawyki, jesli ich nie zbadasz.
+Dziewięćdziesiąt dni wystarczy, by się uczyć. Wystarczy też, by utrwalić złe nawyki, jeśli nikt nie inspekcjonuje zapisu wykonania. Przeglądaj operacje wspomagane AI, audytując to, co stało się w systemie, a nie powtarzając narrację pilotażu. Mierz czasy reakcji, jakość domknięcia, wzorce nadpisań według zmiany, powiązania z incydentami i pokrycie szkoleniami. Potem zdecyduj, czy poszerzyć zakres, zacisnąć progi, zmienić tryby czy wstrzymać zachowania trybu działania. Zakończ datowaną listą działań i jednym rozliczalnym właścicielem na pozycję. Jeśli przegląd nic nie zmienia w stanie systemu, to było spotkanie — nie przegląd.
 
-## Agenda: struktura przegladu na pol dnia
+Strukturyzuj sesję jak operacje, nie jak teatr. Przypomnij zakres: przepływ pracy, linie i tryby, które były na żywo. Porównaj metryki z linią bazową. Wywiad z halą: nadzorcy, utrzymanie, jakość, magazyn. Przejrzyj incydenty i stany bliskie incydentowi z udziałem asystowanego kierowania zgłoszeń. Przeczytaj dziennik zmian reguł i modelu. Wymuś cztery decyzje przed zamknięciem: kontynuacja, poszerzenie, wstrzymanie lub wycofanie zakresu dla każdego przepływu pracy; awans lub degradacja obserwacji, doradztwa lub działania z datą wejścia w życie; aktualizacja sekcji polityki zatwierdzeń, które okazały się niejednoznaczne; przydział odpowiedzialności za naprawy danych, które blokowały asystencję. „Będziemy monitorować” to nie decyzja.
 
-Podsumowanie zakresu: ktore workflow, linie i tryby byly aktywne; przeglad metryk: uzgodniona karta wynikow kontra baseline; wywiady na hali: nadzor, utrzymanie, jakosc, magazyn; przeglad incydentow i bliskich pominiec: wszystko dotykajace wspieranego routingu; dziennik wersji regul i modelu: co sie zmienilo i dlaczego; decyzje: cztery sloty decyzyjne ponizej; lista dzialan: zobowiazania na 30 dni z datami. Przynies eksporty, nie anegdoty.
+Wymagaj pakietu dowodowego, zanim pokój się spotka: cotygodniowe karty wyników, główne nadpisania ze skategoryzowanymi przyczynami, zadania otagowane przez AI z naruszeniem SLA, ukończenie szkoleń według roli, changelog progów i trybów. Brak dowodu oznacza przełożenie przeglądu — bo bez dowodu pokój będzie spierał się o pamięć.
 
-## Pakiet dowodow przed spotkaniem
+Przeciwstaw retrospektywę narracyjną operacyjnej. Narracyjna wymienia uczucia i tematy. Operacyjna wymienia metryki domknięcia, fakty SLA, skategoryzowane nadpisania i datowane działania zmieniające konfigurację. Operacyjna edytuje system.
 
-Cotygodniowe karty wynikow za okres; top 20 override ze skategoryzowanymi powodami; lista zadan oznaczonych przez AI, ktore przekroczyly SLA; ukonczenie szkolen per rola; changelog progow i trybow. Brak dowodu oznacza przesuniecie przegladu.
+Utrzymuj trzydziestodniową listę działań krótką: kilka napraw danych lub definicji z pojedynczymi właścicielami, parę aktualizacji szkoleń lub job aidów, jedna korekta rządów, np. rotacja arbitra. Więcej niż sześć działań zwykle oznacza, że żadne się nie kończy.
 
-## Cztery decyzje wymuszone przed zamknieciem sali
+IRIS czyni przeglądy dziewięćdziesięciodniowe faktami, gdy zadania, zatwierdzenia, wersje reguł i historia asystencji dzielą jeden zapis — tak by pokój sterował eksportami zamiast historiami.
 
-Decyzja A: kontynuuj, poszerz, wstrzymaj lub cofnij zakres per workflow Decyzja B: awansuj lub obniz tryby (obserwuj, doradzaj, dzialaj) z data obowiazywania Decyzja C: aktualizuj sekcje polityki akceptacji, ktore pokazaly niejasnosc Decyzja D: przypisz wlascicieli napraw danych, ktore blokowaly asyste Wyjscie z "bedziemy monitorowac" to porazka przegladu.
+Ciągłość między wdrożeniem, skalą i przeglądem spinają [Jak wdrożyć operacje wspomagane AI bez destabilizacji zakładu](../30_how_to_roll_out_ai_assisted_operations_without_disrupting_the_plant/article_PL.md) oraz [Jak skalować asystencję AI bez utraty kontroli operacyjnej](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_PL.md).
 
-## Porownanie: narracyjna retro kontra operacyjna retro
+Mocny przegląd dziewięćdziesięciodniowy nazywa też to, co jesteście gotowi przestać robić. Programy akumulują rytuały: dodatkowe spotkania, redundantne eksporty, równoległe śledzenie w arkuszach „na wszelki wypadek”. Jeśli asystencja działa, część tego ręcznego rusztowania powinna stać się zbędna — nie dlatego, że ludzie są leniwi, lecz dlatego, że domknięcie jest widoczne w systemie. Jeśli nic nie można wycofać, przegląd powinien pytać, czy pilot faktycznie zmienił wykonanie, czy tylko dodał kolejną warstwę pracy.
 
-| Element | Retro narracyjna | Retro operacyjna |
-|---|---|---|
-| definicja sukcesu | uczucia i anegdoty | metryki domkniecia i reakcji |
-| obsluga porazek | tematy winy | skategoryzowane override i fakty SLA |
-| output | slajdy | datowane dzialania i edycje progow |
+Użyj przeglądu, by ponownie połączyć sponsorowanie z rzeczywistością. Sponsorzy powinni wyjść z pokoju zdolni wyjaśnić bez notatek, które przepływ pracy są w którym trybie, które metryki się przesunęły i które ryzyka pozostają otwarte. Jeśli nie potrafią, program dryfuje do własności IT — a operacje cicho go obchodzą. Dziewięćdziesiąt dni to dobry moment, by ponownie zakotwiczyć własność tam, gdzie są konsekwencje: na hali, w systemach jakości, w kierownictwie utrzymania i w rozmowie o wyniku.
 
-Retro operacyjne zmieniaja stan systemu.
+Przeglądy dziewięćdziesięciodniowe powinny edytować reguły, tryby i właścicieli. Jeśli po nich nic w systemie się nie zmienia, świętowaliście zamiast sterować.
 
-## Szablon listy dzialan na 30 dni (trzymaj krotko)
+## Podsumowanie operacyjne
 
-Maksymalnie trzy naprawy danych lub definicji, kazda z jednym wlascicielem; dwie aktualizacje szkolen lub kart pracy; jedna zmiana nadzoru, np. nowa rotacja arbitrow. Wiecej niz szesc dzialan zwykle oznacza, ze zadne sie nie konczy.
+Obietnica tego artykułu — agenda przeglądu z wymaganym dowodem, czterema jawnymi decyzjami i trzydziestodniową listą działań z właścicielami — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie, które da się prześledzić bez archeologii skrzynek. Dla „Jak przeglądać operacje wspomagane AI po pierwszych 90 dniach” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-## Dlaczego IRIS czyni przeglady 90-dniowe faktami
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy zadania, akceptacje i asysta dziela jeden rekord, przestaje sie klocic o pamiec i zaczyna edytowac progi.
-
-## Podsumowanie
-
-Przeglady 90-dniowe powinny edytowac reguly, tryby i wlascicieli.
-
-Jesli po nich nic w systemie nie zmienia sie, swietowales zamiast sterowac.
+Ten standard nie chodzi o idealne oprogramowanie; chodzi o uczciwość operacyjną: mniej tajemniczych przekazań, mniej prawd uzgadnianych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS daje przeglądom programu jeden zapis wykonania dla metryk, nadpisań, zatwierdzeń i aktualizacji progów prowadzonych changelogiem. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

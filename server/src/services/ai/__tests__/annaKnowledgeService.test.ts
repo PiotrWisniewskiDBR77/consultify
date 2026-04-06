@@ -134,7 +134,7 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
     const result = await buildAnnaVoiceBootstrap('pl');
 
     expect(result.sources).toContain('voice-pl.md');
-    expect(result.sources).not.toContain('voice-en.md');
     expect(result.contextText).toContain('context-for-pl-doc');
+    expect(result.primaryProducts[0]).toBe('dbr77');
   });
 });

@@ -5,75 +5,27 @@ Funnel stage: Consideration
 Core problem: many factories have multiple systems, yet still depend on spreadsheets because formal tools do not cover cross-functional coordination, shared definitions, and daily decision flow well enough  
 Main promise: plants stop relying on spreadsheets when one operating layer becomes easier and more useful than manual workarounds
 
-Factories do not keep spreadsheets because they love spreadsheets. They keep them because spreadsheets still solve real operating gaps. That is the uncomfortable truth.
+No plant keeps spreadsheets because leadership loves grid software. Plants keep spreadsheets because spreadsheets still solve problems the official stack does not solve cleanly: merging partial truths, tracking actions across boundaries, patching process gaps at the speed of a Tuesday afternoon, and giving teams a neutral meeting point when every system speaks a different dialect. The spreadsheet is often the unofficial operating layer—the place where the plant does the real work of making today coherent.
 
-Many plants already have software for production, maintenance, warehouse, or reporting. And still, the real daily coordination often happens in Excel, shared sheets, exported files, and manually updated trackers. That is not only a technology problem. It is a workflow problem.
+That should make you uneasy, not because Excel is evil, but because workarounds have a way of becoming permanent. The file is shared. The tracker is updated. The meeting still starts on time. From a distance, the workaround can look under control. Up close, it often hides version confusion, delayed updates, ambiguous ownership, and fragile decision logic. The cost is not only duplicate effort. It is reduced trust in a single operational truth—which is the currency every plant spends when it tries to move fast without tripping over itself.
 
-## Reality check: spreadsheet dependence often looks harmless because teams get used to the workaround before they measure its operating cost
+Spreadsheets survive where formal systems stop short. Teams reach for them when they need to combine data from different sources, track actions across functions, create temporary definitions that the enterprise stack cannot express quickly, or bridge silos without waiting for a project. Flexibility is part of the story, but the deeper reason is speed and social acceptance: if the official path is slower than the workaround, the workaround wins. The plant is not being lazy. It is being rational under pressure.
 
-The file is shared. The tracker is updated. The meeting still happens on time.
+Cross-functional work creates the strongest spreadsheet pressure. Production needs one view. Maintenance needs another. Quality adds constraints. Warehouse changes what is possible on the line. Leadership wants a summary that nobody’s native tool produces without export gymnastics. When no shared operating layer exists, the spreadsheet becomes the lowest-friction common ground—even when everyone knows it is brittle.
 
-That can make the workaround feel under control, even while the plant is paying for delay, version confusion, and weak ownership every day.
+Spreadsheet-heavy operations often look manageable until you trace a real incident. Then you see duplicate entry, conflicting versions, and the quiet assumption that someone senior will reconcile the truth before anything expensive happens. That is not only inefficiency. It is operational risk: the plant’s most important coordination is sometimes stored in a file that can drift, be edited without history, or depend on one person’s habit.
 
-## Spreadsheets survive where systems stop short
+Plants rarely choose spreadsheets instead of software in a clean strategic way. More often, spreadsheets appear between systems: exports from here, merges there, maintenance notes in a separate tracker, a pre-meeting scramble to align numbers. Spreadsheet dependence is usually a symptom of fragmentation, not of poor intent. People are solving the only way they can.
 
-Spreadsheet use usually tells you something important: the formal system does not cover the real operating need well enough.
+Leaders often know the risk—and still keep the spreadsheet because the alternative feels harder: too big, too rigid, too expensive, too disruptive. So the workaround stays, not because it is good, but because it is immediate. The way out is not shaming the spreadsheet. The way out is making the legitimate job it is doing—shared truth, cross-functional coordination, owned follow-up—easier inside a real operating layer than it is inside a file.
 
-Teams reach for spreadsheets when they need to: combine data from different sources; track actions across functions; create temporary definitions; fill process gaps quickly.
+IRIS is relevant because it is designed to become that shared layer across production, warehouse, quality, maintenance, and tasking. The value is not only digitization. It is reducing shadow coordination by giving the plant one data layer, one execution environment, one place for tasking and follow-up, and one shared operating truth that does not need to be reassembled before every decision.
 
-In other words, the spreadsheet becomes the unofficial operating layer.
+Plants still run on spreadsheets because many systems still stop short of real operational coordination. The answer is to replace the gap the spreadsheet is covering—not the spreadsheet itself as a moral failure—with a better operating layer. That is when manual workarounds finally start to disappear, because the plant no longer has to choose between speed and structure.
 
-## The issue is not flexibility alone
+## The operational bottom line
 
-People often say spreadsheets survive because they are flexible. That is true, but incomplete.
-
-Spreadsheets survive because they are: fast to start; easy to edit; socially accepted; useful for bridging silos.
-
-If the official system is slower than the workaround, the workaround wins.
-
-## Cross-functional work creates the biggest spreadsheet pressure
-
-Most spreadsheets do not exist because one function lacks data. They exist because the plant needs to coordinate across boundaries. Production needs one view. Maintenance needs another. Quality adds context. Warehouse changes the constraints. Leadership wants one summary.
-
-When no shared operating layer exists, spreadsheets become the meeting point.
-
-## Manual trackers create hidden cost
-
-Spreadsheet-heavy operations often look manageable from the outside.
-
-Inside the plant, they create hidden cost through: duplicate work; version confusion; delayed updates; weak ownership; fragile decision logic. The cost is not only inefficiency. It is also reduced trust in the operating truth.
-
-## Spreadsheets are often a symptom of fragmented systems
-
-Plants rarely choose spreadsheets instead of software in a clean, strategic way. More often, spreadsheets appear between systems. The MES exports there. The warehouse file lands elsewhere. Maintenance notes live in a separate tracker. Someone merges them before the meeting.
-
-This is why spreadsheet dependence is usually a sign of fragmentation, not of laziness.
-
-## Why plants keep them even when they know the risk
-
-Most leaders already know spreadsheet-heavy operations are brittle. They still keep them because the alternative often feels harder. A new system can sound: too big; too rigid; too expensive; too disruptive. So the spreadsheet stays. Not because it is good. But because it is immediate.
-
-## What replaces spreadsheets in practice
-
-Plants do not abandon spreadsheets because someone tells them to. They abandon them when a better operating option appears.
-
-That option must be: easier to trust; easier to update; easier to share across teams; closer to real daily work. This is why a plant operating system matters.
-
-It replaces manual coordination not by force, but by being more usable than the workaround.
-
-## What IRIS changes
-
-IRIS is relevant here because it is designed to become the shared layer across production, warehouse, quality, maintenance, and tasking. Its value is not only digitization.
-
-Its value is reducing the need for shadow coordination through: one data layer; one execution environment; one place for tasking and follow-up; one shared operating truth.
-
-That is what spreadsheets have been trying to simulate manually for years.
-
-## Bottom line
-
-Plants still run on spreadsheets because many systems still stop short of real operational coordination. The answer is not to shame the spreadsheet.
-
-The answer is to replace the gap it is covering with a better operating layer. That is when manual workarounds finally start to disappear.
+The promise of this article—plants stop relying on spreadsheets when one operating layer becomes easier and more useful than manual workarounds—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “Why Plants Still Run on Spreadsheets,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
 ---
 

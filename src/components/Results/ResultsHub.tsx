@@ -15,6 +15,8 @@ import { ModuleTab, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { KPICreateModal } from './KPICreateModal';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
+import { KpiOverviewView } from './KpiOverviewView';
+import { KpiQueueView } from './KpiQueueView';
 import { ResultsInitiativesView } from './ResultsInitiativesView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
@@ -107,6 +109,9 @@ export const ResultsHub: React.FC = () => {
   const [observationPhaseFilter, setObservationPhaseFilter] = useState<
     'all' | 'realization' | 'post-implementation'
   >('all');
+  const [kpiWorkspaceMode, setKpiWorkspaceMode] = useState<'overview' | 'queue' | 'catalog'>(
+    'overview'
+  );
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
   const [drawerState, setDrawerState] = useState<{ kpiId: string; section?: KpiDrawerSection } | null>(
@@ -338,6 +343,28 @@ export const ResultsHub: React.FC = () => {
     [replaceResultsFilters, t]
   );
 
+  const openInitiativeKpiLane = useCallback(
+    (initiative: ResultsTrackedInitiative) => {
+      setActiveTab('results_kpi');
+      setKpiWorkspaceMode('catalog');
+      setViewMode('table');
+      replaceResultsFilters(
+        {
+          id: `initiativeName:${initiative.initiativeName}`,
+          column: 'initiativeName',
+          value: initiative.initiativeName,
+          label: initiative.initiativeName,
+        },
+        ['initiativeName']
+      );
+    },
+    [replaceResultsFilters]
+  );
+
+  const openInitiativeReportsLane = useCallback(() => {
+    setActiveTab('results_reports');
+  }, []);
+
   const handleDeleteKpi = useCallback(
     async (kpiId: string) => {
       const ok = window.confirm(
@@ -455,8 +482,9 @@ export const ResultsHub: React.FC = () => {
     );
   }, [resultsSource, runtimeSnapshot, t]);
 
-  const setCatalogFilter = useCallback((filters: FilterChip[] = []) => {
+  const setQueueFilter = useCallback((filters: FilterChip[] = []) => {
     setActiveTab('results_kpi');
+    setKpiWorkspaceMode('queue');
     setActiveFilters(filters);
   }, []);
 
@@ -579,6 +607,21 @@ export const ResultsHub: React.FC = () => {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
           {actionButton(
+            t('results.kpi.workspace.overview', 'Overview'),
+            () => setKpiWorkspaceMode('overview'),
+            kpiWorkspaceMode === 'overview'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.queue', 'Queue'),
+            () => setKpiWorkspaceMode('queue'),
+            kpiWorkspaceMode === 'queue'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.catalog', 'Catalog'),
+            () => setKpiWorkspaceMode('catalog'),
+            kpiWorkspaceMode === 'catalog'
+          )}
+          {actionButton(
             t('results.actions.createReport', 'Create KPI report'),
             () => {
               setActiveTab('results_reports');
@@ -670,6 +713,7 @@ export const ResultsHub: React.FC = () => {
   }, [
     activeTab,
     governedRuntimeStrip,
+    kpiWorkspaceMode,
     lifecycleScopedKpis,
     observationPhaseFilter,
     openRoiPicker,
@@ -687,6 +731,9 @@ export const ResultsHub: React.FC = () => {
           setSearchQuery('');
           setActiveFilters([]);
           setActiveDocumentId(null);
+          if (tab !== 'results_kpi') {
+            setKpiWorkspaceMode('overview');
+          }
         }}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -703,7 +750,7 @@ export const ResultsHub: React.FC = () => {
         onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((f) => f.id !== id))}
         onClearFilters={() => setActiveFilters([])}
         onNewItem={
-          activeTab === 'results_kpi'
+          activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
             ? () => setShowCreateModal(true)
             : activeTab === 'results_reports'
                 ? () => setKpiReportCreateNonce(Date.now())
@@ -712,7 +759,7 @@ export const ResultsHub: React.FC = () => {
                 : undefined
         }
         newItemLabel={
-          activeTab === 'results_kpi'
+          activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
             ? t('results.addKpi', '+ Add KPI')
             : activeTab === 'results_reports'
                 ? t('results.kpiReports.new', '+ New report')
@@ -720,14 +767,19 @@ export const ResultsHub: React.FC = () => {
                 ? t('results.roi.add', '+ Record ROI')
                 : undefined
         }
-        availableViewModes={activeTab === 'results_kpi' ? ['table', 'grid'] : ['table']}
+        availableViewModes={
+          activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
+            ? ['table', 'grid']
+            : ['table']
+        }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
       >
         {activeTab === 'results_initiatives' ? (
           <ResultsInitiativesView
             initiatives={filteredInitiatives}
-            onOpenInitiativeKpis={() => setActiveTab('results_kpi')}
+            onOpenInitiativeKpis={openInitiativeKpiLane}
+            onOpenInitiativeReports={openInitiativeReportsLane}
           />
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
@@ -749,6 +801,26 @@ export const ResultsHub: React.FC = () => {
               <span className="text-sm">{t('common.loading', 'Loading...')}</span>
             </div>
           </div>
+        ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'overview' ? (
+          <KpiOverviewView
+            kpis={filteredKpis}
+            governedSnapshot={runtimeSnapshot}
+            onOpenCatalog={(filters) => {
+              setKpiWorkspaceMode('catalog');
+              setActiveFilters(filters || []);
+              setViewMode('table');
+            }}
+            onOpenQueue={(filters) => {
+              setQueueFilter(filters || []);
+            }}
+            onOpenReports={() => setActiveTab('results_reports')}
+            onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
+          />
+        ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue' ? (
+          <KpiQueueView
+            kpis={filteredKpis}
+            onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
+          />
         ) : activeTab === 'results_kpi' && viewMode === 'table' ? (
           <ResultsKpisTableV3
             kpis={filteredKpis}

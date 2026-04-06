@@ -2,6 +2,7 @@ import { getDatabase } from '../../database/Database.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import ragService from '../ragService.js';
+import { resolveAnnaPreferredProducts, resolveAnnaSiteConfig } from './annaSiteConfig.js';
 
 type AnnaDocRow = {
   id?: string;
@@ -323,7 +324,11 @@ function buildFallbackHits(primaryProducts: string[]): AnnaRagHit[] {
   return hits;
 }
 
-function buildContextText(hits: AnnaRagHit[]): { contextText: string; sources: string[] } {
+function buildContextText(
+  hits: AnnaRagHit[],
+  priorityProductName: string,
+  crossSellRule: string
+): { contextText: string; sources: string[] } {
   if (hits.length === 0) {
     return {
       contextText:
@@ -334,8 +339,8 @@ function buildContextText(hits: AnnaRagHit[]): { contextText: string; sources: s
 
   const sections: string[] = [
     'ANNA KNOWLEDGE CONTEXT',
-    '- Priority: default to Consultify-first answers.',
-    '- Mention other DBR products only when the user asks directly or when they explain how Consultify fits the wider DBR system.',
+    `- Priority: default to ${priorityProductName} first on this landing page.`,
+    `- Cross-sell rule: ${crossSellRule}`,
   ];
 
   const sources: string[] = [];
@@ -357,27 +362,31 @@ export async function buildAnnaKnowledgeContext(opts: {
   locale?: string;
   limit?: number;
   preferredProducts?: string[];
+  siteKey?: string;
 }): Promise<AnnaKnowledgeContextResult> {
   const originalQuery = String(opts.query || '').trim();
   const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
+  const siteConfig = resolveAnnaSiteConfig(opts.siteKey);
+  const sitePreferredProducts =
+    opts.preferredProducts && opts.preferredProducts.length > 0
+      ? uniq(opts.preferredProducts)
+      : resolveAnnaPreferredProducts(opts.siteKey);
 
   const detected = detectRequestedProducts(originalQuery);
   const explicitCrossProductRequest = detected.matchedProducts.some(
-    (product) => product !== 'consultify'
+    (product) => product !== siteConfig.primaryProductSlug
   );
   const preferredCrossProductRequest = Boolean(
-    opts.preferredProducts?.some((product) => product !== 'consultify')
+    sitePreferredProducts.some((product) => product !== siteConfig.primaryProductSlug)
   );
   const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
+  const explicitProducts = detected.matchedProducts;
   const primaryProducts = portfolioMode
-    ? uniq(['dbr77', 'consultify', 'vector', 'iris', 'digital-twin', 'iiot', 'marketplace'])
-    : opts.preferredProducts && opts.preferredProducts.length > 0
-      ? uniq([
-          ...opts.preferredProducts.filter((product) => product !== 'consultify'),
-          'consultify',
-        ])
-      : detected.primaryProducts;
+    ? uniq(['dbr77', ...sitePreferredProducts])
+    : explicitProducts.length > 0
+      ? uniq([...explicitProducts, ...sitePreferredProducts])
+      : sitePreferredProducts;
   const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
   const query = portfolioMode
     ? `${originalQuery} consultify vector iris "digital twin" iiot marketplace`
@@ -468,7 +477,11 @@ export async function buildAnnaKnowledgeContext(opts: {
       })
       .slice(0, limit);
 
-    const { contextText: rawContextText, sources } = buildContextText(hits);
+    const { contextText: rawContextText, sources } = buildContextText(
+      hits,
+      siteConfig.primaryProductName,
+      siteConfig.crossSellRule
+    );
     const contextText = portfolioMode
       ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.`
       : rawContextText;
@@ -485,7 +498,11 @@ export async function buildAnnaKnowledgeContext(opts: {
     );
 
     const fallbackHits = buildFallbackHits(primaryProducts);
-    const { contextText, sources } = buildContextText(fallbackHits);
+    const { contextText, sources } = buildContextText(
+      fallbackHits,
+      siteConfig.primaryProductName,
+      siteConfig.crossSellRule
+    );
     return {
       contextText,
       matchedProducts: detected.matchedProducts,
@@ -496,18 +513,21 @@ export async function buildAnnaKnowledgeContext(opts: {
 }
 
 export async function buildAnnaVoiceBootstrap(
-  locale?: string
+  locale?: string,
+  siteKey?: string
 ): Promise<AnnaKnowledgeContextResult> {
+  const siteConfig = resolveAnnaSiteConfig(siteKey);
   const bootstrapQuery = String(locale || '')
     .toLowerCase()
     .startsWith('pl')
-    ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem'
-    : 'Consultify overview business value demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ecosystem';
+    ? `${siteConfig.primaryProductName} czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem`
+    : `${siteConfig.primaryProductName} overview business value demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ecosystem`;
 
   return buildAnnaKnowledgeContext({
     query: bootstrapQuery,
     locale,
     limit: 8,
-    preferredProducts: ['consultify', 'vector', 'dbr77', 'iris', 'digital-twin', 'iiot', 'marketplace'],
+    preferredProducts: resolveAnnaPreferredProducts(siteKey),
+    siteKey,
   });
 }

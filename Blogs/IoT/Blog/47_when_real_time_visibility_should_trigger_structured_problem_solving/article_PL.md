@@ -1,55 +1,59 @@
-# Kiedy widocznosc w czasie rzeczywistym powinna uruchomic strukturalne problem solving
+# Kiedy widoczność w czasie rzeczywistym powinna uruchamiać uporządkowane rozwiązywanie problemów
 
-Docelowa persona: Kierownik produkcji / Kierownik zmiany / Lider CI  
+Docelowa persona: Kierownik produkcji / Kierownik zmiany / Lider ciągłego doskonalenia  
 Etap lejka: Decision  
+Główny problem: zespoły widzą anomalię na ekranie, ale wracają do decyzji z korytarza, więc ten sam tryb awarii wraca tydzień później bez śladu dowodowego  
+Główna obietnica: mapa wyzwalaczy: które warunki w czasie rzeczywistym otwierają uporządkowaną pętlę, kto posiada charter oraz jak dowód z IoT przyczepia się do zapisu
 
-Glowny problem: zespoly widza anomalie na ekranie, ale wracaja do decyzji z korytarza, wiec ten sam tryb awarii wraca w przyszlym tygodniu bez sladu dowodu Glowna obietnica: mapa triggerow: ktore warunki real-time otwieraja strukturalna petle, kto posiada charter i jak dowod IoT przylacza sie do rekordu Widocznosc w czasie rzeczywistym nie zastepuje myslenia.
+Widoczność w czasie rzeczywistym potrafi przyspieszyć spory. Uporządkowane rozwiązywanie problemów kończy je dowodem.
 
-To starter do zdyscyplinowanego problem solving, gdy stawka uzasadnia narzut.
+Błąd polega na tym, by każdą żółtą poświatę traktować jak temat na charter. Drugi błąd to nigdy nie otwierać chartera, gdy ryzyko, powtórzenia lub wymogi śledzenia wymagają zapisu. IoT powinno pomóc zakładowi wiedzieć, w którą grę gra w danej chwili: szybkie opanowanie, standardowa praca czy dyscyplinowana analiza.
 
-## Bezposrednia odpowiedz
+Uporządkowane rozwiązywanie to nie biurokracja dla samej biurokracji. To sposób, by przestać co miesiąc płacić czesne za tę samą lekcję, bo nikt nie zapisał, co faktycznie zmieniono.
 
-Uruchom strukturalne problem solving, gdy widocznosc real-time pokazuje **powtarzajaca sie strate na aktywie ograniczajacym**, **zbieganie do granicy safety albo jakosci**, **spor miedzy zmianami o prawde maszyny** albo **luke traceability u klienta albo regulatora**, ktorej czat nie domknie.
+## Kiedy uzasadniona jest uporządkowana pętla
 
-Nie wymuszaj pelnego charteru dla **jednorazowych transientow** juz pokrytych standardowa praca albo **znanego zachowania rozgrzewki** z istniejacym SOP.
+Otwórz charter, gdy powtarzająca się strata uderza w ograniczający zasób mimo istniejącej standardowej pracy; gdy granice bezpieczeństwa lub jakości zbliżają się do poziomów, które zakład traktuje poważnie; gdy zmiany nie zgadzają się co do prawdy maszyny w sposób zagrażający planowi lub zgodności; albo gdy śledzenie dla klienta lub regulatora wymaga łańcucha, którego luźna rozmowa nie obroni.
 
-## Framework: mapa czterech triggerow
+## Kiedy zostać przy standardowej pracy
 
-1. **Trigger ekonomiczny** Potwierdzona strata outputu albo uptime na nazwanym constraincie z dwoma lub wiecej wystapieniami w oknie przegladu
+Pomiń ciężką pętlę przy jednorazowych stanach przejściowych już objętych SOP, przy znanym zachowaniu rozgrzewki z istniejącym playbookiem albo gdy opanowanie jest kompletne i powtórzenie nie jest wskazane. Struktura kosztuje; wydawaj ją tam, gdzie nieformalne domknięcie zawiodło lub stawka jest wysoka.
 
-2. **Trigger ryzyka** Trend w strone progu interlock, hold albo scrap wg standardow zakladu
+## Celowo dołączaj dowód z IoT
 
-3. **Trigger zaufania** Sprzeczne narracje miedzy zmianami o tym samym sygnale albo wzorcu override
+Spinaj okna „stabilne versus bieżące”, powody i nadpisania, powiązane działania utrzymania oraz noty potwierdzające. Zapis powinien pozwolić komuś spoza dramatu odtworzyć, co linia wiedziała i kiedy.
 
-4. **Trigger compliance** Reguly dowodu albo retencji wymagaja odtwarzalnej linii czasu
+## Nazwij właścicieli i ramy czasowe
 
-## Sekwencja krokow: od widocznosci do strukturalnej petli
+Chartery bez właściciela zamieniają się w serie spotkań. Przypisz prowadzącego, zdefiniuj datę przeglądu i śledź działania korygujące jak każde inne operacyjne zobowiązanie.
 
-**Ustabilizuj i ogranicz** uzywajac istniejacej eskalacji i regul override; **Zlap kawalek IoT**: timestampy, sygnaly, notatki operatora, zdjecia jesli dozwolone; **Sformuj problem** z jednym ownerem, granica zakresu i time boxem; **Pusc metode** uzywana w zakladzie: A3, lekki 8D, kawalek DMAIC albo ekwiwalent; **Domknij aktualizacja standardow** jesli definicje, szkolenia albo progi musza sie zmienic; **Zaloguj integracje** jesli fix wymaga CMMS, zmiany inzynierskiej albo pracy IT-OT.
+**Test wyzwalacza uporządkowanej pętli:** nazwany właściciel chartera; zdefiniowany horyzont czasu; dołączony pakiet dowodu; śledzone działania korygujące; zamknięcie omówione według kalendarza.
 
-## Porownanie: problem solving z korytarza versus charter
+## Trzymaj chartery na tyle małe, by dało je domknąć
 
-| Z korytarza | Z charterem |
-|---|---|
-| szybko dzis | wolniejszy start, szybsza redukcja powtorzen |
-| slaby dowod | przylaczony kawalek IoT |
-| zalezny od osobowosci | owner i time box |
-| ukryty w czacie | rekord pod audyt |
+Duże charttery giną z głodu kalendarza. Gdy wyzwalacz zadziałał, ogranicz charter do jednego zasobu ograniczającego lub jednej rodziny awarii, dołącz dowód z IoT jako pakiet i ustaw twardą datę przeglądu. Zamknięty mały charter bije otwarty wielki.
 
-## Relacja do planowania produkcji
+## DBR77 IoT jako kręgosłup dowodu
 
-Strukturalne problem solving to nie to samo co **przeplanowanie harmonogramu**. Artykul 40 opisuje, kiedy widocznosc powinna zmienic plan.
+DBR77 IoT wspiera uporządkowane rozwiązywanie, gdy widoczność eksportuje kontekst, któremu hala już ufa — stany, powody, znaczniki czasu — do zapisów doskonalenia zamiast osieroconych zrzutów ekranu.
 
-Ten artykul opisuje, kiedy widocznosc powinna otworzyc sciezke **przyczyny i przeciwdzialania** nawet jesli dzisiejszy plan zostaje zamrozony z dobrych powodow.
+Używaj widoczności w czasie rzeczywistym, by uruchamiać uporządkowane rozwiązywanie problemów, gdy powtórzenia, ryzyko lub śledzenie wymagają zapisu — nie przy każdej fluktuacji. Dyscyplina chroni energię na problemy, które na nią zasługują.
 
-## Co to znaczy dla DBR77 IoT
 
-DBR77 IoT to **nie kolejny dashboard**.
+## Niech obietnica artykułu zostanie praktyczna
 
-To **widocznosc maszyny w czasie rzeczywistym**, **lacznosc retrofit-ready**, **szybki pilot** i **wsparcie decyzji edge-first**, ktore daje strukturalnym metodom odcisk czasu zamiast odtwarzanej pamieci.
+Przełóż powyższe idee w jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo ćwiczenie, które faktycznie realizują. Duże programy zacinają się, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
 
-## Bottom line
+## Punkt kontrolny kierownictwa na następny przegląd operacji
 
-Jesli kazdy blip to projekt, utoniesz.
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
 
-Jesli zaden blip nie jest projektem, bedziesz powtarzal ten sam tydzien na zawsze. Uzywaj triggerow, ownerow i dyscypliny dowodu, zeby wybierac.
+## Domknięcie na hali
+
+Ta rada nic nie znaczy, jeśli zostaje w sali sterującej. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia mniej przypomina salę sądową, a bardziej zsynchronizowany zespół — wciąż głośny i zajęty, ale ułożony wokół tych samych faktów.
+
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie języka to objaw, że pętla wciąż jest zbyt cienka.
+
+---
+
+*DBR77 IoT kotwiczy uporządkowane rozwiązywanie problemów w zaufanej prawdzie maszyny ze znacznikami czasu, kontekście operatora i historii eskalacji, którą można dołączyć do zapisów doskonalenia. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

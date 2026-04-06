@@ -1,80 +1,68 @@
-# Co sprawdzic przed podpisaniem umowy na automatyzacje
+# Co sprawdzić przed podpisaniem kontraktu automatyzacyjnego
 
-Target persona: sponsor / przywodztwo zakupow i inzynierii  
-Funnel stage: Decision  
-Core problem: umowy sa podpisywane z optymistycznym jezykiem zakresu, slabymi regulami zmian i rozmyta akceptacja, co zamienia spory w drogie konflikty  
-Main promise: lista inspekcji przed podpisem skupiona na zakresie, zalozeniach, kamieniach milowych, akceptacji i mechanice zmian
+Docelowa persona: Sponsor / Kierownictwo zakupów i inżynierii  
+Etap lejka: Decyzja  
+Główny problem: kontrakty bywają podpisywane przy optymistycznym języku zakresu, słabych zasadach zmian i rozmytej akceptacji, co zamienia spory w kosztowne konflikty  
+Główna obietnica: lista inspekcji przed podpisem skupiona na zakresie, założeniach, kamieniach milowych, akceptacji i mechanice zmian
 
-Podpisanie wyglada jak meta. Dla projektow automatyzacji to czesto start linii odpowiedzialnosci. Umowa powinna czynic realizacje inspektowalna.
+Podpis czuje się jak zamknięcie. W automatyzacji to zwykle przekazanie od sprzedaży do rozliczalnej realizacji. Pożyteczny kontrakt czyni wykonanie możliwym do inspekcji: jasne granice, uczciwe założenia, kamienie milowe, które coś znaczą, akceptacja, którą da się przeprowadzić, oraz mechanika zmian, która zamienia normalną iterację w papierologię zamiast uszkodzenia relacji.
 
-Jesli tylko sprawia, ze zobowiazania sprzedazowe brzmia pewnie, masz papier, nie ochrone.
+Jeśli dokument tylko sprawia, że pewność brzmi urzędowo, macie teatr — nie kontrolę.
 
-## Kontrola 1: zakres zapisany jako testowalne wlaczenia i wylaczenia
+## Zakres, który da się testować
 
-Chcesz jezyka, ktory trzecia strona moze przeczytac i zrozumiec granice.
+Szukajcie deliverables i wyłączeń na tyle prostych, że trzeci czytelnik rozumie granicę. Uważaj na „pod klucz” bez wyłączeń, integrację „best effort” bez własności i niezdefiniowaną „standardową praktykę”. Mocne kontrakty nazywają interfejsy i kto je posiada, nie tylko aspiracje.
 
-Slaby jezyk zakresu pojawia sie jako: "pod klucz" bez wylaczen; integracja "wedlug najlepszych sil" bez wlasnosci; "standardowa praktyka branzowa" bez definicji.
+## Założenia, które przetrwają podpis
 
-Mocny jezyk zakresu pojawia sie jako: jawne listy deliverables; jawne wylaczenia; nazwane interfejsy i kto je posiada.
+Założenia powinny pozostawać widoczne i zarządzane: co się dzieje, gdy padną, jak dostosowują się cena i harmonogram, kto je weryfikuje i kiedy. Jeśli założenia znikają w prozie prawnej, odkryjecie je z powrotem przy linii na uruchomieniu.
 
-## Kontrola 2: zalozenia sa przywolywane i zarzadzane
+## Kamienie milowe powiązane z decyzjami
 
-Zalozenia nie powinny znikac przy podpisie.
+Daty nie powinny zdobić wykresu Gantta. Każdy kamień milowy powinien mówić, co jest zwalidowane, jaki dowód się liczy i jakie prawa zachowuje kupujący, gdy dowód jest niewystarczający. Tak projekty unikają dryfu na nadziei.
 
-Dobre umowy lacza zalozenia z: co sie dzieje, gdy zalozenie jest falszywe; jak dostosowuja sie cena i harmonogram; kto weryfikuje zalozenia i kiedy. Jesli zalozenia nie sa przywolywane, odkryjesz je przy uruchomieniu.
+## Akceptacja jako kryteria, nie „vibe”
 
-## Kontrola 3: kamienie milowe mapuja sie na realne prawa decyzyjne
+Wiąż akceptację z mierzalnymi kontrolami tam, gdzie to uczciwe dla procesu — tempo, jakość, granice przestojów tam, gdzie ma to zastosowanie; kroki walidacji BHP tam, gdzie ma to zastosowanie; definicje kompletności szkolenia i dokumentacji. Jeśli akceptacja to tylko „udany start produkcyjny”, zaprosiliście spór w najgorszym momencie.
 
-Kamienie milowe nie powinny byc dekoracyjnymi datami.
+## Zamówienia zmian z kręgosłupem
 
-Kazdy kamien powinien odpowiadac: co jest walidowane; jaki dowod jest wymagany; jaka decyzje kupujacy moze podjac, gdy dowod jest niewystarczajacy. Tak projekty unikaja dryfu na nadziei.
+Projekty się zmieniają. Kontrakt powinien mówić, jak zmiany są proponowane, wyceniane, zatwierdzane i dokumentowane. Nieprzejrzyste zasady zmian zamieniają zwykłą naukę inżynierską w faktury, które czują się osobiste.
 
-## Kontrola 4: akceptacja zdefiniowana jako kryteria, nie "klimat"
+## Jasność komercyjna na życie po przecięciu
 
-Akceptacja powinna byc powiazana z mierzalnymi sprawdzeniami tam, gdzie to mozliwe: tempo, jakosc, granice przestojow (jesli dotyczy); kroki walidacji BHP (jesli dotyczy); definicje kompletnosci szkolen i dokumentacji. Jesli akceptacja to tylko "sukcesowy start", zapraszasz do sporu.
+Granice gwarancji i warunki startu, filozofia części zamiennych i czasy realizacji tam, gdzie to istotne, oczekiwania wsparcia i eskalacji — to decyduje, czy operacje czują się wspierane, czy opuszczone. Podpis to właściwy moment, by usunąć niejasność, nie odkładać ją.
 
-## Kontrola 5: mechanika change order jest jawna
+## Niewygodna prawda o późnym przeglądzie
 
-Projekty automatyzacji sie zmieniaja.
+Do czasu obiegu dostawca może już czuć się „wybrany”, liderzy mogą faworyzować prędkość nad doprecyzowaniem, a otwarte założenia mogą być przeformułowane na szczegóły do domknięcia na miejscu. Wtedy dyscyplina ma największe znaczenie. Jeśli dokument nie przetrwa inspekcji wiersz po wierszu, podpis nie stworzy kontroli — zamknie w zamęcie.
 
-Umowa powinna definiowac: jak zglasza sie zmiany; jak zatwierdza sie aktualizacje ceny i harmonogramu; oczekiwania dokumentacyjne dla zmian zakresu.
+## Praktyczny rytm przeglądu
 
-Nieprzejrzysta mechanika zmian zamienia normalna iteracje inzynierska w uszkodzenie relacji.
+Przypisz własność techniczną do zakresu i wyłączeń, zakupy do mechaniki komercyjnej i zmian, operacje do języka akceptacji i wsparcia. Skonsoliduj pytania w jeden pakiet doprecyzowań. Rozwiąż sprzeczności przed mobilizacją, nie w jej trakcie.
 
-## Kontrola 6: jasnosc komercyjna: czesci, gwarancja, wsparcie
+## Jak łączy się DBR77 Marketplace
 
-Przed podpisem potwierdz widocznosc: granic gwarancji i warunkow startu; strategii czesci zamiennych i lead time (jesli dotyczy); oczekiwan co do reakcji wsparcia po starcie. Te elementy decyduja, czy operacje czuje wsparcie, czy porzucenie.
+Przegląd kontraktu powinien dziedziczyć tę samą dyscyplinę porównywalności co wybór — założenia, granice i własność widoczne przy ocenie powinny pozostać widoczne przy podpisie.
 
-## Reality check: slabosc umowy zwykle wychodzi wtedy, gdy entuzjazm zdazyl juz zamienic sie w commitment
+Bliski kompan: [Co dobra oferta automatyzacyjna powinna uczynić widocznym](../17_what_a_good_automation_offer_should_make_visible/article_PL.md).
 
-Wlasnie dlatego pozna inspekcja jest niewygodna, ale konieczna. W momencie, gdy umowa krazy do podpisu:
+## Podpis jako dopasowanie, nie ulga
 
-- dostawca moze byc juz wewnetrznie traktowany jako wybrany partner
-- liderzy moga chciec szybkosci bardziej niz doprecyzowania
-- nierozwiazane zalozenia moga zostac przepisane jako detale do rozwiazania pozniej
+Traktuj podpisanie jako moment, w którym organizacja zobowiązuje się do jednej opowieści. Jeśli podpisy przychodzą, gdy kluczowe funkcje wciąż prywatnie się nie zgadzają, kontrakt staje się rozejmem zamiast planu — a rozejmy padają pod stresem integracji. Użyj ostatniego czytania, by ujawnić te niezgody: jeśli operacje nie żyją z językiem akceptacji, napraw to teraz; jeśli zakupy nie żyją z mechaniką zmian, napraw to teraz.
 
-To jest dokladnie moment, w ktorym kupujacy potrzebuje najwiecej dyscypliny.
+Upewnij się też, że kontrakt dziedziczy zapis z oceny: przywołane założenia, zdefiniowane interfejsy i dowody kamieni milowych. Kontrakt, który na ostatniej stronie wymyśla nowy optymizm, cofa tygodnie dyscyplinowanego porównania.
 
-Jesli dokument nadal nie wytrzymuje wtedy inspekcji linijka po linijce, podpis nie stworzy kontroli.
+## Od decyzji do zachowania hala
 
-## Sekwencja przegladu przed podpisem (praktyczna)
+Kontrakty mają znaczenie, bo zostają, gdy entuzjazm opadnie. Na hali ludzie nie cytują numerów klauzul — podążają za tym, co praktyczne. Mocny język kontraktu zgadza się z operacyjną rzeczywistością: testy akceptacji, które operatorzy potrafią wykonać, granice wsparcia, na których utrzymanie może polegać, oraz zasady zmian, które nie wymagają kryzysu, by je uruchomić.
 
-Wyznacz wlasciciela technicznego do linijki po linijce: zakres i wylaczenia; wyznacz zakupy do mechaniki komercyjnej i regul zmian; wyznacz operacje do jezyka akceptacji i wsparcia; skonsoliduj pytania w jeden pakiet wyjasnien; rozwiaz sprzecznosci przed podpisem, nie po mobilizacji.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: przeczytaj na głos sekcje akceptacji i wsparcia przy operacjach w pokoju — jeśli krzywią się, popraw tekst przed podpisem.
 
-## Co to oznacza dla DBR77 Marketplace
+## Podsumowanie
 
-DBR77 Marketplace wspiera decyzje automatyzacji producenta-first przez workflow podkreslajacy porownywalnosc i widoczne zalozenia.
-
-Ten mindset powinien przejsc do kontraktowania: mniej ukrytych luk; czystsza historia porownan; wyrazniejsza odpowiedzialnosc. Marketplace to nie katalog robotow.
-
-To warstwa zaufania i workflow redukujacy chaos sourcingu przez lepszy design decyzji.
-
-## Bottom line
-
-Umowa to nie trofeum. To plan inspekcji dla pieniedzy, czasu i ryzyka.
-
-Jesli zakres, zalozenia, kamienie milowe, akceptacja i mechanika zmian sa slabe, podpis nie zamyka ryzyka. Utrwala je w umowie.
+Traktuj kontrakt jako plan inspekcji dla pieniędzy, czasu i ryzyka. Słaby zakres, założenia, kamienie milowe, akceptacja i mechanika zmian nie znikają po atramencie — stają się drogimi rozmowami przy działającym sprzęcie.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace wspiera dyscyplinę przedkontraktową widocznych założeń i porównywalnych ofert, by przegląd kontraktu startował ze strukturalnej historii porównania, a nie rozłącznych negocjacji. [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

@@ -1,61 +1,56 @@
-# Kiedy widocznosc w czasie rzeczywistym powinna zmienic plan produkcji
+# Kiedy widoczność w czasie rzeczywistym powinna zmienić plan produkcji
 
-Docelowa persona: Planista produkcji / Menedzer operacji / Interfejs do lancucha dostaw  
+Docelowa persona: Production planner / Operations manager / Supply chain interface  
 Etap lejka: Decision  
+Główny problem: planiści nie ufają historiom z hali, podczas gdy IoT może pokazać dryft za późno, jeśli nie jest spięte z governance planowania — więc albo nic się nie zmienia, albo wszystko zmienia się chaotycznie  
+Główna obietnica: bramka decyzyjna: które warunki w czasie rzeczywistym upoważniają do zmiany planu, kto zatwierdza, w jakim oknie czasowym i jaki standard dowodu obowiązuje
 
-Glowny problem: planisci nie ufaja narracjom z hali, podczas gdy IoT moze pokazac dryft za pozno, jesli nie jest zwiazane z governance planowania, wiec albo nic sie nie zmienia, albo wszystko zmienia sie chaotycznie Glowna obietnica: bramka decyzji: ktore warunki w czasie rzeczywistym upowazniaja do zmiany planu, kto aprobuje, w jakim oknie czasu i jaki standard dowodu obowiazuje
+Widoczność w czasie rzeczywistym to nie pozwolenie na przeplanowywanie co godzinę. To rządzona lista wyzwalaczy na moment, gdy plan przestaje być najlepszą uczciwą prognozą.
 
-Widocznosc w czasie rzeczywistym to nie przywilej do przepisywania planu co godzine.
+Bez reguł planiści wypalają się na chaosie albo ignorują linię w całości. Z regułami IoT staje się dopuszczalnym dowodem zamiast szumu w tle.
 
-To lista wyzwalaczy na moment, gdy plan nie jest juz najlepszym uczciwym forecastem. Planowanie potrzebuje governance tak samo jak linia regul safety.
+Planiści szybko uczą się, które zakłady używają danych odpowiedzialnie, a które traktują każdy wykres jako pozwolenie na panikę. Jeśli IoT staje się synonimem ciągłych zmian sekwencji, planiści będą bronić harmonogramu ignorując strumień. Governance to sposób, by widoczność była wystarczająco wiarygodna, by jej słuchać.
 
-## Bezposrednia odpowiedz
+## Kiedy zmiana planu jest uzasadniona
 
-Zmien plan produkcji, gdy **potwierdzone warunki maszyny i przeplywu** przekraczaja progi, ktore zaklad juz wiaze z ryzykiem klienta, zapasow albo compliance, i gdy zmiana przechodzi przez **nazwanego approvera** w zdefiniowanym oknie.
+Zmień plan, gdy potwierdzone warunki maszyny i przepływu przekraczają progi, które zakład już wiąże z ryzykiem dla klienta, zapasów lub zgodności — oraz gdy nazwany zatwierdzający autoryzuje zmianę w zdefiniowanym oknie. „Potwierdzone” oznacza, że sygnał jest na zatwierdzonej liście dowodów i że wymagane potwierdzenie lub aprobata operatora już nastąpiły.
 
-Nie zmieniaj planu na podstawie: niepotwierdzonych skokow czujnika; opinii jednej zmiany bez potwierdzenia; widocznosci, ktora dotyka tylko wewnetrznej efektywnosci bez wplywu na klienta albo zapasy.
+## Kiedy trzymać linię
 
-## Framework: trzy klasy zmiany planu
+Nie przeplanowuj na niepotwierdzonych skokach, na opinii pojedynczej zmiany bez potwierdzenia ani na warunkach, które dotykają tylko wewnętrznej efektywności bez konsekwencji dla klienta lub zapasów — chyba że governance wyraźnie mówi inaczej. Widoczność może zostać przy lokalnym odrabianiu bez przepisywania harmonogramu.
 
-1. **Klasa ochrony** Safety, regulacyjne albo niezgodnosc jakosci, ktora blokuje wysylke albo wprowadza ryzyko klasy recall Zmiana planu jest czesto obowiazkowa, nie opcjonalna.
+## Trzy klasy zmian planu, które większość zakładów może użyć
 
-2. **Klasa odzysku** Potwierdzona utrata zdolnosci na zasobie ograniczajacym z horyzontem czasu lamiacym zobowiazany harmonogram Zmiana planu jest dozwolona, jesli dzialania odzysku nie zamykaja luki.
+Zdarzenia klasy ochrony dotyczą bezpieczeństwa, regulacji lub niezgodności jakościowej, która blokuje wysyłkę lub tworzy ekspozycję klasy recall — często obowiązkowe ścieżki reakcji. Zdarzenia klasy odrabiania to potwierdzona utrata zdolności na zasobie ograniczającym, gdzie działania odrabiania nie zamykają luki w zaangażowanym horyzoncie. Zdarzenia klasy rebalansu to nierównowagi przepływu, które w uzgodnionym oknie zagłodzą lub zaleją downstream; podążają za standardowym playbookiem i opcjonalnymi regułami zatwierdzającymi.
 
-3. **Klasa rebalansu** Niebalans przeplywu, ktory w uzgodnionym horyzoncie da glod downstream albo nadmiar Zmiana planu jest opcjonalna, ale powinna isc standardowym playbookiem.
+Każda klasa powinna nazywać domyślnych zatwierdzających i sensowne limity częstości, by planiści nie dostawali „whiplashu”.
 
-Kazda klasa powinna miec domyslnego approvera i maksymalna czestotliwosc dziennie, zeby ograniczyc thrash.
+**Spraw, by dowód z IoT był dopuszczalny:** zatwierdzona lista sygnałów do przeplanowania; przepływ pracy potwierdzenia przywoływany, nie pomijany; przyczyny przestojów i obejścia jako część historii; standardy zobowiązań wobec klienta jawne.
 
-## Porownanie: reaktywny thrash versus rzadzony replan
+## Chroń planistów przed chaosem
 
-| Reaktywny thrash | Rzadzony replan |
-|---|---|
-| ciagle zmiany sekwencji | lista wyzwalaczy i approver |
-| wypalony planista | planista chroniony regulami |
-| IoT winione za chaos | IoT cytowane jako obiekt dowodu |
-| operatorzy nie ufaja planowi | plan zgadza sie z potwierdzona rzeczywistoscia |
+Ogranicz, jak często każda klasa zmian planu może się uruchomić dziennie. Wymagaj nazwanych zatwierdzających na klasę. Loguj decyzje, by zakład mógł przeglądać, czy przeplanowywanie pomogło, czy tylko przesunęło ból. Chaos bez pamięci to sposób, by organizacja przestała ufać planistom i danym.
 
-## Checklista: spraw, by dowod IoT byl dopuszczalny w planowaniu
+## DBR77 IoT w governance planowania
 
-- [ ] sygnaly uzyte do replanu sa na liscie zatwierdzonego dowodu
-- [ ] workflow potwierdzenia jest przywolywany, nie pomijany przez "pilnosc"
-- [ ] override i kody przyczyn downtime sa czescia narracji
-- [ ] standardy dla zobowiazania wobec klienta sa jawne
-- [ ] przeglad po zmianie loguje, jaki dowod wyzwolil ruch
+DBR77 IoT wspiera planowanie tam, gdzie widoczność w czasie rzeczywistym wiąże się z obiektami dowodu — stan, przyczyny, znaczniki czasu — którym planiści ufają na tyle, by cytować je w zapisie decyzji.
 
-## Integracja z przekazaniem i eskalacja
+Rządź przeplanowywaniem jak bezpieczeństwem: jasne wyzwalacze, nazwani zatwierdzający, standardy dowodu i limity chaosu. IoT powinno uzasadniać zdyscyplinowane zmiany, nie chaotyczne.
 
-Planowanie siedzi miedzy **wykonaniem zmiany** a **obietnica dla klienta**.
+## Niech obietnica artykułu zostanie praktyczna
 
-Jesli reguly przekazania i eskalacji sa slabe, planisci beda ignorowac IoT. Wzmocnij te petle najpierw na liniach ograniczajacych.
+Przełóż powyższe idee w jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo drill, który faktycznie realizują. Duże programy zacinają się, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
 
-## Co to znaczy dla DBR77 IoT
+## Punkt kontrolny kierownictwa na następny przegląd operacji
 
-DBR77 IoT daje **widocznosc maszyny w czasie rzeczywistym** i **wsparcie decyzji edge-first**, wiec planisci moga pracowac na wspolnych obiektach dowodu zamiast konkurujacych narracji.
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
 
-To **nie kolejny dashboard**: to szybsza sciezka do potwierdzonej prawdy na ograniczeniu.
+## Domknięcie na hali
 
-Lacznosc retrofit-ready wprowadza starsze ograniczenia do tego samego governance.
+Żadna z tych rad nie ma znaczenia, jeśli zostaje w slajdach sterujących. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia bardziej przypomina zsynchronizowany zespół niż salę sądu — wciąż głośno i intensywnie, ale wokół tych samych faktów.
 
-## Bottom line
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie językowe to objaw, że pętla jest wciąż zbyt cienka.
 
-Pozwol, by widocznosc w czasie rzeczywistym zmieniala plan tylko tam, gdzie zgadzaja sie **potwierdzone warunki**, **jasne ryzyko** i **nazwana wladza**. W przeciwnym razie trzymaj plan stabilny i napraw sygnal albo proces.
+---
+
+*DBR77 IoT daje planistom wiarygodny dowód w czasie rzeczywistym — stan maszyny, przyczyny i kontekst — tak by zmiany planu były rządzone, a nie zgadywane. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

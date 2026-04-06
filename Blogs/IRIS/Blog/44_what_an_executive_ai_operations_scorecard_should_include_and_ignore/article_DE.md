@@ -1,73 +1,38 @@
-# Was eine Executive-KI-Operations-Scorecard enthalten soll und ignorieren soll
+# Was eine Executive-KI-Operations-Scorecard enthalten sollte—and was sie ignorieren sollte
 
-Target persona: COO / Werks-P&L-Owner / VP Supply Chain  
-Funnel stage: Evaluation  
-Core problem: Leadership sieht Modell-Demos und Adoptions-Prozente, waehrend das Werk weiter Stunden an unklarem Ownership und langsamen Abschluss verliert  
-Main promise: eine kurze Scorecard, die KI-Assistenz an Response, Durchsatzschutz, Audit-Readiness und menschliches Follow-through bindet und Vanity-Metriken filtert
+Zielpersona: COO / Werks-P&L-Owner / VP Supply Chain  
+Funnel-Stufe: Evaluation  
+Kernproblem: Führung sieht Model-Demos und Adoptionsprozente, während das Werk weiter Stunden an unklarem Ownership und langsamem Abschluss verliert  
+Hauptversprechen: eine kurze Scorecard, die KI-Assistenz mit Reaktion, Durchsatzerhaltung, Audit-Readiness und menschlichem Follow-through verbindet—und Vanity-Metriken herausfiltert
 
-Eine Executive-KI-Operations-Scorecard sollte Median Time-to-Owner fuer assistierte Items, Abschlussrate assistierter Tasks innerhalb SLA, Repeat-Incident-Rate nach Routing-Beruehrung durch Assistenz, Override-Rate mit kategorisierten Gruenden und Trainingsabdeckung nach Rolle enthalten. Sie sollte rohe Modell-Accuracy ohne Operations-Kontext, Leaderboard-artige Suggestion-Counts und "AI-Stunden gespart"-Claims ohne Baseline-Methode ignorieren. Wenn die Scorecard nicht in unter 30 Minuten aus Exports gebaut werden kann, ueberlebt sie echte Operationen nicht. Executives brauchen keine weiteren Charts. Sie brauchen weniger Zahlen, die trotzdem Verhalten vorhersagen.
+Executives brauchen keine weiteren Charts. Sie brauchen weniger Zahlen, die trotzdem Verhalten vorhersagen. Eine Executive-KI-Operations-Scorecard soll sich in unter 30 Minuten aus Exporten bauen lassen—denn wenn sie in einer schlechten Woche nicht ehrlich produziert werden kann, überlebt sie echte Operations nicht. Nehmen Sie mediane Time-to-Owner für assistierte Items, Abschlussrate innerhalb SLA mit vorhandenen Pflichtfeldern, wiederkehrende Incident-Muster, nachdem Assistenz Routing berührt hat, Override-Rate mit kategorisierten Gründen und Trainingsabdeckung je Rolle auf. Diese Metriken verbinden Führungssicht mit Flächenmechanik.
 
-## Enthalten: fuenf operative Outcomes (minimaler Executive-View)
+Ignorieren Sie Vanity-Spuren, die Risiko verbergen: rohes Vorschlagsvolumen ohne Akzeptanzdisziplin, Genauigkeitsmetriken losgelöst von Sicherheits- und Qualitätssperren, „Automatisierungsrate“, die UI-Klicks statt operative Zustände zählt, Zufriedenheitsumfragen ohne Verknüpfung zu Incident-Records und tokenisierte IT-Metriken im Operations-Review-Pack. Moderne Metriken fühlen sich gut an. Sie führen keine Linie.
 
-Time-to-Owner: vom Signal zum benannten accountable Human; Abschlussqualitaet: Prozent SLA-Abschluss mit Pflichtfeldern; Durchsatzschutz: ungeplante Stop-Minuten mit Link zu assistierten Entscheidungen; Repeat-Muster: gleiches Failure-Thema innerhalb 14 Tage; Governance-Gesundheit: Schwellen-Aenderungen mit Freigaben und geloggten Versions-IDs. Diese fuenf ueberleben Audits und Schichtwechsel.
+Nutzen Sie Wochensichten für Vorgesetzte: Drift bei Time-to-Owner und Abschluss-SLA früh erkennen, Override-Themen erkennen, die Training oder Schwellen-Edits nahelegen, wiederholte Incidents sofort adressieren. Nutzen Sie Monatssichten für Kapital und Policy: Personalwirkung trenden, Prozessredesign auslösen, wenn SLAs chronisch scheitern, Governance aktualisieren, wenn Override-Muster sich in Policy-Lücken stabilisieren.
 
-## Ignorieren: fuenf Vanity-Spuren, die Risiko verstecken
+Scorecard-Integrität braucht Disziplin: Jede Metrik benennt ihr System-of-Record-Feld, Baselines sind datiert und eingefroren, Ausschlüsse explizit, rote Schwellen bekommen Action-Owner, und der Executive-Slice bleibt eine Seite mit Details im Anhang.
 
-Suggestion-Volumen ohne Accept- oder Dismiss-Disziplin; Accuracy-Metriken ohne Safety- und Quality-Hold-Kontext; "Automationsrate", die UI-Klicks zaehlt, nicht operative Zustaende; Zufriedenheitsumfragen ohne Incident-Record-Linkage; IT-Token-Kosten-Metriken im Operations-Review-Pack. Vanity-Spuren klingen modern. Sie fuehren keine Linie.
+Vergleichen Sie Demo-Scorecards mit Operating-Scorecards. Demo nutzt kuratierte Screenshots und Highlights. Operating nutzt Exporte, Mediane und Tail-Verhalten sowie Accountability bei Linien- und Funktionsleitern. Käufer und Operatoren lernen schnell den Unterschied.
 
-## Framework: woechentlich versus monatlich
+Die Scorecard funktioniert, wenn wöchentliche Operations-Reviews existieren, Assistenz an Tasks mit Ownern gebunden ist und Finance operative Definitionen für Durchsatzmaße akzeptiert. Sie irreführt, wenn Assistenz außerhalb des Ausführungsdatensatzes läuft, SLA-Definitionen je Schicht differieren oder Incidents verbal ohne Systemverknüpfung schließen.
 
-| Metrik | Woechentliche Nutzung | Monatliche Nutzung |
-|---|---|---|
-| Time-to-Owner | Drift frueh fangen | Trend und Staffing-Entscheidungen |
-| SLA-Abschluss | taktisches Follow-through | Prozess-Redesign-Trigger |
-| Override-Gruende | Training und Schwellen-Edits | Policy-Updates |
-| Repeat-Incidents | sofortige Eindammung | Engineering-Backlog-Prioritaet |
-| Governance-Log-Volumen | Stichprobe Disziplin | Executive-Attestation |
+IRIS hält Executive-Metriken glaubwürdig, wenn assistierte Tasks, Freigaben, Abschlüsse und Overrides aus derselben Ausführungsschicht kommen, die die Fläche nutzt—Führung sieht Felder, keine Stories.
 
-Woechentlich ist fuer Vorgesetzte. Monatlich ist fuer Kapital und Policy.
+Für benachbarten Cadence und Controls siehe [How to Review AI-Assisted Operations After the First 90 Days](../40_how_to_review_ai_assisted_operations_after_the_first_90_days/article_DE.md) und [How to Scale AI Assistance Without Losing Operational Control](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_DE.md).
 
-## Checkliste: Scorecard-Integritaetsregeln
+Eine Scorecard hilft Führung auch, zwei klassische KI-Programm-Failures zu vermeiden: Aktivität zu feiern, während Abschluss schlechter wird, oder die Fläche für Modellfehler zu bestrafen, die eigentlich Schwellenfehlkonfiguration waren. Wenn Metriken an Feldern hängen—Time-to-Owner, SLA-Abschluss, kategorisierte Overrides—werden diese Modi früh sichtbar. Ohne feldgebundene Metriken streitet die Organisation über Narrative, bis ein Incident Ehrlichkeit erzwingt.
 
-- jede Metrik benennt das System-of-Record-Feld  
-- Baselines sind datiert und fuer Vergleichsfenster eingefroren  
-- Ausschluesse sind explizit (geplanter Downtime, Trials, Legacy-Linien)  
-- rote Schwellen triggern einen Action-Owner, kein Diskussionsthema  
-- maximal eine Seite fuer den Executive-Slice; Details im Anhang
+Halten Sie den Executive-Slice absichtlich klein. Ziel ist nicht Beeindrucken mit Breite, sondern ein wöchentlicher Rhythmus, in dem wenige Zahlen wenige Entscheidungen treiben: Schwelle verschärfen, Training ergänzen, Personal verschieben, Act-Modus pausieren oder erst erweitern, wenn die Scorecard sagt, das Werk hat es verdient. So werden Scorecards Management-Tools statt Tapete.
 
-## Vergleich: Demo-Scorecard versus Operations-Scorecard
+Wenn Führung nicht erklären kann, wie eine Metrik Schwelle, Trainingsplan oder Personalmuster ändert—entfernen Sie sie. Halten Sie die Sicht kurz, exportierbar und mit Owner.
 
-| Element | Demo-Scorecard | Operations-Scorecard |
-|---|---|---|
-| Datenquelle | kuratierte Screenshots | Exports und Logs |
-| Erfolgsstory | Highlight-Reel | Median und Tail-Verhalten |
-| Accountability | Projektteam | Linien- und Funktions-Owner |
-| Entscheidungsnutzung | Funding-Narrativ | Schwellen- und Staffing-Edits |
+## Operatives Fazit
 
-Buyer erkennen den Unterschied schnell.
+Das Versprechen dieses Artikels—eine kurze Scorecard, die KI-Assistenz mit Reaktion, Durchsatzerhaltung, Audit-Readiness und menschlichem Follow-through verbindet und Vanity-Metriken filtert—wird erst operativ, wenn es ändert, wie Arbeit fließt: klareres Ownership, schnellere Erstzuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „What an Executive AI Operations Scorecard Should Include and Ignore“ ist das der Akzeptanztest: die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
-## Wann diese Scorecard funktioniert
-
-- das Werk hat bereits einen disziplinierten woechentlichen Operations-Review  
-- Assistenz ist an Tasks mit Ownern gebunden, nicht nur an Notifications  
-- Finance akzeptiert operative Definitionen fuer Durchsatzmasse
-
-## Wann diese Scorecard in die Irre fuehrt
-
-- Assistenz laeuft in einem Side-Channel ausserhalb des Ausfuehrungsdatensatzes  
-- SLA-Definitionen differieren zwischen Schichten  
-- Incidents werden verbal geschlossen ohne System-Linkage
-
-## Warum IRIS Scorecards an Ausfuehrungsrealitaet ausrichtet
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Wenn Assistenz Tasks in derselben Schicht wie Freigaben und Abschluesse erzeugt, streiten Executive-Metriken nicht mehr mit der Flaeche.
-
-## Fazit
-
-Wenn Leadership nicht erklaeren kann, wie eine Metrik eine Schwelle, einen Trainingsplan oder ein Staffing-Muster aendert, entfernen Sie sie von der Scorecard. Halten Sie den View kurz, exportierbar und mit Owner.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur in Meetings und mehr Tage, in denen der Systemdatensatz zu dem passt, was die Fläche sagen würde, wenn Sie sie mitten in der Aufgabe anhalten.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS hält assistierte Signale, Tasks, Freigaben und Abschlüsse auf einer Ausführungsschicht, sodass Executive-Metriken auf Felder statt Stories mappen. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

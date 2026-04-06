@@ -5,65 +5,51 @@ Funnel stage: Decision / Adoption
 Core problem: six months of activity passes without a structured review, so budgets and trust decisions rely on anecdotes  
 Main promise: a six-month review agenda with evidence categories so leadership can renew, adjust, or pause with clarity
 
-Six months is enough time for IoT to show real habits.
+Six months is enough time for IoT to become a habit. It is also enough time for problems to disappear into adaptation—people working around noise, thresholds that drifted, integrations that never quite landed. A structured review prevents both blind optimism and blind cancellation.
 
-It is also enough time for problems to become invisible because people adapted around them. A structured review prevents both blind optimism and blind cancellation.
+By six months, anecdotes have hardened into folklore. “It works great” and “it never worked” can both be half-true. The review should force the plant to show evidence in common buckets so leadership can renew, adjust, or pause without relying on whoever tells the most convincing story in the room.
 
-## The review in one page: five evidence buckets
+## Review evidence in five buckets
 
-1. **Signal integrity** clock, identity, missing data, threshold stability
+Signal integrity: clocks, identity, missing data, threshold stability. Operating behavior: acknowledge times, ignore patterns, shift variance, training completion. Maintenance impact: work orders tied to signals, repeat failures, spare correlations where relevant. Quality and throughput: scrap, rework, short stops, changeover effects the pilot claimed to touch. Cost and effort: internal hours, vendor fees, hardware churn, integration spend.
 
-2. **Operating behavior** acknowledge times, ignore patterns, shift variance, training completion
+For each bucket, capture what improved, what regressed, and what remains unknown. Feelings matter; facts decide.
 
-3. **Maintenance impact** work orders tied to signals, repeat failures, spare correlation
+## Use a simple scorecard for strength of evidence
 
-4. **Quality and throughput** scrap, rework, short stops, changeover effects where relevant
+Rate areas such as pilot KPI linkage, alarm usefulness, operator trust, data governance, security and patching, and replication readiness on evidence strength, not enthusiasm. Averages hide weakness; any low score without a remediation plan should command the room.
 
-5. **Cost and effort** internal hours, vendor fees, hardware churn, integration spend
+## Choose a calm fork after the review
 
-Each bucket gets three bullets: what improved, what regressed, what is still unknown.
+Renew and expand when scores are mostly solid, replication packaging exists, and budget path is clear. Adjust and hold scope when signal or trust issues dominate—fix before new lines. Pause and refactor when ownership debt or integration tangles block safe expansion. Pausing is a leadership decision supported by evidence, not a moral verdict.
 
-## Six-month scorecard (simple)
+Connect the review backward to month-one habits in [what the first 30 days of IIoT should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md), quarter yardsticks in [what to measure in the first 90 days of IIoT rollout](../16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_EN.md), and the post-pilot checkpoint in [how to review IIoT value after the first pilot](../20_how_to_review_iiot_value_after_the_first_pilot/article_EN.md).
 
-Rate each area 1-5: evidence strength, not feelings.
+**Six-month review inputs:** operations, maintenance, IT/OT, quality, finance represented; incident and tuning history exported; operator interviews across shifts; vendor change logs for firmware, gateways, and cloud updates; comparison to original business-case assumptions.
 
-| Area | 1 weak evidence | 3 mixed | 5 strong evidence |
-|---|---|---|---|
-| Pilot KPI linkage | | | |
-| Alarm usefulness | | | |
-| Operator trust | | | |
-| Data governance | | | |
-| Security and patching | | | |
-| Replication readiness | | | |
+## DBR77 IoT in the audit
 
-Averages are less important than any 1s without a remediation plan.
+DBR77 IoT supports six-month reviews when evidence reflects what the system actually ran: integrity, behavior, maintenance linkage, throughput effects, and cost of care—reviewable outcomes, not abstract positioning.
 
-## Decision fork after the review
+After six months, review IoT with structured evidence, an honest scorecard, and a renew-adjust-pause fork. Evidence turns rollout drama into a management decision.
 
-Use a calm fork:
 
-- **Renew and expand** scorecard mostly 3+ with clear replication package and budget path
 
-- **Adjust and hold scope** signal or trust issues dominate; fix before new lines
 
-- **Pause and refactor** ownership or integration debt blocks safe expansion
+## Keep the article’s promise practical
 
-Pausing is a leadership decision, not a failure label, when framed with evidence.
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
 
-## Checklist: participants and inputs
+## A leadership checkpoint for the next ops review
 
-- [ ] operations, maintenance, IT/OT, quality, finance represented
-- [ ] incident log and tuning history exported for the period
-- [ ] operator interview sample across shifts, not only day management
-- [ ] vendor change log for firmware, gateways, cloud updates
-- [ ] comparison to original business case assumptions
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
 
-The same ladder reads cleaner when it connects to month-one habits in [what the first 30 days of IIoT should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md), quarter yardsticks in [what to measure in the first 90 days of IIoT rollout](../16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_EN.md), and the post-pilot checkpoint in [how to review IIoT value after the first pilot](../20_how_to_review_iiot_value_after_the_first_pilot/article_EN.md).
+## Bringing it home on the floor
 
-## What this means for DBR77 IoT
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-DBR77 IoT supports a six-month review when evidence buckets reflect what the system actually ran: signal integrity, operating behavior, maintenance linkage, quality and throughput, and cost of care. Pilots should surface those categories early so leadership is auditing habits and facts, not assembling a new story. Security, patching, and edge choices show up as reviewable outcomes, not as abstract positioning.
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-## Bottom line
+---
 
-After six months, review IoT with five evidence buckets, a simple scorecard, and a clear renew-adjust-pause fork. Evidence turns rollout drama into a management decision.
+*DBR77 IoT helps leadership review IoT rollout with operational evidence: signal integrity, floor behavior, maintenance linkage, and total cost of care. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

@@ -1,78 +1,58 @@
-# Jak wyglada dobry model stanu maszyny zanim skalujesz IoT
+# Jak wygląda dobry model stanu maszyny przed skalowaniem IoT
 
-Docelowa persona: Inzynier produkcji / Lider systemow OT / Inzynier niezawodnosci  
+Docelowa persona: Manufacturing engineer / OT systems lead / Reliability engineer  
 Etap lejka: Evaluation  
+Główny problem: zespoły skalują czujniki zanim uzgodnią, co znaczy „sprawne działanie” w języku maszyny, więc każdy zakład pod presją wymyśla własne etykiety  
+Główna obietnica: minimalny model stanów, który można rządzić: stabilne stany, dozwolone przejścia, dowód dla każdego przejścia i jawne nieznane
 
-Glowny problem: zespoly skaluja czujniki zanim uzgodnia, co znaczy "dobrze dziala" w jezyku maszyny, wiec kazdy zaklad wymysla wlasne etykiety pod presja Glowna obietnica: minimalny model stanu pod governance: stabilne stany, dozwolone przejscia, dowod na kazde przejscie i jawne nieznane
+Skalowanie IoT zanim zespoły uzgodnią stan maszyny to sposób, by mnożyć czujniki i kłótnie jednocześnie.
 
-Skalowanie IoT bez modelu stanu jest jak rozbudowa zakladu bez danych balansu linii. Pojedziesz szybciej i konflikty odkryjesz pozniej. Model stanu to nie lista feature vendora.
+Model stanów to nie lista funkcji dostawcy. To kontrakt zakładu na to, jak surowe sygnały mapują się na następną decyzję operacyjną. Dobre modele są małe, nudne i egzekwowalne.
 
-To uzgodnienie zakladu, jak rzeczywistosc maszyny mapuje sie na kolejna decyzje operacyjna.
+Przed skalą przejdź model względem najgorszego dnia z ostatniego miesiąca. Odtwórz postoje, blokady i przebiegi z ograniczeniami. Jeśli stany kłamałyby albo wymuszały fałszywą precyzję, napraw model — nie ludzi, którzy prowadzą produkcję.
 
-## Bezposrednia odpowiedz
+## Stany to zobowiązania; tagi to głębia
 
-Dobry **model stanu maszyny** przed skala ma: maly zestaw **nazwanych stanow**, ktorych operatorzy i maintenance juz uzywaja w rozmowie; **jasne przejscia** zwiazane z sygnalami albo checkami fizycznymi, nie z wrazeniem; **jednego wlasciciela na przejscie**, gdy stan implikuje inna nastepna akcje; kubelek **nieznane** dozwolony tymczasowo z follow-up ograniczonym czasem. Jesli nie narysujesz tego na jednej stronie, nie jest gotowe do skali.
+Tagi mogą się mnożyć dla analityki inżynierskiej. Stany powinny pozostać nieliczne i wzajemnie wykluczające się w danej chwili na aktywie. Stany napędzają playbooki teraz; tagi mogą karmić późniejsze studia. Jeśli nie narysujesz diagramu stanów na jednej stronie, nie jesteś gotów do skali.
 
-## Stany versus tagi
+## Sześć stanów startowych, które możesz dostosować
 
-Tagi to etykiety bez sztywnej formy. Stany to zobowiazania operacyjne.
+Nazwij je dla swojej kultury, zachowaj logikę: praca zgodnie z planem w uzgodnionej tolerancji; praca z ograniczeniem materiału, narzędzia, obsady lub przepływu w górę; postój planowany, np. przezbrojenie; postój nieplanowany ze ścieżką właściciela; wstrzymanie ze względów jakościowych lub regulacyjnych; tymczasowo nieznane z terminem dalszego działania. Nieznane jest uzasadnione krótkoterminowo; staje się wadą, jeśli staje się trwałym maskowaniem.
 
-| Tagi | Stany |
-|---|---|
-| wiele, nachodzace na siebie | malo, wzajemnie wykluczajace sie w danym momencie aktywa |
-| fajne do analytiki pozniej | prowadza playbooki teraz |
-| latwe dodac w oprogramowaniu | trudne do zgodzenia miedzy zmianami |
+## Każde przejście potrzebuje dowodu i właściciela
 
-Trzymaj tagi na glebie inzynierska. Trzymaj stany na tyle nudne, ze hala je zniesie.
+Przejścia powinny wiązać się z sygnałami, fizycznymi sprawdzeniami lub potwierdzeniami operatora — nie z przeczuciem. Gdy stan implikuje inną następną akcję, ktoś musi jawnie posiadać to przejście.
 
-## Framework: zestaw startowy szesciu stanow
+## Waliduj przed skalą
 
-Dostosuj nazwy do zakladu, zachowaj logike:
+Przejdź model z operatorami na każdej zmianie. Porównaj język modelu z mową na hali. Odtwórz ostatnie incydenty i zapytaj, czy stany mówiłyby prawdę. Napraw kolizje, gdy dwa stany opisują ten sam moment.
 
-1. **Praca zgodnie z planem** W uzgodnionych pasmach wariancji dla cyklu, proxy jakosci i ograniczen
+**Walidacja przed skalą:** diagram na jednej stronie; sprawdzenie słownictwa zmiana po zmianie; powtórka incydentów przechodzi; kubełek nieznanych ma SLA; alarmy i zlecenia odwołują się do stanów, nie do przymiotników.
 
-2. **Praca ograniczona** Praca, ale limit materialu, narzedzia, staffing albo przeplywu upstream
+## Połącz stany z playbookami
 
-3. **Degradacja** Trend od baseline bez jeszcze stopu; priorytet maintenance rosnie
+Każdy stan powinien implikować domyślną następną akcję lub klasę właściciela: kto jest powiadamiany, jaki szablon zlecenia, jaka ścieżka eskalacji. Stany bez playbooków to dekoracyjne etykiety.
 
-4. **Stop znany** Kod przyczyny pasuje do znanego wzoru usterki albo potwierdzonego warunku 5. **Stop nieznany** Stop bez wiarygodnej przyczyny; stan dochodzenia
+## DBR77 IoT i skalowanie „stanem najpierw”
 
-6. **Wylaczona z eksploatacji** Planowa praca, przezbrojenie albo lockout; to nie stan usterki
+DBR77 IoT zasługuje na skalę, gdy wdrożenie traktuje modele stanów jako obiekty rządzenia — stabilne definicje współdzielone przez operatorów — zanim liczba czujników stanie się proxy postępu.
 
-Ten zestaw wystarczy do zestawienia IoT, CMMS i jezyka zmiany, zanim pomnozysz zaklady.
+Dobry model stanu maszyny jest minimalny, rządzony i uczciwy wobec nieznanych. Zbuduj tę zgodę, zanim poszerzysz ślad.
 
-## Checklista: waliduj model przed skala
+## Niech obietnica artykułu zostanie praktyczna
 
-- [ ] operatorzy przypisuja stany bez otwierania instrukcji
-- [ ] kazdy stan mapuje na domyslna nastepna role: operator, maintenance, engineering
-- [ ] przejscia loguja, kto potwierdzil fizyczna rzeczywistosc, gdy czujniki sie rozjezdzaja
-- [ ] standardy sa przywolywane dla bramek safety i jakosci miedzy stanami
-- [ ] nieznane stopy maja maksymalny wiek przed eskalacja
+Przełóż powyższe idee w jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo drill, który faktycznie realizują. Duże programy zacinają się, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
 
-## Porownanie: skalowanie najpierw czujniki versus najpierw stany
+## Punkt kontrolny kierownictwa na następny przegląd operacji
 
-| Najpierw czujniki | Najpierw stany |
-|---|---|
-| wiecej punktow, niejasne znaczenie | mniej punktow, uzgodnione znaczenie |
-| spory o progi na kazdym spotkaniu | spor raz, potem governance |
-| rozlew dashboardow | wspolny jezyk planowania |
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
 
-## Kiedy to nie dziala
+## Domknięcie na hali
 
-**Nie dziala**, gdy leadership traktuje model jak dokumentacje IT zamiast zywego kontraktu operacyjnego.
+Żadna z tych rad nie ma znaczenia, jeśli zostaje w slajdach sterujących. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia bardziej przypomina zsynchronizowany zespół niż salę sądu — wciąż głośno i intensywnie, ale wokół tych samych faktów.
 
-**Nie dziala**, gdy vendor definiuje stany, ktore nie pasuja do triage maintenance na aktywie.
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie językowe to objaw, że pętla jest wciąż zbyt cienka.
 
-## Co to znaczy dla DBR77 IoT
+---
 
-DBR77 IoT wspiera **widocznosc maszyny w czasie rzeczywistym** i **wsparcie decyzji edge-first**, zeby przejscia stanow oceniac blisko aktywa.
-
-Lacznosc retrofit-ready pomaga maszynom brownfield wejsc w to samo slownictwo stanow bez rip-and-replace.
-
-Szybki pilot twardzi model na jednej klasie linii, zanim poszerzysz rollout.
-
-## Bottom line
-
-Uzgodnij **model stanu zanim pomnozysz czujniki**.
-
-Male, nudne, rzadzone stany bija duza chmure sprytnych tagow, ktorym nikt nie ufa na nocnej zmianie.
+*DBR77 IoT wspiera skalowanie IoT „stanem najpierw”: jasna widoczność stanu maszyny, kontekst operatora i rządzone definicje zanim rośnie ślad. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

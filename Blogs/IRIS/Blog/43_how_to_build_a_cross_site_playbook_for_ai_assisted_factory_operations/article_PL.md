@@ -1,72 +1,36 @@
-# Jak zbudowac playbook miedzy zakladami dla operacji wspieranych przez AI
+# Jak zbudować playbook międzyzakładowy dla operacji fabrycznych wspomaganych AI
 
-Target persona: Wiceprezes operacji / Regionalny dyrektor produkcji / Lider PMO programu  
-Funnel stage: Adoption  
-Core problem: kazdy zaklad improwizuje tryby, progi i szkolenia, wiec centrala nie moze porownywac wynikow ani bezpiecznie powielac wzorcow  
-Main promise: playbook z globalnymi elementami bezwzglednymi, strefami adaptacji lokalnej, standardami dowodow i kwartalnym rytmem synchronizacji, ktory utrzymuje follow-through
+Docelowa persona: VP Operations / regionalny dyrektor produkcji / lider PMO programu  
+Etap lejka: Adoption  
+Główny problem: każdy zakład improwizuje tryby, progi i szkolenia, więc firma nie może porównywać wyników ani bezpiecznie ponownie używać wzorców  
+Główna obietnica: playbook z globalnymi elementami bezwzględnymi, strefami lokalnej adaptacji, standardami dowodu i kwartalnym rytmem synchronizacji, który chroni domknięcie
 
-Zbuduj playbook miedzy zakladami dzielac to, co musi byc identyczne (reguly BHP, pola audytu, klasy akceptacji, definicje danych dla wspolnych KPI), od tego, co moze sie roznic (topologia linii, obsada, mix dostawcow, wartosci progow). Opublikuj jeden szablon workflow, jeden pakiet dowodow do przegladow i jedna mape eskalacji. Prowadz miesieczny odczyt miedzy zakladami na metrykach domkniecia, nie na dokladnosci modelu. Jesli dwa zaklady nie potrafia wytlumaczyc tego samego KPI bez spotkania, playbook to nadal slajdy. Skala to nie kopiuj-wklej. Skala to kontrolowana variacja ze wspolnym dowodem.
+Skala między zakładami to nie kopiuj-wklej. To kontrolowana wariacja ze wspólnym dowodem. Zbuduj playbook międzyzakładowy, oddzielając to, co musi być identyczne — reguły BHP, pola audytu, klasy zatwierdzeń, wspólne definicje KPI — od tego, co może się różnić przejrzyście, np. topologia linii, obsada, mix dostawców oraz liczby progów strojone pod dojrzałość. Opublikuj jeden szablon przepływu pracy, jeden pakiet dowodu na przeglądy i jedną mapę eskalacji. Prowadź comiesięczne odczyty metryk domknięcia, a nie dokładności modelu. Jeśli dwa zakłady nie potrafią wyjaśnić tego samego KPI bez spotkania, playbook wciąż jest slajdami.
 
-## Warstwa 1: globalne elementy bezwzgledne (to samo brzmienie, te same pola)
+Globalne elementy bezwzględne powinny czytać się jak klauzule jakości: minimalne pola audytu dla zadań i nadpisań wspomaganych, klasy zatwierdzeń, których lokalnie nie da się ominąć, reguły powiązania incydentów, gdy asystencja zmienia kierowanie zgłoszeń, bramki szkoleniowe przed trybami działania oraz wspólna definicja „zamknięte”. Strefy adaptacji lokalnej muszą być udokumentowane i wersjonowane: kto posiada strojenie, daty wejścia, notatki wycofania. Nieprzejrzystość zamienia programy wielolokalizacyjne w nieporównywalne historie.
 
-Te elementy podrozuj doslownie: minimalne pola audytu dla zadan wspieranych i override; klasy akceptacji, ktorych nie mozna lokalnie omina; reguly powiazania incydentow, gdy asysta dotykala routingu; bramki szkolen przed trybem dzialaj; definicja "domkniete" dla wspolnych KPI. Traktuj je jak klauzule systemu jakosci.
+Praktyczny playbook obejmuje zakres przepływ pracy „w rodzinie”, politykę trybów z kryteriami awansu, taksonomię wyjątków i drabiny eskalacji, wymagane pola przekazania zmiany, kalendarze przeglądów przy trzydziestu, dziewięćdziesięciu i stu osiemdziesięciu dniach, kontrolę zmian propagacji progów oraz granice dla narzędzi dostawców zasilających warstwę wykonania.
 
-## Warstwa 2: strefy adaptacji lokalnej (udokumentowane, wersjonowane)
+Zrób pierwszy dzień warsztatu wymuszający wyrównanie: trzy KPI z identycznymi definicjami, dwa pilotażowe przepływ pracy prześledzone z prawdziwymi ID sygnałów, wspólne kody przyczyn nadpisań, nazwani sponsorzy zakładów i zastępcy nocni, jeden wzorzec rozwiązywania konfliktów z zegarami oraz trzydziestodniowe porównanie wyłącznie na eksportach.
 
-Zaklady moga stroic w ramach: liczby progow powiazane z klasa urzadzenia i dojrzaloscia; wzorcow zmian dla pokrycia arbitra; jezyka i kart pracy dla operatorow; glebokosci integracji z legacy MES lub WMS.
+Wdrożenia szablonowe optymalizują identyczne ekrany, dopóki zakłady nie ukrywają rzeczywistości. Wdrożenia playbooka optymalizują identyczny dowód, dopóki audyty nie stają się prostsze. Szablony czują się szybko, dopóki wyjątki nie idą pod ziemię. Playbook ciężko się czuje, dopóki kierownictwo nie może uczciwie porównać domknięcia.
 
-Kazda lokalna zmiana wymaga wlasciciela, daty obowiazywania i notatki rollback.
+Playbook działa, gdy zakłady już dzielą zdyscyplinowany rytm przeglądów operacyjnych, IT-OT potrafi publikować wersjonowane reguły, a liderzy regionalni akceptują przejrzyste różnice progów. Nie działa, gdy korporacja żąda identycznych liczb bez identycznych ograniczeń, zakłady odmawiają wspólnych kodów nadpisań albo narzędzia dostawców omijają zapis wykonania.
 
-## Framework: zarys rozdzialow playbooka
+IRIS wspiera realny playbook wielolokalizacyjny, gdy zakłady dzielą jeden model wykonania dla zachowania, domknięcia i dowodu — nawet gdy lokalne progi się różnią — więc przeglądy porównują dyscyplinę zamiast kłócić się o definicje.
 
-1. oswiadczenie o zakresie: ktore workflow sa w rodzinie miedzy zakladami  
-2. polityka trybow: obserwuj, doradzaj, dzialaj oraz kryteria awansu  
-3. taksonomia wyjatkow i drabina eskalacji  
-4. pola przekazania wymagane przy kazdym przekazaniu zmiany  
-5. kalendarz przegladow: pakiety dowodow 30, 90, 180 dni  
-6. kontrola zmian: kto publikuje edycje progow i jak wersje sie rozchodza  
-7. granice dostawcow IT dla narzedzi vendorowych zasilajacych warstwe wykonania
+Skala, przegląd i granice dostawcy: [Jak skalować asystencję AI bez utraty kontroli operacyjnej](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_PL.md), [Jak przeglądać operacje wspomagane AI po pierwszych 90 dniach](../40_how_to_review_ai_assisted_operations_after_the_first_90_days/article_PL.md) oraz [Kiedy narzędzia AI dostawców powinny zasilać warstwę wykonania, a kiedy nie](../48_when_vendor_ai_tools_should_feed_the_execution_layer_and_when_not_to/article_PL.md).
 
-## Checklist: agenda pierwszego warsztatu miedzy zakladami (jeden dzien)
+Playbook chroni też zakłady przed korporacyjną „zazdrością metryk”. Gdy jeden zakład ma ostrzejsze ograniczenia, czasy domknięcia mogą wyglądać gorzej na naiwnym dashboardzie — chyba że playbook wymusza jawny opis granic. Przejrzystość bije fałszywą porównywalność. Celem nie są identyczne liczby wyników. Celem jest porównywalna dyscyplina: ten sam kształt zapisu, te same pola audytu, to samo znaczenie „zamknięte”, nawet gdy progi różnią się z dobrych powodów.
 
-- uzgodnij trzy wspolne KPI z identycznymi definicjami  
-- zmapuj dwa pilotowe workflow end-to-end z prawdziwymi ID sygnalow  
-- uzgodnij kody powodow override (ta sama lista, to samo szkolenie)  
-- przypisz sponsorow zakladow i zastepcow na noc  
-- wybierz jeden wzorzec rozwiazywania konfliktow (arbitr lub komitet z zegarem)  
-- zaplanuj pierwsze porownanie 30-dniowe tylko na eksportach
+Liderzy regionalni powinni traktować playbook jako instrument negocjacji. Uwidacznia kompromisy: co jest bezwzględne dla bezpieczeństwa klienta i regulacji, co może się giąć według dojrzałości zakładu i co nigdy nie może się giąć bez wersjonowanej publikacji. To redukuje pasywno-agresywny dryf, w którym zakłady zgadzają się na papierze, a improwizują w praktyce.
 
-## Porownanie: wdrozenia szablonu kontra playbook
+Playbook międzyzakładowy to kontrakt na dowód, nie nakaz identyczności. Standaryzuj to, co chroni ludzi, klientów i audyty. Lokalizuj to, co odzwierciedla realne ograniczenia — z dyscypliną wersji.
 
-| Element | Wdrozenie szablonu | Wdrozenie playbooka |
-|---|---|---|
-| intencja | identyczne ekrany | identyczny dowod i bezpieczenstwo |
-| elastycznosc | niska | ograniczone strojenie lokalne |
-| tryb porazki | obejscia w cieniu | widoczny dryft wersji, ktorym mozna zarzadzac |
-| odczyt dla kierownictwa | procent adopcji | porownywalnosc domkniecia i reakcji |
+## Podsumowanie operacyjne
 
-Szablony wydaja sie szybkie, dopoki zaklady ukrywaja rzeczywistosc. Playbooki wydaja sie ciezkie, dopoki audyty nie staja sie latwe.
-
-## Kiedy ten playbook dziala
-
-Zaklady juz dziela kadencje przegladow operacji na poziomie finansowym; IT-OT wspiera wersjonowana publikacje regul; liderzy regionu akceptuja rozne progi przy pelnej transparentnosci.
-
-## Kiedy ten playbook nie dziala
-
-Centrala chce identycznych liczb bez identycznych ograniczen; zaklady odmawiaja wspolnych kodow override, bo "jestesmy inni"; narzedzia vendorowe omijaja rekord wykonania.
-
-## Dlaczego IRIS wspiera prawdziwy playbook wielo-zakladowy
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Jeden model wykonania miedzy zakladami zamienia przeglady miedzy zakladami w porownanie zachowan i domkniecia, a nie walke o definicje.
-
-## Podsumowanie
-
-Playbook miedzy zakladami to kontrakt na dowod, nie nakaz identycznosci. Standaryzuj to, co chroni ludzi, klientow i audyty.
-
-Lokalizuj to, co odzwierciedla realne ograniczenia, z dyscyplina wersji.
+Obietnica tego artykułu — playbook z globalnymi elementami bezwzględnymi, strefami lokalnej adaptacji, standardami dowodu i kwartalnym rytmem synchronizacji, który chroni domknięcie — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie, które da się prześledzić bez archeologii skrzynek. Dla „Jak zbudować playbook międzyzakładowy dla operacji fabrycznych wspomaganych AI” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS daje programom wielolokalizacyjnym jeden model wykonania dla zadań, zatwierdzeń i przeglądów, tak by porównania używały tego samego kształtu zapisu. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

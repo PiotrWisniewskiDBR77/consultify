@@ -1,5 +1,11 @@
 # KPI AI Support Analysis
 
+Related canon:
+
+- `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+- `docs/product/RESULTS_V8_SSOT.md`
+- `docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+
 ## Context
 
 The KPI model now treats `Initiative -> KPI assignment -> observation phase -> report` as the core operational flow.

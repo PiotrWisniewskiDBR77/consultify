@@ -4,6 +4,13 @@
 > Owner: Product + Engineering
 > Scope: canonical product truth for Results covering KPI, scorecards, OKRs, dashboards, deviations, ROI and executive review
 
+Read with:
+
+- `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
+- `docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+- `docs/product/REPORTING_CANONICAL_TEMPLATES.md`
+- `docs/product/work-packets/cursor-work/final_master/KPI_AI_SUPPORT_ANALYSIS_2026-04-06.md`
+
 ---
 
 ## 1. Why this document exists
@@ -72,6 +79,21 @@ Rule:
 ## 4. Canonical product surfaces
 
 At product level, Results should support at least:
+
+Current operating spine inside the active module is:
+
+- `Initiatives`
+- `KPI`
+- `Reporting`
+- `ROI`
+- `ROI Analysis`
+
+Canonical interpretation:
+
+- `Initiatives` is the observation scope surface
+- `KPI` is the operator workspace for signal inspection, measurement and action
+- `Reporting` is the template-first narrative and review surface
+- `ROI` and `ROI Analysis` extend the results lane with financial consequence and realized-value interpretation
 
 ### 4.1 KPI and metrics surface
 
@@ -313,10 +335,14 @@ AI may not:
 
 ## 9. Related canonical docs
 
+- `KPI_FULL_SYSTEM_CANON_V8.md`
 - `RESULTS_V8_BENCHMARK.md`
 - `RESULTS_KPI_OPERATING_MODEL_AND_OKR_FUNCTIONS_V8.md`
 - `RESULTS_AI_COPILOT_AUTOMATION_AND_AGENT_RUNTIME_V8.md`
 - `RESULTS_PLATFORM_INTEGRATION_PLAN_V8.md`
 - `RESULTS_ROI_REGISTRY_AND_REALIZATION_TRACKING_RUNTIME_V8.md`
+- `RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+- `REPORTING_CANONICAL_TEMPLATES.md`
+- `work-packets/cursor-work/final_master/KPI_AI_SUPPORT_ANALYSIS_2026-04-06.md`
 - `RESULTS_KPI_DEVIATION_MANAGEMENT_V3.md`
 - `ROI_TRACKING_CONTRACT_V3.md`

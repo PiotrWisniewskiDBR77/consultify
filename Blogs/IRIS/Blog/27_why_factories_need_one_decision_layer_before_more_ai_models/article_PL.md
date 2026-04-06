@@ -1,64 +1,38 @@
-# Dlaczego fabryki potrzebuja jednej warstwy decyzji zanim dodadza wiecej modeli AI
+# Dlaczego fabryki potrzebują jednej warstwy decyzyjnej zanim dodadzą więcej modeli AI
 
-Target persona: CTO / Wiceprezes operacji / sponsor transformacji cyfrowej  
-Funnel stage: Decision  
-Core problem: organizacje kupuja kolejne modele i copiloty, podczas gdy priorytety nadal rozpadaja sie miedzy skrzynkami, co daje bardziej pewne sprzecznosci zamiast szybszego domkniecia  
-Main promise: jasny argument za ustabilizowaniem jednej warstwy decyzji dla priorytetyzacji, rozwiazywania konfliktow i routingu wykonania, zanim rozsierszysz liczbe modeli
+Docelowa persona: CTO / wiceprezes ds. operacji / sponsor transformacji cyfrowej  
+Etap lejka: Decision  
+Główny problem: organizacje kupują kolejne modele i copiloty, podczas gdy priorytety wciąż rozpadają się po skrzynkach, tworząc pewniejsze sprzeczności zamiast szybszego domknięcia  
+Główna obietnica: jasny argument za ustabilizowaniem jednej warstwy decyzyjnej dla priorytetyzacji, rozwiązywania konfliktów i kierowania wykonania zanim liczba modelów urośnie
 
-**Bezposrednia odpowiedz:** Fabryki potrzebuja jednej warstwy decyzji przed dodawaniem kolejnych modeli AI, bo modele wzmacniaja to, co juz istnieje w strukturze operacji. Jesli priorytety i definicje sa rozczlonkowane, wiecej modeli daje wiecej sprzecznych rekomendacji, a nie lepsza koordynacje. Dodawanie modeli jest latwe. Dodawanie spojnosci jest trudne. Dlatego kolejnosc ma znaczenie.
+Fabryki potrzebują jednej warstwy decyzyjnej przed dodawaniem kolejnych modeli AI, bo modele wzmacniają to, co już istnieje w strukturze operacyjnej. Jeśli priorytety i definicje są rozfragmentowane, więcej modeli ma tendencję produkować więcej sprzecznych rekomendacji — nie lepszą koordynację. Dodawanie modeli jest łatwe. Dodawanie spójności jest trudne. Sekwencjonowanie to nie konserwatyzm. To zarządzanie ryzykiem.
 
-## Czym jest warstwa decyzji (a czym nie)
+Warstwa decyzyjna to nie dashboard. To miejsce, gdzie zakład odpowiada, co ma teraz największe znaczenie, kto posiada następny krok, co jest zablokowane i dlaczego oraz które kompromisy są jawne. Jeśli te odpowiedzi żyją w równoległych kanałach, nie masz warstwy decyzyjnej. Masz tłum — a tłum robi się drogie, gdy każdy nowy asystent dodaje kolejny głos.
 
-Warstwa decyzji to nie pulpit.
+Każdy model konsumuje częściowe dane, częściowy kontekst i częściowe bodźce. Gdy rezultaty się zderzają, ludzie stają się pełnoetatowymi godzicielami. To kosztowne. Uczy też organizację ignorować wsparcie, bo „AI” zaczyna znaczyć „kolejna opinia do spierania się”.
 
-To miejsce, gdzie zaklad odpowiada: co jest teraz najwazniejsze?; kto posiada nastepny krok?; co jest zablokowane i dlaczego?; jakie kompromisy sa jawne?.
+Prosty test spójności pomaga kierownictwu być uczciwym: czy dwie funkcje widzą tę samą uporządkowaną kolejkę dla spraw przecinających granice? Czy sprzeczne priorytety eskalują znaną ścieżką? Czy definicje przestoju, zablokowania i krytyczności są zgodne w systemie rekordu? Czy jest jeden ślad audytu od sygnału przez decyzję i zadanie do domknięcia? Jeśli odpowiadasz „nie” dwa razy, przestań kupować modele, dopóki nie naprawisz warstwy.
 
-Jesli te odpowiedzi zyja w rownoleglych kanalach, nie masz warstwy decyzji. Masz tlum.
+Minimalna żywotna warstwa decyzyjna jest jawna, nie wymyślna. Potrzebuje jednej gramatyki wejścia — wymaganych pól, gdy sprawa wchodzi — jednej matrycy priorytetyzacji (nawet prosta macierz bije ranking na korytarzu), jednej drabiny eskalacji z timerami oraz jednego punktu przydziału wykonania, który przekazuje pracę do posiadanych przepływów pracy. Modele powinny usprawniać kroki wewnątrz tej warstwy, nie wymyślać nowych miejsc decyzji.
 
-## Dlaczego wiecej modeli bez warstwy zwieksza chaos
+Dodawaj nowy model tylko wtedy, gdy poprawia krok wewnątrz tej warstwy — lepsze klastery w tej samej kolejce, lepsze sugerowany przydział zadań w tym samym modelu odpowiedzialności, lepsze streszczenia na przekazania, które wciąż kończą się w tym samym systemie. Bądź czujny na ekspansję tworzącą drugiego asystenta priorytetyzacji gdzie indziej albo propozycje zmieniające stan bez zapisu w systemie rekordu.
 
-Kazdy model konsumuje: czesciowe dane; czesciowy kontekst; czesciowe incentywy.
+IRIS pasuje do tego argumentu, bo warstwa decyzyjna staje się operacyjna tylko wtedy, gdy priorytetyzacja, eskalacja i przypisana praca zostają w jednej nadzorowanej historii systemu. To co innego niż szersza opowieść o połączonym wykonaniu w [Jak AI zmienia operacje fabryczne, gdy wykonanie jest połączone](../21_how_ai_is_changing_factory_operations_when_execution_is_connected/article_PL.md) — ten artykuł dotyczy w szczególności rozwiązywania konkurujących priorytetów zanim urośnie liczba modeli.
 
-Gdy wyjscia sie zderzaja, ludzie staja sie pelnoetatowymi rekonsyliatorami. To drogie. To tez uczy organizacje ignorowac AI.
+O punktacji i przydziale zadań między funkcjami, gdy warstwa już istnieje, zobacz [Jak AI może priorytetyzować problemy fabryczne między funkcjami](../28_how_ai_can_prioritize_factory_issues_across_functions/article_PL.md).
 
-## Prosty test spojnosci
+Modele skalują zamęt, gdy zakładowi brakuje warstwy decyzyjnej. Zbuduj warstwę najpierw — potem pozwól modelom konkurować o użyteczność wewnątrz niej, nie na zewnątrz.
 
-Odpowiedz tak lub nie: Czy dwie funkcje widza te sama kolejke priorytetow dla spraw przecinajacych funkcje?; Czy sprzeczne priorytety eskaluja przez znana sciezke?; Czy definicje postoju, blokady i krytycznosci sa zgodne w systemie referencyjnym?; Czy jest jeden audyt od sygnalu do decyzji do zadania do domkniecia?.
+## Podsumowanie operacyjne
 
-Jesli odpowiadasz "nie" dwa razy, przestan kupowac modele, dopoki nie naprawisz warstwy.
+Obietnica tego artykułu — jasny argument za ustabilizowaniem jednej warstwy decyzyjnej dla priorytetyzacji, rozwiązywania konfliktów i kierowania wykonania zanim urośnie liczba modeli — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Dlaczego fabryki potrzebują jednej warstwy decyzyjnej zanim dodadzą więcej modeli AI” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-## Minimalna wykonalna warstwa decyzji
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
-Minimalna nie znaczy slaba. Znaczy jawna:
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie usprawnienie operacyjne — tylko narracyjne. Ta regula utrzymuje programy w rzetelności, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
-**Jedna gramatyka przyjecia** Jakie pola sa wymagane, gdy problem wchodzi do systemu?
-
-**Jedna rubryka priorytetyzacji** Nawet prosta macierz ciezkosci razy wplyw na klienta bije ranking na korytarzu.
-
-**Jedna drabina eskalacji** Kto jest wolany na ktorym poziomie i jaki jest timer?
-
-**Jedna routerka wykonania** Zadania wychodza z warstwy decyzji do workflow z wlascicielem.
-
-## Regula rozszerzania modeli
-
-Dodawaj nowy model tylko wtedy, gdy poprawia krok wewnatrz tej warstwy, a nie gdy tworzy nowe miejsce decyzji.
-
-Dobre rozszerzenia: lepsze grupowanie powtarzalnych problemow w tej samej kolejce; lepszy sugerowany routing w tym samym modelu odpowiedzialnosci; lepsze streszczenia do przekazan, ktore i tak koncza w tym samym systemie.
-
-Ryzykowne rozszerzenia: drugi asystent priorytetyzacji w innym narzedziu; model proponujacy dzialania bez zapisu w systemie referencyjnym.
-
-## Dlaczego IRIS to wersja tego argumentu w ksztalcie produktu
-
-DBR77 IRIS to AI-native system operacyjny zakladu z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zadan.
-
-To ma znaczenie, bo warstwa decyzji bez wykonania to kolejne spotkanie. IRIS wiaze priorytetyzacja z przypisana praca i sledzonym domknieciem.
-
-## Podsumowanie
-
-Modele skaluja zamieszanie, gdy zaklad nie ma warstwy decyzji. Zbuduj warstwe najpierw.
-
-Potem pozwol modelom konkurowac o uzytecznosc wewnatrz niej, a nie obok niej.
+Jeśli rekord jest ubogi, napraw rekord, zanim poszerzysz ambicję.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Obejrzyj prezentację](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*
+*DBR77 IRIS realizuje łańcuch od decyzji do wykonania w jednej warstwie przez produkcję, magazyn, jakość, utrzymanie ruchu i tasking, tak by AI pozostało spójne. [Obejrzyj walkthrough](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*

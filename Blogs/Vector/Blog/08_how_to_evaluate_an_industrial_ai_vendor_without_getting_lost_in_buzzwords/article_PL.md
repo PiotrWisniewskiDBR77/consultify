@@ -1,66 +1,42 @@
-# Jak ocenic dostawce industrial AI bez gubienia sie w buzzwordach
+# Jak oceniać dostawcę AI przemysłowego, nie gubiąc się w buzzwordach
 
-Target persona: CTO  
-Funnel stage: Consideration  
-Core problem: kupujacy przemyslowi czesto slysza dopracowany jezyk AI, ale dostaja za malo jasnosci o wdrozeniu, polityce treningu, dopasowaniu domenowym i governance  
-Main promise: producenci potrzebuja prostego filtra oceny, ktory przecina marketing i chroni jakosc zakupu
+Docelowa persona: CTO  
+Etap lejka: Rozważanie  
+Główny problem: nabywcy przemysłowi często słyszą wypolerowany język AI, ale dostają za mało jasności co do wdrożenia, polityki treningu, dopasowania do domeny i governance  
+Główna obietnica: producenci potrzebują wyraźnej soczewki oceny, która przecina marketing i chroni jakość zakupu
 
-Zakup industrial AI staje sie coraz glosniejszy.
+Każdy dostawca ma historię o inteligencji, automatyzacji i transformacji. Mniej który potrafi pokazać prostym językiem operacyjnym, jak system zachowuje się wewnątrz modelu kontroli fabryki. Ocena przemysłowa powinna przypominać przegląd bezpieczeństwa i architektury z kręgosłupem przypadku użycia — nie konkurs piękności demo, w którym wygrywa najładniejszy akapit.
 
-Kazdy dostawca mowi teraz o intelligence, automation, copilots, private models i transformation impact. To utrudnia orientacje na rynku zamiast ja ulatwiac.
+Gubicie się w buzzwordach, gdy dostawca nie potrafi odwzorować obietnic na pisane fakty o ścieżkach danych, trybach wdrożenia, treningu i retencji, podwykonawcach, logowaniu, obsłudze incydentów oraz tym, jak przegląda się rezultaty o wysokich konsekwencjach. Zwolnijcie proces, dopóki te punkty nie zostaną odpowiedziane językiem, który liderzy bezpieczeństwa i operacji potrafią prześledzić wobec rzeczywistości MES, ERP czy QMS. Jeśli rozmowa zostaje na poziomie przymiotników, nie kupujecie AI przemysłowego. Kupujecie nastrój.
 
-## Dlaczego kupujacy sie gubia
+## Żądania dowodów, zanim zaczniecie dbać o roadmapę
 
-Buzzwordy tworza iluzje postepu. Ale rzadko odpowiadaja na pytania, ktore naprawde maja znaczenie w fabryce: jaki problem rozwiazuje system?; jak jest wdrazany?; jakich danych dotyka?; kto pozostaje odpowiedzialny za outputy?; jak dobrze pasuje do realiow produkcji?. Bez tych odpowiedzi proces oceny staje sie teatrem.
+Proście o dowody, nie o przymiotniki. Poproście o diagram lub narrację każdego skoku od danych źródłowych do inferencji i z powrotem, włącznie z konsolami admina i dostępem wsparcia. Poproście o jasność na poziomie umowy: czy treść klienta może służyć do treningu, dostrajania, ewaluacji lub ludzkiego przeglądu w celu ulepszania produktu. Zapytajcie o podwykonawców i regiony dla przechowywania, inferencji, logowania i ticketów. Zapytajcie o opcje wdrożenia z rozpisanymi różnicami technicznymi — wspólny SaaS, izolowany tenant, prywatne API, on-prem lub runtime zarządzany przez klienta. Poproście o przykładowe artefakty: harmonogramy retencji, formaty logów dostępu, zapisy zmian modelu lub szablonów promptów. Zapytajcie o kategorie incydentów, okna powiadomień i zobowiązania do współpracy forensic.
 
-## Zacznij od use case'u, nie od etykiety
+Jeśli odpowiedzi wymagają łańcucha dogrywek i nadal pozostają werbalne, traktujcie to jako sygnał dojrzałości — nie problem harmonogramu.
 
-Pierwsze pytanie do dostawcy nie powinno brzmiec "jak zaawansowane jest wasze AI?"
+## Obietnica kontra to, co powinien usłyszeć nabywca przemysłowy
 
-Powinno brzmiec "jaka wysokowartosciowa decyzje przemyslowa lub workflow poprawiacie?" To przesuwa rozmowe z mglistej capability w strone praktycznego fitu.
+Gdy słyszycie „enterprise secure”, powinniście usłyszeć: model tożsamości, segmentacja, szyfrowanie w tranzycie i w spoczynku oraz kto trzyma klucze. Gdy słyszycie „private AI”, powinniście usłyszeć: izolację runtime, reguły egress oraz czy niepowiązani najemcy dzielą infrastrukturę inferencji w sposób istotny dla waszego modelu ryzyka. Gdy słyszycie „nie trenujemy na waszych danych”, powinniście usłyszeć: zakres klauzuli, kontrole techniczne, wyłączone podwykonawcy oraz prawa audytowe. Gdy słyszycie „industrial copilot”, powinniście usłyszeć: konkretne procesy produkcyjne, obsługę konsekwencji i zachowanie akceptacji. Gdy słyszycie „SOC 2”, powinniście usłyszeć: scope letter, systemy w zakresie, timing i wyjątki.
 
-## Wczesnie pytaj o wdrozenie
+Certyfikaty i logotypy wspierają opowieść. Nie zastępują narracji architektury.
 
-Wdrozenie nie powinno byc zostawiane na koniec do security review.
+## Najpierw kręgosłup przypadku użycia
 
-Kupujacy powinien od razu zapytac: cloud, private API, isolated czy on-prem?; jakie sa granice dostepu?; co jest przechowywane?; co jest logowane?; czy dane klienta trenuja model?. To nie sa poboczne pytania techniczne. To pytania zakupowe.
+Pierwsze pytanie nie brzmi, jak zaawansowany jest model. Brzmi: która przemysłowa decyzja lub proces się poprawia, jakie są wejścia i kto akceptuje wynik. Potem sprawdźcie, czy odpowiedzi dostawcy pozostają spójne, gdy podniesiecie dochodzenie po skoku złomu łączące QMS i dane linii, scenariusz zdolności dotykający finansów i operacji albo problem dostawcy, którego nie da się omówić w generycznym czacie. Jeśli historia rozpada się na przykłady czatu, wciąż patrzycie na opakowanie, nie na produkt przemysłowy.
 
-## Sprawdzaj domain fit, nie tylko plynnosc dema
+**Czerwone flagi:** polityka treningu używa „zwykle” zamiast zachowania zdefiniowanego umową; brak jasnego właściciela aktualizacji modelu, szablonów promptów lub integracji narzędzi; logowanie nie wspiera odtworzenia rekomendacji, która wpłynęła na decyzję liniową lub jakościową; governance opisane tylko jako „human in the loop” bez jasnego podziału ról i ścieżek akceptacji.
 
-Mocne demo nadal moze ukrywac slabe dopasowanie przemyslowe.
+DBR77 Vector jest przeznaczony dla nabywców, którzy oceniają dostawców według kontroli wdrożenia, suwerenności danych, rozumowania przemysłowego, audytowalności i ludzkiej akceptacji — nie według estetyki slajdów. Stoi jako bezpieczna inteligencja za ekosystemem DBR77, z wyłączeniem danych klienta z treningu i opcjami szanującymi granice fabryki. Użyjcie tego samego progu dowodów dla Vector co dla każdego innego finalisty.
 
-Producent powinien zweryfikowac, czy dostawca rozumie: ograniczenia produkcyjne; kompromisy operacyjne; kontekst procesowy; wymagania human approval; realne konsekwencje blednych outputow. To tutaj industrial AI odcina sie od generycznych narzedzi AI.
+Lekiem na buzzwordy jest pisana lista dowodów zmapowana na wasze systemy zakładu i klasy danych. Zakup AI przemysłowego to wybór infrastruktury. Traktujcie mgliste odpowiedzi jako ryzyko decyzyjne, nie jako coś do wygładzenia w planie pilota.
 
-## Oceniaj governance, nie tylko capability
+## Punkt kontrolny zakładu
 
-Wielu kupujacych skupia sie na tym, co system potrafi wygenerowac.
+Traktujcie tę soczewkę oceny jako cotygodniowy nawyk, nie jednorazowe Ćwiczenie RFP. Zanim pchniecie dostawcę dalej, poproście zespół o jeden pisany artefakt na główną obietnicę — diagram, klauzulę, próbkę logów lub przejście przez proces. Jeśli folder pozostaje pusty, a kalendarz wypełnia się demo, optymalizujecie teatr. Zespoły zakupowe w produkcji wygrywają, gdy dowód staje się domyślnym językiem rozmowy.
 
-Mniej uwagi poswieca temu: jak outputy sa przegladane; gdzie siedzi human approval; jak sledzone sa decyzje; jak obslugiwane sa bledy. W fabryce governance jest czescia jakosci produktu.
-
-## Uzyj prostego checklistu zakupowego
-
-Dostawca industrial AI powinien umiec jasno wyjasnic:
-
-1. dokladny use case
-2. model wdrozenia
-3. polityke treningu
-4. dostep i auditability
-5. domain fit
-6. ludzki nadzor
-7. konsekwencje biznesowe, jesli output bedzie bledny
-
-Jesli odpowiedz nadal sklada sie glownie z buzzwordow, kupujacy powinien zwolnic.
-
-## Dlaczego Vector korzysta z takiego filtra
-
-DBR77 Vector jest pozycjonowany dla kupujacych, ktorzy chca czegos wiecej niz ladnego jezyka AI: prywatnych opcji wdrozenia; braku treningu na danych klienta; industrial reasoning; human approval nad krytycznymi decyzjami.
-
-To ulatwia ocenianie przez kryteria operacyjne, a nie tylko przez jakosc prezentacji.
-
-## Wniosek
-
-Najlepszym sposobem na unikniecie chaosu AI buzzwordow jest ocena dostawcow przez use case, wdrozenie, governance i dopasowanie przemyslowe. W produkcji jasnosc zakupu jest czescia kontroli ryzyka.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Sprawdź dopasowanie dostawcy](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector daje nabywcom jaśniejszą ścieżkę oceny AI przemysłowego: prywatne opcje wdrożenia, jasność polityki danych i wyższe oczekiwania co do governance. [Dopasowanie dostawcy](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

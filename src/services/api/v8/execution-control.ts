@@ -89,6 +89,13 @@ export interface V8ManagerProblemRow {
   meta: Record<string, unknown>;
 }
 
+export interface V8ManagerActionExecutionResult {
+  success: boolean;
+  message: string;
+  changedCount: number;
+  changedEntities: Array<{ entityType: string; entityId: string }>;
+}
+
 // AI recommendation types
 export interface V8AiStep {
   order: number;
@@ -393,6 +400,26 @@ export const V8ExecutionControlApi = {
       `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/problems`,
       projectId ? { projectId } : undefined
     ),
+
+  executeManagerProblemAction: (
+    laneId: string,
+    payload: { problemId: string; actionId: string },
+    projectId?: string
+  ) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8ManagerActionExecutionResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/problem-actions/execute${qs}`,
+      payload
+    );
+  },
+
+  applyManagerSuggestion: (laneId: string, payload: { suggestionId: string }, projectId?: string) => {
+    const qs = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    return v8Post<V8ManagerActionExecutionResult>(
+      `/execution-control/manager/lanes/${encodeURIComponent(laneId)}/suggestions/apply${qs}`,
+      payload
+    );
+  },
 
   submitLaneDecision: (laneId: string, payload: { suggestionId: string; state: string; notes?: string }) =>
     v8Post<{ success: boolean; decisionId: string }>(

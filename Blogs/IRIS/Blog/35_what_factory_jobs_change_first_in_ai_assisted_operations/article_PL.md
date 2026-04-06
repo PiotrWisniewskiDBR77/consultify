@@ -1,56 +1,38 @@
-# Jakie prace fabryczne zmieniaja sie najpierw w operacjach wspieranych przez AI
+# Co w zawodach fabrycznych zmienia się najpierw przy operacjach wspomaganych AI
 
-Target persona: HR BP / Kierownik zakladu / Lider operacji z angazem zwiazkowym  
-Funnel stage: Consideration  
-Core problem: planowanie sil roboczych zatrzymuje sie na narracji strachu, bo liderzy nie potrafia opisac, ktore zadania przyspieszaja, ktore wymagaja wiekszej kontroli, a ktore fizycznie sie nie zmieniaja  
-Main promise: mapa zmian wedlug rol, skupiona na koordynacji, weryfikacji i domykaniu, a nie na ogolnym "AI zastepuje operatorow"
+Docelowa persona: partner HR biznesu / plant manager / lider operacji zaangażowany w dialog ze związkami  
+Etap lejka: Consideration  
+Główny problem: planowanie kadry utyka w narracjach strachu, bo liderzy nie potrafią opisać, które zadania przyspieszają, które dostają więcej kontroli, a które fizycznie pozostają bez zmian  
+Główna obietnica: mapa wczesnych zmian według ról, skupiona na koordynacji, weryfikacji i pracy domykającej — nie na ogólnych tezach „AI zastępuje operatorów”
 
-Prace fabryczne zmieniaja sie najpierw tam, gdzie ludzie spedzaja godziny na uzgadnianiu sygnalow, przepisywaniu kontekstu, sciganiu wlascicieli i przygotowaniu przekazan: triaz kierownictwa linii, koordynatorzy utrzymania, role zwolnien jakosci, planisci produkcji i ekspeditorzy magazynu. Fizyczna praca przy maszynie zmienia sie pozniej. Wczesna zmiana to zwykle wiecej weryfikacji i obslugi wyjatkow, a nie mniej ludzi przy narzedziach. Ten artykul jest do rozmow o obsadzie i szkoleniach. To nie obietnica redukcji etatow.
+Zawody fabryczne zmieniają się najpierw tam, gdzie czas znika na uzgadnianiu: skanowanie skrzynek, przepisywanie kontekstu, ściganie właścicieli, przygotowanie przekazań i odbudowa świadomości sytuacyjnej dla następnej zmiany. Liderzy liniowi w triage, koordynatorzy utrzymania, role zwolnień jakości, planiści produkcji i ekspeditorzy magazynowi często czują pierwsze przesunięcia — nie dlatego, że maszyny przestały potrzebować ludzi, lecz dlatego, że praca koordynacyjna staje się widoczna, ustrukturyzowana i częściowo szkicowana. Zmiana rzemiosła fizycznego przychodzi później. Wczesna zmiana to zwykle więcej weryfikacji i obsługi wyjątków, a nie mniej rąk przy narzędziu.
 
-## Co zwykle nie zmienia sie w pierwszym dniu
+Część pracy w większości zakładów nie zmienia się pierwszego dnia: licencjonowane zawody wykonujące naprawy przy obowiązujących zasadach BHP, inspekcje, które regulacje wymagają po ludzku, rzemiosło przezbrojeń, gdzie wciąż dominuje czucie i doświadczenie, oraz subiektywne oceny jakości wobec klienta. Asystencja może te role wspierać; rzadko zastępuje ich rdzeń fizyczny lub prawny jako pierwsza.
 
-Wykwalifikowane zawody wykonujace naprawy przy istniejacych zasadach BHP; fizyczne inspekcje, ktore regulacje wymagaja od czlowieka; przezbrojenia i ustawienia, gdzie nadal liczy sie czucie linii; oceny jakosci wobec klienta przy subiektywnych wadach. Asysta AI moze wspierac te role. Rzadko najpierw zastepuje ich rdzen fizyczny lub prawny.
+Wzorzec między rolami to kompresja koordynacji. Nadzorcy przechodzą od rozproszonego triage do uporządkowanych wyjątków z sugerowanymi właścicielami. Koordynatorzy — od składania pakietów pracy z notatek do edycji szkiców z kontekstem aktywa. Zwolnienia jakości — od ścigania podpisów do jednej kolejki z jawnymi stanami akceptacji. Planiści — od uzgadniania arkuszy do list wyjątków, gdy plan łamie progi. Ekspeditorzy — od ręcznych krzyżowych sprawdzeń do priorytetyzowanych luk powiązanych z startem produkcji.
 
-## Mapa rol: pierwsze fale zmian (ilustracyjnie)
+Umiejętności, które rosną w wartości, to formułowanie kryteriów akceptacji dla wyników, dokumentowanie nadpisań z kodami przyczyn, uczenie czystych pól wejściowych i cotygodniowy przegląd fałszywych alarmów z inżynierią. To umiejętności operacyjne — nie teatr promptingu.
 
-| Zespol rol | Stary pochlon czasu | Wczesny wzor wsparcia |
-|---|---|---|
-| Nadzor linii | triaz skrzynki przez czat i telefony | ranking wyjatkow z proponowanymi wlascicielami i zadaniami |
-| Koordynator utrzymania | skladanie zlecen z rozbitych notatek | szkice pakietow z kontekstem aktywu do edycji technika |
-| Zwolnienie jakosci | sciganie podpisow i statusow | jedna kolejka z jawnymi stanami akceptacji |
-| Planista / harmonogramista | uzgadnianie arkuszy z rzeczywistoscia hali | lista wyjatkow, gdy plan lamie progi |
-| Ekspeditor magazynu | reczne krzyzowe sprawdzenia brakow | priorytetyzowane luki kompletacji zwiazane ze startem produkcji |
+Szkolenie powinno unikać szkody dla morale: pokaż przepływ pracy bez asysty, ustal bazowy podział odpowiedzialności, dodaj sugestie doradcze bez auto-działań, ćwicz odrzucenie, nadpisanie i eskalację, aż powstaną nawyki, dopiero potem zaciskaj progi z mierzonym budżetem błędów. Pominięcie kroku bazowego sprawia, że ludzie zakładają ukrytą agendę zastępowania.
 
-Wzor to kompresja koordynacji.
+Opowiadaj o przebudowie obciążenia pracą, nie o bajce o zastępstwie. Obronny komunikat brzmi, że system szkicuje pakiety, podczas gdy ludzie weryfikują i posiadają skutki — bo to zgadza się z rzeczywistością hali i utrzymuje rozmowy o zatrudnieniu i pracy przy ziemi.
 
-## Umiejetnosci, ktore rosna w wartosci
+IRIS utrzymuje zmiany w zawodach możliwe do inspekcji, spinając asystencję z widocznymi zadaniami, zatwierdzeniami, nadpisaniami i eskalacjami — tak by przeprojektowanie koordynacji nie opierało się na mitach.
 
-Formuowanie kryteriow akceptacji dla outputow AI; dyscyplinowane dokumentowanie override; nauczanie kodow przyczyn i czystego intake; cotygodniowe przeglady falszywych alarmow z inzynieria. To umiejetnosci operacyjne. To nie teatr "prompt engineering".
+Do trybów pracy stojących za nowymi obowiązkami dołącz [Kiedy AI powinno obserwować, doradzać czy działać w fabryce](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_PL.md).
 
-## Sekwencja szkoleniowa, ktora nie niszczy morale
+Zmiana codziennej pracy bywa subtelna, ale rozstrzygająca: mniej czasu na rekonstrukcję kontekstu, więcej na weryfikację i akceptację ustrukturyzowanych propozycji. Zanim poczują „więcej prędkości”, ludzie mogą poczuć „więcej kontroli” — stąd znaczenie zarządzania zmianą. Jeśli zakład komunikuje tylko prędkość, ludzie słyszą ryzyko. Jeśli komunikuje jaśniejsze właścicielstwo i mniej tajemniczych przekazań, słyszą ulgę. Ten sam wdrożenie narzędzia może wylądować jako zagrożenie albo jako upgrade w zależności od tego, czy obowiązki są jawne, zanim progi się zacisną.
 
-Pokaz workflow z wylaczonym AI, ustal baseline odpowiedzialnosci; dodaj sugestie doradcze bez auto-akcji; cwicz odrzut, override i eskalacje az powstanie pamiec miesniowa; zaciskaj progi tylko z mierzonym budzetem bledow. Pominiecie kroku 1 sugeruje ukryta agende zastepowania.
+Liderzy HR i ci prowadzący dialog ze związkami powinni spodziewać się nowych pytań o ocenę pracy: jak wygląda dobra dokumentacja nadpisań, jak kody przyczyn służą coachingowi oraz jak metryki asystencji wiążą się z rozliczalnością bez teatru inwigilacji. Wiarygodna odpowiedź brzmi, że system czyni pracę widoczną — nie po to, by karać, lecz by usunąć niejasność co do tego, kto zatwierdził co pod presją. Widoczność bez uczciwości niszczy zaufanie; widoczność z jasnymi regułami je wzmacnia.
 
-## Porownanie: zastepowanie zadan kontra przeksztalcenie obciazenia
+Zawody zmieniają się najpierw w warstwach koordynacji. Projektuj tam szkolenia, progi i rządy, zanim zadeklarujesz transformaczę przy wrzecionie.
 
-**Narracja zastepowania (wczesnie zwykle zla)** "Robot robi prace."
+## Podsumowanie operacyjne
 
-**Narracja przeksztalcenia obciazenia (wczesnie zwykle sluszna)** "System szuje pakiet, czlowiek weryfikuje i odpowiada za wynik."
+Obietnica tego artykułu — mapa wczesnych zmian według ról, skupiona na koordynacji, weryfikacji i pracy domykającej, a nie na ogólnych tezach „AI zastępuje operatorów” — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie, które da się prześledzić bez archeologii skrzynek. Dla „Co w zawodach fabrycznych zmienia się najpierw przy operacjach wspomaganych AI” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Rekrutacja i rozmowy ze zwiazkami ida lepiej na drugiej narracji, bo pasuje do rzeczywistosci hali.
-
-## Dlaczego IRIS wiaze zmiany pracy z workflow
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy asysta jest przypieta do zadan i akceptacji, redesign pracy zostaje audytowalny: widac, co czlowiek nadal podpisuje, odrzuca lub eskaluje.
-
-## Podsumowanie
-
-Prace zmieniaja sie najpierw w warstwie koordynacji.
-
-Projektuj szkolenia, progi i nadzor tam, zanim nazwiesz transformacje przy wrzecionie.
+Ten standard nie chodzi o idealne oprogramowanie; chodzi o uczciwość operacyjną: mniej tajemniczych przekazań, mniej prawd uzgadnianych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Obejrzyj prezentację](https://dbr77.com/demo).*
+*DBR77 IRIS sprawia, że zmiany ról dają się inspekcji, spinając asystencję z zadaniami, zatwierdzeniami i zapisami domknięcia, które nadzorcy już rozpoznają. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Obejrzyj walkthrough](https://dbr77.com/demo).*

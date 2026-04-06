@@ -1,54 +1,58 @@
-# Kiedy zamrozic zakres w zakupie automatyzacji, a kiedy nie
+# Kiedy zamrozić zakres w zakupie automatyzacji, a kiedy nie
 
-Target persona: lider zakupow z technicznym odpowiednikiem  
-Funnel stage: Evaluation (normalizacja ofert)  
-Core problem: zespoly zamrazaja zakres za wczesnie i utrwalaja zle zalozenia albo nigdy nie zamrazaja i traca porownywalnosc  
-Main promise: prosta regula zamrozenia powiazana z faza oceny, a nie z optymizmem
+Docelowa persona: Lider zakupów z technicznym odpowiednikiem  
+Etap lejka: Ocena (normalizacja ofert)  
+Główny problem: zespoły zamrażają zakres za wcześnie i cementują złe założenia albo nigdy go nie zamrażają i tracą porównywalność  
+Główna obietnica: prosta reguła zamrożenia powiązana z fazą oceny, a nie z optymizmem
 
-Zamrozenie zakresu to narzedzie. To nie sygnal cnoty. Zle uzyte blokuje zly problem. Dobrze uzyte chroni porownywalnosc i rozsadek harmonogramu.
+Zamrożenie zakresu to narzędzie zakupowe. Dobrze użyte — uczciwie porównuje. Źle użyte — cementuje błędne założenia albo w ogóle nie powstaje, więc każda klarowność zmienia kształt projektu osobno dla każdego dostawcy. Zamrażajcie, gdy macie wystarczająco prawdy, by porównywać; odmawiajcie zamrożenia, gdy discovery wciąż zmienia definicję zadania; zamrażajcie ponownie świadomie, gdy zmieniają się istotne fakty.
 
-## Bezposrednia odpowiedz
+## Dwa klasyczne tryby porażki
 
-Zamroz zakres w zakupie automatyzacji, gdy masz pisana baze zgodna z obiektami akceptacji, dostawcy odpowiadaja na ten sam zestaw pytan, a dalszy odkrywczy etap zmienialby tylko etykiety bez zmiany fizyki.
+Pierwszy to zamrożenie za wcześnie: blokujecie narrację zakresu, zanim ustabilizuje się prawda z hali, reguły zmienności czy właścicielstwo interfejsów. Dostawcy wyceniają fikcję; „wygrywa” ten, kto najlepiej zgadł wasz zakład. Drugi to brak zamrożenia: każdy nowy mail staje się ruchomym celem, a zespół porównuje propozycje, które nigdy nie były odpowiedziami na to samo pytanie. Dobre rządzenie żyje między tymi skrajnościami — zamrożenie na rundę, nauka, wersja, zamrożenie znowu.
 
-Nie zamrazaj, gdy materialne fakty zakladu sa nadal otwarte, gdy interfejsy nie maja wlascicieli albo gdy zamrozenie zablokowaloby udokumentowana sciezke wyjatku, ktorej zarzad juz oczekuje.
+Kierownictwo może pomóc, odmawiając traktowania daty zamrożenia jak teatru. Gdy brief wciąż jest niestabilny, przesunięcie zamrożenia to nie słabość — to redukcja ryzyka. Gdy brief jest stabilny, łamanie zamrożenia bez kontroli wersji to cichy koniec porównywalności.
 
-## Macierz decyzji
+## Zamrożenie na rundy oceny
 
-| Sytuacja | zamroz | nie zamrazaj |
-| --- | --- | --- |
-| Obiekty akceptacji stabilne | tak | nie |
-| Wlasciciele interfejsow nazwani | tak | nie |
-| SKU lub mix nadal materialnie sie buja | nie | tak |
-| Uklad lub zasieg moze sie zmienic | nie | tak |
-| Platny discovery jest umowiony na redukcje niejasnosci | nie do wyjscia z discovery | tak w trakcie discovery |
+W znormalizowanej ocenie trzymajcie zakres i zestaw pytań stabilnymi, by odpowiedzi dotyczyły tego samego wyzwania. Ruchome cele zapraszają do asymetrycznej informacji i politycznej interpretacji.
 
-## Sekwencja krokow: ceremonia zamrozenia (ograniczona)
+## Nie zamrażajcie na ślepo
 
-Opublikuj wersje opisu zakresu i wylaczenia; Opublikuj rejestr interfejsow z wlascicielami; Opublikuj reguly wyjasnien: co moze sie zmienic bez ponownego otwarcia porownania; Oznacz data wersje macierzy ocen; Przekaz zamrozenie dostawcom z jednym wlascicielem kanalu.
+Gdy duże niewiadome wciąż zmieniają to, czym jest „zadanie”, zamrożenie jest przedwczesne. Domknijcie luki w rozpoznaniu, opublikujcie nową wersję, potem zamroźcie na następną rundę.
 
-Jesli brakuje kroku trzeciego, bedziecie spierac sie, czy kazdy mail zlamal zamrozenie.
+## Ponowne zamrożenie z dyscypliną
 
-## Kiedy czesciowe zamrozenie to dojrzaly ruch
+Istotne zmiany wymagają podbicia wersji, wspólnych wyjaśnień i resetu oczekiwań co do harmonogramu — a nie cichych edycji w mailu.
 
-Czesciowe zamrozenie znaczy: obudowa sprzetu i obiekty akceptacji sa stale, podczas gdy szczegolowa rewizja oprogramowania moze isc w ramach zdefiniowanej reguly zgodnosci.
+## Powiązanie zamrożenia z kręgosłupem akceptacji
 
-To chroni porownywalnosc lepiej niz udawanie, ze oprogramowanie jest statyczne w drugim tygodniu.
+To, co zamrażacie, powinno być zgodne z obiektami akceptacji. Inaczej stabilność zakupów i rzeczywistość rozruchu rozjadą się.
 
-## Co to znaczy dla DBR77 Marketplace
+## Jak DBR77 Marketplace wspiera regułę
 
-DBR77 Marketplace to workflow decyzji automatyzacyjnych, warstwa zaufania przy wyborze integratora oraz system porownywania ofert.
+Stabilne zestawy pytań i obiekty akceptacji u wszystkich dostawców sprawiają, że zamrożenie oznacza porównywalność — a nie teatr zamówień.
 
-Zamrozenie zakresu powinno byc zgodne z tym, jak oferty sa porownywane w tym workflow, a nie z tym, jak szybko zakupy chca podpisu. Marketplace to nie katalog robotow.
+Najbliższe artykuły towarzyszące: [Jak nie pozwolić, by wyjaśnienia dostawców zniszczyły porównywalność ofert](../46_how_to_keep_supplier_clarifications_from_destroying_offer_comparability/article_PL.md), [Jak określić zakres projektu automatyzacji bez przesady](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_PL.md), [Kiedy ponownie otworzyć decyzję o automatyzacji przed podpisaniem](../32_when_to_reopen_an_automation_decision_before_signing/article_PL.md) oraz [Kiedy połączyć wiele potrzeb automatyzacji w jeden proces zakupowy, a kiedy nie](../41_when_to_bundle_multiple_automation_needs_into_one_buying_process_and_when_not_to/article_PL.md).
 
-To sposob, w jaki producenci utrzymuja uczciwa ocene przy jednoczesnym ruchu naprzod.
+## Zamrożenie z empatią dla integratorów
+
+Dostawcy potrzebują stabilności, by wyceniać i planować. Chaotyczne zamrożenia — ogłoszone, ale podkopywane codziennymi wyjątkami — są gorsze niż brak zamrożenia, bo uczą integratorów ignorować wasz proces. Jeśli musicie zmienić zakres, róbcie to jako opublikowane zdarzenie z konsekwencjami dla harmonogramu i porównywalności, a nie jak szept.
+
+Łączcie zamrożenia z realnym oknem wyjaśnień, by uzasadnione pytania nie wymuszały cichego dryfu zakresu.
+
+## Od decyzji do zachowania hali
+
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „kiedy zamrozić zakres w zakupie automatyzacji, a kiedy nie” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
+
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
+
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
 ## Podsumowanie
 
-Zamroz, gdy trzeba chronic porownywalnosc.
-
-Odmroz, gdy fakty zmieniaja sie na tyle, ze porownywalnosc stalaby sie klamstwem.
+Zamrażajcie zakres, by porównywać uczciwie; odmrażajcie, by się uczyć; zamrażajcie ponownie z rozmysłem. Wiążcie zamrożenia z fazą oceny i prawdą — nie z życzeniami.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace utrzymuje stabilne zestawy pytań i obiekty akceptacji u dostawców, więc zamrożenie zakresu mapuje się na prawdziwą porównywalność, a nie teatr zamówień. [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

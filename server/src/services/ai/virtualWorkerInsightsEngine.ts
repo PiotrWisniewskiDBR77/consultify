@@ -175,34 +175,40 @@ export async function generateInsights(workerId: string): Promise<WorkerInsight[
   const generated: WorkerInsight[] = [];
 
   try {
-    // 1. Knowledge gap detection: messages with no knowledge sources
+    // 1. Knowledge gap detection: conversations marked with fallback or no matched sources
     const gapResult = await db()
-      .query<{ content: string; count: string }>(
-        `SELECT m.content, COUNT(*) as count
-       FROM virtual_worker_messages m
-       JOIN virtual_worker_conversations c ON m.conversation_id = c.id
+      .query<{ topic: string; count: string }>(
+        `SELECT COALESCE(c.primary_topic, 'unknown') as topic, COUNT(*) as count
+       FROM virtual_worker_conversations c
        WHERE c.worker_id = $1
-         AND m.role = 'user'
-         AND (m.knowledge_sources_used IS NULL OR m.knowledge_sources_used = '[]'::jsonb)
-         AND m.created_at > NOW() - INTERVAL '7 days'
-       GROUP BY m.content
+         AND (
+           c.fallback_reason IS NOT NULL
+           OR EXISTS (
+             SELECT 1 FROM virtual_worker_messages m
+             WHERE m.conversation_id = c.id
+               AND m.role = 'assistant'
+               AND (m.knowledge_sources_used IS NULL OR m.knowledge_sources_used = '[]'::jsonb)
+           )
+         )
+         AND c.started_at > NOW() - INTERVAL '7 days'
+       GROUP BY COALESCE(c.primary_topic, 'unknown')
        HAVING COUNT(*) >= 2
        ORDER BY count DESC
        LIMIT 5`,
         [workerId]
       )
-      .catch(() => ({ rows: [] as Array<{ content: string; count: string }> }));
+      .catch(() => ({ rows: [] as Array<{ topic: string; count: string }> }));
 
     for (const row of gapResult.rows || []) {
       const count = parseInt(String(row.count), 10);
-      const preview = String(row.content || '').slice(0, 120);
+      const preview = String(row.topic || 'unknown').slice(0, 120);
       generated.push(
         await createInsight({
           worker_id: workerId,
           insight_type: 'knowledge_gap',
           title: `Unanswered topic pattern (${count} occurrences)`,
-          description: `Users asked about "${preview}" ${count} times in the last 7 days, but no knowledge sources were matched. Consider adding a Knowledge Pill for this topic.`,
-          evidence: { sample_query: preview, occurrence_count: count },
+          description: `Conversations about "${preview}" triggered fallback behavior ${count} times in the last 7 days. Consider improving the assigned knowledge pills or adding missing sections for this topic.`,
+          evidence: { topic: preview, occurrence_count: count },
           priority: count >= 5 ? 'high' : 'medium',
         })
       );
@@ -235,18 +241,14 @@ export async function generateInsights(workerId: string): Promise<WorkerInsight[
       );
     }
 
-    // 3. Frequent topics (most common user messages)
+    // 3. Frequent topics (conversation-level topic family)
     const topicResult = await db()
       .query<{ word: string; count: string }>(
-        `SELECT lower(regexp_replace(m.content, '[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s]', '', 'g')) as word,
-              COUNT(*) as count
-       FROM virtual_worker_messages m
-       JOIN virtual_worker_conversations c ON m.conversation_id = c.id
+        `SELECT COALESCE(c.primary_topic, 'unknown') as word, COUNT(*) as count
+       FROM virtual_worker_conversations c
        WHERE c.worker_id = $1
-         AND m.role = 'user'
-         AND m.created_at > NOW() - INTERVAL '7 days'
-         AND length(m.content) > 10
-       GROUP BY lower(regexp_replace(m.content, '[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s]', '', 'g'))
+         AND c.started_at > NOW() - INTERVAL '7 days'
+       GROUP BY COALESCE(c.primary_topic, 'unknown')
        HAVING COUNT(*) >= 3
        ORDER BY count DESC
        LIMIT 5`,

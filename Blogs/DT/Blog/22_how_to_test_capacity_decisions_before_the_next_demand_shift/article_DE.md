@@ -1,70 +1,49 @@
-# Wie man Kapazitaetsentscheidungen vor der naechsten Nachfrageverschiebung testet
+# Kapazitätsentscheidungen testen, bevor sich die nächste Nachfrage verschiebt
 
-Target persona: COO / Leiter Planung / Operations Director nahe S&OP  
-Funnel stage: Consideration  
-Core problem: Kapazitaetsentscheidungen basieren oft auf Tabellen und mittlerer Last und werden dann durch Mix-Spikes, Ramp-Kurven oder wandernde Constraints ueberrascht, wenn sich die Nachfrage bewegt  
-Main promise: eine kompakte Methode, Kapazitaetsoptionen mit Szenarien zu stresstesten, damit die naechste Nachfrageverschiebung kein ungeplanter Firefight wird
+Zielpersona: COO / Leitung Planung / Operations Director mit S&OP-Bezug  
+Funnel-Stufe: Consideration
+Kernproblem: Kapazitätsentscheidungen fallen oft aus Tabellen und Durchschnittslast — und werden dann von Mix-Spikes, Rampenkurven oder Engpasswanderung überrascht, wenn die Nachfrage sich bewegt  
+Hauptversprechen: eine kompakte Methode, Kapazitätswahlen mit Szenarien zu stresstesten, damit die nächste Nachfrageverschiebung kein ungeplanter Feuerwehreinsatz wird
 
-**Direktantwort:** testen Sie Kapazitaetsentscheidungen, indem Sie die Entscheidung in einem Satz definieren, Baseline plus mindestens drei Nachfrageformen (Level-Shift, Mix-Shift, Spike) modellieren und Constraint-Wanderung, Warteschlangenwachstum, Ueberstunden und Service-Risiko beobachten. Nutzen Sie zuerst manuelle oder historische Inputs, wenn Live-Feeds nicht bereit sind. Das Ergebnis soll vergleichbare KPIs pro Szenario sein, keine einzelne Prognosezahl. Kapazitaet ist keine Headline-Zahl auf einer Folie. Sie ist Verhalten unter einem Plan, der nicht brav bleibt.
+Testen Sie Kapazitätsentscheidungen, indem Sie die Entscheidung in einem Satz definieren, Baseline plus mindestens drei Nachfrageformen modellieren — Level-Shift, Mix-Shift, Spike — und Engpasswanderung, Warteschlangenwachstum, Überstunden und Servicerisiko verfolgen. Nutzen Sie zuerst manuelle oder historische Inputs, wenn Live-Feeds noch nicht bereit sind. Output sind vergleichbare KPIs pro Szenario, keine einzelne Prognosezahl. Kapazität ist keine Slide-Überschrift — sie ist Verhalten unter einem Zeitplan, der nicht ordentlich bleiben will.
 
-## Warum Durchschnitte Kapazitaetsentscheidungen irrefuehren
+Planung liebt den bequemen Satz: „Wir sind bei X Einheiten pro Woche fein.“ Die Hallenantwort ist oft Form, nicht Level — Spikes auf denselben Maschinen wie Baseline-Volumen, Mix, der Last auf langsamere Varianten schiebt, Rampen, die Hiring und Training überholen, Logistik-Kopplung, die effektive Linienzeit stiehlt. Mittelwerte verstecken diese Geschichten, bis der Shift kommt und das Werk sie in Überstunden erklärt.
 
-Durchschnittsnachfrage kann verbergen: woechentliche Spikes, die dieselben Maschinen wie die Basislast beanspruchen; Mix-Aenderungen, die Last auf langsamere Varianten verlagern; saisonale Rampen, die schneller kommen als Einstellung oder Training; gekoppelte Logistik-Constraints, die effektive Linienzeit kosten.
+## Die Entscheidung als Vergleich rahmen
 
-Wenn die Entscheidung lautet "bei X Einheiten pro Woche sind wir fine," kann die Fabrik dennoch scheitern, wenn X in der falschen Form kommt.
+Schreiben Sie den Entscheidungssatz vor jedem Modellierungsdetail. Beispiele: Überstunden-first versus inkrementelle Kopfzahl versus gezielte Engpass-Investition für die nächsten achtzehn Monate; Linien-B-Expansion verschieben, bis Linie A unter neuer Produktfamilie stabil ist; Wahl zwischen zwei Schichtmustern unter einem genannten Uplift-Szenario. Wenn Sie Alternativen nicht vergleichen können, haben Sie noch keine Entscheidung — nur eine Stimmung.
 
-## Rahmen Sie die Kapazitaetsentscheidung als Vergleich
+## Mindest-Szenarioset
 
-Vor jedem Modellierungsdetail schreiben Sie den Entscheidungssatz.
+Fahren Sie Level-Shift (einheitlicher Auf- oder Abschwung nahe Basisfall), Mix-Shift (Volumen stabil, aber Familienverteilung ändert Zyklen und Rüsten genug), Spike-Woche (kurzes Hochlastfenster mit realistischer Erholung) und Rampenkurve (monatliches Wachstum mit ehrlichem Hiring- und Trainingslag). Sie prognostizieren nicht, welche Story passiert — Sie lernen, welcher Plan zuerst bricht.
 
-Beispiele: "Wir waehlen Ueberstunden zuerst versus inkrementellen Headcount versus gezielte Bottleneck-Investition fuer die naechsten 18 Monate."; "Wir verschieben die Erweiterung von Linie B, bis Linie A unter der neuen Produktfamilie stabil ist."; "Wir waehlen zwischen zwei Schichtmustern unter einem 20-Prozent-Uplift-Szenario.".
+## KPIs, die Vergleiche ehrlich halten
 
-Wenn Sie Alternativen nicht vergleichen koennen, haben Sie noch keine Entscheidung. Sie haben eine Stimmung.
+Verfolgen Sie Durchsatz und Backlog-Risiko am Engpass, WIP und Wartezeit an Top-Constraint-Kandidaten, Überstunden- und Zeitarbeiter-Exposition, ein Terminrisiko-Proxy an Release- und Versandregeln und ob der Engpass bleibt oder zwischen Szenarien wandert. Wenn der Engpass wandert, ist das Signal — kein Modellierungsfehler.
 
-## Mindest-Szenarioset (Nachfrageverschiebungs-Linse)
+## Von der Frage zum verteidigbaren Vergleich
 
-Fahren Sie mindestens diese Nachfrageformen gegen dasselbe Operationsmodell: **Level-Shift:** gleichmaessiges Uplift oder Rueckgang nahe dem Basisfall des Leadership; **Mix-Shift:** Volumen stabil, aber die Produktfamilienverteilung aendert Laufzeiten und Ruesten genug; **Spike-Woche:** ein kurzes Fenster hoher Last mit realistischen Erholungsannahmen; **Ramp-Kurve:** Nachfrage waechst monatlich mit ehrlich modellierten Hiring- und Trainingsverzoegerungen. Sie sagen nicht voraus, welches eintrifft. Sie lernen, welcher Plan zuerst bricht.
+Sperren Sie Entscheidungssatz und echte Alternativen. Definieren Sie Baseline mit jüngsten Wochen inklusive Schmerz, nicht nur glatte Wochen. Kodieren Sie Constraints, die zählen: Personalregeln, Werkzeug-Sharing, Materialfreigabe, Transport-Schleifen. Fahren Sie das Szenarioset mit derselben Zufalls- oder Trace-Replay-Politik über Alternativen. Vergleichen Sie Trade-offs in klarer Sprache — Kosten, Risiko, Flexibilität, Umsetzungszeit — und protokollieren Sie Annahmen, die den Schluss falsifizieren würden, wenn sie falsch sind.
 
-## KPIs, die Kapazitaetsvergleiche ehrlich machen
+## Wann dieser Ansatz scheitert
 
-Verfolgen Sie eine kleine Menge, die Leadership nicht wegdiskutieren kann:
+Er scheitert, wenn Teams Constraints nicht benennen, Führung die Frage wöchentlich wechselt, das Modell die Folie reproduziert statt den Plan zu stressen oder ein poliertes Dashboard den Entscheidungsrecord ersetzt.
 
-- Durchsatz und Backlog-Risiko am Bottleneck
-- WIP und Wartezeit an den Top-3-Constraint-Kandidaten
-- Ueberstunden- und Zeitarbeiter-Exposure
-- On-Time-Risiko-Proxy gekoppelt an Freigabe- und Versandregeln
-- Stabilitaet: bleibt der Bottleneck oder wandert er zwischen Szenarien?
 
-Wenn der Bottleneck wandert, ist das ein Signal, kein Modellfehler.
+## Was sich am Montag anders anfühlen sollte
 
-## Schrittfolge: von der Frage zum verteidigbaren Vergleich
+Teams scheitern selten an Intelligenz; sie scheitern daran, dieselben Fragen mit frischerer Anspannung zu wiederholen. Wenn Simulationsarbeit in die Entscheidungslogik eingebunden ist, kommt der Montag mit weniger Kreisdebatten darüber, ob ein Layout „eigentlich funktionieren“ sollte. Stattdessen bleibt eine kurze Liste: welche Option dieselbe Stress-Vokabel überlebt hat, welche Annahmen noch Hypothesen-Labels tragen und was ein erneutes Fahren des Packs vor der nächsten Tranche erzwingt. Das ist Governance im Alltag – kein schwererer Prozess, sondern ein klarer Beleg, warum der Shopfloor dem Plan vertrauen kann.
 
-**Entscheidungssatz und echte Alternativen fixieren.**; **Baseline definieren** mit juengsten Wochen, die Schmerz enthalten, nicht nur glatte Wochen; **Constraints kodieren**, die zaehlen: Staffing-Regeln, Werkzeug-Sharing, Materialfreigabe, Transport-Schleifen; **Szenarioset fahren** mit derselben Randomness-Politik (oder derselben Trace-Replay-Politik) ueber Alternativen; **Trade-offs** in klarer Sprache vergleichen: Kosten, Risiko, Flexibilitaet, Umsetzungszeit; **Annahmen dokumentieren**, die die Schlussfolgerung ungueltig machen wuerden, wenn sie falsch sind.
+Bei Kapital- und Footprint-Entscheidungen ist der Beleg so wichtig wie das Ranking. Genehmigungen sollten Szenario-Identität und Spannen ohne Modell-Öffnen zeigen können. Wenn Führung die Downside-Story nicht in klarer Sprache erzählen kann, kauft die Organisation weiter Animation. Wenn Operations die Personal- und Fluss-Annahmen im Memo nicht wiedererkennt, ist der Twin noch eine Folie, kein Entscheidungssystem. Nutzen Sie den nächsten Leadership-Block als Portabilitätstest: könnte jemand außerhalb des Raums die Wahl allein aus dem Paket verteidigen? Wenn nein, ziehen Sie Annahmen-Ledger und Executive Summary zu, bevor Sie mehr Geld oder Fläche verlangen.
 
-## Wenn dieser Ansatz scheitert
+## Was DBR77 Digital Twin ergänzt
 
-Er scheitert, wenn Teams Constraints nicht benennen, Leadership die Frage woechentlich wechselt oder das Modell darauf trimmt, die Folie zu reproduzieren statt den Plan zu stressen.
+DBR77 Digital Twin unterstützt praktischen Szenarienvergleich mit einem Pfad von manuellen Inputs zu reicherer Integration. Für Kapazitätsentscheidungen bedeutet das disziplinierte Nebeneinander von Personal-, Schicht- und Investitionsoptionen; variabilitätsbewusstes Testen statt Ein-Punkt-Kapazitätsrechnung; klarere Kommunikation mit Finance und Sales über Risiko statt falscher Präzision.
 
-Er scheitert auch, wenn die Organisation ein huebsches Dashboard mit einem Entscheidungsprotokoll verwechselt.
+## Kurz gesagt
 
-## Was Digital Twin hier aendert
-
-Digital Twin ist ein Szenario-Testumfeld fuer operative Entscheidungen. Es ist kein 3D-Showcase.
-
-Es hilft zu sehen, wie Kapazitaetsplaene sich verhalten, bevor die Nachfrage die Lektion auf dem Shopfloor erzwingt.
-
-## Was DBR77 Digital Twin hinzufuegt
-
-DBR77 Digital Twin unterstuetzt praktischen Szenariovergleich mit einem Pfad von manuellen Inputs zu reicherer Integration.
-
-Fuer Kapazitaetsentscheidungen bedeutet das: disziplinierte Side-by-Side-Bewertung von Staffing-, Schicht- und Investitionsoptionen; variability-aware Testing statt Ein-Punkt-Kapazitaetsrechnung; klarere Kommunikation mit Finance und Sales ueber Risiko statt falscher Praezision.
-
-## Fazit
-
-Testen Sie Kapazitaetsentscheidungen, indem Sie echte Alternativen unter mehreren Nachfrageformen vergleichen und beobachten, ob Constraints wandern.
-
-Wenn Sie nur Durchschnitten vertrauen, lehrt die naechste Nachfrageverschiebung dieselbe Lektion mit hoeherer Dringlichkeit und weniger Wuerde.
+Testen Sie Kapazitätsentscheidungen, indem Sie echte Alternativen unter mehreren Nachfrageformen vergleichen und beobachten, ob Constraints wandern. Wenn Sie nur Mittelwerten vertrauen, lehrt der nächste Nachfrageshift dieselbe Lektion — mit höherer Dringlichkeit und weniger Raum für elegantes Recovery.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/digital-twin) oder [Use Cases ansehen](https://dbr77.com/demo).*
+*DBR77 Digital Twin hilft Planungs- und Operations-Teams, Kapazitätsoptionen unter mehreren Nachfrageformen zu vergleichen, bevor der nächste Shift schwache Annahmen offenlegt. [Demo buchen](https://dbr77.com/digital-twin) oder [Use Cases durchstöbern](https://dbr77.com/demo).*

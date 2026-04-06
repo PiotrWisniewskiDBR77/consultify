@@ -1,0 +1,131 @@
+{
+  "product": "DT",
+  "entry_module": {
+    "hero_value_proposition": "Digital Twin as a Decision Engine, Not a Prettier Model",
+    "problem_reality_block": "DT should open from repeated industrial reality, not generic software positioning.",
+    "primary_persona_bridge": "CFO / Plant Manager",
+    "primary_cta": "see where guesswork creates risk"
+  },
+  "decision_paths": [
+    {
+      "path_id": "see_where_guesswork_hurts",
+      "label": "see where guesswork creates risk",
+      "goal": "understand how layout and flow assumptions fail",
+      "section_target": "Layout And Flow",
+      "cta": "see where guesswork creates risk"
+    },
+    {
+      "path_id": "compare_scenarios",
+      "label": "compare options",
+      "goal": "review scenario-based investment logic",
+      "section_target": "CAPEX And Investment",
+      "cta": "book demo"
+    },
+    {
+      "path_id": "review_business_case",
+      "label": "review business case",
+      "goal": "defend the decision in board-level language",
+      "section_target": "Governance And ROI",
+      "cta": "review business case"
+    }
+  ],
+  "knowledge_sections": [
+    {
+      "section_id": "DT::layout_and_flow",
+      "label": "Layout And Flow",
+      "featured_cluster": [
+        "01_digital_twin_not_3d_model_decision_engine",
+        "05_how_to_compare_layout_variants_without_guesswork",
+        "11_how_to_identify_bottlenecks_before_they_happen",
+        "14_digital_twin_for_workforce_optimization",
+        "16_from_static_layout_to_living_factory_model",
+        "17_how_to_use_simulation_for_continuous_improvement"
+      ],
+      "deeper_library": [],
+      "proof_module_ref": "Layout And Flow",
+      "cta_module_ref": "Layout And Flow"
+    },
+    {
+      "section_id": "DT::capex_and_investment",
+      "label": "CAPEX And Investment",
+      "featured_cluster": [
+        "02_why_capex_decisions_should_be_simulated_before_they_are_approved",
+        "03_before_you_buy_a_robot_simulate_it_first",
+        "09_how_cfos_can_use_simulation_to_validate_roi",
+        "15_how_digital_twin_reduces_capex_risk",
+        "18_the_roi_of_digital_twin_in_12_months",
+        "19_how_to_build_a_digital_twin_business_case_without_guesswork"
+      ],
+      "deeper_library": [],
+      "proof_module_ref": "CAPEX And Investment",
+      "cta_module_ref": "CAPEX And Investment"
+    },
+    {
+      "section_id": "DT::governance_and_roi",
+      "label": "Governance And ROI",
+      "featured_cluster": [
+        "04_why_most_digital_twins_fail",
+        "20_how_to_run_your_first_simulation_project",
+        "30_how_to_turn_simulation_outputs_into_executive_decisions",
+        "33_how_to_use_digital_twin_for_factory_change_governance",
+        "45_how_to_assign_model_ownership_across_engineering_operations_and_finance",
+        "50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system"
+      ],
+      "deeper_library": [],
+      "proof_module_ref": "Governance And ROI",
+      "cta_module_ref": "Governance And ROI"
+    }
+  ],
+  "proof_modules": [
+    {
+      "snapshot_id": "capex_on_narrative",
+      "headline": "Teams overpay when capital is approved on narrative confidence rather than scenario stress.",
+      "asset_anchor": [
+        "01_digital_twin_not_3d_model_decision_engine",
+        "24_how_to_compare_capex_options_when_every_scenario_looks_plausible"
+      ]
+    },
+    {
+      "snapshot_id": "not_decision_grade",
+      "headline": "Simulation is weak when it helps visualize but not compare disciplined options.",
+      "asset_anchor": [
+        "27_what_a_good_simulation_input_set_looks_like_before_live_integration",
+        "34_what_a_good_sensitivity_analysis_should_show_before_approval"
+      ]
+    }
+  ],
+  "cta_modules": {
+    "low_commitment": {
+      "label": "see where guesswork creates risk",
+      "intent": "explore",
+      "target": "Layout And Flow"
+    },
+    "mid_commitment": {
+      "label": "book demo",
+      "intent": "demo",
+      "target": "CAPEX And Investment"
+    },
+    "high_commitment": {
+      "label": "review business case",
+      "intent": "decision",
+      "target": "Governance And ROI"
+    }
+  },
+  "bridge_module": {
+    "Layout And Flow": {
+      "target_product": "IRIS",
+      "target_section": "Execution And Rollout",
+      "why_next": "Move from simulated improvement into governed operating execution."
+    },
+    "CAPEX And Investment": {
+      "target_product": "Marketplace",
+      "target_section": "CAPEX And Investment",
+      "why_next": "Translate investment logic into supplier and offer selection."
+    },
+    "Governance And ROI": {
+      "target_product": "Consultify",
+      "target_section": "Governance And ROI",
+      "why_next": "Install stronger transformation governance around scenario-based decisions."
+    }
+  }
+}

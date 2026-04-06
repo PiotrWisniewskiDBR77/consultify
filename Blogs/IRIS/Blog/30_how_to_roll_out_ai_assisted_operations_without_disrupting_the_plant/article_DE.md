@@ -1,54 +1,42 @@
-# So rollen Sie KI-unterstuetzte Operationen aus, ohne das Werk zu stoeren
+# Wie Sie KI-unterstützte Operations ohne Störung des Werks ausrollen
 
-Target persona: Transformation PMO / Werksleiter / IT-OT Lead  
-Funnel stage: Decision  
-Core problem: KI-Rollouts erzeugen Reibung, wenn sie Tagesrhythmen aendern, Aufmerksamkeit spalten oder parallele Systeme unter Produktionsdruck einfuehren  
-Main promise: ein Rollout-Muster parallel zum Betrieb: Shadow-Mode, enger Workflow-Scope, schichtbasiertes Training, Fallback-Prozeduren und explizite Change Windows
+Zielpersona: Transformations-PMO / Plant Manager / IT-OT Lead  
+Funnel-Stufe: Decision  
+Kernproblem: KI-Rollouts erzeugen Reibung, wenn sie Tagesrhythmen ändern, Aufmerksamkeit spalten oder parallele Systeme unter Spitzendruck einführen  
+Hauptversprechen: Ein Rollout-Muster parallel zur Produktion: Shadow-Modus, enger Workflow-Scope, schichtbasiertes Training, Fallback-Prozeduren und explizite Änderungsfenster
 
-Rollen Sie KI-unterstuetzte Operationen ohne Stoerung aus, indem Sie zuerst die Produktionsautoritaet unveraendert lassen, KI im Shadow- oder Advisory-Modus innerhalb eines Workflows laufen lassen, schichtweise mit Shopfloor-Captains trainieren und veroeffentlichte Fallback-Regeln nutzen, wenn das System unsicher oder nicht verfuegbar ist. Stoerung ist nicht "Menschen widerstehen Veraenderung". Stoerung ist oft schlechtes Timing plus unklare Autoritaet.
+Störung wird oft als Widerstand etikettiert. Öfter ist es schlechtes Timing plus unklare Autorität. Rollen Sie KI-unterstützte Operations aus, indem Sie im frühen Fenster finale menschliche Autorität behalten, Assistenz im Shadow- oder Advisory-Modus innerhalb eines Workflows laufen lassen, in kleinen schichtbasierten Einheiten mit glaubwürdigen Flächenführern schulen und Fallback-Regeln veröffentlichen, wenn das System unsicher oder nicht verfügbar ist. Das Ziel ist Fortschritt, ohne Produktion zur Probebühne zu machen.
 
-## Prinzip 1: aendern Sie in der ersten Phase nicht, wer entscheidet
+Ändern Sie im ersten Fenster nicht, wer das Sagen hat. Menschen behalten letzte Entscheidung; KI liefert Vorschläge und strukturierte Entwürfe; Ausnahmen laufen standardmäßig über den bestehenden manuellen Pfad. Dieses Prinzip zu brechen heißt Produktionsrealität bekämpfen statt sie zu verbessern.
 
-In der Fruehphase: Menschen behalten finale Autoritaet; KI liefert Vorschlaege und strukturierte Entwuerfe; Ausnahmen fallen standardmaessig auf den alten manuellen Pfad zurueck. Brechen Sie dieses Prinzip, kaempfen Sie gegen Produktionsrealitaet.
+Wählen Sie einen Workflow mit Reserve-Supervision—nicht Startwoche, nicht große Audit-Woche, keine brutale Umbausequenz ohne Abdeckung. Termindisziplin ist keine Feigheit. So schützen Werke Durchsatz beim Lernen.
 
-## Prinzip 2: waehlen Sie einen Workflow mit freier Supervisor-Kapazitaet
+Eine Low-Disruption-Sequenz sieht so aus: Workflow end-to-end auf Papier mit benannten Ownern abbilden; im Ausführungssystem ohne KI spiegeln; kurz parallele Erfassung laufen lassen, damit alter und neuer Pfad koexistieren; KI nur für Triage und Zusammenfassungen aktivieren, bevor der Umfang wächst; erst erweitern, wenn Abschlussmetriken stabil sind; Fallback dokumentieren—wenn Assistenz ausfällt, welche Felder bleiben Pflicht und wer entscheidet?
 
-Waehlen Sie eine Spur, in der Vorgesetzte Lernen absorbieren koennen: nicht Startwoche; nicht grosse Kundenaudit-Woche; keine grosse Umbau-Serie ohne Extra-Deckung. Das ist Planungsdisziplin, nicht Feigheit.
+Shadow-Modus bedeutet: KI rankt und schlägt vor, während Operatoren Output ohne Strafe ignorieren können, während Sie Übereinstimmung messen. Live-Modus bedeutet: Vorschläge werden Standard-Routing mit menschlicher Bestätigung an Schwellen. Shadow zu überspringen ist ein häufiger Weg, Vertrauen schnell zu zerstören.
 
-## Schrittfolge: ein stoerungsarmer Rollout-Pfad
+Training sollte die Fläche respektieren: schichtbasierte Sessions von respektierten Captains, gebunden an wenige konkrete Screens und Aktionen, inklusive Übung zu Ablehnen, Override und Eskalieren. Wenn Training nicht skaliert, skalieren Workarounds.
 
-Waehlen Sie den Workflow end-to-end auf Papier mit Ownern; spiegeln Sie den Workflow im Ausfuehrungssystem ohne KI; fahren Sie eine bis zwei Wochen parallele Erfassung: alter Pfad plus neuer Pfad; aktivieren Sie KI-Unterstuetzung nur fuer Triage und Zusammenfassungen, nicht fuer autonome Aktionen; erweitern Sie den KI-Scope erst nach stabilen Abschlussmetriken; dokumentieren Sie Fallback: wenn KI ausfaellt, welche Felder bleiben Pflicht?.
+Kommunizieren Sie, was sich ändert und was nicht, wen man nachts ruft und wann Assistenz bewusst aus ist. Schweigen erzeugt Gerüchte; Gerüchte erzeugen Störung.
 
-## Shadow-Mode versus Live-Mode
+Messen Sie Störung direkt: Near-Miss-Abweichungen, Spitzen verbaler Overrides, Überstunden in der Supervision, Qualitätssperren mit Kommunikationsfehlern. Wenn das driftet, pausieren Sie die Expansion—nicht um das Programm zu bestrafen, sondern um das Werk zu schützen.
 
-**Shadow-Mode** KI rankt und schlaegt vor, Bediener ignorieren ohne Strafe, waehrend Sie Uebereinstimmung messen.
+IRIS unterstützt ruhigen Rollout, wenn parallele Erfassung, sichtbares Ownership und Fallback-Pfade in einer reglementierten Ausführungsschicht leben—statt einen weiteren Assistenten auf fragmentierte Tagesarbeit zu boltieren.
 
-**Live-Mode** KI-Vorschlaege werden Default-Routing, weiterhin mit menschlicher Bestaetigung an Schwellen.
+Zur Sequenzlogik siehe [Von Menschen zu KI-unterstützten Operations: Was sich zuerst ändert](../23_from_humans_to_ai_assisted_operations_what_changes_first/article_DE.md). Zum Build-Muster vor dem Rollout siehe [Wie Sie KI-unterstützte Fabrikoperations Schritt für Schritt aufbauen](../25_how_to_build_ai_assisted_factory_operations_step_by_step/article_DE.md).
 
-Werke ueberspringen Shadow-Mode und wundern sich dann ueber Kollaps des Vertrauens.
+Ein ruhiger Rollout bewahrt Autorität, nutzt Shadow-Modi, schult in kleinen Einheiten und misst Störungssignale. Geschwindigkeit ohne Disziplin ist, wie Werke KI hassen lernen—bevor sie je eine faire Chance zum Helfen bekommt.
 
-## Training, das den Shopfloor respektiert
+## Operatives Fazit
 
-Wirksames Training ist: schichtbasiert, nicht ein grosser Saal; gefuehrt von einem respektierten Shopfloor-Captain, nicht nur IT; gebunden an drei konkrete Screens und drei konkrete Aktionen; inklusive Uebung fuer Ablehnung, Override und Eskalation.
+Das Versprechen dieses Artikels—Rollout parallel zur Produktion: Shadow, enger Scope, schichtbasiertes Training, Fallback, Änderungsfenster—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Wie Sie KI-unterstützte Operations ohne Störung des Werks ausrollen“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
-## Change Windows und Kommunikation
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur in Meetings vereinbart, und mehr Tage, an denen der Systemdatensatz zu dem passt, was die Fläche sagen würde, wenn Sie sie mitten in der Aufgabe anhalten.
 
-Veroeffentlichen Sie: was sich aendert; was sich nicht aendert; wen man nachts ruft; wann KI-Unterstuetzung aus ist. Schweigen erzeugt Geruechte. Geruechte erzeugen Stoerung.
+Halten Sie Teams an einer einfachen Regel: Wenn sich eine Verbesserung nicht in Exporten aus dem Ausführungsdatensatz zeigen lässt, ist es noch keine operative Verbesserung—nur eine narrative. Diese Regel hält Programme ehrlich, wenn Demos gut aussehen, Übergaben aber fragil bleiben.
 
-## Messen Sie Stoerung direkt
-
-Verfolgen Sie Stoerungsindikatoren: gemeldete Near-Miss-Prozessabweichungen; Anstieg verbaler Overrides gegenueber Baseline; Ueberstunden-Spitzen in der Supervision; Qualitaetssperren mit Kommunikationsfehlerursache. Driften diese Werte, pausieren Sie die Expansion.
-
-## Warum IRIS stoerungsarmen Rollout unterstuetzt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Aufgaben.
-
-Eine vereinheitlichte Schicht macht parallele Erfassung und Fallback einfacher als ein weiterer Assistent.
-
-## Fazit
-
-Ein ruhiger Rollout bewahrt Autoritaet, nutzt Shadow-Mode, trainiert in kleinen Einheiten und misst Stoerungssignale. Geschwindigkeit ohne Disziplin ist, wie Werke KI hassen lernen.
+Wenn der Datensatz dünn ist, reparieren Sie den Datensatz, bevor Sie den Ehrgeiz erweitern.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [14-Tage-Trial starten](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*
+*DBR77 IRIS unterstützt parallele Rollout-Muster, indem es Aufgaben, Freigaben und KI-Assistenz in einer Ausführungsschicht mit klaren operativen Aufzeichnungen hält. [14-Tage-Trial starten](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*

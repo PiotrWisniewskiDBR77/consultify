@@ -5,66 +5,52 @@ Funnel stage: Decision
 Core problem: teams debate edge versus cloud abstractly while the plant actually needs latency, uptime, and boundary control under real network pain  
 Main promise: a decision matrix that tells you when edge is worth cost and complexity in retrofit-heavy environments
 
-Edge is not a philosophy. It is a boundary choice.
+Edge is not a moral stance. It is a boundary decision about where computation must live so the line can keep running when the world is imperfect.
 
-In brownfield IoT, edge processing earns its keep when the plant would suffer if every decision waited for a clean round trip and a perfect WAN day.
+In brownfield IoT, edge earns its keep when waiting on a clean round trip—or betting on a perfect WAN day—would change outcomes for the worse.
 
-## When edge is usually worth it
+Brownfield networks have personality: rainy days, maintenance windows, and corners where Wi-Fi dies because metal loves to lie. Edge is sometimes less about “faster math” and more about keeping a minimal brain alive when the plant’s uplink is having a mood.
 
-Edge tends to pay back when at least two of these are true:
+## When edge usually pays
 
-- **Latency matters** The useful reaction window is shorter than typical cloud round-trip variance.
+Edge tends to matter when latency sensitivity is real: the useful reaction window is shorter than typical cloud variance. When upstream connectivity wobbles, local logic keeps minimal intelligence alive during gaps. When policy or risk asks you to minimize raw egress, filtering and aggregation at the boundary matter. When OT security discipline wants a clear choke point between plant and enterprise paths. When the next safe step is inherently local to the asset or line controller.
 
-- **Uptime is imperfect** Lines should keep minimal intelligence during brief upstream outages.
+If none of these bite, edge may be premature architecture.
 
-- **Data minimization matters** You need local filtering to avoid shipping noise, PHI-like safety context, or excessive raw streams.
+## When edge can wait
 
-- **OT boundary discipline matters** Policy asks for a clear choke point between plant floor and enterprise paths.
+Purely observational pilots with generous latency tolerance, stable and honestly monitored northbound paths, comfort pushing curated aggregates upstream, and security models that already segment enterprise access well can often defer edge without shame. Deferral is not weakness if the operating loop does not need local gating yet.
 
-- **Action is local** The next safe step is on the asset or the line controller, not in a remote workflow. If none of these bite yet, edge may be premature architecture.
+## Score the need, then pilot narrowly
 
-## When edge is often optional early
+Think in terms of latency sensitivity, WAN reliability risk, raw data volume and burstiness, policy pressure for local processing, and whether shifts must survive offline gaps. Low totals suggest staying cloud-biased with strong segmentation and revisiting edge after pilot learning. Mid scores argue for edge on the highest-value assets first, not plant-wide sprawl. High scores point to edge-first design—with explicit lifecycle, patching, and recovery ownership treated like any other OT asset.
 
-Edge is easier to defer when: the pilot is purely observational with generous latency tolerance; the network path is stable and monitored with honest SLAs; the plant is comfortable pushing curated aggregates upstream only; security policy already accepts a well-segmented northbound channel.
+## Introduce edge without losing control
 
-Deferring edge is not weakness if the operating loop does not need it yet.
+Pick one line and one signal family where pain is real today. Define what must run locally versus what can wait for batch upstream. Document patch ownership, backup, and recovery. Measure false interruptions, reaction time, and data volume before and after. Expand only where the same pattern repeats, not because hardware is available.
 
-## Decision matrix: edge worth score
+## What edge cannot fix
 
-Rate each factor 0-2 (none, partial, strong). Sum the score.
+Edge does not repair bad tags, drifting baselines, unclear action owners, or alert logic that ignores human capacity. It changes where computation runs, not whether the plant agrees on truth. Signal meaning and identity still come from the quality discipline in [how to improve machine data quality before scaling IoT](../24_how_to_improve_machine_data_quality_before_scaling_iot/article_EN.md).
 
-| Factor | 0 | 1 | 2 |
-|---|---|---|---|
-| Latency sensitivity | generous | mixed | tight |
-| WAN reliability risk | low | medium | high |
-| Raw data volume | small | medium | large or bursty |
-| Policy pressure for local processing | low | medium | high |
-| Need for offline continuation | none | short gaps | must run shifts |
+## DBR77 IoT at the boundary
 
-**Guidance:**
+DBR77 IoT maps cleanly when buyers ask about local gating, outage behavior, minimization, and OT choke points—retrofit placement with explicit lifecycle ownership rather than automatic plant-wide edge. Where latency and WAN risk remain mild, a cloud-biased start can stay credible until the scorecard says otherwise.
 
-- **0-3** Start cloud-friendly with strong segmentation; revisit edge after pilot learning.
+Edge is worth it when local intelligence is the safer default for latency, outages, data minimization, or policy boundaries. Score the need, pilot tightly, expand on proof—so edge stays operational, not ornamental.
 
-- **4-6** Pilot edge on the highest-value assets first, not plant-wide.
 
-- **7+** Edge-first decision support is likely justified; design explicitly for lifecycle and patching.
 
-## Step sequence: introduce edge without losing control
+## A leadership checkpoint for the next ops review
 
-Pick one line and one signal family where latency or outages hurt today; define what must run locally versus what can wait for batch upstream; document patch ownership, backup, and recovery like any OT asset; measure before and after: false interruptions, reaction time, data volume; expand only where the score repeats, not because hardware is available.
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
 
-## What edge does not solve
+## Bringing it home on the floor
 
-Edge does not fix: bad sensor mapping or drifting baselines; unclear ownership of actions; alert logic that ignores human capacity.
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-It changes where computation runs, not whether the plant agrees on truth.
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-Tag meaning, identity, and the quality ladder in [how to improve machine data quality before scaling IoT](../24_how_to_improve_machine_data_quality_before_scaling_iot/article_EN.md) still decide whether local processing output is trustworthy.
+---
 
-## What this means for DBR77 IoT
-
-DBR77 IoT maps cleanly when the buyer question is boundary and economics, not slogans: local gating, outage behavior, data minimization, and a clear OT choke point. The fit is retrofit-friendly placement with explicit lifecycle and patching ownership, not automatic plant-wide edge. Where latency and WAN risk are still mild, the credible story can stay cloud-biased until the scorecard says otherwise.
-
-## Bottom line
-
-Edge is worth it in brownfield IoT when latency, outage behavior, data minimization, or policy boundaries make local intelligence the safer default. Score the need, pilot narrowly, and expand on repeated proof. That keeps edge operational instead of ornamental.
+*DBR77 IoT supports edge-first or hybrid IoT architectures with retrofit-friendly deployment and clear boundary choices for brownfield plants. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

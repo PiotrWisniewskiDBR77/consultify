@@ -1,76 +1,38 @@
-# Jak rzadzic decyzjami AI miedzy zmianami i funkcjami
+# Jak rządzić decyzjami AI między zmianami i funkcjami
 
-Target persona: Dyrektor zakladu / PMO transformacji / Wlasciciel systemow jakosci  
-Funnel stage: Decision  
-Core problem: dokumenty nadzoru AI zyja w IT, podczas gdy nocna zmiana ma inne nawyki, a jakosc, utrzymanie i logistyka kazda inaczej rozumie "asyste"  
-Main promise: praktyczna siatka nadzoru: odpowiedzialnosc, kontrola zmian, przekazania zmian i sciezki wyjatkow, ktore czynia reguly AI wykonalnymi 24/7
+Docelowa persona: dyrektor zakładu / PMO transformacji / właściciel systemów jakości  
+Etap lejka: Decision  
+Główny problem: dokumenty rządów AI żyją w IT, podczas gdy nocna zmiana pracuje innymi nawykami, a jakość, utrzymanie i logistyka każda inaczej interpretuje „asystę”  
+Główna obietnica: praktyczna siatka rządów: jasne przypisanie odpowiedzialności, kontrola zmian, przekazania międzyzmianowe i ścieżki wyjątków, które czynią reguły AI wykonalnymi 24/7
 
-Rzadz decyzjami AI miedzy zmianami i funkcjami publikujac jeden regulamin powiazany z workflow: kto moze zmieniac progi, jak wersjonowac zmiany, co musi zawierac przekazanie zmiany i ktora funkcja podpisuje ktora sciezke wyjatku. Potem mierz dryf: wskaznik override per zmiana, odsetek przestarzalych sugestii i czas do wlasciciela dla pracy oznaczonej przez AI. Nadzor, ktory nie pojawia sie przy przekazaniu zmiany, to tylko teatr zgodnosci. To nadzor operacyjny. To nie etyczny PDF w szufladzie.
+Rządź decyzjami AI tam, gdzie dzieje się praca — nie w PDF-ie, którego nikt nie otwiera o drugiej w nocy. Opublikuj jeden podręcznik reguł powiązany z przepływu pracy: kto może zmieniać progi, jak wersjonuje się zmiany, co przekazanie zmiany musi uchwycić oraz która funkcja podpisuje którą ścieżkę wyjątku. Potem mierz dryf przez wskaźniki nadpisań według zmiany, udział „starych” sugestii oraz czas do właściciela dla pracy otagowanej przez AI. Rządy, które nie przetrwają rotacji zmian, to teatr zgodności. To są rządy operacyjne.
 
-## Siatka 1: RACI dla zmian regul AI
+Utrzymuj rozliczalność za zmiany reguł wprost. Ktoś musi odpowiadać za proponowanie, testowanie, publikowanie i wycofywanie edycji progów. Jeśli „odpowiedzialny” jest pustym słowem, dostaniesz ciche edycje i niewiarygodne niespodzianki. Awaryjne wycofanie musi być prawdziwe: wstrzymaj tryb działania, wróć do doradztwa, udokumentuj incydent w ciągu dnia. Bez toru awaryjnego zespoły cicho hot-fixują produkcję — a audyty dziedziczą bałagan.
 
-Trzymaj to prosto.
+Przekazanie zmiany musi dziedziczyć ten sam kontrakt co dzień. Minimalna widoczność obejmuje aktywne tryby dla każdego przepływu pracy, znane identyfikatory wersji reguł lub modelu, głębokość i wiek kolejki wyjątków, główne tematy fałszywych alarmów z poprzedniej zmiany oraz jawne flagi podczas incydentów wyłączające automatyczne zamykanie zgłoszeń. Papierowe streszczenia mogą uzupełniać; nie mogą zastąpić pól systemowych bez odtwarzania wiedzy plemiennej.
 
-| Dzialanie | Odpowiedzialny za wynik | Wykonawca | Konsultowani | Informowani |
-|---|---|---|---|---|
-| zaproponuj zmiane progu | wlasciciel funkcji | lider CI | IT-OT, jakosc | kierownik zakladu |
-| test w cieniu | IT-OT | admin systemu | wlasciciel funkcji | nadzor |
-| opublikuj wersje | kierownik zakladu | admin systemu | prawo lub jakosc wg potrzeby | wszystkie zmiany |
-| awaryjny rollback | dyzurny lider operacji | admin systemu | BHP, jakosc | kierownik zakladu |
+Powierzchnie AI ujawniają konflikty szybciej — więc arbitraż przypisz z góry. Nazwij cotygodniowego arbitra dla sporów priorytetów produkcja kontra utrzymanie, opublikuj drabiny eskalacji dla napięcia zwolnienie jakości kontra harmonogram oraz ogranicz wspólne ruchy trybu działania przy brakach magazyn kontra linia, gdy ryzyko jest wysokie. Nierozstrzygnięte konflikty stają się walką wolumenów. To niszczy zaufanie do asystencji.
 
-Jesli pole "odpowiedzialny za wynik" jest puste, pojawia sie ciche edycje.
+Kontrola zmian potrzebuje dwóch temp: standardowy cotygodniowy rytm z testem cienia i opublikowanym changelogiem oraz tor awaryjny, który stawia bezpieczeństwo i ciągłość na pierwszym miejscu. Fabryki poruszają się szybko; rządy też muszą — bez porzucania zapisów.
 
-## Siatka 2: pola przekazania zmiany dla workflow wspieranych przez AI
+Większość zakładów potrafi wyjaśnić rządy w sali konferencyjnej. Trudniejszy test: czy przychodząca zmiana w poniżej dwóch minut odpowie, który tryb jest aktywny, która wersja reguł jest na żywo, które wyjątki się starzeją i kto posiada następną eskalację, jeśli dryf trwa. Jeśli to wymaga pamięci lub telefonu, rządy wciąż są nieformalne.
 
-Noc musi odziedziczyc ten sam kontrakt co dzien.
+Śledź cotygodniowe sygnały: nadpisania według zmiany i przepływu pracy, mediana czasu akceptacji w trybie doradczym, zadania otagowane przez AI po przekroczeniu SLA, incydenty, w których przychodząca zmiana nie znała wersji reguł. Rosnący dryf bez nazwanego właściciela to porażka rządów — nie modelu.
 
-Minimalny rekord przekazania: aktywne tryby per workflow (obserwuj, doradzaj, dzialaj); znane ID wersji modelu lub regul; glebokosc kolejki wyjatkow i wiek najstarszej pozycji; trzy glowne tematy falszywych alarmow z poprzedniej zmiany; jawne flagi "nie routuj auto" podczas incydentow. Papierowe przekazania bez pol w systemie odtwarzaja wiedze plemienna.
+IRIS uszczegóławia rządy, gdy wersje, zadania, zatwierdzenia i stan przekazania żyją w jednej warstwie operacyjnej — tak by dzień, noc, jakość i utrzymanie dziedziczyły ten sam kontrakt zamiast wymyślać go lokalnie.
 
-## Granice funkcji: kto posiada konflikty miedzy zespolami
+Tryby wdrożenia opisuje [Kiedy AI powinno obserwować, doradzać czy działać w fabryce](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_PL.md). Kontrolę skali po ustaleniu rządów — [Jak skalować asystencję AI bez utraty kontroli operacyjnej](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_PL.md).
 
-AI szybciej uwidacznia konflikty.
+Rządź AI tam, gdzie praca się dzieje: wersje, zmiany i nazwani arbitrowie. Jeśli nocna zmiana nie może odczytać stanu reguł w systemie, jeszcze nie rządzisz.
 
-Przypisz arbitraz z gory: spory priorytetu produkcja kontra utrzymanie: jedna rola arbitra na tydzien; cisnienie harmonogramu kontra zwolnienie jakosci: opublikowana drabina eskalacji; braki magazynu kontra linia: wspolny poranny limit ruchow w trybie dzialaj. Nieprzypisany arbitraz staje sie "kto krzyczy najglosniej." To lamie zaufanie do asysty.
+## Podsumowanie operacyjne
 
-## Kontrola zmian w tempie fabryki
+Obietnica tego artykułu — praktyczna siatka rządów: jasne przypisanie odpowiedzialności, kontrola zmian, przekazania międzyzmianowe i ścieżki wyjątków, które czynią reguły AI wykonalnymi 24/7 — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie, które da się prześledzić bez archeologii skrzynek. Dla „Jak rządzić decyzjami AI między zmianami i funkcjami” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Uzyj dwoch torow:
+Ten standard nie chodzi o idealne oprogramowanie; chodzi o uczciwość operacyjną: mniej tajemniczych przekazań, mniej prawd uzgadnianych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
-**Tor standardowy** Cotygodniowy przeglad, dokumentowany test w cieniu, opublikowany changelog.
-
-**Tor awaryjny** Wstrzymaj tryb dzialaj, wroc do doradzaj, notatka po incydencie w 24 godziny.
-
-Jesli tor awaryjny nie istnieje, zespoly beda hot-fixowac w produkcji w ciszy.
-
-## Reality check: nadzor zwykle peka na granicy zmian, nie na steering meetingach
-
-Wiekszosc zakladow potrafi wyjasnic swoj model nadzoru w sali konferencyjnej.
-
-Trudniejsze pytanie brzmi, czy przychodzaca zmiana potrafi w mniej niz dwie minuty powiedziec:
-
-- ktory tryb jest aktywny
-- ktora wersja regul jest na zywo
-- ktore wyjatki juz sie starzeja
-- kto bierze nastepna eskalacje, jesli dryf urosnie
-
-Jesli odpowiedz zalezy od pamieci, telefonow albo jednego doswiadczonego nadzorcy, nadzor nadal jest nieformalny.
-
-## Metryki, ktore ujawniaja dryf zmian i funkcji
-
-Tygodniowo sledz: wskaznik override per zmiana i per workflow; medianowy czas akceptacji sugestii w trybie doradzaj; liczbe zadan oznaczonych przez AI, ktore przekroczyly SLA; incydenty, gdzie przychodzaca zmiana nie znala wersji regul. Rosnacy dryf bez nazwanego wlasciciela to blad nadzoru, nie modelu.
-
-## Dlaczego IRIS usztywnia nadzor miedzyfunkcyjny
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy reguly, zadania i akceptacje dziela jedna warstwe, przekazania zmian i granice funkcji staja sie audytowalne zamiast plemiennych.
-
-## Podsumowanie
-
-Rzadz AI tam, gdzie dzieje sie praca: wersje, zmiany i nazwani arbitrow.
-
-Jesli nocna zmiana nie odczyta stanu regul w systemie, jeszcze nie rzadzisz.
+Trzymaj zespoły przy prostej zasadzie: jeśli usprawnienia nie widać w eksportach z zapisu wykonania, to jeszcze nie jest usprawnienie operacyjne — tylko narracyjne. Ta zasada utrzymuje programy przy zdrowych zmysłach, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Obejrzyj prezentację](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS eksponuje tryby reguł, wersje, zadania i zatwierdzenia w jednej warstwie, tak by przekazania zmian i własność funkcji pozostawały widoczne dla operacji. [Obejrzyj walkthrough](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

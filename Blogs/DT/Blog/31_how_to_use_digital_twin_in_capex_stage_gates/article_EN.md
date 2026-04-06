@@ -5,63 +5,38 @@ Funnel stage: Decision
 Core problem: stage-gate reviews often treat CAPEX as a document exercise, so simulation arrives too late or in the wrong form to change what gets funded  
 Main promise: a gate-by-gate map of what scenario evidence should exist before each approval, so capital moves forward with traceable de-risking instead of narrative momentum
 
-use Digital Twin inside CAPEX stage gates by defining one simulation deliverable per gate that answers a single funding question, ties to frozen assumptions, and blocks promotion when downside cases are unexplored. Early gates need feasibility and option shape. Middle gates need comparable stress tests. Late gates need ramp, constraint, and sensitivity evidence tied to the spend profile. Capital processes love paperwork.
+Use digital twin inside CAPEX stage gates by defining one simulation deliverable per gate that answers a single funding question, ties to frozen assumptions, and blocks promotion when downside cases are unexplored. Early gates need feasibility and option shape. Middle gates need comparable stress tests. Late gates need ramp, constraint, and sensitivity evidence tied to the spend profile.
 
-They often starve the factory of decision-grade scenario work at the moments when change is still cheap.
+Capital processes love paperwork. They often starve the factory of decision-grade scenario work at the moments when change is still cheap. Without an explicit contract per gate, teams reuse slides until money is spent, postpone simulation until options are narrow, or let each function bring its own spreadsheet story with no shared shock set. None of that de-risks layout, flow, or CAPEX before reality changes.
 
-## Why stage gates fail without a simulation contract
+## Gate map: what to prove before promotion
 
-Without an explicit contract per gate, teams do one of three things: run a model once, then reuse slides until the money is spent; postpone simulation until detailed design, when options are already narrow; let each function bring its own spreadsheet story with no shared shock set.
+At concept or option framing, answer whether you are chasing the right class of change—compare two to three layout or flow hypotheses under the same demand lens. At preliminary business case, answer which option survives shared stress—paired downside cases on the short list with bottleneck and queue signals. At detailed design commitment, locate fragility before purchase—sensitivity on top assumptions with named owners. At execution readiness, test whether ramp can proceed without breaking service—ramp and handover scenarios with constraint time at risk. After approval, use change control—delta scenarios when scope, mix, or supply assumptions move. If a gate cannot point to an evidence row, the gate risks becoming administrative theater.
 
-None of those behaviors de-risks layout, flow, or CAPEX before reality changes.
+## Stage-gate simulation readiness
 
-## Gate map: what simulation must prove before each promotion
+Each gate has one decision owner for assumptions—not a committee cloud. The same shock vocabulary repeats gate to gate. Losing options retire with reasons, not appendix hiding. Finance sees cash timing differences, not only average throughput. Procurement exposure appears when supplier variability matters.
 
-Use this as a default pattern and adapt names to your internal process:
+## When this pattern works—and when it fails
 
-| Gate moment | Funding question the room must answer | Minimum simulation evidence |
-|---|---|---|
-| Concept / option framing | Are we chasing the right class of change? | two to three layout or flow hypotheses compared under the same demand lens |
-| Preliminary business case | Which option survives shared stress? | paired downside cases on the short list with bottleneck and queue signals |
-| Detailed design commitment | Where does fragility concentrate before we buy? | sensitivity on top five assumptions with named owners |
-| Execution readiness | Can we ramp without breaking service? | ramp and handover scenarios with constraint time at risk |
-| Post-approval change control | Does a design drift still match the case? | delta scenarios only when scope, mix, or supply assumptions move |
+It works when capital governance already has named gates and you can attach one artifact per gate. It fails when approval is a single lump with no real down-select—there is nowhere to insert comparative discipline.
 
-If a gate cannot point to a row in this map, the gate is administrative theater.
 
-## Checklist: stage-gate simulation readiness
+## Governance that fits real factory tempo
 
-- [ ] each gate has one decision owner for assumptions, not a committee cloud  
-- [ ] the same shock vocabulary is reused from gate to gate  
-- [ ] losing options are retired with reasons, not hidden in appendix  
-- [ ] finance sees cash timing differences, not only average throughput  
-- [ ] procurement exposure appears when supplier variability matters
+Good governance matches the plant’s clock. Monthly operations reviews should treat forward risk as a first-class citizen, not as an appendix when slides run long. Capital forums should treat scenario IDs and assumption grades as part of the approval artifact, not as a modeler’s footnote. Post-investment reviews should be able to find the baseline story that was funded and test whether reality diverged in ways that change the next tranche.
 
-## When this pattern works and when it fails
-
-**Works** when capital governance already has named gates and you can attach one artifact per gate.
-
-**Fails** when the process is a single lump approval with no real option down-select, because there is nowhere to insert comparative discipline.
-
-## What Digital Twin changes here
-
-Digital Twin is a decision system and scenario-testing environment. Sponsors need gate-ready evidence, not showroom pacing.
-
-Used at gates, it turns CAPEX into a sequence of explicit de-risking steps before physical change locks in.
+When ownership is clear—who maintains structure, who certifies floor truth, who signs scenario packs—refresh events stop being personal favors and become predictable maintenance. That is how digital twin survives turnover: the next steward inherits templates, packs, and ledgers instead of inheriting lore. If your program cannot survive a leadership change, it is still a project, not infrastructure.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin aligns stage-gate CAPEX reviews with one traceable simulation deliverable per funding decision.
+DBR77 Digital Twin aligns stage-gate CAPEX reviews with one traceable simulation deliverable per funding decision: consistent option comparisons as the project matures; traceability from assumption changes to outcome shifts; shorter distance between engineering insight and sponsor-ready clarity.
 
-For stage-gate use, it helps teams: keep option comparisons consistent as the project matures; preserve traceability from assumption changes to outcome shifts; shorten the distance between engineering insight and sponsor-ready clarity.
+Pair gate memos with the executive decision packet pattern in this series; before binding spend, run the act-on-strength test in the companion article.
 
 ## Bottom line
 
-Stage gates only protect capital when each gate demands the right kind of evidence.
-
-If simulation is optional, the factory pays for optionality with rework and late surprises.
-
-For committee-ready narrative, pair each gate artifact with the executive packet pattern in this series; before binding spend, run the act-on-strength test in the companion article.
+Stage gates protect capital only when each gate demands the right kind of evidence. If simulation is optional, the factory pays for optionality with rework and late surprises.
 
 ---
 

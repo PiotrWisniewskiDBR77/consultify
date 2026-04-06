@@ -1,76 +1,60 @@
-# Jak przygotowac zaklad na wizyty dostawcow i warsztaty discovery
+# Jak przygotować zakład na wizyty dostawców i warsztaty discovery
 
-Target persona: menedzer zakladu / menedzer projektu  
-Funnel stage: Consideration (discovery dajace porownywalne wejscia)  
-Core problem: wizyty dostawcow daja wrazenia i zdjecia, ale nie ograniczenia i probki, ktore czynia oferty porownywalnymi  
-Main promise: pakiet przedwizytowy i agenda warsztatu, ktore zamieniaja czas w zakladzie na ustrukturyzowane fakty, ktore dostawca moze odpowiedzialnie wycenic
+Docelowa persona: Kierownik zakładu / Kierownik projektu  
+Etap lejka: Rozważanie (discovery dające porównywalne wejścia)  
+Główny problem: wizyty dostawców zostawiają wrażenia i zdjęcia, ale nie ograniczenia i próbki, które sprawią, że oferty da się porównać  
+Główna obietnica: pakiet przedwizytowy i agenda warsztatu, które zamieniają czas na hali w uporządkowane fakty, pod które dostawca może odpowiedzialnie wycenić
 
-Wizyta dostawcy bez przygotowania to turystyka.
+Nieprzygotowana wizyta to turystyka. Warsztat bez właścicieli tematów to spotkanie, po którym powstają slajdy, z których nikt nie skorzysta. Dostawcy wracają z własnymi modelami mentalnymi; wasz zespół — ze zdjęciami. Później oferty rozjeżdżają się, bo każdy integrator wycenił inny zakład.
 
-Warsztat discovery bez wlascicieli to spotkanie, ktore generuje slajdy. Producenci dostaja lepsze wyniki, gdy czas w zakladzie produkuje:
+Przygotowanie zamienia czas na hali w wejścia: nazwane ograniczenia, uzgodnione próbki, rzeczywistość interfejsów oraz zapis, który karmi porównywalność.
 
-- nazwane ograniczenia
-- uzgodnione probki i metody pomiaru
-- rzeczywistosc interfejsow (IT, utrzymanie, bezpieczenstwo)
-- zapis, ktorego zespol zakupowy naprawde uzyje
+## Co kosztuje was później brak przygotowania
 
-## Bezposrednia odpowiedz
+Gdy dostawcy wyjeżdżają z różnymi wspomnieniami tego samego ograniczenia, kolejne tygodnie spędzicie na godzeniu propozycji, które nie są „złe” — tylko niekompatybilne. Gorzej, jeśli przyznacie kontrakt na interpretację, której wewnętrznie nikt nie uzgodnił. Przygotowanie sprawia, że wizyta buduje wspólną bazę faktów: co jest zmierzone, co założone, co nieznane i jak domkniecie nieznane bez rozbijania porównywalności.
 
-Opublikuj pakiet przedwizytowy co najmniej tydzien przed wizyta (wczesniej przy zlozonych liniach): wersja oswiadczenia o zakresie i kryteria sukcesu; uklad linii lub mapa stref z zaznaczonymi zagrozeniami; probkowe SKU, warianty opakowan i zasady obchodzenia; okna przestoju i dostepu podpisane przez lidera linii; ograniczenia IT i sieci strezczone przez wlasciciela IT; lista decyzji, ktore warsztat musi wyprodukowac.
+Traktuj wizytę jak czas produkcyjny. Chroń linię, ludzi i prawdę: operatorzy nie powinni czuć, że karze się ich za opisywanie bałaganu. Chodzi nie o wypolerowany tour, o wierny obraz.
 
-Prowadz warsztat z agenda ograniczona czasowo i jednym notatnikiem publikujacym podsumowanie tego samego dnia.
+## Opublikuj pakiet przedwizytowy
 
-Jesli wizyta konczy sie tylko wspomnieniami, zaplaciles za podroz i zachowales ryzyko.
+Podzielcie się nim, zanim ktoś stanie na hali, tak by rozmowy zaczynały się od faktów: szkic przepływu, zasady zmienności, ograniczenia przestrzeni i mediów, kontekst BHP, punkty styku IT i OT, obecny ból w języku operatorów oraz to, jak ma wyglądać sukces. Wizyta ma potwierdzać i dopracowywać — a nie odkrywać podstaw od zera.
 
-## Lista kontrolna pakietu przedwizytowego (minimum)
+## Przypisz właścicieli do każdego tematu
 
-| Element | wlasciciel | wynik |
-| --- | --- | --- |
-| krotki film lub zdjecia stanu biezacego | operacje | ograniczony kontekst |
-| fakty przepustowosci i zmiennosci | inzynieria | liczby baseline |
-| przyklady defektow jakosci | jakosc | konkretne tryby awarii |
-| top trzy ryzyki i obawy | sponsor | uczciwe ograniczenia |
-| lista punktow styku integracji | IT + utrzymanie | nazwane systemy |
+Mechanika, sterowanie, jakość, utrzymanie, IT i BHP muszą mieć głos w pokoju. Milczące funkcje stają się głośnym problemem przy uruchomieniu.
 
-Jesli elementu brakuje, etykietuj go jawnie jako otwarte zalozenie z wlascicielem i data. Zalozenia to inwentarz, nie wstyd.
+## Przygotuj reprezentatywne materiały i dane
 
-## Szablon agendy warsztatu (pol dnia, ilustracyjnie)
+Jeśli liczy się zachowanie przy obchodzeniu, uzgodnijcie próbki i metody pomiaru. Jeśli liczą się tempo i wydajność, baseline omówcie uczciwie. Zamiany zapisujcie, nie zostawiajcie ich między wierszami.
 
-Instruktaz bezpieczenstwa i zasady trasy (15 minut); spacer po linii: najpierw cisza obserwacja, potem pytania (45 do 60 minut); okragly stol ograniczen: materialy, tempa, przezbrojenia, wyjatki (45 minut); glebokie wejscie integracja: sygnaly, handshake MES, model wsparcia (45 minut); produkty decyzyjne: co dostawcy musza wlaczyc w nastepna rewizje oferty (30 minut).
+## Zamknij dzień krótkim podsumowaniem
 
-Zamknij trzema opublikowanymi produktami: zaktualizowany rejestr zalozen; otwarte pytania z wlascicielami; data partii wyjasnien wychodzacych.
+Na koniec opublikujcie zwięzły zapis: potwierdzone fakty, otwarte pytania, właściciele i terminy. Pamięć to nie wspólny system.
 
-## Co dostawcy powinni zabrac
+## Jak łączy się to z DBR77 Marketplace
 
-Dostawcy powinni wyjsc z: ta sama referencja briefu w wersji; zdjeciami i szkicami zgodnymi z polityka publikacji; jawna lista tego, czego nie wolno im zakladac; jednym punktem kontaktu dla pytan technicznych.
+Ustrukturyzowany brief wyzwania i wyniki discovery wcześniej w łańcuchu sprawiają, że późniejsze porównanie jest wiarygodne. Mocny pakiet przedwizytowy to ubezpieczenie jakości całego procesu zakupowego.
 
-Jesli kazdy dostawca dostaje inne rozmowy poboczne, budujesz nieporownywalnosc swiadomie.
+Aby domknąć ciągłość po tych spotkaniach, zobacz [Jak utrzymać momentum automatyzacji po pierwszych spotkaniach z dostawcami](../22_how_to_keep_automation_momentum_after_the_first_vendor_meetings/article_PL.md).
 
-## Reality check: wizyty discovery czesto zawodza, bo zaklad zaklada, ze dostawca "sam dojdzie do szczegolow na miejscu"
+## Warsztaty, które szanują produkcję
 
-To zalozenie brzmi praktycznie. Ludzie przechodza po linii. Padaja pytania. Robione sa zdjecia. Ale dopoki wizyta nie zamienia ograniczen, wlascicieli i zalozen w jeden opublikowany zapis, dostawca wychodzi z wrazeniami, a nie z wejsciami gotowymi do decyzji.
+Discovery nie może przejmować linii. Przygotujcie okna, zapasowe warianty ciągłości i realne oczekiwania wobec tego, co operatorzy mogą dać podczas żywej zmiany. Gdy warsztaty ignorują produkcyjną rzeczywistość, dostawcy uczą się złego zakładu — i wyceniają złe ryzyko.
 
-## Typowe bledy przygotowania
+Użyjcie wizyty, by potwierdzić, co jest na tyle stabilne, by wycenić, a co wciąż wymaga ograniczonego kroku discovery. Wynikiem ma być wspólny zestaw faktów, a nie rywalizujące wspomnienia.
 
-| blad | objaw | naprawa |
-| --- | --- | --- |
-| brak lidera linii | generyczne propozycje | przeloz termin |
-| brak probek | zgadywanie obchodzenia | zadeklaruj SKU |
-| brak IT | fikcja interfejsu | wymagaj miejsca IT |
-| brak publikacji podsumowania | dryf pamieci | notatki tego samego dnia |
+## Od decyzji do zachowania na hali
 
-## Co to znaczy dla DBR77 Marketplace
+Sens dopracowania tego etapu ścieżki zakupowej — „Jak przygotować zakład na wizyty dostawców i warsztaty discovery” w praktyce — to przewidywalna realizacja. Na produkcji niejasność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i kłótnie przy maszynach wtedy, gdy linia potrzebowała jasności tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodami i trzymają widoczne odpowiedzialność, dostawcy zaskakują rzadziej, a funkcje mniej godzą sprzeczne narracje.
 
-DBR77 Marketplace jest zbudowany dla zakupow automatyzacji nastawionych na producenta jako workflow. Dobre discovery czyni oferty porownywalnymi. Porownywalne oferty czynia wybor godnym zaufania. Marketplace to nie katalog robotow.
+To nie teoria tylko dla „biura”. Kierownicy zakładów czują skutki, gdy artefakty zakupu nie pokrywają się z halą: pochłonięte nadgodziny, rozciągnięta czujność jakości i utrzymanie improwizujące przy połowicznie zdefiniowanych interfejsach. Dyscyplina zakupu to inwestycja produkcyjna — mniej dramatu przy montażu, mniej nagłych zmian i szybsza droga do stabilnego outputu. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-To system redukcji chaosu sourcingowego przez zamiane rzeczywistosci zakladu na wejscia mozliwe do inspekcji.
+Jeśli macie zabrać jeden nawyk, niech to będzie to: każdy ważny wynik zakupów powinien dać się zauditować przez operacje i utrzymanie. Jeśli nie da się go prześledzić do zachowania na hali, zaostrz język. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a zaczęły się od decyzji.
 
 ## Podsumowanie
 
-Przygotuj zaklad jak do audytu wewnetrznego ze swiadkami z zewnatrz.
-
-Fakty, wlasciciele i opublikowane podsumowania bieja charyzme i rolke z aparatu.
+Przygotujcie zakład jak audyt z zewnętrznymi świadkami: fakty, właściciele, opublikowane podsumowania. Charyzma i rolka zdjęć to nie materiał do porównywalności.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*
+*DBR77 Marketplace zyskuje, gdy brief wyzwania i wyniki discovery są ustrukturyzowane; mocny pakiet przedwizytowy to jakość upstream dla wiarygodnego porównania. [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*

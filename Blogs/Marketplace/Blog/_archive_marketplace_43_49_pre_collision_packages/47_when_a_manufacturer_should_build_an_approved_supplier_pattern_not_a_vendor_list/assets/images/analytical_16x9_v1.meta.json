@@ -1,0 +1,29 @@
+{
+  "article_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list",
+  "product": "Marketplace",
+  "scope_type": "blog",
+  "asset_slug": "47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list",
+  "role": "analytical",
+  "archive_package": "_archive_marketplace_43_49_pre_collision_packages",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "newsletter"
+  ],
+  "model": "cursor-builtin-generate-image",
+  "generation_notes": {
+    "contract": "DBR77_IMAGE_QC_STANDARD Mode 2; Marketplace ARCHIVE closeout batch",
+    "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | Cursor built-in GenerateImage + PIL where noted |\n| seed | n/a |\n| inference_steps | n/a |\n| delivered_px | 1376×768 |"
+  },
+  "prompt_source": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list/image-prompts.md",
+  "prompt_text": "Overhead: physical comparison mat—left stack of identical blank aluminum tags (list mindset), right heavier steel template with three rectangular cutouts (pattern mindset), brass pins, no typography.",
+  "negative_prompt": "infographic columns, dashboard, screen UI, readable words",
+  "seed": "n/a",
+  "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+  "created_at": "2026-03-31T04:51:44+00:00",
+  "alt_text_en": "Tactile board contrasting list-of-vendors thinking versus reusable pattern plate.",
+  "caption_en": "Analytical for supplier pattern governance.",
+  "crop_safe_notes": "Overhead 16:9.",
+  "output_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/47_when_a_manufacturer_should_build_an_approved_supplier_pattern_not_a_vendor_list/assets/images/analytical_16x9_v1.png"
+}

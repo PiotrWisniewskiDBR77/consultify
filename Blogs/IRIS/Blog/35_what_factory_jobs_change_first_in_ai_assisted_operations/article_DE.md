@@ -1,58 +1,38 @@
-# Welche Werksjobs sich zuerst in KI-unterstuetzten Operationen aendern
+# Was sich in Werksjobs zuerst ändert bei KI-unterstützten Operations
 
-Target persona: HR Business Partner / Werksleiter / gewerkschaftlich sensibler Operations Lead  
-Funnel stage: Consideration  
-Core problem: Workforce-Planung bleibt in Angstnarrativen stecken, weil Fuehrung nicht benennen kann, welche Aufgaben schneller werden, welche mehr Pruefung brauchen und welche physisch gleich bleiben  
-Main promise: eine rollenbasierte Karte frueher Veraenderungen mit Fokus auf Koordination, Verifikation und Abschlussarbeit statt generischer "KI ersetzt Bediener"-Claims
+Zielpersona: HR Business Partner / Plant Manager / gewerkschaftlich eingebundener Operations Lead  
+Funnel-Stufe: Consideration  
+Kernproblem: Workforce-Planning bleibt in Angst-Narrativen stecken, weil Führung nicht benennen kann, welche Tasks schneller werden, welche mehr Prüfung bekommen und welche physisch unverändert bleiben  
+Hauptversprechen: Eine rollenbasierte Karte früher Veränderungen mit Fokus auf Koordination, Verifikation und Abschlussarbeit—nicht generische „KI ersetzt Operator“-Claims
 
-Werksjobs aendern sich zuerst dort, wo Menschen Stunden mit Signalabgleich, Kontext-Umschreiben, Owner-Jagd und Uebergabevorbereitung verbringen: Linienfuehrungs-Triage, Instandhaltungskoordinatoren, Qualitaetsfreigabe-Rollen, Produktionsplaner und Lager-Expeditoren. Physische Maschinenarbeit aendert sich spaeter. Frueh ist meist mehr Verifikation und Ausnahmehandling, nicht weniger Menschen am Werkzeug. Der Artikel ist fuer Personal- und Trainingsgespraeche. Kein Headcount-Versprechen.
+Werksjobs ändern sich zuerst dort, wo Zeit in Abstimmung verschwindet: Postfächer scannen, Kontext neu tippen, Owner jagen, Übergaben vorbereiten und Lagebild für die nächste Schicht neu aufbauen. Linienführung-Triage, Instandhaltungskoordinatoren, Quality-Release-Rollen, Produktionsplaner und Lager-Expeditoren spüren oft die frühesten Verschiebungen—nicht weil Maschinen keine Menschen mehr brauchen, sondern weil Koordinationsarbeit sichtbar, strukturiert und teilweise entworfen wird. Physisches Handwerk ändert sich später. Frühe Änderung ist meist mehr Verifikation und Ausnahmehandhabung, nicht weniger Hände am Werkzeug.
 
-## Was typischerweise nicht an Tag eins aendert
+Manche Arbeit ändert sich am ersten Tag in den meisten Werken nicht: lizenzierte Gewerke mit Reparaturen unter bestehenden Safety-Regeln, Inspektionen, die Regulierung Menschen verlangt, Rüsthandwerk, wo Gefühl und Erfahrung dominieren, und subjektive kundenbezogene Quality-Urteile. Assistenz kann diese Rollen unterstützen; sie ersetzt selten zuerst deren physischen oder rechtlichen Kern.
 
-Gelernte Handwerker-Reparaturen unter bestehenden Sicherheitsregeln; physische Inspektionen, die ein Mensch regulativ durchfuehren muss; Ruesten und Einstellen, wenn Muskelgedaechtnis und Liniengefuehl dominieren; kundenorientierte Qualitaetsurteile bei subjektiven Fehlern. KI-Assistenz kann diese Rollen unterstuetzen. Sie ersetzt selten zuerst deren physische oder rechtliche Kerne.
+Das Muster über Rollen hinweg ist Koordinationskompression. Vorgesetzte bewegen sich von zerstreuter Triage zu gerankten Ausnahmen mit vorgeschlagenen Ownern. Koordinatoren von Work-Paketen aus Notizen hin zu editierten Entwürfen mit Asset-Kontext. Quality-Release von Signatur-Jagd zu einer Queue mit expliziten Freigabestatus. Planer von Tabellenabgleich zu Ausnahmelisten, wenn Pläne Schwellen brechen. Expeditoren von manuellen Querprüfungen zu priorisierten Lücken mit Produktionsstart-Bezug.
 
-## Rollenkarte: erste Wellen (illustrativ)
+Skills, die an Wert gewinnen, sind Akzeptanzkriterien für Outputs zu formulieren, Overrides mit Reason Codes zu dokumentieren, saubere Eingabefelder zu lehren und False Positives wöchentlich mit Engineering zu reviewen. Das sind operative Skills—kein Prompting-Theater.
 
-| Rollencluster | Alte Zeitfresser | Fruehes Assistenzmuster |
-|---|---|---|
-| Linienvorgesetzte | Triage ueber Chat und Anrufe | gerankte Ausnahmen mit vorgeschlagenen Ownern und Aufgaben |
-| IH-Koordinator | Arbeitsauftraege aus fragmentierten Notizen | Entwurfspakete mit Anlagenkontext zur Techniker-Editierung |
-| Qualitaetsfreigabe | Unterschriften und Status jagen | eine Warteschlange mit expliziten Freigabestatus |
-| Planer / Scheduler | Tabellen mit Shopfloor-Realitaet abgleichen | Ausnahmeliste, wenn Plan Schwellen bricht |
-| Lager-Expeditor | manuelle Kreuzchecks bei Fehlmengen | priorisierte Kommissionier-Luecken gekoppelt an Produktionsstart |
+Training sollte Moral-Schäden vermeiden: Workflow ohne Assistenz zeigen, Baseline-Ownership etablieren, Advisory-Vorschläge ohne Auto-Aktionen hinzufügen, Reject, Override und Eskalation üben, bis Gewohnheiten da sind, Schwellen erst mit gemessenem Error Budget verschärfen. Baseline überspringen, und Menschen vermuten eine versteckte Ersetzungsagenda.
 
-Das Muster ist Koordinationskompression.
+Erzählen Sie die Workload-Umformungs-Story, nicht das Ersetzungs-Märchen. Die vertretbare Aussage: Das System entwirft Pakete, während Menschen verifizieren und Outcomes besitzen—weil das zur Flächenrealität passt und Hiring- und Arbeitsgespräche geerdet hält.
 
-## Skills, die an Wert gewinnen
+IRIS hält Job-Änderungen inspizierbar, indem Assistenz an sichtbare Tasks, Freigaben, Overrides und Eskalationen gebunden wird—damit Koordinations-Redesign nicht auf Mythos beruht.
 
-Akzeptanzkriterien fuer KI-Outputs formulieren; disziplinierte Override-Dokumentation; Grundcodes und sauberen Intake lehren; woechentliche False-Positive-Reviews mit Engineering. Das ist betrieblich. Kein Prompt-Theater.
+Zu Operating Modes hinter neuen Verantwortlichkeiten ergänzen Sie [Wann KI im Werk beobachten, beraten oder handeln soll](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_DE.md).
 
-## Trainingssequenz, die Moral schuetzt
+Der Shift im Tagesgeschäft ist oft subtil aber entscheidend: weniger Zeit für Kontext-Rekonstruktion, mehr für Verifikation und Sign-off strukturierter Vorschläge. Das kann sich vor „mehr Speed“ wie „mehr Prüfung“ anfühlen—deshalb Change Management. Kommuniziert das Werk nur Speed, hören Menschen Risiko. Kommuniziert es klarere Ownership und weniger mysteriöse Übergaben, hören sie Erleichterung. Derselbe Tool-Rollout kann je nachdem, ob Verantwortlichkeiten vor Schwellen-Verschärfung explizit sind, als Bedrohung oder Upgrade landen.
 
-Workflow ohne KI zeigen, Baseline-Ownership setzen; beratende Vorschlaege ohne Auto-Aktionen hinzufuegen; Ablehnen, Override und Eskalation ueben bis Routine sitzt; Schwellen nur mit gemessenem Fehlerbudget verschaerfen.
+HR- und gewerkschaftsnahe Führung sollte neue Fragen zur Leistungssteuerung erwarten: wie gute Override-Dokumentation aussieht, wie Reason Codes im Coaching genutzt werden und wie Assistenz-Metriken zu Accountability ohne Überwachungstheater passen. Die glaubwürdige Antwort: Das System macht Arbeit sichtbar—nicht um zu bestrafen, sondern um Mehrdeutigkeit zu entfernen, wer unter Druck was freigab. Sichtbarkeit ohne Fairness frisst Vertrauen; Sichtbarkeit mit klaren Regeln stärkt es.
 
-Schritt 1 zu ueberspringen erzeugt den Eindruck versteckter Ersetzungsagenda.
+Jobs ändern sich zuerst in Koordinationsschichten. Designen Sie dort Training, Schwellen und Governance, bevor Sie Transformation an der Spindel beanspruchen.
 
-## Vergleich: Aufgabenersetzung versus Last-Umformung
+## Operatives Fazit
 
-**Ersetzungsstory (frueh meist falsch)** "Der Roboter macht den Job."
+Das Versprechen dieses Artikels—eine rollenbasierte Karte früher Veränderungen mit Fokus auf Koordination, Verifikation und Abschlussarbeit, nicht generische „KI ersetzt Operator“-Claims—wird erst operativ, wenn es die Art ändert, wie Arbeit fließt: klarere Ownership, schnellere erste Zuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „Was sich in Werksjobs zuerst ändert bei KI-unterstützten Operations“ ist das der Akzeptanztest: Die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
-**Last-Umformungsstory (frueh meist richtig)** "Das System entwirft das Paket, der Mensch prueft und traegt das Ergebnis."
-
-Einstellung und gewerkschaftliche Gespraeche laufen besser mit der zweiten Story, weil sie zur Shopfloor-Realitaet passt.
-
-## Warum IRIS Jobwechsel an Workflows bindet
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Wenn Assistenz an Aufgaben und Freigaben haengt, bleibt Job-Redesign pruefbar: sichtbar, was Menschen noch unterschreiben, ablehnen oder eskalieren.
-
-## Fazit
-
-Jobs aendern sich zuerst in Koordinationsschichten.
-
-Trainings, Schwellen und Governance dort designen, bevor Sie Transformation an der Spindel behaupten.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur im Meeting und mehr Tage, an denen der System-Record zu dem passt, was die Fläche mitten in der Task sagen würde.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [Walkthrough ansehen](https://dbr77.com/demo).*
+*DBR77 IRIS macht Rollenänderungen inspizierbar, indem Assistenz an Tasks, Freigaben und Abschlussrecords gebunden wird, die Vorgesetzte schon kennen. [Interaktive Demo starten](https://dbr77.com/iris) oder [Walkthrough ansehen](https://dbr77.com/demo).*

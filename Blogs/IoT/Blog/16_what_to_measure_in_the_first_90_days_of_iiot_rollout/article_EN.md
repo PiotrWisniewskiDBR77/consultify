@@ -5,89 +5,67 @@ Funnel stage: Decision
 Core problem: many manufacturers launch IIoT pilots but track the wrong indicators in the first phase, which makes it harder to prove operational value and decide what to scale  
 Main promise: the first 90 days of IIoT rollout should measure whether one operating loop is becoming clearer, faster, and more repeatable rather than whether the plant has simply connected more assets
 
-The first 90 days of IIoT rollout shape what the plant believes the system is for.
+The first quarter of an IIoT pilot answers a question whether you ask it out loud or not: is this becoming part of how we run the plant, or is it becoming another screen we tolerate?
 
-If the team measures the wrong things early, the rollout can look active without becoming useful. That is why the first metrics matter so much.
+If early metrics reward activity—connections, dashboards, alert volume—the organization optimizes the wrong thing. If early metrics reward control—trust, context quality, response behavior, honest review—the pilot earns a credible next decision.
 
-They define whether the pilot is being reviewed as: a connection project; a reporting layer; or an operating improvement loop. The strongest choice is the third one.
+The first month is where habits form; the quarter tests whether they survive real pressure. For that month-one rhythm, use [what the first 30 days should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md).
 
-The first month is usually where signal credibility and response habits form; the quarter then tests whether they survive real review. For that month-one rhythm, see [what the first 30 days should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md).
+Treat early metrics like flight instruments during takeoff: a few critical dials, not every possible sensor. Too many indicators early makes it easy to celebrate motion while missing whether the plane is climbing.
 
-## Why early measurement often goes wrong
+## Why early measurement drifts wrong
 
-Many teams begin with indicators that are easy to count: number of connected machines; number of dashboards; number of users; number of alerts. These measures are visible. But they do not prove that the plant is responding better.
+Easy counts are seductive. They look decisive in steering meetings. They sidestep the harder judgment: did anyone respond differently because of this system? In the first 90 days, favor measures that reveal loop quality, not busyness.
 
-In the first 90 days, measurement should show whether the system is improving control, not just activity.
+## Anchor metrics to the problem you claimed you were solving
 
-## Start with the problem the rollout is supposed to improve
+Before picking indicators, state the operational intent plainly: which recurring issue, where it shows up, who reacts today, what delay hurts, and what improved control would look like on the floor. Vague intent produces generic metrics and weak conclusions.
 
-Before choosing metrics, the plant should answer: what recurring issue are we targeting; where does it appear; who reacts today; what delay exists now; what would better control look like.
+## Signal reliability: can the floor bet a shift on it?
 
-If these answers are vague, the first metrics usually become generic and weak.
+Are stops captured consistently? Are missing or false events trending down? Do people act on the signal, or hedge because they do not trust it? Weak reliability poisons everything downstream—reasons, alerts, reviews—because nobody wants to own fiction.
 
-## The five measurement groups that matter most early
+## Context quality: does the story hold?
 
-In many IIoT rollouts, the strongest first-90-day measures sit in five groups: signal reliability; context quality; response speed; recurrence reduction; review discipline. Together, they show whether the operating loop is becoming usable.
+Machine truth without structured reasons and ownership is half a story. Track whether classifications are improving, whether operator input is usable, and whether handovers read like continuity instead of reinvention.
 
-## 1. Signal reliability
+## Response speed: where the money often hides
 
-The plant should know whether the system is detecting the right events with enough consistency to trust the loop.
+Time from event to awareness, awareness to action, action to escalation, and repeat recognition within the shift. These intervals often move before headline productivity shifts do—and they are easier to observe honestly in a pilot window.
 
-Useful questions include: are stops captured consistently; are missing events decreasing; are false events creating noise; is the team trusting the signal enough to act on it.
+## Recurrence: is the plant learning?
 
-If signal reliability is weak, every downstream metric becomes harder to trust.
+The pilot should make repeats harder to ignore. Watch whether the same failure script returns with the same ambiguity, or whether the organization discusses and addresses patterns faster. Learning is operational, not rhetorical.
 
-## 2. Context quality
+## Review discipline: does the data change meetings?
 
-Machine data alone rarely explains enough.
+Live systems die when review habits stay informal. Measure whether cadence holds, definitions stay stable, actions get assigned, and the team can explain what changed since last review. IIoT value is as much calendar discipline as byte flow.
 
-The first 90 days should also measure whether the plant is improving context such as: stop reasons; operator input quality; classification consistency; ownership clarity.
+When the quarter closes, connect this habit to [how to review IIoT value after the first pilot](../20_how_to_review_iiot_value_after_the_first_pilot/article_EN.md).
 
-This matters because a live feed without usable context creates visibility without understanding.
+## Expect staged truth, not instant transformation
 
-## 3. Response speed
+A quarter can prove loop improvement without proving enterprise-wide financial transformation. Treat that as success when the proof is real. Overclaiming early destroys credibility faster than a modest, honest win.
 
-One of the clearest early indicators is whether the plant reacts faster once the loop is live.
+**90-day decision lens:** trustworthy signal, usable context, faster response, fewer blind repeats, stable review. If those hold, expansion debates become safer.
 
-That can include: time from event to awareness; time from awareness to response; time from response to escalation; time lost before a recurring issue is reviewed.
+## De-emphasize vanity early
 
-This is often more meaningful early than trying to claim broad productivity change too soon.
+Dashboard sprawl, premature ROI theater, and architecture completeness are distractions unless they directly improve the loop you piloted. Keep the core question visible: is one operating path getting measurably better?
 
-## 4. Recurrence reduction
+## DBR77 IoT in the first quarter
 
-The pilot should also show whether known problems are repeating less often or being resolved with better discipline. That does not require dramatic claims.
+DBR77 IoT is relevant when leadership wants early evidence grouped around signal, context, response, recurrence, and review—signals of control rather than connectivity bragging rights.
 
-It requires the plant to observe whether: the same stop repeats less often; the same cause is captured more clearly; follow-up actions are happening more reliably; the team is learning faster from repeated patterns. That is the beginning of real operational value.
+Measure the first 90 days as a test of an operating loop, not a contest of connected assets. That is how IIoT earns the right to scale.
 
-## 5. Review discipline
 
-Many rollouts weaken because the data becomes live but the review habit stays weak.
+## Bringing it home on the floor
 
-In the first 90 days, the plant should measure: whether review meetings actually happen; whether the same definitions are used each time; whether actions are assigned clearly; whether the team can explain what changed since the last review.
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-This is important because IIoT value depends as much on operating rhythm as on data flow.
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-When the pilot window closes, the same habit shows up in [how to review IIoT value after the first pilot](../20_how_to_review_iiot_value_after_the_first_pilot/article_EN.md).
+---
 
-## Reality check: the first 90 days should not be judged as full transformation
-
-One of the biggest early mistakes is expecting the pilot to prove complete business transformation in one quarter. That creates pressure to overclaim. The stronger expectation is simpler. The first 90 days should prove:
-
-- the signal is trustworthy enough
-- the context is usable enough
-- the response loop is faster
-- the review habit is becoming consistent
-
-If those things are happening, the plant has a stronger basis for wider rollout.
-
-## What not to overemphasize too early
-
-In the first phase, teams often overemphasize: dashboard volume; broad ROI claims; total-site visibility; architecture completeness. Those things may matter later. But they should not distract from the core question: is one operating loop becoming measurably better?
-
-## What this means for DBR77 IoT
-
-DBR77 IoT matters in the first quarter when leadership wants the five early groups (signal, context, response, recurrence, review) visible together instead of drowning in connectivity counts. The product angle here is instrumentation that supports an honest quarterly read on whether control improved, not whether dashboards multiplied.
-
-## Bottom line
-
-In the first 90 days of IIoT rollout, the plant should measure whether one operating loop is becoming more reliable, better explained, faster to react, and more consistently reviewed. That is what gives leadership confidence to scale. Not the number of connected assets alone.
+*DBR77 IoT helps plants prove IIoT value in the first 90 days with same-shift visibility, operator context, alerts, and review-ready operational truth. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

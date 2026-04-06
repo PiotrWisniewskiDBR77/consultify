@@ -1,0 +1,68 @@
+[
+  {
+    "product": "Consultify",
+    "source_root": "Consultify/Blog",
+    "export_root": "_LP_UPLOAD_READY/Consultify",
+    "count": 50,
+    "first_slug": "01_why_traditional_consulting_is_broken",
+    "last_slug": "50_how_to_turn_transformation_management_into_a_repeatable_operating_system",
+    "archive": "_LP_UPLOAD_READY/_archives/Consultify.zip",
+    "archive_sha256": "8e80609d70a4094f4c62884ce99137c0df4ffb5ca937d1913d240f73dac3845d",
+    "archive_size_bytes": 360010
+  },
+  {
+    "product": "IoT",
+    "source_root": "IoT/Blog",
+    "export_root": "_LP_UPLOAD_READY/IoT",
+    "count": 50,
+    "first_slug": "01_why_factories_still_dont_use_machine_data",
+    "last_slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+    "archive": "_LP_UPLOAD_READY/_archives/IoT.zip",
+    "archive_sha256": "2baa06aea504319188116b772f97aee62dc556a2b07ba5acf0810b83f64d29fd",
+    "archive_size_bytes": 359692
+  },
+  {
+    "product": "IRIS",
+    "source_root": "IRIS/Blog",
+    "export_root": "_LP_UPLOAD_READY/IRIS",
+    "count": 50,
+    "first_slug": "01_why_dashboards_dont_fix_factories",
+    "last_slug": "50_what_full_operational_closure_should_look_like_in_an_ai_native_factory",
+    "archive": "_LP_UPLOAD_READY/_archives/IRIS.zip",
+    "archive_sha256": "6fbf82ad7a2acf2b58d1cadf000d55494f845bd203c6bf93a98bbdf0ec9175fd",
+    "archive_size_bytes": 345372
+  },
+  {
+    "product": "DT",
+    "source_root": "DT/Blog",
+    "export_root": "_LP_UPLOAD_READY/DT",
+    "count": 50,
+    "first_slug": "01_digital_twin_not_3d_model_decision_engine",
+    "last_slug": "50_how_to_turn_digital_twin_into_a_repeatable_capex_decision_system",
+    "archive": "_LP_UPLOAD_READY/_archives/DT.zip",
+    "archive_sha256": "8376831d6a1c43068528ca890a793f01f26e5bfa68d2c6e94ab7cf4a3eeeed53",
+    "archive_size_bytes": 321363
+  },
+  {
+    "product": "Marketplace",
+    "source_root": "Marketplace/Blog",
+    "export_root": "_LP_UPLOAD_READY/Marketplace",
+    "count": 50,
+    "first_slug": "01_why_most_automation_projects_never_start",
+    "last_slug": "50_how_to_turn_automation_buying_into_a_repeatable_decision_system",
+    "archive": "_LP_UPLOAD_READY/_archives/Marketplace.zip",
+    "archive_sha256": "f33b7db2273df5c335471a6d20113cbe2c62a8d5402fb081d355ac5f1dac8b06",
+    "archive_size_bytes": 344065
+  },
+  {
+    "product": "Vector",
+    "source_root": "Vector/Blog",
+    "export_root": "_LP_UPLOAD_READY/Vector",
+    "count": 50,
+    "first_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+    "last_slug": "50_how_to_build_a_manufacturing_ai_governance_system_that_survives_scale",
+    "archive": "_LP_UPLOAD_READY/_archives/Vector.zip",
+    "archive_sha256": "8fc93ffc34be62e7f0bae447aef01725568cb397adfa63f5f32b9d154f137e56",
+    "archive_size_bytes": 302383
+  }
+]

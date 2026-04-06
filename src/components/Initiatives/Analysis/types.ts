@@ -4,6 +4,8 @@
  * V3-F02b: Inline initiative management during planning
  */
 
+import type { ReactNode } from 'react';
+
 import type { PortfolioInitiative } from '@/types';
 
 export type AnalysisSubview = 'resources' | 'feasibility' | 'logic' | 'timeline' | 'completeness';
@@ -37,6 +39,17 @@ export interface QuickUpdatePayload {
   budget?: number;
 }
 
+export interface AnalysisWorkspacePanelConfig {
+  title: string;
+  subtitle: string;
+  icon: ReactNode;
+  content: ReactNode;
+}
+
+export type RegisterAnalysisWorkspacePanel = (
+  panel: AnalysisWorkspacePanelConfig | null
+) => void;
+
 export interface ResourceAllocation {
   resourceId: string;
   resourceName: string;
@@ -66,6 +79,7 @@ export interface InitiativeFeasibility {
 }
 
 export interface DependencyLink {
+  id?: string;
   fromId: string;
   fromName: string;
   toId: string;

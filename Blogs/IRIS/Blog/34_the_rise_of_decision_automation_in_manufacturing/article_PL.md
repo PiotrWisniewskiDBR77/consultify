@@ -1,55 +1,36 @@
 # Wzrost automatyzacji decyzji w produkcji
 
-Target persona: COO / Dyrektor operacji / Dyrektor zakladu  
-Funnel stage: Awareness  
-Core problem: kierownictwo slyszy "automatyzacja" jako roboty, podczas gdy wiekszy przesun to automatyzacja priorytetyzacji, routingu i powtarzalnych decyzji w workflow wykonania  
-Main promise: trzezwa definicja automatyzacji decyzji, co powinno zostac u ludzi i jak odroznic teatr od zmiany operacyjnej
+Docelowa persona: COO / VP Operations / dyrektor zakładu  
+Etap lejka: Awareness  
+Główny problem: kierownictwo słyszy „automatyzację” jako roboty, podczas gdy większy przesuw to automatyzacja priorytetyzacji, przydziału zadań i powtarzalnych decyzji wewnątrz przepływu pracy wykonania  
+Główna obietnica: trzeźwa definicja automatyzacji decyzji, co powinno pozostać po stronie człowieka oraz jak odróżnić teatr od realnej zmiany operacyjnej
 
-Automatyzacja decyzji w produkcji oznacza, ze system stosuje opublikowane reguly do powtarzalnych wyborow operacyjnych: co robic dalej, kogo powiadomic, kiedy eskalowac i jaki szkic dzialania przygotowac, z akceptacja czlowieka przy zdefiniowanych progach. Ten trend rosnie, bo koszt koordynacji miedzy funkcjami jest coraz wyzszy, nie dlatego, ze kazdy wybor mozna lub nalezy oddac modelowi. To artykul dla kierownictwa. Nadal stoi na mechanice hali.
+Automatyzacja decyzji w produkcji oznacza, że systemy stosują opublikowane reguły do powtarzalnych wyborów operacyjnych: nad czym pracować dalej, kogo powiadomić, kiedy eskalować oraz jaki szkic działania przygotować — z ludzką akceptacją przy zdefiniowanych progach. Rośnie, bo zakłady toną w koszcie koordynacji, a nie dlatego, że każdą decyzję można lub należy oddać modelowi. To temat dla kadry z konsekwencjami na hali: jeśli pomyślisz, że automatyzacja decyzji to to samo co automatyzacja fizyczna, sfinansujesz złe projekty i przegapisz większą dźwignię.
 
-## Automatyzacja decyzji kontra automatyzacja fizyczna
+Automatyzacja fizyczna przemieszcza materiał i przetwarza detale. Automatyzacja decyzji przemieszcza pozycje pracy, priorytety i sygnały rozliczalności. Profil ryzyka przesuwa się z bezpieczeństwa mechanicznego na rządy: tabele progów, ślady audytu, rolę właściciela i dowód mierzony w czasie reakcji i jakości domknięcia, a nie tylko w powtarzalności cyklu. Liderzy, którzy traktują oba rodzaje zamiennie, źle czytają to, co się zmienia.
 
-| Wymiar | Automatyzacja fizyczna | Automatyzacja decyzji |
-|---|---|---|
-| output | ruch, transport, montaz | uporzadkowana praca, routowane zadania, eskalacje |
-| profil ryzyka | bezpieczenstwo i mechanika | odpowiedzialnosc, zwolnienie jakosci, wplyw na klienta |
-| nadzor | kontrola zmian inzynierskich | tabele progow, slady audytu, role |
-| dowod | czas cyklu i powtarzalnosc | czas reakcji, jakosc domkniecia, wskazniki override |
+Dobrymi kandydatami do automatyzacji są wybory powtarzające się co tydzień lub codziennie, ograniczone jasnymi polami, szybko odwracalne lub szybko ograniczalne oraz już udokumentowane w formie przepływu pracy — nawet jeśli chaotycznej. Słabymi kandydatami są jednorazowe osądy kapitałowe, ustępstwa dla klienta z ryzykiem prawnym oraz wyjątki BHP bez formalnego procesu wyjątków. Dojrzałość waży więcej niż ambicja.
 
-Liderzy mylacy te dwa finansuja zle projekty.
+Myśl poziomami dojrzałości bez pomijania kroków: zapisane decyzje z niespójnym dowodem; prowadzone decyzje z listami kontrolnymi, ale ręcznym kierowaniem zgłoszeń; wspomagane decyzje ze szkicami AI i potwierdzeniem człowieka; zautomatyzowane decyzje w ramach jawnych reguł z audytem wyjątków przez człowieka. Wiele zakładów powinno długo żyć w trybie wspomaganym, zanim zadeklaruje pełną automatyzację. Pomijanie poziomów buduje dług zaufania, który najpierw widać na nocnej zmianie.
 
-## Jakie decyzje nadaja sie do automatyzacji
+Prawdziwa automatyzacja decyzji publikuje progi powiązane z rolami, mierzy wskaźniki nadpisania i odrzuceń, przegląda fałszywe alarmy z nazwanymi właścicielami i definiuje wycofanie, gdy reguły się mylą. Teatr pokazuje demo bez produkcyjnych zapisów, twierdzi, że „zdecydował model” bez cytowań pól i nie wyznacza nikogo odpowiedzialnego za aktualizację reguł po zmianie linii.
 
-Dobre kandydaty maja cechy: powtarzaja sie co tydzien lub codziennie; sa ograniczone jasnymi polami danych; sa cofalne lub kontrolowalne w minuty lub godziny; sa juz opisane w workflow, nawet jesli workflow jest brudny.
+IRIS traktuje decyzje jako część wykonania, bo automatyzacja staje się realna dopiero wtedy, gdy uporządkowany następny krok ląduje u właściciela z timerem i śladem audytu w przepływie pracy — utrzymując automatyzację w rozliczalności wobec operacji, a nie wobec punktorów na slajdzie.
 
-Przyklady, ktore czesto kwalifikuja sie przy odpowiedniej dojrzalosci: przypisywanie rutynowych prac utrzymania wg umiejetnosci i regul zmiany; routing blokady jakosci do wlasciwej wladzy zwolnienia; eskalacja braku magazynowego, gdy start produkcji jest w zdefiniowanym oknie; szkicowanie standardowych zadan po znanym wzorcu alarmu.
+Logikę trybów stojącą za automatyzacją znajdziesz w [Kiedy AI powinno obserwować, doradzać czy działać w fabryce](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_PL.md). Granice akceptacji — w [Jak powinna wyglądać ludzka polityka zatwierdzeń w fabrycznym AI](../39_what_a_human_approval_policy_should_look_like_in_factory_ai/article_PL.md).
 
-Slabe kandydaty: jednorazowe decyzje kapitalowe; ustepstwa dla klienta z ekspozycja prawna; wyjatki BHP bez formalnej procedury wyjatku.
+Kierownictwo powinno też dostrzec zmianę kulturową, którą automatyzacja decyzji implikuje. Gdy przydział zadań staje się bardziej jawny, nieformalne skróty stają się trudniejsze — a część doświadczonych ludzi odczuje to jako utratę autonomii. Przeciwwagą jest przejrzystość: opublikowane reguły, widoczne wyjątki i uczciwy proces zmiany progów, gdy zmienia się rzeczywistość. Automatyzacja bez rządów brzmi jak sztywność. Automatyzacja z rządami brzmi jak ulga po niekończącej się negocjacji.
 
-## Prosta drabina dojrzalosci (cztery poziomy)
+Operacyjnie automatyzacja decyzji to moment, w którym „transformacja cyfrowa” przestaje być sloganem i staje się mierzalnym rytmem: mniej niejednoznacznych kolejek, szybsze pierwsze przydzielenie, mniej powtarzanych eskalacji i czystsze audyty, bo zapis decyzji nie jest składany po fakcie. O taki wzrost warto zabiegać — nie o automatyzację dla samej automatyzacji, lecz o koordynację, która przetrwa zmianę zmiany.
 
-Rejestrowane: decyzje sie dzieja, dowody sa nierowne; prowadzone: checklisty i dashboardy, ludzie robia caly routing; wspierane: AI szuje i rankuje, ludzie potwierdzaja; zautomatyzowane: system dziala w ramach regul, ludzie audytuja wyjatki.
+Automatyzacja decyzji to automatyzacja koordynacji. Rób to z progami, zatwierdzeniami i śladami audytu — albo nie nazywaj tego operacjami.
 
-Wiekszosc zakladow powinna dlugo zyc na poziomie 3 zanim zadeklaruje 4. Pomijanie poziomow buduje dlug zaufania.
+## Podsumowanie operacyjne
 
-## Sygnaly nadzoru, ktore oddzielaja prawdziwe programy od teatru
+Obietnica tego artykułu — trzeźwa definicja automatyzacji decyzji, co powinno pozostać po stronie człowieka oraz jak odróżnić teatr od realnej zmiany operacyjnej — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie, które da się prześledzić bez archeologii skrzynek. Dla „Wzrost automatyzacji decyzji w produkcji” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Prawdziwa automatyzacja decyzji ma: opublikowane progi powiazane z rolami; mierzalne wskazniki override i odrzucen; okresowy przeglad falszywych alarmow z nazwanymi wlascicielami; jawne sciezki wycofania, gdy reguly sie myla.
-
-Teatr ma: demo bez rekordow produkcyjnych; "model zadecydowal" bez cytowania pol; brak wlasciciela aktualizacji regul po zmianie linii.
-
-## Dlaczego IRIS traktuje decyzje jako czesc wykonania
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Automatyzacja decyzji ma znaczenie tylko wtedy, gdy outputem jest zlecony nastepny krok z odpowiedzialnoscia, nie punkt na slajdzie.
-
-## Podsumowanie
-
-Automatyzacja decyzji to automatyzacja koordynacji.
-
-Rob to z progami, akceptacjami i sladem audytu, albo nie nazywaj tego operacjami.
+Trzymaj zespoły przy prostej zasadzie: jeśli usprawnienia nie widać w eksportach z zapisu wykonania, to jeszcze nie jest usprawnienie operacyjne — tylko narracyjne. Ta zasada utrzymuje programy przy zdrowych zmysłach, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Obejrzyj prezentację](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*
+*DBR77 IRIS trzyma wyniki decyzji wewnątrz zadań, zatwierdzeń i śladów audytu, tak by automatyzacja pozostawała w rozliczalności wobec kierownictwa operacyjnego. [Obejrzyj walkthrough](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*

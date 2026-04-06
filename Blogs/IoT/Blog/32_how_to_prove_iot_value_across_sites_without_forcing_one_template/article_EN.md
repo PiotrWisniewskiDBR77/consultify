@@ -5,48 +5,51 @@ Funnel stage: Decision
 Core problem: headquarters pushes a single IoT template while sites differ in assets, maturity, and political readiness, so proof fragments or fake compliance appears  
 Main promise: a multi-site proof model: shared outcomes, flexible patterns, common evidence rules, and transparent exceptions
 
-One template for every site is a comfortable fiction. Plants are not uniform.
+One blueprint for every plant is a comforting slide—and often a fiction.
 
-What can be uniform is how you define proof, security minimums, and review cadence.
+Sites differ in assets, staffing, integration maturity, and what the floor will tolerate during rollout. Forced uniformity produces cosmetic compliance: the template is “adopted,” the workarounds multiply in shadow, and executive trust erodes because the evidence does not line up.
+
+What can be uniform is how proof is defined, how security minimums behave, and how exceptions are logged.
+
+Picture two plants under one logo. One has newer assets and tolerates faster digital change. The other is retrofit-heavy, change-averse, and already running thin on overtime. If headquarters mandates identical milestones and screen packs, the struggling site will route truth around the standard. Leadership sees green compliance on paper and hears a different story in private. That is more dangerous than honest variance declared up front.
+
+The alternative is governed flexibility: the same questions, the same evidence categories, the same security spine—implemented with shapes each site can sustain.
+
+## What executives should insist on
+
+Insist on comparable evidence, not identical wiring. Ask whether downtime reasons are captured with similar discipline, whether escalations have named owners, whether reviews land on a calendar, and whether exceptions carry owners and expiry dates. Those habits travel without forcing every gateway into the same corner of every building.
+
+## What sites should keep local
+
+Local teams should own sensor placement within safety limits, tuning windows that respect baseline honesty, training pace that matches labor reality, and the sequencing of CMMS or MES touches—provided the monthly evidence package still answers the group’s standard questions.
 
 ## Separate outcomes from implementation shape
 
-Agree at group level on: the operating outcomes IoT should improve (examples: unplanned downtime visibility, repeat issue detection, faster handoffs); the minimum evidence standard for a credible claim; security and patching non-negotiables; reporting rhythm for exceptions. Let each site choose implementation shape inside those guardrails.
+At group level, agree on the operating outcomes IoT should improve—examples include earlier visibility of unplanned downtime, faster detection of repeats, cleaner handoffs between shifts and functions. Set a minimum evidence standard for any claim leadership will repeat. Publish non-negotiables for security and patching. Choose a reporting rhythm for exceptions. Inside those guardrails, let each site choose implementation shape that fits brownfield reality.
 
-## The three-layer model
+## Use a three-layer model
 
-1. **Outcome layer (shared)** KPI definitions, evidence rules, executive narrative discipline
+Share an outcome layer: KPI definitions, evidence rules, and narrative discipline executives can trust. Maintain a pattern layer as a small catalog of approved connectivity and edge approaches—not infinite custom science, but more than one size. Make local differences explicit in writing: asset classes, vendor constraints, staffing limits, integration paths. Honest variance beats hidden uniqueness.
 
-2. **Pattern layer (catalog, not mandate)** two to four approved patterns for connectivity and edge placement, not infinite custom science
+## Build a portfolio, not a photocopy
 
-3. **Local layer (explicit)** documented site differences: asset class, vendor constraints, staffing, integration path This model stops fake uniformity while avoiding chaos.
+Sequence a credible multi-site story: two sites run comparable evidence on similar outcomes; a third joins with logged differences; exceptions expire or are promoted into patterns. Compare evidence quality, not dashboard skins.
 
-## Comparison: forced template versus governed flexibility
+**Multi-site proof checklist:** shared outcome definitions; shared evidence minimums; security and patching floor met; exceptions documented with owners and dates; executive narrative uses the same evidence categories site to site.
 
-| Forced single template | Governed flexibility |
-|---|---|
-| cosmetic compliance | honest variance |
-| hidden workarounds | logged exceptions |
-| weak executive trust | comparable evidence |
+## DBR77 IoT across sites
 
-## Multi-site proof checklist
+DBR77 IoT supports governed flexibility when rollout messaging emphasizes repeatable evidence and security baselines while allowing local footprint and tuning honesty—speed and retrofit where sites need it, comparability where leadership needs it.
 
-- [ ] each site publishes a one-page outcome map tied to local bottlenecks
-- [ ] monthly rollup uses the same evidence categories, not only headline numbers
-- [ ] exceptions expire and roll up to a group review quarterly
-- [ ] operator trust metrics or qualitative samples are included, not only IT uptime
-- [ ] integration choices are categorized: now, next, never for this site
+Prove IoT across sites with shared outcomes and evidence rules, flexible patterns inside a catalog, and transparent exceptions. Uniformity of proof beats uniformity of template.
 
-## Step sequence: build a credible portfolio
 
-Pick three outcome types the group will accept as valid IoT wins; run parallel pilots with different patterns where needed; harmonize reporting templates after month three, not before month one; present portfolio review: what worked, what differed, what you will standardize next; update the pattern catalog based on field proof, not vendor slides.
+## Bringing it home on the floor
 
-Single-site replication discipline sits in [how to roll out IoT across multiple lines without losing control](../26_how_to_roll_out_iot_across_multiple_lines_without_losing_control/article_EN.md) and [how to go from one successful IoT pilot to a plant standard](../30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard/article_EN.md). For the group-level split between what to harmonize and what to leave local, see [what to standardize across sites in IoT and what to leave local](../38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local/article_EN.md).
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-## What this means for DBR77 IoT
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-DBR77 IoT fits multi-site portfolios when proof is comparable without fake uniformity: shared outcomes, evidence rules, a small pattern catalog, and exceptions that expire in review. Retrofit flexibility across vintages is the point; identical dashboards are not. Parallel pilot windows should produce evidence leadership can compare honestly, not cosmetic template compliance.
+---
 
-## Bottom line
-
-Prove IoT value across sites with shared outcomes and evidence rules, a small pattern catalog, and explicit local exceptions. Uniform proof beats uniform pixels.
+*DBR77 IoT helps multi-site manufacturers prove IoT value with consistent evidence standards and flexible, retrofit-friendly deployment per site. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

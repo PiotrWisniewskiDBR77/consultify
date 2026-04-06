@@ -1,45 +1,54 @@
-# Jak przejsc od jednego udanego pilota IoT do standardu zakladu
+# Jak przejść od jednego udanego pilota IoT do standardu zakładu
 
 Docelowa persona: Program sponsor / Plant director / Continuous improvement lead  
 Etap lejka: Adoption  
+Główny problem: pilot wygrywa prezentację, podczas gdy zakładowi brakuje pakietu standardu, ścieżki szkolenia i rytmu finansowania replikacji  
+Główna obietnica: praktyczna ścieżka standaryzacji: zamroź wzorzec, finansuj kopie, mierz jakość replikacji i rządź dryfem
 
-Glowny problem: pilot wygrywa prezentacje, podczas gdy zaklad nie ma pakietu standardu, sciezki szkolen i rytmu finansowania replikacji Glowna obietnica: praktyczna sciezka standaryzacji: zamroz wzorzec, finansuj kopie, mierz jakosc replikacji i rzadz dryftem Udany pilot to nie standard. To dowod, ze wzorzec moze nim zostac.
+Udany pilot to dowód, że wzorzec może działać. Standard zakładu to opakowanie, które czyni wzorzec kopiowalnym bez bohatera, który zbudował pierwszą wersję.
 
-Luka miedzy pilotem a standardem to glownie operacyjne opakowanie, nie liczba czujnikow.
+Większość luk między pilotem a standardem jest operacyjna, nie techniczna. Jeśli nie potrafisz zapisać wzorca, nie jesteś gotów go pomnożyć.
 
-## Zamroz wzorzec, nie opowiesc bohatera
+Intuicja bohatera nie jest aktywem w bilansie. Standardy żyją w dokumentach, szkoleniach i kalendarzach przeglądów. Jeśli replikacja wciąż wymaga pierwotnego sponsora na speed dialu, masz utalentowaną osobę — nie skalowalny system.
 
-Udokumentuj pilot jako powtarzalny wzorzec: granica zakresu: aktywa, sygnaly, klasy alertow, integracje w srodku albo poza; diagram sprzetu i sieci, ktory kazdy moze skopiowac; definicje danych i zasady nazw; materialy szkoleniowe, ktorych operatorzy naprawde uzyli; definicje KPI z jezykiem baseline i celu. Jesli wzorca nie da sie zapisac, nie jest gotowy na standard.
+## Zamroź to, co naprawdę zadziałało
 
-## Framework standaryzacji: pilot versus standard zakladu
+Udokumentuj granice zakresu: aktywa, sygnały, klasy alarmów, integracje włączone lub wyłączone. Uchwyć placement sprzętu, by inny zespół mógł go odtworzyć. Zablokuj definicje danych i reguły nazewnictwa. Zarchiwizuj artefakty szkoleniowe, których operatorzy naprawdę używali, nie tylko decki slajdów. Wypisz definicje KPI z językiem baseline, który wszyscy akceptują.
 
-| Artefakt pilota | Wymaganie standardu zakladu |
-|---|---|
-| dzialajace demo | pisany minimalny pakiet |
-| zespol bohaterow | mapa rol na zmiane |
-| ad hoc strojenie | change control z datami przegladu |
-| dowod ze slajdow | metryki operacyjne wedlug rytmu |
+## Traktuj standard jak produkt
 
-## Rytm finansowania i procurementu
+Artefakt pilota jak działające demo staje się pisanym minimum package. Zespół bohaterów staje się mapą nazwanych ról na zmianę. Ad hoc strojenie staje się kontrolą zmian z datami przeglądu. Dowód ze slajdów staje się metrykami operacyjnymi na kadencji. Wersjonuj standard, przypisz właściciela, prowadź changelog.
 
-Unikaj pulapki negocjowania kazdej linii od zera.
+## Finansuj replikację jak SKU
 
-Stworz replikacyjny SKU: przewidywalny koszt na linie albo klase aktywow; zdefiniowany zakres vendora versus praca wewnetrzna; polityka zapasu gateway albo czujnikow; roczna linia budzetu na wymiany. Gdy replikacja jest finansowo niewidzialna, zatrzymuje sie politycznie.
+Jeśli każda nowa linia renegocjuje zakres i cenę, replikacja politycznie staje. Stwórz pakiet replikacji z przewidywalnym kosztem na linię lub klasę aktywów, jasnymi granicami pracy dostawcy versus wewnętrznej, polityką zapasu sprzętu i roczną pozycją budżetową na odświeżenie wymian. Gdy replikacja jest finansowo niewidzialna, łatwiej ją obronić operacyjnie.
 
-## Sekwencja krokow: od wygranej do standardu
+## Ślepy test pakietu
 
-Opublikuj minimalny pakiet w dwoch tygodniach po sukcesie pilota; zrob jedno slepe cwiczenie replikacji: drugi zespol instaluje z pakietu bez bohatera w pokoju; napraw luki w dokumentacji i szkoleniu ujawnione przez slepa kopie; oglos standard v1 z ownerem i changelogiem; podepnij zgodnosc ze standardem do checklist gotowosci linii przy capex albo projektach usprawnien.
+W ciągu tygodni od sukcesu pilota opublikuj minimalny pakiet. Uruchom ślepą replikację: drugi zespół instaluje z pakietu bez pierwotnego bohatera w pokoju. Napraw to, co pęka w dokumentacji i szkoleniu. Ogłoś standard v1 dopiero, gdy inny zespół potrafi go wykonać.
 
-## Mierz zdrowie standardu, nie pozorne przyjecie
+## Mierz zdrowie standardu
 
-Sledz: procent docelowych linii na wersji pakietu standardu; metryki jakosci alarmow spojne z klasa pilota; czas doprowadzenia nowej linii do akceptacji operacyjnej; liczbe i wiek wyjatkow (wyjatki powinny wygasac).
+Śledź odsetek docelowych linii na bieżącej wersji pakietu, metryki jakości alarmów spójne z klasą pilota, czas do operacyjnej akceptacji nowej linii oraz liczbę wyjątków z wiekiem — wyjątki powinny wygasać, nie fosylizować.
 
-## Co to znaczy dla DBR77 IoT
+Ta ścieżka siedzi po dyscyplinie ekspansji w [od pilota do skali: jak wdrażać IIoT bez utraty kontroli](../14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control/article_PL.md), uczciwym przeglądzie po pilocie w [jak przeglądać wartość IIoT po pierwszym pilocie](../20_how_to_review_iiot_value_after_the_first_pilot/article_PL.md), wczesnych nawykach w [jak powinny wyglądać pierwsze 30 dni IIoT w brownfieldzie](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_PL.md) oraz kontroli wieloliniowej w [jak wdrożyć IoT na wielu liniach bez utraty kontroli](../26_how_to_roll_out_iot_across_multiple_lines_without_losing_control/article_PL.md).
 
-DBR77 IoT wspiera: szybki pilot, ktory mozna szybko spakowac po proof; wzorce sprzetu retrofit-friendly, ktore kopiuja sie na podobnych aktywach; widocznosc w czasie rzeczywistym i edge-first wsparcie decyzji jako spojny rdzen.
+## DBR77 IoT jako wersjonowany produkt operacyjny
 
-Uzyj pilota, by zasluzyc na standard, potem traktuj standard jak kazdy inny system zakladu: z ownerami i wersjami.
+DBR77 IoT trzyma przekaz, gdy piloty stają się wersjonowanymi standardami: zamrożony wzorzec, test ślepej replikacji, SKU replikacji, metryki dryfu z właścicielami. Szybkie wdrożenie ma znaczenie jako czas-do-pakietu i czas-do-akceptacji, nie sama nagłówkowa prędkość.
 
-## Bottom line
+Zamień pilot w standard przez zamrożenie wzorca, finansowanie kopii, ślepy test pakietu i rządzenie dryfem wersjami i metrykami. Standardy to produkty operacyjne — nie wspomnienia z warsztatu.
 
-Zamien udany pilot IoT w standard zakladu przez zamrozenie wzorca, finansowanie replikacji, slepy test pakietu i rzadzenie dryftem wersjami i metrykami. Standardy to produkty operacyjne, nie wspomnienia po warsztatach.
+## Punkt kontrolny kierownictwa na następny przegląd operacji
+
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
+
+## Domknięcie na hali
+
+Ta rada nic nie znaczy, jeśli zostaje w sali sterującej. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia mniej przypomina salę sądową, a bardziej zsynchronizowany zespół — wciąż głośny i zajęty, ale ułożony wokół tych samych faktów.
+
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie języka to objaw, że pętla wciąż jest zbyt cienka.
+
+---
+
+*DBR77 IoT pomaga zamieniać udane piloty w powtarzalne standardy dzięki spakowanemu wdrożeniu, jasnym definicjom i playbookom gotowym do replikacji. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

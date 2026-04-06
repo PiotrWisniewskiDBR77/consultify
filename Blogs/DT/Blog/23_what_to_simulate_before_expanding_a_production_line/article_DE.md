@@ -1,69 +1,49 @@
-# Was man vor der Erweiterung einer Produktionslinie simulieren sollte
+# Was vor der Erweiterung einer Produktionslinie zu simulieren ist
 
-Target persona: plant director / industrial engineering lead / program sponsor  
-Funnel stage: Decision  
-Core problem: Linienexpansion wird oft aus statischer Kapazitaetsrechnung und Anbieterunterlagen dimensioniert, waehrend das reale Risiko in Kopplung, Ramp-Verhalten und Mix-/Variabilitaetswirkungen steckt  
-Main promise: ein kompakter Simulationsumfang, der Expansionsentscheidungen testet, bevor Beton, Personal und Lieferantenbindungen festliegen
+Zielpersona: Werksleiter / Leitung Industrieengineering / Programmsponsor  
+Funnel-Stufe: Decision
+Kernproblem: Linienexpansion wird oft aus statischer Kapazitätsrechnung und Lieferantenangeboten dimensioniert, während das echte Risiko in Kopplung, Rampenverhalten und dem liegt, wie das neue Segment unter Mix und Variabilität reagiert  
+Hauptversprechen: ein kompakter Simulationsumfang, der Expansionsentscheidungen testet, bevor Beton, Personal und Lieferantenverpflichtungen fixieren
 
-simulieren Sie vor einer Linienexpansion die Baseline unter realistischer Variabilitaet, die kleinste Menge glaubhafter Expansionsvarianten, Ramp- und Lernkurven, Konkurrenz um geteilte Ressourcen und die Intralogistik, die das neue Segment versorgt. Verzichten Sie nur dann, wenn die Expansion eine triviale Kopie einer bestehenden Zelle mit gleichem Mix und ohne geteilte Engpaesse ist. Linienexpansion ist selten nur mehr Maschinen in derselben Halle. Sie aendert, wie Arbeit ankommt, wartet und sich erholt.
+Vor Linienexpansion simulieren Sie Baseline-Leistung unter realistischer Variabilität, die kleinste glaubwürdige Menge Expansionsvarianten, Rampen- und Lernkurven, Konkurrenz um geteilte Ressourcen und Intralogistik, die das neue Segment speist. Tiefe Simulation überspringen Sie nur, wenn die Expansion ein triviales Duplikat einer bestehenden Zelle mit identischem Mix und ohne gemeinsame Constraints ist. Linienexpansion ist selten „mehr Maschinen in derselben Halle“; es ist eine Änderung, wie Arbeit ankommt, wartet und sich erholt.
 
-## Warum Expansionsfreigaben operativen Nachweis brauchen, nicht nur CAPEX-Pakete
+**Themenabgrenzung:** Dieser Artikel fokussiert Kapazitätsexpansion innerhalb bestehender Footprints, wenn mehrere physische Pfade konkurrieren. Für Linienexpansion vor Nachfrage im weiteren Sinne — andere Stücke der Serie; für Brownfield-Programmbögen Brownfield-Change-Planning; für Nachfrage-Shift-Stress den Kapazitätstest.
 
-Ein starkes Expansionsmemo kann trotzdem verpassen: wie sich WIP und Warteschlangen starten, wenn das neue Segment live geht; ob der Engpass nach oben oder unten wandert; wie Ruestungen und Mix interagieren, wenn der Durchsatz steigt; ob Materialzufuhr, Staging oder Kitting zum versteckten Limit wird.
+## Warum starke CapEx-Memos den Boden verfehlen können
 
-Solche Fehler sind teuer, wenn Beton steht und Vertraege unterschrieben sind.
+Ein poliertes Expansionspaket kann trotzdem auslassen, wie sich WIP und Warteschlangen neu verteilen, wenn das Segment startet, ob der Engpass vorgelagert oder nachgelagert wandert, wie Rüsten interagiert, sobald der Durchsatz steigt, und ob Materialzufuhr, Staging oder Kitting zum versteckten Limiter wird. Diese Lücken werden teuer, nachdem Stahl fließt und Verträge unterschrieben sind.
 
-## Mindestszenariensatz fuer eine Linienexpansion
+## Mindest-Szenarioset
 
-Fahren Sie diese Szenarien mit denselben Modellannahmen: **Baseline heute:** schlechte Wochen einbeziehen, nicht nur Durchschnitt; **Ziel-Durchsatzband:** die Spanne, die das Management tragen will; **Mix-Stress:** der Familienmix, der Zykluszeiten und Ruestungen am meisten belastet; **Ramp-Fall:** ehrliche Annahmen zu Training, Ausschuss und Stabilitaet in den ersten Monaten; **Gekoppelte Ressourcen:** geteilte Anlagen, Pruefer, Krane, AGV-Schleifen oder Aushelfpersonal, das beide Linien beruehrt. Sie vergleichen, wie das System versagt, nicht wie es glaenzt.
+Fahren Sie Baseline heute inklusive schlechter Wochen, nicht nur Mittelwerte; Ziel-Durchsatzband als Spanne, die Führung tragen will; Mix-Stress für die Familienverteilung, die Zyklus und Rüsten am meisten schmerzt; Rampenfall mit ehrlichen Training-, Scrap- und Stabilitätsannahmen; gekoppelte Ressourcen wie geteilte Werkzeuge, Tester, Kräne, AGV-Schleifen oder Aushilfspersonal, das beide Linien berührt. Sie vergleichen, wie das System versagt, nicht wie Sie eine Erfolgsstory dekorieren.
 
-## Rahmen zum Vergleich von Expansionsvarianten
+## Ernsthafte Varianten auf denselben Fakten bewerten
 
-Nutzen Sie ein einfaches Scoreboard, damit Finance und Operations dieselben Fakten diskutieren:
+Beurteilen Sie Optionen nach Durchsatz am wahren Engpass unter Stress, WIP und Wartezeit an Top-Constraints, Überstunden- und Zeitarbeiter-Exposition, Zeit bis stabiler Output nach Go-Live und Sensitivität auf eingehende Verzögerung, wenn Logistik das Tempo setzt. Wenn zwei Varianten im Mittel nah sind, unter Stress aber divergieren — Stress ist die Wahrheit, die Sie vor Ausgaben brauchen.
 
-| Kriterium | Warum es zaehlt |
-|---|---|
-| Durchsatz am Engpass unter Stress | zeigt, ob die Expansion den wahren Limitierer wirklich entlastet |
-| WIP und Wartezeit an Top-Constraints | entlarvt Scheinkapazitaet, die nur Warten verschiebt |
-| Ueberstunden- und Leiharbeitsrisiko | uebersetzt Betriebsrisiko in Kostensprache |
-| Zeit bis stabiler Output nach Go-live | prueft, ob der Business Case sofortige Reife annimmt |
-| Sensitivitaet gegen Liefer- oder Eingangsverzoegerungen | macht Logistikkopplung sichtbar |
+## Inputs, auf die sich Führung vor Modellstart einigen sollte
 
-Wenn zwei Varianten im Mittel nah beieinander liegen, unter Stress aber auseinanderlaufen, ist Stress die Wahrheit vor der Ausgabe.
+Align auf den Entscheidungssatz (was genau gewählt wird), Nachfrageform im Besitz von Sales und Planning, die Constraint-Liste, die in den ersten neunzig Tagen nach Start nicht flexen darf, und die Failure-Definition — welcher KPI-Bruch disqualifiziert eine Option. Ohne diese Vereinbarungen wird das Modell ein Rorschach-Test.
 
-## Checkliste: Inputs, die das Management vor Modellstart fixieren sollte
+## Isolierte Linienmodelle lügen höflich
 
-- **Entscheidungssatz:** was genau gewaehlt wird (Kapazitaet, Layout, Lieferantenscope, Personalmodell).  
-- **Nachfrageform:** Level-, Mix- und Saisonannahmen mit klarem Owner aus Vertrieb und Planung.  
-- **Constraint-Liste:** was in den ersten 90 Tagen nach Start nicht flexibel ist.  
-- **Fail-Definition:** welcher KPI-Bruch eine Option disqualifiziert.
+Nur die neue Linie zu modellieren wirkt sauber und führt oft in die Irre. Wenn die Expansion indirekte Zeit, Wartungsfenster oder Handling-Kapazität vom Rest des Standorts stiehlt, lernt das Werk in der Rampe — nicht im Freigabetreffen. Halten Sie die Grenze ehrlich.
 
-Ohne diese vier Punkte wird das Modell ein Rorschach-Test.
 
-## Typischer Fehler: die neue Linie isoliert modellieren
+## Brownfield-Ehrlichkeit: Pfade vergleichen, nicht Slogans
 
-Isolierte Linienmodelle wirken sauber. Sie luegen oft.
+Brownfield belohnt keinen Optimismus; es belohnt Vergleichbarkeit. Jeder ernsthafte Pfad ändert etwas Physisches – Wege, Staging, Übergaben, Wartungszugang – und diese Änderungen interagieren unter realer Nachfrage und Lieferanten-Verhalten. Szenario-Arbeit verdient Vertrauen, wenn jeder Pfad dieselben Schocks und Evidenz-Regeln sieht, damit das Gespräch bei Trade-offs bleibt statt bei Folien-Charisma.
 
-Wenn die Expansion indirekte Zeit, Instandhaltungsfenster oder Materialfluss-Kapazitaet vom Rest des Werks frisst, lernt das Werk das in der Ramp-Phase, nicht im Freigabetermin.
+Halten Sie die Diskussion explizit darüber, was Sie in diesem Zyklus nicht tun. Ausschlüsse sind so wichtig wie Favoriten; sie verhindern Zombie-Optionen unter neuem Namen. Wenn Refresh-Trigger nach Change verstanden sind, hören Teams auf, letzte Quartals-Gewissheit zu zitieren, nachdem der Shopfloor sich schon bewegt hat. Der Twin sollte diesen Drift schnell peinlich machen – gesünder als die Entdeckung bei einem Service-Miss oder einem Überstunden-Wochenende, das niemand budgetiert hat.
 
-## Was Digital Twin hier aendert
+## Was DBR77 Digital Twin ergänzt
 
-Digital Twin ist ein Szenario-Testumfeld fuer kapitalnahe Betriebsentscheidungen. Es ist keine 3D-Show.
+DBR77 Digital Twin zentriert Expansionsentscheidungen: Durchsatz, Flexibilität, Bestand und Rampenrisiko in einem vergleichbaren Rahmen vor fixiertem Spend. Nebeneinander-Test glaubwürdiger Varianten unter Variabilität; Trade-offs zwischen Durchsatz, Flexibilität, Bestand und Rampenrisiko; Entscheidungsrecords, auf die Finance und Operations sich ohne Folienoptimismus einigen können.
 
-Es erlaubt Fuehrung zu sehen, wie eine erweiterte Linie mit Fluss, Puffern und geteilten Ressourcen interagiert, bevor Layout- und Beschaffungsentscheide schwer rueckgaengig sind.
+## Kurz gesagt
 
-## Was DBR77 Digital Twin ergaenzt
-
-DBR77 Digital Twin ist als praktisches Entscheidungssystem positioniert, mit einem Weg von manuellen Eingaben zu tieferer Integration.
-
-Fuer Expansionsentscheidungen unterstuetzt es: vergleichendes Testen glaubhafter Varianten unter Variabilitaet; klarere Trade-offs zwischen Durchsatz, Flexibilitaet, Bestand und Ramp-Risiko; Entscheidungsprotokolle, auf die Finance und Operations sich ohne Slide-Optimismus einigen koennen.
-
-## Bottom line
-
-Simulieren Sie vor einer Linienexpansion, wenn geteilte Ressourcen, Mix oder Ramp-Risiko eine CAPEX-Geschichte kippen koennen, die statisch gut aussieht.
-
-Wenn die Expansion eine echte isolierte Zellkopie mit stabilem Mix ist, koennen Sie mit messungsgesteuerten Piloten schneller sein. Ziel sind weniger Ueberraschungen, wenn Ausgaben zu Beton werden.
+Simulieren Sie vor Expansion, wenn geteilte Ressourcen, Mix oder Rampenrisiko einen CapEx-Fall kippen können, der statisch gut aussieht. Ist die Expansion eine echte isolierte Zell-Duplikation mit stabilem Mix, können messungsgeführte Piloten schneller sein. Ziel sind weniger Überraschungen, wenn Spend zu Beton wird.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/digital-twin) oder [Digital Twin erkunden](https://dbr77.com/demo).*
+*DBR77 Digital Twin hilft Teams, Expansionsvarianten unter Variabilität und Kopplung geteilter Ressourcen zu vergleichen, bevor physische und Lieferantenverpflichtungen härten. [Demo buchen](https://dbr77.com/digital-twin) oder [Digital Twin entdecken](https://dbr77.com/demo).*

@@ -234,5 +234,29 @@ describeIfDb('Results KPI reports routes (L3)', () => {
     expect(res.body?.success).toBe(true);
     expect(res.body?.data?.snapshot?.actionPlan?.length).toBeGreaterThan(0);
   });
+
+  it('POST refresh creates a new snapshot + report from an existing KPI report snapshot', async () => {
+    const list = await dispatch({ method: 'GET', url: '/api/results/kpi-reports' });
+    const snapId = list.body?.data?.[0]?.snapshotId;
+    expect(snapId).toBeTruthy();
+
+    const res = await dispatch({
+      method: 'POST',
+      url: `/api/results/kpi-reports/${snapId}/refresh`,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body?.success).toBe(true);
+    expect(res.body?.data?.snapshotId).toBeTruthy();
+    expect(res.body?.data?.snapshotId).not.toBe(snapId);
+    expect(res.body?.data?.reportId).toBeTruthy();
+
+    const rpt = await dbGet<any>(
+      `SELECT id, source_type, source_id FROM report_builder_reports WHERE id = ?`,
+      [res.body.data.reportId]
+    );
+    expect(rpt?.source_type).toBe('RESULTS_KPI_REPORT');
+    expect(rpt?.source_id).toBe(res.body.data.snapshotId);
+  });
 });
 

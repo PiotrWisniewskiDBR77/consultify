@@ -116,6 +116,18 @@ describe('V8ResultsApi', () => {
     expect(data.kpiId).toBe('kpi-1');
   });
 
+  it('requests governed KPI report refresh from the V8 namespace', async () => {
+    vi.mocked(v8Post).mockResolvedValue({
+      snapshotId: 'snap-2',
+      reportId: 'report-2',
+    });
+
+    const data = await V8ResultsApi.refreshKpiReport('snap-1');
+
+    expect(v8Post).toHaveBeenCalledWith('/results/kpi-reports/snap-1/refresh', {});
+    expect(data.reportId).toBe('report-2');
+  });
+
   it('requests governed KPI time-series record from the V8 namespace', async () => {
     vi.mocked(v8Post).mockResolvedValue({
       id: 'ts-1',

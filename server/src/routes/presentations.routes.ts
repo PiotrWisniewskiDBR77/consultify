@@ -629,8 +629,10 @@ router.get(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const roleKey = req.user?.role ? String(req.user.role) : null;
-    if (!req.user?.id && !req.userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const authReq = req as any;
+    const roleKey = authReq.user?.role ? String(authReq.user.role) : null;
+    if (!authReq.user?.id && !authReq.userId)
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
@@ -664,7 +666,7 @@ router.get(
     await recordCanonicalDeckExportTrace({
       organizationId: orgId,
       userId,
-      deckId: req.params.id,
+      deckId: String(req.params.id || ''),
       roleKey,
       format: 'pptx',
     }).catch(() => null);
@@ -678,8 +680,10 @@ router.get(
     const { deckId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const roleKey = req.user?.role ? String(req.user.role) : null;
-    if (!req.user?.id && !req.userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const authReq = req as any;
+    const roleKey = authReq.user?.role ? String(authReq.user.role) : null;
+    if (!authReq.user?.id && !authReq.userId)
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
@@ -736,7 +740,8 @@ router.get(
     await recordCanonicalDeckExportTrace({
       organizationId: orgId,
       userId,
-      deckId,
+      deckId: String(deckId || ''),
+      roleKey,
       format: 'pdf',
     }).catch(() => null);
     doc.end();
@@ -744,7 +749,7 @@ router.get(
     await recordCanonicalDeckExportTrace({
       organizationId: orgId,
       userId,
-      deckId,
+      deckId: String(deckId || ''),
       roleKey,
       format: 'pdf',
     }).catch(() => null);

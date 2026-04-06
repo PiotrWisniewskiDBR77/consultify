@@ -1,86 +1,64 @@
 # Was ein gutes Automatisierungsangebot sichtbar machen sollte
 
-Target persona: technischer Bewerter / Sponsor  
-Funnel stage: Evaluation  
-Core problem: starke Sales-Narrative verbergen fehlenden Umfang, versteckte Annahmen und unklare Commitments, die erst nach politischer Commitment sichtbar werden  
-Main promise: eine Buyer-Checkliste fuer Sichtbarkeitsstandards, die ein verteidigungsfaehiges Angebot von einer polierten Story trennt
+Zielpersona: Technischer Bewerter / Sponsor (Geschäftsführung)  
+Funnel-Stufe: Bewertungsphase  
+Kernproblem: Starke Verkaufsnarrative verbergen fehlenden Scope, versteckte Annahmen und unklare Verpflichtungen — die erst nach politischem Commitment sichtbar werden  
+Hauptversprechen: Eine Käufer-Checkliste für Sichtbarkeitsstandards, die ein verteidigbares Angebot von einer polierten Story trennt
 
-Ein gutes Automatisierungsangebot definiert sich nicht durch glaenzende Visuals. Es definiert sich dadurch, was leicht pruefbar ist.
+Bediener beurteilen eine Linie nach dem, was sie sehen, anfassen und verifizieren können. Käufer sollten Automatisierungsangebote genauso beurteilen: was real ist, was angenommen ist, was ausgeschlossen ist und was passiert, wenn die Realität vom Dokument abweicht. Glanz ist kein Beweis. Sichtbarkeit schon.
 
-Hersteller sollten Angebote wie Operateure eine Linie bewerten: was real ist; was angenommen wird; was ausgeschlossen ist; was sich aendert, wenn Realitaet vom Dokument abweicht.
+Wenn kritische Elemente schwer zu finden sind, sehen Sie kein entscheidungsreifes Angebot — Sie sehen eine Geschichte, die unter Druck schlecht altert.
 
-Wenn das schwer sichtbar ist, ist das Angebot noch nicht entscheidungsreif.
+## Scope als Inklusionen und Exklusionen
 
-## Sichtbarkeitsstandard 1: Scope als Inklusionen und Exklusionen
+Inklusionen definieren, was Sie kaufen. Exklusionen definieren, was Sie noch besitzen. Beides sollte so klar sein, dass zwei unabhängige Leser die Grenze gleich verstehen. Vage Exklusionen sind, wie späte Überraschungen „out of scope“ etikettiert werden.
 
-Inklusionen sagen, was Sie kaufen. Exklusionen sagen, wofuer Sie noch verantwortlich sind.
+## Annahmen in der Offenheit, nicht implizit
 
-Ein gutes Angebot macht beides so explizit, dass zwei unabhaengige Leser dasselbe verstehen.
+Annahmen sind normale Ingenieurspraxis; sie zu verstecken nicht. Ein verteidigbares Angebot gruppiert Annahmen nach Produkt und Mix, Durchsatz und Zyklus, Umgebung und Versorgung, vorgelagerte und nachgelagerte Bereitschaft, IT- und OT-Zugang, Personal und Schulungskapazität. Wenn Annahmen nur in Notizbüchern leben, managen Sie kein Risiko — Sie erben es.
 
-Wenn Exklusionen vage sind, erwarten Sie spaete Ueberraschungen als "out of scope".
+## Leistung an ein Testkonzept gebunden
 
-## Sichtbarkeitsstandard 2: Annahmen sind gelistet, nicht impliziert
+Versprechen brauchen Nachweislogik: was demonstriert wird, wessen Site, mit welchen Samples, gegen welche Abnahmekriterien. Narrative ohne Testplan ist Hoffnung als Spezifikation verkleidet.
 
-Annahmen sind keine Schwaeche. Versteckte Annahmen sind es.
+## Gemappte Integrationseigentümerschaft
 
-Ein verteidigungsfaehiges Angebot trennt Annahmen in Kategorien: Produkt und Mix; Durchsatz und Zyklus; Umgebung und Versorgung; Upstream/Downstream-Reife; IT/OT und Datenzugang; Personal und Trainingskapazitaet.
+Fehler clustern an Schnittstellen. Starke Angebote zeigen, wer mechanische, elektrische, Steuerungs-, Netz-, angrenzende MES- oder ERP-Aufgaben wo relevant besitzt und wer Sicherheitsvalidierung wo relevant trägt. Grauzonen sollten benannt sein, nicht über Absätze verschmiert.
 
-Wenn Annahmen nur in Engineering-Notizen leben, kann der Buyer Risiko nicht steuern.
+## Kommerzielle Logik, die erklärt, was den Preis bewegt
 
-## Sichtbarkeitsstandard 3: Performance ist an ein Testkonzept gebunden
+Sie brauchen Sichtbarkeit in Change-Triggern, Site-Zeit und Reise, Garantie- und Ersatzteilgrenzen, Trainingstiefe und Dokumentationsdeliverables. Undurchsichtige kommerzielle Mechanik macht „günstig“ teuer durch Struktur, nicht durch Absicht.
 
-Gute Angebote verbinden Versprechen mit Evidence-Logik: was demonstriert wird; wo (Lieferant vs Ihre Halle); mit welchen Mustern; gegen welche Abnahmekriterien.
+## Wo schwache Angebote meist brechen
 
-Wenn Performance nur eine Erzaehlung ist, haben Sie noch keinen Testplan. Sie haben einen Hoffnungsplan.
+Beim ersten Lesen klingen viele Dokumente vollständig. Sie scheitern, wenn Sie Zeile für Zeile Eigentum zuweisen: wer zahlt, wenn Site-Wahrheit von Annahmen abweicht, wer Kosten trägt, wenn ein Thema bei Inbetriebnahme statt im Angebot auftaucht, wer Bereitschaft für Abnahme belegt versus wer Support verspricht. Wenn das Angebot diese Fragen nicht sauber beantwortet, ist es noch Marketing.
 
-## Sichtbarkeitsstandard 4: Integrations-Ownership ist gemappt
+## Wie DBR77 Marketplace anschließt
 
-Automatisierung scheitert selten nur in der Robotzelle. Sie scheitert an Schnittstellen.
+Angebots-Sichtbarkeit ist der Unterschied zwischen Dokumentenvergleich und Entscheidungsvergleich. Ein Workflow, der Annahmen, Tests, Integrationseigentum und Change-Mechanik vor Commitment prüfbar hält, macht Bewertung ehrlich.
 
-Ein starkes Angebot zeigt eine einfache Ownership-Map: mechanische Schnittstellen; elektrische Schnittstellen; Steuerung und Netzwerk; MES/ERP-angrenzende Aufgaben (falls relevant); Safety-Validierungsverantwortung (falls relevant). Graubereiche sollten benannt werden, nicht verwischt.
+Begleitstücke: siehe [Wie man Robotik-Integratoren, OEMs und Turnkey-Lieferanten vergleicht](../16_how_to_compare_robot_integrators_oems_and_turnkey_suppliers/article_DE.md) und [Was vor Unterzeichnung eines Automatisierungsvertrags zu prüfen ist](../20_what_to_check_before_signing_an_automation_contract/article_DE.md).
 
-## Sichtbarkeitsstandard 5: kommerzielle Logik erklaert, was den Preis bewegt
+## Warum Sichtbarkeit ein Verhandlungsvorteil ist
 
-Buyer brauchen Sichtbarkeit der Veraenderungstreiber: was Re-Quotes ausloest; wie Reise und Vor-Ort-Zeit behandelt werden; Ersatzteile und Gewaehrleistungsgrenzen; Trainingsumfang und Dokumentationslieferobjekte.
+Wenn Lücken früh sichtbar sind, verhandeln Sie aus Wahrheit statt aus Panik. Versteckte Lücken verhandeln aus Inbetriebnahmewoche, wenn Ihr Hebel niedriger und Emotionen höher sind. Auf Sichtbarkeit zu drängen ist daher keine Pedanterie; es ist Timing-Strategie. Ein Lieferant, der sich gegen strukturierte Klarheit wehrt, sagt Ihnen, wie Streit später sich anfühlen wird.
 
-Wenn kommerzielle Logik opak ist, werden "guenstige" Angebote teuer durch Mechanik, nicht durch Boeswilligkeit.
+Sichtbarkeit schützt auch Integratoren, die seriöse Arbeit leisten. Starke Lieferanten wollen oft fairen Vergleich gegen Wettbewerber, die Scope unterbieten. Klare Felder belohnen Kompetenz; vage Felder belohnen Storytelling.
 
-## Reality check: viele Angebote wirken akzeptabel, bis der Buyer Verantwortung Zeile fuer Zeile zuordnen will
+## Schnelle Lesbarkeits-Gate (vor tiefen Workshops)
 
-Genau hier brechen schwache Dokumente meist auseinander. Beim ersten Lesen klingt das Angebot vollstaendig. Das Problem erscheint, wenn das Team fragt:
+Prüfen Sie auf einen Blick: expliziter In-/Out-Scope; kategorisierte Annahmen; kriterienverbundenes Testkonzept; Integration mit Eigentümern; explizite Change-Mechanik. Wenn die meisten Punkte schwach sind, fahren Sie eine strukturierte Klärungsrunde statt höflichem Q&A.
 
-- wer die Schnittstelle besitzt, wenn die Bedingungen vor Ort von der Annahme abweichen
-- wer zahlt, wenn die Aenderung waehrend der Inbetriebnahme statt in der Angebotsphase entdeckt wird
-- wer Abnahmebereitschaft nachweist, statt nur Support zu versprechen
+## Vom Entscheid zum Werksverhalten
 
-Wenn das Dokument diese Fragen nicht klar beantworten kann, ist das Angebot noch immer polierte Erzaehlung und keine entscheidungsreife Sichtbarkeit.
+Der Punkt, diesen Teil der Kaufreise zu schärfen — in der Praxis „Was ein gutes Automatisierungsangebot sichtbar machen sollte“ — ist, Ausführung vorhersehbar zu machen. Auf industriellen Sites bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Streit neben Equipment, wenn die Linie Wochen zuvor Klarheit brauchte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Eigentum sichtbar halten, antworten Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit mit Versöhnung widersprüchlicher Stories.
 
-## Schnelle Angebots-Lesbarkeits-Scorecard
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Kauf-Output so, dass Operations und Instandhaltung es auditieren könnten. Wenn sie es nicht bis zu einem Verhalten auf der Fläche zurückverfolgen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Fehler, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
-Vor Workshops 0 bis 2 pro Punkt:
+## Kurz gesagt
 
-| Punkt | schwach | ok | stark |
-| --- | --- | --- | --- |
-| Scope in/out | vage | teilweise | explizit |
-| Annahmen | verborgen | verstreut | kategorisiert |
-| Testplan | fehlt | locker | kriterienverbunden |
-| Integrationsmap | fehlt | teilweise | owned |
-| Aenderungsmechanik | unklar | teilweise | explizit |
-
-Meist unter "ok" bedeutet: strukturierte Klaerungsrunde, nicht nur hoefliches Q und A.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace soll Sourcing-Chaos reduzieren. Standardisierter Angebotsvergleich passt zu solchen Sichtbarkeitsstandards. Marketplace ist kein Roboterkatalog.
-
-Es ist ein Workflow fuer Automatisierungsentscheidungen und eine Vertrauensschicht fuer Integratorenauswahl, wenn Angebote ehrlich verglichen werden muessen.
-
-## Bottom line
-
-Polish ist kein Beweis.
-
-Ein gutes Angebot macht Umfang, Annahmen, Tests, Integrations-Ownership und kommerzielle Mechanik sichtbar. Wenn Sie diese Felder sauber pruefen koennen, koennen Sie entscheiden. Wenn nicht, entscheiden Sie auf Narrativrisiko.
+Entscheiden Sie über prüfbare Felder — Scope, Annahmen, Tests, Integration, kommerzielle Mechanik — nicht über narrative Zuversicht. Wenn Sie es nicht sehen können, können Sie es nicht sicher kaufen.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt strukturierten Angebotsvergleich, damit Sichtbarkeitsstandards zu Feldern nebeneinander statt zu getrennten PDFs werden. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/demo).*

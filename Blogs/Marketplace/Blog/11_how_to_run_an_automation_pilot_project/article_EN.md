@@ -5,118 +5,51 @@ Funnel stage: Decision
 Core problem: many manufacturers want to start with a pilot, but define it too broadly or too vaguely, which creates delay, confusion, and weak learning  
 Main promise: an automation pilot works when it is scoped as a decision tool, not as a mini version of a full transformation
 
-Many automation projects fail before they scale because the pilot is designed poorly. It is either too big, too vague, or too political. The team says it wants a pilot.
+A pilot is not a small way to do everything. It is a bounded way to learn something specific. When teams forget that, they smuggle full-program ambition into a “phase one” label: multiple product families, vague success language, and a success criterion that changes whenever someone new joins the steering call. The technology may be fine. The experiment is not.
 
-What it often builds is a slow, overloaded project with unclear success criteria. That defeats the point. A good pilot should reduce uncertainty fast. It should not recreate enterprise complexity on day one.
+The plant walks away with months spent, budgets touched, and no clean answer to the question leadership actually needed—whether to scale, pivot, or stop.
 
-## Start with one business question
+## Anchor the pilot in one decision
 
-The best pilot projects begin with one clear question. For example:
+Before you invite solutions, write the decision the pilot must support. Examples: can this bottleneck hold target pace with acceptable quality under real feeding constraints? Can we reduce labor intensity at this cell without creating a new quality risk? Can we integrate this equipment with our existing controls and ownership model without heroic IT effort?
 
-- can this process be automated reliably enough to justify rollout?
-- can we stabilize throughput on this bottleneck?
-- can we reduce labor dependency on this cell?
+A pilot that tries to prove the vendor, the business case, the rollout plan, and the cultural readiness in one swing usually proves nothing clearly. Narrow the question until an honest answer is possible in the time and money you are willing to spend.
 
-This matters because pilots are not just technical tests. They are decision tools.
+## Choose terrain you can control
 
-## Choose a process that is small enough to control
+Politically hot lines and operationally chaotic processes make poor learning environments. You spend the pilot managing theater—escalations, exceptions, competing sponsors—instead of observing the system. Look for repeatable flow, willing operators and maintenance partners, and pain that is real but bounded enough that a setback does not define your year.
 
-A pilot should not start on the most politically sensitive or operationally chaotic process.
+## Define success before proposals, not after
 
-It should start where the team can learn fast without creating unnecessary exposure.
+If success criteria arrive late, vendors optimize for different finish lines and your team argues in circles. Agree internally on the operational outcome that matters most, the minimum acceptable performance band, the timeline window that is actually credible, and what evidence would justify a “go” on the next step. Then hold offers against that frame.
 
-Good pilot candidates usually have: visible pain; repeatable process flow; manageable scope; a team willing to engage. This is not about choosing the easiest process. It is about choosing the clearest one.
+## Keep the scope deliberately thin
 
-## Define success before vendors respond
+One process boundary, one cell or line segment, one coherent product family if variability is the risk you need to test—pick the smallest envelope that still answers your decision. Breadth feels ambitious; in pilots it usually dilutes signal. You want crisp learning, not a preview of every future argument.
 
-Many pilots go wrong because success is discussed after proposals arrive. That reverses the logic. The team should define success before comparison begins. That usually means agreeing on:
+## Compare suppliers for pilot fit, not only for roadmap charisma
 
-- what operational result matters most
-- what minimum performance level is acceptable
-- what timeline is realistic
-- what learning would justify the next step
+Some organizations shine at large rollouts and struggle with tight proof phases; others are the opposite. Evaluate clarity of assumptions, milestone honesty, response agility, and willingness to tie progress to observable checks. A partner who cannot define “done” for the pilot will not define it for the program.
 
-Without this, the pilot becomes a moving target.
+## Surface assumptions like inventory
 
-## Keep pilot scope intentionally narrow
+Site readiness, operator involvement, sample availability, IT security steps, support boundaries—these details decide whether a pilot is fair. When they stay implicit, the pilot looks safer than it is. Make them visible early so surprises happen in planning, not in the first production week.
 
-A pilot is not meant to solve everything. It is meant to answer a few critical uncertainties.
+## Milestones turn intent into accountability
 
-That is why strong pilot scope is usually narrow around: one process; one line or cell; one product family; one decision point. Broad ambition makes pilot learning weaker, not stronger.
+Scope alignment, frozen configuration points, readiness gates, go-live, early performance review—simple milestones keep the effort from drifting into endless experimentation. They also give sponsors a way to intervene without drama when reality diverges from plan.
 
-## Build comparison around pilot fit
+## Capture learning like it is the product
 
-Not every vendor is equally strong for a pilot.
+Schedule a structured review: what held, what broke, which assumptions changed, what would need to be true before scale. Without that loop, the pilot is an event. With it, the pilot is capital spent on a decision record the organization can reuse.
 
-Some are better at large rollouts than at fast, well-scoped proof phases. Buyers should compare vendors not only on technology, but on:
+## How DBR77 Marketplace supports first projects
 
-- fit to pilot scope
-- clarity of assumptions
-- timeline realism
-- response speed
-- willingness to define milestones
-
-This is where many pilot decisions improve dramatically.
-
-## Reality check: many pilots fail because the company is testing too many questions at once
-
-A team says it wants a pilot. What it often means is:
-
-- test the technology
-- test the vendor
-- test the internal team
-- test the business case
-- test future rollout assumptions
-
-That is too much uncertainty for one bounded project.
-
-When the pilot tries to answer every strategic question at once, it usually answers none of them cleanly.
-
-## Make assumptions visible early
-
-Pilots often look simple until hidden assumptions appear.
-
-That is why buyers should surface: site-readiness assumptions; operator involvement assumptions; data and integration assumptions; product variability assumptions; support and escalation assumptions. When assumptions stay hidden, the pilot feels safer than it really is.
-
-## Set milestones, not vague optimism
-
-A real pilot needs milestones.
-
-Not because the team wants bureaucracy, but because progress must stay visible.
-
-Typical milestones include: scope alignment; solution confirmation; implementation readiness; go-live; early performance review. This keeps the pilot from drifting into open-ended experimentation.
-
-## Protect the learning loop
-
-An automation pilot is valuable only if the team captures what it learns.
-
-That means reviewing: what worked; what failed; what changed in assumptions; what would need adjustment before rollout.
-
-Without this loop, the pilot becomes a one-off event instead of a scaling decision.
-
-## Why pilots fail even when the technology works
-
-Some pilots fail for reasons that have little to do with the technical concept.
-
-Common causes include: unclear ownership; weak internal alignment; overloaded scope; slow decisions; no agreement on next-step criteria.
-
-This is important because pilot success depends as much on workflow and decision quality as on engineering.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace fits this stage because it helps manufacturers move from automation interest to a cleaner first project.
-
-Its value includes: challenge clarification; access to comparable offers; clearer assumptions; structured progress from pilot definition to execution.
-
-That matters because a pilot should shorten uncertainty, not expand it.
+DBR77 Marketplace helps teams move from pilot intent to a clearer first engagement: structured challenge definition, comparable offers, and visible assumptions so the pilot stays tied to a decision—not to vendor storytelling.
 
 ## Bottom line
 
-The purpose of an automation pilot is not to prove everything.
-
-It is to answer the most important decision questions with manageable risk.
-
-The strongest pilots are: narrowly scoped; clearly measured; milestone-based; built for learning and next-step confidence. That is how a pilot becomes a launchpad instead of a delay mechanism.
+Run pilots to answer a small set of critical questions with manageable exposure. Narrow scope, explicit success, visible assumptions, dated milestones, and honest learning—that is how a pilot earns the right to scale.
 
 ---
 

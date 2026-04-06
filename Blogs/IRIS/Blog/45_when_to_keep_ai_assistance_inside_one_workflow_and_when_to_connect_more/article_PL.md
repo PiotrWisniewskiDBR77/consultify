@@ -1,63 +1,36 @@
-# Kiedy trzymac asyste AI w jednym workflow, a kiedy laczyc wiecej
+# Kiedy trzymać asystę AI w jednym przepływie pracy, a kiedy łączyć kolejne
 
-Target persona: Lider ciaglego doskonalenia / Wlasciciel MES / Lider systemow magazynowych  
-Funnel stage: Consideration  
-Core problem: zespoly albo izoluja asyste w waskim pilocie na zawsze, albo lacza wszystko naraz i traca sledzilnosc ownership i akceptacji  
-Main promise: siatka decyzji oparta na dojrzalosci danych, ryzyku SLA, obciazeniu kontroli zmian i potrzebach audytu, aby zakres rosl kontrolowanymi krokami
+Docelowa persona: lider ciągłego doskonalenia / właściciel MES / lider systemów magazynowych  
+Etap lejka: Consideration  
+Główny problem: zespoły albo na zawsze izolują asystę w wąskim pilocie, albo od razu łączą wszystko i tracą możliwość prześledzenia odpowiedzialność i akceptacji  
+Główna obietnica: siatka decyzji oparta na dojrzałości danych, ryzyku SLA, obciążeniu kontrolą zmian i potrzebach audytu, żeby zakres posuwał się kontrolowanymi krokami
 
-Trzymaj asyste AI w jednym workflow, gdy definicje sa niestabilne, szkolenia niekompletne, akceptacje niezmapowane lub wolumen incydentow juz przekracza pojemnosc zespolu. Lacz kolejne workflow tylko wtedy, gdy pierwszy pokazuje stabilne metryki domkniecia przez dwa cykle przegladu, powody override maleja lub sa wytlumaczalne, i mozesz uzyc tych samych pol audytu bez niestandardowych wyjatkow. Laczenie bez dyscypliny domykania mnozy chaos predzej niz wartosc. Szerokosc latwo demonstrowac. Glebokosc chroni zaklad.
+Szerokość łatwo zademonstrować. To głębokość trzyma zakład w bezpieczeństwie. Trzymaj asystę AI w jednym przepływie pracy, gdy definicje wciąż są sporne, szkolenia niekompletne, ścieżki akceptacji niezmapowane albo wolumen incydentów już przekracza pojemność zespołu. Podłączaj kolejny przepływ pracy tylko wtedy, gdy pierwszy pokazuje stabilne metryki domknięcia przez dwa cykle przeglądu, powody override’ów maleją lub stają się wyjaśnialne, a te same pola audytu da się ponownie użyć bez wyjątków na zamówienie. Połączenie bez dyscypliny domknięcia mnoży chaos szybciej niż wartość.
 
-## Siatka: zostan waski kontra rozszerz polaczenia
+Czytaj sygnały uczciwie. Zostań wąski, gdy definicje KPI walczą między funkcjami, czas do właściciela rośnie tydzień do tygodnia, motywy override’ów wciąż zaskakują, kontrola zmian jest nieformalna albo audytorzy nie dostają eksportów na żądanie. Rozszerzaj, gdy definicje są opublikowane i zmapowane na pola, metryki odpowiedzialność utrzymują się lub się poprawiają, override’y powtarzają się z kodami nadającymi się do szkolenia, publikacje są wersjonowane z właścicielami, a prośby audytowe są rutyną.
 
-| Sygnal | Zostan waski | Rozszerz polaczenia |
-|---|---|---|
-| definicje KPI | sporne miedzy funkcjami | opublikowane i zmapowane na pola |
-| czas-do-wlasciciela | rosnie tydzien do tygodnia | plaski lub lepszy |
-| motywy override | nowe niespodzianki co tydzien | powtarzalne, trenowalne kody |
-| kontrola zmian | nieformalne edycje | publikacje wersjonowane z wlascicielami |
-| potrzeby audytu | brak eksportow | eksporty na zadanie |
+Przed każdym nowym konektorem uruchom bramkę ekspansji: zamroź czternastodniową linię bazową na żywym przepływie pracy, przejrzyj najważniejsze tematy wyjątków z właścicielami, potwierdź, że ścieżki akceptacji obejmują noce i weekendy, zmapuj pochodzenie danych dla kolejnego przepływu pracy wraz z częstością odświeżania i właścicielem, zdefiniuj wycofanie, które odczepia asystę bez utraty historii, oraz opublikuj okno startu z komunikacją dla zmian. Pomiń bramkę — zapłać w eskalacjach.
 
-Jesli trzy lub wiecej sygnalow "zostan waski" jest prawdziwych, wstrzymaj ekspansje.
+Porównaj sprinty integracji z drabiną integracji. Sprinty koncentrują ryzyko i głośne uczenie się. Drabina ogranicza promień eksplozji, uczenie przypisuje się do kroków, buduje ślad audytu krok po kroku i opiera się presji dostawcy dowodami. Drabina wydaje się wolna, dopóki pierwszy poważny incydent nie potwierdzi jej wartości.
 
-## Sekwencja krokow: brama ekspansji (przed kazdym nowym workflow)
+Minimalna gotowość na drugi przepływ pracy obejmuje role współdzielone przetestowane na wszystkich zmianach, wyrównane taksonomie override’ów lub udokumentowane mapowania, powiązanie incydentów przetestowane na prawdziwym zdarzeniu, aktualne podpisy szkoleniowe oraz pola executiveskiej karty wystarczająco stabilne do porównań.
 
-Zamroz baseline dla aktywnego workflow na 14 dni; przeglad wyjatkow: top 15 motywow z wlascicielami; potwierdz, ze sciezki akceptacji pokrywaja noc i weekend; zmapuj pochodzenie danych dla nastepnego workflow: pole zrodla, odswiezanie, wlasciciel; zdefiniuj rollback: jak odlaczyc asyste bez utraty historii; opublikuj okno startu i komunikacje dla dotknietych zmian. Pominiecie bramy placisz eskalacjami.
+Zostawanie wąskim jest złą strategią tylko wtedy, gdy izolacja wymusza podwójne wprowadzanie, które operatorzy już odrzucają, gdy bezpieczeństwo lub jakość wyraźnie wymaga przepływu pracy między działami, który blokujesz, albo gdy pakiet integracji nie da się rozdzielić. W takich przypadkach poszerzaj z jawnymi ścieżkami wyjątków i dodatkowymi polami audytu — nie po cichu.
 
-## Porownanie: sprint integracji kontra drabina integracji
+IRIS wspiera zdyscyplinowaną drabinę, gdy zachowanie domknięcia, wzorce override’ów i pola audytu pozostają mierzalne przepływ pracy po przepływ pracy w jednej warstwie wykonania — więc następne połączenie to decyzja na dowodach, nie na optymizmie.
 
-| Element | Sprint | Drabina |
-|---|---|---|
-| ryzyko | skoncentrowany promien | ograniczony per krok |
-| uczenie sie | halasliwe | przypisywalne |
-| slad audytu | czesto rekonstruowany | budowany per krok |
-| presja dostawcy | wysoka | umiarkowana |
+Do trybów i pętli reakcji zobacz [Kiedy AI powinna obserwować, doradzać czy działać w fabryce](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_PL.md), [Jak AI może skracać przestoje, gdy istnieją pętle reakcji](../33_how_ai_can_reduce_downtime_when_response_loops_exist/article_PL.md) oraz [Jak skalować wsparcie AI bez utraty kontroli operacyjnej](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_PL.md).
 
-Drabiny wydaja sie wolne do pierwszego powaznego incydentu.
+Podłączaj kolejny przepływ pracy dopiero wtedy, gdy poprzedni domyka się wystarczająco czysto, by mu zaufać. Jeśli nie możesz jeszcze zaufać domknięciu, nie powinieneś ufać szerokości.
 
-## Checklist: minimalna gotowosc do polaczenia drugiego workflow
+## Podsumowanie operacyjne
 
-- wspolne role uzytkownika przetestowane na wszystkich zmianach  
-- identyczna taksonomia override lub udokumentowane mapowanie  
-- regula powiazania incydentu przetestowana na co najmniej jednym rzeczywistym zdarzeniu  
-- lista podpisow szkolen aktualna w ciagu 30 dni  
-- pola karty wynikow kierowniczych niezmienione przez nowy konektor
+Obietnica tego artykułu — siatka decyzji oparta na dojrzałości danych, ryzyku SLA, obciążeniu kontrolą zmian i potrzebach audytu, żeby zakres posuwał się kontrolowanymi krokami — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Kiedy trzymać asystę AI w jednym przepływie pracy, a kiedy łączyć kolejne” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-## Kiedy bycie waskim to zly wybor
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
-Izolowany workflow tworzy podwojne wprowadzanie danych, ktore operatorzy juz odrzucaja; BHP lub jakosc wymaga wprost routingu miedzyfunkcyjnego, ktory blokujesz; kontrakt z dostawca wymusza pakiet integracji, ktorego nie rozdzielisz.
-
-Wtedy poszerzaj ze formalna sciezka wyjatku i dodatkowymi polami audytu, nie po cichu.
-
-## Dlaczego IRIS wspiera zdyscyplinowana drabine
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Jedna warstwa wykonania pokazuje, kiedy nowy konektor jest gotowy, bo zachowanie domkniecia pozostaje mierzalne workflow po workflow.
-
-## Podsumowanie
-
-Lacz nastepny workflow tylko wtedy, gdy poprzedni domyka sie na tyle czysto, by mu zaufac. Jesli nie ufasz domknieciu, nie ufasz szerokosci.
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie jest usprawnienie operacyjne — tylko narracyjne. Ta reguła trzyma programy przy zdrowiu, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS trzyma każdy przepływ pracy na tej samej warstwie wykonania, więc możesz rozszerzać konektory, a metryki domknięcia pozostają porównywalne krok po kroku. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

@@ -5,50 +5,58 @@ Funnel stage: Awareness to Consideration (investment clarity before market engag
 Core problem: business cases hide assumptions inside a single ROI number, which collapses the moment throughput, mix, or staffing truth moves  
 Main promise: a visible business case structure that separates cash, risk, time, and ownership so approvals are real
 
-A business case is not a spell.
+A single ROI figure is a summary, not an argument. When assumptions hide inside it, any shift in throughput, mix, staffing, or downtime collapses the story—and finance learns the hard way that the “approved” case was really a hypothesis dressed as certainty.
 
-It is a shared model of what must stay true for the investment to make sense.
+A strong internal case makes drivers visible: cash timing, operating levers, risk bands, time to value, and who owns each assumption.
 
-If leadership cannot see the assumptions, they are not approving a project. They are approving a mood. A good internal business case for automation should make visible baseline operating facts, named assumptions with owners, cash timing beyond year one, risk and mitigation owners, change-order sensitivity, and what happens if the project slips or scopes down. Visibility beats precision theater. A directional model with explicit assumptions often beats a false exact number.
+## Separate headline return from drivers
 
-## Visible element 1: baseline facts tied to the line, not to finance slides
+Show what moves money: labor minutes, scrap and rework, downtime, energy, consumables, quality incidents, and capacity enablement. Tie each line to an owner and an evidence type—measurement, history, or explicit hypothesis.
 
-Illustrative baseline anchors: current throughput band and constraint story; scrap or rework drivers you intend to touch; staffing model and overtime pattern (illustrative categories); changeover pain in measurable terms where possible. If baseline facts are vague, savings are imaginary.
+## Cash and capex are different conversations
 
-## Visible element 2: assumption ledger with owners and falsification dates
+Map capital to milestones and acceptance. Map operating effects to monthly behavior the plant can observe. Approvals should understand both, not merge them into one opaque index.
 
-Each assumption needs: who owns verification; by when; what measurement would falsify it.
+## Risk belongs on the same page
 
-| weak assumption | visible assumption |
-| --- | --- |
-| "automation will reduce labor" | which roles, which tasks, which shift pattern, verified how |
-| "quality will improve" | which defect class, baseline rate, detection method |
+Name integration risk, schedule sensitivity, readiness gaps, and change-order exposure as scenarios—not footnotes. A case that only works in the sunny path is a case that will be retried under stress.
 
-## Visible element 3: cash story with milestones, not a lump
+## Time to value is part of economics
 
-Show: capex timing; operating cost shifts; training and spare parts cadence (illustrative); sensitivity if ramp is slower than planned.
+Delay costs manual operation, opportunity, and management attention. Show how schedule uncertainty affects returns without pretending dates are guarantees.
 
-## Visible element 4: risk table with mitigations assigned inside the plant
+## Ownership and readiness
 
-Include integrator delivery risk, but also plant-owned risks: access windows; IT readiness; material availability for validation runs.
+Say who runs the project, who approves scope drift, and what must be true on the floor before value arrives. Capital without operational ownership is a slide, not a plan.
 
-## Visible element 5: decision rule if the case weakens mid-flight
+## How DBR77 Marketplace connects
 
-Publish what triggers pause or rescope (illustrative examples): acceptance cannot be met without a scope change that breaks ROI logic; internal readiness fails a named gate twice; supplier evidence changes materially.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because a business case is strongest when internal approval logic uses the same visible assumptions the market-facing process will later test.
-
-That keeps finance, procurement, and operations inside one decision story instead of three separate justifications.
+External comparability pairs with internal discipline: visible assumptions and decision records on both sides of the wall so approvals rest on inspectable logic.
 
 For the closest economics companion, see [How to Validate Total Cost of Ownership in Automation Projects](../31_how_to_validate_total_cost_of_ownership_in_automation_projects/article_EN.md).
 
+## Approvals that survive the first month
+
+Committees approve stories. Operations lives in reality. A business case should bridge that gap by showing what must be true in the first thirty to sixty days after cutover: training consumed, stabilization plan, spare parts path, and who owns performance tuning. If those operational truths are missing, the approval is theoretical.
+
+Use the case to align on non-financial success too: safety posture, ergonomics, workload shift, and quality stability. Not everything valuable fits a single ROI line.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"What a Good Internal Business Case for Automation Should Make Visible" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
+Finally, tie this discipline to accountability: name who will verify assumptions on the floor and by which milestone. Myths thrive when nobody owns measurement; they weaken when verification is part of the project plan, not an afterthought.
+
+
 ## Bottom line
 
-Make assumptions, cash timing, risks, and pause rules visible.
-
-That is how you earn approvals that survive first contact with the plant.
+Make cash, risk, time, and ownership visible. If the case cannot survive assumption scrutiny, it is not ready for committee—no matter how confident the headline looks.
 
 ---
 

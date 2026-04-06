@@ -5,54 +5,54 @@ Funnel stage: Consideration to Evaluation (specification and award inputs)
 Core problem: acceptance is treated as a late commissioning argument instead of a written contract against which delivery is planned  
 Main promise: a bounded method to define acceptance objects, evidence, and sequence before mobilization
 
-Acceptance is not a mood at go-live. It is the operational definition of done. If you cannot test it, you cannot award it cleanly.
+Late acceptance is expensive because it is late comparability. When criteria appear only after equipment arrives, integrators optimize for mobilization, not for your production week. Arguments move to the line, where every hour is loud and costly.
 
-Set acceptance criteria before delivery begins by publishing a numbered list of acceptance objects, each with objective evidence, responsible verifier, and sequence dependencies, then align milestones and payment triggers to those objects.
+Define acceptance as objects with evidence and sequence before delivery planning hardens: what must be true for safety, throughput, quality, recovery behavior, data handshakes, and operational readiness—each mapped to test methods and records.
 
-Deferring acceptance definition converts commissioning into negotiation and erodes schedule accountability.
+## Objects, not vibes
 
-## Step 1: separate objects from activities
+Replace “successful startup” with testable checks where honest for your category: safety functions under plant guarding and lockout reality; cycle bands under agreed load; quality sampling against plant metrology; fault and recovery cases operators can actually trigger; interface messages under network conditions; documentation and training that let standard work run without heroics.
 
-An acceptance object is an outcome you can verify.
+## Sequence matters
 
-Examples (illustrative): cycle time band under named SKU set and station conditions; error rate or reject handling behavior under defined inputs; safety functions validated under named scenarios; data handshake behavior at named interface points.
+Some checks belong at supplier site; some belong in your plant; some need staged evidence. Ordering prevents pretending SAT is FAT—or skipping FAT discipline because “we are behind.”
 
-Activities like "training completed" belong in the plan, but they should still map to observable outcomes where possible.
+## Approvers belong early
 
-## Step 2: define evidence per object
+Quality, maintenance, IT, and operations should see acceptance concepts before award, not discover them at sign-off. Missing approvers at definition time become missing approvers at commissioning time.
 
-For each object, specify: measurement method; environment conditions; sample size or duration rule; pass or fail rule.
+## Tie acceptance to comparison
 
-| weak evidence language | strong evidence language |
-| --- | --- |
-| "performance acceptable" | "throughput X to Y units per hour with scrap below Z under conditions A" |
-| "integrated with MES" | "events E1 to E3 appear in system S within T seconds in test cases TC1 to TC5" |
+Use the same criteria spine to judge offers: which path produces clearer evidence, fewer gray zones, and more realistic stabilization plans? Early acceptance design is sourcing discipline.
 
-## Step 3: sequence dependencies honestly
+## How DBR77 Marketplace helps
 
-Some objects cannot be proven until others are stable.
-
-Build a simple dependency list (illustrative): mechanical safety and guarding sign-off; basic motion and manual mode controls; automatic cycle under constrained SKU set; MES or quality system handshake under test loads; run-off under production-like conditions.
-
-If procurement wants early invoices, map milestones to real intermediate objects, not calendar theater.
-
-## Step 4: align internal approvals to acceptance roles
-
-Name who can sign each object class: operations for throughput and staffing impacts; quality for defect and traceability impacts; IT for identity and network impacts; maintenance for serviceability impacts.
-
-Missing approvers at definition time becomes missing approvers at sign-off time.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because acceptance criteria are one of the clearest ways to compare suppliers on outcomes instead of promises.
-
-That makes early acceptance design part of sourcing discipline, not something postponed to commissioning arguments.
+Acceptance criteria are one of the clearest ways to compare suppliers on outcomes instead of promises. Structured fields let teams attach objects and evidence requirements to comparable offers.
 
 For the closest continuity pieces, see [What FAT and SAT Should Actually Prove Before Go-Live](../25_what_fat_and_sat_should_actually_prove_before_go_live/article_EN.md), [What a Good Automation Offer Should Make Visible](../17_what_a_good_automation_offer_should_make_visible/article_EN.md), and [What a Clean Handoff From Selection to Delivery Should Look Like](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_EN.md).
 
+## Acceptance language operators can recognize
+
+If acceptance criteria read like legal poetry, they will fail operationally. Translate criteria into behaviors: what operators do, what maintenance checks, what quality measures, what stops the line legitimately versus what signals a defect. The goal is not perfect prose; it is shared understanding across functions.
+
+Tie criteria to realistic stabilization windows. Some systems need bounded tuning time; pretending otherwise creates false failures or false passes. Write the window, the exit checks, and the owner.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"How to Set Acceptance Criteria Before Automation Delivery Begins" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
+Finally, tie this discipline to accountability: name who will verify assumptions on the floor and by which milestone. Myths thrive when nobody owns measurement; they weaken when verification is part of the project plan, not an afterthought.
+
+
 ## Bottom line
 
-Write acceptance as testable objects with evidence before mobilization. Late acceptance is expensive because it is late comparability.
+Write acceptance before mobilization as testable objects with evidence. Late acceptance is late comparability—and the plant pays for it in the first production week.
 
 ---
 

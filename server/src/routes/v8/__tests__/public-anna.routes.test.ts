@@ -491,8 +491,9 @@ describe('Public Anna route guardrails', () => {
       workerSystemPrompt: 'Emphasize manufacturing readiness and ROI framing.',
     });
 
-    expect(prompt).toContain('You are Anna, the public Consultify assistant.');
+    expect(prompt).toContain('You are Anna, the public DBR77 product assistant.');
     expect(prompt).toContain('CURRENT SURFACE');
+    expect(prompt).toContain('Current landing-page product: Consultify.');
     expect(prompt).toContain('RETRIEVED KNOWLEDGE CONTEXT');
     expect(prompt).toContain('WORKER PROFILE ADDON');
     expect(prompt).toContain('Emphasize manufacturing readiness and ROI framing.');

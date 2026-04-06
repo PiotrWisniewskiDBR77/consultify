@@ -5,84 +5,33 @@ Funnel stage: Consideration
 Core problem: AI assistance increases event volume, but plants still route exceptions through informal chats, so response ownership and closure loops stay unclear  
 Main promise: a compact exception model with typed paths, thresholds, approvals, and audit fields that supervisors can run under load
 
-Design exception handling for AI-assisted operations by classifying every assisted output into one of four paths: auto-task within policy, advise-only with human claim, escalate with mandatory owner and SLA, or hard stop pending approval. For each path, define triggers, who may override, what record fields are mandatory, and how closure is proven. Publish the model next to workflow maps so shifts do not improvise; A model without named owners and time boxes is only a diagram. Assisted operations do not fail because the model is wrong on day one. They fail because exceptions become a second shadow process.
+Assisted operations do not usually fail because the model is wrong on day one. They fail because exceptions become a second shadow process—fast signals without a matching execution path, borderline cases that humans used to absorb quietly, and volume that turns into phone calls because the official model never included a fifth lane. Design exceptions on purpose, or the floor will design them for you.
 
-## Why exceptions spike when assistance goes live
+When assistance goes live, expect more candidate tasks, more near-threshold disagreements, and more “almost auto” routes that need a human stamp. If you do not design the exception layer, informal channels become the real system.
 
-Assistance surfaces borderline cases that humans used to absorb quietly.
+A workable model classifies assisted outputs into a small number of paths. Auto-task within published thresholds creates a task with rule version and timestamp, and closes with completed work or verified state. Advise-only signals require a human claim, with explicit dismiss or convert-to-task records even on rejection. Escalation paths apply when SLA risk, safety, quality holds, or cross-function conflict appears—each with a tier owner and due time. Hard stops apply for regulatory locks, customer constraints, or immature data—requiring approval roles, evidence links, and release criteria. If a fifth path appears in practice (“just ask the engineer”), your model is incomplete.
 
-You will see: more candidate tasks with incomplete context; more near-threshold signals that disagree across functions; more "almost auto" routes that need a human stamp.
+Before go-live, define a taxonomy for exceptions, an ownership matrix by shift, a time-based escalation ladder, approval rules with deputy coverage, handoff fields the next shift must see in the system, a rollback hook that pauses assisted routing without losing audit history, and a post-incident loop that forces threshold or training updates when patterns repeat.
 
-If you do not design the exception layer, the floor will design it with phone calls.
+Ticket culture logs activity. Closure culture finishes operational states. AI assistance amplifies ticket culture unless tasks bind to outcomes: time-to-owner, time-to-closure, and evidence that the line is safe, sorted, and documented.
 
-## Framework: four exception paths (pick one per event type)
+Roll out calmly: shadow-tag exceptions without auto-routing, review weekly themes, publish version one for a few workflows only, measure time-to-owner and repeat escalations, version the rulebook when thresholds move.
 
-| Path | When it applies | Required record | Closure proof |
-|---|---|---|---|
-| Auto-task | inside published thresholds and policy | task ID, rule version, timestamp | completed work order or verified state |
-| Advise-only | useful signal, human must claim | suggestion ID, claim owner, reason if rejected | explicit dismiss or convert-to-task |
-| Escalate | SLA risk, safety, quality hold, cross-function conflict | escalation tier, owner, due time | resolution note tied to originating signal |
-| Hard stop | regulatory, customer lock, or immature data | approval role, evidence link, release criteria | signed release or versioned rule change |
+IRIS fits the exception layer when assistance, tasks, approvals, and closure proof share one execution record—turning exception design into an operating contract instead of chat archaeology.
 
-If a fifth path appears in practice ("just ask the engineer"), your model is incomplete.
+For neighboring hardening, see [When a Factory Needs One Operational Arbiter for Conflicting Signals](../42_when_a_factory_needs_one_operational_arbiter_for_conflicting_signals/article_EN.md), [How to Create Audit-Ready Records for AI-Assisted Factory Decisions](../46_how_to_create_audit_ready_records_for_ai_assisted_factory_decisions/article_EN.md), and [What Full Operational Closure Should Look Like in an AI-Native Factory](../50_what_full_operational_closure_should_look_like_in_an_ai_native_factory/article_EN.md).
 
-## Checklist: minimum definitions before go-live
+Exception volume is also a diagnostic. If exceptions cluster around missing fields, your intake is immature. If they cluster around policy conflicts, your definitions are misaligned. If they cluster around night shift coverage, your approval model is unrealistic. A good exception model is not only a router; it is a sensor that tells leadership where the operating system is still fragile—before fragility becomes downtime.
 
-1. exception taxonomy: false positive, missing data, policy conflict, safety, customer, supplier  
-2. ownership matrix: who is first responder per type on each shift  
-3. escalation ladder: time-based steps, not personality-based steps  
-4. approval rules: which path requires which role, including deputy coverage  
-5. handoff fields: what the next shift must see in the system, not on paper  
-6. rollback hook: how to pause assisted routing without losing the audit trail  
-7. post-incident loop: when exceptions force a threshold or training change
+Supervisors will adopt exception paths only if they are faster than the informal path. That means time boxes must be real, owners must be reachable, and escalation must produce relief—not another loop. If the official exception path is slower than calling a favorite engineer, the engineer becomes the system. Design for that competitive reality.
 
-## Comparison: ticket culture versus closure culture
+Exception design is ownership design. Name responders, time boxes, and closure fields—then the plant can absorb higher assisted volume without losing control.
 
-| Signal | Ticket culture | Closure culture |
-|---|---|---|
-| intent | log activity | finish the operational state |
-| metric | backlog count | time-to-owner and time-to-closure |
-| success | "we assigned it" | "the line is safe, sorted, and documented" |
+## The operational bottom line
 
-AI assistance amplifies ticket culture unless you bind tasks to operational outcomes.
+The promise of this article—a compact exception model with typed paths, thresholds, approvals, and audit fields that supervisors can run under load—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “How to Design an Exception Handling Model for AI-Assisted Operations,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-## Reality check: exception models usually fail when the floor invents a fifth path
-
-Most teams can describe the official paths in a workshop.
-
-The real test comes later, when the plant starts using unofficial workarounds such as:
-
-- "call maintenance first and log it later"
-- "leave it in advise until day shift arrives"
-- "ask engineering informally because nobody owns this path"
-
-The moment that hidden fifth path becomes normal, the model is no longer controlling assisted volume. The floor is.
-
-## Step sequence: roll out the model without drama
-
-Shadow mode: tag would-be exceptions without auto-routing; weekly review: categorize the top twenty themes and assign owners; publish v1 paths for three workflows only; measure: median time-to-owner, repeat escalations, override reasons; version the rulebook when thresholds move.
-
-## When this model works
-
-Supervisors already respect SLAs for manual work; you can keep one changelog for thresholds and modes; quality and maintenance agree on hold rules.
-
-## When this model fails
-
-ERP or MES remains the only system of record and IRIS-like layers are optional; engineering edits rules without operations sign-off; night shift lacks deputy approvers.
-
-## Why IRIS fits the exception layer naturally
-
-DBR77 IRIS matters here because exception handling only works when assistance, tasks, approvals, and closure proof share one execution record instead of being reconstructed after the incident.
-
-That turns exception design into an operating contract, not a side process built from chat history.
-
-For the neighboring hardening pieces, see [When a Factory Needs One Operational Arbiter for Conflicting Signals](../42_when_a_factory_needs_one_operational_arbiter_for_conflicting_signals/article_EN.md), [How to Create Audit-Ready Records for AI-Assisted Factory Decisions](../46_how_to_create_audit_ready_records_for_ai_assisted_factory_decisions/article_EN.md), and [What Full Operational Closure Should Look Like in an AI-Native Factory](../50_what_full_operational_closure_should_look_like_in_an_ai_native_factory/article_EN.md).
-
-## Final takeaway
-
-Exception design is ownership design.
-
-If every path names a responder, a time box, and a closure field, the plant can absorb higher assisted volume without losing control.
+That standard is not about software perfection; it is about operational honesty: fewer mystery handoffs, fewer truths reconciled only in meetings, and more days where the system record matches what the floor would say if you stopped them mid-task.
 
 ---
 

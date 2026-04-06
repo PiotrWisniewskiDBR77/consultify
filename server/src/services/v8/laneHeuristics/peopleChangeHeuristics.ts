@@ -1,3 +1,4 @@
+import { stableHeuristicId } from './idFactory.js';
 import type { HeuristicInput, HeuristicOutput } from './types.js';
 
 let seqId = 0;
@@ -126,7 +127,7 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
   // Suggestions
   if (noOwner.length > 0) {
     suggestions.push({
-      id: uid('sug-pc'),
+      id: stableHeuristicId('sug-pc', 'assign-initiative-owners'),
       action: `Assign owners to ${noOwner.length} initiatives`,
       reason: 'Unowned initiatives lack accountability',
       expectedOutcome: 'Clear responsibility for delivery and decision-making',
@@ -139,7 +140,7 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
 
   if (unownedTasks.length > 5) {
     suggestions.push({
-      id: uid('sug-pc'),
+      id: stableHeuristicId('sug-pc', 'assign-task-owners'),
       action: `Assign ${unownedTasks.length} tasks to team members`,
       reason: 'Unassigned tasks are invisible to workload and progress tracking',
       expectedOutcome: 'Full workload visibility and progress accountability',
@@ -152,7 +153,7 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
 
   if (ownerClarityPct < 60) {
     suggestions.push({
-      id: uid('sug-pc'),
+      id: stableHeuristicId('sug-pc', 'update-raci'),
       action: 'Update stakeholder map and RACI matrix',
       reason: 'Low ownership clarity indicates incomplete governance mapping',
       expectedOutcome: 'Clear roles and responsibilities for all active work',
@@ -165,7 +166,7 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
 
   if (active.length > 10 && pendingDecisions.length > 5) {
     suggestions.push({
-      id: uid('sug-pc'),
+      id: stableHeuristicId('sug-pc', 'launch-steerco-cadence'),
       action: 'Launch regular communication/steerco cadence',
       reason: 'Large portfolio with many pending decisions needs structured alignment',
       expectedOutcome: 'Stakeholder alignment, faster decisions, reduced governance gaps',
@@ -178,7 +179,7 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
 
   if (ownerCount === 1 && active.length > 5) {
     suggestions.push({
-      id: uid('sug-pc'),
+      id: stableHeuristicId('sug-pc', 'distribute-ownership'),
       action: 'Add change manager or distribute ownership',
       reason: 'Single owner for 5+ initiatives is unsustainable',
       expectedOutcome: 'Reduced bus-factor risk and better attention per initiative',

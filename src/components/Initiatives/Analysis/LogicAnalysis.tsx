@@ -31,10 +31,17 @@ import { useTranslation } from 'react-i18next';
 
 import type { PortfolioInitiative } from '@/types';
 
+import { DependencyGraphCanvas } from './DependencyGraphCanvas';
 import {
   getMenu3AiButtonClass,
 } from './menu3ActionButtonStyles';
-import type { AnalysisIssue, DependencyLink, OrgUser, QuickUpdatePayload } from './types';
+import type {
+  AnalysisIssue,
+  DependencyLink,
+  OrgUser,
+  QuickUpdatePayload,
+  RegisterAnalysisWorkspacePanel,
+} from './types';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -83,9 +90,16 @@ interface LogicAnalysisProps {
   issues: AnalysisIssue[];
   onOpenInitiative: (id: string) => void;
   onQuickUpdate?: (initiativeId: string, updates: QuickUpdatePayload) => Promise<void>;
+  onCreateDependency?: (
+    predecessorId: string,
+    successorId: string,
+    type?: 'FINISH_TO_START' | 'START_TO_START'
+  ) => Promise<void>;
+  onDeleteDependency?: (dependencyId: string) => Promise<void>;
   initiatives?: PortfolioInitiative[];
   users?: OrgUser[];
   onRegisterActions?: (node: React.ReactNode) => void;
+  onRegisterWorkspacePanel?: RegisterAnalysisWorkspacePanel;
 }
 
 /* ------------------------------------------------------------------ */
@@ -138,9 +152,12 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   issues,
   onOpenInitiative,
   onQuickUpdate,
+  onCreateDependency,
+  onDeleteDependency,
   initiatives = [],
   users: _users = [],
   onRegisterActions,
+  onRegisterWorkspacePanel,
 }) => {
   const { t } = useTranslation();
 
@@ -159,6 +176,13 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   const [showSequencer, setShowSequencer] = useState(false);
 
   const [applyingFix, setApplyingFix] = useState<string | null>(null);
+
+  const closeWorkspacePanels = useCallback(() => {
+    setDiscoveredDeps(null);
+    setCycles(null);
+    setShowCriticalPath(false);
+    setShowSequencer(false);
+  }, []);
 
   /* ---------- sort ---------- */
 
@@ -229,22 +253,22 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
           const aPrio = priorityOrder[a.priority] ?? 2;
           const bPrio = priorityOrder[b.priority] ?? 2;
 
-          let fromInit = a;
-          let toInit = b;
+          let predecessor = a;
+          let successor = b;
           let reason = '';
 
           if (a.plannedEndDate && b.plannedStartDate && new Date(a.plannedEndDate) <= new Date(b.plannedStartDate)) {
-            reason = `"${a.name}" ends before "${b.name}" starts — natural sequence in ${overlap.join(', ')} domain`;
+            reason = `"${a.name}" should precede "${b.name}" — natural sequence in ${overlap.join(', ')} domain`;
           } else if (b.plannedEndDate && a.plannedStartDate && new Date(b.plannedEndDate) <= new Date(a.plannedStartDate)) {
-            fromInit = b;
-            toInit = a;
-            reason = `"${b.name}" ends before "${a.name}" starts — natural sequence in ${overlap.join(', ')} domain`;
+            predecessor = b;
+            successor = a;
+            reason = `"${b.name}" should precede "${a.name}" — natural sequence in ${overlap.join(', ')} domain`;
           } else if (aPrio < bPrio) {
-            reason = `"${a.name}" is higher priority (${a.priority}) and shares ${overlap.join(', ')} domain with "${b.name}"`;
+            reason = `"${a.name}" is higher priority (${a.priority}) and likely unlocks "${b.name}" in ${overlap.join(', ')} domain`;
           } else if (bPrio < aPrio) {
-            fromInit = b;
-            toInit = a;
-            reason = `"${b.name}" is higher priority (${b.priority}) and shares ${overlap.join(', ')} domain with "${a.name}"`;
+            predecessor = b;
+            successor = a;
+            reason = `"${b.name}" is higher priority (${b.priority}) and likely unlocks "${a.name}" in ${overlap.join(', ')} domain`;
           } else {
             reason = `Both share ${overlap.join(', ')} domain — "${a.name}" may need to precede "${b.name}"`;
           }
@@ -253,10 +277,10 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             overlap.length >= 2 ? 'high' : (reason.includes('natural sequence') ? 'high' : 'medium');
 
           proposals.push({
-            fromId: fromInit.id,
-            fromName: fromInit.name,
-            toId: toInit.id,
-            toName: toInit.name,
+            fromId: predecessor.id,
+            fromName: predecessor.name,
+            toId: successor.id,
+            toName: successor.name,
             reason,
             confidence,
           });
@@ -274,16 +298,28 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
   }, [dependencies, initiatives, t]);
 
   const handleAcceptDiscovered = useCallback(
-    (dep: DiscoveredDep) => {
-      setAcceptedDiscovered((prev) => new Set([...prev, `${dep.fromId}::${dep.toId}`]));
-      toast.success(
-        t('initiatives.analysis.logic.depAccepted', 'Dependency noted: {{from}} → {{to}}', {
-          from: dep.fromName,
-          to: dep.toName,
-        })
-      );
+    async (dep: DiscoveredDep) => {
+      const key = `${dep.fromId}::${dep.toId}`;
+      try {
+        if (onCreateDependency) {
+          await onCreateDependency(dep.fromId, dep.toId, 'FINISH_TO_START');
+        }
+        setAcceptedDiscovered((prev) => new Set([...prev, key]));
+        toast.success(
+          t('initiatives.analysis.logic.depAccepted', 'Dependency saved: {{from}} → {{to}}', {
+            from: dep.fromName,
+            to: dep.toName,
+          })
+        );
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.error ||
+            error?.message ||
+            t('initiatives.analysis.logic.depAcceptFailed', 'Failed to save dependency')
+        );
+      }
     },
-    [t]
+    [onCreateDependency, t]
   );
 
   /* ---------- AI Detect Cycles ---------- */
@@ -345,14 +381,14 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
   const { blockers, criticalPath } = useMemo(() => {
     const idToInit = new Map(initiatives.map((i) => [i.id, i]));
-    const dependentCount = new Map<string, Set<string>>();
+    const successorCount = new Map<string, Set<string>>();
 
     for (const d of dependencies) {
-      if (!dependentCount.has(d.toId)) dependentCount.set(d.toId, new Set());
-      dependentCount.get(d.toId)!.add(d.fromId);
+      if (!successorCount.has(d.fromId)) successorCount.set(d.fromId, new Set());
+      successorCount.get(d.fromId)!.add(d.toId);
     }
 
-    const blockersResult: BlockerInfo[] = Array.from(dependentCount.entries())
+    const blockersResult: BlockerInfo[] = Array.from(successorCount.entries())
       .filter(([, deps]) => deps.size >= 1)
       .map(([id, deps]) => ({
         initiativeId: id,
@@ -517,13 +553,337 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
     [onQuickUpdate, t]
   );
 
+  const discoveredDepsPanel = discoveredDeps !== null ? (
+    <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+          <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+            {t('initiatives.analysis.logic.discoveredDeps', 'AI discovered potential dependencies')}
+          </h3>
+          <span className="text-xs text-purple-500 dark:text-purple-400">
+            ({discoveredDeps.length})
+          </span>
+        </div>
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      {discoveredDeps.length === 0 ? (
+        <div className="px-4 py-6 text-center">
+          <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {t('initiatives.analysis.logic.noNewDeps', 'No additional dependencies discovered')}
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+          {discoveredDeps.map((dep, idx) => {
+            const key = `${dep.fromId}::${dep.toId}`;
+            const isAccepted = acceptedDiscovered.has(key);
+            return (
+              <div
+                key={`${key}-${idx}`}
+                className={`flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                  isAccepted ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
+                }`}
+              >
+                <span
+                  className={`shrink-0 w-2 h-2 rounded-full ${
+                    dep.confidence === 'high'
+                      ? 'bg-emerald-500'
+                      : dep.confidence === 'medium'
+                        ? 'bg-amber-500'
+                        : 'bg-slate-400'
+                  }`}
+                  title={`Confidence: ${dep.confidence}`}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
+                      {dep.fromName}
+                    </span>
+                    <ArrowRight size={14} className="text-purple-400 shrink-0" />
+                    <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
+                      {dep.toName}
+                    </span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        dep.confidence === 'high'
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                          : dep.confidence === 'medium'
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                            : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                      }`}
+                    >
+                      {dep.confidence}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{dep.reason}</p>
+                </div>
+                {isAccepted ? (
+                  <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <Check size={12} /> Accepted
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => handleAcceptDiscovered(dep)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                    >
+                      <Check size={12} /> Accept
+                    </button>
+                    <button
+                      onClick={() =>
+                        setDiscoveredDeps((prev) => prev?.filter((_, i) => i !== idx) ?? null)
+                      }
+                      className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  const cyclesPanel = cycles !== null ? (
+    <div
+      className={`m-4 rounded-xl border overflow-hidden ${
+        cycles.length > 0
+          ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
+          : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
+      }`}
+    >
+      <div
+        className={`px-4 py-3 border-b flex items-center justify-between ${
+          cycles.length > 0
+            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
+            : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <Shuffle
+            size={16}
+            className={
+              cycles.length > 0
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-emerald-600 dark:text-emerald-400'
+            }
+          />
+          <h3
+            className={`text-sm font-semibold ${
+              cycles.length > 0
+                ? 'text-red-700 dark:text-red-300'
+                : 'text-emerald-700 dark:text-emerald-300'
+            }`}
+          >
+            {cycles.length > 0
+              ? t('initiatives.analysis.logic.cyclesFound', '{{count}} cycle(s) detected', {
+                  count: cycles.length,
+                })
+              : t('initiatives.analysis.logic.noCycles', 'No cycles detected')}
+          </h3>
+        </div>
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-slate-500 hover:bg-slate-200/30 dark:hover:bg-navy-700/50"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      {cycles.map((c, idx) => (
+        <div key={idx} className="px-4 py-3 border-b border-red-200/50 dark:border-red-900/30">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+            {c.pathNames.map((name, ni) => (
+              <React.Fragment key={ni}>
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded ${
+                    ni === 0 || ni === c.pathNames.length - 1
+                      ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {name}
+                </span>
+                {ni < c.pathNames.length - 1 && (
+                  <ArrowRight size={12} className="text-red-400 shrink-0" />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            <Sparkles size={10} className="inline mr-1" />
+            {c.suggestion}
+          </p>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
+  const criticalPathPanel = showCriticalPath ? (
+    <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Route size={16} className="text-amber-600 dark:text-amber-400" />
+          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+            {t('initiatives.analysis.logic.criticalPathTitle', 'Critical Path')}
+            {criticalPath.totalDays > 0 && (
+              <span className="ml-2 text-xs font-normal text-amber-600/70 dark:text-amber-400/70">
+                ({criticalPath.totalDays} days)
+              </span>
+            )}
+          </h3>
+        </div>
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-amber-500 hover:bg-amber-200/30 dark:hover:bg-amber-800/30"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      {criticalPath.path.length === 0 ? (
+        <div className="px-4 py-6 text-center">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {t(
+              'initiatives.analysis.logic.noCriticalPath',
+              'No dependency chain found — add dependencies first'
+            )}
+          </p>
+        </div>
+      ) : (
+        <div className="p-4">
+          <div className="flex items-center gap-1 flex-wrap">
+            {criticalPath.path.map((step, idx) => (
+              <React.Fragment key={step.id}>
+                <button
+                  onClick={() => onOpenInitiative(step.id)}
+                  className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50 hover:border-primary-400 dark:hover:border-primary-600 transition-colors shadow-sm"
+                >
+                  <div className="text-xs font-medium text-slate-900 dark:text-white">
+                    {step.name}
+                  </div>
+                  {step.startDate && step.endDate && (
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      {new Date(step.startDate).toLocaleDateString()} —{' '}
+                      {new Date(step.endDate).toLocaleDateString()}
+                      <span className="ml-1 text-amber-500">
+                        ({daysBetween(step.startDate, step.endDate)}d)
+                      </span>
+                    </div>
+                  )}
+                </button>
+                {idx < criticalPath.path.length - 1 && (
+                  <ArrowRight size={16} className="text-amber-400 shrink-0 mx-1" />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      )}
+      {blockers.length > 0 && (
+        <div className="border-t border-amber-200/50 dark:border-amber-900/30">
+          <div className="px-4 py-2 bg-amber-50/50 dark:bg-amber-900/10">
+            <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+              {t('initiatives.analysis.logic.blockersTitle', 'Blockers')}
+            </h4>
+          </div>
+          <div className="divide-y divide-amber-200/40 dark:divide-amber-900/20">
+            {blockers.map((b) => (
+              <div key={b.initiativeId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                <Zap size={14} className="text-amber-500 shrink-0" />
+                <button
+                  onClick={() => onOpenInitiative(b.initiativeId)}
+                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate"
+                >
+                  {b.initiativeName}
+                </button>
+                <span className="ml-auto shrink-0 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium">
+                  {t('initiatives.analysis.logic.blockerBadge', '{{count}} dependent(s)', {
+                    count: b.dependentCount,
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  const sequencerPanel = showSequencer ? (
+    <div className="m-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Network size={16} className="text-indigo-600 dark:text-indigo-400" />
+          <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+            {t('initiatives.analysis.logic.sequencerTitle', 'AI Recommended Execution Sequence')}
+          </h3>
+        </div>
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30 dark:hover:bg-indigo-800/30"
+        >
+          <X size={14} />
+        </button>
+      </div>
+      {sequenceSteps.length === 0 ? (
+        <div className="px-4 py-6 text-center">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {t('initiatives.analysis.logic.noInitiatives', 'No initiatives to sequence')}
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-indigo-200/50 dark:divide-indigo-900/30">
+          {sequenceSteps.map((step) => (
+            <div key={step.phase} className="px-4 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold">
+                  {step.phase}
+                </span>
+                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                  Phase {step.phase}
+                </span>
+              </div>
+              <div className="space-y-1 ml-9">
+                {step.initiatives.map((init) => (
+                  <div key={init.id} className="flex items-center gap-2 text-sm">
+                    <button
+                      onClick={() => onOpenInitiative(init.id)}
+                      className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[250px]"
+                    >
+                      {init.name}
+                    </button>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                      {init.reason}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  ) : null;
+
   useEffect(() => {
     if (!onRegisterActions) return;
     const toggleDiscoveredDepsPanel = () => {
       if (discoveredDeps !== null) {
-        setDiscoveredDeps(null);
+        closeWorkspacePanels();
         return;
       }
+      setCycles(null);
+      setShowCriticalPath(false);
+      setShowSequencer(false);
       computeDiscoverDeps();
     };
     onRegisterActions(
@@ -537,21 +897,40 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
           AI Discover Dependencies
         </button>
         <button
-          onClick={detectCycles}
-          className={getMenu3AiButtonClass(false)}
+          onClick={() => {
+            if (cycles !== null) {
+              closeWorkspacePanels();
+              return;
+            }
+            setDiscoveredDeps(null);
+            setShowCriticalPath(false);
+            setShowSequencer(false);
+            detectCycles();
+          }}
+          className={getMenu3AiButtonClass(cycles !== null)}
         >
           <Shuffle size={12} />
           Detect Cycles
         </button>
         <button
-          onClick={() => setShowCriticalPath((v) => !v)}
+          onClick={() => {
+            setDiscoveredDeps(null);
+            setCycles(null);
+            setShowSequencer(false);
+            setShowCriticalPath((v) => !v);
+          }}
           className={getMenu3AiButtonClass(showCriticalPath)}
         >
           <Route size={12} />
           Critical Path
         </button>
         <button
-          onClick={() => setShowSequencer((v) => !v)}
+          onClick={() => {
+            setDiscoveredDeps(null);
+            setCycles(null);
+            setShowCriticalPath(false);
+            setShowSequencer((v) => !v);
+          }}
           className={getMenu3AiButtonClass(showSequencer)}
         >
           <Network size={12} />
@@ -559,7 +938,65 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         </button>
       </>
     );
-  }, [onRegisterActions, computeDiscoverDeps, discoveredDeps, discoverRunning, showCriticalPath, showSequencer]);
+  }, [
+    onRegisterActions,
+    computeDiscoverDeps,
+    discoveredDeps,
+    discoverRunning,
+    showCriticalPath,
+    showSequencer,
+    cycles,
+    detectCycles,
+    closeWorkspacePanels,
+  ]);
+
+  useEffect(() => {
+    if (!onRegisterWorkspacePanel) return;
+    if (discoveredDepsPanel) {
+      onRegisterWorkspacePanel({
+        title: 'AI Discover Dependencies',
+        subtitle: 'Review and accept potential cross-initiative dependencies.',
+        icon: <Search size={16} />,
+        content: discoveredDepsPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (cyclesPanel) {
+      onRegisterWorkspacePanel({
+        title: 'Detect Cycles',
+        subtitle: 'Resolve circular dependency chains before sequencing work.',
+        icon: <Shuffle size={16} />,
+        content: cyclesPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (criticalPathPanel) {
+      onRegisterWorkspacePanel({
+        title: 'Critical Path',
+        subtitle: 'See the longest dependency chain and the main blockers.',
+        icon: <Route size={16} />,
+        content: criticalPathPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (sequencerPanel) {
+      onRegisterWorkspacePanel({
+        title: 'AI Sequencer',
+        subtitle: 'Recommended execution phases based on dependencies and priority.',
+        icon: <Network size={16} />,
+        content: sequencerPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    onRegisterWorkspacePanel(null);
+    return undefined;
+  }, [
+    discoveredDepsPanel,
+    cyclesPanel,
+    criticalPathPanel,
+    sequencerPanel,
+    onRegisterWorkspacePanel,
+  ]);
 
   /* ---------- render ---------- */
 
@@ -607,8 +1044,80 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
         </div>
       </div>
 
+      {dependencies.length > 0 && sequenceSteps.length > 0 && (
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Network size={16} className="text-indigo-500" />
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Dependency Flow
+              </h3>
+            </div>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Canonical predecessor → successor graph
+            </span>
+          </div>
+          <div className="p-4 overflow-x-auto">
+            <div className="flex items-stretch gap-3 min-w-max">
+              {sequenceSteps.map((step, idx) => (
+                <React.Fragment key={step.phase}>
+                  <div className="w-64 rounded-xl border border-slate-200/70 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-950/50 p-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-[11px] font-semibold">
+                        {step.phase}
+                      </span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Phase {step.phase}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {step.initiatives.map((init) => {
+                        const isCritical = criticalPath.path.some((cp) => cp.id === init.id);
+                        return (
+                          <button
+                            key={init.id}
+                            type="button"
+                            onClick={() => onOpenInitiative(init.id)}
+                            className={`w-full text-left rounded-lg border px-3 py-2 transition-colors ${
+                              isCritical
+                                ? 'border-amber-300 dark:border-amber-800/60 bg-amber-500/10'
+                                : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:bg-slate-100 dark:hover:bg-white/[0.04]'
+                            }`}
+                          >
+                            <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                              {init.name}
+                            </div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                              {init.reason}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {idx < sequenceSteps.length - 1 && (
+                    <div className="flex items-center px-1">
+                      <ArrowRight size={18} className="text-slate-300 dark:text-slate-600" />
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DependencyGraphCanvas
+        initiatives={initiatives}
+        dependencies={dependencies}
+        criticalPathIds={criticalPath.path.map((step) => step.id)}
+        onOpenInitiative={onOpenInitiative}
+        onCreateDependency={onCreateDependency}
+        onDeleteDependency={onDeleteDependency}
+      />
+
       {/* AI Discover Dependencies panel */}
-      {discoveredDeps !== null && (
+      {!onRegisterWorkspacePanel && discoveredDeps !== null && (
         <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -697,7 +1206,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       )}
 
       {/* Cycle detection results */}
-      {cycles !== null && (
+      {!onRegisterWorkspacePanel && cycles !== null && (
         <div className={`rounded-xl border overflow-hidden ${
           cycles.length > 0
             ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
@@ -748,7 +1257,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       )}
 
       {/* Critical Path panel */}
-      {showCriticalPath && (
+      {!onRegisterWorkspacePanel && showCriticalPath && (
         <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -837,7 +1346,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       )}
 
       {/* AI Sequencer */}
-      {showSequencer && (
+      {!onRegisterWorkspacePanel && showSequencer && (
         <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -905,14 +1414,14 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 <th className="w-8 px-4 py-2.5" />
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button onClick={() => handleSort('from')} className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400">
-                    {t('initiatives.analysis.logic.from', 'From')}
+                    {t('initiatives.analysis.logic.from', 'Predecessor')}
                     <SortIcon col="from" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="w-8" />
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button onClick={() => handleSort('to')} className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400">
-                    {t('initiatives.analysis.logic.to', 'Depends on')}
+                    {t('initiatives.analysis.logic.to', 'Successor')}
                     <SortIcon col="to" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
@@ -935,7 +1444,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 const depKey = `${d.fromId}::${d.toId}`;
                 const isExpanded = expandedDep === depKey;
                 const relatedIssue = issues.find(
-                  (i) => i.issueType === 'dependency_timing' && i.initiativeId === d.fromId
+                  (i) => i.issueType === 'dependency_timing' && i.initiativeId === d.toId
                 );
 
                 return (

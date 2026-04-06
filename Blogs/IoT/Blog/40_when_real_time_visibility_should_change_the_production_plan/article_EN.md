@@ -5,55 +5,55 @@ Funnel stage: Decision
 Core problem: planners distrust shop-floor stories, while IoT can show drift too late if it is not tied to planning governance, so either nothing changes or everything changes chaotically  
 Main promise: a decision gate: which real-time conditions authorize a plan change, who approves, within what time window, and what evidence standard applies
 
-Real-time visibility is not a license to replan every hour.
+Real-time visibility is not permission to replan every hour. It is a governed trigger list for when the plan is no longer the best honest forecast.
 
-It is a trigger list for when the plan is no longer the best honest forecast. Planning needs governance as much as the line needs safety rules.
+Without rules, planners burn out from thrash—or ignore the line entirely. With rules, IoT becomes admissible evidence instead of background noise.
 
-Change the production plan when **confirmed machine and flow conditions** cross thresholds that your plant already ties to customer, inventory, or compliance risk, and when the change passes a **named approver** inside a defined window.
+Planners learn quickly which plants use data responsibly and which plants treat every chart as permission to panic. If IoT becomes synonymous with constant sequence changes, planners will defend the schedule by ignoring the feed. Governance is how you keep visibility credible enough to listen to.
 
-Do not change the plan based on: unconfirmed sensor spikes; one shift's opinion without corroboration; visibility that only affects internal efficiency with no customer or inventory impact.
+## When a plan change is justified
 
-## Framework: three plan-change classes
+Change the plan when confirmed machine and flow conditions cross thresholds the plant already ties to customer, inventory, or compliance risk—and when a named approver authorizes the change inside a defined window. “Confirmed” means the signal sits on an approved evidence list and any required corroboration or operator acknowledgment happened.
 
-1. **Protect class** Safety, regulatory, or quality non-conformance that blocks shipment or introduces recall-class risk Plan change is often mandatory, not optional.
+## When to hold the line
 
-2. **Recover class** Confirmed capacity loss on a constraint resource with a time horizon that breaks the committed schedule Plan change is authorized if recovery actions cannot close the gap.
+Do not replan on unconfirmed spikes, single-shift opinion without corroboration, or conditions that affect internal efficiency alone with no customer or inventory consequence—unless your governance explicitly says otherwise. Visibility can remain for local recovery without rewriting the schedule.
 
-3. **Rebalance class** Flow imbalance that will create downstream starvation or excess within an agreed horizon Plan change is optional but should follow a standard playbook.
+## Three plan-change classes most plants can use
 
-Each class should have a default approver and a maximum frequency per day to prevent thrash.
+Protect-class events involve safety, regulatory, or quality non-conformance that blocks shipment or creates recall-class exposure—often mandatory response paths. Recover-class events are confirmed capacity loss on a constraint resource where recovery actions cannot close the gap inside the committed horizon. Rebalance-class events are flow imbalances that will starve or flood downstream inside an agreed window; they follow a standard playbook and optional approver rules.
 
-## Comparison: reactive thrash versus governed replan
+Each class should name default approvers and sensible frequency limits so planners are not whiplashed.
 
-| Reactive thrash | Governed replan |
-|---|---|
-| constant sequence changes | trigger list and approver |
-| planner burned out | planner protected by rules |
-| IoT blamed for chaos | IoT cited as evidence object |
-| operators distrust plan | plan aligns to confirmed reality |
+**Make IoT evidence admissible:** approved signal list for replan; confirmation workflow referenced, not skipped; downtime reasons and overrides part of the story; customer commitment standards explicit.
 
-## Checklist: make IoT evidence admissible in planning
+## Protect planners from thrash
 
-- [ ] signals used for replan are on the approved evidence list
-- [ ] confirmation workflow is referenced, not skipped for "urgency"
-- [ ] overrides and downtime reason codes are part of the story
-- [ ] standards for customer commitment are explicit
-- [ ] post-change review logs what evidence triggered the move
+Cap how often each plan-change class can fire per day. Require named approvers per class. Log decisions so the plant can review whether replanning helped or only moved pain. Thrash without memory is how organizations learn to distrust both planners and data.
 
-## Integration with handover and escalation
+## DBR77 IoT in planning governance
 
-Planning sits between **shift execution** and **customer promise**.
+DBR77 IoT supports planning when real-time visibility ties to evidence objects—state, reasons, timestamps—planners trust enough to cite in a decision record.
 
-If handover and escalation rules are weak, planners will keep ignoring IoT.
+Govern replanning like safety: clear triggers, named approvers, evidence standards, and limits on thrash. IoT should justify disciplined changes, not chaotic ones.
 
-Strengthen those loops first on constraint lines using [how to use IoT data in shift handover without creating more reporting](../33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting/article_EN.md), [when IoT should trigger supervisor escalation and when it should not](../34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not/article_EN.md), and [how to use IoT for faster problem confirmation on the shop floor](../39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor/article_EN.md).
 
-## What this means for DBR77 IoT
 
-DBR77 IoT is differentiated in planning when replan triggers tie to confirmed conditions, named approvers, and protect or recover or rebalance classes with frequency caps, not to raw visibility or shift opinion.
 
-Constraint assets on older lines should follow the same evidence bar once signal quality is admitted into the planning conversation.
+## Keep the article’s promise practical
 
-## Bottom line
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
 
-Let real-time visibility change the plan only where **confirmed conditions**, **clear risk**, and **named authority** align. Otherwise keep the plan stable and fix the signal or the process.
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT gives planners trustworthy real-time evidence—machine state, reasons, and context—so plan changes are governed, not guessed. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

@@ -1,3 +1,4 @@
+import { stableHeuristicId } from './idFactory.js';
 import type { HeuristicInput, HeuristicOutput } from './types.js';
 
 let seqId = 0;
@@ -145,7 +146,7 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
   // Suggestions
   if (noBaseline.length > 0) {
     suggestions.push({
-      id: uid('sug-rsk'),
+      id: stableHeuristicId('sug-rsk', 'set-baseline-dates'),
       action: `Set baseline dates for ${noBaseline.length} initiatives`,
       reason: 'Variance analysis impossible without baseline',
       expectedOutcome: 'Enables delivery confidence tracking',
@@ -158,7 +159,7 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
 
   if (criticalRisks.length > 0) {
     suggestions.push({
-      id: uid('sug-rsk'),
+      id: stableHeuristicId('sug-rsk', 'assign-mitigation-owners'),
       action: `Assign mitigation owners to ${criticalRisks.length} critical risks`,
       reason: 'Unowned risks have no one driving resolution',
       expectedOutcome: 'Active risk management for each critical item',
@@ -171,7 +172,7 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
 
   if (confidence < 50) {
     suggestions.push({
-      id: uid('sug-rsk'),
+      id: stableHeuristicId('sug-rsk', 'comprehensive-risk-plan'),
       action: 'Create comprehensive risk management plan',
       reason: `Delivery confidence at ${confidence}% — structured risk response needed`,
       expectedOutcome: 'Systematic risk reduction with measurable targets',
@@ -184,7 +185,7 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
 
   if (confidence < 30) {
     suggestions.push({
-      id: uid('sug-rsk'),
+      id: stableHeuristicId('sug-rsk', 'leadership-escalation-review'),
       action: 'Escalation review with leadership — consider stop/slow/continue for at-risk initiatives',
       reason: `Delivery confidence critically low (${confidence}%) — strategic intervention needed`,
       expectedOutcome: 'Clear go/no-go decisions for high-risk initiatives',
@@ -197,7 +198,7 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
 
   if (staleCount > 10) {
     suggestions.push({
-      id: uid('sug-rsk'),
+      id: stableHeuristicId('sug-rsk', 'refresh-stale-items'),
       action: 'Update stale items or close obsolete ones',
       reason: `${staleCount} items with no activity erode data quality`,
       expectedOutcome: 'Accurate portfolio view and risk assessment',

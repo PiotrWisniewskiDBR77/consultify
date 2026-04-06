@@ -20,10 +20,16 @@ Last updated: 2026-03-31 (P04-C evidence closure)
 - Zastąpienie modułu `Finanse` i `Wdrożenia` (KPI ma je zasilać i linkować, nie przejmować).
 
 ## 3. Authority chain (SSOT)
+- Full-system canon: `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_KPI_2026-03-29.md`
 - SSOT: `docs/product/RESULTS_V8_SSOT.md`
 - Runtime linkage: `docs/product/RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`
+
+Interpretation note:
+
+This implementation contract remains the verified historical bounded-lane contract for Wave 1 / V8.1.
+The broader target state for cross-module KPI evolution now lives in `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`.
 
 ## 4. Softs inspirations (benchmark apps)
 ### 4.1 Primary benchmark family (SSOT)
@@ -75,6 +81,9 @@ Last updated: 2026-03-31 (P04-C evidence closure)
 | Reconciliation semantics | explicit discrepancy handling | “reconciliation depth is limited” | Zdefiniować i dowieźć reconciliation (aligned/pending/requires review) + evidence cues | P0 |
 | KPI↔Finance coherence | consequence lane must be coherent | “still not fully unified outside active lane” | Domknąć KPI→Finance runtime unification na deklarowanym zakresie | P0 |
 | KPI as operating system (not only dashboard) | scorecard + commentary + next action | “behaves more like bounded dashboard” | Wymusić “next action” flows (execution follow-up) i status tracking | P1
+| Operator cockpit surfaces | overview + queue + governed catalog | bounded lane shipped table-first workspace | Dowieźć widoczne `Overview / Queue / Catalog` w `Results > KPI` jako realny cockpit operatora | P0 |
+| Reporting artifact maturity | template identity + scope load + refresh | snapshot create exists, artifact visibility still thin | Pokazać template metadata, scope size i dodać snapshot refresh z listy reportów | P0 |
+| Alert and queue semantics | stale / below / discrepancy / requires-review lanes | signals exist but lane visibility is limited | Uczytelnić queue semantics i wejścia do pracy operatora | P1 |
 
 ## 5. Product contract (user-facing)
 ### 5.1 Primary flows
@@ -226,6 +235,19 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 - **DoD**:
   - Status `verified(evidence)` with complete ledger entries and known limits.
 
+#### P04-D — Premium operator surfaces extension
+- **Goal**: domknąć brakujący, widoczny premium scope ponad bounded lane bez zmiany doktryny `P04`.
+- **Acceptance**: użytkownik po wejściu do `Results > KPI / Reports` widzi realną różnicę względem wcześniejszego table-only lane.
+- **Evidence**: UI runtime + targeted regression for cockpit/report refresh flows.
+- **Tasks**:
+  - Dowieźć `Overview / Queue / Catalog` jako przełączalne powierzchnie pracy w `Results > KPI`.
+  - Wzmocnić queue semantics dla `needs entry / below target / discrepancy / requires review`.
+  - Rozszerzyć `Results > Reports` o template metadata, scope load i snapshot refresh.
+- **DoD**:
+  - Operator może wejść `overview -> queue -> catalog -> report` bez gubienia kontekstu.
+  - Report artifact pokazuje template/scope i może być odświeżony bez ręcznego rebuildu scope.
+  - Rozszerzenie nie narusza granic truth ownership z sekcji 3.
+
 ### 8.2 Rollout strategy
 - Feature-flag / gradual exposure; prefer “read-first” zanim włączymy mutacje szeroko.
 - Brak silent scope merge z `Finanse` i `Wdrożenia`.
@@ -244,4 +266,5 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 | P04-A | approved(scope) | 99eb08e9aa | n/a (docs-only) | n/a (docs-only) | KPI canon + scope frozen; no runtime changes in this packet. |
 | P04-B | verified(evidence) | (this commit) | 30 tests (15 integration + 6 health posture + 4 permissions + 3 workflow transitions + 1 E2E + 1 checklist) — all green | E2E: signal→inspect→next-action chain; degraded posture for all 4 scenarios; org-health breakdown | Existing 93 ROI service + 20 route tests still green (113 total). |
 | P04-C | verified(evidence) | (this commit) | Regression: 113 existing + 30 new = 143 total, 0 failures | Contract checklist 12/12 checked; evidence closeout doc created | Known limits: reconciliation UX depends on Finance module (P05); chart aggregation methods are bounded to last/sum/average. |
+| P04-D | in_delivery | pending | To be updated after premium cockpit/report regression passes | UI walkthrough: `Overview / Queue / Catalog` + report refresh | This packet extends visibility and operating ergonomics without changing bounded-lane doctrine. |
 

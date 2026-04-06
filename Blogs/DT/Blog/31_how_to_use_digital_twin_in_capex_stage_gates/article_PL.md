@@ -1,66 +1,43 @@
-# Jak uzywac Digital Twin w CAPEX stage gates
+# Jak używać digital twin w bramkach etapowych CAPEX
 
-Target persona: capital project sponsor / engineering director z finance counterpart  
-Funnel stage: Decision  
-Core problem: stage-gate reviews czesto traktuja CAPEX jako document exercise, wiec simulation przychodzi za pozno albo w zlej formie zeby zmienic to co jest fundowane  
-Main promise: gate-by-gate mapa tego jaki scenario evidence powinien istniec przed kazdym approval, zeby capital szedl naprzod z traceable de-risking zamiast narrative momentum
+Docelowa persona: sponsor projektu kapitałowego / dyrektor inżynierii z partnerem po stronie finansów  
+Etap lejka: Decision
+Główny problem: przeglądy bramek etapowych często traktują CAPEX jak ćwiczenie dokumentacyjne, więc symulacja pojawia się za późno lub w złej formie, by zmienić to, co jest finansowane  
+Główna obietnica: mapa bramka po bramce tego, jaka evidencja scenariuszy powinna istnieć przed każdą akceptacją, by kapitał szedł naprzód z możliwym do obrony ograniczeniem ryzyka, a nie z pędem narracji
 
-**Bezposrednia odpowiedz:** uzyj Digital Twin wewnatrz CAPEX stage gates definiujac jeden simulation deliverable na gate ktory odpowiada na jedno funding question, wiaze sie z frozen assumptions i blokuje promotion gdy downside cases sa unexplored. Wczesne gates potrzebuja feasibility i option shape. Srodkowe gates potrzebuja comparable stress tests. Pozne gates potrzebuja ramp, constraint i sensitivity evidence powiazane ze spend profile. Capital processes kochaja paperwork.
+Włącz digital twin do bramek CAPEX, definiując jeden produkt symulacyjny na bramkę, który odpowiada na jedno pytanie finansowania, jest powiązany z zamrożonymi założeniami i blokuje awans, gdy przypadki downside nie zostały zbadane. Wczesne bramki potrzebują wykonalności i kształtu opcji. Środkowe – porównywalnych testów obciążeniowych. Późne – evidencji rampy, ograniczeń i czułości powiązanej z profilem wydatków.
 
-Czesto glodza fabryke decision-grade scenario work w momentach gdy change jest jeszcze tani.
+Procesy kapitałowe kochają papier. Często głodzą fabrykę pracy scenariuszowej na poziomie decyzji w momentach, gdy zmiana jest jeszcze tania. Bez jawnego kontraktu na bramkę zespoły recyklingują slajdy, aż pieniądze są wydane, odkładają symulację, aż opcje się zwężą, albo każda funkcja przynosi własną historię arkusza bez wspólnego zestawu szoków. Nic z tego nie ogranicza ryzyka layoutu, przepływu ani CAPEX, zanim rzeczywistość się zmieni.
 
-## Dlaczego stage gates failuja bez simulation contract
+## Mapa bramek: co udowodnić przed awansem
 
-Bez explicit contract per gate zespoly robia jedna z trzech rzeczy: uruchamiaja model raz, potem reuse slides az money jest wydane; odkladaja simulation do detailed design gdy opcje sa juz narrow; pozwalaja kazdej funkcji przyniesc wlasny spreadsheet story bez shared shock set.
+Przy koncepcji lub ramowaniu opcji: czy polujesz na właściwą klasę zmiany – porównaj dwie–trzy hipotezy layoutu lub przepływu pod tym samym obiektywem popytu. Przy wstępnym business case: która opcja przetrzyma wspólny stres – sparowane przypadki downside na short liście z sygnałami wąskich gardeł i kolejek. Przy zobowiązaniu do szczegółowego projektu: zlokalizuj kruchość przed zakupem – czułość na kluczowe założenia z nazwanymi właścicielami. Przy gotowości do realizacji: czy rampa może startować bez łamania serwisu – scenariusze rampy i przekazań z czasem przy ograniczeniu na ryzyku. Po zatwierdzeniu: change control – scenariusze delta, gdy zakres, mix lub założenia dostaw się przesuwają. Jeśli bramka nie wskazuje wiersza evidencji, grozi teatr administracyjny.
 
-Zadne z tych zachowan nie de-riskuje layout, flow ani CAPEX zanim reality sie zmieni.
+## Gotowość symulacji przy bramkach
 
-## Gate map: co simulation musi udowodnic przed kazdym promotion
+Każda bramka ma jednego właściciela założeń dla decyzji – nie chmurę komitetu. To samo słownictwo szoków powtarza się od bramki do bramki. Przegrywające opcje są wycofywane z powodami, nie chowane w załącznikach. Finanse widzi różnice w timing cash, nie tylko średni przepust. Ekspozycja zaopatrzenia pojawia się, gdy zmienność dostawców ma znaczenie.
 
-Uzyj tego jako default pattern i dostosuj nazwy do internal process:
+## Kiedy ten wzorzec działa – a kiedy nie
 
-| Gate moment | Funding question ktore pokoj musi odpowiedziec | Minimum simulation evidence |
-|---|---|---|
-| Concept / option framing | Czy scigamy wlasciwa klase change? | dwa do trzech layout lub flow hypotheses porownane pod tym samym demand lens |
-| Preliminary business case | Ktora opcja przezywa shared stress? | paired downside cases na short list z bottleneck i queue signals |
-| Detailed design commitment | Gdzie koncentruje sie fragility zanim kupimy? | sensitivity na top five assumptions z named owners |
-| Execution readiness | Czy mozemy ramp bez lamania service? | ramp i handover scenarios z constraint time at risk |
-| Post-approval change control | Czy design drift nadal pasuje do case? | delta scenarios tylko gdy scope, mix lub supply assumptions sie ruszaja |
+Działa, gdy governance kapitałowa ma nazwane bramki i możesz do każdej dołączyć jeden artefakt. Nie działa, gdy zatwierdzenie jest jednym kluczem bez prawdziwego zawężenia – nie ma gdzie wpiąć dyscypliny porównawczej.
 
-Jesli gate nie wskaze wiersza w tej mapie, gate jest administrative theater.
 
-## Checklist: stage-gate simulation readiness
+## Brownfieldowa uczciwość: porównuj ścieżki, nie slogany
 
-- [ ] kazdy gate ma jednego decision ownera dla assumptions, nie committee cloud  
-- [ ] ten sam shock vocabulary jest reuse od gate do gate  
-- [ ] przegrywajace opcje sa retired z powodami, nie chowane w appendix  
-- [ ] finance widzi cash timing differences, nie tylko average throughput  
-- [ ] procurement exposure pojawia sie gdy supplier variability ma znaczenie
+Brownfield nie nagradza optymizmu; nagradza porównywalność. Każda poważna ścieżka zmienia coś fizycznego – przejazdy, staging, handoffy, dostęp serwisowy – i te zmiany oddziałują pod realnym popytem i zachowaniem dostawców. Praca scenariuszowa zasługuje na zaufanie, gdy każda ścieżka widzi te same szoki i te same zasady evidencji, by rozmowa opierała się o kompromisy, a nie o charyzmę slajdu.
 
-## Kiedy ten pattern dziala a kiedy failuje
-
-**Dziala** gdy capital governance ma juz named gates i mozesz attach jeden artifact na gate.
-
-**Failuje** gdy process to single lump approval bez real option down-select, bo nie ma gdzie wstawic comparative discipline.
-
-## Co zmienia Digital Twin
-
-Digital Twin to decision system i scenario-testing environment. To nie 3D showcase.
-
-Uzyty przy gates zamienia CAPEX w sekwencje explicit de-risking steps zanim physical change sie zablokuje.
+Trzymaj dyskusję jawną co do tego, czego nie robisz w tym cyklu. Wyłączenia są tak samo ważne jak faworyci; zapobiegają powrotowi zombie pod nową nazwą. Gdy wyzwalacze odświeżenia po zmianie są zrozumiane, zespoły przestają cytować zeszłokwartalną pewność, gdy hala już się przesunęła. Bliźniak powinien sprawić, że ten dryf szybko staje się niezręczny – co jest zdrowsze niż odkrycie go przy missie serwisu lub weekendzie nadgodzin, którego nikt nie zaplanował w budżecie.
 
 ## Co dodaje DBR77 Digital Twin
 
-DBR77 Digital Twin wspiera praktyczne scenario comparison ze sciezka od manual inputs do glebszej integracji.
+DBR77 Digital Twin wyrównuje przeglądy CAPEX przy bramkach z jednym możliwym do prześledzenia produktem symulacyjnym na decyzję finansowania: spójne porównania opcji w miarę dojrzewania projektu; możliwość prześledzenia zmian założeń do przesunięć wyników; krótsza droga od insightu inżynierskiego do klarowności dla sponsora.
 
-Dla stage-gate use pomaga zespolom: utrzymac consistent option comparisons w miare dojrzewania projektu; zachowac traceability od zmian assumptions do outcome shifts; skrocic dystans miedzy engineering insight a sponsor-ready clarity.
+Łącz notatki bramkowe ze wzorcem pakietu decyzyjnego dla zarządu w tej serii; przed wiążącym wydatkiem uruchom test „wystarczająco silny dowód” z artykułu towarzyszącego.
 
-## Bottom line
+## Podsumowanie
 
-Stage gates chronia capital tylko gdy kazdy gate wymaga wlasciwego typu evidence.
-
-Jesli simulation jest optional, fabryka placi za optionality rework i late surprises.
+Bramki chronią kapitał tylko wtedy, gdy każda wymaga właściwego rodzaju evidencji. Jeśli symulacja jest opcjonalna, fabryka płaci za opcjonalność przeróbkami i późnymi niespodziankami.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/digital-twin) lub [Zobacz przypadki użycia](https://dbr77.com/demo).*
+*DBR77 Digital Twin pomaga sponsorom dołączać spójne pakiety scenariuszy do każdej bramki kapitałowej, by porównania opcji i możliwość prześledzenia założeń przetrwały całą ścieżkę finansowania. [Umów demo](https://dbr77.com/digital-twin) lub [Zobacz przypadki użycia](https://dbr77.com/demo).*

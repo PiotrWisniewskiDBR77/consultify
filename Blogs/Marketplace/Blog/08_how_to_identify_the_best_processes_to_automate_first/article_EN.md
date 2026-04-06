@@ -5,79 +5,51 @@ Funnel stage: Consideration
 Core problem: many manufacturers want to automate, but do not know which process should be the first and therefore lose momentum before a project starts  
 Main promise: the best first automation target is not the most exciting process, but the one with the clearest pain, repeatability, and business case for structured vendor comparison
 
-One of the biggest mistakes in automation strategy is trying to answer the question too broadly: "What should we automate?" That question is too large to drive action. The better question is: "Which process should we automate first?"
+The wrong first question is “What should we automate?” It is too large; it invites a strategy seminar instead of a project. The right first question is “What should we automate first?” First wins set the tone for credibility, learning, and the political capital you will need for everything that follows. Pick poorly—too vague, too political, too fragile—and the organization learns that automation is slow and argumentative. Pick well, and the same organization learns that disciplined buying produces outcomes.
 
-The first win matters because it shapes: internal confidence; business-case credibility; rollout momentum; future decision quality. That is why choosing the first process well is so important.
+The best first target is rarely the flashiest. It is the one you can describe, scope, compare, and execute with a straight face.
 
-## Start with pain, not with technology
+## Start from pain, not from catalogs
 
-Many companies begin by focusing on the solution type: robot; cobot; conveyor; vision; AMR. That is usually too early. The stronger starting point is the process pain itself.
+If the conversation opens with brand names or device classes, you are shopping. If it opens from bottleneck reality—where pace breaks, where quality wobbles, where labor concentrates—you are buying. Technology follows once the process story is tight enough that a stranger could price the edges.
 
-Ask: where is the bottleneck; where does manual work repeat constantly; where do quality issues keep returning; where is throughput limited by unstable execution. Technology should follow problem clarity, not replace it.
+## Repeatability is your friend
 
-## Look for repeatability first
+Highly repetitive motion, handling, inspection, or end-of-line work tends to produce cleaner boundaries. That matters twice: internally, because alignment is easier; externally, because suppliers can bid comparable work instead of guessing your tolerance for variation.
 
-The best first automation candidates usually contain a high level of repeatability.
+## Choose pain the organization already respects
 
-That can mean: repeated motion; repeated handling; repeated quality checks; repeated end-of-line activities.
+The first project should relieve something people feel on Monday morning: chronic overtime at one station, recurring rework, chronic waiting, output that swings shift to shift. Abstract “efficiency opportunities” produce abstract sponsorship. Concrete pain produces owners who will stand in the room when trade-offs appear.
 
-Repeatability matters because it makes the process easier to scope, easier to compare across vendors, and easier to justify internally.
+## Watch for quiet, expensive work
 
-## Look for visible operational pain
+Some of the best candidates do not look dramatic. They leak minutes every cycle through small delays, constant coordination, or fragile manual checks. Those minutes compound into shifts and quarters. When you articulate that math plainly, the business case stops sounding theoretical.
 
-The first project should solve something the organization can clearly feel.
+## Avoid the prestige trap
 
-That usually means a process where pain shows up in: delay; labor pressure; quality risk; output instability; repeated firefighting.
+The visible, glossy project tempts sponsors who want a signal. It also attracts scope creep and political spectators. A humbler line with sharp boundaries often trains the organization in how to run automation well—clear brief, fair comparison, disciplined acceptance—before you bet the brand on a flagship.
 
-If the pain is too abstract, the business case will stay weak and alignment will be harder.
+## Readiness without perfection
 
-## Look for hidden cost that repeats every shift
+Not every painful process is ready immediately. You still need enough stability to describe inputs, outputs, and constraints, and enough maturity to own interfaces and validation. Waiting for perfect stability is another trap. The goal is sufficient clarity for suppliers to respond responsibly—not a research program.
 
-Some of the best automation candidates are not dramatic. They are quietly expensive.
+## After you pick: make it buyable
 
-These are processes that create: repeated small delays; constant staffing dependency; recurring rework; coordination waste; unstable pace. These losses are powerful because they accumulate every day.
+Prioritization is half the job. The other half is converting the choice into a challenge brief, a comparison structure, and a decision path. A perfect first target still dies in procurement fog.
 
-That makes them easier to defend as automation priorities once they are framed clearly.
+## How DBR77 Marketplace supports the handoff
 
-## Avoid choosing the first project for prestige
+DBR77 Marketplace helps manufacturers move from “this is our best candidate” to structured market engagement: comparable offers and a cleaner route to a real project decision.
 
-A common trap is selecting the most visible or exciting automation idea first. That can be tempting. But the best first automation target is usually not the most glamorous one.
+## Sequencing the politics of “first”
 
-It is the one most likely to produce: a clear scope; a comparable offer set; a defensible return; a manageable execution path. That is what creates momentum.
+The first project will be watched. If it is vague, late, or argumentative, internal skeptics will generalize: “automation is always like this.” If it is bounded and well-run, the same people will treat the second project as a repeatable motion. That is why first-process selection is partly a change-management decision. Pick a target your organization can align on, describe it without embarrassment on paper, and protect comparability as fiercely as you protect budget.
 
-## Evaluate process readiness honestly
-
-Not every painful process is ready to automate immediately.
-
-The plant should also assess: how stable the current workflow is; whether input and output conditions are understood; whether the team can describe the challenge clearly; whether the success criteria are visible. This does not mean waiting for perfection. It means creating enough clarity for the market to respond usefully.
-
-## Use a simple prioritization logic
-
-A practical first-pass filter can be built around five questions: Is the process repetitive enough?; Is the pain real enough?; Is the cost recurring enough?; Is the scope describable enough?; Is the outcome valuable enough?.
-
-If the answer is yes across most of these, the process is likely a stronger first candidate than more abstract opportunities.
-
-## Why buyer workflow matters after prioritization
-
-Identifying the right process is only the first half of the work.
-
-The next challenge is turning that priority into: a clear challenge brief; a comparable request to the market; a structured selection workflow.
-
-Without that step, even the right first process can still stall in execution planning.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace is relevant here because it helps manufacturers move from process priority to structured action.
-
-It supports: challenge clarification; comparable offer collection; cleaner vendor evaluation; faster movement toward a real project.
-
-That matters because identifying the right process only creates value if the plant can convert it into a decision-ready automation path.
+Also remember that “first” does not have to mean “largest.” It should mean “most legible.” A legible win creates the organizational skill to tackle harder geometry next: stranger interfaces, tougher variability, higher political visibility. Skip the skill-building step and you often buy a flagship drama before the team knows how to run a disciplined buy.
 
 ## Bottom line
 
-The best first automation target is not the most impressive one.
-
-It is the process with the clearest combination of: repeatability; pain; recurring cost; scope clarity; business value. That is where automation moves from idea to action.
+Automate first where pain is real, work is repeatable, scope is describable, and value is obvious to the people who run the line. That combination builds momentum; everything else is commentary.
 
 ---
 

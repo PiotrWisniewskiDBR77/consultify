@@ -1,71 +1,34 @@
-# Kiedy producent powinien izolowac AI wg zakladu, jednostki biznesowej lub przeplywu pracy
+# Kiedy producent powinien izolować AI według zakładu, jednostki biznesowej lub procesu
 
-Target persona: COO / dyrektor IT  
-Funnel stage: Consideration  
-Core problem: jeden wspolny tenant AI wydaje sie wydajny dopoki nie pojawi sie mieszanie danych miedzy zakladami, sprzeczne polityki lub incydent wymuszajacy bolesny podzial  
-Main promise: jasne reguly izolacji lacza promien skutkow, granice zgodnosci i odpowiedzialnosc operacyjna z tym jak naprawde dziala siec fabryk
+Docelowa persona: COO / dyrektor IT  
+Etap lejka: Rozważanie  
+Główny problem: jeden wspólny tenant AI wydaje się efektywny, dopóki mieszanie danych między lokalizacjami, sprzeczne polityki lub jeden incydent nie wymuszą bolesnego podziału  
+Główna obietnica: jasne reguły izolacji wyrównują promień skutków, granice zgodności i własność operacyjną z tym, jak naprawdę działa sieć fabryk
 
-Izolacja to nie paranoja. To inzynieria promienia skutkow.
+Izolacja to nie paranoja. To inżynieria promienia skutków — ten sam instynkt, który prowadzi strefowanie sieci, rozdzielone ścieżki administracyjne i ostrożne oddzielenie testu od produkcji. Jeden wspólny tenant AI może wydawać się efektywny, dopóki mieszanie między lokalizacjami, sprzeczne polityki lub poważny przegląd nie wymuszą bolesnego podziału, który powinien być zaprojektowany od początku.
 
-## Bezposrednia odpowiedz
+Izolujcie AI według zakładu, gdy fabryki działają pod różnymi reżimami regulacyjnymi, klasyfikacjami danych lub ograniczeniami pracy i rad zakładowych, które sprawiają, że wspólne mieszanie jest kosztowne w wyjaśnianiu. Izolujcie według jednostki biznesowej, gdy P&L, IP lub poufność wobec klienta nie mogą się mieszać w logach i dostępie administracyjnym. Izolujcie według procesu, gdy ścieżka wysokiej automatyzacji dotyka aktuacji lub systemów przy bezpieczeństwie, podczas gdy inne przepływy pozostają analityczne. Właściwa jednostka izolacji odpowiada jednostce zaufania — a nie wygodzie zamówień.
 
-Izoluj AI wg zakladu gdy fabryki dzialaja pod roznymi rezimami regulacyjnymi, klasami danych lub ograniczeniami zwiazkow i rad pracowniczych. Izoluj wg jednostki biznesowej gdy P i L, IP lub poufnosc klienta nie moga sie mieszac w logach i dostepie administracyjnym. Izoluj wg przeplywu pracy gdy sciezka wysokiej automatyzacji dotyka aktuacji lub systemow przy BHP, podczas gdy inne przeplywy zostaja analityczne. We wlasciwa jednostke izolacji wpasowuje sie jednostka zaufania.
+## Trzy soczewki izolacji
 
-## Ramy: trzy soczewki izolacji
+Regulacja i klasa danych to pierwsza soczewka, bo jest najmniej do negocjacji. Jeśli dwie lokalizacje nie mogą dzielić tej samej jurysdykcji kopii zapasowej ani reguły retencji, nie powinny dzielić tej samej przestrzeni nazw środowiska AI — bo incydent ani pytanie audytowe nie przejmą się tym, że „było taniej na jednej umowie”. Granice handlowe i IP tworzą drugą soczewkę. Gdy jednostki biznesowe chronią odrębne IP procesów lub wrażliwe relacje z klientami, wspólne tenanty inferencji tworzą zbędną niepewność forensyczną po każdej podejrzeniu wycieku: wszyscy stają się podejrzani, a śledztwo staje się polityczne i techniczne. Sprzężenie operacyjne i bezpieczeństwo to trzecia soczewka. Przepływy, które mogą wpływać na stan fizyczny, zasługują na twardsze granice niż streszczenia wewnętrznych PDF — nie dlatego, że streszczenia są nieszkodliwe, lecz dlatego, że promień skutków jest inny, gdy rekomendacje są obok wykonania.
 
-### Soczewka 1: Regulacja i klasa danych
+## Jak wygląda stresujący moment
 
-Jesli dwa zaklady nie moga dzielic tej samej jurysdykcji kopii zapasowej lub retencji, nie powinny dzielic tej samej przestrzeni nazw runtime AI.
+Sprawa za izolacją zwykle wyjaśnia się po napiętym tygodniu: eskalacja jakości, audyt klienta lub przegląd bezpieczeństwa z pytaniem wprost — kto jeszcze mógł zobaczyć ten payload i pod jakim kontem? Jeśli uczciwa odpowiedź brzmi „nie wiemy”, przegraliście już bitwę o narrację. Izolacja pozwala zachować krótką, faktyczną odpowiedź: ograniczone populacje, ograniczone logi, ograniczone ścieżki administracyjne. To nie brak zaufania do własnych zakładów. To tak ostre linie własności, by dało się je bronić, gdy nadejdzie presja.
 
-### Soczewka 2: Granice handlowe i IP
+Wspólny tenant może działać, gdy klasy danych są jednolite, polityki scentralizowane, logowanie rozdzielone z mocną separacją tenantów i żaden przepływ nie zapisuje do systemów produkcyjnych bez dedykowanej płaszczyzny akceptacji — zweryfikujcie te warunki na piśmie, nie jako założenia. Jeśli nie potraficie ich zweryfikować, nie pozwólcie optymizmowi zamówień zastąpić architektury.
 
-Gdy jednostki biznesowe konkuruja o tych samych klientow lub chronia rozny procesowy IP, wspolne tenanty inferencji tworza niepotrzebna watpliwosc sledcza po kazdej podejrzeniu wycieku.
+Izolacja według zakładu, jednostki biznesowej i procesu to decyzje o domenach zaufania; platforma musi oferować kształty wdrożenia, które szanują te domeny bez wymuszania jednego kruchego globalnego tenantu. Vector wspiera to ćwiczenie: autorskie AI przemysłowe z wzorcami on-premise, prywatnego API i izolacji, wyłączenie danych klienta z treningu wspólnego modelu oraz rozumowanie przemysłowe nastawione na transformację — żeby wybory izolacji opierały się na architekturze, a nie na domyślnych ustawieniach SaaS konsumenckiego.
 
-### Soczewka 3: Sprzezenie operacyjne i BHP
+Producenci powinni dobierać granularność izolacji tak jak strefy sieciowe: dopasujcie granicę do domeny zaufania, a potem skalujcie wewnątrz granicy z dyscypliną.
 
-Przeplywy wplywajace na stan fizyczny zasluguja na twardsze granice niz streszczenie wewnetrznych PDF.
+## Punkt kontrolny zakładu
 
-## Porownanie: wspolny tenant kontra izolowane stosy
+Traktujcie „Kiedy producent powinien izolować AI według zakładu, jednostki biznesowej lub procesu” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną.
 
-| Czynnik | Wspolny tenant AI | Izolacja per zaklad, JU lub przeplyw |
-|---|---|---|
-| Koszt operacyjny | nizsza baza | wyzsza baza |
-| Promien skutkow | szerszy | wezszy |
-| Narracja audytu | trudniejsza pod stresem | prostsze linie wlasnosci |
-| Dostep admina dostawcy | jedne drzwi do ochrony | wiele drzwi, kazde mniejsze |
-
-## Sekwencja krokow: wybierz jednostke izolacji
-
-### Krok 1: Wymien najgorsze wiarygodne zdarzenie straty
-
-Wyciek danych, zla aktuacja, korupcja harmonogramu lub szkoda reputacji u nazwanego klienta.
-
-### Krok 2: Zmapuj ktore zaklady lub jednostki bylby objete
-
-Jesli odpowiedz brzmi wszyscy, zaostrz izolacje.
-
-### Krok 3: Sprawdz umowne i polityczne zakazy mieszania
-
-Umowy z klientami i wewnetrzne standardy klasyfikacji sa rozstrzygajace.
-
-### Krok 4: Udokumentuj decyzje o izolacji w rejestrze integracji
-
-Przyszle rozszerzenia nie powinny po cichu zawalac granic.
-
-## Kiedy wspolny tenant nadal ma sens
-
-Wspolny tenant moze dzialac gdy klasy danych sa jednorodne, polityki scentralizowane, logowanie podzielone tagami najemcy z separacja kryptograficzna i zaden przeplyw nie zapisuje do systemow produkcyjnych bez dedykowanej plaszczyzny akceptacji. Zweryfikuj te warunki na pismie.
-
-## Most produktowy
-
-DBR77 Vector to bezpieczna warstwa inteligencji za ekosystemem DBR77: autorskie AI przemyslowe zaprojektowane pod mocniejsze granice wdrozenia lacznie z on-premise, prywatnym API i wzorcami izolacji, z wykluczeniem danych klienta z treningu wspolnego modelu i rozumowaniem pod prace transformacji przemyslowej.
-
-Decyzje o izolacji warto weryfikowac wobec tej klasy platformy, nie domyslow SaaS ogolnego czatu.
-
-## Podsumowanie
-
-Producenci powinni wybierac granularnosc izolacji tak jak strefy sieciowe. Dopasuj granice do domeny zaufania. Potem skaluj wewnatrz granicy z dyscyplina.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Sprawdź bezpieczeństwo](https://dbr77.com/vector) lub [Poznaj produkty z Vector](https://dbr77.com/demo).*
+*DBR77 Vector wspiera mocniejsze granice wdrożenia, by wybory izolacji mapowały się na wzorce on-premise, prywatnego API i izolacji operacyjnej między lokalizacjami. [Przegląd bezpieczeństwa](https://dbr77.com/vector) lub [Poznaj produkty z Vector](https://dbr77.com/demo).*

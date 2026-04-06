@@ -1,0 +1,2131 @@
+{
+  "product": "Vector",
+  "same_lp_edges": [
+    {
+      "from_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "to_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "to_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "to_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "to_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "to_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_what_it_means_to_train_an_ai_on_real_transformation_cases",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_what_it_means_to_train_an_ai_on_real_transformation_cases",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_what_it_means_to_train_an_ai_on_real_transformation_cases",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_what_it_means_to_train_an_ai_on_real_transformation_cases",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "14_what_it_means_to_train_an_ai_on_real_transformation_cases",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_dbr77_vector_differs_from_chatgpt_wrappers_and_generic_copilots",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_dbr77_vector_differs_from_chatgpt_wrappers_and_generic_copilots",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_dbr77_vector_differs_from_chatgpt_wrappers_and_generic_copilots",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_dbr77_vector_differs_from_chatgpt_wrappers_and_generic_copilots",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "20_how_dbr77_vector_differs_from_chatgpt_wrappers_and_generic_copilots",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_when_a_manufacturer_should_choose_private_ai_over_public_ai_convenience",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_when_a_manufacturer_should_choose_private_ai_over_public_ai_convenience",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_when_a_manufacturer_should_choose_private_ai_over_public_ai_convenience",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_when_a_manufacturer_should_choose_private_ai_over_public_ai_convenience",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "21_when_a_manufacturer_should_choose_private_ai_over_public_ai_convenience",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_when_ai_security_claims_are_too_vague_for_industrial_buyers",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_when_ai_security_claims_are_too_vague_for_industrial_buyers",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_when_ai_security_claims_are_too_vague_for_industrial_buyers",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_when_ai_security_claims_are_too_vague_for_industrial_buyers",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "31_when_ai_security_claims_are_too_vague_for_industrial_buyers",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_classify_factory_use_cases_by_ai_risk_before_adoption",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_classify_factory_use_cases_by_ai_risk_before_adoption",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_classify_factory_use_cases_by_ai_risk_before_adoption",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_classify_factory_use_cases_by_ai_risk_before_adoption",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "32_how_to_classify_factory_use_cases_by_ai_risk_before_adoption",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_factory_knowledge_should_not_be_exposed_to_generic_ai_tools",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_factory_knowledge_should_not_be_exposed_to_generic_ai_tools",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_factory_knowledge_should_not_be_exposed_to_generic_ai_tools",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_factory_knowledge_should_not_be_exposed_to_generic_ai_tools",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "37_when_factory_knowledge_should_not_be_exposed_to_generic_ai_tools",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_decide_which_factory_workflows_are_safe_enough_for_ai_assistance",
+      "to_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_decide_which_factory_workflows_are_safe_enough_for_ai_assistance",
+      "to_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_decide_which_factory_workflows_are_safe_enough_for_ai_assistance",
+      "to_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_decide_which_factory_workflows_are_safe_enough_for_ai_assistance",
+      "to_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "43_how_to_decide_which_factory_workflows_are_safe_enough_for_ai_assistance",
+      "to_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "edge_type": "same_section",
+      "reason": "same lp_section: AI And Decision Making",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "to_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "to_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "to_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "to_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "to_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_what_makes_an_ai_model_deployment_ready_for_industry",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_what_makes_an_ai_model_deployment_ready_for_industry",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_what_makes_an_ai_model_deployment_ready_for_industry",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_what_makes_an_ai_model_deployment_ready_for_industry",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "19_what_makes_an_ai_model_deployment_ready_for_industry",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_an_ai_deployment_boundary_should_include_in_manufacturing",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_an_ai_deployment_boundary_should_include_in_manufacturing",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_an_ai_deployment_boundary_should_include_in_manufacturing",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_an_ai_deployment_boundary_should_include_in_manufacturing",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "23_what_an_ai_deployment_boundary_should_include_in_manufacturing",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_when_ai_outputs_need_human_approval_and_when_they_do_not",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_when_ai_outputs_need_human_approval_and_when_they_do_not",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_when_ai_outputs_need_human_approval_and_when_they_do_not",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_when_ai_outputs_need_human_approval_and_when_they_do_not",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "24_when_ai_outputs_need_human_approval_and_when_they_do_not",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_when_on_prem_ai_is_worth_the_complexity_and_when_it_is_not",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_when_on_prem_ai_is_worth_the_complexity_and_when_it_is_not",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_when_on_prem_ai_is_worth_the_complexity_and_when_it_is_not",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_when_on_prem_ai_is_worth_the_complexity_and_when_it_is_not",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "27_when_on_prem_ai_is_worth_the_complexity_and_when_it_is_not",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_build_a_governed_pilot_for_industrial_ai_without_creating_shadow_it",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_build_a_governed_pilot_for_industrial_ai_without_creating_shadow_it",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_build_a_governed_pilot_for_industrial_ai_without_creating_shadow_it",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_build_a_governed_pilot_for_industrial_ai_without_creating_shadow_it",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "28_how_to_build_a_governed_pilot_for_industrial_ai_without_creating_shadow_it",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_what_a_cto_should_ask_before_connecting_ai_to_factory_systems",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_what_a_cto_should_ask_before_connecting_ai_to_factory_systems",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_what_a_cto_should_ask_before_connecting_ai_to_factory_systems",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_what_a_cto_should_ask_before_connecting_ai_to_factory_systems",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "29_what_a_cto_should_ask_before_connecting_ai_to_factory_systems",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_what_a_private_ai_architecture_review_should_decide_before_rollout",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_what_a_private_ai_architecture_review_should_decide_before_rollout",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_what_a_private_ai_architecture_review_should_decide_before_rollout",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_what_a_private_ai_architecture_review_should_decide_before_rollout",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "33_what_a_private_ai_architecture_review_should_decide_before_rollout",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_manufacturer_should_isolate_ai_by_site_business_unit_or_workflow",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_manufacturer_should_isolate_ai_by_site_business_unit_or_workflow",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_manufacturer_should_isolate_ai_by_site_business_unit_or_workflow",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_manufacturer_should_isolate_ai_by_site_business_unit_or_workflow",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "34_when_a_manufacturer_should_isolate_ai_by_site_business_unit_or_workflow",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_a_secure_human_in_the_loop_design_should_look_like_for_industrial_ai",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_a_secure_human_in_the_loop_design_should_look_like_for_industrial_ai",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_a_secure_human_in_the_loop_design_should_look_like_for_industrial_ai",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_a_secure_human_in_the_loop_design_should_look_like_for_industrial_ai",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "39_what_a_secure_human_in_the_loop_design_should_look_like_for_industrial_ai",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_compare_private_api_isolated_tenant_and_on_prem_ai_without_confusion",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_compare_private_api_isolated_tenant_and_on_prem_ai_without_confusion",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_compare_private_api_isolated_tenant_and_on_prem_ai_without_confusion",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_compare_private_api_isolated_tenant_and_on_prem_ai_without_confusion",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "46_how_to_compare_private_api_isolated_tenant_and_on_prem_ai_without_confusion",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_what_a_multi_site_industrial_ai_rollout_should_standardize_first",
+      "to_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_what_a_multi_site_industrial_ai_rollout_should_standardize_first",
+      "to_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_what_a_multi_site_industrial_ai_rollout_should_standardize_first",
+      "to_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_what_a_multi_site_industrial_ai_rollout_should_standardize_first",
+      "to_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "48_what_a_multi_site_industrial_ai_rollout_should_standardize_first",
+      "to_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Execution And Rollout",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "to_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "to_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "to_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "to_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "to_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_compare_industrial_ai_training_policies_without_marketing_fog",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_compare_industrial_ai_training_policies_without_marketing_fog",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_compare_industrial_ai_training_policies_without_marketing_fog",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_compare_industrial_ai_training_policies_without_marketing_fog",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "25_how_to_compare_industrial_ai_training_policies_without_marketing_fog",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_what_traceability_should_look_like_in_a_manufacturing_ai_system",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_what_traceability_should_look_like_in_a_manufacturing_ai_system",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_what_traceability_should_look_like_in_a_manufacturing_ai_system",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_what_traceability_should_look_like_in_a_manufacturing_ai_system",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "26_what_traceability_should_look_like_in_a_manufacturing_ai_system",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_turn_secure_industrial_ai_into_a_repeatable_operating_capability",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_turn_secure_industrial_ai_into_a_repeatable_operating_capability",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_turn_secure_industrial_ai_into_a_repeatable_operating_capability",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_turn_secure_industrial_ai_into_a_repeatable_operating_capability",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "30_how_to_turn_secure_industrial_ai_into_a_repeatable_operating_capability",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_how_to_write_non_negotiable_ai_requirements_into_enterprise_procurement",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_how_to_write_non_negotiable_ai_requirements_into_enterprise_procurement",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_how_to_write_non_negotiable_ai_requirements_into_enterprise_procurement",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_how_to_write_non_negotiable_ai_requirements_into_enterprise_procurement",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "35_how_to_write_non_negotiable_ai_requirements_into_enterprise_procurement",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_what_an_industrial_ai_incident_response_model_should_include",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_what_an_industrial_ai_incident_response_model_should_include",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_what_an_industrial_ai_incident_response_model_should_include",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_what_an_industrial_ai_incident_response_model_should_include",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "36_what_an_industrial_ai_incident_response_model_should_include",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_evaluate_ai_subprocessors_and_data_paths_in_manufacturing",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_evaluate_ai_subprocessors_and_data_paths_in_manufacturing",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_evaluate_ai_subprocessors_and_data_paths_in_manufacturing",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_evaluate_ai_subprocessors_and_data_paths_in_manufacturing",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "38_how_to_evaluate_ai_subprocessors_and_data_paths_in_manufacturing",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_scale_industrial_ai_without_losing_deployment_control",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_scale_industrial_ai_without_losing_deployment_control",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_scale_industrial_ai_without_losing_deployment_control",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_scale_industrial_ai_without_losing_deployment_control",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "40_how_to_scale_industrial_ai_without_losing_deployment_control",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_ai_governance_should_become_a_board_level_issue_in_manufacturing",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_ai_governance_should_become_a_board_level_issue_in_manufacturing",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_ai_governance_should_become_a_board_level_issue_in_manufacturing",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_ai_governance_should_become_a_board_level_issue_in_manufacturing",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "41_when_ai_governance_should_become_a_board_level_issue_in_manufacturing",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_a_manufacturer_should_require_in_an_ai_audit_export",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_a_manufacturer_should_require_in_an_ai_audit_export",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_a_manufacturer_should_require_in_an_ai_audit_export",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_a_manufacturer_should_require_in_an_ai_audit_export",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "42_what_a_manufacturer_should_require_in_an_ai_audit_export",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_an_industrial_ai_program_should_pause_before_scaling_further",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_an_industrial_ai_program_should_pause_before_scaling_further",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_an_industrial_ai_program_should_pause_before_scaling_further",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_an_industrial_ai_program_should_pause_before_scaling_further",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "44_when_an_industrial_ai_program_should_pause_before_scaling_further",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_a_secure_ai_change_control_process_should_include",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_a_secure_ai_change_control_process_should_include",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_a_secure_ai_change_control_process_should_include",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_a_secure_ai_change_control_process_should_include",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "45_what_a_secure_ai_change_control_process_should_include",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_ai_policy_documents_fail_and_operating_rules_should_replace_them",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_ai_policy_documents_fail_and_operating_rules_should_replace_them",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_ai_policy_documents_fail_and_operating_rules_should_replace_them",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_ai_policy_documents_fail_and_operating_rules_should_replace_them",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "47_when_ai_policy_documents_fail_and_operating_rules_should_replace_them",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_review_industrial_ai_risk_after_the_first_90_days",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_review_industrial_ai_risk_after_the_first_90_days",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_review_industrial_ai_risk_after_the_first_90_days",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_review_industrial_ai_risk_after_the_first_90_days",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "49_how_to_review_industrial_ai_risk_after_the_first_90_days",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_build_a_manufacturing_ai_governance_system_that_survives_scale",
+      "to_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_build_a_manufacturing_ai_governance_system_that_survives_scale",
+      "to_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_build_a_manufacturing_ai_governance_system_that_survives_scale",
+      "to_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_build_a_manufacturing_ai_governance_system_that_survives_scale",
+      "to_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    },
+    {
+      "from_slug": "50_how_to_build_a_manufacturing_ai_governance_system_that_survives_scale",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "same_section",
+      "reason": "same lp_section: Governance And ROI",
+      "weight": 100
+    }
+  ],
+  "cross_product_edges": [
+    {
+      "from_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "02_will_your_data_train_someone_elses_model_what_every_manufacturer_should_ask",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "03_on_prem_vs_cloud_ai_for_manufacturing_what_actually_matters",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "04_generic_llm_vs_industrial_ai_the_difference_is_bigger_than_accuracy",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "05_why_factory_data_should_never_be_treated_like_generic_enterprise_data",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "06_the_hidden_risk_of_uploading_layouts_costs_and_process_know_how_to_public_ai",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "07_what_private_ai_really_means_in_a_manufacturing_environment",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "08_how_to_evaluate_an_industrial_ai_vendor_without_getting_lost_in_buzzwords",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "09_why_ai_governance_matters_more_in_factories_than_in_offices",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "10_ai_that_recommends_is_useful_ai_that_decides_alone_is_dangerous",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "11_the_real_cost_of_choosing_the_wrong_ai_deployment_model",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "12_can_you_audit_your_ai_why_traceability_matters_in_industrial_decisions",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "13_why_domain_knowledge_beats_bigger_generic_models_in_manufacturing",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "14_what_it_means_to_train_an_ai_on_real_transformation_cases",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "15_why_security_teams_block_ai_projects_and_when_theyre_right",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "16_industrial_ai_without_data_sovereignty_is_a_strategic_mistake",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "17_how_human_approval_layers_make_ai_safer_and_more_defensible",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "19_what_makes_an_ai_model_deployment_ready_for_industry",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "20_how_dbr77_vector_differs_from_chatgpt_wrappers_and_generic_copilots",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "21_when_a_manufacturer_should_choose_private_ai_over_public_ai_convenience",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "23_what_an_ai_deployment_boundary_should_include_in_manufacturing",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "24_when_ai_outputs_need_human_approval_and_when_they_do_not",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "25_how_to_compare_industrial_ai_training_policies_without_marketing_fog",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "26_what_traceability_should_look_like_in_a_manufacturing_ai_system",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "27_when_on_prem_ai_is_worth_the_complexity_and_when_it_is_not",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "28_how_to_build_a_governed_pilot_for_industrial_ai_without_creating_shadow_it",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "29_what_a_cto_should_ask_before_connecting_ai_to_factory_systems",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "30_how_to_turn_secure_industrial_ai_into_a_repeatable_operating_capability",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "31_when_ai_security_claims_are_too_vague_for_industrial_buyers",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "32_how_to_classify_factory_use_cases_by_ai_risk_before_adoption",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "33_what_a_private_ai_architecture_review_should_decide_before_rollout",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "34_when_a_manufacturer_should_isolate_ai_by_site_business_unit_or_workflow",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "35_how_to_write_non_negotiable_ai_requirements_into_enterprise_procurement",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "36_what_an_industrial_ai_incident_response_model_should_include",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "37_when_factory_knowledge_should_not_be_exposed_to_generic_ai_tools",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "38_how_to_evaluate_ai_subprocessors_and_data_paths_in_manufacturing",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "39_what_a_secure_human_in_the_loop_design_should_look_like_for_industrial_ai",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "40_how_to_scale_industrial_ai_without_losing_deployment_control",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "41_when_ai_governance_should_become_a_board_level_issue_in_manufacturing",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "42_what_a_manufacturer_should_require_in_an_ai_audit_export",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "43_how_to_decide_which_factory_workflows_are_safe_enough_for_ai_assistance",
+      "to_slug": "20_why_ai_in_factory_operations_fails_without_one_execution_layer",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IRIS / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "44_when_an_industrial_ai_program_should_pause_before_scaling_further",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "45_what_a_secure_ai_change_control_process_should_include",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "46_how_to_compare_private_api_isolated_tenant_and_on_prem_ai_without_confusion",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "47_when_ai_policy_documents_fail_and_operating_rules_should_replace_them",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "48_what_a_multi_site_industrial_ai_rollout_should_standardize_first",
+      "to_slug": "02_what_data_should_you_collect_from_machines",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to IoT / AI And Decision Making",
+      "weight": 80
+    },
+    {
+      "from_slug": "49_how_to_review_industrial_ai_risk_after_the_first_90_days",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    },
+    {
+      "from_slug": "50_how_to_build_a_manufacturing_ai_governance_system_that_survives_scale",
+      "to_slug": "04_roi_calculator_guide",
+      "edge_type": "bridge_next_product",
+      "reason": "bridge to Consultify / Governance And ROI",
+      "weight": 80
+    }
+  ],
+  "featured_edges": [],
+  "mva_edges": [
+    {
+      "from_slug": "01_why_public_ai_is_a_security_risk_for_industrial_operations",
+      "to_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    },
+    {
+      "from_slug": "22_how_to_run_a_security_review_of_an_industrial_ai_vendor",
+      "to_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    },
+    {
+      "from_slug": "18_the_enterprise_checklist_for_secure_ai_in_manufacturing",
+      "to_slug": "49_how_to_review_industrial_ai_risk_after_the_first_90_days",
+      "edge_type": "mva_path",
+      "reason": "minimum viable asset path",
+      "weight": 95
+    }
+  ]
+}

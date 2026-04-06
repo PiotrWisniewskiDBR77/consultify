@@ -1,129 +1,56 @@
-# Jak poprowadzić pilotaż automatyzacji
+# Jak prowadzić pilotaż projektu automatyzacji
 
-Docelowa persona: Operations Leader / Executive Sponsor  
-Etap lejka: Decision  
-Główny problem: wielu producentów chce zacząć od pilota, ale definiuje go zbyt szeroko albo zbyt mgliście, co tworzy opóźnienia, chaos i słabą wartość poznawczą  
-Główna obietnica: pilot automatyzacji działa wtedy, gdy jest zaprojektowany jako narzędzie decyzyjne, a nie jako miniaturowa wersja pełnej transformacji
+Docelowa persona: Lider operacji / Sponsor projektu (kadra zarządzająca)  
+Etap lejka: Decyzja  
+Główny problem: wielu producentów chce zacząć od pilotażu, ale definiuje go zbyt szeroko lub zbyt mgliście, co generuje zwłokę, zamęt i słabą naukę  
+Główna obietnica: pilotaż automatyzacji działa, gdy jest zakreślony jako narzędzie decyzyjne, a nie miniwersja pełnej transformacji
 
-Wiele projektów automatyzacyjnych nie skaluje się dalej, bo pilot został źle zaprojektowany. Jest albo zbyt duży, albo zbyt mglisty, albo zbyt polityczny. Zespół mówi, że chce pilota.
+Pilotaż to nie mały sposób na zrobienie wszystkiego. To ograniczony sposób, by nauczyć się czegoś konkretnego. Gdy zespoły o tym zapominają, przemycają ambicję całego programu pod etykietę „faza jeden”: wiele rodzin produktów, mgliste kryteria sukcesu i kryterium, które zmienia się przy każdej nowej osobie na callu steeringowym. Technologia może być w porządku. Eksperyment — nie.
 
-W praktyce często buduje powolny, przeciążony projekt z niejasnymi kryteriami sukcesu. To zabija sens pilota. Dobry pilot powinien szybko redukować niepewność. Nie powinien odtwarzać enterprise complexity już pierwszego dnia.
+Zakład wychodzi z miesiącami, dotkniętym budżetem i bez czystej odpowiedzi na pytanie, którego naprawdę potrzebowało kierownictwo — czy skalować, zmienić kierunek czy zatrzymać się.
 
-## Zacznij od jednego pytania biznesowego
+## Zakotwicz pilotaż w jednej decyzji
 
-Najlepsze projekty pilotażowe zaczynają się od jednego jasnego pytania. Na przykład:
+Zanim zaprosisz rozwiązania, zapisz decyzję, którą pilotaż ma wesprzeć. Przykłady: czy to wąskie gardło utrzyma docelowe tempo przy akceptowalnej jakości przy realnych ograniczeniach podawania? Czy możemy zmniejszyć intensywność pracy w tej komórce bez nowego ryzyka jakości? Czy zintegrujemy ten sprzęt z istniejącym sterowaniem i modelem własności bez bohaterskiego wysiłku IT?
 
-- czy ten proces da się zautomatyzować wystarczająco stabilnie, by uzasadnić rollout?
-- czy możemy ustabilizować throughput na tym bottlenecku?
-- czy możemy zmniejszyć zależność od pracy ręcznej na tej celi?
+Pilotaż, który próbuje jednym zamachem udowodnić dostawcę, biznes case, plan roll-outu i gotowość kulturową, zwykle niczego jasno nie udowadnia. Zwęż pytanie, aż uczciwa odpowiedź będzie możliwa w czasie i za pieniądze, które jesteś gotów wydać.
 
-To ważne, bo piloty nie są tylko testami technicznymi. Są narzędziami decyzyjnymi.
+## Wybierz teren, który potrafisz kontrolować
 
-## Wybierz proces wystarczająco mały, by go kontrolować
+Politycznie gorące linie i operacyjnie chaotyczne procesy to słabe środowiska uczenia. Spędzasz pilotaż na teatrze — eskalacjach, wyjątkach, konkurujących sponsorach — zamiast obserwować system. Szukaj powtarzalnego przepływu, chętnych partnerów po stronie operatorów i utrzymania oraz bólu realnego, ale na tyle ograniczonego, że potknięcie nie definiuje roku.
 
-Pilot nie powinien startować na najbardziej politycznie wrażliwym albo najbardziej chaotycznym operacyjnie procesie.
+## Zdefiniuj sukces przed ofertami, nie po
 
-Powinien startować tam, gdzie zespół może szybko się nauczyć bez niepotrzebnej ekspozycji.
+Gdy kryteria sukcesu przychodzą późno, dostawcy optymalizują pod różne mety, a zespół kręci się w kółko. Uzgodnijcie wewnętrznie operacyjny efekt, który najbardziej liczy się dla was, minimalny akceptowalny pas wydajności, okno czasowe, które jest naprawdę wiarygodne, oraz jaki dowód uzasadni „go” na kolejny krok. Potem mierzcie oferty wobec tej ramy.
 
-Dobrzy kandydaci na pilot zwykle mają: widoczny ból operacyjny; powtarzalny przepływ procesu; możliwy do opanowania scope; zespół gotowy do współpracy. To nie chodzi o wybór najłatwiejszego procesu. Chodzi o wybór najbardziej czytelnego.
+## Celowo utrzymaj cienki zakres
 
-## Zdefiniuj sukces zanim vendorzy odpowiedzą
+Jedna granica procesu, jeden segment linii lub komórki, jedna spójna rodzina produktów, jeśli zmienność to ryzyko, które musicie przetestować — wybierzcie najmniejszą kopertę, która wciąż odpowiada na waszą decyzję. Szerokość brzmi ambitnie; w pilotażach zwykle rozmywa sygnał. Chcecie ostrego uczenia, nie podglądu każdej przyszłej kłótni.
 
-Wiele pilotów psuje się dlatego, że sukces jest omawiany dopiero po pojawieniu się ofert. To odwraca logikę. Zespół powinien zdefiniować sukces zanim zacznie porównywać odpowiedzi. Zwykle oznacza to uzgodnienie:
+## Porównuj dostawców pod kątem dopasowania do pilotażu, nie tylko charyzmy roadmapy
 
-- jaki rezultat operacyjny jest najważniejszy
-- jaki minimalny poziom performance jest akceptowalny
-- jaki timeline jest realistyczny
-- jaka nauka uzasadni kolejny krok
+Jedne organizacje świecą przy dużych roll-outach i słabną w ciasnych fazach dowodu; inne odwrotnie. Oceniajcie jasność założeń, uczciwość kamieni milowych, zwinność reakcji i gotowość wiązać postęp z obserwowalnymi kontrolami. Partner, który nie potrafi zdefiniować „skończone” dla pilotażu, nie zdefiniuje go dla programu.
 
-Bez tego pilot staje się ruchomym celem.
+## Wyłóż założenia jak inwentarz
 
-## Utrzymuj scope pilota celowo wąskie
+Gotowość hali, zaangażowanie operatorów, dostępność próbek, kroki bezpieczeństwa IT, granice wsparcia — te detale decydują, czy pilotaż jest uczciwy. Gdy pozostają domyślne, pilotaż wygląda bezpieczniej niż jest. Uwidocznijcie je wcześnie, by niespodzianki działy się w planowaniu, nie w pierwszym tygodniu produkcji.
 
-Pilot nie ma rozwiązać wszystkiego. Ma odpowiedzieć na kilka krytycznych niepewności.
+## Kamienie milowe zamieniają intencję w odpowiedzialność
 
-Dlatego mocny scope pilota jest zwykle wąski wokół: jednego procesu; jednej linii albo celi; jednej rodziny produktowej; jednego punktu decyzyjnego. Szeroka ambicja osłabia wartość pilota, zamiast ją wzmacniać.
+Zgodność zakresu, zamrożone punkty konfiguracji, bramki gotowości, start produkcyjny, wczesny przegląd wydajności — proste kamienie milowe pilnują, by wysiłek nie dryfował w nieskończoną eksperymentację. Dają też sponsorom sposób interwencji bez dramatu, gdy rzeczywistość odbiega od planu.
 
-## Buduj porównanie wokół dopasowania do pilota
+## Chwytaj naukę tak, jakby była produktem
 
-Nie każdy vendor jest równie dobry do pilota.
+Zaplanuj ustrukturyzowany przegląd: co się trzymało, co pękło, które założenia się zmieniły, co musiałoby być prawdą przed skalowaniem. Bez tej pętli pilotaż jest wydarzeniem. Z nią pilotaż to kapitał wydany na zapis decyzji, który organizacja może ponownie użyć.
 
-Niektórzy lepiej radzą sobie z dużymi rolloutami niż z szybkim, dobrze ograniczonym proof phase.
+## Jak DBR77 Marketplace wspiera pierwsze projekty
 
-Kupujący powinni porównywać vendorów nie tylko technologicznie, ale także przez:
+DBR77 Marketplace pomaga zespołom przejść od intencji pilotażu do jaśniejszego pierwszego zaangażowania: ustrukturyzowany opis wyzwania, porównywalne oferty i widoczne założenia, by pilotaż był przywiązany do decyzji — nie do narracji dostawcy.
 
-- dopasowanie do scope pilota
-- clarity assumptions
-- realizm timeline
-- szybkość odpowiedzi
-- gotowość do definiowania milestone'ów
+## W skrócie
 
-Tu wiele decyzji pilotażowych staje się wyraźnie lepszych.
-
-## Reality check: wiele pilotów zawodzi, bo firma próbuje przetestować zbyt wiele pytań naraz
-
-Zespół mówi, że chce pilota. W praktyce często znaczy to:
-
-- przetestować technologię
-- przetestować dostawcę
-- przetestować zespół wewnętrzny
-- przetestować business case
-- przetestować założenia przyszłego rolloutu
-
-To za dużo niepewności jak na jeden ograniczony projekt.
-
-Jeśli pilot próbuje odpowiedzieć jednocześnie na każde strategiczne pytanie, zwykle nie odpowiada czysto na żadne z nich.
-
-## Ujawnij assumptions na początku
-
-Piloty często wyglądają prosto, dopóki nie pojawią się ukryte assumptions.
-
-Dlatego kupujący powinni ujawnić: assumptions dotyczące gotowości site; assumptions dotyczące zaangażowania operatorów; assumptions dotyczące danych i integracji; assumptions dotyczące zmienności produktu; assumptions dotyczące supportu i eskalacji.
-
-Kiedy assumptions pozostają ukryte, pilot wydaje się bezpieczniejszy, niż jest naprawdę.
-
-## Ustal milestone'y, a nie mglisty optymizm
-
-Prawdziwy pilot potrzebuje milestone'ów.
-
-Nie dlatego, że zespół chce biurokracji, ale dlatego, że postęp musi być widoczny.
-
-Typowe milestone'y obejmują: alignment scope; potwierdzenie rozwiązania; gotowość do wdrożenia; go-live; wczesny przegląd performance.
-
-To chroni pilota przed dryfowaniem w otwartą, nieskończoną eksperymentację.
-
-## Chroń pętlę uczenia się
-
-Pilot automatyzacji ma wartość tylko wtedy, gdy zespół przechwytuje to, czego się nauczył.
-
-To oznacza przegląd: co zadziałało; co nie zadziałało; co zmieniło się w assumptions; co wymagałoby korekty przed rolloutem.
-
-Bez tej pętli pilot staje się jednorazowym wydarzeniem zamiast decyzją o skali.
-
-## Dlaczego piloty zawodzą, nawet gdy technologia działa
-
-Niektóre piloty zawodzą z powodów, które mają niewiele wspólnego z samą technologią.
-
-Najczęstsze przyczyny to: niejasny ownership; słaby internal alignment; przeciążony scope; powolne decyzje; brak zgody co do kryteriów kolejnego kroku.
-
-To ważne, bo sukces pilota zależy równie mocno od jakości workflow i decyzji, jak od inżynierii.
-
-## Co to oznacza dla DBR77 Marketplace
-
-DBR77 Marketplace pasuje do tego etapu, bo pomaga producentom przejść od zainteresowania automatyzacją do czystszego pierwszego projektu.
-
-Jego wartość obejmuje: doprecyzowanie challenge; dostęp do porównywalnych ofert; czytelniejsze assumptions; uporządkowany postęp od definicji pilota do execution. To ważne, bo pilot powinien skracać niepewność, a nie ją rozszerzać.
-
-## Bottom line
-
-Celem pilota automatyzacji nie jest udowodnienie wszystkiego.
-
-Jest nim odpowiedź na najważniejsze pytania decyzyjne przy możliwym do opanowania ryzyku.
-
-Najmocniejsze piloty są: wąsko zdefiniowane; jasno mierzone; oparte na milestone'ach; zaprojektowane pod naukę i pewność kolejnego kroku.
-
-Wlasnie tak pilot staje sie launchpadem zamiast mechanizmu opozniajacego.
+Prowadź pilotaże, by odpowiedzieć na mały zestaw krytycznych pytań przy kontrolowanej ekspozycji. Wąski zakres, jawny sukces, widoczne założenia, datowane kamienie milowe i uczciwa nauka — tak pilotaż zasługuje na prawo do skalowania.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom demo producenta](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace pomaga producentom zamienić pomysł na pilotaż w jaśniejszy pierwszy projekt dzięki ustrukturyzowanemu opisowi wyzwania, porównywalnym ofertom i przepływ pracy gotowemu pod kamienie milowe. [Umów demo dla producenta](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

@@ -1,62 +1,36 @@
-# Wie ein sicheres Human-in-the-Loop-Design fuer industrielle KI aussehen sollte
+# Wie ein sicheres Human-in-the-Loop-Design für Industrie-KI aussehen sollte
 
-Target persona: Qualitaetsleiter / Leiter Digital Factory  
-Funnel stage: Entscheidung  
-Core problem: menschliche Freigabe wird zur Formalitaet, wenn Rollen, Nachweispakete und Logging die Entscheidung nicht verteidigbar machen  
-Main promise: Ein sicheres HITL-Muster bindet Freigaben an Aktionsumfaenge, Trace-Bundles, Timeouts und Eskalation, ohne Operateure in Klick-Engpaesse zu verwandeln
+Zielpersona: Leitung Qualität / Digital-Factory-Lead  
+Funnel-Stufe: Decision  
+Kernproblem: „Menschliche Freigabe“ wird zum Abnick-Stempel, wenn Rollen, Evidence-Packs und Logging die menschliche Entscheidung nicht verteidigbar machen  
+Hauptversprechen: Ein sicheres HITL-Muster bindet Freigaben an scoped Actions, Trace-Bundles, Timeouts und Eskalation — ohne Operateure zu Klick-durch-Engpässen zu machen
 
-Human-in-the-Loop ist kein Haekchen. Es ist eine technisch ausgelegte Kontrolle.
+Human-in-the-Loop ist kein Häkchen. Es ist eine engineered control — dieselbe Kategorie wie Verriegelungen, Sign-offs und Segregation of Duties, die Qualitätssysteme bereits ernst nehmen. Ein sicheres industrielles HITL-Design sollte Freigabe-Scopes nach Workflow-Klasse definieren, Modellversion und Input-Zusammenfassung zeigen, auf die sich der Freigeber stützt, Rollentrennung zwischen Antragsteller und Freigeber bei Hochrisiko-Aktionen verlangen, Entscheidungen mit Korrelations-IDs in Qualitätssysteme loggen wo nötig, zeitgebundene Freigaben erzwingen und sicher degradieren, wenn Freigeber nicht verfügbar sind. Automatisieren Sie niedrig-Risiko-Stufen; gaten Sie hoch-Risiko-Stufen. Das Design muss ein Audit-Gespräch überstehen, nicht nur eine Demo-UI.
 
-Ein sicheres industrielles HITL-Design sollte Freigabeumfaenge nach Workflow-Klasse definieren, Modellversion und Eingabe-Zusammenfassung zeigen, auf denen der Approver basiert, Rollentrennung zwischen Antragsteller und Approver bei Hochrisikoaktionen fordern, Entscheidungen mit Korrelations-IDs in Qualitaetssysteme loggen wo noetig, zeitgebundene Freigaben erzwingen und bei fehlenden Approvern sicher degradieren. Automatisieren Sie niedrige Risikostufen; sperren Sie hoehere.
+Gute HITL-UX ist oft langsamer als schlechte — absichtlich: sie zwingt zur Pause, in der ein Mensch noch begründen kann, was er gesehen hat. Wenn Freigaben sich unter Druck wie ein zusätzliches Klickhindernis anfühlen, ist das Design noch nicht mit Schichtrealität kalibriert; dann wird umgangen, statt verbessert.
 
-Das Design sollte ein Audit-Gespraech ueberstehen, nicht nur eine Demo-UI.
+## Was schiefgeht, wenn HITL Dekoration ist
 
-## Framework: HITL-Schichten
+Das schmerzhafte Muster ist vertraut: ein Tool fügt einen „Approve“-Button hinzu, aber der Freigeber sieht nur polierten Text, nicht die Inputs, die zählen. Unter Zeitdruck werden Freigaben Muskelgedächtnis. Später, wenn eine Entscheidung infrage gestellt wird, kann niemand rekonstruieren, was zum Zeitpunkt der Unterschrift bekannt war — nur dass jemand ja klickte. Das ist keine Governance; das ist Liability-Laundering. Sicheres HITL ist für diese stressigen Minuten designed: es bremst den gefährlichen Schritt, nicht jeden, und macht die verantwortungsvolle Pause im Record sichtbar.
 
-### Schicht 1: Policy-Matrix
+## Schichten, die Dekoration von Security trennen
 
-Ordnen Sie jeden Workflow zu: Auto-Assist, Vorschlag-mit-Bestaetigung, Vier-Augen, Automatisierungsverbot.
+Policy-Matrix: mappen Sie jeden Workflow auf Auto-Assist, Suggest-with-Confirm, Dual-Control oder verbotene Automatisierung — damit „Freigabe“ etwas Spezifisches bedeutet. Evidence-Bundle: was der Freigeber sieht, inklusive gekürzter Inputs mit Redaction-Regeln, Limitation-Statements wo verfügbar und Links zu Work Orders oder Specs. Action-Binding: freigegebene Aktionen laufen nur über benannte Integrationskanäle mit derselben Korrelations-ID wie der Freigabe-Record. Timeout und Fallback: wenn Freigabe stockt, Default sicherer Hold — nicht stille Ausführung — und Routing zu Backup-Freigeber-Pools nach Werk-Regeln. Continuous Review: sampeln Sie Freigaben in höheren Stufen; messen Sie Override-Raten und Time-to-Approve.
 
-### Schicht 2: Nachweisbuendel
+Dekoratives HITL zeigt „irgendwer online“ als Freigeber, Evidence nur als finalen Text, Logging nur als Chat-Transkript und Failures, die leise weiterlaufen. Sicheres HITL nutzt benannte Kompetenz und Segregation, dauerhafte Freigabe-Records mit IDs und expliziten Hold oder Eskalation, wenn die Kontrolle nicht erfüllbar ist.
 
-Was der Approver sieht: gekuerzte Eingaben mit Redaktionsregeln; Konfidenz und bekannte Limitierungen wo verfuegbar; Links zu Workorders oder Spezifikationen.
+**Design-Review-Fragen:** können zwei Personen Segregation versehentlich über geteilte Accounts umgehen; kann eine Freigabe gegen eine andere Zielsystem-Aktion replayed werden; erfüllt Logging sowohl IT-Security- als auch Quality-Trace-Regeln; rekonstruieren Sie die Entscheidung in unter einer Stunde im Drill?
 
-### Schicht 3: Aktionsbindung
+Sicheres HITL ist Segregation, Traceability und Authority-Routing — kein zusätzlicher Klick auf einem generischen Assistant. Vector unterstützt diese Design-Haltung: proprietäre Industrie-KI mit On-Premise- / Private-API- / isolierten Deployments-Optionen, kein Training auf Kundendaten und Outputs geformt für Workflow-Integrationen und Freigabe-Gates statt ungebundenem Chat — damit menschliches Urteil bindend bleibt, wo Ihre Schichten es verlangen.
 
-Freigegebene Aktionen laufen nur ueber benannte Integrationskanaele mit derselben Korrelations-ID wie der Freigabedatensatz.
+HITL-Qualität definiert Traceability und Segregation, nicht ein zweiter Mausklick. Designen Sie Freigaben wie Safety-Interlocks — und messen Sie, ob sie unter Stress halten.
 
-### Schicht 4: Timeout und Fallback
+## Werks-Checkpoint
 
-Wenn Freigabe stockt: Standard ist sicherer Halt, nicht stille Ausfuehrung; Routing zu Backup-Approver-Pools nach Werkregeln.
+Behandeln Sie „Wie ein sicheres Human-in-the-Loop-Design für Industrie-KI aussehen sollte“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Auszug aus der Trainingspolicy, Log-Probe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Fertigungs-KI reift, wenn Belege Routine werden: dieselbe Disziplin, die Sie schon vor Linienfreigabe, Lieferantenwechsel oder großem IT-Cutover erwarten. Das ist der Wechsel von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent.
 
-### Schicht 5: laufende Pruefung
-
-Hoehere Stufen woechentlich stichprobenartig pruefen; Overrides und Time-to-Approve messen.
-
-## Vergleich: dekoratives versus sicheres HITL
-
-| Signal | dekorativ | sicher |
-| --- | --- | --- |
-| Approver-Rolle | jeder online | benannte Kompetenz und Trennung |
-| Nachweis | nur Endtext | Eingabe-Zusammenfassung, Modellversion, Umfang |
-| Logging | Chat-Transkript | dauerhafter Freigabedatensatz mit IDs |
-| Ausfall | leise weiter | expliziter Halt oder Eskalation |
-
-## Checkliste: Design-Review-Fragen
-
-- koennen zwei Personen Segregation durch geteilte Konten aushebeln?
-- laesst sich eine Freigabe gegen eine andere Zielsystemaktion replayen?
-- erfuellt Logging IT-Security und Qualitaets-Trace?
-- rekonstruieren Sie die Entscheidung in unter einer Stunde im Drill?
-
-## Product bridge
-
-DBR77 Vector unterstuetzt industrielles Schlussfolgern im DBR77-Oekosystem mit Deploymentsgrenzen, die HITL-Kontrollen an Werksintegrationen binden: proprietaere industrielle KI, on-premise / private API / isolierte Optionen, kein Training auf Kundendaten, Ausgaben fuer operative Disziplin statt offenem Chat.
-
-## Final takeaway
-
-HITL-Qualitaet ist Traceability und Trennung, nicht ein zweiter Mausklick. Entwerfen Sie Freigaben wie Sicherheitsverriegelungen. Messen Sie, ob sie unter Stress halten.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, dann diese: benennen Sie, was vor Ausweitung der Nutzung wahr sein muss, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Trost mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Produkte mit Vector erkunden](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*
+*DBR77 Vector koppelt industrielles Reasoning mit Integrationsmustern, die verteidigbare Freigabe und Logging statt generischem Freiform-Chat unterstützen. [Produkte mit Vector erkunden](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*

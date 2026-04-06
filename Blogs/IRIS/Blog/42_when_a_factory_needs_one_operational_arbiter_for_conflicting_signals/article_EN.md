@@ -5,65 +5,31 @@ Funnel stage: Decision
 Core problem: production, quality, maintenance, and logistics each receive plausible AI-ranked priorities, so the floor waits for informal negotiation instead of executing  
 Main promise: clear criteria for appointing a single arbiter role, decision rights, time limits, and how the arbiter records overrides without breaking follow-through
 
-You need one operational arbiter when conflicting signals produce parallel urgent tasks with incompatible owners, rising repeat escalations, and measurable throughput loss while teams debate. The arbiter is not a second boss for every case; they break ties on a published scope of workflows, within time boxes, and always write a short decision record tied to the underlying signals. If you cannot name the arbiter on night shift, you do not have arbitration, you have politics. Conflicting signals are normal in a complex plant. Unbounded debate is not.
+Conflicting signals are normal in a complex plant. Unbounded debate is not. You need one operational arbiter when parallel urgent tasks collide over constrained resources, SLA clocks reset because ownership bounces, adjacent shifts override assistance in opposite directions, and morning meetings replay the same fight without a versioned outcome. The arbiter is not a second boss for every case. They break ties on a published scope, within time boxes, and always write a short decision record tied to underlying signals. If you cannot name the arbiter on night shift, you have politics—not arbitration.
 
-## Signals that you are past "healthy tension"
+The arbiter owns tie-break priority among published workflows, time-boxed calls on resource conflicts, publishing decision records with rationale, and requesting formal threshold edits when patterns repeat. They do not rewrite engineering standards alone, bypass safety or quality holds without policy change, own every routine assignment, or replace line supervision. They end stalemates; they do not absorb accountability for execution.
 
-Watch for these patterns weekly: two functions open competing work orders for the same constrained resource; SLA clocks reset because ownership keeps bouncing; supervisors override assistance in opposite directions on adjacent shifts; morning meetings replay the same conflict without a versioned outcome. If three or more appear together, appoint an arbiter model.
+Stand arbitration up quickly with operational discipline: list the top conflict themes from the last month, map workflows and signals involved, publish scope by line and shift pattern, name primary and deputy arbiters, define maximum time before a default safe action triggers, require a short decision log linking signal IDs and owners, and review arbitration monthly—high volume usually means bad thresholds, not bad people.
 
-## Framework: what the arbiter owns versus what they must not own
+Rotating committees feel comfortable; named arbiters preserve throughput. Committees schedule meetings. Arbiters run clocks. Audit trails scatter in committees; they concentrate with a decision stream. Night coverage fails more often in committees; it succeeds when deputies are planned.
 
-| Owns | Does not own |
-|---|---|
-| tie-break priority among published workflows | rewriting engineering standards alone |
-| time-boxed call on resource conflicts | bypassing safety or quality holds without policy change |
-| publishing a decision record with rationale | owning every routine task assignment |
-| requesting threshold or policy edits after patterns repeat | replacing line supervision |
+Decision records need non-negotiable fields: a conflict ID linking sources, chosen priority order with an effective window, deferred work items with new owners and due times, a flag if policy change is required, and a role stamp per plant rules. Empty fields guarantee the next shift will reopen the fight.
 
-The arbiter breaks stalemates, not accountability for execution.
+A single arbiter is the wrong answer when conflicts are rare and local, when root cause is definition drift, or when a single-line supervisor already plays the role credibly.
 
-## Step sequence: stand up arbitration in one week
+IRIS makes arbitration operational when competing priorities, resulting tasks, and decision logs share execution state—turning tie-breaks into durable records instead of slide notes.
 
-List the top five conflict themes from the last thirty days; map which workflows participate and which signals feed them; publish arbitration scope: lines, shifts, and decision types included; name primary and deputy arbiters per shift pattern; define the maximum time allowed before a default safe action triggers; require a one-paragraph decision log with signal IDs and owners; review arbitration volume monthly; high volume means bad thresholds.
+For governance and prioritization neighbors, pair with [How to Govern AI Decisions Across Shifts and Functions](../37_how_to_govern_ai_decisions_across_shifts_and_functions/article_EN.md), [How AI Can Prioritize Factory Issues Across Functions](../28_how_ai_can_prioritize_factory_issues_across_functions/article_EN.md), and [How to Design an Exception Handling Model for AI-Assisted Operations](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_EN.md).
 
-## Comparison: rotating committee versus named arbiter
+Arbitration should feel boring when it is working: short decision notes, clear deferrals, timers reset intentionally, and fewer repeat arguments in the morning meeting. When arbitration feels dramatic, the plant usually has a missing threshold, a missing owner, or a policy gap masquerading as a personality conflict. The arbiter’s job is to make those gaps visible—not to become the permanent hero who resolves the same fight weekly.
 
-| Element | Rotating committee | Named arbiter |
-|---|---|---|
-| speed | meeting-driven | clock-driven |
-| audit trail | scattered notes | single decision stream |
-| accountability | diffuse | explicit |
-| night coverage | often missing | planned deputies |
+Good arbitration also protects supervisors from becoming informal judges. Without a published mechanism, tie-break authority quietly lands on whoever is loudest or most senior in the room. That is corrosive over time. A named arbiter role is not about elevating one person; it is about making conflict resolution a service with a clock, a record, and a feedback loop into thresholds.
 
-Committees preserve comfort. Arbiters preserve throughput.
+Arbitration is a service level for conflict, not a personality contest. Name it, time-box it, record it, and measure how often the same conflict returns.
 
-## Checklist: decision record fields (non-negotiable)
+## The operational bottom line
 
-- conflict ID linking both signal sources  
-- chosen priority order with effective window  
-- deferred work items with new owners and due times  
-- whether thresholds or policies need a formal change ticket  
-- signature or role stamp per plant rules
-
-Empty fields mean the next shift will reopen the fight.
-
-## When a single arbiter is the wrong answer
-
-Conflicts are rare and local; use line ownership instead; root cause is bad data definitions; fix definitions before roles; the plant is single-line with one supervisor; the supervisor is already the arbiter.
-
-## Why IRIS makes arbitration operational instead of verbal
-
-DBR77 IRIS matters here because arbitration only works when competing priorities, resulting tasks, and the decision log live in the same execution state.
-
-That turns tie-breaks into a durable operating record instead of another meeting summary people reinterpret on the next shift.
-
-If you need the broader governance and prioritization neighbors, pair this with [How to Govern AI Decisions Across Shifts and Functions](../37_how_to_govern_ai_decisions_across_shifts_and_functions/article_EN.md), [How AI Can Prioritize Factory Issues Across Functions](../28_how_ai_can_prioritize_factory_issues_across_functions/article_EN.md), and [How to Design an Exception Handling Model for AI-Assisted Operations](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_EN.md).
-
-## Final takeaway
-
-Arbitration is a service level for conflict, not a personality contest.
-
-Name it, time-box it, record it, and measure how often the same conflict returns.
+The promise of this article—clear criteria for appointing a single arbiter role, decision rights, time limits, and how the arbiter records overrides without breaking follow-through—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “When a Factory Needs One Operational Arbiter for Conflicting Signals,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
 ---
 

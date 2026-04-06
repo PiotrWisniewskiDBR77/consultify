@@ -280,6 +280,7 @@ export interface SyncResult {
   status: string;
   recordsSynced: number;
   duration: number;
+  error?: string | null;
 }
 
 export interface SyncEvent {

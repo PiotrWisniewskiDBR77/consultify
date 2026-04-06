@@ -8,15 +8,23 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
+  Brain,
   BookOpen,
   ChevronRight,
   Clock,
+  Cpu,
   Eye,
   Filter,
   GraduationCap,
+  Landmark,
+  LayoutGrid,
   Search,
+  Shield,
+  ShoppingCart,
+  Sparkles,
   Tag,
   TrendingUp,
   X,
@@ -27,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
+import { KNOWLEDGE_BASE_SITE, isKbCategoryForCurrentSite } from '@/config/knowledgeBaseSite';
 import {
   KbArticleListItem,
   KbCategory,
@@ -39,55 +48,67 @@ import { useKnowledgeTags } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
-const SECTION_ICONS: Record<string, React.ReactNode> = {
-  'consultify-why-transformations-fail': <AlertTriangle size={22} />,
-  'consultify-the-money-question': <TrendingUp size={22} />,
-  'consultify-decisions-that-ship': <Zap size={22} />,
-};
+type AccentTheme = { gradient: string; border: string; glow: string; text: string; bg: string };
 
-const SECTION_ACCENT: Record<string, { gradient: string; border: string; glow: string; text: string; bg: string }> = {
-  'consultify-why-transformations-fail': {
+const ACCENT_THEMES: AccentTheme[] = [
+  {
     gradient: 'from-rose-400 to-red-500',
     border: 'border-rose-500/20 hover:border-rose-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(244,63,94,0.35)]',
     text: 'text-rose-400',
     bg: 'bg-rose-500/10',
   },
-  'consultify-the-money-question': {
+  {
     gradient: 'from-emerald-400 to-teal-500',
     border: 'border-emerald-500/20 hover:border-emerald-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(16,185,129,0.35)]',
     text: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
   },
-  'consultify-decisions-that-ship': {
+  {
     gradient: 'from-amber-400 to-orange-500',
     border: 'border-amber-500/20 hover:border-amber-500/40',
     glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(245,158,11,0.35)]',
     text: 'text-amber-400',
     bg: 'bg-amber-500/10',
   },
-};
+];
 
-const DEFAULT_ACCENT = SECTION_ACCENT['consultify-decisions-that-ship'];
-type SectionMetaKeys = { eyebrowKey: string; chipsKeys: string[]; statLabelKey: string };
-const SECTION_META_KEYS: Record<string, SectionMetaKeys> = {
-  'consultify-why-transformations-fail': {
-    eyebrowKey: 'kb.lane.failurePatterns',
-    chipsKeys: ['kb.chip.governance', 'kb.chip.risk', 'kb.chip.leadership'],
-    statLabelKey: 'kb.stat.warningSigns',
-  },
-  'consultify-the-money-question': {
-    eyebrowKey: 'kb.lane.boardLogic',
-    chipsKeys: ['kb.chip.roi', 'kb.chip.boardRoom', 'kb.chip.portfolio'],
-    statLabelKey: 'kb.stat.boardCases',
-  },
-  'consultify-decisions-that-ship': {
-    eyebrowKey: 'kb.lane.executionMoves',
-    chipsKeys: ['kb.chip.execution', 'kb.chip.aiStrategy', 'kb.chip.decisionSpeed'],
-    statLabelKey: 'kb.stat.executionPlays',
-  },
-};
+const DEFAULT_ACCENT = ACCENT_THEMES[2];
+
+const ICON_BY_NAME = {
+  Activity,
+  AlertTriangle,
+  BookOpen,
+  Brain,
+  Cpu,
+  Landmark,
+  LayoutGrid,
+  Shield,
+  ShoppingCart,
+  Sparkles,
+  TrendingUp,
+  Zap,
+} as const;
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function accentForSlug(slug: string | null | undefined): AccentTheme {
+  if (!slug) return DEFAULT_ACCENT;
+  return ACCENT_THEMES[hashString(slug) % ACCENT_THEMES.length] || DEFAULT_ACCENT;
+}
+
+function iconForCategory(category: Pick<KbCategory, 'icon'>, size = 22): React.ReactNode {
+  const Icon = ICON_BY_NAME[category.icon as keyof typeof ICON_BY_NAME] || BookOpen;
+  return <Icon size={size} />;
+}
 
 function kbImg(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
@@ -133,15 +154,15 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const { data: allArticlesData } = useDocsArticles({ language: docsLanguage, limit: 100 });
   const allArticles = allArticlesData?.articles;
 
-  const consultifyCategories = useMemo(() =>
-    categories?.filter((c: KbCategory) => c.slug.startsWith('consultify-')) || [],
+  const siteCategories = useMemo(() =>
+    categories?.filter((c: KbCategory) => isKbCategoryForCurrentSite(c.slug)) || [],
     [categories]
   );
 
   const featured = useMemo(
     () =>
       allFeatured
-        ?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+        ?.filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag))
         .slice(0, 6) || [],
     [allFeatured, selectedTag]
@@ -150,7 +171,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const browseArticles = useMemo(
     () =>
       allArticles
-        ?.filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+        ?.filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag)) || [],
     [allArticles, selectedTag]
   );
@@ -165,7 +186,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const displayArticles = useMemo(() => {
     if (activeSearch) {
       return (searchResults || [])
-        .filter((a: KbArticleListItem) => a.category_slug?.startsWith('consultify-'))
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
     if (selectedCategory && categoryArticles?.length) {
@@ -228,7 +249,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm text-[11px] sm:text-xs font-bold text-primary-300 tracking-wide mb-6 sm:mb-8">
-                <span>{t('kb.hero.badge', '50+ expert articles on transformation management')}</span>
+                <span>{t('kb.hero.badge', KNOWLEDGE_BASE_SITE.heroBadge)}</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
@@ -236,7 +257,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               </h1>
 
               <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto px-2 dark:text-white/55">
-                {t('kb.hero.subtitle', 'Read the guides leaders use before they commit budget, launch rollout, or defend ROI. Built for moments when the next decision matters more than another opinion.')}
+                {t('kb.hero.subtitle', KNOWLEDGE_BASE_SITE.heroSubtitle)}
               </p>
 
               {/* Search */}
@@ -272,26 +293,25 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6">
               <div>
                 <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
-                  {t('kb.sections.eyebrow', 'Choose the tension you want to solve')}
+                  {t('kb.sections.eyebrow', KNOWLEDGE_BASE_SITE.sectionsEyebrow)}
                 </p>
                 <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                  {t('kb.sections.title', 'Three sharper ways into the library')}
+                  {t('kb.sections.title', KNOWLEDGE_BASE_SITE.sectionsTitle)}
                 </h2>
               </div>
               <p className="hidden max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/50 md:block">
                 {t(
                   'kb.sections.subtitle',
-                  'Each lane is framed around a real executive tension, so people can enter through failure, money, or execution instead of generic taxonomy.'
+                  KNOWLEDGE_BASE_SITE.sectionsSubtitle
                 )}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-              {consultifyCategories.map((category: KbCategory) => {
-                const accent = SECTION_ACCENT[category.slug] || DEFAULT_ACCENT;
-                const metaKeys = SECTION_META_KEYS[category.slug];
-                const eyebrow = metaKeys ? t(metaKeys.eyebrowKey) : t('kb.sections.defaultEyebrow', 'Category');
-                const chips = metaKeys ? metaKeys.chipsKeys.map((k) => t(k)) : [];
-                const statLabel = metaKeys ? t(metaKeys.statLabelKey) : t('kb.sections.defaultStatLabel', 'articles');
+              {siteCategories.map((category: KbCategory) => {
+                const accent = accentForSlug(category.slug);
+                const eyebrow = t('kb.sections.defaultEyebrow', 'Category');
+                const chips: string[] = [];
+                const statLabel = t('kb.sections.defaultStatLabel', 'articles');
                 return (
                   <Link
                     key={category.id}
@@ -321,7 +341,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                           'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg shadow-black/10',
                           accent.gradient
                         )}>
-                          {SECTION_ICONS[category.slug] || <BookOpen size={22} />}
+                          {iconForCategory(category, 22)}
                         </div>
                       </div>
 
@@ -406,7 +426,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                   {activeSearch && <span>Search: &ldquo;{activeSearch}&rdquo;</span>}
                   {selectedCategory && (
                     <span className="px-2.5 py-0.5 rounded-full bg-primary-600/15 border border-primary-500/25 text-primary-300 text-xs font-semibold">
-                      {consultifyCategories.find((c: KbCategory) => c.slug === selectedCategory)?.name}
+                      {siteCategories.find((c: KbCategory) => c.slug === selectedCategory)?.name}
                     </span>
                   )}
                   {selectedTag && (
@@ -485,7 +505,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               )}
 
               {/* Section Previews */}
-              {consultifyCategories.map((category: KbCategory) => (
+              {siteCategories.map((category: KbCategory) => (
                 <SectionPreview
                   key={category.id}
                   category={category}
@@ -639,7 +659,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
 
 const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }) => {
   const { t } = useTranslation();
-  const accent = SECTION_ACCENT[article.category_slug || ''] || DEFAULT_ACCENT;
+  const accent = accentForSlug(article.category_slug);
   const visibleTags = getVisibleArticleTags(article);
 
   return (
@@ -704,7 +724,7 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
 
   if (!articles?.length) return null;
 
-  const accent = SECTION_ACCENT[category.slug] || DEFAULT_ACCENT;
+  const accent = accentForSlug(category.slug);
 
   return (
     <div>
@@ -714,7 +734,7 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
             'w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br text-white flex-shrink-0',
             accent.gradient
           )}>
-            {SECTION_ICONS[category.slug] || <BookOpen size={20} />}
+            {iconForCategory(category, 20)}
           </div>
           <div className="min-w-0">
             <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">{category.name}</h2>

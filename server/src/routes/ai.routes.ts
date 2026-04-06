@@ -18,6 +18,7 @@ import {
 } from '../middleware/validation.middleware.js';
 import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
 import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import type { WorkerWebAccessPolicy } from '../services/ai/virtualWorkerWebAccessService.js';
 import {
   triggerAIDependencyConflict,
   triggerAIOverloadDetected,
@@ -2027,7 +2028,7 @@ router.post(
         }
       }
 
-      let workerWebPolicyOverride: Record<string, unknown> | null = null;
+      let workerWebPolicyOverride: WorkerWebAccessPolicy | null = null;
       if (virtualWorkerSlug) {
         emitSSE({
           type: 'thought',

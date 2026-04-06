@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Safety Infrastructure &amp; Geospatial &#8211; HxGN Spotlight</title>
+	<atom:link href="https://blog.hexagon.com/tag/safety-infrastructure-geospatial/feed/" rel="self" type="application/rss+xml" />
+	<link>https://blog.hexagon.com</link>
+	<description>Hexagon’s platform for original stories from opinion leaders and customers</description>
+	<lastBuildDate>Thu, 27 Apr 2023 14:57:53 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.1</generator>
+	<item>
+		<title>Hexagon mentioned in 13 Gartner® Hype Cycle™ reports</title>
+		<link>https://blog.hexagon.com/hexagon-mentioned-in-13-gartner-hype-cycle-reports/</link>
+		
+		<dc:creator><![CDATA[Keri Tomsic]]></dc:creator>
+		<pubDate>Fri, 14 Apr 2023 16:55:36 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[IoT]]></category>
+		<category><![CDATA[Manufacturing Intelligence]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Smart Factories]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13924</guid>
+
+					<description><![CDATA[Check out some key insights from select 2022 Gartner Hype Cycle reports that feature Hexagon. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Beyond today</title>
+		<link>https://blog.hexagon.com/beyond-today/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Tue, 16 Aug 2022 15:12:07 +0000</pubDate>
+				<category><![CDATA[HxGN TV]]></category>
+		<category><![CDATA[Video]]></category>
+		<category><![CDATA[HxGN LIVE]]></category>
+		<category><![CDATA[HxGN LIVE Global]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13579</guid>
+
+					<description><![CDATA[Join Hexagon’s Safety, Infrastructure &#038; Geospatial division president, Steven Cost, and guests as they explore how Hexagon's solutions can help you see, understand and address today’s challenges while also offering a clear path to a better tomorrow.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Data drives the direction of the world’s invisible water sources</title>
+		<link>https://blog.hexagon.com/data-drives-the-direction-of-the-worlds-invisible-water-sources/</link>
+		
+		<dc:creator><![CDATA[Brian Tidwell]]></dc:creator>
+		<pubDate>Tue, 22 Mar 2022 15:13:19 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[Empowering an Autonomous Future]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13192</guid>
+
+					<description><![CDATA[In celebration of World Water Day, see how management of groundwater supplies is crucial in humanity’s future and how Hexagon’s technologies can help.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Smart monitoring is a critical step in cutting down on deforestation</title>
+		<link>https://blog.hexagon.com/smart-monitoring-critical-step-cutting-deforestation/</link>
+		
+		<dc:creator><![CDATA[Brian Tidwell]]></dc:creator>
+		<pubDate>Mon, 21 Mar 2022 17:54:01 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[Empowering an Autonomous Future]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13190</guid>
+
+					<description><![CDATA[Hexagon is dedicated to providing GIS and remote sensing tools that allow students and researchers to make a difference in the fight against deforestation.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>More traffic on the tracks</title>
+		<link>https://blog.hexagon.com/more-traffic-on-the-tracks/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Wed, 12 Jan 2022 13:00:21 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Artificial Intelligence]]></category>
+		<category><![CDATA[HxGN Connect]]></category>
+		<category><![CDATA[HxGN OnCall | Dispatch]]></category>
+		<category><![CDATA[HxGN OnCall Security | Guardian]]></category>
+		<category><![CDATA[Leica BLK 247]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Sensors]]></category>
+		<category><![CDATA[Situational Awareness]]></category>
+		<category><![CDATA[Smart Cities & Nations]]></category>
+		<category><![CDATA[Solutions for Smart Cities]]></category>
+		<category><![CDATA[Transportation]]></category>
+		<category><![CDATA[Visualisation]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13112</guid>
+
+					<description><![CDATA[In this episode of HxGN Radio, we discuss how rail companies can keep customers and cargo safe, while doing more with a finite set of tracks.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Location Intelligence: Hexagon&#8217;s geospatial resources and support for academia</title>
+		<link>https://blog.hexagon.com/location-intelligence-hexagons-geospatial-resources-support-academia/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Wed, 12 May 2021 13:00:12 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Academia]]></category>
+		<category><![CDATA[Elliott Ferguson]]></category>
+		<category><![CDATA[Mike Lane]]></category>
+		<category><![CDATA[Rob Mott]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Thought Leadership]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=12848</guid>
+
+					<description><![CDATA[In this final episode of our series about careers and professional development, we'll be focusing on the programmes and resources that Hexagon Geospatial and Hexagon US Federal have in place for the academic community.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Location Intelligence: Safeguarding transportation infrastructure</title>
+		<link>https://blog.hexagon.com/location-intelligence-safeguarding-transportation-infrastructure-using-automated-os-ow-management/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Wed, 10 Mar 2021 14:00:23 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Bruce Chaplin]]></category>
+		<category><![CDATA[Justin Dinger]]></category>
+		<category><![CDATA[Mark Nicklas]]></category>
+		<category><![CDATA[Rick Schulte]]></category>
+		<category><![CDATA[SafeHaul]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Smart Cities & Nations]]></category>
+		<category><![CDATA[Solutions for Smart Cities]]></category>
+		<category><![CDATA[Thought Leadership]]></category>
+		<category><![CDATA[Transportation]]></category>
+		<guid isPermaLink="false">http://hxgnspotlight.com/?p=12815</guid>
+
+					<description><![CDATA[Over the road trucking is critical to how goods are transported around the world. We discuss the impact of oversized and overweight freight loads on transportation infrastructure.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Responsible AI in public safety</title>
+		<link>https://blog.hexagon.com/responsible-ai-public-safety/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Wed, 24 Feb 2021 13:00:09 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Artificial Intelligence]]></category>
+		<category><![CDATA[Jack Williams]]></category>
+		<category><![CDATA[Public Safety]]></category>
+		<category><![CDATA[Real-Time]]></category>
+		<category><![CDATA[Rick Zak]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Smart Cities & Nations]]></category>
+		<category><![CDATA[Tech Trends]]></category>
+		<category><![CDATA[Thought Leadership]]></category>
+		<guid isPermaLink="false">http://hxgnspotlight.com/?p=12798</guid>
+
+					<description><![CDATA[Public safety organisations are rapidly adopting artificial intelligence (AI) solutions to improve operations and deliver a higher standard of service. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Location Intelligence: Landing your first geospatial job</title>
+		<link>https://blog.hexagon.com/landing-first-geospatial-job/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Tue, 23 Feb 2021 15:30:30 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Elliot Ferguson]]></category>
+		<category><![CDATA[Government]]></category>
+		<category><![CDATA[Innovation]]></category>
+		<category><![CDATA[Mike Lane]]></category>
+		<category><![CDATA[Rob Mott]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Thought Leadership]]></category>
+		<guid isPermaLink="false">http://hxgnspotlight.com/?p=12792</guid>
+
+					<description><![CDATA[Mike Lane and Elliott Ferguson from Hexagon Geospatial talk with us about landing your first job in the geospatial industry.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Public Safety Now: See the unseen: The value of AI in public safety</title>
+		<link>https://blog.hexagon.com/public-safety-now-see-unseen-value-ai-public-safety/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 10 Dec 2020 14:00:00 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Artificial Intelligence]]></category>
+		<category><![CDATA[HxGN OnCall Dispatch | Smart Advisor]]></category>
+		<category><![CDATA[Jack Williams]]></category>
+		<category><![CDATA[John Whitehead]]></category>
+		<category><![CDATA[Real-Time]]></category>
+		<category><![CDATA[Safe Cities]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Smart Cities]]></category>
+		<category><![CDATA[Smart Nations]]></category>
+		<category><![CDATA[Solutions for Smart Cities]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=12751</guid>
+
+					<description><![CDATA[Artificial intelligence can work behind the scenes to support emergency communications professionals and identify issues that could not be detected by human observation alone. Learn more about the role of AI in public safety in this edition of Public Safety Now.]]></description>
+		
+		
+		
+			</item>
+	</channel>
+</rss>

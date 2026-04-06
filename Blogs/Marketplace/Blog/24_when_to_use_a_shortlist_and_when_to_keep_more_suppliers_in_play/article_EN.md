@@ -5,64 +5,49 @@ Funnel stage: Consideration (process design for comparability)
 Core problem: teams either over-invite suppliers and drown in noise, or over-shortlist too early and lose negotiating reality  
 Main promise: a simple decision gate that matches supplier count to uncertainty, comparability needs, and internal alignment
 
-Supplier count is not a virtue. It is a control variable.
+Supplier count is a control variable, not a virtue. Too many bidders dilute your attention, encourage thin proposals, and signal low odds—so integrators invest less. Too narrow a field too early locks you into a story before you know what you are buying. The right number follows uncertainty: stay wider while the challenge and comparability frame are still forming; narrow when you can compare fairly and need depth instead of breadth.
 
-Too many suppliers creates: incompatible proposals; diluted attention from your own team; integrators who invest less because odds feel low.
+## Widen the field when discovery is real
 
-Too few suppliers too early creates: weak price and scope tension; internal suspicion that the fix was chosen before the problem was understood. Manufacturers do better when they choose supplier count on purpose.
+Keep more suppliers in play when the solution class is not settled, internal alignment is still shaky, or site constraints are not yet legible. In those conditions, conversations are learning tools. Forcing a shortlist prematurely produces confident guesses on the wrong problem.
 
-Use a shortlist when the problem is defined enough to compare fairly and your team can run a disciplined matrix.
+## Shortlist when comparability is possible
 
-Keep more suppliers in play when uncertainty is still structural: unclear scope, unclear constraints, or unresolved internal owners.
+Move to a shortlist when you can freeze evaluation fields, publish the same clarifications to serious bidders, and judge responses on substance instead of format. Shortlisting is a promise to suppliers that their effort will be met with a fair, bounded comparison—not an endless tournament.
 
-The practical rule: high problem uncertainty: widen until the brief stabilizes; high decision risk: keep at least two credible paths until commercial terms are comparable; high time pressure with frozen scope: shortlist fast, but freeze comparison fields first.
+## Do not move columns after you shortlist
 
-If you change supplier count without changing the brief, you are usually rearranging chaos.
+If evaluation criteria keep shifting once the list is small, you force integrators to chase a moving target and you destroy trust. Freeze the spine; change it only with version discipline and explicit reset.
 
-## Shortlist signals (when narrowing is rational)
+## Negotiating reality without chaos
 
-Shortlisting makes sense when: scope boundaries are written and versioned; success criteria are testable, not aesthetic; integration owners are named on your side; comparison columns are frozen for one evaluation cycle; you can explain why excluded suppliers are excluded without embarrassment. That is not "we like these three." That is "we can evaluate fairly at three."
+A shortlist should still leave enough tension for honest commercial discussion. A single viable name is sometimes reality—but then proof discipline matters even more, not less.
 
-## Keep-more-suppliers signals (when widening stays rational)
+## How DBR77 Marketplace helps
 
-Stay broader when: operations and engineering disagree on the real constraint; the line cannot commit to samples, rates, or downtime assumptions; safety or validation rules are still ambiguous; procurement is being asked to compare offers that are not actually comparable yet. In those states, a shortlist does not increase speed. It increases rework.
-
-## Reality check: teams often shrink the list too early because fewer suppliers feels like progress
-
-That feeling is understandable. Calendars get lighter. Meetings get shorter. The process looks more controlled. But if uncertainty is still sitting inside the brief, a shorter list does not create comparability.
-
-It only hides the fact that the buyer narrowed choice before the problem was stable enough to evaluate fairly.
-
-## A two-stage mental model
-
-Think in two supplier pools, not one permanent list.
-
-| Stage | purpose | typical count (illustrative) |
-| --- | --- | --- |
-| discovery | reduce unknowns, test feasibility assumptions | wider |
-| decision | compare offers under frozen fields | narrow |
-
-Move from discovery to decision only when the brief can survive a single clarification batch without reshaping scope.
-
-## Comparison hygiene that makes either count work
-
-Whether you keep four suppliers or two, the same rule applies: one outbound channel, one matrix, one assumptions log.
-
-If you widen suppliers but keep informal channels, you multiply contradictions.
-
-If you shortlist but keep moving columns, you force integrators to guess.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because supplier count only becomes useful when the buyer can explain why discovery stays wide or why decision-stage comparison narrows.
-
-That turns shortlist design into an explicit operating rule instead of a political gesture inside procurement.
+Supplier count becomes useful when you can explain why discovery stayed wide or why decision-stage comparison narrowed. That turns shortlist design into an operating rule instead of a political gesture.
 
 For the closest neighboring decision path, see [When Single Sourcing Is Smarter Than Running a Full Supplier Beauty Contest](../27_when_single_sourcing_is_smarter_than_running_a_full_supplier_beauty_contest/article_EN.md); if scope is still unstable, also see [How to Scope an Automation Project Without Overcomplicating It](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_EN.md).
 
+## Supplier experience matters
+
+Integrators allocate talent to opportunities that look serious. A bloated field can accidentally signal low intent; an overly narrow field can signal a rigged game. Explain internally why supplier count matches uncertainty so your team communicates respectfully externally. Fair process is not only ethics—it is how you attract quality effort on your project.
+
+When you shortlist, commit to depth: workshops, site truth, and structured clarifications that justify the down-select. A shortlist that only narrows names without deepening understanding is cosmetic.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"When to Use a Shortlist and When to Keep More Suppliers in Play" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
 ## Bottom line
 
-Shortlist when you can compare fairly. Stay wider when you still cannot describe what fair comparison means. Supplier count should follow uncertainty, not habit.
+Shortlist when you can compare fairly. Stay wider until you can describe what fair comparison means. Let uncertainty drive the count—not habit, not policy alone, and not fear of missing a name.
 
 ---
 

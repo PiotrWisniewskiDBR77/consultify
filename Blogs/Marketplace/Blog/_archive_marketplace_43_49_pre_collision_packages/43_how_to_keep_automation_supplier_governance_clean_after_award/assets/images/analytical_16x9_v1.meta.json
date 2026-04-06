@@ -1,0 +1,29 @@
+{
+  "article_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/43_how_to_keep_automation_supplier_governance_clean_after_award",
+  "product": "Marketplace",
+  "scope_type": "blog",
+  "asset_slug": "43_how_to_keep_automation_supplier_governance_clean_after_award",
+  "role": "analytical",
+  "archive_package": "_archive_marketplace_43_49_pre_collision_packages",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "newsletter"
+  ],
+  "model": "cursor-builtin-generate-image",
+  "generation_notes": {
+    "contract": "DBR77_IMAGE_QC_STANDARD Mode 2; archive closeout",
+    "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | Cursor GenerateImage + PIL for social |\n| seed | n/a |\n| steps | n/a |\n| delivered_px | 1376×768 |"
+  },
+  "prompt_source": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/43_how_to_keep_automation_supplier_governance_clean_after_award/image-prompts.md",
+  "prompt_text": "Overhead: felt mat with frozen baseline metal plates left, brass rail with oak change tiles and pins toward open slot for new scope token—no legible numbers, no slide diagram.",
+  "negative_prompt": "Gantt wallpaper, infographic, dashboard, software UI",
+  "seed": "n/a",
+  "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+  "created_at": "2026-03-31T04:54:58+00:00",
+  "alt_text_en": "Physical board for baseline and numbered change path metaphor without typography.",
+  "caption_en": "Analytical for supplier governance traceability.",
+  "crop_safe_notes": "Overhead 16:9.",
+  "output_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/43_how_to_keep_automation_supplier_governance_clean_after_award/assets/images/analytical_16x9_v1.png"
+}

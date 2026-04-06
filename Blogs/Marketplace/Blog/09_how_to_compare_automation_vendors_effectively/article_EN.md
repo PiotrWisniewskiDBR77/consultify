@@ -5,106 +5,55 @@ Funnel stage: Consideration
 Core problem: many automation buying teams receive multiple offers, but cannot compare them cleanly because scope, assumptions, and risk are presented inconsistently  
 Main promise: vendor comparison becomes faster and more defensible when buyers compare structured fields instead of sales narratives
 
-Most automation buyers do not struggle because they receive too few offers. They struggle because the offers are hard to compare. One proposal looks cheaper. Another looks faster. A third looks more advanced. But once the team starts reading closely, the real problem appears: they are not comparing the same thing.
+Most teams do not fail for lack of options. They fail because the options are not on the same page—literally. One proposal optimizes for a narrow machine boundary. Another prices a wider integration job. A third leans on assumptions that never made it into writing. The spreadsheet looks balanced; underneath, you are comparing different projects wearing similar row labels.
 
-That is why vendor comparison often turns into confusion instead of confidence.
+Effective comparison is less about taste in presentations and more about forcing the same questions to be answered in the same places.
 
-## The first mistake: comparing presentations instead of scope
+## Presentations are not scope
 
-Many teams get pulled toward style before structure. One vendor presents beautifully. Another sounds more technical. A third promises flexibility.
+Style can distract: slick renderings, confident claims, friendly references. None of that replaces answers to boring questions. What is included? What is explicitly excluded? What throughput, mix, and environmental conditions were assumed? What happens when reality diverges? Until scope is legible, “cheaper” and “faster” are adjectives, not facts.
 
-None of that matters until the buyer can answer: what is actually included; what is excluded; what assumptions drive the offer; what the supplier is truly committing to. Without scope clarity, comparison is mostly theater.
+## Start with a small set of fields
 
-## Compare five fields first
+Before you drown in detail, anchor on five comparison dimensions: scope boundary, price logic, lead time and milestone shape, stated assumptions, and risk ownership. Those categories surface most of the real divergence. Everything else is elaboration—or decoration.
 
-A practical comparison should start with a small number of structured fields: scope; price logic; lead time; assumptions; risk. These five areas usually reveal more than a long sales deck.
+## Scope is where comparisons quietly break
 
-They help the team understand whether differences between offers are real or just formatting differences.
+Two prices can look close while one proposal assumes your team completes civil work, IT interfaces, and training consumption—and the other rolls those inside integrator hours. Ask about safety, commissioning, documentation, spare parts philosophy, and software support boundaries. The goal is not infinite granularity; it is eliminating surprise categories after award.
 
-## Scope is the real battleground
+## Price without structure is a gamble
 
-Most comparison errors happen because scope is not equally visible.
+The question is not which number is smallest. It is which number is tied to the clearest commitment set. A higher price with visible boundaries can be economically safer than a lower price built on guesses your organization will pay for later.
 
-Buyers should ask: what hardware is included; what integration work is included; what safety elements are included; what commissioning is included; what training, documentation, and support are included.
+## Assumptions must sit in daylight
 
-Two offers can look similar in price while being very different in total project reality.
+Throughput targets, product variability, upstream readiness, site access, utility headroom, and IT security constraints belong in the open. Hidden assumptions make projects feel cheaper and schedules feel shorter until integration truth arrives. Comparability requires that those assumptions be visible side by side—not buried in appendices nobody aligns on.
 
-## Reality check: comparison usually breaks where the buyer assumes sameness too early
+## Risk should be a first-class row
 
-Many teams say they are comparing three vendors. In practice, they are comparing:
+Compare delivery risk, integration risk, schedule sensitivity, performance risk, and dependencies on third parties or on your own readiness tasks. This is where adult conversations happen: not only what could work in a demo, but what you can justify buying when uncertainty is real.
 
-- one supplier pricing a narrow machine scope
-- one supplier pricing a wider integration job
-- one supplier pricing around assumptions that are still unwritten
+## Weak challenges produce fake vendor comparisons
 
-That is why the commercial table may look orderly while the decision is still distorted underneath.
+If the brief is vague, suppliers answer different questions. You are then comparing interpretations, not solutions. Invest in challenge clarity before you invest in another round of demos.
 
-## Price should never be read alone
+## What procurement actually needs
 
-Price matters. But price without structure is dangerous. The better question is not:
+Procurement does not need prettier PDFs. It needs stable fields, visible assumptions, and a record that finance and engineering can audit. That is how you defend a choice without relying on charisma.
 
-- which vendor is cheapest?
+## How DBR77 Marketplace supports the workflow
 
-It is:
+DBR77 Marketplace is built around structured challenge definition and standardized offers so buyers can compare on substance—scope, assumptions, delivery logic—rather than on narrative momentum.
 
-- which price is connected to the clearest scope, assumptions, and delivery accountability?
+## Turning comparison into a committee-proof record
 
-That is how buyers avoid false savings that later become scope gaps, change requests, or timeline pain.
+Effective comparison is not only a procurement task; it is how sponsors defend time and money. When differences between vendors are explained as visible scope and assumption deltas, leadership can engage without feeling baited into choosing based on slides. When differences are buried, approvals become brittle: any late fact feels like a betrayal. Build the comparison so a third party could reconstruct it—what was asked, what was answered, what changed, and why the shortlist makes sense.
 
-## Assumptions must be visible
-
-Strong comparisons require visible assumptions.
-
-The buyer should know: what throughput is assumed; what product variability is assumed; what upstream conditions are assumed; what site-readiness assumptions exist; what dependencies sit outside the offer.
-
-When assumptions stay hidden, the project feels cheaper and safer than it really is. That destroys trust later.
-
-## Risk should be compared explicitly
-
-One of the biggest mistakes in automation sourcing is treating risk as an afterthought.
-
-Buyers should compare: delivery risk; integration risk; schedule risk; performance risk; dependency on third parties. This is where the strongest decision conversations happen.
-
-Not just around “what could work,” but around “what is most defensible to buy.”
-
-## Do not compare vendors without a clean challenge
-
-Vendor comparison becomes weak when the original challenge is weak.
-
-If the project brief is vague, suppliers will answer different questions in different ways. That means the buyer is not really comparing vendors. The buyer is comparing interpretation. This is why challenge clarity comes before comparison quality.
-
-## Why procurement needs structure, not prettier PDFs
-
-Procurement teams do not need more beautiful proposal documents.
-
-They need: standard fields; visible assumptions; comparable risk logic; faster narrowing of options.
-
-That is what makes the decision easier to defend across operations, engineering, finance, and leadership.
-
-## What better comparison looks like
-
-A stronger vendor comparison process usually means:
-
-- one defined challenge brief
-- one standardized response structure
-- one short list of comparison fields
-- one clear path to shortlist and contract
-
-At that point, the team is no longer drowning in sales material. It is making a decision.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace is built around this exact buyer problem. Its value is not only access to vendors.
-
-Its value is: structured challenge definition; standardized offers; clearer comparability; faster movement from shortlist to execution.
-
-That matters because good vendor comparison is not a presentation skill. It is a workflow design problem.
+On the plant side, comparability is also respect: operators and maintenance leaders can see that the “winning” path was not picked by charisma alone, but tied to acceptance and interface ownership they will live with. That reduces passive resistance during commissioning—the quiet sabotage of a team that never believed the decision in the first place.
 
 ## Bottom line
 
-The best automation vendor is not the one with the most impressive deck.
-
-It is the one whose offer stands up clearly across: scope; assumptions; price logic; lead time; risk. That is how comparison becomes defensible instead of exhausting.
+The best vendor for your plant is the one whose offer survives structured scrutiny: clear scope, explicit assumptions, honest timeline logic, and visible risk. Build that frame first; the decision gets faster and harder to regret.
 
 ---
 

@@ -5,67 +5,48 @@ Funnel stage: Decision to delivery (execution transition)
 Core problem: selection winners arrive on site while operations, IT, and maintenance still think the project is "procurement's thing"  
 Main promise: a handoff package and meeting rhythm that makes ownership, interfaces, and acceptance continuity explicit
 
-Selection ends with a name on a slide. Delivery starts with a line that still has to run tomorrow. The gap is where budgets leak and trust erodes. A clean handoff is not a longer contract appendix.
+Selection ends with a name on a slide. Delivery begins with a line that must run tomorrow morning. The gap between those moments is where budgets leak, trust erodes, and integrators learn that your organization is still negotiating with itself. A clean handoff is not a longer contract appendix; it is a short, published set of artifacts and owners that prevent the project from becoming a ping-pong match.
 
-It is a short set of artifacts and owners that prevent the project from becoming a ping-pong match between buyer and integrator. A clean handoff includes: a single integrated project plan with milestones tied to acceptance objects; a RACI that names operations, maintenance, IT, quality, and safety owners; a frozen configuration baseline (hardware, software build IDs, scope statement version); a communication protocol: cadence, channels, escalation path; a thirty-to-sixty-day operations readiness plan (training, spares, documentation consumption).
+## What the package should contain
 
-Publish it in one internal handoff meeting and one supplier kickoff that use the same slide deck skeleton.
+Publish an integrated plan with milestones tied to acceptance objects, not only dates. Include a RACI that names operations, maintenance, IT, quality, and safety—not generic “plant support.” Freeze configuration context: hardware scope statement version, software and firmware build identifiers as applicable, and interface lists. Define communication cadence, channels, and escalation paths. Add a thirty-to-sixty-day operations readiness path: training consumption, spare parts thinking, documentation ownership, and validation windows that match real production pressure.
 
-If two different stories exist after week one, you already paid for rework.
+## Run a handoff meeting with teeth
 
-## Handoff package checklist (minimum)
+The kickoff should confirm the same story procurement told leadership: scope, assumptions, acceptance spine, and plant obligations. If operations hears a different movie than engineering, fix that before mobilization spends money.
 
-| Artifact | purpose |
-| --- | --- |
-| scope statement ID + exclusions | prevents silent drift |
-| interface register | prevents IT fantasy |
-| risk register with owners | prevents orphan issues |
-| test plan outline through FAT and SAT | prevents late surprises |
-| training plan with audiences | prevents unsupported go-live |
-| spare parts list and lead times | prevents early downtime drama |
+## Keep acceptance continuous
 
-Missing artifacts should be listed as explicit risks with dates, not as hope.
+FAT and SAT should trace to criteria agreed before award—not invented under pressure beside the line. Continuity is how structured comparison survives first contact with reality.
 
-## The handoff meeting agenda (90 minutes, illustrative)
+## How DBR77 Marketplace ties in
 
-What was selected and why (decision log summary); what changes are allowed and how (change control); who owns what internally (RACI walk); what suppliers need from the plant each week (dependency map); what "green" looks like at FAT and SAT (acceptance anchors).
-
-End with action items: names, dates, one outbound supplier note confirming the same understanding.
-
-## What changes after handoff (behavior, not paperwork)
-
-After handoff, the buyer owner stops being the only throat to choke. Operations speaks in weekly integration cadence. Maintenance signs off on access and LOTO reality. IT commits to network and credential timelines.
-
-Procurement monitors commercial change discipline, not daily engineering trivia.
-
-## Reality check: handoff usually fails when the organization assumes the winning supplier now "has the project"
-
-That assumption sounds efficient. It is usually the point where ownership starts to blur. The supplier expects plant inputs. The plant expects the supplier to drive every next step. Procurement assumes execution has taken over.
-
-If nobody republishes ownership after selection, the project inherits a winner but not a working operating model.
-
-## Common handoff failures
-
-| failure | cost | fix |
-| --- | --- | --- |
-| no IT seat | interface slips | mandate attendance |
-| training treated as optional | support load spikes | bind training to milestones |
-| undocumented baseline | scope arguments | freeze build IDs |
-| dual narratives | mistrust | one kickoff deck |
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because handoff quality depends on whether the selected offer, contract terms, and acceptance expectations survive intact into execution.
-
-That is what turns structured comparison into delivery continuity instead of forcing the plant to rediscover what was supposedly decided already.
+Handoff quality depends on whether selected offers, contract terms, and acceptance expectations remain intact into execution. Structured comparison should become delivery continuity, not a memory exercise.
 
 For the closest continuity pieces, see [What FAT and SAT Should Actually Prove Before Go-Live](../25_what_fat_and_sat_should_actually_prove_before_go_live/article_EN.md), [When to Reopen an Automation Decision Before Signing](../32_when_to_reopen_an_automation_decision_before_signing/article_EN.md), and [What to Check Before Signing an Automation Contract](../20_what_to_check_before_signing_an_automation_contract/article_EN.md).
 
+## Handoff as change management
+
+Selection creates winners inside your organization too: people who feel heard, and people who feel surprised. Handoff is the moment to re-anchor everyone to one plan. Publish the package, read it in a cross-functional room, and make space for objections on paper—not as side conversations that reappear at SAT.
+
+Treat the handoff package as living through version control. If integration reality changes the plan, update the record and communicate deltas the same way you would communicate a line changeover—deliberately, with owners.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"What a Clean Handoff From Selection to Delivery Should Look Like" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
+Finally, tie this discipline to accountability: name who will verify assumptions on the floor and by which milestone. Myths thrive when nobody owns measurement; they weaken when verification is part of the project plan, not an afterthought.
+
+
 ## Bottom line
 
-Selection without handoff is a decision without owners.
-
-Publish the package, align the kickoff, and make FAT and SAT continuity predictable instead of heroic.
+Selection without handoff is a decision without owners. Publish the package, align the kickoff, and make acceptance predictable instead of heroic.
 
 ---
 

@@ -1,4 +1,12 @@
-import { ArrowLeft, Clock, MessageSquare, Mic, RefreshCw, Type } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock,
+  MessageSquare,
+  Mic,
+  RefreshCw,
+  Tag,
+  Type,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../../services/api';
@@ -13,6 +21,12 @@ interface Conversation {
   message_count: number;
   duration_seconds: number | null;
   outcome: string;
+  primary_topic: string | null;
+  intent: string | null;
+  products_discussed: string[];
+  summary: string | null;
+  fallback_reason: string | null;
+  quality_flags: string[];
 }
 
 interface Message {
@@ -23,6 +37,12 @@ interface Message {
   matched_products: string[] | null;
   token_count: number | null;
   latency_ms: number | null;
+  retrieval_query: string | null;
+  used_pill_ids: string[];
+  used_pill_sections: string[];
+  response_mode: string | null;
+  message_topic: string | null;
+  message_intent: string | null;
   created_at: string;
 }
 
@@ -64,6 +84,8 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [channelFilter, setChannelFilter] = useState<string>('');
   const [outcomeFilter, setOutcomeFilter] = useState<string>('');
+  const [topicFilter, setTopicFilter] = useState('');
+  const [intentFilter, setIntentFilter] = useState('');
 
   const fetchConversations = async () => {
     setLoading(true);
@@ -71,6 +93,8 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
       const params = new URLSearchParams({ limit: '50' });
       if (channelFilter) params.set('channel', channelFilter);
       if (outcomeFilter) params.set('outcome', outcomeFilter);
+      if (topicFilter.trim()) params.set('topic', topicFilter.trim());
+      if (intentFilter.trim()) params.set('intent', intentFilter.trim());
 
       const response = await Api.get(
         `/api/virtual-workers/${workerId}/conversations?${params.toString()}`
@@ -104,7 +128,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
 
   useEffect(() => {
     fetchConversations();
-  }, [workerId, channelFilter, outcomeFilter]);
+  }, [workerId, channelFilter, outcomeFilter, topicFilter, intentFilter]);
 
   const handleSelectConv = (convId: string) => {
     setSelectedConv(convId);
@@ -156,6 +180,23 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
                 <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
                   {msg.content}
                 </p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {msg.message_topic && (
+                    <span className="inline-block px-2 py-0.5 bg-white/60 dark:bg-navy-800/60 rounded text-xs text-slate-500 dark:text-slate-400">
+                      topic: {msg.message_topic}
+                    </span>
+                  )}
+                  {msg.message_intent && (
+                    <span className="inline-block px-2 py-0.5 bg-white/60 dark:bg-navy-800/60 rounded text-xs text-slate-500 dark:text-slate-400">
+                      intent: {msg.message_intent}
+                    </span>
+                  )}
+                  {msg.response_mode && (
+                    <span className="inline-block px-2 py-0.5 bg-white/60 dark:bg-navy-800/60 rounded text-xs text-slate-500 dark:text-slate-400">
+                      mode: {msg.response_mode}
+                    </span>
+                  )}
+                </div>
                 {msg.knowledge_sources_used && msg.knowledge_sources_used.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {msg.knowledge_sources_used.map((src, i) => (
@@ -164,6 +205,18 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
                         className="inline-block px-2 py-0.5 bg-white/60 dark:bg-navy-800/60 rounded text-xs text-slate-500 dark:text-slate-400"
                       >
                         {src}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {msg.used_pill_sections?.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {msg.used_pill_sections.map((src, i) => (
+                      <span
+                        key={`${src}-${i}`}
+                        className="inline-block px-2 py-0.5 bg-indigo-100/70 dark:bg-indigo-900/20 rounded text-xs text-indigo-700 dark:text-indigo-300"
+                      >
+                        section: {src}
                       </span>
                     ))}
                   </div>
@@ -205,6 +258,20 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
             <option value="abandoned">Abandoned</option>
             <option value="unknown">Unknown</option>
           </select>
+          <input
+            type="text"
+            value={topicFilter}
+            onChange={(e) => setTopicFilter(e.target.value)}
+            placeholder="Filter topic"
+            className="px-2 py-1 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300 text-xs"
+          />
+          <input
+            type="text"
+            value={intentFilter}
+            onChange={(e) => setIntentFilter(e.target.value)}
+            placeholder="Intent"
+            className="px-2 py-1 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300 text-xs"
+          />
         </div>
       </div>
 
@@ -241,6 +308,12 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
                     <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
                       {conv.message_count} msg{conv.message_count !== 1 ? 's' : ''}
                     </span>
+                    {conv.primary_topic && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <Tag size={12} />
+                        {conv.primary_topic}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -257,6 +330,28 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
                   </span>
                 </div>
               </div>
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                {conv.intent && (
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    intent: {conv.intent}
+                  </span>
+                )}
+                {conv.products_discussed?.length > 0 && (
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    products: {conv.products_discussed.join(', ')}
+                  </span>
+                )}
+                {conv.fallback_reason && (
+                  <span className="text-xs text-amber-600 dark:text-amber-400">
+                    fallback: {conv.fallback_reason}
+                  </span>
+                )}
+              </div>
+              {conv.summary && (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                  {conv.summary}
+                </p>
+              )}
             </button>
           ))}
         </div>

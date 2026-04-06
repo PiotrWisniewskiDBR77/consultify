@@ -1,88 +1,44 @@
-# So bauen Sie KI-unterstuetzte Fabrikoperationen Schritt fuer Schritt auf
+# Wie Sie KI-unterstützte Fabrikoperations Schritt für Schritt aufbauen
 
-Target persona: Program Owner / Werk IT-OT Lead / COO Sponsor  
-Funnel stage: Decision  
-Core problem: KI-Programme stocken, weil Teams Intelligenz skalieren wollen, bevor Ausfuehrungsmechanik, Verantwortung und Messung stabil sind  
-Main promise: ein achtstufiger Pfad von Baseline-Disziplin zu gemessener KI-Unterstuetzung in einem operativen Workflow mit klaren Gates und Nachweis-Kriterien
+Zielpersona: Program Owner / Plant IT-OT Lead / COO-Sponsor  
+Funnel-Stufe: Decision  
+Kernproblem: KI-Programme stocken, weil Teams Intelligenz skalieren wollen, bevor Ausführungsmechanik, Ownership und Messung stabil sind  
+Hauptversprechen: Ein achtstufiger Pfad von Baseline-Disziplin zu gemessener KI-Assistenz in einem operativen Workflow, mit expliziten Gates und Nachweiskriterien
 
-Bauen Sie KI-unterstuetzte Operationen, indem Sie einen funktionsuebergreifenden Workflow in einer vereinheitlichten Ausfuehrungsschicht stabilisieren, Schwellen und Freigaben definieren, dann KI fuer Triage und Routing-Unterstuetzung ergaenzen und erst danach den Umfang anhand von Zykluszeit- und Abschlussmetriken erweitern. Das ist eine Implementierungssequenz, keine Philosophie-Folie.
+Bauen Sie KI-unterstützte Operations, indem Sie einen funktionsübergreifenden Workflow in einer vereinheitlichten Ausführungsschicht stabilisieren, Schwellen und Freigaben definieren und dann KI für Triage und Routing-Unterstützung hinzufügen—und erst dann den Umfang anhand gemessener Zykluszeit und Abschlusskennzahlen erweitern. Das ist eine Implementierungssequenz, kein Philosophie-Deck. Schritte zu überspringen verwandelt Piloten in dauerhafte Anekdoten.
 
-## Schritt 1: waehlen Sie einen Workflow, der Zeit oder Geld weh tut
+Wählen Sie zuerst einen Workflow, der in Zeit oder Geld weh tut: wiederholte Qualitätssperren mit langsamem Abschluss, Instandhaltungsreaktionslatenz auf kritischen Assets, Lageraktionen, die die Produktion bremsen, oder Planänderungen, die in funktionsübergreifenden Lärm explodieren. Vermeiden Sie „alles“, Prozesse ohne Owner und solche, die nicht oft genug wiederkehren, um zu lernen.
 
-Gute Kandidaten: wiederkehrende Qualitaetssperren mit langsamem Abschluss; Reaktionslatenz der Instandhaltung bei kritischen Assets; Lageraktionen, die die Produktion bremsen; Planumschichtungen, die als funktionsuebergreifendes Rauschen explodieren.
+Übersetzen Sie den Schmerz in Arbeitspakete, nicht Folien. Definieren Sie Trigger, Pflichtfelder beim Intake, Zustände wie offen, in Bearbeitung, wartet auf Freigabe, geschlossen plus Abschlusskriterien. Wenn Sie den Workflow nicht auf einer Seite beschreiben können, sind Sie nicht bereit für KI—Sie sind bereit für einen Workshop.
 
-Schlechte Kandidaten: "alles"; ein Prozess ohne Owner; ein Prozess, der sich nicht monatlich wiederholt.
+Gleichen Sie Definitionen über die beteiligten Funktionen aus. Einigen Sie sich auf Prioritätsbänder, Schwere- oder Risikoklassen und was blockiert versus wartend zählt. Assistenz verstärkt Fehlausrichtung; sie verzeiht sie nicht.
 
-## Schritt 2: definieren Sie den Workflow als Arbeitspakete, nicht als Folien
+Implementieren Sie den Workflow in einem Ausführungsheim. Der Standard ist eine einzige priorisierte Warteschlangen-Geschichte, nicht drei parallele Posteingänge. Mindestdisziplin umfasst sichtbares Ownership, Zeitstempel, Freigabetore wo nötig und Eskalationsregeln für stecken gebliebene Zustände.
 
-Uebersetzen Sie den Schmerz in: Trigger-Definitionen; Pflichtfelder beim Intake; Zustaende (offen, in Arbeit, wartet auf Freigabe, geschlossen); Abschlusskriterien. Wenn das nicht auf eine Seite passt, sind Sie nicht bereit fuer KI.
+Die meisten KI-Piloten scheitern, bevor das Modell helfen kann. Intake bleibt über E-Mail, Chat, Excel und Gewohnheit verteilt. Niemand ist sich über blockiert, dringend oder geschlossen einig. Supervisors routen manuell um, weil der Workflow nie stabilisiert wurde. In diesem Zustand beschleunigt KI nicht Arbeit—sie beschleunigt Verwirrung in einem Workflow, der nicht messbar ist.
 
-## Schritt 3: richten Sie Definitionen zwischen den beteiligten Funktionen aus
+Operieren Sie ohne KI für ein Baseline-Fenster—oft zwei bis vier Produktionswochen—und messen Sie Zeit bis zur ersten Aktion, Zeit bis Abschluss, Wiedereröffnungsrate und manuelle Umleitungen. Die Baseline ist Ihr Nachweisanker. Ohne sie wird Erfolg Storytelling.
 
-Fuehren Sie einen kurzen Workshop mit Produktion, Qualitaet, Instandhaltung, Lager nach Bedarf.
+Fügen Sie dann KI im selben Workflow hinzu: Gruppierung und Deduplizierung, vorgeschlagenes Routing und Prioritätsbänder, Entwurfszusammenfassungen für Übergaben und Schwellenalarme mit expliziten Regeln. Behalten Sie menschliche Bestätigung für alles über vereinbartem Risiko.
 
-Einigen Sie sich auf: Prioritaetsbaender; Schwere- oder Risikoklasse; was "blockiert" versus "wartet" bedeutet. KI verstaerkt Fehlausrichtung, wenn Sie das ueberspringen.
+Beurteilen Sie Erfolg mit Vorher-Nachher auf denselben KPIs—nicht „User mögen es“, sondern mediane Zykluszeit, Wiedereröffnungsrate und beprobte Supervisor-Koordinationszeit.
 
-## Schritt 4: implementieren Sie den Workflow in einem Ausfuehrungs-Home
+Erweitern Sie durch Klonen des Musters, nicht durch Modell-Hinzufügen. Der nächste Workflow sollte Governance-Muster, Freigabelogik und Messmethoden wiederverwenden. Modellanzahl ist kein Fortschritt. Muster-Wiederverwendung ist Fortschritt.
 
-Ziel ist eine priorisierte Warteschlangen-Geschichte, nicht drei parallele Postfaecher.
+Bevor Sie den Umfang weiten, bestehen Sie auf Nichtverhandelbarem: erfasste und akzeptierte Baseline-Metriken, schriftlich benannte Owner, Audit-Pfade für Freigaben und Änderungen, dokumentierter Fehlermodus für falsche Assistenz und Training, das Flächenrollen erreicht—nicht nur IT.
 
-Minimum: sichtbare Verantwortung; Zeitstempel; Freigabetore wo noetig; Eskalationsregeln fuer steckengebliebene Zustaende.
+IRIS passt zu diesem Build-Pfad, weil Schritte vier und sechs ein Ausführungsheim für Arbeitspakete, Freigaben und Follow-up brauchen—nicht eine weitere Schicht, die den Datensatz spaltet.
 
-## Reality check: die meisten KI-Piloten scheitern, bevor das Modell ueberhaupt helfen kann
+Zur Sequenzlogik vor Build-Start siehe [Von Menschen zu KI-unterstützten Operations: Was sich zuerst ändert](../23_from_humans_to_ai_assisted_operations_what_changes_first/article_DE.md). Zum Low-Disruption-Rollout nach fertigem Build siehe [Wie Sie KI-unterstützte Operations ohne Störung des Werks ausrollen](../30_how_to_roll_out_ai_assisted_operations_without_disrupting_the_plant/article_DE.md).
 
-Der Bruch kommt meist frueher, als Teams erwarten. Sie sagen, sie pilotieren KI, aber in der Praxis:
+KI-unterstützte Operations skalieren, wenn das Werk Ausführungsdisziplin skaliert. Bauen Sie einen Workflow sauber, messen Sie ehrlich, dann lassen Sie KI beschleunigen, was schon strukturiert ist.
 
-- ist der Intake weiter ueber E-Mail, Chat, Excel und lokale Gewohnheiten verteilt
-- ist niemand einig, was blockiert, dringend oder geschlossen bedeutet
-- routen Vorgesetzte Arbeit weiter manuell um, weil der Workflow nie stabil genug gemacht wurde
+## Operatives Fazit
 
-In diesem Zustand beschleunigt KI keinen Workflow.
+Das Versprechen dieses Artikels—ein achtstufiger Pfad von Baseline-Disziplin zu gemessener KI-Assistenz in einem Workflow mit expliziten Gates—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Wie Sie KI-unterstützte Fabrikoperations Schritt für Schritt aufbauen“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
-Sie beschleunigt Verwirrung innerhalb eines Workflows, der nie eng genug definiert wurde, um ihn zu messen.
-
-## Schritt 5: betreiben Sie ohne KI fuer ein definiertes Baseline-Fenster
-
-Waehlen Sie ein vertretbares Fenster: zwei bis vier Produktionswochen sind ueblich.
-
-Messen Sie: Zeit bis zur ersten Aktion; Zeit bis zum Abschluss; Wiedereroeffnungsrate; Anzahl manueller Umrouter. Diese Baseline ist Ihr Nachweisanker.
-
-## Schritt 6: ergaenzen Sie KI-Unterstuetzung im selben Workflow
-
-Fuehren Sie KI nur ein fuer: Buendelung und Dedupe; vorgeschlagenes Routing und Prioritaetsband; Entwurfszusammenfassungen fuer Uebergaben; Schwellenalarme mit expliziten Regeln.
-
-Halten Sie menschliche Bestaetigung fuer alles oberhalb vereinbarten Risikos.
-
-## Schritt 7: fahren Sie einen Vorher-Nachher-Vergleich auf denselben KPIs
-
-Bewerten Sie nicht nach "es gefaellt".
-
-Bewerten Sie nach: Median-Aenderung der Durchlaufzeit; Aenderung der Wiedereroeffnungsrate; Koordinationszeit der Fuehrungskraft (Stichprobe).
-
-## Schritt 8: erweitern Sie durch Klonen des Musters, nicht durch mehr Modelle
-
-Der naechste Workflow sollte wiederverwenden: Governance-Muster; Freigabelogik; Messmethode. Modellzahl ist kein Fortschritt. Muster-Wiederverwendung ist Fortschritt.
-
-## Gate-Checkliste bevor Sie den Umfang erweitern
-
-1. Baseline-Metriken erfasst und von Operations-Fuehrung akzeptiert
-2. Owner schriftlich fuer Workflow-Kategorien benannt
-3. Audit Trail fuer Freigaben und Aenderungen vorhanden
-4. Fehlmodus dokumentiert (was passiert, wenn KI falsch liegt)
-5. Training fuer Shopfloor-Rollen, nicht nur fuer IT
-
-## Warum IRIS zu diesem Aufbau-Pfad passt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Aufgaben.
-
-Schritt 4 und Schritt 6 sind genau dort, wo eine vereinheitlichte Schicht aufhoert optional zu sein.
-
-## Fazit
-
-KI-unterstuetzte Operationen skalieren, wenn das Werk Ausfuehrungsdisziplin skaliert.
-
-Bauen Sie einen Workflow sauber, messen Sie ehrlich, dann lassen Sie KI beschleunigen, was bereits strukturiert ist.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur in Meetings vereinbart, und mehr Tage, an denen der Systemdatensatz zu dem passt, was die Fläche sagen würde, wenn Sie sie mitten in der Aufgabe anhalten.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [14-Tage-Trial starten](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*
+*DBR77 IRIS ist gebaut, um Workflow, Baseline-Betrieb und KI-Assistenz in einer Ausführungsschicht über Produktion, Lager, Qualität, Instandhaltung und Tasking zu hosten. [14-Tage-Trial starten](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*

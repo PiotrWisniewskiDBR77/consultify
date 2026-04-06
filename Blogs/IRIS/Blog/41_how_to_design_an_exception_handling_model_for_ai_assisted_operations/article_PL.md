@@ -1,87 +1,38 @@
-# Jak zaprojektowac model obslugi wyjatkow dla operacji wspieranych przez AI
+# Jak zaprojektować model obsługi wyjątków dla operacji wspomaganych AI
 
-Target persona: Architekt operacji / Lider inzynierii zakladowej / Wlasciciel systemow jakosci  
-Funnel stage: Consideration  
-Core problem: asysta AI zwieksza wolumen zdarzen, ale zaklady nadal routuja wyjatki przez nieformalne czaty, wiec odpowiedzialnosc za reakcje i petle domkniecia pozostaja niejasne  
-Main promise: zwarty model wyjatkow ze sciezkami typu progi, akceptacje i pola audytu, ktore nadzor moze prowadzic pod obciazeniem
+Docelowa persona: architekt operacji / lider inżynierii zakładu / właściciel systemów jakości  
+Etap lejka: Consideration  
+Główny problem: asystencja AI zwiększa wolumen zdarzeń, ale zakłady wciąż kierują wyjątki przez nieformalne czaty, więc własność reakcji i pętle domknięcia pozostają niejasne  
+Główna obietnica: zwarty model wyjątków z typowanymi ścieżkami, progami, zatwierdzeniami i polami audytu, które nadzorcy utrzymają pod obciążeniem
 
-Zaprojektuj obsluge wyjatkow dla operacji wspieranych przez AI klasyfikujac kazdy wynik asysty do jednej z czterech sciezek: auto-zadanie w polityce, tylko doradztwo z przejeciem przez czlowieka, eskalacja z obowiazkowym wlascicielem i SLA, lub twardy stop do czasu akceptacji. Dla kazdej sciezki okresl wyzwalacze, kto moze nadpisac, jakie pola rekordu sa obowiazkowe i jak dowodzisz domkniecia. Opublikuj model obok map workflow, zeby zmiany nie improwizowaly. Model bez nazwanych wlascicieli i ramek czasowych to tylko diagram. Wspierane operacje nie padaja, bo model jest zly pierwszego dnia. Padaja, bo wyjatki staja sie drugim cieniem procesu.
+Operacje wspomagane zwykle nie padają dlatego, że model jest zły pierwszego dnia. Padają dlatego, że wyjątki stają się drugim, cieniem procesu — szybkie sygnały bez dopasowanej ścieżki wykonania, przypadki graniczne, które ludzie kiedyś po cichu absorbowali, oraz wolumen zamieniający się w telefony, bo oficjalny model nigdy nie przewidział piątego pasa. Projektuj wyjątki celowo — inaczej zaprojektuje je hala dla ciebie.
 
-## Dlaczego wyjatki rosna, gdy asysta startuje
+Gdy asystencja wchodzi na żywo, spodziewaj się więcej kandydatów do zadań, więcej sporów tuż przy progach i więcej tras „prawie automatycznych”, które potrzebują ludzkiej pieczęci. Jeśli nie zaprojektujesz warstwy wyjątków, nieformalne kanały staną się prawdziwym systemem.
 
-Asysta wydobywa przypadki brzegowe, ktore ludzie wczesniej pochlaniali cicho.
+Wykonalny model klasyfikuje wyniki asysty do małej liczby ścieżek. Auto-zadanie w opublikowanych progach tworzy zadanie z wersją reguły i znacznikiem czasu oraz zamyka się ukończoną pracą lub zweryfikowanym stanem. Sygnały tylko doradcze wymagają przejęcia przez człowieka, z jawnym odrzuceniem lub konwersją na zadanie także przy odrzuceniu. Ścieżki eskalacji stosują się, gdy pojawia się ryzyko SLA, BHP, blokady jakości lub konflikt międzyfunkcyjny — każda z właścicielem poziomu i terminem. Twarde stopery obowiązują przy blokadach regulacyjnych, ograniczeniach klienta lub niedojrzałych danych — wymagają ról akceptacji, powiązań dowodu i kryteriów zwolnienia. Jeśli w praktyce pojawia się piąta ścieżka („po prostu zapytaj inżyniera”), model jest niekompletny.
 
-Zobaczysz: wiecej kandydatow na zadania z niepelnym kontekstem; wiecej sygnalow blisko progow, ktore roznia sie miedzy funkcjami; wiecej tras "prawie auto", ktore potrzebuja stempla czlowieka.
+Przed startem zdefiniuj taksonomię wyjątków, macierz własności według zmiany, czasową drabinę eskalacji, reguły akceptacji z pokryciem zastępców, pola przekazania, które następna zmiana musi widzieć w systemie, hak wycofania, który wstrzymuje asystowane kierowanie zgłoszeń bez utraty historii audytu oraz pętlę po incydencie wymuszającą aktualizację progów lub szkoleń, gdy wzorce się powtarzają.
 
-Jesli nie zaprojektujesz warstwy wyjatkow, hala zaprojektuje ja telefonami.
+Kultura zgłoszeń loguje aktywność. Kultura domknięcia kończy stany operacyjne. Asystencja AI wzmacnia kulturę zgłoszeń, chyba że zadania wiążą się ze skutkami: czas do właściciela, czas do domknięcia oraz dowód, że linia jest bezpieczna, uporządkowana i udokumentowana.
 
-## Framework: cztery sciezki wyjatkow (jedna na typ zdarzenia)
+Wdrażaj spokojnie: taguj wyjątki w cieniu bez automatycznego zamykania zgłoszeń, przeglądaj cotygodniowe tematy, publikuj wersję pierwszą tylko dla kilku przepływów pracy, mierz czas do właściciela i powtarzające się eskalacje, wersjonuj podręcznik reguł, gdy progi się przesuwają.
 
-| Sciezka | Kiedy | Wymagany rekord | Dowod domkniecia |
-|---|---|---|---|
-| Auto-zadanie | w publikowanych progach i polityce | ID zadania, wersja reguly, znacznik czasu | zamkniete zlecenie lub zweryfikowany stan |
-| Tylko doradztwo | pozyteczny sygnal, czlowiek musi przejac | ID sugestii, wlasciciel przejecia, powod odrzucenia | jawne odrzucenie lub konwersja na zadanie |
-| Eskalacja | ryzyko SLA, bezpieczenstwo, blokada jakosci, konflikt miedzy funkcjami | poziom eskalacji, wlasciciel, termin | notatka rozwiazania powiazana ze zrodlem |
-| Twardy stop | regulacja, blokada klienta lub niedojrzale dane | rola akceptacji, link dowodu, kryteria zwolnienia | podpisane zwolnienie lub zmiana reguly z wersja |
+IRIS pasuje do warstwy wyjątków, gdy asystencja, zadania, zatwierdzenia i dowód domknięcia dzielą jeden zapis wykonania — zamieniając projekt wyjątków w kontrakt operacyjny zamiast archeologii czatu.
 
-Jesli w praktyce pojawia sie piata sciezka ("po prostu zapytaj inzyniera"), model jest niepelny.
+Sąsiednie utwardzenia: [Kiedy fabryka potrzebuje jednego operacyjnego arbitra przy sprzecznych sygnałach](../42_when_a_factory_needs_one_operational_arbiter_for_conflicting_signals/article_PL.md), [Jak tworzyć zapisy gotowe pod audyt dla fabrycznych decyzji wspomaganych AI](../46_how_to_create_audit_ready_records_for_ai_assisted_factory_decisions/article_PL.md) oraz [Jak powinno wyglądać pełne operacyjne domknięcie w fabryce AI-native](../50_what_full_operational_closure_should_look_like_in_an_ai_native_factory/article_PL.md).
 
-## Checklist: minimalne definicje przed startem
+Wolumen wyjątków to też diagnostyka. Jeśli wyjątki grupują się wokół brakujących pól, intake jest niedojrzały. Jeśli wokół konfliktów polityki, definicje są niewspółliniowe. Jeśli wokół pokrycia nocnej zmiany, model akceptacji jest nierealny. Dobry model wyjątków to nie tylko mechanizm eskalacji; to czujnik mówiący kierownictwu, gdzie system operacyjny wciąż jest kruchy — zanim kruchość stanie się przestojem.
 
-1. taksonomia wyjatkow: falszywy alarm, brak danych, konflikt polityki, bezpieczenstwo, klient, dostawca  
-2. macierz odpowiedzialnosci: kto pierwszy reaguje na typ na kazdej zmianie  
-3. drabina eskalacji: kroki czasowe, nie oparte na osobowosci  
-4. reguly akceptacji: ktora sciezka wymaga ktorej roli, lacznie z zastepstwami  
-5. pola przekazania: co nastepna zmiana musi widziec w systemie, nie na papierze  
-6. hak rollbacku: jak wstrzymac wspierany routing bez utraty sladu audytu  
-7. petla po incydencie: kiedy wyjatki wymuszaja zmiane progu lub szkolenia
+Nadzorcy przyjmą ścieżki wyjątków tylko wtedy, gdy są szybsze niż nieformalna ścieżka. To znaczy, że ramy czasowe muszą być prawdziwe, właściciele osiągalni, a eskalacja musi przynosić ulgę — nie kolejną pętlę. Jeśli oficjalna ścieżka wyjątku jest wolniejsza niż telefon do ulubionego inżyniera, inżynier staje się systemem. Projektuj pod tę konkurencyjną rzeczywistość.
 
-## Porownanie: kultura zgloszen kontra kultura domkniecia
+Projekt wyjątków to projekt własności. Nazwij responderów, ramy czasowe i pola domknięcia — wtedy zakład może wchłonąć wyższy wolumen asysty bez utraty kontroli.
 
-| Sygnal | Kultura zgloszen | Kultura domkniecia |
-|---|---|---|
-| intencja | rejestrowac aktywnosc | domknac stan operacyjny |
-| metryka | glebokosc backlogu | czas-do-wlasciciela i czas-do-domkniecia |
-| sukces | "przypisalismy" | "linia jest bezpieczna, posortowana i udokumentowana" |
+## Podsumowanie operacyjne
 
-Asysta AI wzmacnia kulture zgloszen, jesli nie zwiazujesz zadan z wynikami operacyjnymi.
+Obietnica tego artykułu — zwarty model wyjątków z typowanymi ścieżkami, progami, zatwierdzeniami i polami audytu, które nadzorcy utrzymają pod obciążeniem — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie, które da się prześledzić bez archeologii skrzynek. Dla „Jak zaprojektować model obsługi wyjątków dla operacji wspomaganych AI” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-## Reality check: modele wyjatkow zwykle padaja, gdy hala wynajduje piata sciezke
-
-Wiekszosc zespolow potrafi opisac oficjalne sciezki na warsztacie.
-
-Prawdziwy test przychodzi pozniej, gdy zaklad zaczyna uzywac nieoficjalnych obejsc, takich jak:
-
-- "najpierw zadzwon do utrzymania, a zaloguj pozniej"
-- "zostaw to w advise do czasu dziennej zmiany"
-- "zapytaj inzynierie nieformalnie, bo nikt nie jest wlascicielem tej sciezki"
-
-W momencie, gdy ukryta piata sciezka staje sie norma, model nie kontroluje juz wspieranego wolumenu. Kontroluje go hala.
-
-## Sekwencja krokow: wdrozenie modelu bez dramatu
-
-Tryb cienia: taguj potencjalne wyjatki bez auto-routingu; przeglad tygodniowy: kategoryzuj top 20 motywow i przypisz wlascicieli; publikuj sciezki v1 dla tylko trzech workflow; mierz: mediana czasu-do-wlasciciela, powtarzajace eskalacje, powody override; wersjonuj ksiege regol, gdy progi sie przesuwaja.
-
-## Kiedy ten model dziala
-
-Nadzor juz respektuje SLA dla pracy recznej; mozesz utrzymac jeden changelog progow i trybow; jakosc i utrzymanie zgadzaja sie co do regul blokady.
-
-## Kiedy ten model nie dziala
-
-ERP lub MES pozostaje jedynym systemem prawdy, a warstwy typu IRIS sa opcjonalne; inzynieria edytuje reguly bez akceptacji operacji; nocna zmiana nie ma zastepcow akceptujacych.
-
-## Dlaczego IRIS pasuje do warstwy wyjatkow
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy asysta, zadania, akceptacje i wyjatki dziela jeden rekord wykonania, przestajesz odtwarzac historie po kazdym incydencie.
-
-## Podsumowanie
-
-Projektowanie wyjatkow to projektowanie odpowiedzialnosci.
-
-Jesli kazda sciezka nazywa respondenta, ramke czasu i pole domkniecia, zaklad zniesie wyzszy wolumen asysty bez utraty kontroli.
+Ten standard nie chodzi o idealne oprogramowanie; chodzi o uczciwość operacyjną: mniej tajemniczych przekazań, mniej prawd uzgadnianych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS trzyma asystencję, zadania, zatwierdzenia i wyjątki na jednym zapisie wykonania, tak by ścieżki i własność pozostawały widoczne między zmianami. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

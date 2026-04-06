@@ -494,7 +494,9 @@ class WorkbookGeneratorService {
 
         const validated = WorkbookSchemaValidator.safeParse(parsed);
         if (!validated.success) {
-          const errorSummary = validated.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+          const errorSummary = validated.error.issues
+            .map((e) => `${e.path.join('.')}: ${e.message}`)
+            .join('; ');
           logger.warn(`[WorkbookGenerator] Phase 3 attempt ${attempt}: Validation failed: ${errorSummary}`);
           if (attempt === maxAttempts) {
             schema = this.repairSchema(parsed as any);

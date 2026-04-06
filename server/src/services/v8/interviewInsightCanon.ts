@@ -19,7 +19,7 @@ import type {
   InsightOpportunity,
   InsightSignal,
   InsightEvidenceMapEntry,
-} from '../../InterviewInsightService.js';
+} from '../InterviewInsightService.js';
 
 export { type InsightTheme, type InsightIssue, type InsightOpportunity, type InsightSignal, type InsightEvidenceMapEntry };
 

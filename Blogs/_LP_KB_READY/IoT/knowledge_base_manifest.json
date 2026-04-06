@@ -1,0 +1,1676 @@
+{
+  "schema_version": "1.0.0",
+  "product": "IoT",
+  "source_root": "Blogs/IoT/Blog",
+  "generated_at": "2026-04-01T10:43:22.232048+00:00",
+  "primary_persona_entry": "Plant Manager / Operations",
+  "sections": [
+    {
+      "section_id": "IoT::downtime_and_oee",
+      "label": "Downtime And OEE",
+      "promise": "Make operational losses visible early enough to change the shift.",
+      "intro": "Make operational losses visible early enough to change the shift.",
+      "featured_slugs": [
+        "01_why_factories_still_dont_use_machine_data",
+        "07_how_to_reduce_downtime_by_30_using_real_time_data",
+        "09_oee_is_not_enough",
+        "10_why_your_maintenance_strategy_is_failing",
+        "11_real_time_production_visibility_in_practice",
+        "12_5_operational_problems_every_factory_has"
+      ],
+      "deeper_slugs": [
+        "08_the_hidden_costs_of_not_measuring_production_properly",
+        "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+        "24_how_to_improve_machine_data_quality_before_scaling_iot",
+        "28_how_to_reduce_false_alarms_in_iiot_systems",
+        "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+        "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+        "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+        "40_when_real_time_visibility_should_change_the_production_plan",
+        "47_when_real_time_visibility_should_trigger_structured_problem_solving"
+      ],
+      "section_cta": "Move from visibility into owned execution and closure."
+    },
+    {
+      "section_id": "IoT::execution_and_rollout",
+      "label": "Execution And Rollout",
+      "promise": "Show how pilots become plant-standard operating behavior without disruption.",
+      "intro": "Show how pilots become plant-standard operating behavior without disruption.",
+      "featured_slugs": [
+        "06_how_to_start_iiot_without_breaking_production",
+        "13_7_mistakes_companies_make_when_implementing_iot",
+        "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+        "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+        "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+        "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory"
+      ],
+      "deeper_slugs": [
+        "17_how_to_choose_the_right_first_iiot_use_case",
+        "18_who_should_own_iiot_rollout_inside_the_factory",
+        "20_how_to_review_iiot_value_after_the_first_pilot",
+        "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+        "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+        "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+        "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+        "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+        "42_what_iot_governance_should_look_like_after_the_first_year",
+        "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+        "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory"
+      ],
+      "section_cta": "Install stronger rollout governance at leadership level."
+    },
+    {
+      "section_id": "IoT::ai_and_decision_making",
+      "label": "AI And Decision Making",
+      "promise": "Show how machine signals become usable operational decisions, not just collected data.",
+      "intro": "Show how machine signals become usable operational decisions, not just collected data.",
+      "featured_slugs": [
+        "02_what_data_should_you_collect_from_machines",
+        "03_from_sensors_to_decisions",
+        "04_machine_data_is_useless_without_context",
+        "05_edge_vs_cloud_in_manufacturing",
+        "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+        "23_what_machine_data_should_trigger_action_and_what_should_not"
+      ],
+      "deeper_slugs": [
+        "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+        "29_when_to_expand_from_visibility_to_closed_loop_response",
+        "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+        "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+        "41_how_to_review_operator_overrides_in_iot_workflows",
+        "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+        "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+        "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+        "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+        "49_what_data_retention_and_traceability_should_look_like_in_iiot"
+      ],
+      "section_cta": "Handle AI trust and secure industrial decision logic."
+    }
+  ],
+  "articles": [
+    {
+      "canonical_id": "IoT::01_why_factories_still_dont_use_machine_data",
+      "slug": "01_why_factories_still_dont_use_machine_data",
+      "title": "Why Factories Still Underuse Their Machine Data",
+      "summary_line": "factories generate data, but too little of it reaches the people who need it in time to improve the shift",
+      "product": "IoT",
+      "target_persona": "Plant Manager",
+      "funnel_stage": "Awareness",
+      "core_problem": "factories generate data, but too little of it reaches the people who need it in time to improve the shift",
+      "main_promise": "real operational control starts when machine data becomes visible, usable, and actionable in real time",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "machine data in manufacturing",
+      "featured": true,
+      "mva_role": "flagship_awareness",
+      "locales": {
+        "EN": {
+          "path": "01_why_factories_still_dont_use_machine_data/article_EN.md",
+          "title": "Why Factories Still Underuse Their Machine Data"
+        },
+        "PL": {
+          "path": "01_why_factories_still_dont_use_machine_data/article_PL.md"
+        },
+        "DE": {
+          "path": "01_why_factories_still_dont_use_machine_data/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::02_what_data_should_you_collect_from_machines",
+      "slug": "02_what_data_should_you_collect_from_machines",
+      "title": "What Data Should You Collect from Machines?",
+      "summary_line": "many plants either collect too little machine data to improve operations or collect too much without a clear model for action",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Awareness",
+      "core_problem": "many plants either collect too little machine data to improve operations or collect too much without a clear model for action",
+      "main_promise": "the right machine data set is not the biggest one, but the one that helps the plant detect losses, explain deviations, and respond within the same shift",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "what data should you collect from machines",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "02_what_data_should_you_collect_from_machines/article_EN.md",
+          "title": "What Data Should You Collect from Machines?"
+        },
+        "PL": {
+          "path": "02_what_data_should_you_collect_from_machines/article_PL.md"
+        },
+        "DE": {
+          "path": "02_what_data_should_you_collect_from_machines/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::03_from_sensors_to_decisions",
+      "slug": "03_from_sensors_to_decisions",
+      "title": "From Sensors to Decisions: How Industrial Data Actually Flows",
+      "summary_line": "many plants collect signals, but the path from raw data to operational action is broken or too slow",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Awareness",
+      "core_problem": "many plants collect signals, but the path from raw data to operational action is broken or too slow",
+      "main_promise": "industrial data becomes valuable only when the flow from signal to context to escalation is designed as one system",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "from sensors to decisions",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "03_from_sensors_to_decisions/article_EN.md",
+          "title": "From Sensors to Decisions: How Industrial Data Actually Flows"
+        },
+        "PL": {
+          "path": "03_from_sensors_to_decisions/article_PL.md"
+        },
+        "DE": {
+          "path": "03_from_sensors_to_decisions/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::04_machine_data_is_useless_without_context",
+      "slug": "04_machine_data_is_useless_without_context",
+      "title": "Machine Data Is Useless Without Context",
+      "summary_line": "factories often collect machine signals, but cannot explain what actually happened or what should happen next",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Awareness",
+      "core_problem": "factories often collect machine signals, but cannot explain what actually happened or what should happen next",
+      "main_promise": "machine data becomes operationally useful only when it is connected to human, process, and business context",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "machine data is useless without context",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "04_machine_data_is_useless_without_context/article_EN.md",
+          "title": "Machine Data Is Useless Without Context"
+        },
+        "PL": {
+          "path": "04_machine_data_is_useless_without_context/article_PL.md"
+        },
+        "DE": {
+          "path": "04_machine_data_is_useless_without_context/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::05_edge_vs_cloud_in_manufacturing",
+      "slug": "05_edge_vs_cloud_in_manufacturing",
+      "title": "Edge vs Cloud in Manufacturing: What Actually Works",
+      "summary_line": "many teams frame edge versus cloud as a technical battle instead of an operational architecture decision",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Awareness",
+      "core_problem": "many teams frame edge versus cloud as a technical battle instead of an operational architecture decision",
+      "main_promise": "in manufacturing, the best answer is rarely edge only or cloud only, but the right split between local response and scalable visibility",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "edge vs cloud in manufacturing",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "05_edge_vs_cloud_in_manufacturing/article_EN.md",
+          "title": "Edge vs Cloud in Manufacturing: What Actually Works"
+        },
+        "PL": {
+          "path": "05_edge_vs_cloud_in_manufacturing/article_PL.md"
+        },
+        "DE": {
+          "path": "05_edge_vs_cloud_in_manufacturing/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::06_how_to_start_iiot_without_breaking_production",
+      "slug": "06_how_to_start_iiot_without_breaking_production",
+      "title": "How to Start IIoT Without Breaking Production",
+      "summary_line": "many manufacturers delay IIoT because they expect heavy integration, line disruption, and operational risk",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "many manufacturers delay IIoT because they expect heavy integration, line disruption, and operational risk",
+      "main_promise": "the safest way to start IIoT is not a full transformation project, but a narrow pilot that proves value on a real line without destabilizing production",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "how to start IIoT without breaking production",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "06_how_to_start_iiot_without_breaking_production/article_EN.md",
+          "title": "How to Start IIoT Without Breaking Production"
+        },
+        "PL": {
+          "path": "06_how_to_start_iiot_without_breaking_production/article_PL.md"
+        },
+        "DE": {
+          "path": "06_how_to_start_iiot_without_breaking_production/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "slug": "07_how_to_reduce_downtime_by_30_using_real_time_data",
+      "title": "How to Reduce Downtime Faster with Real-Time Data",
+      "summary_line": "many plants measure downtime after the fact, which makes response too slow to prevent repeat losses",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "many plants measure downtime after the fact, which makes response too slow to prevent repeat losses",
+      "main_promise": "real-time data can reduce downtime materially when it helps the plant identify causes faster, escalate faster, and react within the same shift",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "reduce downtime by 30 using real-time data",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "07_how_to_reduce_downtime_by_30_using_real_time_data/article_EN.md",
+          "title": "How to Reduce Downtime Faster with Real-Time Data"
+        },
+        "PL": {
+          "path": "07_how_to_reduce_downtime_by_30_using_real_time_data/article_PL.md"
+        },
+        "DE": {
+          "path": "07_how_to_reduce_downtime_by_30_using_real_time_data/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::08_the_hidden_costs_of_not_measuring_production_properly",
+      "slug": "08_the_hidden_costs_of_not_measuring_production_properly",
+      "title": "The Hidden Costs of Not Measuring Production Properly",
+      "summary_line": "many plants think the cost of weak production measurement is only reporting inconvenience, while the real cost is operational and financial",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "many plants think the cost of weak production measurement is only reporting inconvenience, while the real cost is operational and financial",
+      "main_promise": "poor measurement creates hidden losses in downtime, quality, pace, labor response, and decision-making that compound every day",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "hidden costs of not measuring production properly",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "08_the_hidden_costs_of_not_measuring_production_properly/article_EN.md",
+          "title": "The Hidden Costs of Not Measuring Production Properly"
+        },
+        "PL": {
+          "path": "08_the_hidden_costs_of_not_measuring_production_properly/article_PL.md"
+        },
+        "DE": {
+          "path": "08_the_hidden_costs_of_not_measuring_production_properly/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::09_oee_is_not_enough",
+      "slug": "09_oee_is_not_enough",
+      "title": "OEE Is Not Enough: What You Should Measure Instead",
+      "summary_line": "many plants rely on OEE as the main performance lens, even though OEE alone cannot explain or drive the actions needed for improvement",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "many plants rely on OEE as the main performance lens, even though OEE alone cannot explain or drive the actions needed for improvement",
+      "main_promise": "OEE is useful, but factories need a broader measurement system that includes context, response, and operational flow",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "OEE is not enough",
+      "featured": true,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "09_oee_is_not_enough/article_EN.md",
+          "title": "OEE Is Not Enough: What You Should Measure Instead"
+        },
+        "PL": {
+          "path": "09_oee_is_not_enough/article_PL.md"
+        },
+        "DE": {
+          "path": "09_oee_is_not_enough/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::10_why_your_maintenance_strategy_is_failing",
+      "slug": "10_why_your_maintenance_strategy_is_failing",
+      "title": "Why Your Maintenance Strategy Is Failing",
+      "summary_line": "many maintenance programs still react too late because they run on delayed signals, weak context, and poor escalation",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "many maintenance programs still react too late because they run on delayed signals, weak context, and poor escalation",
+      "main_promise": "maintenance improves when machine visibility, reason capture, and response logic are connected early enough to change the shift",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "why your maintenance strategy is failing",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "10_why_your_maintenance_strategy_is_failing/article_EN.md",
+          "title": "Why Your Maintenance Strategy Is Failing"
+        },
+        "PL": {
+          "path": "10_why_your_maintenance_strategy_is_failing/article_PL.md"
+        },
+        "DE": {
+          "path": "10_why_your_maintenance_strategy_is_failing/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::11_real_time_production_visibility_in_practice",
+      "slug": "11_real_time_production_visibility_in_practice",
+      "title": "Real-Time Production Visibility in Practice",
+      "summary_line": "many teams talk about real-time visibility abstractly, but do not define what it should actually look like on the floor",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "many teams talk about real-time visibility abstractly, but do not define what it should actually look like on the floor",
+      "main_promise": "real-time production visibility is not a dashboard concept, but a working operational window for operators, supervisors, maintenance, and management",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "real-time production visibility in practice",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "11_real_time_production_visibility_in_practice/article_EN.md",
+          "title": "Real-Time Production Visibility in Practice"
+        },
+        "PL": {
+          "path": "11_real_time_production_visibility_in_practice/article_PL.md"
+        },
+        "DE": {
+          "path": "11_real_time_production_visibility_in_practice/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::12_5_operational_problems_every_factory_has",
+      "slug": "12_5_operational_problems_every_factory_has",
+      "title": "5 Operational Problems That Usually Share One Root Cause",
+      "summary_line": "factories often treat operational pain points as separate issues, while many share the same underlying visibility and response gap",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "factories often treat operational pain points as separate issues, while many share the same underlying visibility and response gap",
+      "main_promise": "the most common factory problems become easier to solve when the plant can see issues earlier, capture context, and trigger action during the shift",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "5 operational problems every factory has",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "12_5_operational_problems_every_factory_has/article_EN.md",
+          "title": "5 Operational Problems That Usually Share One Root Cause"
+        },
+        "PL": {
+          "path": "12_5_operational_problems_every_factory_has/article_PL.md"
+        },
+        "DE": {
+          "path": "12_5_operational_problems_every_factory_has/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::13_7_mistakes_companies_make_when_implementing_iot",
+      "slug": "13_7_mistakes_companies_make_when_implementing_iot",
+      "title": "7 Mistakes Companies Make When Implementing IIoT",
+      "summary_line": "many companies delay or damage IIoT value because they treat implementation as a technology rollout instead of an operational change loop",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader",
+      "funnel_stage": "Consideration",
+      "core_problem": "many companies delay or damage IIoT value because they treat implementation as a technology rollout instead of an operational change loop",
+      "main_promise": "IIoT implementation works better when the first phase stays narrow, practical, and tied to one real operating problem",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "mistakes companies make when implementing iot",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "13_7_mistakes_companies_make_when_implementing_iot/article_EN.md",
+          "title": "7 Mistakes Companies Make When Implementing IIoT"
+        },
+        "PL": {
+          "path": "13_7_mistakes_companies_make_when_implementing_iot/article_PL.md"
+        },
+        "DE": {
+          "path": "13_7_mistakes_companies_make_when_implementing_iot/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "slug": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control",
+      "title": "From Pilot to Scale: How to Roll Out IIoT Without Losing Control",
+      "summary_line": "many manufacturers prove IIoT on one line and then lose momentum or control when rollout expands beyond the first pilot",
+      "product": "IoT",
+      "target_persona": "Plant Manager / COO / Operations Leader",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers prove IIoT on one line and then lose momentum or control when rollout expands beyond the first pilot",
+      "main_promise": "IIoT rollout scales better when the plant expands a proven operating loop step by step instead of turning a pilot into a rushed plant-wide program",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "how to roll out IIoT from pilot to scale",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control/article_EN.md",
+          "title": "From Pilot to Scale: How to Roll Out IIoT Without Losing Control"
+        },
+        "PL": {
+          "path": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control/article_PL.md"
+        },
+        "DE": {
+          "path": "14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "slug": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory",
+      "title": "How to Build a Business Case for IIoT in a Brownfield Factory",
+      "summary_line": "many manufacturers know IIoT could improve visibility and response, but struggle to build a credible business case in brownfield conditions where systems, machines, and losses are uneven",
+      "product": "IoT",
+      "target_persona": "Plant Manager / COO / CFO",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers know IIoT could improve visibility and response, but struggle to build a credible business case in brownfield conditions where systems, machines, and losses are uneven",
+      "main_promise": "a stronger IIoT business case starts with one real operating problem, one measurable loss pattern, and one proof path the plant can validate before scale",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "business case for IIoT",
+      "featured": true,
+      "mva_role": "decision_stage",
+      "locales": {
+        "EN": {
+          "path": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory/article_EN.md",
+          "title": "How to Build a Business Case for IIoT in a Brownfield Factory"
+        },
+        "PL": {
+          "path": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory/article_PL.md"
+        },
+        "DE": {
+          "path": "15_how_to_build_a_business_case_for_iiot_in_a_brownfield_factory/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "slug": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout",
+      "title": "What to Measure in the First 90 Days of IIoT Rollout",
+      "summary_line": "many manufacturers launch IIoT pilots but track the wrong indicators in the first phase, which makes it harder to prove operational value and decide what to scale",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader / COO",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers launch IIoT pilots but track the wrong indicators in the first phase, which makes it harder to prove operational value and decide what to scale",
+      "main_promise": "the first 90 days of IIoT rollout should measure whether one operating loop is becoming clearer, faster, and more repeatable rather than whether the plant has simply connected more assets",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "first 90 days of IIoT rollout",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_EN.md",
+          "title": "What to Measure in the First 90 Days of IIoT Rollout"
+        },
+        "PL": {
+          "path": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_PL.md"
+        },
+        "DE": {
+          "path": "16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::17_how_to_choose_the_right_first_iiot_use_case",
+      "slug": "17_how_to_choose_the_right_first_iiot_use_case",
+      "title": "How to Choose the Right First IIoT Use Case",
+      "summary_line": "many manufacturers want to start IIoT but choose the first use case based on visibility, internal politics, or technology preference instead of operational leverage",
+      "product": "IoT",
+      "target_persona": "Plant Manager / COO / Operations Leader",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers want to start IIoT but choose the first use case based on visibility, internal politics, or technology preference instead of operational leverage",
+      "main_promise": "the right first IIoT use case is usually the one with a repeated loss pattern, a clear response gap, and a practical path to prove better control in a limited scope",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "first IIoT use case",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "17_how_to_choose_the_right_first_iiot_use_case/article_EN.md",
+          "title": "How to Choose the Right First IIoT Use Case"
+        },
+        "PL": {
+          "path": "17_how_to_choose_the_right_first_iiot_use_case/article_PL.md"
+        },
+        "DE": {
+          "path": "17_how_to_choose_the_right_first_iiot_use_case/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::18_who_should_own_iiot_rollout_inside_the_factory",
+      "slug": "18_who_should_own_iiot_rollout_inside_the_factory",
+      "title": "Who Should Own IIoT Rollout Inside the Factory",
+      "summary_line": "many IIoT rollouts slow down because ownership is spread across IT, operations, maintenance, and leadership without one clear operating owner for the first loop",
+      "product": "IoT",
+      "target_persona": "COO / Plant Manager / Operations Leader",
+      "funnel_stage": "Decision",
+      "core_problem": "many IIoT rollouts slow down because ownership is spread across IT, operations, maintenance, and leadership without one clear operating owner for the first loop",
+      "main_promise": "stronger IIoT rollout happens when one accountable owner leads a cross-functional loop with clear rules for response, escalation, review, and next-step decisions",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IIoT rollout ownership",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "18_who_should_own_iiot_rollout_inside_the_factory/article_EN.md",
+          "title": "Who Should Own IIoT Rollout Inside the Factory"
+        },
+        "PL": {
+          "path": "18_who_should_own_iiot_rollout_inside_the_factory/article_PL.md"
+        },
+        "DE": {
+          "path": "18_who_should_own_iiot_rollout_inside_the_factory/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "slug": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead",
+      "title": "Why IIoT Alerts Fail on the Shop Floor and What Works Instead",
+      "summary_line": "many IIoT rollouts produce alerts, but the alert layer does not improve response because the signals are noisy, poorly routed, or disconnected from ownership and escalation logic",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader / Maintenance Leader",
+      "funnel_stage": "Decision",
+      "core_problem": "many IIoT rollouts produce alerts, but the alert layer does not improve response because the signals are noisy, poorly routed, or disconnected from ownership and escalation logic",
+      "main_promise": "IIoT alerts become useful when they are tied to one clear response path, one ownership model, and one review habit instead of being treated as notification volume",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IIoT alerts",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead/article_EN.md",
+          "title": "Why IIoT Alerts Fail on the Shop Floor and What Works Instead"
+        },
+        "PL": {
+          "path": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead/article_PL.md"
+        },
+        "DE": {
+          "path": "19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::20_how_to_review_iiot_value_after_the_first_pilot",
+      "slug": "20_how_to_review_iiot_value_after_the_first_pilot",
+      "title": "How to Review IIoT Value After the First Pilot",
+      "summary_line": "many manufacturers finish an IIoT pilot but do not know how to review value credibly, so the next decision gets shaped by optimism, politics, or weak ROI theater instead of operating proof",
+      "product": "IoT",
+      "target_persona": "COO / Plant Manager / CFO",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers finish an IIoT pilot but do not know how to review value credibly, so the next decision gets shaped by optimism, politics, or weak ROI theater instead of operating proof",
+      "main_promise": "a stronger post-pilot review checks whether one operating loop became more visible, faster, more disciplined, and more scalable before the plant tries to justify full rollout",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "review IIoT value after pilot",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "20_how_to_review_iiot_value_after_the_first_pilot/article_EN.md",
+          "title": "How to Review IIoT Value After the First Pilot"
+        },
+        "PL": {
+          "path": "20_how_to_review_iiot_value_after_the_first_pilot/article_PL.md"
+        },
+        "DE": {
+          "path": "20_how_to_review_iiot_value_after_the_first_pilot/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "slug": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory",
+      "title": "What the First 30 Days of IIoT Should Look Like in a Brownfield Factory",
+      "summary_line": "many manufacturers start IIoT pilots in brownfield conditions but enter the first 30 days without a clear operating sequence, which creates noise, uncertainty, and weak proof",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Operations Leader / COO",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers start IIoT pilots in brownfield conditions but enter the first 30 days without a clear operating sequence, which creates noise, uncertainty, and weak proof",
+      "main_promise": "the first 30 days of IIoT work better when the plant follows a narrow sequence focused on signal trust, context capture, response habits, and short review cycles rather than broad rollout ambition",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "first 30 days of IIoT",
+      "featured": true,
+      "mva_role": "demo_trial_explainer",
+      "locales": {
+        "EN": {
+          "path": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md",
+          "title": "What the First 30 Days of IIoT Should Look Like in a Brownfield Factory"
+        },
+        "PL": {
+          "path": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_PL.md"
+        },
+        "DE": {
+          "path": "21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "slug": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait",
+      "title": "When to Integrate IIoT with MES, ERP, and CMMS and When to Wait",
+      "summary_line": "many manufacturers assume IIoT value depends on early integration with MES, ERP, or CMMS, which often slows the first phase and makes proof harder to achieve",
+      "product": "IoT",
+      "target_persona": "COO / Plant Manager / CTO",
+      "funnel_stage": "Decision",
+      "core_problem": "many manufacturers assume IIoT value depends on early integration with MES, ERP, or CMMS, which often slows the first phase and makes proof harder to achieve",
+      "main_promise": "stronger IIoT rollout usually proves one operating loop first and integrates broader systems later, once the plant knows what data, workflow, and ownership logic actually matter",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "IIoT MES ERP CMMS integration",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait/article_EN.md",
+          "title": "When to Integrate IIoT with MES, ERP, and CMMS and When to Wait"
+        },
+        "PL": {
+          "path": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait/article_PL.md"
+        },
+        "DE": {
+          "path": "22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::23_what_machine_data_should_trigger_action_and_what_should_not",
+      "slug": "23_what_machine_data_should_trigger_action_and_what_should_not",
+      "title": "What Machine Data Should Trigger Action and What Should Not",
+      "summary_line": "brownfield IoT often floods teams with signals, so every spike feels urgent and the floor learns to ignore the stack",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Reliability Lead / Operations Director",
+      "funnel_stage": "Consideration",
+      "core_problem": "brownfield IoT often floods teams with signals, so every spike feels urgent and the floor learns to ignore the stack",
+      "main_promise": "a simple decision framework so only machine-backed conditions that change the next safe action earn alerts, while everything else stays visibility-only",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "machine data IoT action rules",
+      "featured": true,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "23_what_machine_data_should_trigger_action_and_what_should_not/article_EN.md",
+          "title": "What Machine Data Should Trigger Action and What Should Not"
+        },
+        "PL": {
+          "path": "23_what_machine_data_should_trigger_action_and_what_should_not/article_PL.md"
+        },
+        "DE": {
+          "path": "23_what_machine_data_should_trigger_action_and_what_should_not/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "slug": "24_how_to_improve_machine_data_quality_before_scaling_iot",
+      "title": "How to Improve Machine Data Quality Before Scaling IoT",
+      "summary_line": "teams scale connectivity and dashboards before clocks, units, naming, and sampling line up, so downstream decisions inherit silent error",
+      "product": "IoT",
+      "target_persona": "Engineering Manager / OT Lead / Plant IT sponsor",
+      "funnel_stage": "Consideration",
+      "core_problem": "teams scale connectivity and dashboards before clocks, units, naming, and sampling line up, so downstream decisions inherit silent error",
+      "main_promise": "a short quality ladder you can run during pilot so scale multiplies signal integrity instead of confusion",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "machine data quality IoT",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "24_how_to_improve_machine_data_quality_before_scaling_iot/article_EN.md",
+          "title": "How to Improve Machine Data Quality Before Scaling IoT"
+        },
+        "PL": {
+          "path": "24_how_to_improve_machine_data_quality_before_scaling_iot/article_PL.md"
+        },
+        "DE": {
+          "path": "24_how_to_improve_machine_data_quality_before_scaling_iot/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "slug": "25_when_edge_processing_is_worth_it_in_brownfield_iot",
+      "title": "When Edge Processing Is Worth It in Brownfield IoT",
+      "summary_line": "teams debate edge versus cloud abstractly while the plant actually needs latency, uptime, and boundary control under real network pain",
+      "product": "IoT",
+      "target_persona": "CTO / Plant IT / OT security sponsor",
+      "funnel_stage": "Decision",
+      "core_problem": "teams debate edge versus cloud abstractly while the plant actually needs latency, uptime, and boundary control under real network pain",
+      "main_promise": "a decision matrix that tells you when edge is worth cost and complexity in retrofit-heavy environments",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "edge processing brownfield IoT",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "25_when_edge_processing_is_worth_it_in_brownfield_iot/article_EN.md",
+          "title": "When Edge Processing Is Worth It in Brownfield IoT"
+        },
+        "PL": {
+          "path": "25_when_edge_processing_is_worth_it_in_brownfield_iot/article_PL.md"
+        },
+        "DE": {
+          "path": "25_when_edge_processing_is_worth_it_in_brownfield_iot/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "slug": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control",
+      "title": "How to Roll Out IoT Across Multiple Lines Without Losing Control",
+      "summary_line": "second and third lines copy the pilot in name only, so tagging, ownership, and review rhythms diverge quietly",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Program sponsor / Continuous improvement lead",
+      "funnel_stage": "Adoption",
+      "core_problem": "second and third lines copy the pilot in name only, so tagging, ownership, and review rhythms diverge quietly",
+      "main_promise": "a replication kit and governance rhythm that keeps speed without turning each line into a custom science project",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "multi-line IoT rollout",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control/article_EN.md",
+          "title": "How to Roll Out IoT Across Multiple Lines Without Losing Control"
+        },
+        "PL": {
+          "path": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control/article_PL.md"
+        },
+        "DE": {
+          "path": "26_how_to_roll_out_iot_across_multiple_lines_without_losing_control/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "slug": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet",
+      "title": "What to Do When Operators Do Not Trust IoT Signals Yet",
+      "summary_line": "leadership declares IoT live while the floor treats signals as \"computer guesses\" and reverts to habit",
+      "product": "IoT",
+      "target_persona": "Operations Manager / Shift lead / HR-trained frontline sponsor",
+      "funnel_stage": "Adoption",
+      "core_problem": "leadership declares IoT live while the floor treats signals as \"computer guesses\" and reverts to habit",
+      "main_promise": "a trust ladder that pairs physical verification, transparent thresholds, and bounded promises until credibility compounds",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "operator trust industrial IoT",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet/article_EN.md",
+          "title": "What to Do When Operators Do Not Trust IoT Signals Yet"
+        },
+        "PL": {
+          "path": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet/article_PL.md"
+        },
+        "DE": {
+          "path": "27_what_to_do_when_operators_do_not_trust_iot_signals_yet/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::28_how_to_reduce_false_alarms_in_iiot_systems",
+      "slug": "28_how_to_reduce_false_alarms_in_iiot_systems",
+      "title": "How to Reduce False Alarms in IIoT Systems",
+      "summary_line": "alarm counts look like \"activity\" while the floor learns to mute channels and real faults hide in the noise",
+      "product": "IoT",
+      "target_persona": "Reliability Manager / Maintenance planner / OT engineer",
+      "funnel_stage": "Adoption",
+      "core_problem": "alarm counts look like \"activity\" while the floor learns to mute channels and real faults hide in the noise",
+      "main_promise": "a disciplined false-alarm reduction loop: corroboration, hysteresis, duty cycles, and accountable tuning",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "reduce false alarms IIoT",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "28_how_to_reduce_false_alarms_in_iiot_systems/article_EN.md",
+          "title": "How to Reduce False Alarms in IIoT Systems"
+        },
+        "PL": {
+          "path": "28_how_to_reduce_false_alarms_in_iiot_systems/article_PL.md"
+        },
+        "DE": {
+          "path": "28_how_to_reduce_false_alarms_in_iiot_systems/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::29_when_to_expand_from_visibility_to_closed_loop_response",
+      "slug": "29_when_to_expand_from_visibility_to_closed_loop_response",
+      "title": "When to Expand from Visibility to Closed-Loop Response",
+      "summary_line": "leadership wants automation headlines while the plant still lacks trusted signals, owners, and rollback discipline",
+      "product": "IoT",
+      "target_persona": "Plant Manager / Engineering lead / Safety and quality sponsor",
+      "funnel_stage": "Decision",
+      "core_problem": "leadership wants automation headlines while the plant still lacks trusted signals, owners, and rollback discipline",
+      "main_promise": "a gated expansion model that moves from see to act only when human loops have proven judgment under load",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "closed loop industrial IoT",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "29_when_to_expand_from_visibility_to_closed_loop_response/article_EN.md",
+          "title": "When to Expand from Visibility to Closed-Loop Response"
+        },
+        "PL": {
+          "path": "29_when_to_expand_from_visibility_to_closed_loop_response/article_PL.md"
+        },
+        "DE": {
+          "path": "29_when_to_expand_from_visibility_to_closed_loop_response/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "slug": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard",
+      "title": "How to Go from One Successful IoT Pilot to a Plant Standard",
+      "summary_line": "the pilot wins a presentation while the plant lacks a standard package, training path, and funding rhythm for replication",
+      "product": "IoT",
+      "target_persona": "Program sponsor / Plant director / Continuous improvement lead",
+      "funnel_stage": "Adoption",
+      "core_problem": "the pilot wins a presentation while the plant lacks a standard package, training path, and funding rhythm for replication",
+      "main_promise": "a practical standardization path: freeze the pattern, fund copies, measure replication quality, and govern drift",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT pilot to standard manufacturing",
+      "featured": false,
+      "mva_role": "adoption_stage",
+      "locales": {
+        "EN": {
+          "path": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard/article_EN.md",
+          "title": "How to Go from One Successful IoT Pilot to a Plant Standard"
+        },
+        "PL": {
+          "path": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard/article_PL.md"
+        },
+        "DE": {
+          "path": "30_how_to_go_from_one_successful_iot_pilot_to_a_plant_standard/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "slug": "31_what_to_review_after_the_first_6_months_of_iot_rollout",
+      "title": "What to Review After the First 6 Months of IoT Rollout",
+      "summary_line": "six months of activity passes without a structured review, so budgets and trust decisions rely on anecdotes",
+      "product": "IoT",
+      "target_persona": "Plant director / Finance partner / Program sponsor",
+      "funnel_stage": "Decision",
+      "core_problem": "six months of activity passes without a structured review, so budgets and trust decisions rely on anecdotes",
+      "main_promise": "a six-month review agenda with evidence categories so leadership can renew, adjust, or pause with clarity",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT rollout six month review",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "31_what_to_review_after_the_first_6_months_of_iot_rollout/article_EN.md",
+          "title": "What to Review After the First 6 Months of IoT Rollout"
+        },
+        "PL": {
+          "path": "31_what_to_review_after_the_first_6_months_of_iot_rollout/article_PL.md"
+        },
+        "DE": {
+          "path": "31_what_to_review_after_the_first_6_months_of_iot_rollout/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "slug": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template",
+      "title": "How to Prove IoT Value Across Sites Without Forcing One Template",
+      "summary_line": "headquarters pushes a single IoT template while sites differ in assets, maturity, and political readiness, so proof fragments or fake compliance appears",
+      "product": "IoT",
+      "target_persona": "VP Operations / Group manufacturing lead / Digital transformation sponsor",
+      "funnel_stage": "Decision",
+      "core_problem": "headquarters pushes a single IoT template while sites differ in assets, maturity, and political readiness, so proof fragments or fake compliance appears",
+      "main_promise": "a multi-site proof model: shared outcomes, flexible patterns, common evidence rules, and transparent exceptions",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 3: Solution Logic",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "multi-site IoT value proof",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template/article_EN.md",
+          "title": "How to Prove IoT Value Across Sites Without Forcing One Template"
+        },
+        "PL": {
+          "path": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template/article_PL.md"
+        },
+        "DE": {
+          "path": "32_how_to_prove_iot_value_across_sites_without_forcing_one_template/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "slug": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting",
+      "title": "How to Use IoT Data in Shift Handover Without Creating More Reporting",
+      "summary_line": "handover still runs on verbal memory and static sheets while IoT adds streams nobody wants to re-type into another report",
+      "product": "IoT",
+      "target_persona": "Shift lead / Production supervisor / Plant operations manager",
+      "funnel_stage": "Consideration",
+      "core_problem": "handover still runs on verbal memory and static sheets while IoT adds streams nobody wants to re-type into another report",
+      "main_promise": "a tight handover pattern: three live facts, one open risk, one confirmed next action, all grounded in machine state without a new reporting stack",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "IoT shift handover manufacturing",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting/article_EN.md",
+          "title": "How to Use IoT Data in Shift Handover Without Creating More Reporting"
+        },
+        "PL": {
+          "path": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting/article_PL.md"
+        },
+        "DE": {
+          "path": "33_how_to_use_iot_data_in_shift_handover_without_creating_more_reporting/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "slug": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not",
+      "title": "When IoT Should Trigger Supervisor Escalation and When It Should Not",
+      "summary_line": "supervisors get pulled into every yellow blip, so escalation becomes noise and the floor stops treating alerts as serious",
+      "product": "IoT",
+      "target_persona": "Production supervisor / Area manager / Plant operations lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "supervisors get pulled into every yellow blip, so escalation becomes noise and the floor stops treating alerts as serious",
+      "main_promise": "a supervisor escalation policy: which machine-backed conditions interrupt leadership, which stay with the line, and how overrides change the rule",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 2: Problem Deep Dives",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "IoT supervisor escalation manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not/article_EN.md",
+          "title": "When IoT Should Trigger Supervisor Escalation and When It Should Not"
+        },
+        "PL": {
+          "path": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not/article_PL.md"
+        },
+        "DE": {
+          "path": "34_when_iot_should_trigger_supervisor_escalation_and_when_it_should_not/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "slug": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot",
+      "title": "What a Good Machine State Model Looks Like Before Scaling IoT",
+      "summary_line": "teams scale sensors before they agree what \"running well\" means in machine language, so every site invents its own labels under pressure",
+      "product": "IoT",
+      "target_persona": "Manufacturing engineer / OT systems lead / Reliability engineer",
+      "funnel_stage": "Evaluation",
+      "core_problem": "teams scale sensors before they agree what \"running well\" means in machine language, so every site invents its own labels under pressure",
+      "main_promise": "a minimal state model you can govern: stable states, allowed transitions, evidence for each transition, and explicit unknowns",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "machine state model industrial IoT",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot/article_EN.md",
+          "title": "What a Good Machine State Model Looks Like Before Scaling IoT"
+        },
+        "PL": {
+          "path": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot/article_PL.md"
+        },
+        "DE": {
+          "path": "35_what_a_good_machine_state_model_looks_like_before_scaling_iot/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "slug": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise",
+      "title": "How to Turn IoT Signals into Maintenance Priorities Without Noise",
+      "summary_line": "every new sensor trend becomes a P1 ticket, so technicians chase data and backlog the work that actually protects output",
+      "product": "IoT",
+      "target_persona": "Maintenance manager / Reliability lead / Planner",
+      "funnel_stage": "Consideration",
+      "core_problem": "every new sensor trend becomes a P1 ticket, so technicians chase data and backlog the work that actually protects output",
+      "main_promise": "a maintenance priority ladder fed by IoT: evidence rules, joint triage with operations, and a hard cap on concurrent \"urgent\" IoT items",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT maintenance prioritization",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise/article_EN.md",
+          "title": "How to Turn IoT Signals into Maintenance Priorities Without Noise"
+        },
+        "PL": {
+          "path": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise/article_PL.md"
+        },
+        "DE": {
+          "path": "36_how_to_turn_iot_signals_into_maintenance_priorities_without_noise/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "slug": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves",
+      "title": "How to Keep an IoT Program Alive When the First Champion Leaves",
+      "summary_line": "the first champion carried informal decisions, vendor relationships, and operator trust, so the program looks personal instead of institutional",
+      "product": "IoT",
+      "target_persona": "Plant manager / IT-OT sponsor / Program owner",
+      "funnel_stage": "Adoption",
+      "core_problem": "the first champion carried informal decisions, vendor relationships, and operator trust, so the program looks personal instead of institutional",
+      "main_promise": "a continuity kit: documented decisions, shared ownership, operator-validated signal rules, and budget line items that survive a personnel change",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Downtime And OEE",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT program continuity manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves/article_EN.md",
+          "title": "How to Keep an IoT Program Alive When the First Champion Leaves"
+        },
+        "PL": {
+          "path": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves/article_PL.md"
+        },
+        "DE": {
+          "path": "37_how_to_keep_an_iot_program_alive_when_the_first_champion_leaves/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "slug": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local",
+      "title": "What to Standardize Across Sites in IoT and What to Leave Local",
+      "summary_line": "central teams push uniform dashboards while sites need honest variance in assets, staffing, and integration paths, so standards feel fake or blocking",
+      "product": "IoT",
+      "target_persona": "Group manufacturing director / Digital operations lead / Enterprise architect",
+      "funnel_stage": "Decision",
+      "core_problem": "central teams push uniform dashboards while sites need honest variance in assets, staffing, and integration paths, so standards feel fake or blocking",
+      "main_promise": "a clean split: non-negotiable group standards for security, evidence, and escalation logic, plus explicit local freedom for sensor maps, job plans, and training rhythm",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "standardize IoT across manufacturing sites",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local/article_EN.md",
+          "title": "What to Standardize Across Sites in IoT and What to Leave Local"
+        },
+        "PL": {
+          "path": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local/article_PL.md"
+        },
+        "DE": {
+          "path": "38_what_to_standardize_across_sites_in_iot_and_what_to_leave_local/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "slug": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor",
+      "title": "How to Use IoT for Faster Problem Confirmation on the Shop Floor",
+      "summary_line": "teams debate whether the machine is actually wrong or the story is wrong, so minutes burn while production waits on opinions",
+      "product": "IoT",
+      "target_persona": "Line supervisor / Process engineer / Quality technician",
+      "funnel_stage": "Consideration",
+      "core_problem": "teams debate whether the machine is actually wrong or the story is wrong, so minutes burn while production waits on opinions",
+      "main_promise": "a confirmation workflow: live signals plus a short physical check list, agreed corroboration rules, and a single \"confirmed / not confirmed\" outcome for the next action",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT problem confirmation shop floor",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor/article_EN.md",
+          "title": "How to Use IoT for Faster Problem Confirmation on the Shop Floor"
+        },
+        "PL": {
+          "path": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor/article_PL.md"
+        },
+        "DE": {
+          "path": "39_how_to_use_iot_for_faster_problem_confirmation_on_the_shop_floor/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::40_when_real_time_visibility_should_change_the_production_plan",
+      "slug": "40_when_real_time_visibility_should_change_the_production_plan",
+      "title": "When Real-Time Visibility Should Change the Production Plan",
+      "summary_line": "planners distrust shop-floor stories, while IoT can show drift too late if it is not tied to planning governance, so either nothing changes or everything changes chaotically",
+      "product": "IoT",
+      "target_persona": "Production planner / Operations manager / Supply chain interface",
+      "funnel_stage": "Decision",
+      "core_problem": "planners distrust shop-floor stories, while IoT can show drift too late if it is not tied to planning governance, so either nothing changes or everything changes chaotically",
+      "main_promise": "a decision gate: which real-time conditions authorize a plan change, who approves, within what time window, and what evidence standard applies",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "real-time visibility production planning manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "40_when_real_time_visibility_should_change_the_production_plan/article_EN.md",
+          "title": "When Real-Time Visibility Should Change the Production Plan"
+        },
+        "PL": {
+          "path": "40_when_real_time_visibility_should_change_the_production_plan/article_PL.md"
+        },
+        "DE": {
+          "path": "40_when_real_time_visibility_should_change_the_production_plan/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::41_how_to_review_operator_overrides_in_iot_workflows",
+      "slug": "41_how_to_review_operator_overrides_in_iot_workflows",
+      "title": "How to Review Operator Overrides in IoT Workflows",
+      "summary_line": "overrides accumulate silently, audits discover them late, and operators learn that bypass is easier than fixing the underlying signal or process",
+      "product": "IoT",
+      "target_persona": "Operations supervisor / EHS partner / Engineering lead",
+      "funnel_stage": "Consideration",
+      "core_problem": "overrides accumulate silently, audits discover them late, and operators learn that bypass is easier than fixing the underlying signal or process",
+      "main_promise": "a review rhythm: what gets logged, how expiries work, who approves extensions, and how reviews tie to standards and training",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "operator override review industrial IoT",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "41_how_to_review_operator_overrides_in_iot_workflows/article_EN.md",
+          "title": "How to Review Operator Overrides in IoT Workflows"
+        },
+        "PL": {
+          "path": "41_how_to_review_operator_overrides_in_iot_workflows/article_PL.md"
+        },
+        "DE": {
+          "path": "41_how_to_review_operator_overrides_in_iot_workflows/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::42_what_iot_governance_should_look_like_after_the_first_year",
+      "slug": "42_what_iot_governance_should_look_like_after_the_first_year",
+      "title": "What IoT Governance Should Look Like After the First Year",
+      "summary_line": "year one is excitement and pilots, year two is when informal rules crack under audits, turnover, and real integration pressure",
+      "product": "IoT",
+      "target_persona": "Plant director / IT-OT sponsor / Continuous improvement lead",
+      "funnel_stage": "Adoption",
+      "core_problem": "year one is excitement and pilots, year two is when informal rules crack under audits, turnover, and real integration pressure",
+      "main_promise": "a year-two governance pack: cadence, ownership, standards map, evidence rules, and explicit scale criteria that survive normal plant chaos",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT governance after first year manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "42_what_iot_governance_should_look_like_after_the_first_year/article_EN.md",
+          "title": "What IoT Governance Should Look Like After the First Year"
+        },
+        "PL": {
+          "path": "42_what_iot_governance_should_look_like_after_the_first_year/article_PL.md"
+        },
+        "DE": {
+          "path": "42_what_iot_governance_should_look_like_after_the_first_year/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "slug": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts",
+      "title": "How to Keep IoT Signal Definitions Consistent Across Shifts",
+      "summary_line": "each shift names states differently, rounds timestamps differently, and interprets thresholds in conversation, so handover becomes opinion instead of evidence",
+      "product": "IoT",
+      "target_persona": "Engineering lead / Continuous improvement lead / Shift operations sponsor",
+      "funnel_stage": "Consideration",
+      "core_problem": "each shift names states differently, rounds timestamps differently, and interprets thresholds in conversation, so handover becomes opinion instead of evidence",
+      "main_promise": "a shared signal dictionary plus handover rules that stay stable when people, vendors, or screens change",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "IoT signal definitions consistent across shifts manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts/article_EN.md",
+          "title": "How to Keep IoT Signal Definitions Consistent Across Shifts"
+        },
+        "PL": {
+          "path": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts/article_PL.md"
+        },
+        "DE": {
+          "path": "43_how_to_keep_iot_signal_definitions_consistent_across_shifts/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "slug": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not",
+      "title": "When IoT Alerts Should Create Work Orders and When They Should Not",
+      "summary_line": "CMMS floods with auto-generated tickets that technicians ignore, while real failures still arrive as verbal escalations",
+      "product": "IoT",
+      "target_persona": "Maintenance planner / Reliability engineer / CMMS owner with operations partnership",
+      "funnel_stage": "Demo/Trial/Pilot Entry",
+      "core_problem": "CMMS floods with auto-generated tickets that technicians ignore, while real failures still arrive as verbal escalations",
+      "main_promise": "a routing matrix: which alerts become work orders, which become watch items, and which only enrich existing jobs",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "when IoT alerts should create work orders manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not/article_EN.md",
+          "title": "When IoT Alerts Should Create Work Orders and When They Should Not"
+        },
+        "PL": {
+          "path": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not/article_PL.md"
+        },
+        "DE": {
+          "path": "44_when_iot_alerts_should_create_work_orders_and_when_they_should_not/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "slug": "45_what_an_executive_iot_scorecard_should_include_after_scale_up",
+      "title": "What an Executive IoT Scorecard Should Include After Scale-Up",
+      "summary_line": "after scale-up, leadership sees pretty utilization charts while the floor still argues about signal truth, integration debt, and override patterns",
+      "product": "IoT",
+      "target_persona": "Plant director / COO / Group manufacturing leader",
+      "funnel_stage": "Decision",
+      "core_problem": "after scale-up, leadership sees pretty utilization charts while the floor still argues about signal truth, integration debt, and override patterns",
+      "main_promise": "a scorecard built from evidence categories: connectivity truth, signal quality, operational impact, governance health, and honest integration status",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "executive IoT scorecard after scale manufacturing",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "45_what_an_executive_iot_scorecard_should_include_after_scale_up/article_EN.md",
+          "title": "What an Executive IoT Scorecard Should Include After Scale-Up"
+        },
+        "PL": {
+          "path": "45_what_an_executive_iot_scorecard_should_include_after_scale_up/article_PL.md"
+        },
+        "DE": {
+          "path": "45_what_an_executive_iot_scorecard_should_include_after_scale_up/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "slug": "46_how_to_decide_which_iot_signals_deserve_edge_logic",
+      "title": "How to Decide Which IoT Signals Deserve Edge Logic",
+      "summary_line": "teams either push everything to the cloud for convenience or lock logic into PLCs without visibility, and neither path scales cleanly in brownfield",
+      "product": "IoT",
+      "target_persona": "IT-OT architect / Controls lead / Plant systems engineer",
+      "funnel_stage": "Consideration",
+      "core_problem": "teams either push everything to the cloud for convenience or lock logic into PLCs without visibility, and neither path scales cleanly in brownfield",
+      "main_promise": "a decision grid: latency, safety, bandwidth, autonomy during outages, and maintainability determine where logic lives",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "which IoT signals need edge computing manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "46_how_to_decide_which_iot_signals_deserve_edge_logic/article_EN.md",
+          "title": "How to Decide Which IoT Signals Deserve Edge Logic"
+        },
+        "PL": {
+          "path": "46_how_to_decide_which_iot_signals_deserve_edge_logic/article_PL.md"
+        },
+        "DE": {
+          "path": "46_how_to_decide_which_iot_signals_deserve_edge_logic/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "slug": "47_when_real_time_visibility_should_trigger_structured_problem_solving",
+      "title": "When Real-Time Visibility Should Trigger Structured Problem Solving",
+      "summary_line": "teams see the anomaly on screen but revert to hallway decisions, so the same failure mode returns next week with no evidence trail",
+      "product": "IoT",
+      "target_persona": "Production manager / Shift manager / Continuous improvement lead",
+      "funnel_stage": "Decision",
+      "core_problem": "teams see the anomaly on screen but revert to hallway decisions, so the same failure mode returns next week with no evidence trail",
+      "main_promise": "a trigger map: which real-time conditions open a structured loop, who owns the charter, and how IoT evidence attaches to the record",
+      "lp_section": "Downtime And OEE",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "IRIS",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "real-time visibility structured problem solving manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "47_when_real_time_visibility_should_trigger_structured_problem_solving/article_EN.md",
+          "title": "When Real-Time Visibility Should Trigger Structured Problem Solving"
+        },
+        "PL": {
+          "path": "47_when_real_time_visibility_should_trigger_structured_problem_solving/article_PL.md"
+        },
+        "DE": {
+          "path": "47_when_real_time_visibility_should_trigger_structured_problem_solving/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "slug": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines",
+      "title": "How to Create a Site-Ready IoT Rollout Playbook for New Lines",
+      "summary_line": "each new line reinvents connectivity, training, and handover, so scale feels like a sequence of hero projects instead of a repeatable factory motion",
+      "product": "IoT",
+      "target_persona": "Project owner / Engineering manager / IT-OT rollout lead",
+      "funnel_stage": "Decision",
+      "core_problem": "each new line reinvents connectivity, training, and handover, so scale feels like a sequence of hero projects instead of a repeatable factory motion",
+      "main_promise": "a site-ready playbook: brownfield constraints, signal scope, pilot cutover, handover package, and governance hooks in one checklist owners can execute",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 5: Execution And Transformation",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT rollout playbook new production line manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines/article_EN.md",
+          "title": "How to Create a Site-Ready IoT Rollout Playbook for New Lines"
+        },
+        "PL": {
+          "path": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines/article_PL.md"
+        },
+        "DE": {
+          "path": "48_how_to_create_a_site_ready_iot_rollout_playbook_for_new_lines/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "slug": "49_what_data_retention_and_traceability_should_look_like_in_iiot",
+      "title": "What Data Retention and Traceability Should Look Like in IIoT",
+      "summary_line": "plants collect everything and keep it forever, or keep nothing and cannot reconstruct a customer complaint week, so audits become panic exports",
+      "product": "IoT",
+      "target_persona": "Quality manager / IT-OT security partner / Regulatory-facing operations lead",
+      "funnel_stage": "Adoption",
+      "core_problem": "plants collect everything and keep it forever, or keep nothing and cannot reconstruct a customer complaint week, so audits become panic exports",
+      "main_promise": "a retention map tied to signal class, a traceability chain from machine event to human action, and honest storage boundaries",
+      "lp_section": "AI And Decision Making",
+      "knowledge_layer": "Layer 4: Decision Support",
+      "secondary_bridge": "Execution And Rollout",
+      "bridge_product": "Vector",
+      "bridge_section": "AI And Decision Making",
+      "primary_keyword": "IIoT data retention traceability manufacturing",
+      "featured": false,
+      "mva_role": "",
+      "locales": {
+        "EN": {
+          "path": "49_what_data_retention_and_traceability_should_look_like_in_iiot/article_EN.md",
+          "title": "What Data Retention and Traceability Should Look Like in IIoT"
+        },
+        "PL": {
+          "path": "49_what_data_retention_and_traceability_should_look_like_in_iiot/article_PL.md"
+        },
+        "DE": {
+          "path": "49_what_data_retention_and_traceability_should_look_like_in_iiot/article_DE.md"
+        }
+      }
+    },
+    {
+      "canonical_id": "IoT::50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "slug": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory",
+      "title": "How to Turn IoT into a Repeatable Operating System in a Brownfield Factory",
+      "summary_line": "IoT lives as a project office, a vendor relationship, and a set of screens, but it never becomes the way the plant runs day to day",
+      "product": "IoT",
+      "target_persona": "Plant director / Transformation sponsor / Head of manufacturing engineering",
+      "funnel_stage": "Adoption",
+      "core_problem": "IoT lives as a project office, a vendor relationship, and a set of screens, but it never becomes the way the plant runs day to day",
+      "main_promise": "an operating system pattern: cadence, roles, signal truth, escalation, integration honesty, and proof that survives turnover",
+      "lp_section": "Execution And Rollout",
+      "knowledge_layer": "Layer 1: Field Reality",
+      "secondary_bridge": "AI And Decision Making",
+      "bridge_product": "Consultify",
+      "bridge_section": "Execution And Rollout",
+      "primary_keyword": "IoT operating system brownfield factory manufacturing",
+      "featured": false,
+      "mva_role": "nurture_stream",
+      "locales": {
+        "EN": {
+          "path": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory/article_EN.md",
+          "title": "How to Turn IoT into a Repeatable Operating System in a Brownfield Factory"
+        },
+        "PL": {
+          "path": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory/article_PL.md"
+        },
+        "DE": {
+          "path": "50_how_to_turn_iot_into_a_repeatable_operating_system_in_a_brownfield_factory/article_DE.md"
+        }
+      }
+    }
+  ],
+  "cta_ladder": {
+    "low_commitment": {
+      "label": "see where visibility is failing",
+      "intent": "explore",
+      "target": "Downtime And OEE"
+    },
+    "mid_commitment": {
+      "label": "plan a pilot",
+      "intent": "pilot",
+      "target": "Execution And Rollout"
+    },
+    "high_commitment": {
+      "label": "review line-fit",
+      "intent": "decision",
+      "target": "Execution And Rollout"
+    }
+  },
+  "cross_product_bridges": {
+    "Downtime And OEE": {
+      "target_product": "IRIS",
+      "target_section": "Execution And Rollout",
+      "why_next": "Move from visibility into owned execution and closure."
+    },
+    "Execution And Rollout": {
+      "target_product": "Consultify",
+      "target_section": "Execution And Rollout",
+      "why_next": "Install stronger rollout governance at leadership level."
+    },
+    "AI And Decision Making": {
+      "target_product": "Vector",
+      "target_section": "AI And Decision Making",
+      "why_next": "Handle AI trust and secure industrial decision logic."
+    }
+  }
+}

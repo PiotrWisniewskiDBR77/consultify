@@ -1,60 +1,44 @@
-# Czy Twoje dane trenuja cudzy model? O co powinien zapytac kazdy producent
+# Czy Twoje dane wytrenują czyjś model? O co powinien zapytać każdy producent
 
-Target persona: CTO  
-Funnel stage: Awareness  
-Core problem: wiele firm produkcyjnych korzysta z AI bez zrozumienia, czy ich dane moga poprawiac cudzy model albo wychodzic poza zamierzona granice kontroli  
-Main promise: polityka treningu i architektura wdrozenia powinny byc kluczowym kryterium zakupu, a nie dopiskiem prawnym
+Docelowa persona: CTO  
+Etap lejka: Świadomość  
+Główny problem: wielu producentów używa AI, nie rozumiejąc, czy ich dane mogą ulepszać cudzy model lub opuszczać zamierzoną granicę kontroli  
+Główna obietnica: nabywcy powinni traktować politykę treningu i architekturę wdrożenia jako kluczowe kryteria zakupu, a nie przypisy prawne na marginesie
 
-Wiekszosc kupujacych zaczyna od funkcji. Produkcja powinna zaczynac od ekspozycji.
+Większość rozmów o zakupie AI zaczyna się od możliwości. W produkcji powinny zaczynać się od ekspozycji.
 
-Pytanie nie brzmi tylko, czy narzedzie dziala. Pytanie brzmi, co dzieje sie z danymi, gdy operatorzy, inzynierowie lub analitycy zaczynaja uzywac go z realnym kontekstem fabryki.
+Pytanie nie brzmi tylko, czy narzędzie dobrze odpowiada na demo. Brzmi, co dzieje się z informacją, gdy operatorzy, inżynierowie czy analitycy zaczynają podawać mu realny kontekst fabryki: ograniczenia, incydenty, koszty, logikę usprawnień i notatki „na pół gwizdka”, które mają sens tylko w waszym zakładzie. Jeśli ten materiał wchodzi w przepływ modelu bez jasnych zasad separacji, firma może tworzyć wartość dla systemu, którego nie kontroluje — i osłabiać własną pozycję przy każdym kolejnym wklejonym akapicie.
 
-## Dlaczego to pytanie jest wazniejsze, niz wielu kupujacych mysli
+## Dlaczego to pytanie jest ważniejsze, niż wielu nabywców sądzi
 
-Na produkcji prompty rzadko sa niewinne.
+Prompty w produkcji rzadko są nieszkodliwe. Często niosą założenia procesowe, strukturę kosztów, ograniczenia linii, dane dostawców i narrację o tym, jak rozwiązywano problemy w poprzednim kwartale. Nawet gdy użytkownik wierzy, że wystarczająco zaczerwienił kontekst, to co zostaje, nadal może być operacyjnie specyficzne. Polityka treningu to moment, w którym ta ekspozycja staje się strukturalna: nie jednorazowy wyciek, lecz stałe pytanie, czy wasz operacyjny język może zostać wchłonięty we wspólny cykl ulepszeń, który służy innym klientom, innym produktom lub przyszłemu zachowaniu modelu, na które nie wyraziliście zgody.
 
-Moga zawierac: zalozenia procesowe; strukture kosztow; ograniczenia linii; dane dostawcow; logike usprawnien; incydenty produkcyjne.
+## Polityka treningu to nie drobny szczegół
 
-Jesli te informacje trafiaja do modelu bez jasnych zasad separacji, firma moze budowac wartosc dla systemu, nad ktorym nie ma kontroli.
+Wielu nabywców nadal zakłada, że jeśli dostawca mówi „prywatnie” lub „bezpiecznie”, problem jest rozwiązany. Nie jest. Nabywca musi wiedzieć, czy dane klienta są kiedykolwiek używane do treningu lub dostrajania modelu; czy treść promptów jest przechowywana; kto ma dostęp do logów; czy dane mogą być utrzymywane poza zamierzonym środowiskiem; oraz czy w przetwarzaniu uczestniczą podwykonawcy. Jeśli odpowiedź jest mglista, ryzyko jest realne — bo mgliste domyślne ustawienia zwykle sprzyjają platformie, nie zakładowi.
 
-## Polityka treningu nie jest drobnym detalem
+## Ryzyko przemysłowe jest strategiczne, nie tylko techniczne
 
-Wielu kupujacych nadal zaklada, ze jesli dostawca mowi "private" albo "secure", problem znika. Nie znika.
+Jeśli know-how firmy pomaga ulepszać model obsługujący inne strony, sprawa nie kończy się na poufności. To strategiczny przeciek. Organizacja może oddawać wzorce tego, jak działa, optymalizuje, szacuje lub reaguje na problemy — wzorce trudne do „cofnięcia”, gdy już trafią do cyklu ulepszania dostawcy. To inna kategoria straty niż pojedynczy źle umiejscowiony plik.
 
-Kupujacy musi wiedziec: czy dane klienta sa kiedykolwiek uzywane do treningu lub fine-tuningu modelu?; czy tresc promptow jest przechowywana?; kto ma dostep do logow?; czy dane moga byc retencjonowane poza docelowym srodowiskiem?; czy w przetwarzaniu uczestnicza podwykonawcy?. Jesli odpowiedz jest niejasna, ryzyko jest realne.
+## Sam język prawny nie wystarcza
 
-## Ryzyko przemyslowe jest strategiczne, nie tylko techniczne
+Zespoły przemysłowe często polegają na języku zamówień lub ogólnych obietnicach bezpieczeństwa. To za słabe na AI. Relacja z modelem obejmuje zachowanie treningowe, granice inferencji, sposób przechowywania oraz governance i audytowalność. Każda z tych warstw wpływa na to, czy zachowujecie realną kontrolę. Akapit umowy bez historii technicznej jest jak plan jakości bez planu kontroli: czyta się dobrze, dopóki ktoś nie zapyta, jak to egzekwujecie.
 
-Jesli know-how firmy pomaga ulepszac model obslugujacy inne podmioty, problem nie dotyczy tylko poufnosci. To strategiczny wyciek.
+## O co producenci powinni pytać wprost
 
-Firma moze oddawac wzorce o tym, jak dziala, optymalizuje, estymuje lub reaguje na problemy.
+Zanim zatwierdzicie dostawcę AI, zadawajcie bezpośrednie pytania prostym językiem biznesowym. Czy dane klienta kiedykolwiek trenują model? Czy prompty, dokumenty lub rezultaty są przechowywane poza sesją? Czy model może działać w prywatnym lub on-prem środowisku zgodnym z waszą segmentacją? Kto może przeglądać historię interakcji i na jakich zasadach? Jak jest logowany i regulowany dostęp?
 
-## Dlaczego jezyk prawny nie wystarcza
+Jeśli odpowiedzi nie da się jasno sformułować bez łańcucha dogrywek, ryzyko zakupowe jest już zbyt wysokie dla wrażliwych obciążeń przemysłowych.
 
-Zespoly przemyslowe czesto opieraja sie na zapisach zakupowych lub ogolnych deklaracjach bezpieczenstwa. To za malo dla AI.
+**Minimalny próg:** domyślne zasady treningu są jawne; retencja jest jawna; podwykonawcy są nazwani tam, gdzie dotykają payloadów; tryb wdrożenia jest wybrany, zanim popłyną dane pilotażowe.
 
-Relacja z modelem obejmuje: zachowanie treningowe; granice inferencji; zachowanie storage; governance i auditability. Kazdy z tych elementow wplywa na kontrole.
+Poważny dostawca AI przemysłowego powinien jasno postawić trzy rzeczy: wasze dane nie trenują cudzego modelu; granice wdrożenia są kontrolowane; ludzka akceptacja zostaje w pętli przy ważnych decyzjach. To różnica między wygodą AI a odpowiedzialnością AI.
 
-## O co producent powinien zapytac wprost
+DBR77 Vector jest pozycjonowany pod środowiska przemysłowe, w których nabywcy potrzebują silniejszej pewności: brak treningu na danych klienta, prywatne opcje wdrożenia, przemysłowe rozumowanie i wyższe oczekiwania co do governance. To przesuwa pytanie zakupowe z „co model potrafi?” na „jaką kontrolę zachowujemy, korzystając z niego?”.
 
-Przed akceptacja dostawcy AI zapytaj: Czy dane klienta kiedykolwiek trenuja model?; Czy prompty, dokumenty lub odpowiedzi sa przechowywane poza sesja?; Czy model moze dzialac w srodowisku prywatnym albo on-prem?; Kto moze przegladac historie interakcji?; Jak logowany i nadzorowany jest dostep?.
-
-Jesli odpowiedzi nie da sie podac jasno w jezyku biznesowym, ryzyko zakupu jest juz za wysokie.
-
-## Jak wyglada lepsze podejscie
-
-Powazny dostawca industrial AI powinien jasno komunikowac trzy rzeczy: Twoje dane nie trenuja cudzego modelu; granice wdrozenia sa kontrolowane; human approval pozostaje w petli przy waznych decyzjach. To roznica miedzy wygoda AI a odpowiedzialnoscia AI.
-
-## Dlaczego Vector pasuje do tego standardu
-
-DBR77 Vector jest pozycjonowany dla srodowisk przemyslowych, w ktorych kupujacy potrzebuja wiekszej pewnosci w obszarach: brak treningu na danych klienta; opcje prywatnego wdrozenia; industrial reasoning; wyzsze oczekiwania governance.
-
-To przesuwa pytanie zakupowe z "co model potrafi?" na "jaka kontrole zachowujemy, gdy z niego korzystamy?"
-
-## Wniosek
-
-Jesli Twoj zespol nie potrafi odpowiedziec, czy Wasze dane trenuja cudzy model, to nie rozumie jeszcze swojej ekspozycji AI. Producent nie powinien traktowac tego jako pytania drugorzednego.
+Jeśli zespół nie potrafi odpowiedzieć, czy wasze dane trenują czyjś model, nie rozumiecie jeszcze swojej ekspozycji na AI. Producenci nie powinni traktować tego jako pytania drugiego rzędu.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Sprawdź bezpieczeństwo](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*
+*DBR77 Vector pomaga producentom korzystać z AI przemysłowego bez treningu modelu na danych klienta i z silniejszą kontrolą wdrożenia. [Przegląd bezpieczeństwa](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*

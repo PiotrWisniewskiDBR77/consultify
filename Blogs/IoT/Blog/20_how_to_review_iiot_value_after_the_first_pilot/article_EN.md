@@ -5,79 +5,58 @@ Funnel stage: Decision
 Core problem: many manufacturers finish an IIoT pilot but do not know how to review value credibly, so the next decision gets shaped by optimism, politics, or weak ROI theater instead of operating proof  
 Main promise: a stronger post-pilot review checks whether one operating loop became more visible, faster, more disciplined, and more scalable before the plant tries to justify full rollout
 
-The first IIoT pilot should create clarity. But in many factories, the review after the pilot creates confusion instead. This happens because the plant asks the wrong question. It asks: did the pilot prove the whole transformation? That is too much to ask from a first phase. A better question is: did the pilot prove enough to justify the next decision? That is the purpose of a strong value review.
+The pilot’s job is to create a decision, not a victory lap. A strong review answers whether the plant now has a repeatable model—or whether it has a lively dashboard and fragile habits.
 
-The habits and metrics that feed that answer usually come from the first month and the first quarter of rollout; see [what the first 30 days should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md) and [what to measure in the first 90 days](../16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_EN.md).
+Ask for staged proof, not instant transformation. The habits that feed this conversation usually begin in [what the first 30 days should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md) and [what to measure in the first 90 days](../16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_EN.md).
 
-## Why post-pilot reviews often become weak
+A post-pilot review is where sponsorship either becomes a budget line or reverts to a story. Treat the meeting as a decision factory, not a morale event. The output should be a clear next step with owners, not a fuzzy “let’s keep going.”
 
-After a pilot, different groups want different outcomes. Operations wants to know whether the loop helped. Finance wants to know whether scale is defensible. Leadership wants to know whether momentum is real. Vendors or project sponsors may want to show success quickly.
+## Why post-pilot reviews weaken
 
-That combination creates pressure for: broad ROI language; selective examples; optimistic interpretation; weak treatment of what did not work.
+Stakeholders want different wins. Sponsors feel pressure to show success. Finance wants defensible economics. Operations wants relief. Without structure, the review becomes selective storytelling. That may feel good in the room; it makes the next decision worse.
 
-The result is often a success story that sounds stronger than the proof behind it.
+## Start from baseline honesty
 
-## What the review should actually test
+Begin with what problem was chosen, how the plant handled it before, what delays existed, what changed during the pilot, and what remains weak. Narrative without baseline invites optimism bias.
 
-A credible post-pilot review should test whether the first loop became: more visible; faster to react; clearer in ownership; more consistent in review; credible enough to repeat elsewhere.
+## Five questions that keep the room grounded
 
-This is important because the next decision is rarely about the pilot alone. It is about whether the factory now has a repeatable model.
+Did people trust the signal enough to act? Did response become faster or more disciplined? Did ownership clarify? Did repeats become easier to discuss honestly? Is the loop stable enough to replicate in a similar area? These questions judge operational value, not presentation polish.
 
-## Why value review should start with the baseline, not the narrative
+## Useful pilots can be modest
 
-Some teams begin the review with a summary deck. A stronger review begins with the baseline: what problem was chosen; how the plant handled it before; what delays or blind spots existed; what changed during the pilot; what still remains weak. This sequence keeps the review honest. It also makes it easier to separate proof from enthusiasm.
+A pilot can fail to prove site-wide ROI and still succeed at proving the loop can improve. Staged proof is not weak proof. It is how large capital decisions become safer.
 
-## The five questions that usually make a review stronger
+## Weak reviews hide uncomfortable truths
 
-In many factories, the post-pilot review improves when leadership asks:
+Skipping baseline uncertainty, avoiding failed assumptions, celebrating dashboard activity, or jumping to broad rollout claims may protect feelings. They do not protect capital.
 
-1. did the plant trust the signal enough to act on it
-2. did response become faster or more disciplined
-3. did ownership become clearer
-4. did recurring issues become easier to review
-5. is the loop stable enough to repeat in a similar area
+## End with a real decision
 
-These questions keep the discussion grounded in operational value.
+Scale the same loop into a similar area, stabilize before scaling, or change the use-case logic before moving on. The point is decision quality, not applause. If scale is justified, use [from pilot to scale: how to roll out IIoT without losing control](../14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control/article_EN.md) as the guardrail.
 
-## Reality check: a pilot can be useful even if it does not prove plant-wide ROI yet
+## Maturity sounds like restraint
 
-One common mistake is dismissing a pilot because it did not prove the full financial case for site-wide rollout in one step. That standard is often unrealistic. A useful pilot may still create strong value by proving:
+The strongest signal is language that separates what worked, what is still weak, what should scale next, and what should not scale yet. That restraint builds trust.
 
-- the problem is real
-- the signal is usable
-- the loop can improve
-- the operating model is scalable with refinement
+## DBR77 IoT in the review
 
-That is not weak proof. It is staged proof. And staged proof is how larger decisions become safer.
+DBR77 IoT belongs when the review frames baseline honesty and one of three next steps—repeat, tighten, or pivot—rather than deck polish. Pilot proof on one loop is the right unit of account.
 
-## What weak review behavior usually looks like
+Review IIoT value as a test of a loop: visibility, speed, clarity, repeatability. That is how pilots become foundations instead of stories.
 
-A post-pilot review is often weaker when it: hides baseline uncertainty; avoids failed assumptions; focuses on dashboard activity; jumps too quickly to broad rollout claims; ignores where the loop is still unstable. That may make the pilot sound better in the room. It does not make the next decision better.
 
-## What leadership should decide after the review
 
-A strong review should end with one of three decisions:
+## A leadership checkpoint for the next ops review
 
-1. scale the same loop into a similar area
-2. stabilize the current loop before scaling
-3. change the use-case logic before moving further
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
 
-This matters because the goal of the review is not applause. It is decision quality.
+## Bringing it home on the floor
 
-When the review says scale, [from pilot to scale: how to roll out IIoT without losing control](../14_from_pilot_to_scale_how_to_roll_out_iiot_without_losing_control/article_EN.md) is the governing frame for keeping that expansion disciplined.
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-## Why the review should include what not to scale yet
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-One of the most mature signals in a post-pilot review is the ability to say: this part worked; this part is still weak; this should scale next; this should not scale yet. That language builds trust.
+---
 
-It shows that the plant is treating IIoT as an operating discipline, not as a presentation exercise.
-
-## What this means for DBR77 IoT
-
-DBR77 IoT belongs in the post-pilot conversation when the review is framed around baseline honesty and one of three next-step outcomes (repeat, tighten, or stop), not around deck polish. Pilot proof on one loop is the right unit of account for deciding whether scale is warranted, and that is what disciplined product positioning should reinforce.
-
-## Bottom line
-
-The best way to review IIoT value after the first pilot is to ask whether one operating loop became more visible, faster, clearer, and more repeatable and whether that creates a credible next decision.
-
-That is how the pilot becomes a foundation for scale instead of just a success narrative.
+*DBR77 IoT helps teams review pilot value with clear operational proof: same-shift visibility, operator context, alerts, and repeatable loop behavior. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

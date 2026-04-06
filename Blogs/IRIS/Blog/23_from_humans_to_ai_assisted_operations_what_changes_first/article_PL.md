@@ -1,62 +1,38 @@
-# Od ludzi do operacji wspieranych przez AI: co zmienia sie najpierw
+# Od ludzi do operacji wspomaganych AI: co zmienia się najpierw
 
-Target persona: Kierownik zakladu / Lider ciaglego doskonalenia  
-Funnel stage: Consideration  
-Core problem: zespoly boja sie mglistej narracji "zastapienia" i opozniaja pozyteczna adopcje, bo nie potrafia ustalic kolejnosci tego, co powinno zmienic sie najpierw w rolach, rutynach i systemach  
-Main promise: praktyczny model sekwencji pierwszych zmian operacyjnych: dyscyplina widocznosci, jasnosc odpowiedzialnosci, standaryzacja workflow, potem wsparcie AI
+Docelowa persona: Plant Manager / lider ciągłego doskonalenia  
+Etap lejka: Consideration  
+Główny problem: zespoły boją się mglistej narracji „zastępowania” i opóźniają sensowną adopcję, bo nie potrafią ułożyć kolejności tego, co powinno zmienić się najpierw w rolach, rutynach i systemach  
+Główna obietnica: praktyczny model sekwencji pierwszych przesunięć operacyjnych: dyscyplina widoczności, jasność odpowiedzialności, standaryzacja przepływu pracy, potem wsparcie AI na wierzchu
 
-**Bezposrednia odpowiedz:** Pierwsza zmiana to rzadko "model". Pierwsza zmiana to zwykle sposob, w jaki zaklad zapisuje rzeczywistosc, przydziela odpowiedzialnosc i wymusza domkniecie. Wsparcie AI stabilizuje sie dopiero wtedy, gdy te podstawy wykonania sa widoczne i wspoldzielone. Operacje wspierane przez AI to nie jeden przelacznik. To sekwencja. Jesli zmienisz kolejnosc, zwykle dostaniesz frustracje zamiast przepustowosci.
+Operacje wspomagane AI to nie jeden przełącznik. To sekwencja — a jeśli zmienisz kolejność, zwykle dostajesz frustrację zamiast przepustowości. Pierwsza zmiana rzadko brzmi „model”. Pierwsza zmiana brzmi: jak zakład zapisuje rzeczywistość, przydziela odpowiedzialność i egzekwuje domykanie działań. Inteligencja stabilizuje się dopiero wtedy, gdy te podstawy wykonania są widoczne i współdzielone.
 
-## Co powinno zmienic sie najpierw: linia bazowa wykonania
+Zacznij od linii bazowej wykonania. Zaostrz, co liczy się jako zdarzenie i jakie metadane są obowiązkowe. Wyjaśnij domyślnych właścicieli i ścieżki eskalacji. Traktuj ważną pracę jako śledzone zadania ze stanami, nie jako prośby werbalne. Wyrównaj definicje między funkcjami — bo jeśli dwa zespoły rozumieją inaczej „postój”, „zablokowane” lub „krytyczne”, wsparcie wzmocni zamęt zamiast go redukować. To zmiany ludzkie i procesowe. To też przesłanki.
 
-Zanim AI zmieni decyzje, zaklad powinien zaciagnac:
+Po drugie, standaryzuj przekazanie, nie tylko dashboard. Głębsze przesunięcie to ustrukturyzowany ruch między linią a utrzymaniem, jakością a produkcją, magazynem a planowaniem. AI działa lepiej, gdy przekazania mają szablony, wymagane pola, oczekiwane ramy czasowe i kryteria domknięcia — tak by wsparcie miało stabilny obiekt do usprawniania.
 
-**Higiena zdarzen** Co liczy sie jako zdarzenie? Jakie metadane sa obowiazkowe? Co jest szumem?
+Po trzecie, wprowadzaj AI tam, gdzie praca jest już ustrukturyzowana. Obronny wczesny wzorzec to wybrać przepływ pracy, który już boli, upewnić się, że jest reprezentowany jako zadania w jednej historii systemu, dodać AI do triage, streszczania i sugestii przydziału wewnątrz tego samego przepływu pracy oraz mierzyć czas cyklu i wskaźnik ponownego otwarcia — nie tylko „satysfakcję”. Ta sekwencja to coś, co możesz wyjaśnić hali bez proszenia ludzi o zaufanie do magii.
 
-**Reguly odpowiedzialnosci** Kto jest domyslnym wlascicielem dla ktorej kategorii? Jak wyglada eskalacja?
+Co zwykle nie powinno zmieniać się najpierw: szeroki asystent czatu dla wszystkich, obietnice autonomii rozłączone od barier ochronnych albo konkursy benchmarków modeli ignorujące dojrzałość przepływu pracy. To może należeć później. Rzadko naprawia zepsutą pętlę wykonania pierwszego dnia.
 
-**Dyscyplina pozycji pracy** Jesli ma znaczenie, to staje sie sledzonym zadaniem ze stanem, a nie prosba werbalna.
+IRIS wpisuje się w tę sekwencję, bo wsparcie AI stabilizuje się szybciej, gdy zadania, odpowiedzialność i przekazania żyją w jednej warstwie wykonania — dając zakładowi miejsce na ustandaryzowanie bazy zanim doda się wsparcie na wierzchu.
 
-**Zgodnosc definicji** Jesli dwie funkcje rozumieja inaczej "postoj" lub "blokada", AI poglebi zamieszanie. To zmiany ludzkie i procesowe. To tez warunki wstepne.
+Po sekwencji budowy, gdy baza jest czysta, zobacz [Jak budować operacje fabryczne wspomagane AI krok po kroku](../25_how_to_build_ai_assisted_factory_operations_step_by_step/article_PL.md). O dyscyplinie wdrożenia na hali zobacz [Jak wdrożyć operacje wspomagane AI bez destabilizacji zakładu](../30_how_to_roll_out_ai_assisted_operations_without_disrupting_the_plant/article_PL.md).
 
-## Drugie: standaryzuj przekazanie, nie tylko pulpit
+**Test realizmu na 30 dni:** Czy możesz wyeksportować zeszłomiesięczne główne problemy z właścicielami i czasami domknięcia? Czy menedżerowie zgadzają się, co znaczy „domknięte”? Czy akceptacje są udokumentowane dla wrażliwych działań? Czy jest jedna uporządkowana kolejka dla przepływ pracy? Czy możesz przeprowadzić retrospektywę bez prywatnych skrzynek? Jeśli to pada, wsparcie AI będzie unosić się nad prawdziwym zakładem.
 
-Pulpity moga wspolistniec.
+To, co zmienia się najpierw w operacjach wspomaganych AI, to dyscyplina wykonania, nie inteligencja. Uczyń pętlę widoczną i posiadaną. Wtedy AI ma coś solidnego, by wspierać.
 
-Glebsza zmiana to ustrukturyzowane przekazania: z linii do utrzymania; z jakosci do produkcji; z magazynu do planowania.
+Traktuj sekwencję jako zobowiązanie kierownicze, nie przypis: hala powinna czuć, że podstawy się stabilizują, zanim wsparcie przyspieszy.
 
-AI dziala lepiej, gdy przekazania maja: szablon; wymagane pola; oczekiwane czasy; kryteria domkniecia.
+## Podsumowanie operacyjne
 
-## Trzecie: wprowadz AI tam, gdzie praca jest juz ustrukturyzowana
+Obietnica tego artykułu — praktyczny model sekwencji pierwszych przesunięć: dyscyplina widoczności, jasność odpowiedzialności, standaryzacja przepływu pracy, potem wsparcie AI na wierzchu — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Od ludzi do operacji wspomaganych AI: co zmienia się najpierw” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Sensowny wczesny wzor to: wybierz workflow, ktory juz boli (powtarzajace sie incydenty, wolne domkniecie, miedzyfunkcyjny ping-pong); upewnij sie, ze workflow jest reprezentowany jako zadania w jednej narracji systemowej; dodaj AI do triazu, streszczen i propozycji routingu w tym workflow; mierz czas cyklu i wskaznik ponownego otwarcia, a nie "satysfakcje uzytkownika" wylacznie. To sekwencja krokow, ktora mozesz obronic na hali.
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
-## Co zwykle nie zmienia sie najpierw
-
-Zaklady czesto probuja zaczac od: szerokiego asystenta czatu dla wszystkich; obietnic autonomicznej optymalizacji; konkursow benchmarkowych modeli. To moze byc pozniej pozyteczne. Rzadko naprawia zepsuta petle wykonania pierwszego dnia.
-
-## Checklist realizmu na 30 dni
-
-Uzyj go jako ostrego testu operacyjnego:
-
-1. Czy mozesz wyeksportowac top 20 problemow z ostatniego miesiaca z wlascicielem i czasem domkniecia?
-2. Czy menedzerowie zgadzaja sie, co znaczy "zamkniete"?
-3. Czy akceptacje sa dokumentowane dla wrazliwych dzialan?
-4. Czy jest jedna widoczna kolejka priorytetow miedzy funkcjami dla tego workflow?
-5. Czy mozesz zrobic retrospektywe bez polegania na prywatnych skrzynkach?
-
-Jesli ten checklist pada, wsparcie AI unosi sie nad prawdziwym zakladem.
-
-## Dlaczego IRIS pasuje do tej sekwencji
-
-DBR77 IRIS to AI-native system operacyjny zakladu z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zadan.
-
-To ma znaczenie, bo wsparcie AI potrzebuje stabilnego podloza zadan i odpowiedzialnosci. Bez tego automatyzujesz anegdoty.
-
-## Podsumowanie
-
-To, co zmienia sie najpierw w operacjach wspieranych przez AI, to dyscyplina wykonania, a nie inteligencja. Najpierw spraw, by petla byla widoczna i miala wlascicieli. Potem AI ma co wspierac w sposob niezawodny.
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie usprawnienie operacyjne — tylko narracyjne. Ta regula utrzymuje programy w rzetelności, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Obejrzyj prezentację](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*
+*DBR77 IRIS wspiera właściwą sekwencję, dając zakładowi jedną warstwę wykonania dla zadań, odpowiedzialność, akceptacji i wsparcia AI między funkcjami. [Obejrzyj walkthrough](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*

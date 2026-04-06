@@ -241,7 +241,7 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
 export const InitiativePreviewV3Footer: React.FC<{
   initiative: InitiativePreviewV3Model;
   tasksCount?: number;
-  onOpenFull: () => void;
+  onOpenFull?: () => void;
   onOpenInModule?: () => void;
   onOpenChat?: (prompt: string) => Promise<void> | void;
   onCopyLink?: () => Promise<void> | void;
@@ -323,13 +323,17 @@ export const InitiativePreviewV3Footer: React.FC<{
   const actionRows: ActionRow[] = useMemo(() => {
     if (extraActionsSlot) return [];
     const buttons: ActionRow['buttons'] = [
-      {
-        label: isPolish ? 'Otwórz' : 'Open',
-        icon: ExternalLink,
-        onClick: onOpenFull,
-        colorScheme: 'primary',
-        shortcut: 'O',
-      },
+      ...(onOpenFull
+        ? [
+            {
+              label: isPolish ? 'Otwórz' : 'Open',
+              icon: ExternalLink,
+              onClick: onOpenFull,
+              colorScheme: 'primary' as const,
+              shortcut: 'O',
+            },
+          ]
+        : []),
       ...(onOpenInModule
         ? [
             {

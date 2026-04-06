@@ -1,69 +1,49 @@
-# Co symulowac przed rozbudowa linii produkcyjnej
+# Co symulować przed rozbudową linii produkcyjnej
 
-Target persona: plant director / industrial engineering lead / program sponsor  
-Funnel stage: Decision  
-Core problem: rozbudowa linii jest czesto wymiarowana ze statycznego capacity math i propozycji vendorow, podczas gdy realne ryzyko siedzi w coupling, ramp behavior i jak nowy segment zachowuje sie przy mix i variability  
-Main promise: zwarty scope symulacji ktory testuje decyzje expansion zanim concrete, staffing i commitmenty supplierow sie zamykaja
+Docelowa persona: dyrektor zakładu / lider inżynierii przemysłowej / sponsor programu  
+Etap lejka: Decision
+Główny problem: rozbudowa linii często jest wymiarowana ze statycznej matematyki zdolności i ofert dostawców, podczas gdy prawdziwe ryzyko siedzi w sprzężeniu, zachowaniu rampy i tym, jak nowy odcinek zachowuje się przy mixie i zmienności  
+Główna obietnica: zwięzły zakres symulacji testujący decyzję o rozbudowie, zanim beton, staffing i zobowiązania u dostawców staną się twarde
 
-**Bezposrednia odpowiedz:** przed rozbudowa linii symuluj baseline performance pod realistyczna variability, najmniejszy zestaw wiarygodnych wariantow expansion, ramp i learning curves, contention shared resources oraz intralogistics zasilajace nowy segment. Pomijaj symulacje tylko gdy expansion jest trywialnym duplikatem istniejacej cell z identycznym mix i bez shared constraints. Rozbudowa linii rzadko znaczy "wiecej maszyn w tej samej hali."
+Przed rozbudową linii symuluj wydajność baseline przy realistycznej zmienności, najmniejszy wiarygodny zestaw wariantów rozbudowy, krzywe rampy i uczenia się, konflikt o zasoby współdzielone oraz intralogistykę zasilającą nowy odcinek. Pomiń głęboką symulację tylko wtedy, gdy rozbudowa to trywialny duplikat istniejącej komórki przy identycznym mixie i bez wspólnych ograniczeń. Rozbudowa linii rzadko brzmi „więcej maszyn w tej samej hali”; to zmiana w tym, jak praca przychodzi, kolejkuje się i wraca do równowagi.
 
-To zmiana w tym jak praca przychodzi, tworzy kolejki i wraca do stabilnosci.
+**Granica tematu:** ten artykuł skupia się na rozbudowie zdolności w istniejącym śladzie, gdy konkurują kilka fizycznych ścieżek. O rozbudowie linii „przed popytem” w szerszym sensie — inne opracowania w serii; o programach brownfield — planowanie zmian brownfield; o teście zdolności przy przesunięciu popytu — artykuł o testowaniu zdolności.
 
-## Dlaczego expansion approvals potrzebuja operational proof, nie tylko CAPEX packets
+## Dlaczego mocne memo CAPEX nadal omija halę
 
-Mocny expansion memo moze nadal przegapic: jak WIP i kolejki sie redystrybuuja gdy nowy segment startuje; czy bottleneck migruje upstream lub downstream; jak changeovers i mix interaguja gdy throughput rosnie; czy material delivery, staging lub kitting staje sie ukrytym limiterem. Te failure modes sa drogie po wlaniu betonu i podpisaniu kontraktow.
+Dopieszczony pakiet rozbudowy wciąż może pominąć, jak WIP i kolejki się rozłożą, gdy nowy odcinek startuje, czy wąskie gardło migruje w górę czy w dół strumienia, jak przezbrojenia współgrają, gdy rośnie throughput, oraz czy dostawa materiału, staging czy kitting nie staje się ukrytym ograniczeniem. Te luki robią się drogie po wlaniu stali i podpisaniu umów.
 
-## Minimalny zestaw scenariuszy dla decyzji line expansion
+## Minimalny zestaw scenariuszy
 
-Odpal te scenariusze na tych samych zalozeniach modelu: **Baseline today:** uwzglednij zle tygodnie, nie tylko srednie; **Target throughput band:** zakres objetosci ktory leadership chce utrzymac; **Mix stress:** family mix ktory najbardziej boli cycle time i changeover time; **Ramp case:** uczciwe zalozenia training, scrap i stability na pierwsze miesiace pracy; **Coupled resources:** shared tools, testers, cranes, AGV loops lub relief staffing dotykane przez obie linie. Porownujesz jak system failuje, nie ozdabiasz success story.
+Odpal dzisiejszy baseline z „złymi” tygodniami, nie tylko średnimi; pasmo docelowego throughputu jako zakres, który kierownictwo chce utrzymać; stres mixu dla rodzin, które najbardziej bolą cykl i przezbrojenia; przypadek rampy z uczciwymi założeniami szkolenia, scrapu i stabilności; sprzężone zasoby — wspólne narzędzia, testery, żurawie, pętle AGV, zastępczy staffing, którego dotykają obie linie. Porównujesz, jak system się psuje, a nie ozdabiasz historię sukcesu.
 
-## Framework porownania wariantow expansion
+## Oceniaj poważne warianty na tych samych faktach
 
-Uzyj prostego scoreboardu zeby finance i operations debatowaly o tych samych faktach:
+Sądź opcje po throughput przy prawdziwym wąskim gardle pod stresem, WIP i czasie kolejki u głównych ograniczeń, ekspozycji na nadgodziny i pracę tymczasową, czasie do stabilnego outputu po starcie oraz wrażliwości na opóźnienie inbound, gdy tempo narzuca logistyka. Jeśli dwa warianty są bliskie na średniej, a rozjeżdżają się pod stresem — stres to prawda, której potrzebujesz przed wydatkiem.
 
-| Kryterium | Dlaczego ma znaczenie |
-|---|---|
-| Throughput przy bottleneck pod stress | pokazuje czy expansion naprawde zdejmuje limiter |
-| WIP i queue time przy top constraints | lapie false capacity ktora tylko przesuwa czekanie |
-| Overtime i temp labor exposure | tlumaczy operational risk na jezyk kosztow |
-| Time to stable output po go-live | testuje czy business case zaklada instant maturity |
-| Wrazliwosc na opoznienie supplier lub inbound | ujawnia coupling logistyczny |
+## Wejścia, co do których kierownictwo powinno się zgodzić przed startem modelu
 
-Jesli dwa warianty wygladaja blisko na sredniej ale rozjezdzaja sie pod stress, stress to prawda ktora potrzebujesz przed spend.
+Uzgadnijcie zdanie decyzyjne (co dokładnie wybieracie), kształt popytu własny sprzedaży i planowania, listę ograniczeń, które nie mogą się ugiąć w pierwszych dziewięćdziesięciu dniach po starcie, oraz definicję porażki — jakie naruszenie KPI dyskwalifikuje opcję. Bez tych ustaleń model staje się testem Rorschacha.
 
-## Checklist: inputy ktore leadership powinno zaakceptowac przed startem modelu
+## Odizolowany model linii kłamie grzecznie
 
-- **Decision sentence:** co dokladnie jest wybierane (capacity, layout, supplier scope, staffing model).  
-- **Demand shape:** zalozenia level, mix i sezonowosci owned przez sales i planning.  
-- **Constraint list:** co nie moze elastycznie zmienic sie w pierwszych 90 dniach po starcie.  
-- **Failure definition:** ktory breach KPI liczy sie jako "ten option jest disqualifikowany."
+Modelowanie samej nowej linii jest czyste i często myli. Jeśli rozbudowa zabiera czas pośredni, okna konserwacji lub zdolność transportu reszcie site’u, zakład uczy się tego w rampie — nie na spotkaniu zatwierdzającym. Trzymaj granicę modelu uczciwie.
 
-Bez tych czterech model staje sie testem Rorschacha.
 
-## Czesty blad: modelowanie nowej linii w izolacji
+## Governance pasujące do tempa fabryki
 
-Izolowane modele linii wygladaja czysto. Czesto klamia.
+Dobre governance dopasowuje się do zegara zakładu. Comiesięczne przeglądy operacyjne powinny traktować ryzyko do przodu jako pełnoprawnego obywatela agendy, nie jako dodatek, gdy skończą się slajdy. Fora kapitałowe powinny traktować ID scenariuszy i stopnie założeń jako część artefaktu akceptacji, nie jako przypis modelarza. Przeglądy po inwestycji powinny odnaleźć baseline historii, którą sfinansowano, i sprawdzić, czy rzeczywistość odbiegła w sposób zmieniający następną transzę.
 
-Jesli expansion zabiera indirect time, maintenance windows lub material handling capacity od reszty site, zaklad uczy sie tego w ramp, nie na approval meeting.
-
-## Co zmienia Digital Twin
-
-Digital Twin to scenario-testing environment dla operational decisions przylegajacych do kapitalu. To nie 3D showcase.
-
-Pozwala leadership zobaczyc jak rozbudowana linia interaguje z flow, buforami i shared resources zanim layout i sourcing staja sie trudne do cofniecia.
+Gdy własność jest jasna – kto utrzymuje strukturę, kto certyfikuje prawdę hali, kto podpisuje pakiety scenariuszy – zdarzenia odświeżenia przestają być osobistymi przysługami i stają się przewidywalnym utrzymaniem. Tak digital twin przetrwa rotację: następny steward dziedziczy szablony, pakiety i rejestry zamiast dziedziczyć ustne mity. Jeśli program nie przetrwa zmiany kierownictwa, to wciąż projekt, nie infrastruktura.
 
 ## Co dodaje DBR77 Digital Twin
 
-DBR77 Digital Twin jest budowany jako praktyczny decision system ze sciezka od manual inputs do bogatszej integracji.
+DBR77 Digital Twin centruje decyzje o rozbudowie: throughput, elastyczność, zapasy i ryzyko rampy w jednej porównywalnej ramce przed zamknięciem wydatku. Testy obok siebie wiarygodnych wariantów przy zmienności; kompromisy między throughputem, elastycznością, zapasami i ryzykiem rampy; zapisy decyzji, które finanse i operacje mogą uzgodnić bez optymizmu slajdów.
 
-Dla decyzji expansion wspiera: side-by-side test wiarygodnych wariantow expansion pod variability; czytelniejsze trade-offy miedzy throughput, flexibility, inventory i ramp risk; decision records na ktorych finance i operations moga sie zgodzic bez slide optimism.
+## Podsumowanie
 
-## Bottom line
-
-Symuluj przed rozbudowa linii gdy shared resources, mix lub ramp risk moga obrocic CAPEX story ktore wyglada dobrze jako static case.
-
-Jesli expansion to prawdziwy duplicate cell z izolowana logistyka i stabilnym mix, mozesz isc szybciej z measurement-led pilots. Cel to mniej niespodzianek gdy spend zamienia sie w concrete.
+Symuluj przed rozbudową, gdy wspólne zasoby, mix lub ryzyko rampy mogą obalić case CAPEX, który jako statyczny wygląda dobrze. Jeśli rozbudowa to prawdziwy zduplikowany komórka z odizolowaną logistyką i stabilnym mixem, piloty oparte na pomiarze mogą iść szybciej. Chodzi o mniej niespodzianek, gdy wydatki zamieniają się w beton.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*
+*DBR77 Digital Twin pomaga porównywać warianty rozbudowy przy zmienności i sprzężeniu wspólnych zasobów, zanim stwardnieją fizyczne zobowiązania i dostawcy. [Umów demo](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*

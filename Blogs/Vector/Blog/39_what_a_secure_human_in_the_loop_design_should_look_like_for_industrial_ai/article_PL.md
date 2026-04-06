@@ -1,62 +1,34 @@
-# Jak powinien wygladac bezpieczny human-in-the-loop dla AI przemyslowego
+# Jak powinien wyglądać bezpieczny projekt human-in-the-loop dla AI przemysłowego
 
-Target persona: szef jakosci / lider cyfrowej fabryki  
-Funnel stage: Decyzja  
-Core problem: "ludzka aprobata" staje sie formalnym stemplem, gdy role, paczki dowodow i logowanie nie czynia decyzji czlowieka obronnej  
-Main promise: bezpieczny wzorzec HITL wiaze aprobaty ze zakresami dzialan, paczkami sladow, timeoutami i eskalacja bez zamieniania operatorow w waskie gardla klikniec
+Docelowa persona: szef jakości / lider cyfrowej fabryki  
+Etap lejka: Decyzja  
+Główny problem: „akceptacja człowieka” staje się gumowym stempelkiem, gdy role, pakiety dowodów i logowanie nie czynią decyzji człowieka obronnej  
+Główna obietnica: bezpieczny wzorzec HITL wiąże akceptacje z określonymi działaniami, pakietami śledzenia, timeoutami i eskalacją — bez zamieniania operatorów w wąskie gardła „klik-dalej”
 
-Human-in-the-loop to nie checkbox. To zaprojektowana kontrola.
+Human-in-the-loop to nie checkbox. To zaprojektowana kontrola — ta sama kategoria co blokady wzajemne, podpisy i segregacja obowiązków, które systemy jakości już traktują poważnie. Bezpieczny projekt HITL dla przemysłu powinien definiować zakresy akceptacji wg klasy przepływu, pokazywać wersję modelu i streszczenie wejść, na których opierał się akceptor, wymagać separacji ról między wnioskującym a akceptującym przy działaniach wysokiego ryzyka, logować decyzje z identyfikatorami korelacji do systemów jakości tam, gdzie trzeba, egzekwować akceptacje ograniczone czasowo oraz bezpiecznie degradować, gdy akceptor jest niedostępny. Automatyzujcie niskoryzykowne warstwy; bramkujcie wysokoryzykowne. Projekt powinien przetrwać rozmowę audytową, nie tylko demo UI.
 
-## Bezposrednia odpowiedz
+## Co idzie nie tak na hali, gdy HITL jest ozdobą
 
-Bezpieczny przemyslowy HITL powinien definiowac zakresy aprobat wg klasy workflow, pokazywac wersje modelu i streszczenie wejsc, na ktorych approver polega, wymagac separacji rol miedzy proszacym a approverem dla dzialan wysokiego ryzyka, logowac decyzje z correlation ID do systemow jakosci tam gdzie potrzeba, egzekwowac aprobaty czasowe i degradowac bezpiecznie gdy approverzy niedostepni. Automatyzuj niskie warstwy ryzyka; blokuj wyzsze. Projekt powinien przetrwac rozmowe audytowa, nie tylko demo UI.
+Bolesny wzorzec jest znajomy: narzędzie dodaje przycisk „zatwierdź”, ale akceptor widzi tylko wypolerowany tekst, nie wejścia, które mają znaczenie. Pod presją czasu akceptacje stają się pamięcią mięśni. Później, gdy kwestionuje się decyzję, nikt nie odtworzy, co było wiadomo w chwili podpisu — tylko że ktoś kliknął tak. To nie governance; to pranie odpowiedzialności. Bezpieczny HITL jest projektowany na te zestresowane minuty: spowalnia niebezpieczny krok, nie każdy, i czyni odpowiedzialną pauzę widoczną w zapisie.
 
-## Framework: warstwy HITL
+## Warstwy oddzielające ozdobę od bezpieczeństwa
 
-### Warstwa 1: macierz polityki
+Macierz polityki: zmapujcie każdy przepływ na auto-asystę, sugestię z potwierdzeniem, podwójną kontrolę lub zakaz automatyzacji — tak by „akceptacja” znaczyła coś konkretnego. Pakiet dowodów: co widzi akceptor, włącznie ze skróconymi wejściami z regułami redakcji, oświadczeniami o ograniczeniach tam, gdzie dostępne, oraz linkami do powiązanych zleceń lub specyfikacji. Wiązanie działania: zatwierdzone działania wykonują się wyłącznie przez nazwane kanały integracji z tym samym identyfikatorem korelacji co zapis akceptacji. Timeout i rezerwa: jeśli akceptacja stoi, domyślnie bezpieczne wstrzymanie — nie ciche wykonanie — i eskalacja do pul zapasowych akceptorów wg reguł zakładu. Ciągły przegląd: próbkujcie akceptacje w wyższych warstwach; mierzcie wskaźniki nadpisań i czas do akceptacji.
 
-Mapuj kazdy workflow na: auto-assist, suggest-with-confirm, dual-control lub zakaz automatyzacji.
+Ozdobny HITL pokazuje „kogoś online” jako akceptora, dowód będący tylko końcowym tekstem, logowanie będące jedynie transkryptem czatu oraz awarie, które cicho przechodzą dalej. Bezpieczny HITL używa nazwanej kompetencji i segregacji, trwałych zapisów akceptacji z identyfikatorami oraz jawnego wstrzymania lub eskalacji, gdy kontroli nie da się spełnić.
 
-### Warstwa 2: paczka dowodowa
+**Pytania przeglądu projektu:** czy dwie osoby mogą przypadkiem ominąć segregację przez współdzielone konta; czy akceptację można odtworzyć przeciwko innemu działaniu w systemie docelowym; czy logowanie spełnia zarówno reguły bezpieczeństwa IT, jak i śledzenia jakości; czy potraficie odtworzyć decyzję poniżej godziny podczas ćwiczenia?
 
-Co widzi approver: obciete wejscia z regulami redakcji; pewnosc i znane ograniczenia tam gdzie dostepne; linki do powiazanych zlecen lub specyfikacji.
+Bezpieczny HITL to segregacja, śledzalność i rozdział uprawnień — nie dodatkowy klik przy generycznym asystencie. Vector wspiera tę postawę projektową: autorskie AI przemysłowe z opcjami on-prem / prywatnego API / izolowanego wdrożenia, bez treningu na danych klienta oraz wynikami ukształtowanymi pod integracje przepływów i bramki akceptacji zamiast nieograniczonego czatu — tak by ludzki osąd pozostał wiążący tam, gdzie wasze warstwy tego wymagają.
 
-### Warstwa 3: wiazanie dzialania
+Jakość HITL definiują śledzalność i segregacja, nie drugi klik myszy. Projektujcie akceptacje jak blokady bezpieczeństwa — i mierzcie, czy naprawdę trzymają pod stresem.
 
-Zatwierdzone dzialania wykonuja sie tylko przez nazwane kanaly integracji z tym samym correlation ID co zapis aprobaty.
+## Punkt kontrolny zakładu
 
-### Warstwa 4: timeout i fallback
+Traktujcie „Jak powinien wyglądać bezpieczny projekt human-in-the-loop dla AI przemysłowego” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną.
 
-Jesli aprobata stoi: domyslnie bezpieczny hold, nie ciche wykonanie; routing do zapasowej puli approverow wg regul zakladu.
-
-### Warstwa 5: ciagly przeglad
-
-Probkuj aprobaty tygodniowo w wyzszych warstwach; mierz wskazniki nadpisan i czasu do aprobaty.
-
-## Porownanie: ozdobny HITL versus bezpieczny HITL
-
-| Sygnal | Ozdobny | Bezpieczny |
-| --- | --- | --- |
-| Rola approvera | ktokolwiek online | nazwana kompetencja i segregacja |
-| Dowod | tylko tekst koncowy | streszczenie wejsc, wersja modelu, zakres |
-| Logowanie | transkrypt czatu | trwaly zapis aprobaty z ID |
-| Awaria | ciche kontynuowanie | jawny hold lub eskalacja |
-
-## Checklist: pytania przegladowe projektu
-
-- czy dwie osoby moga omingc segregacje przez wspoldzielone konta?
-- czy aprobata moze byc odtworzona przeciwko innemu dzialaniu w systemie docelowym?
-- czy logowanie spelnia wymogi IT security i sladu jakosci?
-- czy odtworzysz decyzje ponizej godziny podczas drillu?
-
-## Product bridge
-
-DBR77 Vector wspiera rozumowanie przemyslowe w ekosystemie DBR77 z granicami wdrozen sprzyjajacymi wiazaniu kontroli HITL z integracjami fabryki: proprietary industrial AI, opcje on-premise / private API / izolacja, brak treningu na danych klienta oraz wyjscia pod dyscypline operacyjna zamiast otwartego czatu.
-
-## Final takeaway
-
-Jakosc HITL definiuje slad i segregacja, nie drugi klik myszy. Projektuj aprobaty jak blokady bezpieczenstwa. Mierz, czy faktycznie trzymaja pod stresem.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*
+*DBR77 Vector łączy rozumowanie przemysłowe ze wzorcami integracji wspierającymi obronną akceptację i logowanie, a nie dowolny czat. [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*

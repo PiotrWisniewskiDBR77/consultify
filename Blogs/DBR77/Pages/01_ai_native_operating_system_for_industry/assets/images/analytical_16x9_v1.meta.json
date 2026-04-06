@@ -1,0 +1,29 @@
+{
+  "article_path": "Blogs/DBR77/Pages/01_ai_native_operating_system_for_industry",
+  "product": "DBR77",
+  "scope_type": "page",
+  "asset_slug": "01_ai_native_operating_system_for_industry",
+  "role": "analytical",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "newsletter"
+  ],
+  "model": "cursor:composer-generate-image",
+  "model_params": {
+    "provider": "cursor:composer-generate-image",
+    "seed": "n/a",
+    "steps": "n/a"
+  },
+  "generation_notes": "Agent2 multi-product batch; GenerateImage; retries on timeout with shorter prompts where needed.",
+  "prompt_source": "Blogs/DBR77/Pages/01_ai_native_operating_system_for_industry/image-prompts.md",
+  "prompt_text": "Five offset trays materials linked by cord eyelets—layer stack without software labels.",
+  "negative_prompt": "readable text, logos, legible UI, sci-fi HUD, stock governance theatre, infographic labels",
+  "seed": "n/a",
+  "run_id": "DBR77-agent2-batch-32",
+  "created_at": "2026-03-31T12:00:00+00:00",
+  "alt_text_en": "Five offset trays materials linked by cord eyelets—layer stack without software labels.",
+  "caption_en": "Five offset trays materials linked by cord eyelets—layer stack without software labels.",
+  "crop_safe_notes": "Native 1376×768 after normalize.",
+  "output_path": "Blogs/DBR77/Pages/01_ai_native_operating_system_for_industry/assets/images/analytical_16x9_v1.png"
+}

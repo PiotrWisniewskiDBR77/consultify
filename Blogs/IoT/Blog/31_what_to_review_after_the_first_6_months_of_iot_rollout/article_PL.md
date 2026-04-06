@@ -1,69 +1,52 @@
-# Co przegladac po pierwszych 6 miesiacach rolloutu IoT
+# Co przeglądać po pierwszych 6 miesiącach rolloutu IoT
 
 Docelowa persona: Plant director / Finance partner / Program sponsor  
 Etap lejka: Decision / Adoption  
+Główny problem: mija sześć miesięcy aktywności bez ustrukturyzowanego przeglądu, więc decyzje budżetowe i o zaufaniu opierają się na anegdotach  
+Główna obietnica: agenda przeglądu po sześciu miesiącach z kategoriami dowodów, by kierownictwo mogło odnowić, dostosować lub wstrzymać z jasnością
 
-Glowny problem: mija szesc miesiecy aktywnosci bez zorganizowanego przegladu, wiec budzet i decyzje o zaufaniu opieraja sie na anegdotach Glowna obietnica: agenda przegladu po szesciu miesiacach z kategoriami dowodow, by leadership moglo odnowic, dostosowac albo zapauzowac z jasnoscia Szesc miesiecy to wystarczajaco, by IoT pokazalo prawdziwe nawyki.
+Sześć miesięcy to wystarczająco dużo czasu, by IoT stało się nawykiem. To też wystarczająco dużo, by problemy zniknęły w adaptacji — ludzie obchodzą szum, progi się rozjeżdżają, integracje nigdy do końca nie wylądowały. Ustrukturyzowany przegląd zapobiega ślepemu optymizmowi i ślepemu anulowaniu.
 
-To tez wystarczajaco, by problemy staly sie niewidzialne, bo ludzie je obeszli.
+Po sześciu miesiącach anegdoty twardnieją w folklor. „Świetnie działa” i „nigdy nie działało” mogą być w połowie prawdziwe. Przegląd powinien zmusić zakład do pokazania dowodu we wspólnych kubełkach, by kierownictwo mogło odnowić, dostosować lub wstrzymać bez polegania na tym, kto opowiada najbardziej przekonującą historię w pokoju.
 
-Zorganizowany przeglad chroni przed slepym optymizmem i slepym anulowaniem.
+## Przeglądaj dowód w pięciu kubełkach
 
-## Przeglad na jednej stronie: piec wiader dowodow
+Integralność sygnału: zegary, tożsamość, brakujące dane, stabilność progów. Zachowanie operacyjne: czasy potwierdzenia, wzorce ignorowania, wariancja między zmianami, ukończenie szkolenia. Wpływ na utrzymanie: zlecenia powiązane z sygnałami, powtarzające się awarie, korelacje części zamiennych tam, gdzie ma to sens. Jakość i przepustowość: złom, przerób, krótkie postoje, efekty przezbrojeń, których pilot dotykał. Koszt i wysiłek: godziny wewnętrzne, opłaty dostawcy, rotacja sprzętu, wydatki na integrację.
 
-1. **Integralnosc sygnalu** zegar, tozsamosc, brakujace dane, stabilnosc progow
+Dla każdego kubełka uchwyć, co się poprawiło, co się pogorszyło i co pozostaje nieznane. Uczucia mają znaczenie; decydują fakty.
 
-2. **Zachowanie operacyjne** czasy potwierdzen, wzorce ignorowania, wariancja zmian, ukonczenie szkolen
+## Użyj prostego scorecard dla siły dowodu
 
-3. **Wplyw na maintenance** zlecenia powiazane z sygnalami, powtarzajace sie awarie, korelacja z czesciami
+Oceń obszary takie jak powiązanie z KPI pilota, użyteczność alarmów, zaufanie operatorów, governancja danych, bezpieczeństwo i patchowanie oraz gotowość do replikacji według siły dowodu, nie entuzjazmu. Średnie ukrywają słabość; każdy niski wynik bez planu naprawy powinien dominować w pokoju.
 
-4. **Jakosc i throughput** odpad, przerobki, krotkie postoje, efekty przezbrojen tam gdzie ma sens
+## Wybierz spokojny fork po przeglądzie
 
-5. **Koszt i wysilek** godziny wewnetrzne, oplaty vendora, rotacja sprzetu, koszt integracji
+Odnów i rozszerzaj, gdy wyniki są w większości solidne, istnieje opakowanie replikacji i ścieżka budżetu jest jasna. Dostosuj i utrzymaj zakres, gdy dominują kwestie sygnału lub zaufania — napraw zanim nowe linie. Wstrzymaj i refaktoryzuj, gdy dług własności lub plątanina integracji blokuje bezpieczną ekspansję. Pauza to decyzja kierownicza poparta dowodem, nie wyrok moralny.
 
-Kazde wiadro dostaje trzy punkty: co sie poprawilo, co sie pogorszylo, co nadal nieznane.
+Połącz przegląd wstecz z nawykami miesiąca pierwszego w [jak powinny wyglądać pierwsze 30 dni IIoT w brownfieldzie](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_PL.md), miarami kwartału w [co mierzyć w pierwszych 90 dniach rolloutu IIoT](../16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_PL.md) oraz punktem kontrolnym po pilocie w [jak przeglądać wartość IIoT po pierwszym pilocie](../20_how_to_review_iiot_value_after_the_first_pilot/article_PL.md).
 
-## Scorecard po szesciu miesiacach (prosty)
+**Wejścia do przeglądu po 6 miesiącach:** reprezentowane operacje, utrzymanie, IT/OT, jakość, finanse; wyeksportowana historia incydentów i strojenia; wywiady z operatorami między zmianami; logi zmian dostawcy dla firmware, bram i chmury; porównanie z pierwotnymi założeniami biznes case.
 
-Ocen kazdy obszar 1-5: sila dowodu, nie uczucia.
+## DBR77 IoT w audycie
 
-| Obszar | 1 slaby dowod | 3 mieszany | 5 silny dowod |
-|---|---|---|---|
-| Powiazanie z KPI pilota | | | |
-| Uzytecznosc alarmow | | | |
-| Zaufanie operatorow | | | |
-| Governance danych | | | |
-| Security i patchowanie | | | |
-| Gotowosc do replikacji | | | |
+DBR77 IoT wspiera przeglądy po sześciu miesiącach, gdy dowód odzwierciedla to, co system naprawdę prowadził: integralność, zachowanie, powiązanie z utrzymaniem, efekty przepustowości i koszt utrzymania — wyniki do przeglądu, nie abstrakcyjne pozycjonowanie.
 
-Srednia ma mniejsze znaczenie niz jakiekolwiek jedynki bez planu naprawczego.
+Po sześciu miesiącach przeglądaj IoT ze strukturalnym dowodem, uczciwym scorecard i widłami odnowienia-dostosowania-pauzy. Dowód zamienia dramat wdrożenia w decyzję zarządczą.
 
-## Rozwidlenie decyzji po przegladzie
+## Niech obietnica artykułu zostanie praktyczna
 
-Uzyj spokojnego widelca:
+Przełóż powyższe idee w jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo drill, który faktycznie realizują. Duże programy zacinają się, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
 
-- **Odnow i rozszerz** scorecard glownie 3+ z jasnym pakietem replikacji i sciezka budzetu
+## Punkt kontrolny kierownictwa na następny przegląd operacji
 
-- **Dostosuj i trzymaj zakres** dominuja problemy sygnalu albo zaufania; napraw przed nowymi liniami
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
 
-- **Zapauzuj i przebuduj** dlug ownershipu albo dlug integracyjny blokuje bezpieczna ekspansje
+## Domknięcie na hali
 
-Pauza to decyzja leadership, nie etykieta porazki, gdy ma oparcie w dowodach.
+Żadna z tych rad nie ma znaczenia, jeśli zostaje w slajdach sterujących. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia bardziej przypomina zsynchronizowany zespół niż salę sądu — wciąż głośno i intensywnie, ale wokół tych samych faktów.
 
-## Checklista: uczestnicy i wejscia
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie językowe to objaw, że pętla jest wciąż zbyt cienka.
 
-- [ ] reprezentacja operations, maintenance, IT/OT, quality, finance
-- [ ] log incydentow i historia strojen wyeksportowana za okres
-- [ ] probka wywiadow operatorow przez zmiany, nie tylko dzienne management
-- [ ] log zmian vendora: firmware, gateway, cloud
-- [ ] porownanie do zalozen pierwotnego business case
+---
 
-## Co to znaczy dla DBR77 IoT
-
-DBR77 IoT wspiera: szybkie piloty, ktore powinny szybko nakarmic uczciwe dowody po szesciu miesiacach; widocznosc w czasie rzeczywistym, ktora pokazuje zachowanie operacyjne w danych; wzorce edge-first widoczne w przegladzie security i uptime.
-
-Traktuj znacznik szesciu miesiecy jak review produktu dla wewnetrznego systemu, nie retrospective marketingowe.
-
-## Bottom line
-
-Po szesciu miesiacach przegladaj IoT w pieciu wiadrach dowodow, prostym scorecard i jasnym widelcu odnow-dostosuj-pauza. Dowody zamieniaja dramat rolloutu w decyzje zarzadzania.
+*DBR77 IoT pomaga kierownictwu przeglądać wdrożenie IoT z operacyjnym dowodem: integralność sygnału, zachowanie na hali, powiązanie z utrzymaniem i całkowity koszt utrzymania. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

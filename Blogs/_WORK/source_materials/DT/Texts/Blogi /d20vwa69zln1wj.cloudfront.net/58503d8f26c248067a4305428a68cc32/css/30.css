@@ -1,0 +1,28 @@
+/* HIDE THUMBNAILS */
+#addsearch-results .addsearch-result-item-container, 
+#addsearch-results .addsearch-result-item-sub-active, 
+#addsearch-results .addsearch-result-item-sub { 
+  background-size: 0 0 !important; 
+} 
+#addsearch-results .addsearch-result-item-sub-active div, 
+#addsearch-results .addsearch-result-item-sub div { 
+ padding-left: 30px !important; 
+}
+#addsearch-results {
+  font-family: 'Open Sans' , sans-serif;
+  font-size: 16px; 
+  line-height: 20px;
+  color: #1E223E;
+}
+#addsearch-results .addsearch-result-item-sub h1 a, 
+#addsearch-results .addsearch-result-item-sub h2 a {
+  font-size: 24px; 
+  font-weight:300;
+  line-height: 34px;
+  color:#5580c0;
+}
+#addsearch-results .addsearch-result-item-sub-active {
+  background-color: rgba(203, 228, 247, 0.08);
+}
+#addsearch-logo { display: none !important; }
+}

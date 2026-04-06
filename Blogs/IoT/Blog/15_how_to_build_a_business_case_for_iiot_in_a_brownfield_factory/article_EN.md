@@ -5,81 +5,55 @@ Funnel stage: Decision
 Core problem: many manufacturers know IIoT could improve visibility and response, but struggle to build a credible business case in brownfield conditions where systems, machines, and losses are uneven  
 Main promise: a stronger IIoT business case starts with one real operating problem, one measurable loss pattern, and one proof path the plant can validate before scale
 
-In many factories, the IIoT business case does not fail because the idea is weak. It fails because the logic is too abstract.
+Brownfield IIoT proposals often die from abstraction. The story promises digital transformation, future analytics, and enterprise visibility while leaving finance staring at soft payback and operations wondering what, exactly, changes next Tuesday on line three.
 
-The proposal talks about: digitalization; visibility; smarter operations; future scale. But it does not show clearly enough: where the current loss lives; how the first phase will reduce it; what proof will make the next step credible. That is why many brownfield business cases stall.
+A defensible case sounds less like a platform pitch and more like a disciplined bet: here is a loss we can see, here is why today’s loop is too slow, here is what we will test in a bounded pilot, and here is what evidence we need before the next tranche of spend.
 
-## Why brownfield makes the business case harder
+Finance does not dislike digital investment; it dislikes ambiguous payback told in buzzwords. Operations does not dislike discipline; it dislikes being asked to prove transformation when it still needs to ship today’s orders. A strong case bridges those worlds with observable mechanics.
 
-Brownfield factories rarely operate in neat conditions.
+## Why brownfield complicates the narrative
 
-They usually combine: older machines; mixed connectivity; partial automation; manual workarounds; uneven process discipline.
+Older assets, mixed connectivity, manual workarounds, and uneven discipline make generic ROI templates feel hollow. That is not an argument against IIoT; it is an argument for honesty. The case should reflect the plant as it runs, not a greenfield fantasy.
 
-That makes the opportunity real, but it also makes the value case harder to frame with generic assumptions.
+## Lead with loss, not with price tags
 
-The business case has to reflect the actual plant, not an ideal future-state diagram.
+Cost lines matter, but they should not open the conversation. Open with the operating pain: recurring downtime patterns, slow response, unknown reasons, weak escalation, pace visibility gaps. Finance engages more cleanly when operations translates pain into observable mechanics, not slogans.
 
-## The first mistake: starting from technology cost instead of operational loss
+## Anchor on one measurable problem
 
-Many companies begin the business case with: hardware cost; platform cost; integration cost; license cost. Those costs matter. But they should not be the first page of the logic.
+Unknown downtime, delayed maintenance response, thin shift handovers, or repeated short stops are examples of problems you can baseline without mythology. A narrow anchor makes the pilot scope legible and keeps the debate grounded.
 
-The first page should explain: which loss pattern matters most now; how often it happens; what reaction gap exists today; why the plant cannot solve it with its current loop. Without that, the discussion becomes price-first too early.
+## Stage proof before you stage ambition
 
-## A stronger business case starts with one measurable operating problem
+Strong cases separate what must be true after a pilot from what might be true after years. Early proof is about signal trust, faster response, clearer ownership, and review discipline—not a claim to solve every future problem at once.
 
-In many factories, the best first case is not broad transformation.
+## Align operations and finance on one logic thread
 
-It is one concrete pattern such as: unknown downtime; delayed response to recurring stops; unclear reason capture; weak pace-to-target visibility; poor line-side escalation.
+Operations sees friction on the floor. Finance sees risk in payback and rollout. Bridge the views with a shared story: this loss pattern creates recurring cost and instability; this pilot tests whether a tighter loop reduces it; the next decision depends on evidence, not hope.
 
-That is useful because the plant can observe the current state, test the change, and review whether the loop improves.
+## Avoid the “prove everything” pilot
 
-## What proof should exist before the ROI story expands
+Asking the first phase to validate technical fit, full-site scale, strategic transformation, and long-term analytics at once produces a case that sounds impressive and approves poorly. Narrow proof earns the next decision.
 
-The business case becomes stronger when it can point to: baseline loss visibility; response time before change; repeated issue frequency; time lost to reconstruction; quality of ownership and escalation.
+**Decision-ready pilot outline:** the current loss pattern; today’s response gap; pilot scope and boundaries; signals you will trust; review cadence; criteria for expand, tighten, or stop.
 
-This matters because brownfield decisions are easier to defend when the business case is built from operating proof rather than from software enthusiasm.
+## Structure leadership can recognize
 
-## Why CFO and operations need the same logic
+Current pattern, response gap, pilot design, expected proof signals, and explicit criteria for wider rollout. That structure signals maturity: you are buying learning with limits, not buying a dream without guardrails.
 
-IIoT projects often slow down when finance and operations evaluate them through different lenses.
+## DBR77 IoT on CFO-friendly sequencing
 
-Operations sees: late signals; weak response; line friction; hidden downtime.
+DBR77 IoT supports brownfield cases when spend stays tied to staged evidence: one line, honest baselines, and a rule that additional investment follows repeated loop improvement rather than narrative momentum.
 
-Finance sees: unclear payback; soft assumptions; uncertain rollout scale; uncontrolled implementation cost. A stronger business case connects these two views.
+The strongest IIoT business case is narrow, observable, and staged. It earns scale with proof, not with vocabulary.
 
-It shows how one operating problem creates measurable loss, and how a narrow first phase can validate whether that loss is reducible.
 
-## Reality check: a business case is weaker when the first phase tries to prove everything
+## Bringing it home on the floor
 
-One common mistake is to ask the first phase to prove:
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-- technical fit
-- full-site rollout
-- strategic transformation
-- future analytics value
-- long-term platform logic
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
-all at once.
+---
 
-That usually creates a case that feels impressive but is hard to approve. A stronger first case is much narrower. It proves:
-
-- one problem matters
-- one loop improves
-- one pilot model is credible
-- one next decision becomes easier
-
-That is how the business case gains momentum.
-
-## What the structure of a usable IIoT business case should include
-
-A practical brownfield business case usually needs: the current loss pattern; the current response gap; the first pilot scope; the expected proof signals; the criteria for wider rollout. This keeps the logic disciplined.
-
-It also helps leadership see that the plant is not buying a vague technology story. It is validating a measurable operating improvement.
-
-## What this means for DBR77 IoT
-
-DBR77 IoT supports brownfield business cases when the CFO-facing thread stays tied to narrow, observable loss and staged capital: one pilot line, honest baselines, and a rule that the next tranche of spend follows evidence the loop repeats. That matches how strong cases avoid transformation theater while still leaving room for a second wave if the first proof holds.
-
-## Bottom line
-
-The strongest IIoT business case in a brownfield factory starts with one real operating problem, one measurable loss pattern, and one pilot path that can prove whether the loop improves. That is what makes the decision more defensible. Not broader language. Better proof.
+*DBR77 IoT helps brownfield plants build staged IIoT business cases with pilot-first proof, same-shift visibility, and a credible path from one line to broader rollout. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

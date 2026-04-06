@@ -1,78 +1,40 @@
-# Co powinna obejmowac granica wdrozenia AI w produkcji
+# Co powinna obejmować granica wdrożenia AI w produkcji
 
-Target persona: CTO / architekt enterprise  
-Funnel stage: Consideration  
-Core problem: zespoly mowia o "prywatnym AI" bez wspolnej definicji tego, co granica wdrozenia faktycznie chroni, co rodzi falszywa pewnosc w pilotach  
-Main promise: producenci moga zdefiniowac granice wdrozenia jako konkretny zestaw kontroli obejmujacy lokalizacje runtime, sciezki danych, dostep, egress, retencje i reguly integracji
+Docelowa persona: CTO / architekt enterprise  
+Etap lejka: Rozważanie  
+Główny problem: zespoły mówią o „prywatnym AI” bez wspólnej definicji tego, co granica wdrożenia faktycznie chroni, co rodzi fałszywą pewność podczas pilotów  
+Główna obietnica: producenci mogą zdefiniować granicę wdrożenia jako konkretny zestaw kontroli obejmujących lokalizację runtime, ścieżki danych, dostęp, egress, retencję i reguły integracji
 
-"Prywatne" to nie nastroj. To granica, ktora mozesz wytlumaczyc security, operacjom i zarzadowi.
+„Prywatne” to nie nastrój. To granica, którą potraficie wyjaśnić bezpieczeństwu, operacjom i zarządowi, gdy ktoś pyta, co jest na żywo, dokąd poszły dane i kto mógł ich dotknąć. Granica wdrożenia AI w produkcji powinna obejmować: gdzie działa model, jakie sieci może osiągać, jak dane wchodzą i wychodzą, kto ma dostęp, co jest logowane, jak długo dane przetrwają, jakie pętle treningu lub ulepszania są dozwolone oraz jak zakres integracji z fabryką jest określony i monitorowany. Jeśli któryś z tych elementów jest niezdefiniowany, granica jest niekompletna — a niekompletne granice nie wytrzymują stresu.
 
-## Bezposrednia odpowiedz
+## Dlaczego granice biją roszczenia marki
 
-Granica wdrozenia AI w produkcji powinna obejmowac: gdzie dziala model, jakie sieci moze osiagac, jak dane wchodza i wychodza, kto ma dostep, co jest logowane, jak dlugo dane sa przechowywane, jakie petle treningu lub ulepszania sa dozwolone oraz jak zakresia sie i monitoruje integracje fabryczne.
+Nabywcy słyszą nakładające się słowa: prywatna chmura, VPC, dedykowana instancja, poziom enterprise. Te etykiety automatycznie nie znaczą tej samej postawy kontroli. Definicja granicy wymusza precyzję. Zapobiega też „rozwiązywaniu” ryzyka przez słownictwo zamówień.
 
-Jesli ktorys z tych elementow jest nieokreslony, granica jest niepelna.
+## Stos granic
 
-## Dlaczego granice wygrywaja z marka
+Lokalizacja runtime powinna być jawna: on-prem, środowisko prywatne kontrolowane przez klienta, tenant zarządzany przez dostawcę z umowną izolacją lub inny podany wzorzec. Zasięg sieci powinien definiować dozwolone i zabronione połączenia, włącznie ze ścieżkami egress oraz oczekiwaniami separacji OT/IT. Ścieżki danych ingress i egress powinny dokumentować, co użytkownicy i systemy mogą wysłać, czy załączniki lub webhooki opuszczają granicę oraz jak obsługiwane są sekrety — egress to miejsce, gdzie wiele historii „prywatnych” po cichu słabnie.
 
-Kupujacy slysza nakladajace sie slowa: private cloud, VPC, dedykowana instancja, enterprise tier. Te etykiety nie oznaczaja automatycznie tej samej postawy kontroli. Definicja granicy wymusza precyzje.
+Tożsamość i kontrola dostępu powinny obejmować oczekiwania SSO i MFA, separację ról między adminami a operatorami oraz procedury break-glass. Logowanie, monitoring i retencja powinny określać, jakie zdarzenia są logowane, kto może czytać logi, okna retencji oraz eksport do SIEM. Polityka treningu i ulepszania modelu powinna stwierdzać, czy prompty lub dokumenty klienta mogą służyć do ulepszania modelu dostawcy, czy dostrajanie odbywa się wyłącznie w środowisku klienta oraz jak dane ewaluacyjne są oddzielane od produkcji.
 
-## Stos graniczny: siedem komponentow
+Zakresy integracji fabrycznej powinny być jawne dla API łączących się z MES, ERP, QMS lub ticketami: zakresy least privilege, kontrola zmian oraz separacja test versus produkcja.
 
-### 1. Lokalizacja runtime
+## Słaby język kontra silny język
 
-Jasno okresl, czy przetwarzanie odbywa sie: on-premise; w prywatnym srodowisku kontrolowanym przez klienta; w tenantcie zarzadzanym przez dostawce z umowna izolacja. Lokalizacja warunkuje fizyczna i prawna rzeczywistosc.
+Słaby język brzmi jak „poważnie traktujemy bezpieczeństwo”, „gotowi na enterprise” i „wasze dane są chronione”. Silny język brzmi jak „dane klienta nie trenują modelu, egzekwowane przez wymienione kontrole”, „brak ścieżki egress poza nazwane wyjątki” oraz „logi przechowywane przez zdefiniowany okres, eksportowalne w zdefiniowanym formacie”. Nabywcy powinni preferować drugą klasę — bo da się ją testować.
 
-### 2. Zasieg sieci
+W zamówieniach zamieńcie stos granic w tabelę wymagań. Oceniajcie dostawców jako: wspierane, wspierane z warunkami, niewspierane lub tylko roadmapa. Pozycje tylko-roadmapa należą do rejestrów ryzyka, nie do cichych założeń.
 
-Zdefiniuj dozwolone i zabronione polaczenia: outbound do publicznego internetu; ruch poziomy w sieci zakladu; wymagania VPN dla administratorow. Separacja OT/IT w produkcji powinna byc jawnie respektowana.
+Stos granic, który definiujecie, to sposób oddzielenia prawdziwej architektury od slajdów, zanim płyną pieniądze i payloady. Vector jest w ekosystemie DBR77 opisany w tych kategoriach: autorskie AI przemysłowe trenowane na wiedzy o transformacji fabryk, z wyborami on-prem, prywatnego API lub izolowanego wdrożenia oraz jawną postawą, że dane klienta nie trenują modelu.
 
-### 3. Sciezki danych ingress i egress
+Granica wdrożenia to kontrakt między waszym modelem ryzyka a architekturą AI. Jeśli nie potraficie jej wypowiedzieć językiem operacyjnym, nie jesteście gotowi skalować użycia poza eksperymenty.
 
-Udokumentuj: co uzytkownicy i systemy moga wysylac; czy zalaczniki, eksporty lub webhooki opuszczaja granice; jak obslugiwane sa sekrety i poswiadczenia. Egress to miejsce, gdzie wiele historii "prywatnych" cichutko slabnie.
+## Punkt kontrolny zakładu
 
-### 4. Tozsamosc i kontrola dostepu
+Traktujcie „Co powinna obejmować granica wdrożenia AI w produkcji” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną.
 
-Uwzglednij: SSO i oczekiwania MFA; podzial rol miedzy adminem a operatorem; procedury break-glass.
-
-### 5. Logowanie, monitoring i retencja
-
-Okresl: jakie zdarzenia sa logowane; kto moze czytac logi; okna retencji; eksport do SIEM. Audytowalnosc jest czescia granicy, nie dodatkiem.
-
-### 6. Polityka treningu i ulepszania modelu
-
-Granica powinna stwierdzac, czy: prompty lub dokumenty klienta moga sluzyc do ulepszania modelu dostawcy; fine-tuning odbywa sie tylko w srodowisku klienta; dane ewaluacyjne sa odseparowane od produkcji.
-
-### 7. Zakresy integracji z systemami fabrycznymi
-
-Jesli API laczy sie z MES, ERP, QMS lub ticketingiem: least-privilege; change control; separacja test versus produkcja.
-
-## Porownanie: slabe versus mocne jezyk granicy
-
-Slabe brzmi jak: "powaznie traktujemy bezpieczenstwo"; "gotowosc enterprise"; "twoje dane sa chronione".
-
-Mocne brzmi jak: "dane klienta nie trenuja modelu, egzekwowane przez X"; "brak outboundowej sciezki danych poza Y"; "logi przez Z dni, eksportowalne przez W". Kupujacy powinni preferowac druga klase.
-
-## Jak uzyc tego w zakupach
-
-Zamien siedem komponentow na tabele wymagan.
-
-Oceniaj dostawcow: wspierane; wspierane z warunkami; niewspierane; tylko roadmapa.
-
-Pozycje tylko-roadmapa trafiaja do rejestru ryzyka, nie do cichych zalozen.
-
-## Most produktowy
-
-DBR77 Vector jest pozycjonowany wokol mocniejszych granic wdrozenia dla AI przemyslowego: wlasnosciowy model trenowany na wiedzy transformacji fabrycznej, z opcjami on-premise, prywatnego API lub izolowanego wdrozenia oraz jasna postawa, ze dane klienta nie trenuja modelu.
-
-To jest klasa jezyka granicznego, jakiej producenci powinni oczekiwac na etapie ewaluacji.
-
-## Podsumowanie
-
-Granica wdrozenia to kontrakt miedzy twoim modelem ryzyka a architektura AI.
-
-Jesli nie potrafisz jej opisac w kategoriach operacyjnych, nie jestes gotowy do skalowania uzycia poza eksperymentami.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Sprawdź bezpieczeństwo](https://dbr77.com/demo).*
+*DBR77 Vector jest zaprojektowany wokół jawnych granic wdrożenia przemysłowego, w tym prywatnych i on-prem opcji oraz postawy bez treningu na danych klienta. [Poznaj produkty z Vector](https://dbr77.com/vector) lub [Przegląd bezpieczeństwa](https://dbr77.com/demo).*

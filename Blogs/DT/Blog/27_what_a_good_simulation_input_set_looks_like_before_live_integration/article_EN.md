@@ -5,73 +5,38 @@ Funnel stage: Evaluation
 Core problem: teams delay simulation because they believe live data integration is mandatory, while the bigger failure mode is vague inputs that cannot support a real decision comparison  
 Main promise: a concrete input-set standard that is good enough to test scenarios, trace assumptions, and justify the next integration step without pretending the plant is fully instrumented
 
-a good pre-integration input set includes a bounded system map, time-based process logic, calibrated throughput and variability at constraints, realistic changeover and reliability behavior, material and staffing rules that match how work actually releases, and a short list of key assumptions explicitly owned. If those exist, you can run meaningful scenario tests. Live feeds then improve fidelity and refresh cadence, but they do not replace decision discipline. Live integration is a maturity path. It is not a moral prerequisite to start.
+A good pre-integration input set includes a bounded system map, time-based process logic, calibrated throughput and variability at constraints, realistic changeover and reliability behavior, material and staffing rules that match how work actually releases, and a short list of key assumptions explicitly owned. If those exist, you can run meaningful scenario tests. Live feeds improve fidelity and refresh cadence; they do not replace decision discipline. Live integration is a maturity path, not a moral prerequisite to start.
 
-## The minimum decision-grade input stack
+The failure mode that kills early twins is not “manual.” It is vague: scope creep without boundaries, averages without ranges, rules that describe the ideal week instead of the real one. Fix that, and the first comparisons become defensible. Wire sensors later where they change what gets decided.
 
-### 1) Bounded system map
+## The minimum decision-grade stack
 
-Define what is in the model and what is intentionally out. Out-of-scope clarity prevents silent omissions that break trust later.
+Define a bounded system map—what is in, what is intentionally out—so silent omissions cannot hide. Encode time-based process logic: sequences, routings, join points, rework paths when they matter to the decision. At key constraints, capture median processing time and spread justified by data or controlled assumption; include micro-stops when they change effective capacity. Average-only inputs are a common source of false confidence.
 
-### 2) Time-based process logic
-
-Sequences, routings, and join points should reflect how orders actually flow, including rework paths if they matter to the decision.
-
-### 3) Constraint timing with variability
-
-At key constraints, capture: median cycle time or processing time; spread or distribution choice justified by data or controlled assumption; micro-stop behavior if it changes effective capacity. Average-only inputs are a common source of false confidence.
-
-### 4) Changeover and family logic
-
-If mix matters to the decision, the input set must encode: family definitions that operators recognize; changeover times or rules tied to realistic sequences; scheduling policies that reflect how planners actually prioritize.
-
-### 5) Material release and logistics rules
-
-Include staging, transport loops, and release policies that create waiting even when stations look available.
-
-### 6) Staffing and shift mechanics
-
-Shifts, breaks, skills, and coverage rules should match what is enforceable, not what is theoretically possible.
-
-### 7) Scenario parameters as a controlled layer
-
-Demand shapes, supply delay patterns, and shock events should be editable without rebuilding the whole model.
+If mix matters, include family definitions operators recognize, changeover rules tied to realistic sequences, and scheduling policies planners actually run. Add material release and logistics rules that create waiting even when stations look available. Reflect staffing and shift mechanics as enforceable coverage, not theoretical capacity. Keep demand shapes, supply delay patterns, and shock events in a controlled layer you can edit without rebuilding the whole model.
 
 ## Quality checks before you trust outputs
 
-Use this checklist:
+The as-is model should reproduce a known bad week qualitatively. Bottleneck ranking in baseline should match shop-floor intuition. Changing one key assumption should move results in a direction the team can explain. Two independent reviewers should trace inputs to sources or assumptions. The decision sentence should survive the first modeling sprint without morphing. If the model cannot pass the bad-week test, fix inputs before debating scenarios.
 
-- [ ] the as-is model reproduces a known bad week qualitatively  
-- [ ] bottleneck ranking matches shop floor intuition in baseline  
-- [ ] changing one key assumption moves results in a direction the team can explain  
-- [ ] two independent reviewers can trace inputs to sources or assumptions  
-- [ ] the decision sentence is unchanged after the first modeling sprint
+## What live integration adds—and does not
 
-If the model cannot pass the bad-week test, fix inputs before debating scenarios.
+Live integration adds faster refresh, less manual transcription, and tighter alignment to short-horizon operations. It does not automatically clarify which decision is being tested, protect against wrong scope, or create executive alignment without explicit assumptions.
 
-## What live integration adds (and what it does not)
 
-Live integration adds: faster refresh; less manual transcription; tighter alignment to short-horizon operations.
+## What should feel different on Monday
 
-It does not add: automatic clarity about what decision is being tested; protection against modeling the wrong scope; executive alignment without explicit assumptions.
+Teams rarely fail because they lack intelligence; they fail because the next meeting repeats the same questions with fresher anxiety. When simulation work is wired into how you decide, Monday shows up with fewer circular arguments about whether a layout "ought to work." Instead, you carry a short list: which option survived the same stress vocabulary, which assumptions still carry hypothesis labels, and what would force you to rerun the pack before the next tranche. That is the practical face of governance—not a heavier process, but a clearer receipt for why the floor should trust the plan.
 
-## What Digital Twin is in this context
-
-Digital Twin is a decision system and scenario-testing environment. High-fidelity graphics do not prove inputs are decision-grade.
-
-Good inputs make it a reliable comparison engine even before streams are connected.
+For capital and footprint choices, the receipt matters as much as the ranking. Approvals should be able to point to scenario identity and ranges without opening a model. If executives cannot explain the downside story in plain language, the organization is still buying animation. If operations cannot recognize the staffing and flow assumptions embedded in the memo, the twin is still a slide, not a decision system. Use the next leadership block to test whether the narrative is portable: could someone not in the room defend the choice from the packet alone? If not, tighten the assumption ledger and the executive summary before you ask for more money or more floor space.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin keeps early models honest: the manual-to-integration path stays disciplined so pre-feed comparisons remain defensible.
-
-That path is designed so teams can prove value before committing to full live complexity.
+DBR77 Digital Twin keeps early models honest: the manual-to-integration path stays disciplined so pre-feed comparisons remain defensible and teams can prove value before committing to full live complexity.
 
 ## Bottom line
 
-A good simulation input set before live integration is bounded, time-accurate, variability-aware, and assumption-traceable.
-
-If you cannot name your key assumptions, you do not have a model problem. You have a governance problem wearing a technical mask.
+A good simulation input set before live integration is bounded, time-accurate, variability-aware, and assumption-traceable. If you cannot name your key assumptions, you do not have a model problem—you have a governance problem wearing a technical mask.
 
 ---
 

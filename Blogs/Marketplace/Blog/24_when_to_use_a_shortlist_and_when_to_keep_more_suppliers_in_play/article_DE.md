@@ -1,73 +1,52 @@
-# Wann eine Shortlist sinnvoll ist und wann mehr Lieferanten im Spiel bleiben sollten
+# Wann man eine Shortlist nutzt und wann man mehr Lieferanten im Spiel hält
 
-Target persona: Einkaufslead / Einkaufsowner  
-Funnel stage: Consideration (Prozessdesign fuer Vergleichbarkeit)  
-Core problem: Teams laden entweder zu viele Lieferanten ein und ertrinken im Rauschen, oder sie shortlisten zu frueh und verlieren Verhandlungsspannung und Realitaet  
-Main promise: ein einfaches Decision Gate, das Lieferantenzahl an Unsicherheit, Vergleichsbedarf und interne Ausrichtung koppelt
+Zielpersona: Beschaffungsleitung / Einkaufsverantwortlicher  
+Funnel-Stufe: Überlegungsphase (Prozessdesign für Vergleichbarkeit)  
+Kernproblem: Teams laden entweder zu viele Lieferanten ein und ertrinken im Rauschen, oder sie shortlisten zu früh und verlieren Verhandlungsrealität  
+Hauptversprechen: Ein einfaches Entscheidungstor, das Lieferantenzahl an Unsicherheit, Vergleichbarkeitsbedarf und internes Alignment koppelt
 
-Lieferantenzahl ist keine Tugend. Sie ist eine Steuerungsvariable.
+Lieferantenzahl ist eine Steuergröße, keine Tugend. Zu viele Bieter verwässern Aufmerksamkeit, ermutigen dünne Vorschläge und signalisieren geringe Chancen – Integratoren investieren weniger. Zu enges Feld zu früh sperrt Sie in eine Story, bevor Sie wissen, was Sie kaufen. Die richtige Zahl folgt der Unsicherheit: breiter bleiben, solange Challenge und Vergleichsrahmen noch Form annehmen; engen, wenn Sie fair vergleichen können und Tiefe statt Breite brauchen.
 
-Zu viele Lieferanten erzeugt: inkompatible Vorschlaege; zerstreute Aufmerksamkeit im eigenen Team; weniger Invest der Integratoren, weil die Chancen niedrig wirken.
+## Feld erweitern, wenn Discovery real ist
 
-Zu wenige Lieferanten zu frueh erzeugt: schwache Preis- und Scope-Spannung; internen Verdacht, dass die Loesung gewaehlt wurde, bevor das Problem verstanden war. Hersteller liefern besser, wenn sie Lieferantenzahl bewusst waehlen.
+Halten Sie mehr Lieferanten im Spiel, wenn die Lösungsklasse nicht feststeht, internes Alignment noch wackelig ist oder Site-Randbedingungen noch nicht lesbar sind. Unter diesen Bedingungen sind Gespräche Lernwerkzeuge. Vorzeitige Shortlist erzeugt selbstbewusstes Raten am falschen Problem.
 
-Nutzen Sie eine Shortlist, wenn das Problem definiert genug ist, um fair zu vergleichen und Ihr Team eine disziplinierte Matrix fahren kann.
+## Shortlisten, wenn Vergleichbarkeit möglich ist
 
-Halten Sie mehr Lieferanten im Spiel, wenn Unsicherheit noch strukturell ist: unklarer Scope, unklare Constraints, ungeloste interne Owner.
+Gehen Sie zur Shortlist, wenn Sie Bewertungsfelder einfrieren, dieselben Klärungen an ernsthafte Bieter publizieren und Antworten nach Substanz statt Format bewerten können. Shortlisten ist ein Versprechen an Lieferanten, dass ihr Aufwand auf fair vergleichbare, begrenzte Bewertung trifft – nicht auf ein endloses Turnier.
 
-Die Praxisregel: hohe Problemunsicherheit: erweitern, bis der Brief stabil ist; hohes Entscheidungsrisiko: mindestens zwei glaubwuerdige Pfade, bis kommerzielle Bedingungen vergleichbar sind; hoher Zeitdruck bei eingefrorenem Scope: schnell shortlisten, aber zuerst Vergleichsfelder einfrieren.
+## Spalten nicht verschieben, nachdem Sie shortlisten
 
-Wenn Sie Lieferantenzahl aendern ohne den Brief zu aendern, sortieren Sie meist nur Chaos.
+Wenn Bewertungskriterien weiter wandern, sobald die Liste klein ist, zwingen Sie Integratoren, ein bewegliches Ziel zu jagen, und zerstören Vertrauen. Friern Sie die Säule ein; ändern Sie sie nur mit Versionsdisziplin und explizitem Reset.
 
-## Shortlist-Signale (wann Engfuehrung rational ist)
+## Verhandlungsrealität ohne Chaos
 
-Shortlisten ist sinnvoll, wenn: Scope-Grenzen geschrieben und versioniert sind; Erfolgskriterien testbar sind, nicht aisthetisch; Integrationsowner auf Ihrer Seite benannt sind; Vergleichsspalten fuer einen Evaluationszyklus eingefroren sind; Sie erklaeren koennen, warum ausgeschlossene Lieferanten ausgeschlossen sind, ohne Peinlichkeit. Das ist nicht "diese drei moegen wir." Das ist "wir koennen bei dreien fair bewerten."
+Eine Shortlist sollte noch genug Spannung für ehrliche kommerzielle Diskussion lassen. Ein einzelner lebensfähiger Name ist manchmal Realität – dann zählt Proof-Disziplin noch mehr, nicht weniger.
 
-## Mehr-Lieferanten-Signale (wann Breite rational bleibt)
+## Wie DBR77 Marketplace hilft
 
-Bleiben Sie breiter, wenn: Operations und Engineering ueber die echte Constraint uneins sind; die Linie keine Samples, Raten oder Stillstandsannahmen committen kann; Safety- oder Validierungsregeln noch mehrdeutig sind; Einkauf Angebote vergleichen soll, die noch nicht wirklich vergleichbar sind. In diesen Zustaenden beschleunigt eine Shortlist nicht. Sie erzeugt Rework.
+Lieferantenzahl wird nützlich, wenn Sie erklären können, warum Discovery breit blieb oder warum Entscheidungsvergleich sich verengte. Das macht Shortlist-Design zu einer Betriebsregel statt politischer Geste.
 
-## Reality check: Teams verengen die Liste oft zu frueh, weil weniger Lieferanten wie Fortschritt wirken
+Nächster Entscheidungspfad: [Wann Single Sourcing klüger ist als ein voller Lieferanten-Beauty-Contest](../27_when_single_sourcing_is_smarter_than_running_a_full_supplier_beauty_contest/article_DE.md); wenn Scope noch instabil ist, siehe auch [Wie man ein Automatisierungsprojekt scoped, ohne es zu überkomplizieren](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_DE.md).
 
-Dieses Gefuehl ist verstaendlich. Kalender werden leichter. Meetings werden kuerzer. Der Prozess wirkt kontrollierter. Aber wenn Unsicherheit noch im Brief steckt, schafft eine kuerzere Liste keine Vergleichbarkeit.
+## Lieferantenerfahrung zählt
 
-Sie verdeckt nur, dass der Buyer die Auswahl verengt hat, bevor das Problem stabil genug war, um es fair zu bewerten.
+Integratoren verteilen Talent an Chancen, die ernst aussehen. Ein aufgeblähtes Feld kann versehentlich geringe Absicht signalisieren; ein zu enges Feld ein manipuliertes Spiel. Erklären Sie intern, warum Lieferantenzahl zur Unsicherheit passt, damit Ihr Team extern respektvoll kommuniziert. Fairer Prozess ist nicht nur Ethik – so ziehen Sie Qualitätsaufwand auf Ihr Projekt.
 
-## Zwei-Stufen-Denkmodell
+Wenn Sie shortlisten, committen Sie sich zu Tiefe: Workshops, Site-Wahrheit und strukturierte Klärungen, die den Down-Select rechtfertigen. Eine Shortlist, die nur Namen verengt ohne tieferes Verständnis, ist Kosmetik.
 
-Denken Sie in zwei Lieferantenpools, nicht einer permanenten Liste.
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-| Stufe | Zweck | typische Zahl (illustrativ) |
-| --- | --- | --- |
-| discovery | Unbekanntes reduzieren, Machbarkeitsannahmen testen | breiter |
-| decision | Angebote unter eingefrorenen Feldern vergleichen | schmaler |
+Der Punkt, diesen Teil der Buying Journey zu verschärfen – „Wann man eine Shortlist nutzt und wann man mehr Lieferanten im Spiel hält“ in der Praxis – ist, Ausführung vorhersehbar zu machen. Auf industriellen Sites bleibt Mehrdeutigkeit nicht abstrakt: Sie wird Warten, Nacharbeit, stille Workarounds und Streit neben Equipment, wenn die Linie Wochen zuvor Klarheit brauchte. Wenn Teams dieselben Fakten publizieren, Abnahme an Evidenz binden und Ownership sichtbar halten, antworten Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, konkurrierende Stories abzugleichen.
 
-Wechseln Sie von discovery zu decision nur, wenn der Brief eine Klaerungsrunde ohne Scope-Reshape ueberlebt.
+Das ist nicht Theorie nur für Stabsfunktionen. Plant Manager spüren Konsequenzen, wenn Buying-Artefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die in Improvisation um halb definierte Schnittstellen gezogen wird. Starke Buying-Disziplin ist daher eine Produktionsinvestition – weniger Drama während Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel verlangsamen Sie das Dokument, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur Schmerz downstream.
 
-## Vergleichshygiene, die beide Zaehlungen funktionieren laesst
-
-Ob vier oder zwei Lieferanten: dieselbe Regel gilt: ein ausgehender Kanal, eine Matrix, ein Annahmen-Log.
-
-Wenn Sie Lieferanten erweitern, aber informelle Kanal bleiben, multiplizieren Sie Widersprueche.
-
-Wenn Sie shortlisten, aber Spalten weiter verschieben, zwingen Sie Integratoren zu Raten.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace ist als Workflow fuer Automatisierungsentscheidungen gebaut, nicht als Browse-first-Katalog.
-
-Es unterstuetzt, fruehe unordentliche Gespraeche in strukturierten Vergleich zu verwandeln, wenn Sie bereit sind zu verengen.
-
-Das ist derselbe Moment, in dem eine Shortlist aufhoert Politik zu sein und Operations wird. Marketplace ist kein Roboterkatalog.
-
-Es ist ein System, das Sourcing-Chaos reduziert, indem Lieferantenzahl und Vergleichsfelder explizit werden.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes große Buying-Output als etwas, das Operations und Instandhaltung auditieren könnten. Wenn sie es nicht bis zu einem Verhalten auf dem Shopfloor zurückverfolgen können, verschärfen Sie die Sprache, bis es geht.
 
 ## Fazit
 
-Shortlisten, wenn Sie fair vergleichen koennen.
-
-Bleiben Sie breiter, wenn Sie noch nicht beschreiben koennen, was fairer Vergleich bedeutet. Lieferantenzahl soll Unsicherheit folgen, nicht Gewohnheit.
+Shortlisten, wenn Sie fair vergleichen können. Bleiben Sie breiter, bis Sie sagen können, was fairer Vergleich bedeutet. Lassen Sie Unsicherheit die Zahl treiben – nicht Gewohnheit, nicht Policy allein und nicht Angst, einen Namen zu verpassen.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace hilft Teams, von Discovery-Gesprächen zu eingefrorenem Feldvergleich zu kommen, ohne den Entscheidungsdatensatz in E-Mail-Threads zu verlieren. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*

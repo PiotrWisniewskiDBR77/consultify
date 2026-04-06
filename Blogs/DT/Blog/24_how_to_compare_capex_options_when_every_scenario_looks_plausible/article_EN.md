@@ -5,78 +5,44 @@ Funnel stage: Decision
 Core problem: when every CAPEX storyline passes a spreadsheet sniff test, teams default to politics, vendor charisma, or incremental habit instead of testing which option survives stress and downside cases  
 Main promise: a disciplined comparison method that breaks ties between plausible CAPEX paths using explicit stress tests, sensitivity rules, and disqualifying failure modes
 
-when all CAPEX scenarios look plausible, force a tie-breaker by running the same downside and variability cases across options, tracking bottleneck migration, cash timing, flexibility to unwind, and operational fragility. Then rank options by how they fail, not by how they look in the base case. If two options still tie, the decision is usually flexibility, not average ROI. Plausible is a dangerous word in capital reviews. It often means "nobody has proven the option wrong yet." That is not the same as "the option is robust."
+When every CAPEX scenario looks plausible, force a tie-breaker: run the same downside and variability cases across options, track bottleneck migration, cash timing, flexibility to unwind, and operational fragility—then rank options by how they fail, not by how they look in the base case. If two options still tie, the decision is usually flexibility, not average ROI.
 
-## Why plausible base cases create false confidence
+“Plausible” is a dangerous word in capital reviews. It often means nobody has proven an option wrong yet—which is not the same as robust under the quarters you will actually run.
 
-Spreadsheet base cases tend to share the same optimism: smooth ramps; stable mix; predictable supplier performance; maintenance windows that always hold.
+## Why shared optimism creates false confidence
 
-When every option inherits the same rosiness, the ranking becomes arbitrary.
+Spreadsheet base cases tend to share smooth ramps, stable mix, predictable supplier performance, and maintenance windows that always hold. When every option inherits the same rosiness, ranking becomes arbitrary. The factory needs a comparison that survives a bad quarter, not only a polite one.
 
-The factory needs a comparison that survives a bad quarter, not a polite quarter.
+## Compare failure modes, not slogans
 
-## Tie-breaker framework: compare failure modes, not slogans
+Write the real decision being made—buy, build, retrofit, defer. List disqualifiers: operational or financial breaches that remove an option. Run paired stress tests with the same shocks and assumptions across every option. Measure asymmetry—which breaks earlier, costs more to recover, or locks the site longer. Choose the least-bad under stress when no option is perfect, and document why. That keeps the room focused on resilience, not narrative.
 
-Use this sequence:
+## Stress cases that separate plausible paths
 
-1. **Write the real decision:** what capital path is actually being chosen (buy, build, retrofit, defer).  
-2. **List disqualifiers:** what operational or financial breach removes an option from the table.  
-3. **Run paired stress tests:** the same shocks across every option, with the same assumptions.  
-4. **Measure asymmetry:** which option breaks earlier, costs more to recover, or locks the site longer.  
-5. **Choose the least-bad under stress** if no option is perfect, and document why.
+Include demand downside with simultaneous volume and margin pressure, mix shock toward the family distribution that hurts the specific investment most, supply disruption aligned to a credible historical band, labor constraints during ramp such as hiring lag or absenteeism, and coupled-site effects on shared utilities, tools, or logistics paths. An option that looks fine only when those shocks are ignored should lose early and quietly.
 
-This keeps the room focused on resilience, not narrative.
+## What to score for each path
 
-## Stress cases that usually separate "plausible" options
+Ask whether throughput at the true bottleneck improves or only relocates waiting; how cash timing compares for benefit versus outlay; whether spend can be staged or pivoted without sunk-cost traps; how operational fragility shows up under variability; and how expensive partial rollback would be if assumptions were wrong. Average ROI belongs in the packet; stress behavior belongs in the decision.
 
-Run at least: **Demand downside:** volume and margin pressure at the same time; **Mix shock:** the product family distribution that hurts the specific investment most; **Supply disruption:** inbound delay patterns that happen yearly, not only in crises; **Labor constraint:** hiring lag, absenteeism, or skill bottlenecks during ramp; **Coupled-site effects:** shared utilities, tools, or logistics paths that the project touches.
+## Decision hygiene when narratives collide
 
-If an option looks fine only when those shocks are ignored, it should lose quietly and early.
+Use one model language across options—same units, cycle definitions, downtime policy. Name assumption owners across sales, operations, procurement, maintenance. Write invalidation triggers tied to measurable signals. Treat deferral as a real option so teams do not over-invest in looking decisive.
 
-## Comparison table: what to score for each CAPEX path
 
-| Score theme | Question |
-|---|---|
-| Throughput at the true bottleneck | Does the investment relieve the limiter or relocate waiting? |
-| Cash timing | When does benefit arrive versus when cash leaves? |
-| Option value | Can you stage spend, pause, or pivot without sunk-cost traps? |
-| Operational fragility | Does small variability explode queues, overtime, or service risk? |
-| Undo cost | How expensive is partial rollback if assumptions were wrong? |
+## From comparison to commitment
 
-Average ROI belongs in the packet. Stress behavior belongs in the decision.
+Simulation quality is not measured by how polished the scene looks; it is measured by whether a responsible executive can commit with a downside story they are willing to own. That requires frozen option sets, honest ranges, and stress paths that include the weeks nobody wants on a chart. It also requires a written trigger for partial reruns when scope shifts before spend lands.
 
-## Checklist: decision hygiene when narratives collide
-
-- **One model language:** same units, same cycle definitions, same downtime policy across options.  
-- **Named owners for assumptions:** sales, operations, procurement, maintenance.  
-- **Written invalidation triggers:** what new data would force a reopen.  
-- **Explicit deferral path:** what happens if the committee chooses "wait."
-
-Without deferral as a real option, teams over-invest in looking decisive.
-
-## When this method still deadlocks
-
-If options remain tied under stress, the tie-breaker is usually: which path preserves more flexibility for the next 24 months; which path reduces fragility in the highest-variability part of the plan; which path aligns with a known constraint the site cannot change quickly.
-
-If the tie-breaker becomes "which vendor we like," the analysis failed upstream.
-
-## What Digital Twin changes here
-
-Digital Twin is a decision system for scenario testing, not a rendering exercise. Visual polish does not replace paired stress cases.
-
-It gives capital committees a shared view of how plausible options behave when the base case is wrong.
+If your organization struggles here, the fix is usually social, not technical: name the standard pack, refuse bespoke optimism per option, and publish kill notes when paths fail. Carry fewer, stronger scenarios into execution. The factory will still be hard; the difference is that you rehearsed the hard parts before concrete hardened them.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin is tuned for CAPEX option reviews that must survive shared downside shocks, not slide optimism.
-
-For CAPEX option reviews, it helps teams: align finance and operations on the same stress cases; expose hidden bottlenecks and coupling before spend; produce decision records that survive later scrutiny.
+DBR77 Digital Twin is tuned for CAPEX option reviews that must survive shared downside shocks, not slide optimism: align finance and operations on the same stress cases; expose hidden bottlenecks and coupling before spend; produce decision records that survive later scrutiny.
 
 ## Bottom line
 
-When every CAPEX scenario looks plausible, stop debating slides and start comparing how options fail under the same shocks.
-
-The best capital decision is often the one that remains acceptable when the base case is wrong.
+When every CAPEX scenario looks plausible, stop debating slides and start comparing how options fail under the same shocks. The best capital decision is often the one that remains acceptable when the base case is wrong.
 
 ---
 

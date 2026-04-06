@@ -5,105 +5,64 @@ Funnel stage: Decision
 Core problem: contracts get signed with optimistic scope language, weak change rules, and fuzzy acceptance, which turns disagreements into expensive disputes  
 Main promise: a pre-signature inspection list focused on scope, assumptions, milestones, acceptance, and change mechanics
 
-Signing feels like the finish line.
+Signature feels like closure. In automation, it is usually the handoff from selling to accountable delivery. A useful contract makes execution inspectable: clear boundaries, honest assumptions, milestones that mean something, acceptance you can run, and change mechanics that turn normal iteration into paperwork instead of relationship damage.
 
-For automation projects, it is often the starting line of real accountability. A contract should make execution inspectable.
+If the document only makes confidence sound official, you have theater—not control.
 
-If it only makes sales commitments sound confident, you have paperwork, not protection.
+## Scope that can be tested
 
-## Check 1: scope is written as testable inclusions and exclusions
+Look for deliverables and exclusions plain enough that a third reader understands the boundary. Watch for fluffy turnkey language without exclusions, “best effort” integration without ownership, and undefined “standard practice.” Strong contracts name interfaces and who owns them, not just aspirations.
 
-You want language that a third party could read and understand the boundary. Weak scope language shows up as:
+## Assumptions that survive signature
 
-- "turnkey" without exclusions
-- "best effort" integration without ownership
-- "standard industry practice" without definitions
+Assumptions should remain visible and managed: what happens if they fail, how price and schedule adjust, who verifies them and when. If assumptions vanish into legal prose, you will rediscover them beside the line at commissioning.
 
-Strong scope language shows up as:
+## Milestones tied to decisions
 
-- explicit deliverables lists
-- explicit exclusions
-- named interfaces and who owns them
+Dates should not decorate a Gan chart. Each milestone should state what is validated, what evidence counts, and what rights the buyer keeps if evidence is insufficient. That is how projects avoid drifting on hope.
 
-## Check 2: assumptions are referenced and managed
+## Acceptance as criteria, not vibes
 
-Assumptions should not disappear at signature. Good contracts connect assumptions to:
+Tie acceptance to measurable checks where that is honest for the process—rate, quality, downtime boundaries where applicable; safety validation steps where applicable; definitions of training and documentation completeness. If acceptance is only “successful go-live,” you have invited argument at the worst possible time.
 
-- what happens if an assumption is false
-- how price and timeline adjust
-- who verifies assumptions and when
+## Change orders with a spine
 
-If assumptions are not referenced, you will rediscover them during commissioning.
+Projects change. The contract should say how changes are proposed, priced, approved, and documented. Opaque change rules convert ordinary engineering learning into invoices that feel personal.
 
-## Check 3: milestones map to real decision rights
+## Commercial clarity for life after cutover
 
-Milestones should not be decorative dates. Each milestone should answer:
+Warranty boundaries and start conditions, spares philosophy and lead times where relevant, support and escalation expectations—these determine whether operations feels backed or abandoned. Signature is the right moment to remove ambiguity, not defer it.
 
-- what is being validated
-- what evidence is required
-- what decision the buyer can make if evidence is insufficient
+## The uncomfortable truth about late review
 
-This is how projects avoid drifting on hope.
+By circulation time, the supplier may already feel “selected,” leaders may prioritize speed over clarification, and open assumptions may be reframed as details to sort on site. That is when discipline matters most. If the document cannot survive line-by-line inspection, signing will not create control—it will lock in confusion.
 
-## Check 4: acceptance is defined as criteria, not vibes
+## A practical review rhythm
 
-Acceptance should be tied to measurable checks where possible:
+Assign technical ownership to scope and exclusions, procurement to commercial mechanics and change rules, operations to acceptance and support language. Consolidate questions into one clarification packet. Resolve contradictions before mobilization, not during it.
 
-- rate, quality, downtime boundaries (as applicable)
-- safety validation steps (as applicable)
-- training and documentation completeness definitions
+## How DBR77 Marketplace connects
 
-If acceptance is only "successful go-live," you have invited argument.
+Contract review should inherit the same comparability discipline as selection—assumptions, boundaries, and ownership visible in evaluation should still be visible at signature.
 
-## Check 5: change order mechanics are explicit
+For a tight companion, see [What a Good Automation Offer Should Make Visible](../17_what_a_good_automation_offer_should_make_visible/article_EN.md).
 
-Automation projects change. The contract should define:
+## Signature as alignment, not relief
 
-- how changes are requested
-- how pricing and schedule updates are approved
-- documentation expectations for scope changes
+Treat signing as the moment the organization commits to one story. If signatures arrive while key functions still privately disagree, the contract becomes a truce rather than a plan—and truces fail under integration stress. Use the final read-through to expose those disagreements: if operations cannot live with acceptance language, fix it now; if procurement cannot live with change mechanics, fix it now.
 
-Opaque change mechanics turn normal engineering iteration into relationship damage.
+Also ensure the contract inherits the evaluation record: referenced assumptions, defined interfaces, and milestone proofs. A contract that invents new optimism at the last page undoes weeks of disciplined comparison.
 
-## Check 6: commercial clarity on spares, warranty, and support
 
-Before signature, confirm visibility into:
+## From decision to plant behavior
 
-- warranty boundaries and start conditions
-- spare parts strategy and lead times (as applicable)
-- support response expectations after go-live
+Contracts matter because they are what remains when enthusiasm fades. On the floor, people do not quote clause numbers—they follow what is practical. Strong contract language aligns with operational reality: acceptance tests operators can execute, support boundaries maintenance can rely on, and change rules that do not require a crisis to activate.
 
-These items determine whether operations feels supported or abandoned.
-
-## Reality check: contract weakness usually shows up after enthusiasm has already hardened into commitment
-
-That is why late inspection is uncomfortable but necessary. By the time the contract is circulating:
-
-- the supplier may already be treated internally as the chosen partner
-- leaders may want speed more than clarification
-- unresolved assumptions may be reframed as details to solve later
-
-That is exactly when the buyer needs the most discipline.
-
-If the document still cannot survive line-by-line inspection at that moment, signature will not create control.
-
-## Pre-signature review sequence (practical)
-
-Assign one technical owner to read scope and exclusions line by line; assign procurement to read commercial mechanics and change rules; assign operations to read acceptance and support language; consolidate questions into one clarification packet; resolve contradictions before signature, not after mobilization.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because contract review should inherit the same comparison discipline used earlier in selection.
-
-If assumptions, boundaries, and ownership were supposed to be visible during evaluation, they should still be visible at signature instead of disappearing into confident legal phrasing.
-
-For the most relevant companion article, see [What a Good Automation Offer Should Make Visible](../17_what_a_good_automation_offer_should_make_visible/article_EN.md).
+If you take one habit away, make it this: read acceptance and support sections aloud with operations in the room—if they wince, fix the text before you sign.
 
 ## Bottom line
 
-A contract is not a trophy. It is an inspection plan for money, time, and risk.
-
-If scope, assumptions, milestones, acceptance, and change mechanics are weak, signature does not close risk. It locks it in.
+Treat the contract as an inspection plan for money, time, and risk. Weak scope, assumptions, milestones, acceptance, and change mechanics do not vanish after ink—they become expensive conversations beside running equipment.
 
 ---
 

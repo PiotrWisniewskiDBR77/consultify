@@ -1,75 +1,38 @@
-# Co powinna zawierac i czego powinna ignorowac kierownicza karta wynikow operacji AI
+# Co powinna zawierać — a czego ignorować — executiveska karta wyników operacji AI
 
-Target persona: COO / Wlasciciel P&L zakladu / Wiceprezes lancucha dostaw  
-Funnel stage: Evaluation  
-Core problem: kierownictwo widzi demo modeli i procent adopcji, podczas gdy zaklad nadal traci godziny na niejasna odpowiedzialnosc i wolne domkniecie  
-Main promise: krotka karta wynikow laczaca asyste AI z reakcja, ochrona przepustowosci, gotowoscia audytu i follow-through ludzkim, z odfiltrowaniem metryk pozorow
+Docelowa persona: COO / właściciel P&L zakładu / wiceprezes łańcucha dostaw  
+Etap lejka: Evaluation  
+Główny problem: kierownictwo widzi dema modeli i procenty adopcji, podczas gdy zakład wciąż traci godziny na niejasną odpowiedzialność i wolnym domknięciu  
+Główna obietnica: krótka karta wyników wiążąca asystę AI z reakcją, ochroną przepustowości, gotowością do audytu i ludzkim domykaniem działań, przy odfiltrowaniu metryk pozorów
 
-Kierownicza karta wynikow operacji AI powinna zawierac mediane czasu-do-wlasciciela dla pozycji wspieranych, wskaznik domkniecia zadan wspieranych w SLA, wskaznik powtarzajacych sie incydentow po tym, jak asysta dotykala routingu, wskaznik override ze skategoryzowanymi powodami oraz pokrycie szkoleniami wg roli. Powinna ignorowac surowa dokladnosc modelu bez kontekstu operacyjnego, rankingi liczby sugestii oraz twierdzenia o "oszczedzonych godzinach AI" bez metody baseline. Jesli karty nie da zbudowac z eksportow w ponizej 30 minut, nie przetrwa prawdziwych operacji. Kierownictwo nie potrzebuje wiecej wykresow. Potrzebuje mniej liczb, ktore nadal przewiduja zachowanie.
+Executive nie potrzebują więcej wykresów. Potrzebują mniej liczb, które wciąż przewidują zachowanie. Executiveska karta wyników operacji AI powinna dać się złożyć z eksportów w poniżej trzydziestu minut — bo jeśli w złym tygodniu nie da się jej uczciwie wyprodukować, nie przetrwa prawdziwych operacji. Ujmij medianowy czas do właściciela dla pozycji wspomaganych, wskaźnik domknięcia w SLA przy obecnych wymaganych polach, powtarzające się wzorce incydentów po tym, jak asysta zmieniła kierowanie zgłoszeń, wskaźnik override’ów ze skategoryzowanymi powodami oraz pokrycie szkoleniami według ról. Te metryki łączą widok kierownictwa z mechaniką hali.
 
-## Zawieraj: piec wynikow operacyjnych (minimalny widok kierowniczy)
+Ignoruj tory pozorów, które ukrywają ryzyko: surowy wolumen sugestii bez dyscypliny akceptacji, metryki dokładności odłączone od blokad bezpieczeństwa i jakości, „wskaźnik automatyzacji” liczący kliknięcia UI zamiast stanów operacyjnych, ankiety satysfakcji bez powiązania z rekordami incydentów oraz tokenowe metryki IT w pakiecie przeglądu operacji. Nowoczesne metryki dobrze się czują. Nie prowadzą linii.
 
-1. czas-do-wlasciciela: od sygnalu do nazwanego odpowiedzialnego czlowieka  
-2. jakosc domkniecia: procent domkniec w SLA z wymaganymi polami  
-3. ochrona przepustowosci: minuty nieplanowanych postojow powiazane z decyzjami wspieranymi  
-4. powtarzajace sie wzorce: ten sam motyw porazki w ciagu 14 dni  
-5. zdrowie nadzoru: zmiany progow z akceptacjami i zarejestrowanymi ID wersji
+Używaj widoku tygodniowego dla przełożonych: wcześnie wychwytuj dryf czasu do właściciela i SLA domknięcia, zauważaj motywy override’ów sugerujące szkolenie lub edycję progów, reaguj natychmiast na powtarzające się incydenty. Używaj widoku miesięcznego dla kapitału i polityki: trenduj wpływ na obsadę, uruchamiaj przeprojektowanie procesu, gdy SLA chronicznie pada, aktualizuj nadzór, gdy wzorce override’ów stabilizują się w lukach politycznych.
 
-Te piec przetrwa audyty i zmiany zmian.
+Integralność karty wymaga dyscypliny: każda metryka nazywa pole systemu prawdy, linie bazowe są datowane i zamrożone, wyłączenia jawne, czerwone progi mają właściciela działania, a executive slice mieści się na jednej stronie ze szczegółami w aneksie.
 
-## Ignoruj: piec torow pozoru, ktore ukrywaja ryzyko
+Porównaj karty demo z kartami operacyjnymi. Demo używa dobranych zrzutów i najlepszych momentów. Operacyjna używa eksportów, median i zachowania w ogonie oraz rozliczalności u liderów linii i funkcji. Nabywcy i operatorzy szybko uczą się rozróżniać.
 
-Wolumen sugestii bez dyscypliny akceptacji lub odrzucenia; metryki dokladnosci rozlaczone od blokad BHP i jakosci; "wskaznik automatyzacji" liczacy kliki UI, nie stany operacyjne; ankiety satysfakcji bez powiazania z rekordami incydentow; metryki IT w stylu kosztu na token w pakiecie przegladu operacji. Tory pozoru brzmia nowoczesnie. Nie prowadza linii.
+Karta działa, gdy cotygodniowe przeglądy operacji już istnieją, asysta wiąże się z zadaniami z właścicielami, a finanse akceptuje operacyjne definicje miary przepustowości. Wprowadza w błąd, gdy asysta działa poza rekordem wykonania, definicje SLA różnią się między zmianami albo incydenty zamykają się werbalnie bez powiązania w systemie.
 
-## Framework: widok tygodniowy kontra miesieczny
+IRIS utrzymuje wiarygodność metryk executive, gdy wspomagane zadania, akceptacje, domknięcia i override’y pochodzą z tej samej warstwy wykonania, której używa hala — więc kierownictwo widzi pola, nie opowieści.
 
-| Metryka | Uzycie tygodniowe | Uzycie miesieczne |
-|---|---|---|
-| czas-do-wlasciciela | wczesne wychwycenie dryftu | trend i decyzje o obsadzie |
-| domkniecie SLA | taktyczny follow-through | wyzwalacze przeprojektowania procesu |
-| powody override | szkolenia i edycje progow | aktualizacje polityki |
-| powtarzajace incydenty | natychmiastowe opanowanie | priorytety backlogu inzynierskiego |
-| wolumen logu nadzoru | probka dyscypliny | atestacja kierownicza |
+Do sąsiedniego rytmu i kontroli zobacz [Jak przeglądać operacje wspomagane AI po pierwszych 90 dniach](../40_how_to_review_ai_assisted_operations_after_the_first_90_days/article_PL.md) oraz [Jak skalować wsparcie AI bez utraty kontroli operacyjnej](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_PL.md).
 
-Tygodniowo to dla nadzorcow. Miesiecznie to dla kapitalu i polityki.
+Karta pomaga też kierownictwu uniknąć dwóch klasycznych trybów awarii programów AI: świętowania aktywności, gdy domknięcie się pogarsza, albo karania hali za błędy modelu, które w rzeczywistości były złą konfiguracją progów. Gdy metryki są powiązane z polami — czas do właściciela, domknięcie SLA, skategoryzowane override’y — te tryby wcześnie się uwidaczniają. Bez pól organizacja spiera się o narracje, dopóki incydent nie wymusi uczciwości.
 
-## Checklist: reguly integralnosci karty
+Na koniec celowo utrzymuj executive slice mały. Chodzi nie o olśnienie szerokością, lecz o cotygodniowy rytm, w którym krótki zestaw liczb napędza krótki zestaw decyzji: zacieśnij próg, dołóż szkolenie, przesuń obsadę, wstrzymaj tryb działania albo poszerzaj dopiero wtedy, gdy karta mówi, że zakład na to zapracował. Tak karty stają się narzędziami zarządzania zamiast tapety.
 
-- kazda metryka nazywa pole systemu prawdy  
-- baseline sa datowane i zamrozone na okna porownan  
-- wykluczenia sa jawne (planowany downtime, proby, linie legacy)  
-- czerwone progi wyzwalaja wlasciciela dzialania, nie temat dyskusji  
-- maksymalnie jedna strona dla widoku kierowniczego; szczegoly w aneksie
+Jeśli kierownictwo nie potrafi wyjaśnić, jak dana metryka zmienia próg, plan szkolenia lub wzorzec obsady — usuń ją. Trzymaj widok krótki, eksportowalny i z rozliczalnym właścicielem.
 
-## Porownanie: karta demo kontra karta operacyjna
+## Podsumowanie operacyjne
 
-| Element | Karta demo | Karta operacyjna |
-|---|---|---|
-| zrodlo danych | dobrane zrzuty ekranu | eksporty i logi |
-| historia sukcesu | najlepsze momenty | mediana i ogon zachowania |
-| odpowiedzialnosc | zespol projektu | wlasciciele linii i funkcji |
-| uzycie decyzyjne | narracja finansowania | edycje progow i obsady |
+Obietnica tego artykułu — krótka karta wyników wiążąca asystę AI z reakcją, ochroną przepustowości, gotowością do audytu i ludzkim domykaniem działań, przy odfiltrowaniu metryk pozorów — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Co powinna zawierać — a czego ignorować — executiveska karta wyników operacji AI” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Nabywcy szybko ucza sie roznicy.
-
-## Kiedy ta karta dziala
-
-Zaklad juz prowadzi zdyscyplinowany tygodniowy przeglad operacji; asysta jest zwiazana z zadaniami z wlascicielami, nie tylko powiadomieniami; finanse akceptuje operacyjne definicje miar przepustowosci.
-
-## Kiedy ta karta wprowadza w blad
-
-Asysta dziala w kanale obok poza rekordem wykonania; definicje SLA roznia sie miedzy zmianami; incydenty zamykane werbalnie bez powiazania w systemie.
-
-## Dlaczego IRIS wyrownuje karty z rzeczywistoscia wykonania
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy asysta tworzy zadania w tej samej warstwie co akceptacje i domkniecia, metryki kierownicze przestaja klocic sie z hala.
-
-## Podsumowanie
-
-Jesli kierownictwo nie potrafi wytlumaczyc, jak metryka zmienia prog, plan szkolenia lub wzorzec obsady, usun ja z karty. Trzymaj widok krotki, eksportowalny i z przypisanym wlascicielem.
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS trzyma wspomagane sygnały, zadania, akceptacje i domknięcia w jednej warstwie wykonania, więc metryki executive mapują na pola, nie na opowieści. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

@@ -5,60 +5,54 @@ Funnel stage: Consideration to Evaluation (portfolio shaping before RFQ design)
 Core problem: bundling reduces transaction count but often destroys comparability, hides weak scopes, and couples schedules that should stay independent  
 Main promise: a decision grid for bundle versus split based on interfaces, risk coupling, and award logic
 
-Bundling feels efficient.
+Bundling feels efficient: one steering committee, one procurement cycle, one narrative for the board. It can also create a monster—coupled schedules, tangled accountability, and proposals so large that comparability collapses into executive summaries nobody can defend technically.
 
-It is efficient when it increases comparability and reduces integration seams.
+Split when the work packages are independent enough to compare and award cleanly. Bundle when interfaces, risk, and mobilization genuinely require a single thread.
 
-It is expensive when it merges unrelated risks into one throat to choke.
+## Bundle when coupling is real
 
-Bundle multiple automation needs into one buying process when they share interfaces, timing constraints, or supplier capabilities in a way that a single integrator can own coherent delivery with one acceptance record.
+Consider one process when systems share interfaces, sequencing matters for safety or production continuity, economies of integration exist, or a single integrator must own conflicting dependencies between cells. The test is simple: would splitting force hidden coordination anyway?
 
-Split into parallel or sequenced buys when scopes have different technical owners, different readiness calendars, different risk profiles, or when bundling would force a single award across unrelated bets.
+## Split when comparability or risk demands it
 
-## Dimension 1: interface coupling
+Separate buys when scopes differ in technology class, readiness timelines diverge, sponsors differ, or weak packages would hide inside a larger number. Forcing unrelated needs into one RFQ often produces one glossy story and several under-defined work packages.
 
-High coupling (illustrative): shared MES events and routing logic across cells; shared material handling spine feeding multiple stations.
+## Define work packages even inside a bundle
 
-Low coupling: independent lines with separate quality sampling models and no shared controls philosophy. High coupling favors one thread. Low coupling favors separable decisions.
+If you bundle, still name packages with acceptance objects, owners, and commercial boundaries. Otherwise “one project” becomes one argument.
 
-## Dimension 2: schedule coupling
+## Award logic must survive scrutiny
 
-Ask whether a slip on project A should legally and operationally drag project B. If yes, bundling may reflect reality. If no, bundling can create artificial hostage-taking.
+Committees should see where money maps to outcomes per package—even if signatures sit on one umbrella agreement.
 
-## Dimension 3: comparability integrity
+## How DBR77 Marketplace helps
 
-Bundling works when you can still define: acceptance objects per work package inside the envelope; change-order rules that do not blur accountability between packages.
-
-If the bundle becomes a single vague "automation program," you lose inspectability.
-
-## Dimension 4: supplier capability fit
-
-Some suppliers excel at integrated cells. Others excel at narrow deliverables. Bundling should match capability, not only convenience.
-
-## Quick comparison (illustrative)
-
-| signal | favor bundle | favor split |
-| --- | --- | --- |
-| shared handshake points | yes | no |
-| different internal owners and calendars | no | yes |
-| different uncertainty levels | no | yes |
-| need one throat for integration seams | yes | no |
-
-## Bounded protocol
-
-Run a two-page internal memo (illustrative): list needs with owners and readiness dates; mark interface edges between needs; decide bundle, split, or phased sequence with explicit stop rules.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because bundling only helps when portfolio structure improves comparability instead of burying unrelated risks inside one procurement package.
-
-That makes bundle-versus-split logic a scope-design decision before it becomes a supplier-selection decision.
+Structured comparison per work package keeps bundled programs inspectable: acceptance and accountability splits stay visible instead of dissolving into a single headline.
 
 For the closest upstream neighbors, see [How to Scope an Automation Project Without Overcomplicating It](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_EN.md) and [When to Use a Shortlist and When to Keep More Suppliers in Play](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_EN.md).
 
+## Portfolio governance without coupling accidents
+
+Bundling changes escalation paths: one delay can ripple across packages. If you bundle, build explicit decoupling rules—where schedules may diverge, where budgets are ring-fenced, and how partial completion is handled. Otherwise a problem in one cell becomes a hostage crisis for unrelated work.
+
+Communicate to leadership that “one project” on paper may still be several acceptance stories on the floor. Transparency prevents false expectations and prevents a single weak package from hiding inside a large headline number.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"When to Bundle Multiple Automation Needs Into One Buying Process and When Not To" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
+Finally, tie this discipline to accountability: name who will verify assumptions on the floor and by which milestone. Myths thrive when nobody owns measurement; they weaken when verification is part of the project plan, not an afterthought.
+
+
 ## Bottom line
 
-Bundle for coherent integration and comparability. Split to protect unrelated risks and calendars. Do not bundle only to reduce paperwork.
+Bundle for genuine coupling; split for clarity and risk isolation. Never let transaction count drive architecture—let interfaces, schedules, and defensible comparability drive it.
 
 ---
 

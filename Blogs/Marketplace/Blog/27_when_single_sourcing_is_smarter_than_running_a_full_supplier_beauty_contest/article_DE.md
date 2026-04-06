@@ -1,66 +1,54 @@
-# Wann Single Sourcing klueger ist als ein voller Lieferanten-Beautycontest
+# Wann Single Sourcing klüger ist als ein voller Lieferanten-Beauty-Contest
 
-Target persona: Werksleiter / Einkaufsowner  
-Funnel stage: Consideration (Beschaffungsstrategie unter Constraints)  
-Core problem: policy-getriebene Multi-Bid-Prozesse verzoegern Entscheidungen ohne Vergleichbarkeit zu verbessern, wenn das Problem bereits strukturell eingeschraenkt ist  
-Main promise: klare Kriterien, wann gerichtete Auswahl rational, ethisch und schneller ist, ohne Proof-Disziplin aufzugeben
+Zielpersona: Werksleitung / Einkaufsverantwortlicher  
+Funnel-Stufe: Überlegungsphase (Beschaffungsstrategie unter Randbedingungen)  
+Kernproblem: Policy-getriebene Multi-Bid-Prozesse verzögern Entscheidungen ohne Vergleichbarkeit zu verbessern, wenn das Problem bereits stark eingeschränkt ist  
+Hauptversprechen: Klare Kriterien, wann gerichtete Auswahl rational, ethisch und schneller ist – ohne Proof-Disziplin aufzugeben
 
-Multi-Lieferanten-Wettbewerbe sind ein Werkzeug. Sie sind kein Moralgesetz. Manchmal verbessert ein Wettbewerb Outcomes.
+Multi-Supplier-Wettbewerbe sind ein Werkzeug. Kein universelles Gesetz. Manchmal schärfen mehr Gebote Ergebnisse; manchmal verbrennen sie Kalender und zwingen Integratoren zur Performance bei einer Entscheidung, die Geografie, Technologie, Incumbent-Wissen oder regulatorische Realität schon eingeschränkt hat. Der Failure Mode ist Prozess um des Prozesses willen: beschäftigte Scorecards, späte Klarheit und ein Werk, das Aktivität mit Urteil verwechselt.
 
-Manchmal verbrennt er Kalender und zwingt Integratoren zu Angebots-Theater fuer eine Entscheidung, die bereits strukturell eingeschraenkt ist.
+Single Sourcing kann rational sein, wenn die machbare Menge wirklich klein ist – aber nur, wenn Proof-Disziplin intakt bleibt.
 
-Hersteller sollten den Prozess waehlen, der zu Unsicherheit, Risiko und interner Reife passt.
+## Wenn ein Wettbewerb wenig neue Information liefert
 
-Single Sourcing ist klueger, wenn der Scope durch Standards, physische Realitaet oder Kontinuitaetsentscheidung wirklich eingeschraenkt ist und Sie dennoch strukturierten Nachweis, Referenzen und ein verhandeltes kommerzielles Modell verlangen koennen.
+Erwägen Sie Verengung oder gerichtete Auswahl, wenn nur ein oder zwei glaubwürdige Lieferanten den Scope ausführen können, der Technologie-Stack durch Kompatibilität effektiv vorgegeben ist, Zeitplanrealität realistische Alternativen entfernt oder wiederholter Scope mit qualifiziertem Incumbent ein volles Replay verschwendet. Es geht nicht darum, Prüfung zu vermeiden; es geht darum, aufzuhören so zu tun, als schaffen sechs Namen Optionen, die nicht existieren.
 
-Ein Beautycontest ist klueger, wenn Sie Preisspannung brauchen, Capability-Differenzierung oder der Brief noch nicht vergleichbar ist.
+## Proof zählt weiter
 
-Wenn Sie einen Contest ohne Vergleichbarkeit fahren, bekommen Sie teure Verwirrung. Wenn Sie single sourcen ohne Proof, bekommen Sie bequemes Risiko.
+Weniger Bieter sollten trotzdem eine schriftliche Begründung hinterlassen: warum das Feld eng ist, welche Kriterien andere zugelassen hätten, welche Evidenz Fit und Lieferglaubwürdigkeit stützt und wie kommerzielle Struktur getestet wurde. Gerichtete Auswahl ohne Dokumentation wirkt wie Gefälligkeit, auch wenn es keine ist.
 
-## Wann Single Sourcing oft rational ist (hersteller-first)
+## Ethik und Governance ohne Theater
 
-Gerichtete Auswahl kann rational sein, wenn: Sie eine bestehende Plattform erweitern und Interoperabilitaet die Constraint ist; Sie einen validierten internen Standard haben, der erlaubte Architekturen definiert; Time-to-Benefit dominiert und die Alternative fortgesetzter manueller Verlust ist; Sie kuerzlich einen fairen Vergleich gefahren haben und das Delta inkrementell ist; ein Lieferantenwechsel inakzeptables Kontinuitaetsrisiko fuer Produktion erzeugt. Das ist nicht "wir moegen sie." Das ist "die feasible Menge ist eng und dokumentiert."
+Nutzen Sie Transparenz passend zu Ihren Policies: faire Notice wo nötig, klare technische Gates und Dokumentation, die ein Reviewer ohne Insiderwissen nachvollziehen kann. Geschwindigkeit und Integrität sind keine Gegensätze, wenn der Record sauber ist.
 
-## Wann ein voller Wettbewerb noch das bessere Werkzeug ist
+## Wann Sie trotzdem einen breiteren Prozess fahren sollten
 
-Bleiben Sie kompetitiv, wenn: Capability-Unterschiede gross und unmapped sind; kommerzielle Modelle noch nicht vergleichbar sind; interne Owner ueber die echte Constraint uneins sind; Sie keine glaubwuerdige Baseline fuer Preis oder Scope-Grenze haben; Governance unabhaengigen Vergleich fuer Audit-Gruende braucht.
+Erweitern Sie das Feld, wenn die Lösungsklasse offen ist, Vergleichbarkeit gesund ist oder internes Alignment noch Marktbildung braucht. Wettbewerbe sind wertvoll, wenn sie Pfade wirklich differenzieren – nicht wenn sie ein vorgezeichnetes Ende proben.
 
-Wenn diese Bedingungen wahr sind, ist Single Sourcing meist Politik im Prozesskostuem.
+## Wie DBR77 Marketplace passt
 
-## Proof-Disziplin, die in beiden Pfaden bleiben muss
+Gerichtete Auswahl bleibt verteidigbar, wenn Challenge-Klarheit, Vergleichsartefakte und kommerzielle Logik inspizierbar bleiben – auch wenn die Lieferantenzahl klein ist.
 
-Ob drei Bieter oder einer: geschriebene Akzeptanzkriterien; Referenzprotokoll fuer material claims; Change-Control-Regeln; Decision Log mit Exclusions und Annahmen. Single Sourcing soll Bid-Count reduzieren, nicht Inspizierbarkeit.
+Nächstes Prozessdesign-Pendant: [Wann man eine Shortlist nutzt und wann man mehr Lieferanten im Spiel hält](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_DE.md).
 
-## Reality check: Single Sourcing wird meist dann gefaehrlich, wenn Bequemlichkeit als technische Constraint beschrieben wird
+## Dokumentation schützt alle
 
-Die Sprache kann diszipliniert klingen. Das Team sagt Kontinuitaet. Der Sponsor sagt Dringlichkeit. Der Incumbent sagt, er kenne die Linie bereits. Diese Gruende koennen real sein. Aber wenn sich die Constraint nicht so dokumentieren laesst, dass ein interner Reviewer sie spaeter verteidigen koennte, driftet der Prozess von gerichteter Auswahl zu ungepruefter Praeferenz.
+Single Sourcing lädt zu Prüfung ein – intern und extern. Behandeln Sie Dokumentation als Schutz für Käufer und Lieferanten: klare Constraint-Statement, sichtbare Bewertung erwogener Alternativen und Aufzeichnung technischer und kommerzieller Gates. Das reduziert Flüsterkampagnen und macht Audits langweilig – das ist das Ziel.
 
-## Entscheidungs-Checkliste (fuenf Fragen)
+Unterscheiden Sie auch „nur ein realistischer Bieter“ von „nur ein Bieter, den wir zu pflegen vernachlässigt haben“. Wenn das Feld eng ist, weil Beziehungen vernachlässigt wurden, erweitern Sie es, bevor Sie rationalisieren.
 
-Ja oder nein:
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-1. Ist der Brief stabil genug fuer faire Bewertung?
-2. Ist die feasible Lieferantenmenge aus dokumentierten technischen Gruenden eng?
-3. Koennen wir Total-Cost-Logik gegen eine Referenzprojektklasse benchmarken?
-4. haben wir Governance-Freigabe fuer die Sourcing-Route?
-5. koennen wir die Entscheidung Operations ohne Peinlichkeit erklaeren?
+Der Punkt, diesen Teil der Buying Journey zu verschärfen – „Wann Single Sourcing klüger ist als ein voller Lieferanten-Beauty-Contest“ in der Praxis – ist, Ausführung vorhersehbar zu machen. Auf industriellen Sites bleibt Mehrdeutigkeit nicht abstrakt: Sie wird Warten, Nacharbeit, stille Workarounds und Streit neben Equipment, wenn die Linie Wochen zuvor Klarheit brauchte. Wenn Teams dieselben Fakten publizieren, Abnahme an Evidenz binden und Ownership sichtbar halten, antworten Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, konkurrierende Stories abzugleichen.
 
-Wenn Sie bei eins, vier und fuenf nicht auf ja kommen, reparieren Sie den Prozess bevor Sie ueber Lieferantenzahl streiten.
+Das ist nicht Theorie nur für Stabsfunktionen. Plant Manager spüren Konsequenzen, wenn Buying-Artefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die in Improvisation um halb definierte Schnittstellen gezogen wird. Starke Buying-Disziplin ist daher eine Produktionsinvestition – weniger Drama während Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel verlangsamen Sie das Dokument, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur Schmerz downstream.
 
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace unterstuetzt hersteller-first Automatisierungseinkauf als Workflow. Workflow bedeutet nicht immer "maximale Lieferanten."
-
-Es bedeutet maximale Klarheit: was Sie kaufen, wie Sie vergleichen und wie Sie Readiness beweisen. Marketplace ist kein Roboterkatalog.
-
-Es ist Vertrauen und Vergleichsschicht, die auch hilft, wenn die feasible Menge klein ist, weil Disziplin wichtiger wird, wenn Optionen weniger sind.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes große Buying-Output als etwas, das Operations und Instandhaltung auditieren könnten. Wenn sie es nicht bis zu einem Verhalten auf dem Shopfloor zurückverfolgen können, verschärfen Sie die Sprache, bis es geht.
 
 ## Fazit
 
-Fahren Sie einen Wettbewerb, wenn Vergleichbarkeit und Differenzierung es erfordern.
-
-Single sourcen Sie, wenn Constraints real und dokumentiert sind und Proof-Disziplin bleibt. Das Ziel ist eine gute Entscheidung, kein beschaeftigter Prozess.
+Fahren Sie einen Wettbewerb, wenn Differenzierung und Vergleichbarkeit es erfordern. Single-Sourcen Sie, wenn Constraints real und dokumentiert sind und Proof-Disziplin bleibt. Optimieren Sie für eine sound Entscheidung, nicht für Bieterzahl.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt Klarheit-zuerst-Kauf: selbst bei schmaler machbarer Lieferantenmenge halten strukturierte Challenge und Vergleichsartefakte Entscheidungen inspizierbar. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

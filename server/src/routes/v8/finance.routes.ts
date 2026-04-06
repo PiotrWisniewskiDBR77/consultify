@@ -995,7 +995,8 @@ router.get(
       statementId,
       statementType: String(statement.statement_type || '').toUpperCase() as 'P&L' | 'BS' | 'CF',
       requestedLevel,
-      defaultPeriodLabel: statement.period_label || null,
+      defaultPeriodLabel:
+        typeof statement.period_label === 'string' ? statement.period_label : null,
     });
 
     return res.json({
@@ -1298,7 +1299,13 @@ router.post(
     const columnSelection = resolveStatementColumnSelection(scopedText, {
       periodLabel: effectivePeriodLabel,
       currency: effectiveCurrency,
-      scaling: effectiveScaling,
+      scaling:
+        effectiveScaling === 'units' ||
+        effectiveScaling === 'thousands' ||
+        effectiveScaling === 'millions' ||
+        effectiveScaling === 'billions'
+          ? effectiveScaling
+          : undefined,
     });
     const extractionRaw =
       aiExtraction && aiExtraction.lines.length > 0

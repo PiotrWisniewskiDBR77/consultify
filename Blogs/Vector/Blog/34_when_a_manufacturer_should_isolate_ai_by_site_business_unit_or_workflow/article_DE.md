@@ -1,69 +1,34 @@
-# Wann ein Hersteller KI nach Standort, Geschaeftseinheit oder Workflow isolieren sollte
+# Wann ein Hersteller KI nach Standort, Geschäftsbereich oder Workflow isolieren sollte
 
-Target persona: COO / IT-Leiter  
-Funnel stage: Consideration  
-Core problem: Ein gemeinsamer KI-Mandant wirkt effizient, bis Datenmischung zwischen Standorten, widerspruechliche Richtlinien oder ein Incident eine schmerzhafte Teilung erzwingt  
-Main promise: Klare Isolationsregeln gleichen Schadensradius, Compliance-Grenzen und operative Verantwortung mit dem tatsaechlichen Fabriknetz ab
+Zielpersona: COO / IT-Leiter  
+Funnel-Stufe: Consideration  
+Kernproblem: Ein gemeinsamer KI-Tenant wirkt effizient, bis Standort-übergreifende Datenmischung, widersprüchliche Richtlinien oder ein Vorfall eine schmerzhafte Teilung erzwingt  
+Hauptversprechen: Klare Isolationsregeln richten Blast-Radius, Compliance-Grenzen und operative Ownership an aus, wie das Werksnetz wirklich läuft
 
-Isolation ist keine Paranoia. Es ist Schadensradius-Engineering.
+Isolation ist keine Paranoia. Sie ist Blast-Radius-Engineering — derselbe Instinkt wie Netz-Zoning, getrennte Admin-Pfade und sorgfältige Trennung von Test und Produktion. Ein gemeinsamer KI-Tenant kann effizient wirken, bis Standort-übergreifende Vermischung, widersprüchliche Richtlinien oder ein ernster Review eine schmerzhafte Teilung erzwingt, die von Anfang an designed sein sollte.
 
-Isolieren Sie KI nach Standort, wenn Werke unter verschiedenen Regimen, Datenklassen oder Betriebsrats- und Gewerkschaftsrahmen laufen. Isolieren Sie nach Geschaeftseinheit, wenn P und L, IP oder Kundenvertraulichkeit in Logs und Admin-Zugriff nicht vermischt werden duerfen. Isolieren Sie nach Workflow, wenn ein hochautomatisierter Pfad Aktuierung oder sicherheitsnahe Systeme beruehrt, waehrend andere analytisch bleiben. Die richtige Isolationseinheit passt zur Vertrauensdomaene.
+Isolieren Sie KI nach Standort, wenn Werke unter unterschiedlichen Regimen, Datenklassifikationen oder arbeits- und betriebsrätlichen Zwängen laufen, die gemeinsame Vermischung teuer erklärbar machen. Isolieren Sie nach Geschäftsbereich, wenn P&L, IP oder Kundenvertraulichkeit nicht in Logs und Admin-Zugriff vermischen dürfen. Isolieren Sie nach Workflow, wenn ein hochautomatisierter Pfad Aktuierung oder sicherheitsnahe Systeme berührt, während andere Workflows analytisch bleiben. Die richtige Isolationseinheit entspricht der Vertrauenseinheit — nicht der Beschaffungsbequemlichkeit.
 
-## Rahmen: drei Isolationslinsen
+## Drei Isolationslinsen
 
-### Linse 1: Regulatorik und Datenklasse
+Regulatorik und Datenklasse sind die erste Linse, weil sie am wenigsten verhandelbar ist. Wenn zwei Standorte nicht dieselbe Backup-Jurisdiktion oder Retention-Regel teilen können, sollten sie nicht denselben KI-Runtime-Namespace teilen — weil Vorfall und Audit-Frage sich nicht dafür interessieren, dass es „auf einem Vertrag billiger war“. Kommerzielle und IP-Grenzen bilden die zweite Linse. Wenn Geschäftsbereiche unterschiedliche Prozess-IP oder sensible Kundenbeziehungen schützen, erzeugen geteilte Inferenz-Tenants unnötige forensische Zweifel nach jedem Leak-Verdacht: Alle werden verdächtig, und die Untersuchung wird politisch wie technisch. Operative und sicherheitsrelevante Kopplung ist die dritte Linse. Workflows, die physischen Zustand beeinflussen können, verdienen härtere Grenzen als Zusammenfassungen interner PDFs — nicht weil Zusammenfassungen harmlos sind, sondern weil der Blast-Radius anders ist, wenn Empfehlungen neben Ausführung sitzen.
 
-Wenn zwei Standorte nicht dieselbe Backup-Jurisdiktion oder Aufbewahrungsregel teilen duerfen, sollten sie nicht denselben KI-Runtime-Namespace teilen.
+## Wie der stressige Moment aussieht
 
-### Linse 2: Handels- und IP-Grenzen
+Der Fall für Isolation klärt sich meist nach einer angespannten Woche: Qualitätseskalation, Kundenaudit oder ein Security-Review mit der direkten Frage — wer hätte diese Nutzlast noch sehen können, und unter welchem Konto? Wenn die ehrliche Antwort „wir sind uns nicht sicher“ lautet, haben Sie die Narrativ-Schlacht schon verloren. Isolation hält diese Antwort kurz und sachlich: begrenzte Populationen, begrenzte Logs, begrenzte Admin-Pfade. Es geht nicht darum, eigene Standorte zu misstrauen. Es geht darum, Ownership-Linien so scharf zu ziehen, dass sie sich unter Druck verteidigen lassen.
 
-Wenn Geschaeftseinheiten um dieselben Kunden konkurrieren oder unterschiedliches Prozess-IP schuetzen, erzeugen gemeinsame Inferenz-Mandanten unnoetige forensische Zweifel nach Leckverdacht.
+Gemeinsamer Tenant kann funktionieren, wenn Datenklassen einheitlich sind, Richtlinien zentralisiert sind, Logging mit starker Tenant-Trennung segmentiert ist und kein Workflow ohne dedizierte Freigabe-Ebene in Produktionssysteme schreibt — verifizieren Sie diese Bedingungen schriftlich, nicht als Annahmen. Wenn Sie sie nicht verifizieren können, sollte Beschaffungsoptimismus Architektur nicht ersetzen.
 
-### Linse 3: Operative und Sicherheitskopplung
+Standort-, Geschäftsbereich- und Workflow-Isolation sind Vertrauensdomänen-Entscheidungen; die Plattform muss Deployments-Formen bieten, die diese Domänen respektieren, ohne einen fragilen globalen Tenant zu erzwingen. Vector unterstützt diese Übung: proprietäre Industrie-KI mit On-Premise-, Private-API- und Isolationsmustern, Ausschluss von Kundendaten aus dem Training des geteilten Modells und industriellem Reasoning für Transformationsarbeit — damit Isolationsentscheidungen auf Architektur landen, nicht auf Consumer-SaaS-Defaults.
 
-Workflows, die physischen Zustand beeinflussen, verdienen haertere Grenzen als PDF-Zusammenfassung.
+Hersteller sollten Isolationsgranularität wie Netzzonen wählen: Grenze an die Vertrauensdomäne anpassen, dann innerhalb der Grenze mit Disziplin skalieren.
 
-## Vergleich: gemeinsamer Mandant vs isolierte Stacks
+## Werks-Checkpoint
 
-| Faktor | Gemeinsamer KI-Mandant | Isoliert pro Standort, GE oder Workflow |
-|---|---|---|
-| Betriebskosten | niedrigere Basis | hoehere Basis |
-| Schadensradius | breiter | enger |
-| Audit-Erzaehlung | unter Stress schwerer | einfachere Eigentumslinien |
-| Vendor-Admin-Zugriff | eine Tuer zu schuetzen | mehrere Tueren, jede kleiner |
+Behandeln Sie „Wann ein Hersteller KI nach Standort, Geschäftsbereich oder Workflow isolieren sollte“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Trainingsrichtlinien-Auszug, Log-Stichprobe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Industrie-KI reift, wenn Evidence Routine wird: dieselbe Disziplin, die Sie bereits vor einem Linien-Release, einem Lieferantenwechsel oder einem großen IT-Cutover erwarten. Das ist der Shift von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent.
 
-## Schrittfolge: Isolationseinheit waehlen
-
-### Schritt 1: Schlimmstes glaubwuerdiges Verlustereignis listen
-
-Datenleck, falsche Aktuierung, Planungskorruption oder Reputationsschaden mit Namenskunde.
-
-### Schritt 2: Kartieren welche Standorte oder Einheiten betroffen waeren
-
-Wenn die Antwort alle sind, Isolation verschaerfen.
-
-### Schritt 3: Vertragliche und policy Verbotsregeln gegen Mischung pruefen
-
-Kundenvertraege und interne Klassifizierungsstandards sind massgeblich.
-
-### Schritt 4: Isolationsentscheidung im Integrationsregister dokumentieren
-
-Erweiterungen sollten Grenzen nicht still zusammenfallen lassen.
-
-## Wann gemeinsamer Mandant noch vertretbar ist
-
-Gemeinsamer Mandant kann funktionieren wenn Datenklassen einheitlich sind, Richtlinien zentralisiert sind, Logging mandantengetaggt mit kryptographischer Trennung erfolgt und kein Workflow ohne dedizierte Freigabe-Ebene in Produktionssysteme schreibt. Diese Bedingungen schriftlich verifizieren.
-
-## Produktbruecke
-
-DBR77 Vector ist die sichere Intelligenzschicht hinter dem DBR77-Oekosystem: proprietaere industrielle KI fuer staerkere Deployments-Grenzen inklusive On-Premise, privater API und isolierter Muster, ohne Kundendaten im Training des gemeinsamen Modells, mit industrieller Argumentation statt generischem Chat.
-
-Isolationsentscheidungen sollten gegen diese Plattformklasse geprueft werden, nicht gegen generische Chat-SaaS-Defaults.
-
-## Abschluss
-
-Hersteller sollten Isolationsgranularitaet wie Netzzonen waehlen. Grenze an Vertrauensdomaene anpassen. Dann innerhalb der Grenze diszipliniert skalieren.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, nehmen Sie diese: Benennen Sie, was wahr sein muss, bevor sich die Nutzung ausweitet, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Komfort mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Sicherheit prüfen](https://dbr77.com/vector) oder [Produkte mit Vector erkunden](https://dbr77.com/demo).*
+*DBR77 Vector unterstützt stärkere Deployments-Grenzen, damit Isolationsentscheidungen auf On-Premise-, Private-API- und isolierte operative Muster über Standorte hinweg abbilden. [Sicherheit prüfen](https://dbr77.com/vector) oder [Produkte mit Vector erkunden](https://dbr77.com/demo).*

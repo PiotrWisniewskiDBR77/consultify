@@ -42,7 +42,7 @@ async function requireTableColumns(tableName: string): Promise<Map<string, unkno
       'TABLE_NOT_CONFIGURED'
     );
   }
-  return cols as Map<string, unknown>;
+  return cols as unknown as Map<string, unknown>;
 }
 
 async function createMyWorkToolSession(params: {

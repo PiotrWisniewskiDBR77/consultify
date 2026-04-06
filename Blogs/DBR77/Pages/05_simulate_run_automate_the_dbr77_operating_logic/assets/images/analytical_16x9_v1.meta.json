@@ -1,0 +1,26 @@
+{
+  "article_path": "Blogs/DBR77/Pages/05_simulate_run_automate_the_dbr77_operating_logic",
+  "product": "DBR77",
+  "scope_type": "page",
+  "asset_slug": "05_simulate_run_automate_the_dbr77_operating_logic",
+  "role": "analytical",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "newsletter"
+  ],
+  "model": "google:imagen-4.0-generate-001",
+  "prompt_source": "Blogs/DBR77/Pages/05_simulate_run_automate_the_dbr77_operating_logic/image-prompts.md",
+  "prompt_text": "Realistic industrial systems tabletop infographic mapping one connected manufacturing operating logic through unlabeled modules, tokens, route continuity, and physical markers rather than written step names or software panels, executive clarity, premium editorial business design, landscape layout, no cartoon icons, no clutter no text, no labels, no numbers, no clutter, no generic charts without industrial context, no decorative UI overload, every module and signal must stay abstract and non-legible Target aspect ratio: 16:9 Critical render rule: do not generate any readable text, letters, numbers, captions, labels, logos, watermarks, slide titles, document copy, dashboard copy, UI text, headline text, wall text, or typographic overlays anywhere in the image. If a screen, board, document, dashboard, scorecard, or interface is visible, it must contain only abstract non-readable blocks, simple shapes, and soft placeholder marks. Never place large title words, marketing slogans, section headers, or composited text for later overlay; leave that area visually quiet and empty instead. Use unlabeled structure, simple shapes, tokens, lanes, connectors, and status cues instead of screenshot-like dashboards or reports. Analytical image rule: avoid screenshot aesthetics, whiteboard snapshots, slide decks, tables with headers, and infographic panels with text. Prefer a premium enterprise visual metaphor built from cards, modules, flows, physical markers, subtle charts without labels, and clean operational structure. Do not label stages directly inside the image; represent system stages through position, grouping, material contrast, and abstract markers only. Google-specific output rule: produce a photorealistic or editorial-realistic business image with no readable text anywhere. Do not place words on walls, tables, screens, reports, dashboards, scorecards, or overlays. Any interface elements must stay abstract, minimal, and completely non-legible. Avoid: generic stock meeting scene, flashy sci-fi, neon overlays, cartoon metaphor, fake futuristic interface",
+  "negative_prompt": "generic stock meeting scene, flashy sci-fi, neon overlays, cartoon metaphor, fake futuristic interface",
+  "seed": "n/a",
+  "run_id": "n/a",
+  "created_at": "2026-03-28T17:50:15.242325+00:00",
+  "alt_text_en": "visualize the DBR77 sequence as one operating logic.",
+  "caption_en": "visualize the DBR77 sequence as one operating logic.",
+  "crop_safe_notes": "Exported 1376×768 (center-cover from generator master) per DBR77 pixel-aspect gate.",
+  "output_path": "Blogs/DBR77/Pages/05_simulate_run_automate_the_dbr77_operating_logic/assets/images/analytical_16x9_v1.png",
+  "generation_notes": {
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | cursor-builtin-generate-image |\n| seed | n/a |\n| steps | n/a |\n| generator_native_px | varied |\n| delivered_px | 1376×768 |\n| post_process | center-cover crop + LANCZOS to 16:9 contract |\n| run | DBR77-Agent3-PaczkaC25-2026-03-31 |"
+  }
+}

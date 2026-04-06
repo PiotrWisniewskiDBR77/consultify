@@ -5,51 +5,57 @@ Funnel stage: Adoption
 Core problem: plants collect everything and keep it forever, or keep nothing and cannot reconstruct a customer complaint week, so audits become panic exports  
 Main promise: a retention map tied to signal class, a traceability chain from machine event to human action, and honest storage boundaries
 
-Retention is not a storage bill problem only. It is a trust and liability boundary. Traceability is how you prove what the line knew and when.
+Retention is where optimism meets liability.
 
-IIoT retention and traceability should look like **classified retention tiers** per signal and product, **immutable or controlled-rewrite logs** for safety and quality critical paths, **linked operator and maintenance actions** where systems allow, and **documented export procedures** that do not depend on one engineer's laptop.
+Collect everything forever and you inflate cost, slow systems, and blur what matters. Keep nothing structured and you cannot reconstruct a difficult week when a customer or auditor asks what the line knew and when. IIoT maturity shows up in whether the plant can answer those questions without heroics.
 
-If you cannot answer "what did we keep, why, and who can change it," you are not ready for scale.
+Retention policy is also a clarity policy: it forces the plant to decide what matters enough to preserve, who may alter records, and how exports work when stress is high.
 
-## Framework: retention tiers (example pattern)
+## Classify before you store
 
-1. **Tier A: safety and regulatory adjacent** Longer retention, stricter access, change control on definitions and thresholds
+Define retention tiers by signal class and product context: what must be immutable or controlled-rewrite for safety and quality critical paths; what supports operational improvement on shorter horizons; what can aggregate after a period; what should never have been ingested. If you cannot explain why a class is retained, you are not ready to widen the funnel.
 
-2. **Tier B: quality and customer traceability** Tied to lot or batch keys where your process uses them, with reconstruction tests
+## Build traceability chains, not islands
 
-3. **Tier C: operational improvement** Shorter retention, focused on constraint assets and CI learning
+Link machine events to operator confirmations, maintenance actions, and overrides where systems allow. The goal is a story a stranger can follow next month: what happened, who saw it, what was done, what changed afterward.
 
-4. **Tier D: exploratory or diagnostic** Shortest retention, clearly labeled non-authoritative for audits Tiers must be **plant-specific**. Copy a vendor default at your own risk.
+## Honest storage and change boundaries
 
-## Checklist: traceability chain minimum
+Decide who can alter or delete, under what approvals, and how backups behave. Panic exports the night before an audit signal missing routine discipline, not a storage problem alone.
 
-- [ ] machine timestamp integrity policy (edge versus server clock rules)
-- [ ] signal dictionary version stamped on exported bundles
-- [ ] override and escalation records retained per tier rules
-- [ ] work-order linkage where CMMS integration exists
-- [ ] named owner for retention policy updates and annual review
+## Practice exports before you need them
 
-## Comparison: hoarding versus disciplined retention
+Run drills that simulate complaint reconstruction. If the drill requires one engineer’s laptop or undocumented queries, fix the procedure before the real event.
 
-| Hoarding | Disciplined retention |
-|---|---|
-| endless cheap storage story | tiered purpose |
-| unclear legal hold path | named procedures |
-| fear-driven keep all | evidence-based keep rules |
-| export heroics | repeatable extract |
+**Retention readiness:** tiers published with owners; traceability path documented; export drills practiced; deletion rules explicit; critical logs treated with change control.
 
-## Governance and standards
+## Run a one-hour reconstruction drill
 
-Connect retention to **standards reviews** the same way you review thresholds.
+Pick a recent difficult week—not the easy one—and ask the team to reconstruct it using only retained records and defined export paths. Time how long it takes and note every workaround (USB sticks, ad hoc queries, screenshots). Those workarounds are your real policy until you replace them with procedures.
 
-When customer or internal rules shift, **reclassify signals** instead of silently stretching databases.
+## DBR77 IoT in regulated reality
 
-Retention classes assume dictionary versions you define in [how to keep IoT signal definitions consistent across shifts](../43_how_to_keep_iot_signal_definitions_consistent_across_shifts/article_EN.md), policy owners fit [what IoT governance should look like after the first year](../42_what_iot_governance_should_look_like_after_the_first_year/article_EN.md), and integration boundaries that affect exports stay honest per [when to integrate IIoT with MES, ERP, and CMMS and when to wait](../22_when_to_integrate_iiot_with_mes_erp_and_cmms_and_when_to_wait/article_EN.md).
+DBR77 IoT supports grown-up programs when retention and traceability are design requirements—evidence categories leadership can review—rather than surprises discovered in infrastructure.
 
-## What this means for DBR77 IoT
+Retention and traceability should be classified, owned, and bounded, with chains from machine events to human actions and routines that survive both calm weeks and difficult ones.
 
-DBR77 IoT carries retention and traceability as first-class settings: tier labels per signal class, export paths that do not depend on one laptop, and audit-facing bundles that stamp dictionary version and clock rules. When those rules are explicit, storage stops being a silent liability.
 
-## Bottom line
 
-Good IIoT is observable in real time and **accountable after the fact**. Build the map before the first serious incident forces you to.
+
+## Keep the article’s promise practical
+
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
+
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT supports IIoT retention and traceability with structured event history, operator context, and governance-friendly evidence categories. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

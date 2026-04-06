@@ -5,53 +5,40 @@ Funnel stage: Decision
 Core problem: teams want a green light, but "good enough" is undefined, so approvals rest on narrative confidence instead of bounded evidence  
 Main promise: a capital-readiness gate that ties simulation quality to decision risk, not to model beauty or animation polish
 
-treat simulation as good enough for capital commitment when the decision set is frozen, inputs carry explicit uncertainty bands, the model structure matches the physical constraints you will actually build, at least two independent stress paths bracket the downside, and a named owner will re-run the standard scenario pack if scope changes before spend. Digital Twin is a scenario-testing environment for de-risking CAPEX before reality changes, not a 3D showcase that substitutes for governance. Capital decisions need a stop rule. Without one, simulation becomes endless refinement theater.
+Treat simulation as good enough for capital commitment when the decision set is frozen, inputs carry explicit uncertainty bands, the model structure matches the physical constraints you will actually build, at least two independent stress paths bracket the downside, and a named owner will re-run the standard scenario pack if scope changes before spend.
 
-## Why "more runs" is the wrong default
+Digital twin is a scenario-testing environment for de-risking CAPEX before reality changes—not a three-dimensional showcase that substitutes for governance. Capital decisions need a stop rule. Without one, simulation becomes endless refinement theater.
 
-Common failure modes: expanding scope mid-cycle without re-baselining assumptions; swapping a constraint in the narrative while the model still encodes the old bottleneck; accepting point estimates when the business case needs ranges; confusing visual fidelity with decision fidelity. A decision system should answer: what breaks first, under which demand and supply stories, with what lead time to recover.
+## Why “more runs” is the wrong default
 
-## Capital-readiness checklist
+Watch for expanding scope mid-cycle without re-baselining assumptions, swapping the constraint in narrative while the model still encodes the old bottleneck, accepting point estimates when the business case needs ranges, or confusing visual fidelity with decision fidelity. A decision system should answer what breaks first, under which demand and supply stories, with what lead time to recover.
 
-- [ ] the option set is closed: you are comparing named alternatives, not discovering new ones in the meeting  
-- [ ] each alternative maps to the same guardrails: service level, safety, quality, regulatory, and staffing rules are explicit  
-- [ ] inputs list source and freshness: cycle times, changeovers, yields, inbound behavior, and labor availability are evidence-backed or labeled illustrative  
-- [ ] structural logic matches intended footprint: travel, storage, routing, and resource pools reflect the CAPEX you would fund  
-- [ ] stress set is agreed: base, peak, delayed ramp, and at least one disruption story everyone accepts as relevant  
-- [ ] ranking is stable under sensitivity: small input moves do not flip the winner without explanation  
-- [ ] post-approval trigger is written: what event forces a partial or full re-simulation before the next tranche
+## Capital-readiness gate
 
-Illustrative inputs can still support a decision if ranges are wide and the winner survives the pessimistic band.
+Close the option set—you compare named alternatives, not discovering new ones in the meeting. Map each alternative to the same guardrails: service, safety, quality, regulatory, and staffing rules explicit. Inputs list source and freshness for cycles, changeovers, yields, inbound behavior, and labor availability—evidence-backed or clearly labeled illustrative. Structural logic matches intended footprint: travel, storage, routing, resource pools reflect the CAPEX you would fund. Stress set is agreed: base, peak, delayed ramp, and at least one disruption story everyone accepts. Ranking stays stable under sensitivity—small input moves do not flip the winner without explanation. Post-approval trigger is written: what event forces partial or full re-simulation before the next tranche. Illustrative inputs can still support a decision if ranges are wide and the winner survives the pessimistic band.
 
-## Comparison: decision-grade versus presentation-grade
+## Decision-grade versus presentation-grade
 
-| Signal | Decision-grade | Presentation-grade |
-|---|---|---|
-| option set | frozen and numbered | open-ended "ideas" |
-| outputs | ranges and ranking rationale | single hero screenshot |
-| stress | standard pack + sensitivity | one sunny base case |
-| ownership | named model owner and finance pairing | anonymous project file |
-| next step | gate memo tied to spend tranche | slide deck only |
+Decision-grade work carries a frozen numbered option set, ranges with ranking rationale, a standard stress pack plus sensitivity, named model owner with finance pairing, and a gate memo tied to spend tranche. Presentation-grade work shows open-ended ideas, single hero screenshots, one sunny base case, anonymous project files, and slide decks without next-step governance.
 
-## Step sequence: lock the gate without freezing learning
+## Lock the gate without freezing learning
 
-**Publish the frozen option brief** with boundaries and excluded ideas; **Run the standard scenario pack** on every surviving option; **Record sensitivity bands** that matter to cash and service; **Write the approval memo** as: recommendation, downside story, kill criteria before next cash release; **Schedule the post-investment review hook** so the model does not die after PO signature.
+Publish the frozen option brief with boundaries and excluded ideas. Run the standard scenario pack on every surviving option. Record sensitivity bands that matter to cash and service. Write the approval memo as recommendation, downside story, and kill criteria before next cash release. Schedule the post-investment review hook so the model does not die after the purchase order.
 
-## What Digital Twin changes here
 
-Digital Twin is a decision system.
+## How this shows up in gate memos and floor conversations
 
-It lets leadership compare CAPEX paths before concrete cures the layout.
+A useful digital twin practice creates continuity between the conference room and the walk-through. Gate memos should read like operational documents: named options, shared shocks, explicit exclusions, and the guardrails that actually bound spend. The floor conversation should echo the same language—where time accumulates, where buffers sit, what changes when inbound wobbles—so engineering detail does not get "translated" into loss on the first busy week.
+
+Layout debates especially need this bridge. Geometry is persuasive on paper; flow is persuasive under stress. When your comparison table includes intralogistics load, constraint migration, and recovery behavior—not only headline rate—you reduce the classic failure mode where the cheapest footprint buys the most fragile Tuesday. Finance should see how timing and working capital move with those choices, not only how the capex ticket compares. That alignment is how scenario work earns a permanent seat at the table instead of a one-time consulting glow.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin supports practical scenario comparison from manual inputs toward richer integration, so capital conversations stay tied to flow and constraint logic rather than static slides. It sits alongside the **CAPEX stage-gates** article for per-gate deliverables, the **act-on-strength** article for the commitment threshold, and the **plausible CAPEX options** article for retiring weak options early.
+DBR77 Digital Twin supports practical scenario comparison from manual inputs toward richer integration so capital conversations stay tied to flow and constraint logic rather than static slides. It sits alongside the CAPEX stage-gates article for per-gate deliverables, the act-on-strength article for commitment threshold, and the plausible CAPEX options article for retiring weak paths early.
 
 ## Bottom line
 
-Good enough for capital is not perfect.
-
-It is bounded, owned, and stress-tested enough that the next dollar has an explicit downside story attached.
+Good enough for capital is not perfect. It is bounded, owned, and stress-tested enough that the next dollar has an explicit downside story attached.
 
 ---
 

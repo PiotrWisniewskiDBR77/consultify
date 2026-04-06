@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Innovation &#8211; HxGN Spotlight</title>
+	<atom:link href="https://blog.hexagon.com/topic/innovation/feed/" rel="self" type="application/rss+xml" />
+	<link>https://blog.hexagon.com</link>
+	<description>Hexagon’s platform for original stories from opinion leaders and customers</description>
+	<lastBuildDate>Thu, 04 Jan 2024 14:53:11 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.1</generator>
+	<item>
+		<title>Hexagon recognitions of 2023: A look at our 14 Gartner® Hype Cycle™ recognitions</title>
+		<link>https://blog.hexagon.com/hexagon-recognitions-of-2023-a-look-at-our-14-gartner-hype-cycle-recognitions/</link>
+		
+		<dc:creator><![CDATA[Heather Tuggle]]></dc:creator>
+		<pubDate>Thu, 04 Jan 2024 14:53:11 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<guid isPermaLink="false">https://blog.hexagon.com/?p=14230</guid>
+
+					<description><![CDATA[In 2023, 14 of the Gartner Hype Cycle reports placed Hexagon as a Sample Vendor in respective technologies. Discover the key highlights from these reports where Hexagon's impact is showcased. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Reporter 91 sneak peek: Right here. Right now. First-person innovation</title>
+		<link>https://blog.hexagon.com/reporter-91-sneak-peek-right-right-now-first-person-innovation/</link>
+		
+		<dc:creator><![CDATA[Burkhard Boeckem]]></dc:creator>
+		<pubDate>Fri, 17 Nov 2023 14:32:12 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[first-person design]]></category>
+		<category><![CDATA[HxDR]]></category>
+		<category><![CDATA[Nexus]]></category>
+		<category><![CDATA[user-centric design]]></category>
+		<guid isPermaLink="false">https://blog.hexagon.com/?p=14218</guid>
+
+					<description><![CDATA[Explore the latest Reporter 91 edition, showcasing cutting-edge trends in surveying, geospatial content and construction. In this article, CTO Burkhard Boeckem reveals how a user-centric design ethos is shaping the industry's future.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>A global HxGN SDx deployment journey</title>
+		<link>https://blog.hexagon.com/global-hxgn-sdx-deployment-journey/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 26 Oct 2023 07:00:06 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Cargill]]></category>
+		<category><![CDATA[HxGN SDx]]></category>
+		<category><![CDATA[ReVisionz]]></category>
+		<guid isPermaLink="false">https://blog.hexagon.com/?p=14193</guid>
+
+					<description><![CDATA[In this podcast, Brian Moura from Hexagon's Asset Lifecycle Intelligence division sits down with Carrie Knight from Cargill and Sharon Wildey from ReVisionz to discuss the successes and challenges of global HxGN SDx enterprise-wide deployment.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>3D technology opens Georgia Aquarium’s window into the world of sharks</title>
+		<link>https://blog.hexagon.com/3d-technology-opens-georgia-aquariums-window-world-sharks/</link>
+		
+		<dc:creator><![CDATA[Katherine Ji]]></dc:creator>
+		<pubDate>Fri, 28 Jul 2023 19:30:00 +0000</pubDate>
+				<category><![CDATA[Blog]]></category>
+		<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[Core]]></category>
+		<category><![CDATA[Georgia Aquarium]]></category>
+		<category><![CDATA[Geosystems]]></category>
+		<category><![CDATA[Leica 3D Disto]]></category>
+		<category><![CDATA[Leica Geosystems]]></category>
+		<category><![CDATA[Point Cloud]]></category>
+		<category><![CDATA[Reynolds Polymer]]></category>
+		<category><![CDATA[Smart Construction]]></category>
+		<category><![CDATA[Visualisation]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=12725</guid>
+
+					<description><![CDATA[A new shark exhibit at the Georgia Aquarium in Atlanta invites guests to experience the wonder of ocean life in ways not possible before, thanks to advanced building and measurement technologies.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Digital Twins: Promoting project performance</title>
+		<link>https://blog.hexagon.com/digital-twins-promoting-project-performance/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 27 Jul 2023 08:00:17 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Autonomous]]></category>
+		<category><![CDATA[Digital Twin]]></category>
+		<category><![CDATA[Smart Industrial Facilities]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=14079</guid>
+
+					<description><![CDATA[Digital twins are increasingly being deployed during the project phases of the facility lifecycle. In the second episode of the podcast series "Digital Twins: The gateway to autonomous industrial facilities", created in partnership with Petroleum Economist, we discuss how the digital twin provides benefits during the project phase.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Kicking off Innovation Day at HxGN LIVE Global 2023</title>
+		<link>https://blog.hexagon.com/kicking-off-innovation-day-hxgn-live-global-2023/</link>
+		
+		<dc:creator><![CDATA[Zach Riggs]]></dc:creator>
+		<pubDate>Wed, 14 Jun 2023 21:55:25 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[HxGN LIVE]]></category>
+		<category><![CDATA[HxGN LIVE 2023]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=14036</guid>
+
+					<description><![CDATA[Hexagon's CTO Burkhard Boeckem began Innovation Day at the event with a powerful technology showcase.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>HxGN LIVE Global 2023 Digital Innovation in Construction sessions: What to expect</title>
+		<link>https://blog.hexagon.com/hxgn-live-global-2023-digital-innovation-construction-sessions-expect/</link>
+		
+		<dc:creator><![CDATA[Zach Riggs]]></dc:creator>
+		<pubDate>Tue, 30 May 2023 17:56:47 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[HxGN LIVE Global 2023]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=14004</guid>
+
+					<description><![CDATA[Get ready for the Digital Innovation in Construction Summit at HxGN LIVE Global 2023!]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Putting data to work: Harnessing technology to unlock actionable insights</title>
+		<link>https://blog.hexagon.com/putting-data-work-harnessing-technology-unlock-actionable-insights/</link>
+		
+		<dc:creator><![CDATA[Zach Riggs]]></dc:creator>
+		<pubDate>Tue, 23 May 2023 15:10:03 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[Digital Innovation in Construction Summit]]></category>
+		<category><![CDATA[HxGN LIVE Global]]></category>
+		<category><![CDATA[HxGN LIVE Global 2023]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13999</guid>
+
+					<description><![CDATA[Explore the advantages of digitally-enabled construction sites with technologies that will feature at HxGN LIVE Global 2023 this June!]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Hexagon&#8217;s News Mash-Up (Q1 2023)</title>
+		<link>https://blog.hexagon.com/hexagons-news-mash-q1-2023/</link>
+		
+		<dc:creator><![CDATA[Zach Riggs]]></dc:creator>
+		<pubDate>Wed, 10 May 2023 18:10:16 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13973</guid>
+
+					<description><![CDATA[Check out Hexagon's latest News Mash-Up video covering the first quarter of 2023.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Hexagon Headlines: 6 engaging stories to explore</title>
+		<link>https://blog.hexagon.com/hexagon-headlines-6-engaging-stories-explore/</link>
+		
+		<dc:creator><![CDATA[Zach Riggs]]></dc:creator>
+		<pubDate>Fri, 05 May 2023 20:22:38 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13971</guid>
+
+					<description><![CDATA[Discover new product launches in preparation for HxGN LIVE Global 2023 along with stories about how our technology is being used around the world.]]></description>
+		
+		
+		
+			</item>
+	</channel>
+</rss>

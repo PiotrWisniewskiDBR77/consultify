@@ -7,55 +7,53 @@ Main promise: a confirmation workflow: live signals plus a short physical check 
 
 IoT does not replace walking the line. It shortens the argument about what is true right now.
 
-Fast confirmation is a team habit backed by signal quality, not a feature toggle.
+Fast confirmation is a habit: signal quality plus a disciplined physical check plus a time box for declaring an outcome. Without the outcome step, people fight the screen instead of fixing the line.
 
-Use IoT to confirm problems faster by pairing **one live signal bundle** with a **three-step physical check** and a **time box** for the decision.
+In the heat of a stop, the room splits. One voice insists the machine is fine; another insists the data proves otherwise; a third remembers a similar Tuesday that turned out to be material, not mechanical. Minutes burn while production waits. IoT’s value in that moment is not to win an argument—it is to force a short, repeatable path to a declared truth everyone will act on.
 
-Typical sequence: Pull the last stable window and the current window for the same signal family; Run the agreed physical checks that operators trust for that asset class; Record confirmed versus not confirmed with a reason code, even if the reason is "sensor suspect". If you skip step three, you train people to fight the screen.
+## Run a tight sequence
 
-## Corroboration rules that work in brownfield
+Pull the last stable window and the current window for the same signal family so everyone references the same story. Run the agreed physical checks operators trust for that asset class—lubrication, tooling, material condition, interlocks, whatever your plant already treats as credible. Record confirmed or not confirmed with a reason, including “sensor suspect” when honesty demands it. Skipping the record trains the organization to debate indefinitely.
 
-Brownfield means distrust is rational until proven otherwise.
+## Corroboration rules for brownfield
 
-| Rule | Purpose |
-|---|---|
-| two-signal agreement for interrupt-class claims | reduces single-point lies |
-| physical check for stop-class claims | anchors reality |
-| photo or gauge reading optional where policy allows | creates audit-friendly evidence |
+Require a second hint—another sensor, a quality sample, or a repeat pattern—before high-cost actions when single-point spikes are common. Pair IoT with the checks your plant already respects; do not invent exotic rituals nobody will run under pressure.
 
-Keep rules simple enough for night shift.
+## Confirmation versus opinion loops
 
-## Comparison: opinion loop versus confirmation loop
+Opinion loops recycle stories. Confirmation loops end with a named state: verified problem, verified false alarm, or sensor fault path. That closure is what frees labor to act.
 
-| Opinion loop | Confirmation loop |
-|---|---|
-| long discussion | short checklist |
-| blame between functions | shared evidence object |
-| delayed run decision | bounded time box |
-| IoT feels political | IoT feels operational |
+**Respectable confirmation:** time box for the decision; physical checklist published; outcomes always logged; sensor suspect path is blame-free.
 
-## Checklist: make confirmation respectable
+Planning should treat confirmation as part of cycle time, not as extra overhead to squeeze later.
 
-- [ ] operators helped write the physical check list
-- [ ] supervisors protect the time box; escalation follows if it expires
-- [ ] maintenance joins only after confirmation or when safety demands
-- [ ] standards cited when quality or safety gates apply
-- [ ] bad confirmations get reviewed like near misses, without personal attacks
+## Close the loop after confirmation
 
-## Planning note
+When an event is marked “sensor suspect,” follow with a tuning ticket and visible closure. When it is “confirmed fault,” tie the record to the work order or escalation path immediately. Unclosed outcomes teach people that confirmation is theater.
 
-Confirmation is about **now**. Planning uses confirmed events later in the week. Do not mix the two conversations in the same ten minutes.
+## DBR77 IoT on the line
 
-Confirmation is easier when distrust is handled openly in [what to do when operators do not trust IoT signals yet](../27_what_to_do_when_operators_do_not_trust_iot_signals_yet/article_EN.md), action gates stay clear in [what machine data should trigger action and what should not](../23_what_machine_data_should_trigger_action_and_what_should_not/article_EN.md), and planners only consume confirmed events per [when real-time visibility should change the production plan](../40_when_real_time_visibility_should_change_the_production_plan/article_EN.md).
+DBR77 IoT supports faster confirmation when live bundles, operator context, and escalation tie to a short, repeatable verify-and-record habit—not raw alerts alone.
 
-## What this means for DBR77 IoT
+Use IoT to end arguments: compare windows, run trusted checks, record confirmed or not confirmed. Speed comes from closure, not from more streams.
 
-DBR77 IoT should surface the live signal bundle and a short audit trail at the asset so the shift can close confirmed versus not confirmed inside the time box, with escalation when the clock runs out.
 
-Older machines join the same habit when connectivity is honest about gaps instead of pretending remote-only truth.
 
-## Bottom line
 
-Faster confirmation is **signals plus trusted physical checks plus a time box**.
+## Keep the article’s promise practical
 
-IoT earns floor credibility when it ends arguments, not when it starts them.
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
+
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT helps the shop floor confirm problems faster with live signals, operator context, and disciplined verify-and-record workflows. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

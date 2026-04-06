@@ -1,70 +1,38 @@
-# Wann ein Werk einen operativen Arbitrator fuer widerspruechliche Signale braucht
+# Wann ein Werk einen operativen Schiedsrichter für widersprüchliche Signale braucht
 
-Target persona: Werksleiter / Director Operations / Chief Engineer  
-Funnel stage: Decision  
-Core problem: Produktion, Qualitaet, Instandhaltung und Logistik erhalten plausibel KI-rankte Prioritaeten, sodass die Flaeche auf informelle Verhandlung wartet statt auszufuehren  
-Main promise: klare Kriterien fuer eine einzelne Arbitrator-Rolle, Entscheidungsrechte, Zeitlimits und wie Overrides ohne Follow-through-Bruch protokolliert werden
+Zielpersona: Plant Manager / Operations Director / Chief Engineer  
+Funnel-Stufe: Decision  
+Kernproblem: Produktion, Qualität, Instandhaltung und Logistik erhalten jeweils plausible KI-gerankte Prioritäten—die Fläche wartet auf informelle Verhandlung statt auszuführen  
+Hauptversprechen: Klare Kriterien für eine einzelne Schiedsrichter-Rolle, Entscheidungsrechte, Zeitlimits und wie der Schiedsrichter Overrides protokolliert, ohne Follow-through zu brechen
 
-Sie brauchen einen operativen Arbitrator, wenn widerspruechliche Signale parallele dringende Aufgaben mit inkompatiblen Ownern erzeugen, wiederholte Eskalationen steigen und messbarer Durchsatz waehrend Debatten verloren geht. Der Arbitrator ist nicht ein zweiter Chef fuer jeden Fall; er entscheidet Patt-Situationen in einem veroeffentlichten Workflow-Scope, in Timeboxes, und schreibt immer einen kurzen Decision-Record mit Link zu den Signalen. Wenn Sie nachts keinen Arbitrator benennen koennen, haben Sie keine Arbitration, sondern Politik. Widerspruechliche Signale sind in komplexen Werken normal. Unbegrenzte Debatte nicht.
+Widersprüchliche Signale sind in komplexen Werken normal. Unbounded Debate nicht. Sie brauchen einen operativen Schiedsrichter, wenn parallele dringende Tasks um knappe Ressourcen kollidieren, SLA-Uhren resetten, weil Ownership springt, benachbarte Schichten Assistenz gegensätzlich überschreiben und Morgenmeetings denselben Kampf ohne versioniertes Outcome wiederholen. Der Schiedsrichter ist nicht ein zweiter Chef für jeden Fall. Er bricht Patt in veröffentlichtem Scope, in Time-Boxes und schreibt immer einen kurzen Decision Record mit Anbindung an die zugrunde liegenden Signale. Können Sie den Schiedsrichter auf Nachtschicht nicht benennen, haben Sie Politik—keinen Schiedsrichter.
 
-## Signale, dass Sie jenseits "gesunder Spannung" sind
+Die Rolle funktioniert nur, wenn sie nicht zur dauerhaften Eskalationsstufe wird: wiederkehrende Konflikte derselben Art sind ein Hinweis auf fehlende Schwellen, nicht auf fehlende Autorität. Nutzen Sie Decision Records deshalb auch als Input für Schwellen-Reviews — sonst „löst“ der Schiedsrichter wöchentlich dasselbe Problem neu.
 
-Beobachten Sie diese Muster woechentlich: zwei Funktionen oeffnen konkurrierende Workorders um dieselbe knappe Ressource; SLA-Uhren resetten, weil Ownership springt; Vorgesetzte ueberschreiben Assistenz gegensaetzlich in benachbarten Schichten; Morgenmeetings wiederholen denselben Konflikt ohne versioniertes Ergebnis.
+Der Schiedsrichter besitzt Tie-Break-Priorität zwischen veröffentlichten Workflows, time-boxed Calls bei Ressourcenkonflikten, Veröffentlichung von Decision Records mit Rationale und formale Schwellen-Edits anfordern, wenn Muster wiederkehren. Er schreibt Engineering-Standards nicht allein um, umgeht Safety- oder Quality-Holds ohne Policy-Change nicht, besitzt nicht jede Routine-Zuweisung und ersetzt keine Linienaufsicht. Er beendet Patt; er absorbiert keine Accountability für Execution.
 
-Wenn drei oder mehr zusammen auftreten, fuehren Sie ein Arbitrator-Modell ein.
+Stellen Sie Schiedsverfahren schnell mit operativer Disziplin auf: Top-Konflikt-Themen des letzten Monats listen, Workflows und Signale mappen, Scope nach Linie und Schichtmuster veröffentlichen, primären und Deputy-Schiedsrichter benennen, maximale Zeit vor Default-Safe-Action definieren, kurzes Decision Log mit Signal-IDs und Ownern verlangen und Arbitration monatlich reviewen—hohes Volumen bedeutet meist schlechte Schwellen, keine schlechten Menschen.
 
-## Framework: was der Arbitrator besitzt und was nicht
+Rotierende Komitees fühlen sich bequem; benannte Schiedsrichter erhalten Durchsatz. Komitees planen Meetings. Schiedsrichter laufen Uhren. Audit-Trails zerstreuen sich in Komiteen; sie konzentrieren sich in einem Decision Stream. Nacht-Coverage scheitert in Komitees öfter; sie gelingt mit geplanten Deputies.
 
-| Besitzt | Besitzt nicht |
-|---|---|
-| Tie-Break-Prioritaet zwischen veroeffentlichten Workflows | alleiniges Umschreiben von Engineering-Standards |
-| zeitlich begrenzter Call bei Ressourcenkonflikten | Umgehen von Safety- oder Quality-Holds ohne Policy-Change |
-| Veroeffentlichung eines Decision-Records mit Begruendung | Ownership fuer jede Routine-Zuweisung |
-| Anforderung von Schwellen- oder Policy-Edits bei wiederholten Mustern | Ersatz fuer Linien-Vorgesetzte |
+Decision Records brauchen nicht verhandelbare Felder: Conflict-ID mit Quellen, gewählte Prioritätsreihenfolge mit Wirksamkeitsfenster, verschobene Work Items mit neuen Ownern und Fristen, Flag wenn Policy-Change nötig, und Rollen-Stempel nach Werkregeln. Leere Felder garantieren, dass die nächste Schicht den Kampf wieder öffnet.
 
-Der Arbitrator bricht Patt, nicht die Verantwortung fuer Ausfuehrung.
+Ein einzelner Schiedsrichter ist falsch, wenn Konflikte selten und lokal sind, wenn Root Cause Definitions-Drift ist oder wenn ein Linienvorgesetzter die Rolle schon glaubwürdig spielt.
 
-## Schrittfolge: Arbitration in einer Woche aufstellen
+IRIS macht Arbitration operativ, wenn konkurrierende Prioritäten, resultierende Tasks und Decision Logs Execution State teilen—Tie-Breaks werden durable Records statt Foliennotizen.
 
-Top-5-Konfliktthemen der letzten 30 Tage listen; Workflows und Signale mappen, die sie speisen; Arbitrations-Scope veroeffentlichen: Linien, Schichten, Entscheidungstypen; Primary- und Deputy-Arbitratoren pro Schichtmuster benennen; maximale Zeit bis eine Default-Safe-Action ausloest; Pflicht: ein Absatz Decision-Log mit Signal-IDs und Ownern; Arbitrations-Volumen monatlich reviewen; hohes Volumen bedeutet schlechte Schwellen.
+Zu Governance und Priorisierung siehe [Wie man KI-Entscheidungen über Schichten und Funktionen hinweg regiert](../37_how_to_govern_ai_decisions_across_shifts_and_functions/article_DE.md), [Wie KI Werksissues funktionsübergreifend priorisieren kann](../28_how_ai_can_prioritize_factory_issues_across_functions/article_DE.md) und [Wie man ein Exception-Handling-Modell für KI-unterstützte Operations entwirft](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_DE.md).
 
-## Vergleich: rotierendes Komitee versus benannter Arbitrator
+Schiedsverfahren soll sich langweilig anfühlen, wenn es funktioniert: kurze Decision Notes, klare Deferrals, Timer absichtlich reset, weniger Repeat-Argumente im Morgenmeeting. Fühlt sich Arbitration dramatisch an, fehlt meist eine Schwelle, ein Owner oder eine Policy-Lücke als Persönlichkeitskonflikt verkleidet. Der Schiedsrichter macht Lücken sichtbar—er wird nicht der permanente Held, der denselben Fight wöchentlich löst.
 
-| Element | Rotierendes Komitee | Benannter Arbitrator |
-|---|---|---|
-| Geschwindigkeit | meeting-getrieben | clock-getrieben |
-| Audit-Trail | verstreute Notizen | ein Entscheidungsstrom |
-| Accountability | diffus | explizit |
-| Nacht-Coverage | oft fehlend | geplante Deputies |
+Gute Arbitration schützt Vorgesetzte auch davor, informelle Richter zu werden. Ohne veröffentlichten Mechanismus landet Tie-Break-Autorität leise bei dem Lautesten oder Seniorsten im Raum. Das frisst mit der Zeit. Eine benannte Schiedsrichter-Rolle geht nicht darum, eine Person zu erheben; es geht darum, Konfliktlösung zu einem Service mit Uhr, Record und Feedback in Schwellen zu machen.
 
-Komitees bewahren Komfort. Arbitratoren bewahren Durchsatz.
+Arbitration ist ein Service Level für Konflikt, kein Persönlichkeitswettbewerb. Benennen, time-boxen, protokollieren und messen, wie oft derselbe Konflikt zurückkommt.
 
-## Checkliste: Decision-Record-Felder (nicht verhandelbar)
+## Operatives Fazit
 
-- Konflikt-ID, die beide Signalquellen verbindet  
-- gewaehlte Prioritaetsreihenfolge mit Wirksamkeitsfenster  
-- zurueckgestellte Arbeitspakete mit neuen Ownern und Faelligkeiten  
-- ob Schwellen oder Policies ein formales Change-Ticket brauchen  
-- Signatur oder Rollenstempel nach Werkregeln
-
-Leere Felder bedeuten: die naechste Schicht oeffnet den Streit neu.
-
-## Wann ein einzelner Arbitrator falsch ist
-
-Konflikte sind selten und lokal; nutzen Sie stattdessen Linien-Ownership; Ursache sind schlechte Daten-Definitionen; fixen Sie Definitionen vor Rollen; das Werk ist Einlinie mit einem Vorgesetzten; der Vorgesetzte ist bereits Arbitrator.
-
-## Warum IRIS Arbitration operativ statt verbal macht
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Wenn Prioritaeten, Tasks und Decision-Logs ein System teilen, wird Arbitration kein Meeting-Summary, sondern ein haltbarer Ausfuehrungszustand.
-
-## Fazit
-
-Arbitration ist ein Service-Level fuer Konflikt, kein Persoenlichkeitswettbewerb.
-
-Benennen, time-boxen, protokollieren und messen, wie oft derselbe Konflikt zurueckkommt.
+Das Versprechen dieses Artikels—klare Kriterien für eine einzelne Schiedsrichter-Rolle, Entscheidungsrechte, Zeitlimits und wie Overrides ohne Follow-through-Bruch protokolliert werden—wird erst operativ, wenn es die Art ändert, wie Arbeit fließt: klarere Ownership, schnellere erste Zuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „Wann ein Werk einen operativen Schiedsrichter für widersprüchliche Signale braucht“ ist das der Akzeptanztest: Die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS hält Prioritäten, Tasks und Decision Logs in einem Execution Layer, damit Arbitration durable State produziert, keine Foliennotizen. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

@@ -1,63 +1,54 @@
-# Wann der bestehende Lieferant das naechste Automatisierungsprojekt nicht gewinnen sollte
+# Wann ein amtierender Lieferant das nächste Automatisierungsprojekt nicht gewinnen sollte
 
-Target persona: Sponsor / Executive Steering und Integrator-Governance  
-Funnel stage: Evaluation bis Decision (Award-Logik und strategische Kontrolle)  
-Core problem: Traegheit der Beziehung und Wechselkostenangst machen Repeat-Buying zu Default-Single-Sourcing ohne frische Vergleichbarkeit  
-Main promise: explizite, sachliche Kriterien, wann der Incumbent-Pfad fuer den neuen Scope unsicher ist
+Zielpersona: Sponsor / Führungssteuerung und Integrator-Governance  
+Funnel-Stufe: Von Bewertung zu Entscheidung (Vergabelogik und strategische Kontrolle)  
+Kernproblem: Beziehungsträgheit und Wechselkostenangst machen Repeat-Buying zu Default-Single-Sourcing ohne frische Vergleichbarkeit  
+Hauptversprechen: explizite, nicht-emotionale Kriterien, wann der Incumbent-Pfad für den nächsten Scope unsicher ist
 
-Loyalitaet ist keine Beschaffungsstrategie.
+Komfort ist verführerisch. Sie kennen das Team, die Telefonnummern und die Macken ihrer Dokumentation. Diese Vertrautheit kann Kompetenz sein – oder Trägheit in der Maske von Klugheit. Incumbents gewinnen das nächste Projekt per Default, wenn Wechselkostenangst, politische Bequemlichkeit oder „sie kennen unser Werk“ frische Vergleichbarkeit kurzschließt. Manchmal ist das rational. Manchmal sperrt es Sie in einen Pfad, der nicht mehr zu Scope, Risikoprofil oder der Leistungslatte passt, die Sie jetzt brauchen.
 
-Sie ist ein Gefuehl, das gegen Ergebnisse, Schnittstellen und Risiko-Ownership getestet werden sollte. Der Incumbent verdient oft das naechste Projekt. Manchmal kauft das Werk Kontinuitaet eines Problems.
+Ziel ist eine dokumentierte Entscheidung, kein Reflex.
 
-Der bestehende Lieferant sollte das naechste Automatisierungsprojekt nicht gewinnen, wenn Vergleichbarkeit schwaechere Evidenz fuer den neuen Scope zeigt, wenn Governance- oder Liefermuster aus frueherer Arbeit nicht timebox-faehig reparierbar sind, wenn Interessenkonflikt oder Abhaengigkeitsrisiko material ist, oder wenn interne Ausrichtung einen sauberen Vergleichsrecord fuer Rechenschaft braucht. Komfort ersetzt keinen Entscheidungsrecord.
+## Wann der Incumbent-Pfad unsicher ist
 
-## Signal 1: der neue Scope ist keine Wiederholung des alten Wins
+Geben Sie das Feld neu aus, wenn der neue Scope ihre bewiesene Grenze überschreitet, wenn die Leistung bei früherer Arbeit akzeptabel, aber nicht wiederholbar war, wenn Annahmen aus dem letzten Projekt nicht mehr gelten, wenn kommerzielles oder Change-Verhalten versteckte Kosten erzeugt hat, wenn Technologie weiter ist und das Incumbent-Modell schlecht passt, oder wenn Governance einen Nachweis verlangt, dass das enge Feld noch gerechtfertigt ist. Keines dieser Urteile braucht Drama – nur Ehrlichkeit.
 
-Illustrative Mismatches: anderes Produktmix oder Ruestintensitaet; neue regulatorische oder Kunden-Rueckverfolgbarkeitsanforderungen; andere Schnittstellen-Owner nach IT- oder MES-Wechsel.
+## Trägheit als Strategie verkleidet
 
-Wenn Incumbent-Vorteil Erinnerung an die alte Linie ist, fordern Sie Nachweis gegen die neue Done-Definition.
+Achten Sie auf Sprache, die Vergleich vermeidet: „mit denen geht es schneller“, „Wechsel ist riskant“, „die verstehen uns schon“. Diese Aussagen können wahr sein. Sie brauchen Evidenz zu diesem Scope, nicht zur Erinnerung.
 
-## Signal 2: fruehere Lieferung zeigte ein Muster, keinen Vorfall
+## Proof-Disziplin bei Repeat-Awards
 
-Unterscheiden Sie eine schlechte Woche von wiederholtem Muster (illustrative Kategorien):
+Wenn Sie das Feld engen, dokumentieren Sie, warum Alternativen nicht glaubwürdig sind, welche Kriterien andere zugelassen hätten und wie die kommerzielle Struktur getestet wurde. Beziehungsgeschichte ist Input, kein Urteil.
 
-| Mustertyp | Beispiel | warum es naechste Vergabe bedroht |
-| --- | --- | --- |
-| Zeitplanrealismus | chronisches Rutschen bei werksseitigen Abhaengigkeiten | deutet auf Planungsmodell-Mismatch |
-| Aenderungsdisziplin | haeufiger informeller Scope-Drift | schwache Baseline-Hygiene uebertraegt sich |
-| Inbetriebnahme-Reibung | Akzeptanzstreit wiederholt sich | Akzeptanzobjekte moegen noch vage sein |
-| Support nach Go-Live | langsame Reaktion unter Ausfalldruck | Betriebsrisiko bleibt |
+## Vergleichbarkeit zählt weiter
 
-Muster verdienen strukturierten Vergleich, keine Flur-Verlaengerung.
+Selbst freundliche Erneuerungen sollten dieselben Scope-, Annahmen- und Risikofragen beantworten wie ein Kaltstart. Sonst erneuern Sie nicht – Sie driften.
 
-## Signal 3: kommerzielle oder IP-Haltung blockiert Inspectability
+## Wie DBR77 Marketplace hilft
 
-Illustrative Red Flags:
+Dieselbe Vergleichsstruktur für Incumbents und Herausforderer zwingt Erneuerung zu einer dokumentierten Entscheidung – mit sichtbaren Annahmen und verteidigbarer Vergabelogik – statt zu Gravitation.
 
-- undurchsichtiges Subunternehmertum ohne Accountability-Mapping
-- Restriktionen, die Wiederverwendung von Randbedingungen in einem Wettbewerbsbrief verhindern
-- Preise, die nicht auf Akzeptanzobjekte mapbar sind
+Nächste Sourcing-Pfad-Nachbarn: [Wie man Automatisierungs-Lieferantenreferenzen prüft, ohne Zeit zu verschwenden](../23_how_to_check_automation_supplier_references_without_wasting_time/article_DE.md), [Wann man eine Shortlist nutzt und wann man mehr Lieferanten im Spiel hält](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_DE.md) und [Wann Single Sourcing klüger ist als ein voller Lieferanten-Beauty-Contest](../27_when_single_sourcing_is_smarter_than_running_a_full_supplier_beauty_contest/article_DE.md).
 
-Wenn Sie nicht vergleichen koennen, koennen Sie die Vergabe intern nicht verteidigen.
+## Beziehungskapital ist real – und erschöpfbar
 
-## Signal 4: interne Stakeholder fehlt Vertrauen in geschlossene Verlaengerung
+Lange Partnerschaften können Assets sein: Vertrauen, Kurzsprache, bekannte Macken. Sie können auch blinde Flecken schaffen: ungefragte Annahmen, tolerierte schwache Dokumentation oder kommerzielle Muster, die zu neuem Scope nicht passen. Die Frage beim nächsten Award ist nicht, ob die Beziehung existiert, sondern ob sie das Outcome verdient, das Sie jetzt brauchen.
 
-Wenn Operations, Qualitaet oder IT-Leadership keine kurze schriftliche Begruendung signieren, warum Verlaengerung geringstes Risiko ist, werten Sie das als Signal. Erzwungene Einigkeit ohne Evidenz erzeugt Post-Award-Blame-Routing.
+Ein respektvoller Incumbent-Verlust ist möglich, wenn der Record fairen Vergleich und einen verteidigbaren Grund zeigt, warum ein anderer Pfad zur neuen Geometrie passt. Das wahrt Integrität für künftige Zusammenarbeit, ohne den Brunnen mit Politik zu vergiften.
 
-## Begrenztes Entscheidungsprotokoll
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Nutzen Sie ein einfaches Gate (illustrativ): neuen Scope und Akzeptanzobjekte veroeffentlichen; Incumbent verlangen, in denselben strukturierten Feldern wie Herausforderer zu antworten; Referenz- und Lieferreview gegen Muster-Checkliste fahren; entscheiden: Incumbent vergeben, Vergleich erweitern, oder Scope pausieren.
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Wann ein bestehender Lieferant das nächste Automatisierungsprojekt nicht gewinnen sollte“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-## Was das fuer DBR77 Marketplace bedeutet
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
 
-DBR77 Marketplace ist Workflow fuer Automatisierungsentscheidungen und Vertrauensschicht fuer Integratorenauswahl. Incumbent-Disziplin passt: gleiche Felder, gleicher Evidenzstandard, gleiche Vergleichbarkeit. Marketplace ist kein Roboterkatalog.
-
-Es ist ein herstellernahes System, Sourcing-Chaos zu reduzieren und Award-Logik inspectable zu machen.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
 ## Fazit
 
-Erneuern Sie den Incumbent, wenn der Entscheidungsrecord es fuer den neuen Scope traegt. Defaulten Sie den Incumbent, wenn Sie Vergleichsarbeit vermeiden.
+Incumbents sollten gewinnen, wenn sie es auf Basis dieses Scopes verdienen – nicht, weil Vergleich unbequem wirkte. Schreiben Sie die Kriterien, fahren Sie dieselben Felder und entscheiden Sie wie Owner.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace erzwingt dieselbe Vergleichsstruktur für Incumbents und Herausforderer, damit Erneuerung eine dokumentierte Entscheidung ist, nicht Trägheit als Strategie. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

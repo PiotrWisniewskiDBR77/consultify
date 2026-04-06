@@ -1,70 +1,60 @@
-# Welches Change-Order-Risiko Sie pruefen sollten, bevor ein Automatisierungsprojekt startet
+# Welches Change-Order-Risiko man prüfen sollte, bevor ein Automatisierungsprojekt startet
 
-Target persona: Einkaufslead / rechtliche und technische Freigeber  
-Funnel stage: Decision (Vertrags- und Baseline-Disziplin)  
-Core problem: Teams unterschreiben optimistische Baselines und kaempfen dann darueber, was eine Aenderung ist, wer zahlt und ob Zeitplanverschiebungen entschuldigt sind  
-Main promise: eine Change-Order-Risikokarte vor Start entlang Scope-Schnittstellen, Annahmen, Zugang und latenter Maengel
+Zielpersona: Beschaffungsleitung / rechtliche und technische Freigeber  
+Funnel-Stufe: Entscheidungsphase (Vertrags- und Baseline-Disziplin)  
+Kernproblem: Teams unterschreiben optimistische Baselines und kämpfen dann darüber, was als Änderung zählt, wer zahlt und ob Planverschiebungen entschuldbar sind  
+Hauptversprechen: eine Pre-Start-Change-Order-Risikokarte, gebunden an Scope-Schnittstellen, Annahmen, Zugang und latente Defekte
 
-Change Orders sind keine Ueberraschungen. Sie sind die vorhersagbare Folge unklarer Baselines.
+Change Orders folgen fehlenden Baselines. Waren Scope-Schnittstellen in der Evaluation unscharf, werden sie in der Integration zu Rechnungen. Wurden Annahmen nie verifiziert, waren „Überraschungen“ vorhersehbar. Hatten Werks-Readiness-Aufgaben keine Owner, werden Verzögerungen zu Force-majeure-Debatten, die eigentlich vergessene Voraussetzungen sind.
 
-Wenn Sie Change-Klauseln erst beim ersten Streit lesen, haben Sie das teure Forum gewaehlt.
+Prüfen Sie vier Schienen, bevor Sie Installation freigeben: eingefrorene Scope-Grenze gegen das bewertete Angebot; explizite Annahmenliste mit Verify-by-Dates und Ownern; Werksabhängigkeiten im Kalender mit benannter Accountability; Change-Regeln, die sagen, wie Anfragen, Preise und Freigaben laufen, wenn die Realität abweicht.
 
-Validieren Sie vor Start Change-Order-Risiko entlang vier Schienen: schriftlicher Scope-Baseline, benannte Annahmen mit Falsifikationsregeln, vom Werk besessene Zugangs- und Abhaengigkeitsfenster und kommerzielle Mechaniken, die Unbekanntes bepreisen ohne Zeitplanverantwortung zu kollabieren.
+## Schnittstellen sind das übliche Schlachtfeld
 
-Fehlt eine Schiene, steigt Change-Volumen und Vergabe-Logik haette die Unsicherheit anders abbilden sollen.
+Mechanische, elektrische, Steuerungs-, IT- und Sicherheitsübergaben sollten Owner haben, nicht impliziert sein. Grauzonen sind, wo Change Orders gedeihen.
 
-## Schiene 1: Scope-Baseline ist bidirektional
+## Zugang und Site-Realität
 
-Sie brauchen Inklusiven und Exklusiven, auf die beide Seiten referenzieren. Checkliste (illustrativ):
+Leistung, Platz, Netzpfade, Hebelogistik und Produktionsfenster beeinflussen, was Integratoren wann tun können. Sind Zugangsannahmen falsch, folgen Planungskämpfe – auch wenn niemand täuschen wollte.
 
-- [ ] Lieferliste mappt auf Akzeptanzobjekte
-- [ ] Exklusiven benennen Supply, Bau, IT und Schulungsgrenzen
-- [ ] Schnittstellen-Ownership ist pro Handshake-Punkt explizit
+## Latente Defekte in der Baseline
 
-Schwache Baselines erzeugen "nicht in meinem Angebot" Debatten.
+Manchmal ist das „bestehende System“ nicht so verstanden, wie Folien behaupteten. Baseline-Verifikation gehört vor die Mobilisierung, nicht als entdeckende Aktivität mit Rechnung in Projektmitte.
 
-## Schiene 2: Annahmen sind falsifizierbar und bepreist
+## Eskalation vor Emotionen
 
-Annahmen ohne Konsequenzen sind Dekoration.
+Vereinbaren Sie Schwellen: wann Kosten- oder Planbewegung ein Executive Review auslöst, wie Evidenz präsentiert wird und wer was freigibt. Ruhige Mechanik schlägt Flurverhandlungen neben einer laufenden Linie.
 
-Bestaetigen Sie, dass der Vertrag regelt: was passiert, wenn eine Annahme falsch ist; wer wann verifiziert; ob Preis und Zeit neu geoeffnet oder begrenzt werden.
+## Praktischer einstündiger interner Review
 
-## Schiene 3: werkskontrollierte Abhaengigkeiten haben Owner und Daten
+Baseline-Scope laut gegen das bewertete Angebot lesen; Top-Annahmen listen und Verify-Daten markieren; Owner für Werksabhängigkeiten mit Kalender-Holds zuweisen; Eskalation bei Schwellenüberschreitung bestätigen. Kleine Disziplin, große Einsparungen.
 
-Illustrative werksseitige Risiken: Bodenbereitschaft und Medienverfuegbarkeit; Credential-Ausgabe und Netzsegmente; Materialversorgung fuer FAT- oder SAT-Analogien; Personal fuer Parallel-Lauf oder Cutover-Support.
+## Bezug zum DBR77 Marketplace
 
-Ohne Plan mit Namen werden Integratoren Wirkung plausibel geltend machen.
+Wenn Baselines und Annahmen vom Vergleich bis zum Vertrag sichtbar bleiben, klassifizieren Post-Award-Änderungen gegen das, was Sie bereits entschieden haben – statt alte Mehrdeutigkeit unter neuer Rechnungsnummer neu zu verhandeln.
 
-## Schiene 4: kommerzielle Mechanik passt zur echten Unsicherheit
+Nächste Kontroll-Nachbarn: [Was vor der Unterzeichnung eines Automatisierungsvertrags zu prüfen ist](../20_what_to_check_before_signing_an_automation_contract/article_DE.md), [Wann man eine Automatisierungsentscheidung vor der Unterzeichnung wieder öffnen sollte](../32_when_to_reopen_an_automation_decision_before_signing/article_DE.md) und [Wie eine saubere Übergabe von Auswahl zu Lieferung aussehen sollte](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_DE.md).
 
-Vergleichen Sie zwei Haltungen (illustrativ):
+## Change Orders als Information
 
-| Haltung | passt wenn | Change-Risiko |
-| --- | --- | --- |
-| Festpreis auf eingefrorener Basis | geringe Schnittstellen-Volatilitaet, starke Discovery | niedriger wenn Basis real |
-| Zielpreis mit definierten Allowances | messbare Unbekannte bleiben | mittel; braucht Steuerung |
-| Zeit und Material mit Caps | hoher Lernanteil | hoeher; braucht enge Scope-Guards |
+Ein früher Anstieg von Change-Traffic ist oft diagnostisch: unklarer Scope, instabile Annahmen oder schwache interne Readiness. Nehmen Sie Muster ernst. Ziel ist nicht null Änderungen – echte Projekte lernen – sondern vorhersehbare Mechanik und ehrliche Klassifikation, damit Leadership Realität sieht.
 
-Passungsfehler zwischen Haltung und Realitaet ist eine Change-Order-Fabrik.
+Führen Sie ein laufendes Log von Change-Themen. Themen zeigen, wo die Basis schwach war und wo das Briefing des nächsten Projekts besser werden sollte.
 
-## Begrenztes Protokoll vor Kickoff
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Fahren Sie eine einstuendige interne Review (illustrativ): Scope-Baseline laut gegen evaluiertes Angebot lesen; Top-ten Annahmen listen und Verifikationsdaten markieren; Owner fuer Werk-Abhaengigkeiten mit Kalender-Holds zuweisen; Eskalationspfad vereinbaren, wenn Aenderung Kosten- oder Zeitplanschwelle kreuzt.
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Welches Change-Order-Risiko man prüfen sollte, bevor ein Automatisierungsprojekt startet“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-## Was das fuer DBR77 Marketplace bedeutet
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
 
-DBR77 Marketplace soll Automatisierungseinkauf inspectable machen: Workflow, Vertrauen und vergleichbare Angebote.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
-Inspectability vor Kickoff heisst: Ihre Basis ist strukturiert genug, dass Change Requests klassifizierbar sind statt aus Erinnerung zu streiten. Marketplace ist kein Roboterkatalog.
-
-Es ist ein herstellernahes System, Sourcing-Chaos zu reduzieren und Post-Award-Realitaet mit dem Verglichenen zu halten.
+Verknüpfen Sie diese Disziplin schließlich mit Rechenschaft: Benennen Sie, wer Annahmen auf dem Shopfloor und zu welchem Meilenstein verifiziert. Mythen gedeihen, wenn niemand Messung besitzt; sie verlieren an Kraft, wenn Verifikation Teil des Projektplans ist — kein Nachgedanken.
 
 ## Fazit
 
-Change Orders folgen fehlenden Baselines.
-
-Pruefen Sie die vier Schienen bevor Sie Installation freigeben, nicht wenn die erste Rechnung kommt.
+Change-Order-Risiko ist größtenteils Baseline-Risiko. Richten Sie Scope, Annahmen, Werksarbeit und Change-Mechanik aus, bevor die Installation startet – nicht wenn die erste Überraschungsrechnung landet.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace hält Baseline- und Annahmenfelder sichtbar, damit Post-Award-Änderungen gegen das klassifiziert werden können, was verglichen wurde, statt Folien neu zu verhandeln. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

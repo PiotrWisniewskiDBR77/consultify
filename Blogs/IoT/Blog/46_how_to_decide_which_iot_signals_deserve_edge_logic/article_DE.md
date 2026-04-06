@@ -1,52 +1,59 @@
-# Wie Sie entscheiden welche IoT-Signale Edge-Logik verdienen
+# Wie Sie entscheiden, welche IoT-Signale Edge-Logik verdienen
 
 Zielpersona: IT-OT-Architekt / Leitung Steuerung / Werksystemingenieur  
+Funnel-Stufe: Consideration  
+Kernproblem: Teams schieben entweder alles in die Cloud, weil es bequem ist, oder sperren Logik in SPS ohne Sichtbarkeit – keiner der Wege skaliert im Brownfield sauber  
+Hauptversprechen: ein Entscheidungsraster: Latenz, Safety, Bandbreite, Autonomie bei Ausfällen und Wartbarkeit bestimmen, wo Logik lebt
 
-Funnel-Phase: Consideration Kernproblem: Teams schieben entweder alles in die Cloud bequem oder sperren Logik in SPS ohne Sichtbarkeit, kein Pfad skaliert sauber im Brownfield Hauptversprechen: ein Entscheidungsraster: Latenz, Safety, Bandbreite, Autonomie bei Ausfaellen und Wartbarkeit bestimmen wo Logik lebt Edge-Logik ist keine Ideologie. Es ist eine Platzierungsentscheidung fuer Verantwortung und Uptime.
+Edge-Logik ist eine Platzierungsentscheidung über Verantwortung, Verfügbarkeit und Auditierbarkeit – kein Slogan über Modernität.
 
-Falsche Platzierung zeigt sich als spaete Reaktion, fragile Overrides oder unauditierbare Aenderungen.
+Wenn Sie alles remote schieben, können Sie dort, wo Sekunden zählen, Latenz und Fragilität hinzufügen. Wenn Sie alles in Legacy-Controller sperren, verlieren Sie Sichtbarkeit, kämpfen mit Schwellen-Iteration und vergraben Änderungen, die niemand nachvollziehen kann. Brownfield braucht ein Raster, keine Ideologie.
 
-Legen Sie IoT-Logik an die Edge wenn **Subsekunden-Reaktion zaehlt**, **die Linie bei WAN-Beeintraechtigung sicher laufen muss**, **Rohstreams zu schwer fuer kontinuierlichen Versand sind** oder **lokale Verriegelungen deterministisches Verhalten** an Standards gebunden brauchen.
+Die Entscheidung ist iterativ. Frühe Piloten dürfen cloud-lastig sein, solange gelernt wird; spätere Phasen können lokales Gating für bestimmte Signalfamilien rechtfertigen. Schreiben Sie Annahmen auf und prüfen Sie sie neu, wenn WAN-Verhalten und Alarmmüdigkeit eine andere Geschichte erzählen.
 
-Halten Sie Logik zentral wenn **globale Optimierung**, **Cross-Linien-Korrelation** oder **seltene Batch-Analytik** das Ziel ist und Latenz akzeptabel ist.
+## Wann Edge-Logik ihren Platz verdient
 
-Im Zweifel default **zuerst Sichtbarkeit**, dann Promotion nur fuer Signale die einen schriftlichen Edge-Promotion-Test bestehen.
+Bevorzugen Sie lokale Ausführung, wenn Subsekunden-Reaktion für Safety oder Output zählt, wenn WAN-Beeinträchtigung minimale Intelligenz nicht stoppen darf, wenn Rohstreams zu schwer oder zu sensibel sind, um sie dauernd zu versenden, oder wenn deterministische Verriegelungen dokumentierten Standards folgen müssen. Das sind Situationen, in denen „erst die Cloud rufen“ der falsche erste Instinkt ist.
 
-## Framework: Edge-Promotion-Test (sechs Gates)
+## Wann zentrale Logik weiter passt
 
-1. **Latenz-Gate** Erzeugt Warten auf Cloud-Roundtrip Safety-, Qualitaets- oder Constraint-Risiko?
+Zentralisieren Sie, wenn der Wert in Korrelation über Linien, Portfolio-Analytik oder seltener Batch-Optimierung liegt – und die Latenztoleranz ehrlich hoch ist. Nicht jede Berechnung verdient ein dauerhaftes Zuhause auf der Linie.
 
-2. **Autonomie-Gate** Braucht die Linie Entscheidungen bei Verlust des Uplinks?
+## Wartbarkeit ist nicht verhandelbar
 
-3. **Bandbreiten-Gate** Ueberlastet kontinuierlicher Cloud-Ingest das Werksnetz ohne Nutzen?
+Edge-Logik braucht Patch-Ownership, Backup, Recovery und Change Control wie jedes OT-Asset. Wenn das Werk sie nicht halten kann, wird Edge zu versteckter Fragilität. Dokumentieren Sie, wer Änderungen freigibt, wie Rollback funktioniert und wie Audits den Trail lesen.
 
-4. **Determinismus-Gate** Erwartet ein Standard oder Versicherer begrenztes Verhalten?
+## Platzierung mit Datenqualität koppeln
 
-5. **Wartbarkeits-Gate** Kann Ihr Team Edge-Logik mit Change Control patchen und versionieren?
+Müll an der Edge ist immer noch Müll – nur schneller. Identität, Zeitstempel und Signalbedeutung kommen weiter aus der Disziplin in [wie Sie Maschinendatenqualität vor IoT-Skalierung verbessern](../24_how_to_improve_machine_data_quality_before_scaling_iot/article_DE.md). Grenzökonomie gehört zu [wann Edge-Verarbeitung im Brownfield-IoT sich lohnt](../25_when_edge_processing_is_worth_it_in_brownfield_iot/article_DE.md).
 
-6. **Evidenz-Gate** Laesst sich rekonstruieren was die Edge fuer Audits und Post-Incident-Review entschieden hat?
+**Edge-Platzierungs-Check:** Latenz- und Ausfallverhalten dokumentiert; Wartbarkeits-Owner benannt; Audit-Trail für Logikänderungen; Rollback getestet; zentrale Schicht beantwortet weiter Portfoliofragen, wo nötig.
 
-## Vergleich: Edge-by-default versus Cloud-by-default
+## Nur zwei Seiten dokumentieren
 
-| Edge-by-default | Cloud-by-default |
-|---|---|
-| viele kleine Regeln zu patchen | weniger Deploy-Targets |
-| starke lokale Autonomie | einfachere globale Views |
-| Risiko versteckten Logik-Drifts | Risiko spaeter Aktuierung |
-| braucht diszipliniertes Versioning | braucht ehrliche Latenz-Rechnung |
+Seite eins: Signale, die lokal laufen müssen und warum. Seite zwei: wie Patches, Backups und Rollbacks ablaufen. Wenn diese Seiten fehlen, ist Edge-Logik ein Hobby, kein Standard.
 
-## Signalqualitaet als Voraussetzung
+## DBR77 IoT und rechenbare Platzierung
 
-Edge-Logik verstaerkt Fehler.
+DBR77 IoT unterstützt durchdachte Edge-Nutzung, wenn lokales Gating mit Transparenz, Lifecycle-Ownership und Klarheit darüber einhergeht, was aus Skalierungsgründen zentral bleibt.
 
-Promoten Sie Signale erst nach **ehrlicher Baseline** und **Definitions-Stabilitaet** ueber Schichten. Sonst automatisieren Sie Verwirrung naeher an die Maschine.
+Entscheiden Sie Edge-Logik über Latenz, Safety, Bandbreite, Ausfallverhalten und Wartbarkeit – nicht über Mode. Platzierung soll die Linie sicherer und klarer machen, nicht nur „näher an der Hardware“.
 
-## Was das fuer DBR77 IoT bedeutet
 
-DBR77 IoT ist **kein weiteres Dashboard**.
+## Den Artikelversprechen praktisch machen
 
-Es ist **Echtzeit-Maschinensichtbarkeit**, **retrofit-freundliche Konnektivitaet**, **schnelle Piloten** und **Edge-first Entscheidungsunterstuetzung** sodass Logik-Platzierung zu Werks-Constraints passt statt zu Vendor-Defaults.
+Übersetzen Sie die Ideen oben in eine Gewohnheit, die Ihr Werk im nächsten Monat halten kann: ein Review, das stattfindet, ein Wörterbuch, das Menschen öffnen, eine Routing-Regel, der sie vertrauen, oder ein Drill, den sie wirklich durchführen. Große Programme stocken, wenn alles gleichzeitig losläuft. Kleine Schleifen verstärken sich, wenn sie sich wiederholen.
 
-## Bottom line
+## Leadership-Checkpoint für das nächste Ops-Review
 
-Edge ist wo Dringlichkeit und Autonomie leben. Cloud ist wo Muster und Portfolio-Sicht leben. Waehlen Sie pro Signalklasse, nicht pro Slogan.
+Eine einfache Frage: Was hat sich diesen Monat auf dem Shopfloor geändert, weil IoT die Realität klarer – nicht lauter – gemacht hat? Wenn die Antwort vage ist, straffen Sie Umfang, Definitionen oder den Review-Takt, bevor Sie den Footprint vergrößern. Nützliches IoT zeigt sich in ruhigeren Übergaben, schnellerer Bestätigung und weniger Kreisdebatten darüber, was passiert ist. Verbindungszahlen sind Eingaben; Verhaltensänderung ist der Beleg.
+
+## Auf dem Shopfloor ankommen
+
+Dieser Rat zählt nichts, wenn er im Lenkungsdeck bleibt. Der nützliche Test ist, ob die nächste Schicht mit weniger Debatte handeln kann: klarere Zustände, weniger mysteriöse Stops, schnellere Bestätigung und Eskalation, die Aufmerksamkeit respektiert. Wenn IoT funktioniert, fühlt sich die Linie weniger wie ein Gerichtssaal und mehr wie ein koordiniertes Team an – immer noch laut und beschäftigt, aber ausgerichtet auf dieselben Fakten.
+
+Wenn Sie den Shopfloor gehen und Menschen das System noch als „der Computer“ statt „unser Bild der Linie“ beschreiben, straffen Sie Kontext, Ownership und Review, bis sich die Sprache ändert. Sprachverzögerung ist ein Symptom, dass die Schleife noch zu dünn ist.
+
+---
+
+*DBR77 IoT unterstützt Edge- und Hybrid-Logik-Platzierung mit retrofit-freundlichem Deployment und klarer Ownership für lokale versus zentrale Verarbeitung. [Pilot planen](https://dbr77.com/iot) oder [Online-Demo ansehen](https://dbr77.com/demo).*

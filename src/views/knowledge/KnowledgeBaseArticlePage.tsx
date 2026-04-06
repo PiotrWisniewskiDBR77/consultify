@@ -46,6 +46,7 @@ import { Link, useParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
+import { KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
 import { KbArticleListItem, useDocsArticle, useDocsArticles, useDocsTrackView } from '@/hooks/useDocs';
 import { useKnowledgeRelated } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
@@ -71,7 +72,7 @@ interface AnnaArticleContext {
   articleUrl?: string;
 }
 
-const METADATA_LINE_PATTERN = /^(Target persona|Funnel stage|Funnel-Stufe|Core problem|Main promise|Docelowa persona|Etap lejka|Główny problem|Główna obietnica|Zielpersona|Kernproblem|Hauptversprechen|Hlavní problém|Direct answer):\s/i;
+const METADATA_LINE_PATTERN = /^(Target persona|Funnel stage|Funnel-Phase|Funnel-Stufe|Trichterphase|Core problem|Main promise|Docelowa persona|Etap lejka|Główny problem|Główna obietnica|Zielpersona|Zielperson|Kernproblem|Hauptversprechen|Hlavní problém|Direct answer):\s/i;
 
 function stripMetadataFromContent(content: string): string {
   const lines = content.split('\n');
@@ -114,7 +115,7 @@ function useScrollProgress() {
 function useArticleSeo(article: any, categorySlug?: string) {
   useEffect(() => {
     if (!article) return;
-    const title = `${article.title} | Consultify`;
+    const title = `${article.title} | ${KNOWLEDGE_BASE_SITE.brandName}`;
     const description = article.summary || '';
     const url = `${window.location.origin}/knowledge-base/${categorySlug}/${article.slug}`;
 
@@ -151,7 +152,11 @@ function useArticleSeo(article: any, categorySlug?: string) {
       url,
       ...(article.thumbnail_url && { image: kbImg(article.thumbnail_url) }),
       ...(article.reading_time_minutes && { timeRequired: `PT${article.reading_time_minutes}M` }),
-      publisher: { '@type': 'Organization', name: 'Consultify', url: 'https://consultify.ai' },
+      publisher: {
+        '@type': 'Organization',
+        name: KNOWLEDGE_BASE_SITE.publisherName,
+        url: KNOWLEDGE_BASE_SITE.brandUrl,
+      },
       mainEntityOfPage: { '@type': 'WebPage', '@id': url },
       breadcrumb: {
         '@type': 'BreadcrumbList',

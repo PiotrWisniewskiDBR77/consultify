@@ -1,67 +1,34 @@
-# Jak powinno wygladac pelne operacyjne domkniecie w AI-native factory
+# Jak powinno wyglądać pełne operacyjne domknięcie w fabryce AI-native
 
-Target persona: Dyrektor zakladu / Sponsor ciaglego doskonalenia / Lider jakosci klienta  
-Funnel stage: Adoption  
-Core problem: zaklady swietuja wspierana widocznosc, podczas gdy zlecenia, blokady i wyjatki zostaja otwarte z rozmytymi koncami, ktore lamia zaufanie klienta i audytu  
-Main promise: definicja domkniecia obejmujaca produkcje, magazyn, jakosc, utrzymanie i zlecanie z mierzalnymi bramkami i jednym rekordem wykonania
+Docelowa persona: Dyrektor zakładu / sponsor ciągłego doskonalenia / lider jakości wobec klienta  
+Etap lejka: Adoption  
+Główny problem: zakłady świętują wspieraną widoczność, podczas gdy zlecenia, blokady i wyjątki zostają otwarte z rozmytym finałem — co niszczy zaufanie klienta i audytu  
+Główna obietnica: definicja domknięcia obejmująca produkcję, magazyn, jakość, utrzymanie ruchu i przydzielanie zadań, z mierzalnymi bramkami i jednym rekordem wykonania
 
-Pelne operacyjne domkniecie w AI-native factory oznacza, ze kazda wsparta sciezka konczy sie w zweryfikowanym stanie: praca fizyczna ukonczona, rekordy systemow zgodne, akceptacje zarejestrowane, odchylenia zalogowane, a zadania nastepcze albo ukonczone albo zaplanowane z wlascicielami i datami. Domkniecie jest falszywe, jesli zapas, status jakosci lub historia utrzymania roznia sie miedzy systemami. Asysta jest czescia lancucha, nie rownolegla opowiescia. Jesli nie potrafisz wyeksportowac pakietu domkniecia dla losowego tygodnia w ponizej godziny, nie osiagnales pelnej dojrzalosci domkniecia. Domkniecie to nie nastroj. To zestaw zgodnych faktow.
+Domknięcie to nie nastrój. To zestaw faktów, które do siebie pasują. Pełne operacyjne domknięcie w fabryce AI-native oznacza, że każda wsparta ścieżka kończy się w stanie zweryfikowanym: praca fizyczna wykonana, zapisy systemów zgodne, akceptacje zebrane, odchylenia zalogowane, a zadania następcze albo zamknięte, albo zaplanowane z właścicielami i datami. Domknięcie jest pozorne, jeśli stany zapasu, jakości lub historia utrzymania ruchu rozjeżdżają się między systemami. Asysta jest ogniwem łańcucha — nie równoległą opowieścią, której nikt nie zestawia z resztą. Jeśli w godzinę nie da się wyeksportować pakietu domknięcia dla losowego tygodnia, nie macie dojrzałości domknięcia — tylko widoczność z wiszącymi końcówkami.
 
-## Definicja: szesc bramek prawdziwego domkniecia
+Myśl w kategoriach bramek. Stan operacyjny powinien wrócić do zdefiniowanego trybu pracy albo kontrolowanego postoju. Dokumentacja i parametry — zaktualizowane tam, gdzie wymaga tego standard. Dysponowanie jakością spójne w powiązanych zapisach. Prawda magazynowa dla objętego zakresu się zgadza. Historia utrzymania odzwierciedla to, co zrobiono, przez kogo, z częściami i czasem. Tymczasowe mitygacje mają datowane zadania z eskalacją po przekroczeniu. Pominiecie bramki oznacza, że następna zmiana odziedziczy ryzyko.
 
-Stan operacyjny: linia, gniazdo lub aktyw wrocilo do zdefiniowanego trybu pracy lub kontrolowanego postoju; dokumentacja: instrukcje, parametry i slady zaktualizowane wg wymagan; dysponowanie jakoscia: status partii lub serii spojny miedzy QMS a rekordem wykonania; prawda magazynowa: ilosci WMS i MES uzgodnione dla objete zakresu; historia utrzymania: CMMS odzwierciedla co zrobiono, przez kogo, z czesciami i czasem; follow-through: tymczasowe mitygacje maja datowane zadania z eskalacja przy przekroczeniu. Pominiecie bramki sprawia, ze nastepna zmiana dziedziczy ryzyko.
+Częściowe domknięcie wydaje się szybkie, dopóki ktoś nie pociągnie nici: zadania zamknięte „na słowo” przy niezweryfikowanym standardie pracy, blokady zwolnione w jednym systemie, a w innych nie, asysta odrzucona bez śladu, KPI zielone przy wiszących wyjątkach. Pełne domknięcie mierzone naiwnie wygląda wolniej; mierzone przez cały cykl życia problemu — szybciej.
 
-## Framework: czesciowe domkniecie kontra pelne domkniecie
+Rób cotygodniową próbkę integralności: losowe pozycje wsparte przez AI prześledź przez bramki, zmierz minuty rozbieżności między systemami dla zapasu i jakości, wypisz powtarzające się wzorce częściowego domknięcia i przypisz jednego właściciela na motyw z celem naprawy w trzydzieści dni.
 
-| Sygnal | Czesciowe domkniecie | Pelne domkniecie |
-|---|---|---|
-| status zadania | zamkniete werbalnie | zweryfikowane wobec standardu pracy |
-| asysta | sugestia odrzucona bez rekordu | odrzucenie lub konwersja zalogowane |
-| blokady | zwolnione tylko w jednym systemie | zwolnione w systemach zaleznych |
-| metryki | KPI zielone, gdy wyjatki wisza | wyjatki sa przypisane lub przeklasyfikowane |
+Ścieżka dojrzałości na dziewięćdziesiąt dni może obejmować: publikację definicji domknięcia w wersji pierwszej z właścicielami bramek, wyrównanie przeglądów usprawnień pod niepowodzenia bramek zamiast pod anegdoty, wbudowanie reguł odrzucenia i konwersji asysty w te same bramki, ćwiczenie międzyfunkcyjne na symulowanej wielosystemowej blokadzie oraz szablon pakietu domknięcia dla klientów i audytorów. Gdy ograniczenia legacy blokują pełną automatyzację, publikujcie jawne granice częściowego domknięcia i kontrole kompensacyjne — nie ciche luki.
 
-Czesciowe domkniecie wydaje sie szybkie, dopoki klient lub audyt nie ciagnie nici.
+Zakłady często uznają temat za zamknięty, gdy ustaje widoczny ból: linia znów pracuje, kolejka się rusza, pilny telefon się kończy. Częściowe domknięcie wciąż zostawia ryzyko, gdy status jakości jest poprawiony w jednym miejscu, a nie w pozostałych, gdy obejścia tymczasowe nie mają datowanego właściciela dalszych kroków albo gdy „wykonane” zadanie kryje otwartą zależność. Domknięcie musi być warunkiem wielosystemowym, a nie chwilą, w której spada stres.
 
-## Checklist: tygodniowa probka integralnosci domkniecia
+IRIS stawia na domknięcie jako pierwszy cel wtedy, gdy asysta, zadania, akceptacje i zależne stany żyją w jednej narracji wykonania — a luki widać tego samego dnia, zanim przyjdzie kolejna reklamacja.
 
-- dziesiec losowych pozycji wspieranych na zaklad  
-- przejdz kazda przez szesc bramek  
-- mierz minuty rozbieznosci miedzy systemami dla zapasu i jakosci  
-- wypisz top 3 powtarzajace sie motywy czesciowego domkniecia  
-- przypisz jednego wlasciciela na motyw z celem naprawy w 30 dni
+Powiązane teksty: [Jak AI zmienia operacje fabryczne, gdy wykonanie jest połączone](../21_how_ai_is_changing_factory_operations_when_execution_is_connected/article_PL.md), [Jak tworzyć zapisy gotowe pod audyt dla decyzji wspieranych przez AI](../46_how_to_create_audit_ready_records_for_ai_assisted_factory_decisions/article_PL.md) oraz [Jak zaprojektować model obsługi wyjątków w operacjach wspomaganych przez AI](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_PL.md).
 
-## Sekwencja krokow: sciezka dojrzalosci (90 dni)
+Dojrzałe operacje AI-native nie robią wrażenia wolumenem. Robią wrażenie wtedy, gdy każda wsparta ścieżka może zakończyć się obronnym, możliwym do wyeksportowania stanem zamkniętym.
 
-Publikuj definicje domkniecia v1 z wlascicielami bramek; wyrownaj przeglady IR do porazek bramek, nie anegdot; wbuduj reguly odrzucenia i konwersji asysty w te same bramki; przeprowadz drill miedzyfunkcyjny: symulowana blokada z wielosystemowym zwolnieniem; publikuj szablon pakietu domkniecia dla klientow i audytorow.
+## Podsumowanie operacyjne
 
-## Kiedy "pelne domkniecie" jest nierealne krotkoterminowo
+Obietnica tego artykułu — definicja domknięcia obejmująca produkcję, magazyn, jakość, utrzymanie ruchu i przydzielanie zadań, z mierzalnymi bramkami i jednym rekordem wykonania — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Jak powinno wyglądać pełne operacyjne domknięcie w fabryce AI-native” traktuj to jako test akceptacji: następna zmiana powinna odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Legacy nie wymienia statusu bez recznych mostkow; walidacja regulacyjna blokuje czesc integracji.
-
-Wtedy publikuj jawne granice czesciowego domkniecia i kontrole kompensacyjne, nie ciche luki.
-
-## Reality check: zaklady zwykle nazywaja temat zamknietym, gdy znika widoczny bol
-
-To zrozumiale. Linia znow dziala. Kolejka rusza. Pilny telefon sie skonczyl. Ale czesciowe domkniecie nadal zostawia ryzyko, gdy:
-
-- status jakosci zostal poprawiony w jednym systemie, ale nie w pozostalych
-- tymczasowe obejscie nie ma datowanego wlasciciela follow-upu
-- nastepna zmiana dziedziczy otwarta zaleznosc ukryta jako wykonane zadanie
-
-Dlatego domkniecie musi byc zdefiniowane jako warunek wielosystemowy, a nie jako moment, w ktorym spada stres.
-
-## Dlaczego IRIS celuje w operacje najpierw-domykajace
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Jedna warstwa czyni domkniecie jedna opowiescia: asysta, zadania, akceptacje i stany systemu albo sie zgadzaja, albo luka jest widoczna tego samego dnia.
-
-## Podsumowanie
-
-Dojrzale operacje AI-native nie robia wrazenia wolumenem.
-
-Robia wrazenie, gdy kazda wsparta sciezka moze konczyc sie obronnym, eksportowalnym stanem zamknietym.
+Trzymaj zespół przy prostej zasadzie: jeśli usprawnienia nie widać w eksporcie z rekordu wykonania, to jeszcze nie jest usprawnienie operacyjne — tylko narracyjne. Ta zasada trzyma programy przy zdrowych zmysłach, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS scala produkcję, magazyn, jakość, utrzymanie ruchu i przydzielanie zadań w jednej warstwie wykonania, tak by bramki domknięcia w różnych systemach wyrównywały się tego samego dnia, w którym pojawiają się luki. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

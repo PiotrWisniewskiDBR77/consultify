@@ -1,64 +1,56 @@
-# Wann Sie eine bezahlte Discovery-Phase vor der vollen Automatisierungsvergabe fahren
+# Wann man eine bezahlte Discovery-Phase vor der vollen Automatisierungsvergabe fahren sollte
 
-Target persona: Buyer Owner / Capex-Sponsor zwischen technischer Unsicherheit und Termindruck  
-Funnel stage: Evaluation (zwischen qualifiziertem Interesse und voller Vertragsvergabe)  
-Core problem: Werke ueberspringen bezahlte Discovery und fixieren Preise auf Vermutungen, oder sie fahren endlose kostenlose Workshops ohne Vergleichbarkeit  
-Main promise: klare Trigger fuer eine begrenzte bezahlte Discovery mit Lieferobjekten, die Vergabe speisen, nicht Theater
+Zielpersona: Einkaufsverantwortlicher / CapEx-Sponsor (technische Unsicherheit und Termindruck)  
+Funnel-Stufe: Bewertungsphase (zwischen qualifiziertem Interesse und voller Vertragsvergabe)  
+Kernproblem: Werke überspringen bezahlte Discovery und fixieren Preis auf Vermutungen – oder führen endlose kostenlose Workshops, die nie Vergleichbarkeit produzieren  
+Hauptversprechen: klare Trigger für eine begrenzte bezahlte Discovery-Phase mit Deliverables, die die Vergabe speisen, nicht Theater
 
-Kostenlose Arbeit ist keine Sorgfalt. Sie ist oft der Weg, das Unbekannte nicht zu schreiben. Bezahlte Discovery ist kein Moralurteil ueber Lieferanten.
+Kostenlose Workshops können zu unbezahlten Designzyklen werden, die nie konvergieren. Discovery zu überspringen kann Preis auf Vermutungen fixieren, die zu Nachträgen werden. Bezahlte Discovery existiert, um messbare Closure in einer Box zu kaufen – wenn Unbekanntes teuer genug ist, dass Raten leichtsinnig ist, aber endlose Gratisarbeit ebenso leichtsinnig ist.
 
-Sie ist ein Einkaufsinstrument, das Evidenz, Grenzen und Entscheidungsqualitaet unter Unsicherheit kauft.
+Nutzen Sie sie, wenn Sie Deliverables definieren können, die die nächste Vergleichsrunde fairer machen – nicht, wenn Sie wollen, dass jemand unbegrenzt für Sie denkt.
 
-Fahren Sie eine bezahlte Discovery vor der vollen Vergabe, wenn Schnittstellen-, Layout- oder Sicherheits- und Qualitaetsintegrationsrisiko nicht aus Zeichnungen und Standardbegehung geklaert werden kann und Fehl-Scoping teurer waere als ein begrenzter bezahlter Sprint.
+## Wann sich bezahlte Discovery rechnet
 
-Fahren Sie keine bezahlte Discovery, wenn der Bedarf ein wiederholbarer Commodity-Einkauf mit fixierter Spezifikation und bekannter Integrator-Performance in derselben Arbeitsklasse ist.
+Erwägen Sie sie, wenn Schnittstellenrisiko hoch ist, physische oder IT-Constraints noch nicht messbar sind, repräsentatives Handling-Verhalten strukturierte Tests braucht oder mehrere Lösungsklassen vor vollen Angeboten apples-to-apples normalisiert werden müssen. Der Trigger ist simpel: Ohne Closure würden Sie Fiktion vergleichen.
 
-## Trigger-Set A: Schnittstellen- und Datenwahrheit ist noch hypothetisch
+## Wann man sie überspringt
 
-Illustrative Signale: MES-Handshake-Regeln sind intern noch nicht vereinbart; Seriennummern, Routings oder Rework-Logik sind nicht stabil genug zum Angebot; IT kann Credential- und Netzwerkfenster nicht schriftlich verbindlich machen.
+Überspringen Sie, wenn Spezifikation und Constraints bereits eine faire Basis für vergleichbare Vollangebote sind – Variabilität dokumentiert, Schnittstellen gelistet, Abnahme skizziert, internes Alignment stabil. Dann zu zahlen ist meist Kalender-Theater.
 
-Bezahlte Discovery soll benannte Schnittstellenannahmen und eine Gap-Liste liefern, keine schoene Slide-Show.
+## Die Phase wie ein Mini-Projekt begrenzen
 
-## Trigger-Set B: physische Wahrheit braucht gemessene Bestaetigung
+Schreiben Sie Scope, Timebox, Preis und explizite Outputs: gemessene Fakten, aktualisierte Annahmen, Zeichnungen oder Simulationen wie vereinbart und ein vergleichsfertiges Briefing-Delta. Wenn Sie Outputs nicht benennen können, kaufen Sie keine Discovery – Sie kaufen Hoffnung.
 
-Illustrative Signale: Reichweite, Schutzeinrichtung oder AGV-Routing braucht Layout-Validierung; Medien und Plattenlasten sind unsicher; parallele Produktionsrestriktionen sind eng und noch nicht in Zugangsplaenen modelliert.
+## Vergleichbarkeit im Blick behalten
 
-Bezahlte Discovery soll gemessene Randbedingungen liefern, auf die das Vollangebot referenzieren kann.
+Discovery soll strukturierte Vergleichsfelder speisen, keine privaten Narrative, die ein Lieferant bevorzugt. Was Sie lernen, gehört in den gemeinsamen Record.
 
-## Trigger-Set C: kommerzielles Modell braucht eine gemeinsame Basis
+## Wie DBR77 Marketplace passt
 
-Illustrative Signale: Meilensteinlogik und Akzeptanzobjekte sind funktionsuebergreifend umstritten; Ersatzteile, Schulung und Garantiestart-Trigger sind offen; Performance-Remedies sind politisch sensibel.
+Bezahlte Discovery verbessert den Einkauf nur, wenn Outputs zu wiederverwendbaren Vergleichsinputs werden. Strukturierte Felder schützen eine begrenzte Phase davor, Shortlist-Disziplin zu zerlegen.
 
-Bezahlte Discovery soll ein kommerzielles Skelett entlang Akzeptanz liefern, auch wenn finale Bedingungen auf Vergabe warten.
+Nächste Nachbarschritte: [Wie Sie Ihr Werk auf Lieferanten-Site-Visits und Discovery-Workshops vorbereiten](../29_how_to_prepare_your_plant_for_supplier_site_visits_and_discovery_workshops/article_DE.md) und [Wie man Automatisierungs-Momentum nach den ersten Lieferantentreffen hält](../22_how_to_keep_automation_momentum_after_the_first_vendor_meetings/article_DE.md).
 
-## Was ein gutes bezahltes Discovery-Paket enthaelt
+## Kommerzielle Klarheit für Discovery
 
-Nutzen Sie einen schriftlichen Mini-Scope (illustrativ): Lieferliste mit Akzeptanz fuer die Discovery-Phase selbst; Timebox und Site-Access-Annahmen; IP- und Wiederverwendungsregeln fuer Zeichnungen und Berechnungen; expliziter Ausschluss fuer die bezahlte Phase; wie Outputs ein vergleichbares Vollgebot speisen.
+Bezahlte Phasen brauchen kommerzielle Grenzen: was deliverable ist, was optional ist, wie Findings das nächste Angebot speisen und wie IP behandelt wird. Ohne diese Schienen wird Discovery zu einem weichen Projekt im Projekt – freundlich, teuer und schwer vergleichbar.
 
-| schwache bezahlte Discovery | starke bezahlte Discovery |
-| --- | --- |
-| vage "Engineering Support" Stunden | benannte Outputs gekoppelt an Vergabeinputs |
-| keine interne Akzeptanz fuer Discovery | Mini-Akzeptanz pro Lieferobjekt |
-| Outputs nur beim Lieferanten | Buyer kann Randbedingungen im RFQ wiederverwenden |
+Wählen Sie Discovery-Partner mit derselben Integrität, die Sie für die Lieferung brauchen. Verhalten in einem kleinen Engagement previewt oft Verhalten in einem großen.
 
-## Was Sie nicht tun sollten
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Bezahlte Discovery nutzen, um internen Owner zu vermeiden; bezahlte Discovery die Shortlist-Disziplin ersetzen lassen; eine bezahlte Phase ohne schriftlichen Stop unterschreiben, wenn Fakten fehlen.
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Wann man eine bezahlte Discovery-Phase vor der vollen Automatisierungsvergabe fahren sollte“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-## Was das fuer DBR77 Marketplace bedeutet
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
 
-DBR77 Marketplace behandelt Automatisierungseinkauf als Workflow: strukturierter Vergleich, Vertrauenssignale und Angebots-Inspectability.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
-Bezahlte Discovery passt dazu, wenn ihre Ergebnisse zu strukturierten Feldern werden, die andere Bieter erfuellen koennen, nicht zu privaten Side Letters. Marketplace ist kein Roboterkatalog.
-
-Es ist ein System, Sourcing-Chaos zu reduzieren, indem Entscheidungsinputs sichtbar werden.
+Verknüpfen Sie diese Disziplin schließlich mit Rechenschaft: Benennen Sie, wer Annahmen auf dem Shopfloor und zu welchem Meilenstein verifiziert. Mythen gedeihen, wenn niemand Messung besitzt; sie verlieren an Kraft, wenn Verifikation Teil des Projektplans ist — kein Nachgedanken.
 
 ## Fazit
 
-Bezahlen Sie Discovery, wenn Unbekanntes teuer ist und messbare Schliessung in einer Timebox realistisch ist.
-
-Lassen Sie es weg, wenn die Spezifikation bereits eine faire Basis fuer Vollangebotsvergleiche ist.
+Zahlen Sie für Discovery, wenn Unbekanntes teuer ist und Closure in einer Timebox realistisch ist. Überspringen Sie, wenn Sie bereits eine faire Basis haben, um Vollangebote zu vergleichen. Schützen Sie in beiden Fällen die Vergleichbarkeit.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace funktioniert am besten, wenn Discovery-Outputs zu strukturierten Vergleichsfeldern werden statt zu privaten Lieferanten-Narrativen. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/demo).*

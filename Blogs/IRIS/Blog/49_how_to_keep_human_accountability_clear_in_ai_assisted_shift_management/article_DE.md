@@ -1,63 +1,36 @@
-# Wie man menschliche Accountability in KI-unterstuetztem Schichtmanagement klar haelt
+# Wie Sie menschliche Verantwortlichkeit im KI-gestützten Schichtmanagement klar halten
 
-Target persona: Schichtleiter / Produktionsvorgesetzter / Gewerkschafts- oder Betriebsrats-Partner  
-Funnel stage: Decision  
-Core problem: wenn Assistenz Arbeit vorschlaegt oder routet, verwischt die taegliche Verantwortung zwischen "das System sagte" und "ich entschied", besonders bei Uebergaben  
-Main promise: benannte Accountability pro Schicht-Slice fuer Claims, Freigaben, Overrides und Abschluesse mit einfacher Sprache, die Operateure wiederholen koennen
+Zielpersona: Schichtleiter / Produktionsüberwacher / Gewerkschaftspartner oder Betriebsratsverbindung  
+Funnel-Stufe: Decision  
+Kernproblem: Wenn Assistenz Arbeit vorschlägt oder routet, verwischt die tägliche Verantwortung zwischen „das System hat gesagt“ und „ich habe entschieden“ – besonders bei Übergaben  
+Hauptversprechen: Benannte Verantwortung pro Schichtausschnitt für Claims, Freigaben, Overrides und Abschlüsse – in einfacher Sprache, die Betriebsteams wiederholen können
 
-Halten Sie menschliche Accountability klar, indem Sie nicht ueberlappende Rollen zuweisen: wer assistierte Items claimen muss, wer Act-Verhalten freigeben darf, wer Overrides mit Pflicht-Reason-Codes besitzt und wer Abschluesse fuer Safety- und Quality-Holds signiert. Veroeffentlichen Sie ein einseitiges Schicht-Charter, das dieselben Felder im System wiederholt. Trainieren Sie Vorgesetzte, verbale Uebergaben mit "die KI entschied" zu verbieten; der Record muss eine benannte menschliche Zustandsaenderung zeigen. Wenn Accountability ein Meeting zur Interpretation bricht, fuellen Operateure die Luecke mit informellem Ownership. Assistenz darf empfehlen. Menschen tragen weiter die Linie.
+Assistenz darf empfehlen. Die Linie tragen weiterhin Menschen. Verantwortung wird unklar, wenn niemand erkennt, ob ein Statuswechsel Vorschlag, Entwurf, Freigabe oder Override war – besonders bei Übergaben, Urlaubsvertretung und Nachtdruck. Halten Sie Klarheit, indem Sie nicht überlappende Rollen vergeben: wer assistierte Queue-Items claimen muss, wer geschützte Aktionen oder Holds freigeben darf, wer Overrides mit Pflicht-Reason-Codes besitzt und wer Abschlüsse unterschreibt, wo Standardarbeit es verlangt. Veröffentlichen Sie eine einseitige Schicht-Charta mit denselben Feldern wie das System. Schulen Sie Vorgesetzte, verbale Übergaben mit „die KI hat entschieden“ zu verbieten; der Datensatz muss einen benannten menschlichen Statuswechsel zeigen.
 
-## Charter-Template: vier Accountability-Slots pro Schicht
+Die Charta soll pro Schicht vier Slots benennen: Claim-Owner für die Erstreaktion auf assistierte Queues, Freigabeberechtigung für geschützte Aktionen oder Holds, Override-Berechtigung mit Reason-Codes und Abschlussunterzeichner wo nötig – plus schriftlich benannte Stellvertretung, nicht „ruft jemanden an“.
 
-Claim-Owner: erster Mensch, der fuer assistierte Queue-Items handelt; Freigabe-Autoritaet: Rollen, die Act-Verhalten oder Holds freigeben; Override-Autoritaet: wer Routing mit Pflicht-Reason-Codes aendern darf; Abschluss-Signatur: wer Erledigung gegen Standardarbeit bescheinigt.
+Übergabefelder schützen Verantwortung nur, wenn sie im System leben: Zähler offener assistierter Items nach Schwere, Items auf Freigabe mit Rolle und Alter, False-Positive-Themen aus der Vorschicht, Flags für Piloten, Lieferanten-Feeds oder degradierte Sensoren sowie offene Vorfälle mit verknüpften Task-IDs. Papier kann ergänzen; es darf nicht System of Record werden, ohne Mehrdeutigkeit neu zu erzeugen.
 
-Deputies muessen im selben Dokument benannt sein, nicht "ruf jemanden an".
+Sprache formt Haftung. Sagen Sie: „Ich habe die Freigabe unter Policy-Version X bestätigt“, statt „das System hat es durchgewunken“. Sagen Sie: „Ich habe mit Reason-Code Y überschrieben“, statt „es war falsch“. Sagen Sie: „Ich übernehme diese Queue jetzt“, statt „jemand sollte mal schauen“. Geteilte Verantwortung fühlt sich früh bequem an und wird später zum Risikopolster. Benannte Verantwortung wirkt streng – bis Audits und Gespräche mit Betriebsrat reibungslos laufen.
 
-## Checkliste: Uebergabefelder, die Accountability schuetzen
+Pausieren Sie Assistenz, wenn Schulungslücken bei Pflichtrollen sichtbar werden, wenn Sensorwartung bekannt schlechte Daten liefert oder wenn Personalunterdeckung unter veröffentlichte Freigabe-Mindestbesetzung fällt. Pausieren ist eine Entscheidung: protokollieren Sie, wer autorisiert hat und für wie lange.
 
-- offene assistierte Items nach Schwere gezaehlt  
-- Liste wartender Freigaben mit Rolle und Alter  
-- bekannte False-Positive-Themen aus vorheriger Schicht  
-- explizite Flags: Trials, Vendor-Tool-Feeds, degradierte Sensoren  
-- offene Incidents mit verknuepften Task-IDs
+IRIS hält Namen an Status gebunden – nicht an Chat –, wenn Claims, Freigaben, Overrides, Pausen und Abschlüsse als operative Statuswechsel in einem Ausführungsdatensatz stehen, den die nächste Schicht lesen kann.
 
-Papier-Summaries duerfen ergaenzen. Sie ersetzen keine Systemfelder.
+Zu Governance und Ausnahmen siehe [Wie man KI-Entscheidungen über Schichten und Funktionen hinweg steuert](../37_how_to_govern_ai_decisions_across_shifts_and_functions/article_DE.md), [Welche Fabrikjobs sich in KI-gestützten Operations zuerst ändern](../35_what_factory_jobs_change_first_in_ai_assisted_operations/article_DE.md) und [Wie man ein Ausnahmemodell für KI-gestützte Operations entwirft](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_DE.md).
 
-## Framework: Sprachregeln fuer Vorgesetzte (druckbar)
+Schichtmanagement ist der Ort, an dem abstrakte KI-Policy auf Muskelgedächtnis trifft. Wenn die übernehmende Führung nicht erkennt, was über Nacht passiert ist – Modi, Queues, ausstehende Freigaben, aktive Lieferanten-Feeds –, wird Verantwortlichkeit auf Geschichten zurückfallen. Die Lösung sind nicht mehr Übergabetreffen, sondern weniger Rätsel: Systemfelder, die die Fragen beantworten, die Vorgesetzte ohnehin stellen, über Teams hinweg gleich formuliert, damit „ich dachte, das hätte jemand erledigt“ kein normaler Satz mehr ist.
 
-| Sagen | Nicht sagen |
-|---|---|
-| "Ich habe Freigabe unter Policy v12 bestaetigt" | "das System hat es durchgewunken" |
-| "Ich habe mit Reason-Code X ueberschrieben" | "es war falsch" |
-| "Ich claim diese Queue jetzt" | "jemand sollte mal schauen" |
+Gewerkschafts- und Betriebsratskontexte erfordern Fairness: Regeln müssen vorhersehbar, gleichmäßig angewendet und so sichtbar sein, dass sie bei Streit nachprüfbar sind. Darum ist „die KI hat entschieden“ giftige Sprache. Sie verbirgt die menschliche Entscheidung, die den Status wirklich bewegt hat. Klare Sprache und klare Datensätze schützen Arbeitnehmer und Vorgesetzte gleichermaßen – weil sie Meinungsverschiedenheiten lösbar machen, ohne jeden Vorfall zum Glaubwürdigkeitswettkampf zu machen.
 
-Sprache formt Haftung und Training.
+Klarheit ist Dokument plus Systemgewohnheit. Rollen benennen, Felder erzwingen und Sprache auf der Fläche coachen.
 
-## Vergleich: geteilte versus benannte Accountability
+## Operatives Fazit
 
-| Element | geteilt | benannt |
-|---|---|---|
-| Geschwindigkeitsgefuehl | bequem am Tag eins | strikt |
-| Audit-Ergebnis | mehrdeutig | nachverfolgbar |
-| Klarheit fuer Gewerkschaft oder BR | schwach | staerker |
-| Repeat-Issues | haeufig | leichter korrigierbar |
+Das Versprechen dieses Artikels – benannte Verantwortung pro Schichtausschnitt für Claims, Freigaben, Overrides und Abschlüsse in einfacher, wiederholbarer Sprache – wird erst operativ, wenn es die Arbeitsbewegung verändert: klareres Ownership, schnellere Erstzuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Wie Sie menschliche Verantwortlichkeit im KI-gestützten Schichtmanagement klar halten“ ist das der Akzeptanztest: die nächste Schicht soll lesen können, was passiert ist, was freigegeben wurde und was offen bleibt – ohne mündliche Rekonstruktion.
 
-Geteilte Accountability ist ein Liability-Schwamm.
-
-## Wann Assistenz fuer eine Schicht pausieren sollte
-
-Trainingsluecke in einer Pflichtrolle erkannt; Sensor-Wartungsfenster mit bekannt schlechten Daten; Besetzung unter publiziertem Minimum fuer Freigaben. Pause ist eine Entscheidung. Loggen Sie, wer die Pause autorisiert hat und wie lange.
-
-## Warum IRIS Namen an Zustaende bindet, nicht an Chat
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Wenn Claims, Freigaben und Abschluesse Zustandsaenderungen in einem Record sind, wird Accountability kein Story-Feld mehr, sondern ein Datenfeld.
-
-## Fazit
-
-Klarheit ist ein Dokument plus Systemgewohnheit. Rollen benennen, Felder erzwingen, Sprache auf der Flaeche coachen.
+Dieser Standard geht nicht um Software-Perfektion, sondern um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur im Meeting und mehr Tage, in denen der Systemdatensatz zu dem passt, was die Fläche mitten in der Aufgabe sagen würde.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS speichert Claims, Freigaben, Overrides und Abschlüsse als Statuswechsel in einem Ausführungsdatensatz, damit Schichtverantwortung benannt und exportierbar bleibt. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

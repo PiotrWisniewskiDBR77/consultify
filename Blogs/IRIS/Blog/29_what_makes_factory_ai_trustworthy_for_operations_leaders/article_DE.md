@@ -1,70 +1,44 @@
-# Was Fabrik-KI fuer Operationsfuehrung vertrauenswuerdig macht
+# Was Fabrik-KI für Operations-Führungskräfte vertrauenswürdig macht
 
-Target persona: Werksleiter / VP Operations / Qualitaets- und Sicherheitsfuehrung  
-Funnel stage: Decision  
-Core problem: Fuehrung unterstuetzt Innovation grundsaetzlich, kann KI aber nicht gegenueber Shopfloor verteidigen ohne Nachvollziehbarkeit, begrenzte Aktionen und messbare Betriebsergebnisse  
-Main promise: eine Fuehrungs-Checkliste fuer vertrauenswuerdige Industrie-KI: geerdete Outputs, explizite Grenzen, Audit Trails, menschliche Tore und Nachweis ueber Zyklusmetriken
+Zielpersona: Werksleiter / VP Operations / Qualitäts- und Sicherheitsführung  
+Funnel-Stufe: Decision  
+Kernproblem: Führungskräfte unterstützen Innovation grundsätzlich, können KI aber nicht gegenüber der Fläche verteidigen ohne Nachverfolgbarkeit, begrenzte Aktionen und messbare operative Ergebnisse  
+Hauptversprechen: Eine Führungs-Checkliste für vertrauenswürdige industrielle KI: geerdete Outputs, explizite Grenzen, Audit-Pfade, menschliche Tore und Nachweis an Zyklusmetriken gebunden
 
-Fabrik-KI wird fuer Operationsfuehrung vertrauenswuerdig, wenn jede Empfehlung genug erklaert ist um zu handeln, durch veroeffentlichte Regeln begrenzt ist, im selben System wie Aufgaben und Freigaben protokolliert wird und an Betriebsmetriken wie Reaktionszeit und Abschlussqualitaet gemessen wird, nicht an Demo-Glanz. Vertrauen ist keine Stimmung. Es ist ein Satz pruefbarer Verhaltensweisen.
+Vertrauen ist keine Stimmung. In Operations ist Vertrauen ein Set prüfbarer Verhaltensweisen: Assistenz, die auf Supervisor-Tiefe ihre Arbeit zeigt; Aktionen, die durch veröffentlichte Regeln begrenzt sind; Aufzeichnungen, die bei Aufgaben leben; und Nachweis an Zyklusmetriken statt Demo-Glanz. Führungskräfte müssen KI gegenüber Menschen verteidigen, die zur Rechenschaft gezogen werden, wenn etwas schiefgeht. Diese Verteidigung muss konkret sein.
 
-## Vertrauenssignal 1: das System zeigt seine Arbeit in Bedienertiefe
+Vertrauenswürdige Assistenz enthält genug Kontext zum Handeln: welche Signale genutzt wurden, welche Annahmen getroffen wurden, was unsicher ist. Sie brauchen keine akademische Erklärbarkeit. Sie brauchen Operator-Klarheit—etwas, das ein Schichtlead ohne Data-Science-Abschluss infrage stellen kann.
 
-Bediener misstrauen Blackboxen.
+Vertrauen steigt, wenn das Werk Worst-Case-Fragen schnell beantworten kann: was, wenn dieser Vorschlag falsch ist, wie schnell können wir zurückrollen, wer hat einen irreversiblen Schritt freigegeben. Wenn diese Antworten unklar sind, sollten Führungskräfte ihre Glaubwürdigkeit nicht auf das Tool setzen.
 
-Vertrauenswuerdige Unterstuetzung enthaelt: welche Signale genutzt wurden; welche Annahmen getroffen wurden; was unsicher ist. Sie brauchen keine akademische Erklaerbarkeit. Sie brauchen Vorgesetzten-Kontext.
+Führungskommunikation sollte deshalb dieselbe Präzision wie ein Sicherheitsbriefing haben: keine Slogans zur „KI-Strategie“, wenn die Schicht noch nicht in eigenen Worten erklären kann, was erlaubt ist. Kurze, wiederholbare Botschaften — verbunden mit sichtbaren Fixes, wenn etwas schiefging — bauen mehr Vertrauen als große Townhalls mit vagen Versprechen.
 
-## Vertrauenssignal 2: Aktionen sind begrenzt und wo moeglich reversibel
+Menschliche Tore sollten echter Haftung entsprechen: Sicherheitsexposition, Qualitätsfreigabe, Kundenversand, große Anlagenänderungen. Wenn alles Freigabe braucht, wirkt KI nutzlos. Wenn nichts Freigabe braucht, tragen Führungskräfte unbesessenes Risiko. Der Mittelweg sind veröffentlichte Schwellen, die die Fläche erkennt.
 
-Vertrauen steigt, wenn das Werk antworten kann:
+Vertrauen bricht meist nach dem ersten sichtbaren Fehltritt—nicht nach Whitepaper-Debatte. Der falsche Owner wird in ein dringendes Thema gezogen. Ein Supervisor kann nicht erklären, warum ein Vorschlag erschien. Der Audit-Pfad ist über Chat, E-Mail und Notizen verstreut. Danach endet das Gespräch bei „KI grundsätzlich“ und wird zu „ist dieser Workflow unter Druck verteidigbar?“.
 
-- was ist der Worst Case, wenn dieser Vorschlag falsch ist?
-- wie schnell koennen wir zurueckrollen?
-- wer hat einen irreversiblen Schritt freigegeben?
+Audit-Pfade gehören zum Arbeitspaket. Vertrauen erodiert, wenn Chat-Historie von operativen Aufzeichnungen getrennt ist und Entscheidungen bei Audits aus Erinnerung rekonstruiert werden. Das vertrauenswürdige Muster: ein Arbeitspaket, eine Zeitleiste, ein Datensatz.
 
-Sind die Antworten unklar, sollten Fuehrungskraefte das Tool nicht verteidigen.
+Nachweis sollte operative KPIs nutzen: Zeit bis zur ersten Aktion bei wiederkehrenden Themen, Wiedereröffnungsrate nach Abschluss, Eskalationsgenauigkeit, beprobte Supervisor-Koordinationsminuten. Wenn Anbieter nur Genauigkeitscharts zeigen, fragen Sie nach Werkmetriken—das Werk zahlt in Minuten, nicht in Leaderboard-Punkten.
 
-## Vertrauenssignal 3: menschliche Tore passen zur echten Haftung
+**Führungs-Vertrauens-Checkliste (fünf Punkte):** veröffentlichte Schwellen für menschliche Bestätigung; Grundcodes für Overrides und Ablehnungen; rollenbasierte Berechtigungen für sensible Felder; dokumentierter Fehlermodus und Fallback; Baseline-Fenster vor Expansionsansprüchen erfasst.
 
-Vertrauenswuerdige Programme richten Tore aus an: Sicherheits-Exposition; Qualitaetsfreigabe; Kundenversand; grossen Geraeteaenderungen. Wenn alles Freigaben braucht, wirkt KI nutzlos. Wenn nichts Freigaben braucht, tragen Fuehrungskraefte unbesessenes Risiko.
+IRIS zählt, weil Vertrauen steigt, wenn Empfehlungen, Freigaben, Overrides und Abschlussmetriken in einer reglementierten Betriebsumgebung leben—damit Führung KI als Infrastruktur prüfen kann, nicht als isolierten Assistenten.
 
-## Reality check: Vertrauen bricht meist nach der ersten falschen Eskalation
+Kombinieren Sie mit [Wann KI empfehlen soll und wann Menschen in Operations entscheiden sollten](../26_when_ai_should_recommend_and_when_humans_should_decide_in_operations/article_DE.md) beim Mappen von Entscheidungsgrenzen.
 
-Die meisten Werke verlieren Vertrauen nicht, weil jemand ein kritisches Whitepaper gelesen hat.
+Operations-Führungskräfte vertrauen KI, wenn sie sich wie Pflanzeninfrastruktur verhält: begrenzt, aufgezeichnet, messbar, ausgerichtet auf Rechenschaft. Alles andere ist ein Pilot, der auf eine Krise wartet.
 
-Sie verlieren es nach einem sichtbaren Betriebsfehler, zum Beispiel wenn:
+## Operatives Fazit
 
-- der falsche Owner in ein dringendes Thema gezogen wird
-- ein Vorgesetzter nicht erklaeren kann, warum der Vorschlag gemacht wurde
-- das Team den Audit Trail ueber Chat, E-Mail und Systemnotizen verteilt vorfindet
+Das Versprechen dieses Artikels—Führungs-Checkliste: geerdete Outputs, Grenzen, Audit-Pfade, Tore, Zyklusnachweis—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Was Fabrik-KI für Operations-Führungskräfte vertrauenswürdig macht“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
-Ab diesem Punkt diskutiert die Fuehrung KI nicht mehr in der Theorie. Sie fragt, ob der Workflow unter Druck verteidigbar ist.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur in Meetings vereinbart, und mehr Tage, an denen der Systemdatensatz zu dem passt, was die Fläche sagen würde, wenn Sie sie mitten in der Aufgabe anhalten.
 
-## Vertrauenssignal 4: Audit Trails leben beim Arbeitspaket
+Halten Sie Teams an einer einfachen Regel: Wenn sich eine Verbesserung nicht in Exporten aus dem Ausführungsdatensatz zeigen lässt, ist es noch keine operative Verbesserung—nur eine narrative. Diese Regel hält Programme ehrlich, wenn Demos gut aussehen, Übergaben aber fragil bleiben.
 
-Vertrauen bricht, wenn: KI-Chat-Historie getrennt von CMMS- oder QMS-Aufzeichnungen ist; Entscheidungen bei Audits aus Erinnerung rekonstruiert werden. Das vertrauenswuerdige Muster ist simpel: ein Arbeitspaket, eine Timeline, ein Record.
-
-## Vertrauenssignal 5: Nachweis nutzt Betriebs-KPIs, nicht Neuheit
-
-Fuehrung sollte Messung verlangen wie: Zeit bis zur ersten Aktion bei Wiederholthemen; Wiedereroeffnungsrate nach Abschluss; Eskalationsgenauigkeit (war der richtige Owner dabei?); Koordinationsminuten der Fuehrungskraft, woechentlich gesampelt. Zeigt der Vendor nur Genauigkeitscharts, fordern Sie Werk-Metriken.
-
-## Fuenf-Punkte-Vertrauens-Checkliste fuer Fuehrungsreviews
-
-1. Veroeffentlichte Schwellen fuer menschliche Bestaetigung
-2. Reason Codes fuer Overrides und Ablehnungen
-3. rollenbasierte Berechtigungen fuer sensible Felder
-4. dokumentierter Fehlmodus und Fallback-Prozedur
-5. ein erfasstes Baseline-Fenster vor Expansionsanspruechen
-
-## Warum IRIS vertrauenswuerdige Operations-KI unterstuetzt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Aufgaben.
-
-Vertrauenswuerdigkeit ist einfacher, wenn Intelligenz und Ausfuehrung eine gemeinsame regierte Umgebung teilen.
-
-## Fazit
-
-Operationsfuehrung vertraut KI, wenn sie sich wie Infrastruktur verhaelt: begrenzt, protokolliert, messbar, ausgerichtet an echte Verantwortung. Alles andere ist ein Pilot, der auf eine Krise wartet.
+Wenn der Datensatz dünn ist, reparieren Sie den Datensatz, bevor Sie den Ehrgeiz erweitern.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Walkthrough ansehen](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*
+*DBR77 IRIS vereinheitlicht KI-Assistenz mit Aufgaben, Freigaben und auditfreundlichen Zeitleisten in einer Plant-Operating-Schicht über Kernfunktionen. [Walkthrough ansehen](https://dbr77.com/iris) oder [Interaktive Demo starten](https://dbr77.com/demo).*

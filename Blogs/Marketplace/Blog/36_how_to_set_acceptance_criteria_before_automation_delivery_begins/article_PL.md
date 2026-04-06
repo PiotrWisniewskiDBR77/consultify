@@ -1,61 +1,56 @@
-# Jak ustawic kryteria akceptacji zanim rozpocznie sie dostawa automatyzacji
+# Jak ustawić kryteria akceptacji, zanim rozpocznie się realizacja automatyzacji
 
-Target persona: inzynieria i jakosc / nabywca techniczny  
-Funnel stage: Consideration do Evaluation (specyfikacja i wejscia do przyznania)  
-Core problem: akceptacja jest traktowana jak pozny argument przy uruchomieniu zamiast pisanego kontraktu, wobec ktorego planuje sie dostawe  
-Main promise: ograniczona metoda definiowania obiektow akceptacji, dowodow i sekwencji przed mobilizacja
+Docelowa persona: Kierownictwo inżynieryjne i jakości / nabywca techniczny  
+Etap lejka: Od rozważania do oceny (specyfikacja i wejścia do przyznania)  
+Główny problem: akceptacja jest traktowana jak późny argument commissioningu zamiast pisanego kontraktu, według którego planuje się dostawę  
+Główna obietnica: ograniczona metoda zdefiniowania obiektów akceptacji, dowodów i sekwencji przed utwardzeniem planu realizacji
 
-Akceptacja to nie nastroj przy go-live. To operacyjna definicja ukonczenia. Jesli nie mozesz tego przetestowac, nie mozesz tego czysto przyznac.
+Późna akceptacja jest droga, bo to późna porównywalność. Gdy kryteria pojawiają się dopiero po przyjeździe sprzętu, integratorzy optymalizują pod mobilizację, nie pod wasz tydzień produkcji. Spory przenoszą się na halę, gdzie każda godzina jest głośna i kosztowna.
 
-## Bezposrednia odpowiedz
+Zdefiniuj akceptację jako obiekty z dowodem i sekwencją, zanim plan realizacji stwardnieje: co musi być prawdą dla bezpieczeństwa, przepustowości, jakości, zachowania po awarii, wymiany danych i gotowości operacyjnej — każde zmapowane na metody testów i zapisy.
 
-Ustal kryteria akceptacji przed rozpoczeciem dostawy, publikujac ponumerowana liste obiektow akceptacji, kazdy z obiektywnym dowodem, odpowiedzialnym weryfikatorem i zaleznosciami sekwencji, a nastepnie wyrownaj kamienie milowe i platnosci do tych obiektow.
+## Obiekty, nie „klimat”
 
-Odkladanie definicji akceptacji zamienia commissioning w negocjacje i niszczy odpowiedzialnosc za harmonogram.
+Zastąp „udany rozruch” weryfikowalnymi sprawdzeniami, gdzie to uczciwe dla waszej kategorii: funkcje bezpieczeństwa przy realnych osłonach i lockout; pasma cyklu przy uzgodnionym obciążeniu; próbkowanie jakości przy metrologii zakładu; przypadki usterek i odzysku, które operatorzy naprawdę mogą wywołać; komunikaty interfejsów przy warunkach sieci; dokumentacja i szkolenie pozwalające prowadzić standardową pracę bez heroizmu.
 
-## Krok 1: rozdziel obiekty od aktywnosci
+## Sekwencja ma znaczenie
 
-Obiekt akceptacji to rezultat, ktory mozesz zweryfikowac.
+Część kontroli należy u dostawcy; część u was w zakładzie; część wymaga dowodów etapowych. Kolejność zapobiega udawaniu, że SAT to FAT — albo pomijaniu dyscypliny FAT, bo „jesteśmy w tyle”.
 
-Przyklady (ilustracyjne): pasmo czasu cyklu pod nazwanym zestawem SKU i warunkami stanowiska; wskaznik bledow lub zachowanie obslugi odrzutow pod zdefiniowanymi wejsciami; funkcje bezpieczenstwa zwalidowane pod nazwanymi scenariuszami; zachowanie handshake danych przy nazwanych punktach interfejsu.
+## Akceptujący wcześnie
 
-Aktywnosci jak "szkolenie zakonczone" naleza do planu, ale nadal powinny mapowac na obserwowalne rezultaty, jesli to mozliwe.
+Jakość, utrzymanie, IT i operacje powinny zobaczyć koncepcję akceptacji przed przyznaniem, nie odkrywać ją przy podpisie. Brakujący akceptujący w definicji to brakujący akceptujący przy commissioningu.
 
-## Krok 2: zdefiniuj dowod dla kazdego obiektu
+## Powiąż akceptację z porównaniem
 
-Dla kazdego obiektu okresl: metode pomiaru; warunki srodowiska; regule wielkosci proby lub czasu trwania; regule zaliczenia lub niezaliczenia.
+Użyj tego samego kręgosłupa kryteriów do oceny ofert: która ścieżka daje jaśniejszy dowód, mniej szarych stref i bardziej realistyczny plan stabilizacji? Wczesne projektowanie akceptacji to dyscyplina sourcowania.
 
-| slaby jezyk dowodu | mocny jezyk dowodu |
-| --- | --- |
-| "wydajnosc akceptowalna" | "przepustowosc X do Y jednostek na godzine ze zlomem ponizej Z pod warunkami A" |
-| "zintegrowane z MES" | "zdarzenia E1 do E3 pojawiaja sie w systemie S w ciagu T sekund w przypadkach testowych TC1 do TC5" |
+## Jak pomaga DBR77 Marketplace
 
-## Krok 3: szczerze ustaw zaleznosci sekwencji
+Kryteria akceptacji to jeden z najjaśniejszych sposobów porównywania dostawców według wyników, nie obietnic. Ustrukturyzowane pola pozwalają dołączać obiekty i wymagania dowodowe do porównywalnych ofert.
 
-Niektore obiekty nie da sie udowodnic, dopoki inne nie sa stabilne.
+Najbliższe elementy ciągłości: [Co FAT i SAT powinny naprawdę udowodnić przed startem produkcyjnym](../25_what_fat_and_sat_should_actually_prove_before_go_live/article_PL.md), [Co dobra oferta automatyzacyjna powinna uczynić widocznym](../17_what_a_good_automation_offer_should_make_visible/article_PL.md) oraz [Jak powinna wyglądać czysta przekazanie od selekcji do realizacji](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_PL.md).
 
-Zbuduj prosta liste zaleznosci (ilustracyjnie): akceptacja mechanicznego bezpieczenstwa i ogrodzenia; podstawowy ruch i sterowanie w trybie recznym; cykl automatyczny przy ograniczonym zestawie SKU; handshake MES lub systemu jakosci pod obciazeniami testowymi; probna produkcja przy warunkach zblizonych do produkcji.
+## Język akceptacji rozpoznawalny dla operatorów
 
-Jesli zakupy chca wczesnych faktur, mapuj kamienie milowe na prawdziwe obiekty posrednie, a nie teatr kalendarzowy.
+Jeśli kryteria czytają się jak poezja prawnicza, zawiodą operacyjnie. Przetłumacz je na zachowania: co robi operator, co sprawdza utrzymanie, co mierzy jakość, co legitymuje zatrzymanie linii a co sygnalizuje defekt. Celem nie jest doskonała proza — celem jest wspólne zrozumienie między funkcjami.
 
-## Krok 4: wyrownaj wewnetrzne akceptacje do rol akceptacji
+Powiąż kryteria z realistycznymi oknami stabilizacji. Niektóre systemy potrzebują ograniczonego czasu strojenia; udawanie inaczej rodzi fałszywe porażki lub fałszywe przejścia. Zapisz okno, kontrole wyjścia i właściciela.
 
-Wskaz, kto moze podpisac kazda klase obiektu: operacje dla wplywu na przepustowosc i obsade; jakosc dla wplywu na defekty i identyfikowalnosc; IT dla tozsamosci i sieci; utrzymanie dla serwisowalnosci.
+## Od decyzji do zachowania hali
 
-Brak akceptujacych przy definicji staje sie brakiem akceptujacych przy podpisie.
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „jak ustawić kryteria akceptacji, zanim rozpocznie się realizacja automatyzacji” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-## Co to znaczy dla DBR77 Marketplace
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-DBR77 Marketplace to workflow decyzji automatyzacji i system porownywania ofert ze strukturalna inspektowalnoscia.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
-Kryteria akceptacji naleza do tej struktury wczesnie: to sposob, w jaki rozne sciezki integratora staja sie porownywalne przez rezultaty, a nie hasla. Marketplace to nie katalog robotow.
-
-To warstwa zaufania przy wyborze integratora oparta na tym, co zaklad moze zweryfikowac.
+Na koniec powiąż tę dyscyplinę z rozliczalnością: nazwij, kto zweryfikuje założenia na hali i przy którym kamieniu milowym. Mity kwitną, gdy nikt nie posiada pomiaru; słabną, gdy weryfikacja jest częścią planu projektu, a nie dopiskiem.
 
 ## Podsumowanie
 
-Zapisz akceptacje jako testowalne obiekty z dowodem przed mobilizacja. Pozna akceptacja jest droga, bo to pozna porownywalnosc.
+Pisz akceptację przed mobilizacją jako testowalne obiekty z dowodem. Późna akceptacja to późna porównywalność — a zakład płaci za to w pierwszym tygodniu produkcji.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace pozwala dołączać obiekty akceptacji i pola dowodowe do porównywalnych ofert, więc ścieżki integratorów oceniane są według weryfikowalnych wyników. [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

@@ -1,69 +1,42 @@
-# Wann Vendor-KI-Tools die Ausfuehrungsschicht speisen sollten und wann nicht
+# Wann Vendor-KI-Tools die Ausführungsschicht speisen sollten und wann nicht
 
-Target persona: Einkauf / Werksengineering / IT-OT-Integrations-Lead  
-Funnel stage: Evaluation  
-Core problem: attraktive Vendor-Copilots erzeugen parallele Task-Kanaele, die Freigaben, Training und Audit-Felder umgehen, die das Werk schon definiert hat  
-Main promise: eine Entscheidungsmatrix zu Verhalten, Daten, Latenz, Ownership und Abschluss-Hooks, damit Vendor-Tools Ausfuehrung staerken statt zu fragmentieren
+Zielpersona: Einkauf / Werksengineering / IT-OT-Integrationslead  
+Funnel-Stufe: Evaluation  
+Kernproblem: Attraktive Vendor-Copilots erzeugen parallele Aufgabenkanäle, die Freigaben, Training und Audit-Felder umgehen, die das Werk schon definiert hat  
+Hauptversprechen: eine Entscheidungsmatrix zu Verträgen, Datenhandling, Latenz, Ownership und Abschluss-Hooks, damit Vendor-Tools Ausführung stärken statt zu fragmentieren
 
-Vendor-KI-Tools sollten die Ausfuehrungsschicht speisen, wenn Outputs auf stabile Task-Typen mappen, Daten unter Werk-Retention und Zugriffsregeln bleiben, Latenz in operative SLAs passt und jede assistierte Aktion mit denselben Freigabe- und Audit-Feldern wie native Workflows landen kann. Nicht speisen, wenn der Vendor keine vertraglich klaren unveraenderlichen Logs fuer Act-Verhalten liefern kann, Feld-Lineage verweigert oder Operateure zwingt, in einer separaten App zu schliessen. Ein Tool, das die Schleife nicht im System of Record schliesst, ist ein Side-Project, keine Operations-Infrastruktur. Die Vendor-Demo ist nicht Ihre Nachtschicht. Ihr Ausfuehrungsrecord schon.
+Das Vendor-Demo ist nicht Ihre Nachtschicht. Ihr Ausführungsdatensatz ist es. Vendor-KI-Tools sollten die Ausführungsschicht speisen, wenn Outputs auf stabile Aufgabentypen mappen, Datenhandling zu Werk-Retention und Zugriffsregeln passt, Latenz in operative SLAs fällt und assistierte Aktionen dieselben Freigabe- und Audit-Felder wie native Workflows landen. Speisen Sie nicht, wenn der Vendor sich nicht zu unveränderlichen Logs für Act-Verhalten verpflichten kann, Feld-Level-Lineage verweigert oder Bediener in einer separaten App leben müssen, um die Schleife zu schließen. Ein Tool, das die Schleife in Ihrem System of Record nicht schließen kann, ist ein Side-Project—keine Operations-Infrastruktur.
 
-## Matrix: Schicht speisen versus adjacent halten
+Behandeln Sie Integrationsentscheidungen als operative Fit-Tests. Strukturierte IDs und Owner, Respekt vor Werk-Policy-Klassen, vertraglich definiertes exportierbares Logging, vorhersagbare Latenz und klare Datenresidenz-Postur gehören in die Spalte „Schicht speisen“. Freitext-only-Outputs, Shadow-Approver, undurchsichtige flüchtige Logs, Batch- oder unvorhersagbare Latenz und unklare Subprozessoren gehören in „adjacent halten“. Landen mehrere Zeilen falsch, integrieren Sie nicht für Act-Modi—egal wie poliert das Demo.
 
-| Kriterium | Schicht speisen | adjacent halten |
-|---|---|---|
-| Task-Mapping | strukturierte IDs und Owner | nur Freitext |
-| Freigaben | respektiert Werk-Policy-Klassen | umgeht oder schattiert Approver |
-| Logging | vertraglich definiert, exportierbar | undurchsichtig oder transient |
-| Latenz | innerhalb SLA fuer Workflow | Batch oder unvorhersehbar |
-| Datenresidenz | passt zu Werk- und Kundenregeln | unklare Subprozessoren |
+Schützen Sie sich in Verträgen: explizite System-of-Record-Zuweisung für assistierte Entscheidungen, Retention und Exportformate, Änderungsbenachrichtigung wenn Modelle oder Prompts Routing beeinflussen, Vorfall-Support-Erwartungen und ein Decommission-Pfad mit Datenextrakt und Feld-Mapping. Unsignierte Klauseln werden mündliche Versprechen, die beim ersten Ausfall verfallen.
 
-Wenn zwei oder mehr Zeilen in der falschen Spalte landen, fuer Act-Modes nicht integrieren.
+Einkauf kann diese Punkte nur durchsetzen, wenn Engineering und Operations vorher sagen, welche Felder für Abschluss, Freigabe und Audit unverzichtbar sind. Ohne diese Liste verhandelt Beschaffung Preis und SLA — und verliert gegenüber einem Vendor, der „Integration“ als Buzzword verkauft. Ein einseitiges Vertragswerk ohne Feld-Mapping ist später kein Schutz, sondern ein Archiv guter Absichten.
 
-## Checkliste: Vertragsklauseln, die spaeter retten
+Halten Sie ein kurzes Lieferkriterien-Blatt bereit: welche Objekttypen müssen im Werkssystem landen, welche Identitäten müssen an Freigaben hängen, welche Logs müssen exportierbar sein, und welche Umgebungen dürfen Support sehen. Wenn der Vendor das nicht zeigen kann, bevor Sie produktiv werden, ist das ein Signal — nicht ein Timing-Problem.
 
-- explizite System-of-Record-Zuweisung fuer assistierte Entscheidungen  
-- Retention, Exportformat und Legal-Hold-Verhalten  
-- Change-Notification fuer Modell- oder Prompt-Updates mit Routing-Impact  
-- Incident-Support-SLAs und Root-Cause-Kooperation  
-- Decommission-Pfad: Datenextrakt und Feld-Mapping beim Ausstieg
+Pilot sicher: Outputs im Shadow spiegeln ohne Routing, Präzision bei Claims und Dismissals messen, zehn reale Ausnahmen End-to-End mit Audit-Feldern gehen, eine Schicht mit stale Daten und Duplikaten red-teamen, zu Advise befördern und erst dann Richtung Act auf Workflows mit stabilem Abschluss.
 
-Unsignierte Klauseln werden muendliche Versprechen, die beim ersten Ausfall verfallen.
+Best-of-Breed-Stacks gewinnen Feature-Debatten. Spine-first-Architekturen gewinnen Follow-through—eine Abschlussgewohnheit, meist native Audits, konzentrierte Trainingslast und workflow-begrenzte Fehlerisolierung.
 
-## Schrittfolge: Vendor-Feed sicher pilotieren
+Adjacent-Tools sind weiter sinnvoll für reine Engineering-Analytics ohne Linienstatuswechsel, Offline-Experimente oder Lieferantenportale, die das Werk nie als operative Wahrheit behandelt—wenn klar gelabelt, damit sie nicht in Act-Pfade leaken.
 
-1. Shadow-Publish: Outputs spiegeln ohne Routing  
-2. Precision nur auf Claims und Dismissals messen  
-3. zehn reale Exceptions end-to-end mit Audit-Feldern mappen  
-4. Red-Team-Schicht: stale Daten, Duplikat-Signale, Sprach-Grenzfaelle  
-5. auf advise promoten, dann act nur bei Workflows mit stabilem Abschluss
+IRIS ist als Ausführungs-Spine gebaut, die Vendors treffen sollten: in dieselbe Aufgaben-, Freigabe- und Abschlussform wie native Workflows publizieren—Einkauf vergleicht operativen Fit statt Neuheit.
 
-## Vergleich: Best-of-Breed-Stack versus Ausfuehrungs-Wirbelsaeule
+Zu Entscheidungsschicht und Ownership siehe [Warum Werke vor mehr KI-Modellen eine Entscheidungsschicht brauchen](../27_why_factories_need_one_decision_layer_before_more_ai_models/article_DE.md), [Wie man ein standortübergreifendes Playbook für KI-unterstützte Werksoperations aufbaut](../43_how_to_build_a_cross_site_playbook_for_ai_assisted_factory_operations/article_DE.md) und [Wie Daten-Ownership in einem KI-nativen Plant Operating System aussehen sollte](../47_what_data_ownership_should_look_like_in_an_ai_native_plant_operating_system/article_DE.md).
 
-| Element | Best-of-Breed ohne Wirbelsaeule | Wirbelsaeule-first mit Vendoren |
-|---|---|---|
-| Operateurerlebnis | viele Apps | eine Abschluss-Gewohnheit |
-| Audit | rekonstruiert | ueberwiegend nativ |
-| Trainingslast | hoch | gebundelt |
-| Failure-Isolation | unklar | workflow-begrenzt |
+Einkauf sollte „Integration“ als Verhaltenstest behandeln, nicht als Checkbox. Bitten Sie Vendors, Abschluss zu demonstrieren: wie assistierter Output zur Aufgabe wird, wie Freigaben anhängen, wie Exporte aussehen und wie Logs unter Legal Hold reagieren. Kehrt die Demo immer zu einem separaten Portal zurück, wo Bediener „später fertigmachen“ müssen, kaufen Sie parallele Arbeit, nicht operativen Hebel.
 
-Best-of-Breed gewinnt Features. Wirbelsaeule-first gewinnt Follow-through.
+Planen Sie Exit früh. Vendors ändern Modelle, Bedingungen oder verlieren Relevanz. Hängt Ihre Ausführungs-Spine von einem proprietären Abschluss-Shape ab, den Sie nicht extrahieren können, haben Sie neue Silos geschaffen, während Sie alte entfernen wollten. Spine-first-Integration verlangt Decommission-Klarheit: was exportiert wird, wie Felder mappen, wie das Werk weiterläuft, wenn der Vendor blinzelt.
 
-## Wann adjacent Tools trotzdem Sinn machen
+Integrieren Sie Vendors auf Abschlussdisziplin, nicht auf Neuheit. Können sie nicht mit derselben Rechenschaft wie interne Workflows in Ihren Datensatz schreiben, halten Sie sie aus Act-Modi fern.
 
-Reine Engineering-Analytik ohne Linienstatus-Aenderung; R&D-Experimente mit synthetischen oder Offline-Daten; Lieferanten-Portale, die das Werk nie als operative Wahrheit behandelt. Klar labeln, damit nichts in Act-Pfade leckt.
+## Operatives Fazit
 
-## Warum IRIS als Ausfuehrungs-Wirbelsaeule gebaut ist, der Vendoren begegnen soll
+Das Versprechen dieses Artikels—eine Entscheidungsmatrix zu Verträgen, Datenhandling, Latenz, Ownership und Abschluss-Hooks, damit Vendor-Tools Ausführung stärken statt zu fragmentieren—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere Erstzuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „Wann Vendor-KI-Tools die Ausführungsschicht speisen sollten und wann nicht“ ist das der Akzeptanztest: Die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Wenn Vendor-Tools in dieselbe Task-, Freigabe- und Abschluss-Form publizieren, kann Einkauf Vendor nach operativem Fit vergleichen, nicht nach Slide-Design.
-
-## Fazit
-
-Integrieren Sie Vendor nach Abschlussdisziplin, nicht nach Neuheit.
-
-Wenn sie nicht mit derselben Accountability wie interne Workflows in Ihren Record schreiben koennen, halten Sie sie aus Act-Modes raus.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: Vendor-Integration zählt erst dann, wenn Abschluss, Freigaben und Exporte im Ausführungsdatensatz genauso belegbar sind wie bei internen Workflows—ohne paralleles „Fertigmachen“ in einem separaten Portal.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS ist die Ausführungs-Spine, in der Vendor-Outputs als strukturierte Aufgaben mit denselben Freigaben und Abschlussfeldern wie native Workflows landen sollen. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

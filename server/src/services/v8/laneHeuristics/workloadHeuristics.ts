@@ -1,3 +1,4 @@
+import { stableHeuristicId } from './idFactory.js';
 import type { HeuristicInput, HeuristicOutput } from './types.js';
 
 let seqId = 0;
@@ -130,7 +131,7 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
     const topOver = overloaded[0];
     const topUnder = underloaded[0];
     suggestions.push({
-      id: uid('sug-wl'),
+      id: stableHeuristicId('sug-wl', 'rebalance-top-overload'),
       action: `Reassign ${Math.min(3, topOver[1].total - 8)} tasks from ${topOver[0]} to ${topUnder[0]}`,
       reason: `${topOver[0]} is overloaded (${topOver[1].total} tasks); ${topUnder[0]} has capacity (${topUnder[1].total} tasks)`,
       expectedOutcome: 'Balanced workload, reduced slippage risk',
@@ -143,7 +144,7 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
 
   if (noEstimateTasks.length > 5) {
     suggestions.push({
-      id: uid('sug-wl'),
+      id: stableHeuristicId('sug-wl', 'add-estimates'),
       action: `Add time estimates to ${noEstimateTasks.length} tasks`,
       reason: 'Without estimates, capacity planning is unreliable',
       expectedOutcome: 'Accurate workload visibility and leveling',
@@ -156,7 +157,7 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
 
   if (overloaded.length > 2) {
     suggestions.push({
-      id: uid('sug-wl'),
+      id: stableHeuristicId('sug-wl', 'reduce-wip-limit'),
       action: 'Reduce WIP limit to 5 tasks per person',
       reason: 'Multiple people are overloaded — systemic WIP control needed',
       expectedOutcome: 'Focus on completion over starting new work',
@@ -167,7 +168,7 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
     });
 
     suggestions.push({
-      id: uid('sug-wl'),
+      id: stableHeuristicId('sug-wl', 'smooth-delivery-schedule'),
       action: 'Smooth delivery schedule to spread work over longer horizon',
       reason: 'Current sprint/period has demand spike beyond capacity',
       expectedOutcome: 'Reduced overload without losing total throughput',
@@ -180,7 +181,7 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
 
   if (overloaded.length > 3 && underloaded.length === 0) {
     suggestions.push({
-      id: uid('sug-wl'),
+      id: stableHeuristicId('sug-wl', 'hire-contractor'),
       action: 'Hire contractor or temporary resource',
       reason: 'No internal reallocation possible — all team members overloaded',
       expectedOutcome: 'Additional capacity to absorb workload peak',

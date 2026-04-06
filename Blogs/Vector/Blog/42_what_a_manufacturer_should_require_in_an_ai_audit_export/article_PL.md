@@ -1,67 +1,34 @@
-# Czego producent powinien wymagac w eksporcie audytowym AI
+# Czego producent powinien wymagać w eksporcie audytowym AI
 
-Docelowa persona: CISO / szef audytu IT / jakosc i regulatory  
-Etap lejka: Rozwazanie  
+Docelowa persona: CISO / szef audytu IT / jakość i compliance regulacyjny  
+Etap lejka: Rozważanie  
+Główny problem: dostawcy dostarczają marketingowe atestacje, a operacje potrzebują odtwarzalnych dowodów konfiguracji, ścieżek danych i historii zmian  
+Główna obietnica: zdefiniowany eksport audytowy zamienia subiektywne „zaufajcie nam” w artefakty do inspekcji, które da się zestawić z diagramami architektury
 
-Rdzeniowy problem: dostawcy dostarczaja marketingowe atestacje, podczas gdy operacje potrzebuja odtwarzalnych dowodow konfiguracji, sciezek danych i historii zmian Glowna obietnica: zdefiniowany export audytowy zamienia subiektywne "zaufaj nam" w artefakty do inspekcji, ktore mozna zestawic z diagramami architektury Export audytowy to nie slajd z logo.
+Eksport audytowy to nie slajd z logo. To uporządkowany pakiet dowodów, który wpisuje się w sposób, w jaki już udowadniacie kontrolę w MES, tożsamości i przeglądach sieci — bo AI wchodzi do tej samej rodziny systemów: przy fabryce, z konsekwencjami i niewygodnie, gdy ślad jest cienki.
 
-To uporzadkowany pakiet dowodow zgodny z tym jak juz udowadniasz kontrole w MES, tozsamosci i sieci.
+Producent powinien wymagać, by eksport audytowy AI obejmował topologię wdrożenia i inwentarz środowisk, mapowanie tożsamości i ról z zasadami eskalacji uprawnień, diagramy przepływu danych powiązane z realnymi konektorami, historię wersji modelu i promptów z zapisami zmian, dowody polityki treningu i fine-tuningu wraz z podwykonawcami, retencję logów i kontrolę dostępu pod kątem odtwarzalności, konfigurację ludzkiej akceptacji dla każdej klasy przepływów pracy oraz kontakty i umowne SLA na wypadek incydentu. Tam, gdzie to możliwe, wymagajcie formatów maszynowo czytelnych, żeby wewnętrzne narzędzia mogły porównywać eksporty kwartał do kwartału. Jeśli czegoś nie da się wyeksportować, nie da się tego zaudytować w skali programu.
 
-## Bezposrednia odpowiedz
+## Zdefiniujcie kontrakt eksportu zanim powstanie uzależnienie
 
-Producent powinien wymagac eksportu audytowego AI obejmujacego topologie wdrozenia i inwentarz srodowisk, mapowania tozsamosci i rol z zasadami eskalacji, diagramy przeplywu danych powiazane z rzeczywistymi konektorami, historie wersji modelu i promptow z zapisami zmian, dowody polityki treningu i dostrajania wlacznie z podprocesorami, retencje logow i kontrole dostepu dla odtwarzalnosci, konfiguracje aprobaty czlowieka wg klasy przeplywu oraz kontakty IR z umownymi SLA. Wymagaj formatow maszynowo czytelnych tam gdzie to mozliwe, aby narzedzia wewnetrzne mogly porownywac eksporty kwartalnie.
+Opublikujcie minimalny schemat, którego oczekuje enterprise — zgodnie z nawykami własnego audytu. Negocjujcie eksport jako dostarczenie umowne z ustalonym rytmem odświeżania, a nie jednorazowy PDF. Zróbcie ćwiczenie stołowe: czy zewnętrzny audytor odtworzy decyzję wyłącznie z logów i wersji? Powiązcie zakres eksportu wyłącznie z zatwierdzonymi trybami wdrożenia, żeby cieniste ścieżki pojawiały się jako luki. Przechowujcie migawki kwartalne z ochroną integralności, jeśli polityka wymaga dowodu przed zniekształceniem.
 
-Jesli nie da sie wyeksportowac, nie da sie zaudytowac w skali programu.
+## Siedem pakietów, które powinny iść razem
 
-## Sekwencja krokow: zdefiniuj kontrakt eksportu
+Topologia i inwentarz: hosty, regiony, strefy sieci, konsole administracyjne i to, gdzie które obciążenia działają. Tożsamość i dostęp: role, mapowania grup, break-glass, długość sesji, postawa MFA na ścieżkach uprzywilejowanych. Ścieżki danych i retencja: ingress, egress, szyfrowanie, zegary retencji, zachowanie przy legal hold. Linia modelu i promptów: przypięte trasy, tagi wersji, historia promocji, akceptujący każdą zmianę. Dowód granicy treningu: oświadczenie pisemne plus kontrole techniczne wykluczające dane klienta z treningu. Governance przepływ pracy: klasyfikacja procesów, miejsce ludzkiej akceptacji, rejestry wyjątków — jeśli są. Operacje: kopie zapasowe konfiguracji, runbooki, logowanie dostępu wsparcia dostawcy.
 
-Opublikuj minimalna schemat oczekiwany przez przedsiebiorstwo, zgodnie z nawykiem ISO lub audytu wewnetrznego; Wynegocjuj eksport jako dostawe umowna z kadencja odswiezania, nie jako jednorazowy PDF; Przeprowadz cwiczenie: czy zewnetrzny audytor odtworzy decyzje wylacznie z logow i wersji?; Powiaz zakres eksportu wylacznie z zatwierdzonymi trybami wdrozenia, aby cienie sciezki widzialy sie jako luki; Przechowuj migawki kwartalne z haszem lub podpisem jesli polityka wymaga dowodu nienaruszalnosci.
+Czerwone flagi to narracyjne PDF-y bez identyfikatorów konfiguracji, odmowa rozdzielenia ruchu treningowego od telemetrii inferencji, logi bez tożsamości aktora lub ID korelacji oraz „wyjaśnimy na żywo na callu” zamiast trwałych eksportów.
 
-## Ramy: siedem pakietow audytowych
+Eksporty audytowe to umowa z przyszłym sobą: pakiety działają tylko wtedy, gdy działający system faktycznie emituje te pola i relacje. Vector jest pozycjonowany tak, by poważne programy audytowe mogły żądać artefaktów zgodnych z narracją architektury: granice wdrożenia pod prywatną i izolowaną pracę, dane klienta nieużywane do treningu modelu, autorskie rozumowanie przemysłowe oparte na wiedzy o transformacji fabryk zamiast ogólnego czatu oraz śledzialność wspierająca odtwarzalność podczas przeglądu.
 
-### Pakiet 1: topologia i inwentarz
+Możliwość audytu to wymaganie produktowe, nie rozmowa sprzedażowa. Zdefiniujcie eksport, zanim system wejdzie na produkcję.
 
-Hosty, regiony, strefy sieci, konsole admina i gdzie dziala ktore obciazenie.
+## Punkt kontrolny zakładu
 
-### Pakiet 2: tozsamosc i dostep
+Traktujcie „Czego producent powinien wymagać w eksporcie audytowym AI” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację przepływu pracy lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną. Traktujcie niejasność jak dług: każda nierozstrzygnięta kwestia ścieżek danych, domyślnego treningu czy kierowania ścieżek akceptacji to coś, za co zapłacicie pod presją czasu — zwykle przy audycie, incydencie lub pośpiesznym wdrożeniu.
 
-Role, mapowania grup, break-glass, dlugosc sesji, MFA na sciezkach uprzywilejowanych.
-
-### Pakiet 3: sciezki danych i retencja
-
-Ingress, egress, szyfrowanie, zegary retencji, zachowanie przy legal hold.
-
-### Pakiet 4: linia modelu i promptu
-
-Przypiete trasy, tagi wersji, historia promocji, kto zatwierdzil kazda zmiane.
-
-### Pakiet 5: dowod granicy treningu
-
-Oswiadczenie pisemne plus kontrole techniczne wykluczajace dane klienta z treningu.
-
-### Pakiet 6: zarzadzanie przeplywami
-
-Klasyfikacja przeplywow, miejsce aprobaty czlowieka, rejestr wyjatkow jesli sa.
-
-### Pakiet 7: operacje
-
-Kopia zapasowa konfiguracji, runbooki, logi dostepu wsparcia dostawcy.
-
-## Lista kontrolna: czerwone flagi w odpowiedziach dostawcy
-
-- narracyjne PDF bez identyfikatorow konfiguracji
-- odmowa rozdzielenia ruchu treningowego od telemetrii inferencji
-- logi bez tozsamosci aktora lub ID korelacji
-- "wyjasnimy na zywo na rozmowie" zamiast trwalych eksportow
-
-## Most produktowy
-
-DBR77 Vector to bezpieczna warstwa inteligencji za ekosystemem DBR77: proprietarny AI przemyslowy z granicami wdrozenia pasujacymi do prywatnego i izolowanego modelu pracy, trenowany na wiedzy transformacji fabryk, bez uzywania danych klienta do treningu modelu oraz z rozumowaniem przemyslowym zamiast generycznego czatu. Nabywcy prowadzacy powazne programy audytowe powinni oczekiwac eksportow zgodnych z ta narracja architektury.
-
-## Podsumowanie
-
-Audytowalnosc to wymaganie produktowe, nie rozmowa sprzedazowa. Zdefiniuj eksport zanim zalezysz od systemu na produkcji.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie w stałym rytmie, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Sprawdź bezpieczeństwo](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*
+*DBR77 Vector jest zbudowany wokół granic wdrożenia i rozumowania przemysłowego, które przy odpowiednim zakresie z dostawcą powinny przejrzysto wyjść w eksportach audytowych. [Przegląd bezpieczeństwa](https://dbr77.com/vector) lub [Umów demo](https://dbr77.com/demo).*

@@ -1,82 +1,40 @@
-# Jak tworzyc rekordy gotowe do audytu dla decyzji wspieranych przez AI w zakladzie
+# Jak tworzyć rekordy gotowe do audytu dla decyzji fabrycznych wspomaganych AI
 
-Target persona: Kierownik jakosci / Sprawy regulacyjne / Lider IT-OT zakladu  
-Funnel stage: Decision  
-Core problem: audytorzy i klienci pytaja "kto zdecydowal, na jakiej podstawie, jakimi danymi", podczas gdy dzialania wsparte zyja w logach czatu i zrzutach  
-Main promise: minimalny schemat rekordu, reguly retencji i kadencja przegladu, ktore wytrzymuja kontrole bez paralizowania operatorow
+Docelowa persona: menedżer jakości / regulatory affairs / lider IT-OT zakładu  
+Etap lejka: Decision  
+Główny problem: audytorzy i klienci pytają „kto zdecydował, na jakiej podstawie, na jakich danych”, podczas gdy wspomagane działania żyją w logach czatu i zrzutach  
+Główna obietnica: minimalny schemat rekordu, reguły retencji i rytm przeglądów, które wytrzymają kontrolę bez paraliżowania operatorów
 
-Tworz rekordy gotowe do audytu wymagajac dla kazdej wspartej decyzji zmieniajacej stan linii, dysponowanie zapasem lub status jakosci: pochodzenia sygnalu, wersji reguly lub modelu, przejecia lub akceptacji czlowieka z rola, znacznikow czasu, powiazanych artefaktow pracy i dowodu domkniecia. Przechowuj je w systemie prawdy wykonania, nie w e-mailu. Retencja musi zgadzac sie z programem jakosci i kontraktem klienta, z niezmiennymi logami dla zdarzen w trybie dzialaj. Jesli operator nie wydobedzie rekordu w dwie minuty na zmianie, projekt audytu jest nadal teoretyczny. Audyty nie chodza o AI. Chodza o obronna operacje.
+Audyty nie chodzą o AI. Chodzą o operacje możliwe do obrony. Twórz rekordy gotowe do audytu, wymagając dla każdej wspomaganej decyzji zmieniającej stan linii, dysponowania zapasem lub status jakości: pochodzenia sygnału, wersji reguły lub modelu, ludzkiego przejęcia lub akceptacji z rolą, znaczników czasu, powiązanych artefaktów pracy i dowodu domknięcia — przechowywanych w systemie wykonania będącym źródłem prawdy, nie w poczcie. Retencja powinna odpowiadać programowi jakości i kontraktowi z klientem, z niezmiennymi logami dla zdarzeń w trybie działania. Jeśli operator nie wygeneruje rekordu w dwie minuty w trakcie zmiany, projekt wciąż jest teoretyczny.
 
-## Minimalny schemat: siedem pol, ktore odpowiadaja wiekszosci audytorow
+Minimalny schemat odpowiada na większość pytań audytora: ID decyzji i nazwa przepływu pracy; wejścia odnoszące się do zleceń, partii, czujników lub dokumentów; wynik asysty jako ustrukturyzowana klasyfikacja lub tekst rekomendacji; wersja polityki i identyfikator migawki progów; aktor ludzki z przejęciem, akceptacją lub override’em i kodem powodu; skutek wykonania, np. ukończenie zadania, zwolnienie blokady lub trasa przeróbki; powiązane incydenty lub odchylenia, gdy ma to zastosowanie. Dodawaj pola dla branż regulowanych; nie odejmuj od bazy.
 
-ID decyzji i nazwa workflow; wejscia: referencje czujnika, zlecenia, partii lub dokumentu; wynik asysty: tekst rekomendacji lub klasyfikacja strukturalna; wersja polityki i ID migawki progow; aktor ludzki: przejecie, akceptacja lub override z kodem powodu; wynik wykonania: domkniecie zadania, zwolnienie blokady lub trasa przerobu; powiazane incydenty lub odchylenia jesli sa. Dodawaj pola dla branz regulowanych, nie odejmuj od tej bazy.
+Głębokość skaluje się według trybu. Tryb obserwacji loguje politykę próbkowania i dowód przeglądu, gdy nie podjęto działania. Tryb doradztwa wymaga przejęcia lub odrzucenia z powodem — także przy odrzuceniu. Tryb działania potrzebuje pełnego niezmiennego łańcucha łącznie z pre-check i post-check. Tryb działania bez niezmienności zaprasza wątpliwości.
 
-## Framework: glebokosc rekordu wg trybu
+Prowadź cotygodniowy wewnętrzny drill: próbkuj wspomagane pozycje między zmianami, weryfikuj pola i ID wersji, potwierdzaj, że override’y mapują na tematy szkoleniowe, rejestruj luki jako działania korygujące z właścicielami i datami. Trzydzieści minut dyscypliny bije kwartalne bohaterstwo.
 
-| Tryb | Minimum ponad baze |
-|---|---|
-| obserwuj | polityka probkowania i dowod przegladu jesli brak dzialania |
-| doradzaj | przejecie lub odrzucenie z powodem, takze przy odrzuceniu |
-| dzialaj | pelny niezmienny lancuch lacznie z pre-check i post-check |
+Załączniki mogą uzupełniać strukturę; nie powinny jej zastępować. PDF-y i zrzuty są bolesne w wyszukiwaniu, łatwo dryfują i obciążają operatorów zajęciem uploadem. Typowane pola w systemie prawdy skalują się.
 
-Tryb dzialaj bez niezmiennosci zaprasza watpliwosc.
+Retencja i dostęp muszą być jawne: kto może przeglądać logi po trzydziestu dniach, jak minimalizować dane osobowe w tekście asysty, jak legal hold zamraża rekordy bez psucia operacji, jak podprocesorzy dostawcy pojawiają się w pakietach dla klienta.
 
-## Checklist: wewnetrzny drill audytowy tygodniowo (30 minut)
+Panika audytowa zwykle zaczyna się wtedy, gdy rekord trzeba odtworzyć z eksportów, zrzutów, czatu i wyjaśnień post factum. W tej chwili problemem nie jest poler dokumentacji. Tym, że rekord operacyjny nigdy nie był jednym możliwym do obrony obiektem.
 
-- losowa probka pieciu pozycji wspieranych z kazdej zmiany  
-- weryfikacja wszystkich siedmiu pol obecnych i spojnych  
-- potwierdzenie, ze ID wersji zgadzaja sie z publikowanym changelogiem  
-- kontrola, czy powody override mapuja sie na tematy szkolen  
-- luki jako dzialania naprawcze z wlascicielami i datami
+Warstwuj wymagania według klasy ryzyka, gdy pola grożą spowolnieniem niskoryzykownych zdarzeń doradczych — ale nie zdejmuj rozliczalności z ścieżek wysokiego ryzyka.
 
-## Porownanie: dowod przez zalacznik kontra dowod przez strukture
+IRIS sprawia, że pakiety audytowe są produktem ubocznym wykonania, gdy wyniki asysty, zadania, akceptacje i historia wersji dzielą jeden kształt rekordu — więc eksporty filtrują rzeczywistość zamiast ją odtwarzać.
 
-| Element | Kultura zalacznikow | Kultura struktury |
-|---|---|---|
-| skladowanie | PDF i zrzuty | typowane pola w systemie prawdy |
-| wyszukiwanie | bolesne | eksportowalne |
-| dryft | wysoki | nizszy przy wersjonowaniu |
-| obciazenie operatora | zajecie uploadem | wypelnienie pol raz |
+Do sąsiednich elementów zobacz [Jak powinna wyglądać polityka ludzkiej akceptacji w fabrycznym AI](../39_what_a_human_approval_policy_should_look_like_in_factory_ai/article_PL.md), [Jak zaprojektować model obsługi wyjątków w operacjach wspomaganych AI](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_PL.md) oraz [Kiedy AI powinna rekomendować, a kiedy ludzie decydować w operacjach](../26_when_ai_should_recommend_and_when_humans_should_decide_in_operations/article_PL.md).
 
-Zalaczniki uzupelniaja. Nie powinny zastepowac struktury.
+Gotowość do audytu to efekt codziennych pól, nie bohaterstwa pod koniec kwartału. Zaprojektuj minimalny schemat, wymuś go najpierw w trybach działania, potem poszerzaj wraz z dojrzałością.
 
-## Reguly retencji i dostepu (rozstrzygnij jawnie)
+## Podsumowanie operacyjne
 
-Kto moze przegladac logi trybu dzialaj po 30 dniach; jak minimalizowac dane osobowe w tekscie asysty; jak nazywac podprocesory dostawcow w pakietach dla klienta; jak legal hold zamraza rekordy wsparte bez lamiania operacji.
+Obietnica tego artykułu — minimalny schemat rekordu, reguły retencji i rytm przeglądów, które wytrzymają kontrolę bez paraliżowania operatorów — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Jak tworzyć rekordy gotowe do audytu dla decyzji fabrycznych wspomaganych AI” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-## Reality check: audytowa panika zwykle zaczyna sie, gdy rekord trzeba odtworzyc
+Ten standard nie chodzi o perfekcję oprogramowania; chodzi o operacyjną uczciwość: mniej tajemniczych przekazań, mniej prawd godzonych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
-Zaklady rzadko odkrywaja slabosc projektu rekordu podczas spokojnego warsztatu.
-
-Odkrywaja ja wtedy, gdy ktos prosi o jedna wsparta decyzje, a odpowiedz jest rozrzucona po:
-
-- eksporcie z systemu
-- screenshotcie
-- watku na czacie
-- wyjasnieniu nadzorcy po fakcie
-
-W tym momencie problemem nie jest juz jakosc dokumentacji.
-
-Problemem jest to, ze rekord operacyjny nigdy nie zostal zaprojektowany jako jeden obronny obiekt.
-
-## Kiedy projekt pod audyt spowalnia zaklad
-
-Zbyt wiele obowiazkowych pol na niskoryzykowych zdarzeniach doradztwa; podwojny zapis w trzech systemach bez rekordu nadrzednego; lancuchy akceptacji niezgodne z rzeczywistym pokryciem nocnym.
-
-Napraw przez warstwowanie wymagan wg klasy ryzyka, nie przez usuwanie odpowiedzialnosci.
-
-## Dlaczego IRIS robi pakiety audytowe produktem ubocznym wykonania
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy asysta, zadania i akceptacje dziela jeden ksztalt rekordu, eksporty audytowe staja sie filtrem na rzeczywistosc, nie projektem rekonstrukcji.
-
-## Podsumowanie
-
-Gotowosc do audytu to efekt codziennych pol, nie bohaterstwa pod koniec kwartalu.
-
-Zaprojektuj minimalny schemat, egzekwuj go najpierw w trybach dzialaj, potem poszerzaj wraz z dojrzaloscia.
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie jest usprawnienie operacyjne — tylko narracyjne. Ta reguła trzyma programy przy zdrowiu, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS przechowuje wyniki asysty obok zadań i akceptacji w jednym kształcie rekordu wykonania, więc eksporty audytowe filtrują operacyjną prawdę. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

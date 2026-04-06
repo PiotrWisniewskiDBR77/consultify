@@ -1,0 +1,25 @@
+{
+  "article_path": "Blogs/DBR77/Pages/06_which_dbr77_product_fits_your_current_decision_bottleneck",
+  "product": "DBR77",
+  "scope_type": "page",
+  "asset_slug": "06_which_dbr77_product_fits_your_current_decision_bottleneck",
+  "role": "social",
+  "aspect_ratio": "1:1",
+  "usage": [
+    "website",
+    "social",
+    "newsletter"
+  ],
+  "model": "google:imagen-4.0-generate-001",
+  "prompt_source": "Blogs/DBR77/Pages/06_which_dbr77_product_fits_your_current_decision_bottleneck/image-prompts.md",
+  "prompt_text": "Premium editorial manufacturing image with one clear routing choice across multiple industrial pain points, using one center-safe thesis moment instead of headline space or poster treatment; no split poster, no route labels, no text blocks, realistic plant setting, dark graphite palette with one accent color, helpful strategic mood, no neon sci-fi, no generic sales-team stock photo no text in the generated image, keep the key subject inside the center-safe crop for social or newsletter reuse, no baked headline area, no poster typography, no readable labels Target aspect ratio: 1:1 Critical render rule: do not generate any readable text, letters, numbers, captions, labels, logos, watermarks, slide titles, document copy, dashboard copy, UI text, headline text, wall text, or typographic overlays anywhere in the image. If a screen, board, document, dashboard, scorecard, or interface is visible, it must contain only abstract non-readable blocks, simple shapes, and soft placeholder marks. Never place large title words, marketing slogans, section headers, or composited text for later overlay; leave that area visually quiet and empty instead. Keep the focal object simple, bold, and centered without visible interface copy or poster-like headline treatment. Google-specific output rule: produce a photorealistic or editorial-realistic business image with no readable text anywhere. Do not place words on walls, tables, screens, reports, dashboards, scorecards, or overlays. Any interface elements must stay abstract, minimal, and completely non-legible. Avoid: headline baked into image, meme aesthetic, smiling stock characters, cheesy corporate poster, sci-fi neon",
+  "negative_prompt": "headline baked into image, meme aesthetic, smiling stock characters, cheesy corporate poster, sci-fi neon",
+  "seed": "n/a",
+  "run_id": "n/a",
+  "created_at": "2026-03-28T19:04:19.504184+00:00",
+  "alt_text_en": "create a strong visual around the phrase \"which DBR77 product fits your bottleneck?\"",
+  "caption_en": "create a strong visual around the phrase \"which DBR77 product fits your bottleneck?\"",
+  "crop_safe_notes": "Primary subject should remain center-safe for 1:1 reuse.",
+  "output_path": "Blogs/DBR77/Pages/06_which_dbr77_product_fits_your_current_decision_bottleneck/assets/images/social_1x1_v1.png",
+  "generation_notes": {}
+}

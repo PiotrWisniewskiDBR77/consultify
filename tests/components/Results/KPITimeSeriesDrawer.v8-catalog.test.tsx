@@ -178,7 +178,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
+    fireEvent.change(screen.getByPlaceholderText('Notes, source, or audit comment (optional)'), {
       target: { value: 'March value' },
     });
     fireEvent.click(screen.getByText('Record'));
@@ -219,7 +219,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
+    fireEvent.change(screen.getByPlaceholderText('Notes, source, or audit comment (optional)'), {
       target: { value: 'March value' },
     });
     fireEvent.click(screen.getByText('Record'));
@@ -296,6 +296,73 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
 
     expect(Api.put).not.toHaveBeenCalledWith('/benefits/kpis/kpi-1', expect.anything());
+  });
+
+  it('shows premium chart, alert, and target checkpoint semantics in the drawer', async () => {
+    vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
+      organizationId: 'org-1',
+      kpis: [
+        {
+          id: 'kpi-1',
+          name: 'KPI Alpha',
+          unit: '%',
+          latestValue: 12,
+          targetValue: 20,
+          baselineValue: 8,
+          isOnTarget: false,
+          measurementFrequency: 'MONTHLY',
+          observationPhase: 'both',
+          realizationExpectation: { targetValue: 18, measurementFrequency: 'MONTHLY' },
+          postImplementationExpectation: { targetValue: 20, measurementFrequency: 'MONTHLY' },
+          latestMeasurementDate: '2026-03-01T00:00:00.000Z',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      mappings: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getKpiDrawerDetail).mockResolvedValue({
+      organizationId: 'org-1',
+      kpiId: 'kpi-1',
+      measurements: [
+        {
+          id: 'm-1',
+          kpiId: 'kpi-1',
+          value: 10,
+          measuredAt: '2026-02-01',
+          periodStart: '2026-02-01',
+          periodKey: '2026-02',
+          createdAt: '2026-02-02T00:00:00.000Z',
+        },
+        {
+          id: 'm-2',
+          kpiId: 'kpi-1',
+          value: 12,
+          measuredAt: '2026-03-01',
+          periodStart: '2026-03-01',
+          periodKey: '2026-03',
+          createdAt: '2026-03-02T00:00:00.000Z',
+        },
+      ],
+      openCase: {
+        id: 'case-1',
+        kpiId: 'kpi-1',
+        organizationId: 'org-1',
+        severity: 'RED',
+        status: 'OPEN',
+        deviationSummary: 'Below target',
+        actions: [{ id: 'a-1', title: 'Recover trend', dueDate: '2026-03-05', status: 'OPEN' }],
+      },
+    } as any);
+
+    render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Calculation')).toBeInTheDocument();
+      expect(screen.getByText('Freshness posture')).toBeInTheDocument();
+      expect(screen.getByText('Governed target checkpoints')).toBeInTheDocument();
+      expect(screen.getAllByText('Projection').length).toBeGreaterThan(0);
+      expect(screen.getByText('Action ageing')).toBeInTheDocument();
+    });
   });
 
   it('falls back to legacy KPI settings save only for bounded compatibility errors', async () => {

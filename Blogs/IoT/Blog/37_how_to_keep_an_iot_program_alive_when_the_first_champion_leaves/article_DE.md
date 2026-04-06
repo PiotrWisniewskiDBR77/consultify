@@ -1,51 +1,58 @@
-# Wie man ein IoT-Programm am Leben haelt, wenn der erste Champion geht
+# Wie man ein IoT-Programm am Leben hält, wenn der erste Champion geht
 
-Zielpersona: Werksleiter / IT-OT-Sponsor / Programmowner  
+Zielpersona: Werksleiter / IT-OT-Sponsor / Program Owner  
+Funnel-Phase: Adoption  
+Kernproblem: der erste Champion trug informelle Entscheidungen, Vendor-Beziehungen und Bedienervertrauen — das Programm wirkt persönlich statt institutionell  
+Hauptversprechen: ein Continuity-Kit: dokumentierte Entscheidungen, geteiltes Ownership, bedienervalidierte Signalregeln und Budgetposten, die einen Personalwechsel überstehen
 
-Funnel-Phase: Adoption Kernproblem: der erste Champion trug informelle Entscheidungen, Vendor-Beziehungen und Bedienervertrauen, das Programm wirkt persoenlich statt institutionell Hauptversprechen: ein Continuity-Kit: dokumentierte Entscheidungen, geteilte Ownership, bedienervalidierte Signalregeln und Budget-Positionen, die Personalwechsel ueberleben Champions beschleunigen Starts. Institutionen ueberleben Uebergaben.
+Jedes reife Programm überlebt irgendwann seinen ersten Helden.
 
-Wenn Ihr IoT-Programm stirbt, wenn eine Person die Rolle wechselt, war es nie operationalisiert.
+Bis dahin lebt IoT oft in Slack-Threads, privaten Tabellen und den Köpfen von zwei Personen, die alle anrufen, wenn eine Schwelle „falsch fühlt“. Das kann im Rollout funktionieren. Es scheitert in dem Moment, in dem jemand wechselt, ausbrennt oder befördert wird. Das Werk entdeckt schmerzhaft, dass „wir haben IoT“ bedeutete: „wir haben Morgan“.
 
-Halten Sie das Programm am Leben, indem Sie **Wissen aus dem Kopf in Artefakte** verschieben, bevor der Champion geht: Decision-Log fuer Schwellen, Eskalationen und Overrides; benannte Co-Owner fuer OT-Konnektivitaet, Datenqualitaet und Shopfloor-Training; quartalsweises Review-Kalender, gekoppelt an Planung, nicht an Heldentum; Budget- und Vendor-Vertragskarte mit Erneuerungs-Triggern. Ziel ist langweilige Kontinuitaet, kein Ersatz-Held.
+Continuity ist nicht romantisch. Es ist die unglamouröse Arbeit, Urteil in Artefakte zu verwandeln: Logs, Owner, Kalender und Budgetzeilen, die bestehen, wenn Namen wechseln.
 
-## Die drei Ownership-Splits
+Wenn Ihr Continuity-Plan „jemanden wie Morgan einstellen“ lautet, beschreiben Sie Hiring-Risiko, kein System. Institutionen dokumentieren, was Morgan wöchentlich getan hat — nicht nur, was Morgan im Kopf trug.
 
-Single-Thread-Ownership vermeiden.
+## Was zuerst verschwindet, wenn der Champion geht
 
-| Spur | Owner |
-|---|---|
-| Operations | was Signale fuer Laufentscheidungen und Uebergabe bedeuten |
-| Instandhaltung | Asset-Health-Interpretation und CMMS-Anbindung |
-| Engineering / IT-OT | Konnektivitaets-Standards, Security-Patching, Integrationsgrenzen |
+Schwellenbegründungen verdampfen. Eskalationspfade zerfasern. Vendor-Kontakte altern. Trainingsdecks existieren, aber niemand weiß, welche Version die Fläche wirklich nutzt. Bediener kehren leise zu alten Gewohnheiten zurück, weil niemand das System öffentlich nachjustiert. Finance sieht eine Verlängerung und kann nicht sagen, ob die Value-Story noch stimmt.
 
-Champions haben diese Spuren oft verwischt. Institutionelles IoT braucht klare Naehte.
+Nichts davon ist unvermeidlich. So passiert es, wenn Wissen absichtlich persönlich blieb.
 
-## Schrittfolge: 30-Tage-Continuity-Sprint
+## Wissen in auffindbare Objekte verschieben
 
-Arbeitsnotizen des Champions in ein Decision-Log mit Datum und Begruendung exportieren; Halbtages-Workshop mit Bedienern: welche Signale sich noch wahr anfuehlen; Co-Owner mit Backup-Namen zuweisen, nicht nur Primary; einen Monat "keine neuen Alarme" einfrieren, waehrend Ownership stabilisiert wird; einseitige Programm-Charter der Werksfuehrung mit Kosten und Review-Takt vorlegen.
+Führen Sie ein lebendiges Entscheidungs-Log für Schwellen, Eskalation und Overrides: was sich geändert hat, warum, wer freigegeben hat, wann es wieder auf den Tisch kommt. Speichern Sie es dort, wo Instandhaltung und Operations wirklich hinschauen — nicht in einem Engineering-Ordner. Benennen Sie Co-Owner für OT-Konnektivität, Datenqualität und Flächentraining, damit Abwesenheit vor Urlaub sichtbar ist, nicht in einer Krise.
 
-## Checkliste: institutionelle Signale
+Binden Sie Quartalsreviews an den Werksbetriebskalender neben Sicherheit und Qualität — nicht an die Energie des Champions. Mappen Sie Vendor-Verträge, Zugänge und Verlängerungs-Trigger dort, wo Finance und IT-OT beides sehen.
 
-- [ ] Schwellen haben benannte Reviewer und letztes Review-Datum
-- [ ] Overrides haben Ablauf und Audit-Trail fuer Vorgesetzte zugaenglich
-- [ ] Trainingsmaterialien leben im Werk-LMS oder Aequivalent, nicht auf privaten Laufwerken
-- [ ] Standard-Referenzen sind explizit fuer Safety- und Qualitaets-Gates
-- [ ] Pilot-Scope und Scale-Kriterien sind schriftlich, damit der naechste Owner sie verteidigen kann
+## Signale mit Bedienern auf jeder Schicht validieren
 
-## Wann es funktioniert und wann nicht
+Institutionelles Gedächtnis ist unvollständig, bis zweite und dritte Schicht denselben Tag auf dieselbe Weise erklären können. Führen Sie kurze Stichproben-Audits: Szenario zeigen, Zustand und Grund in Wörterbuchsprache fragen, Kollisionen sofort fixen. Wenn Vokabular driftet, wird IoT zu einem Turmbau zu Babel, den der nächste Owner erbt.
 
-**Funktioniert**, wenn Fuehrung das Programm als Infrastruktur finanziert, nicht als Nebenprojekt.
+## Einen 30-Tage-Continuity-Sprint vor Turnover fahren, wenn möglich
 
-**Scheitert**, wenn der Ausstieg zum Schuldzirkus wird und Bediener lernen, IoT sei wieder optional.
+Exportieren Sie das Entscheidungs-Log und gehen Sie es mit neuen Ownern durch. Proben Sie Eskalations- und Override-Review, als wäre der Champion schon weg. Bestätigen Sie Patching-, Backup- und Recovery-Ownership für Gateways und Edge-Assets. Richten Sie Finance auf Verlängerungslinien und interne Arbeitsbudgets aus, damit das Programm keine Überraschungsrechnung wird.
 
-## Was das fuer DBR77 IoT bedeutet
+Der Sprint ist kein Misstrauen gegen Menschen. Es ist Respekt vor Realität.
 
-DBR77 IoT ist fuer **schnelle Piloten** und **retrofit-freundliche Konnektivitaet** gebaut, was Abhaengigkeit von Stammwissen eines Integrators reduziert.
+**Institutionelle Signale:** dokumentierte Owner existieren für jeden langweiligen Job; Trainingsmaterialien leben im Werkssystem mit Versionskontrolle; Vendor-Zugang hat benannte Backups; KPI-Definitionen haben einen Steward, der jeden Projekt-Spitznamen überdauert.
 
-**Echtzeit-Maschinensichtbarkeit** und **Edge-first Entscheidungsunterstuetzung** bleiben wertvoll bei rotierender Ownership, wenn Regeln dokumentiert sind.
+## Wenn Artefakte nicht retten können
 
-## Bottom line
+Wenn Ownership nominal ist — Titel auf einem Organigramm ohne Zeit — wird Dokumentation Theater. Wenn Politik ehrliches Tuning bestraft, wird das Log lügen. Fixen Sie Anreize und Autorität, bevor Sie Templates polieren.
 
-Ueberleben Sie Champion-Wechsel mit **Artefakten, Co-Ownership und Kalender**.
+## DBR77 IoT jenseits des Helden
 
-IoT wird real, wenn das Werk es ohne einen einzelnen Zauberer betreiben kann.
+DBR77 IoT unterstützt Continuity, wenn Deployments mit Playbooks, geteiltem Stewardship und Review-Takt ausgeliefert werden, der Personalwechsel übersteht — nicht nur Demo-Day-Gewinne.
+
+Champions entfachen Schwung. Institutionen überleben Übergaben. Halten Sie IoT am Leben, indem Sie Entscheidungen, Owner, Kalender und Geld für das Werk sichtbar machen — nicht für einen einzelnen Posteingang.
+
+## Auf dem Shopfloor ankommen
+
+Dieser Rat zählt nichts, wenn er im Lenkungsdeck bleibt. Der nützliche Test ist, ob die nächste Schicht mit weniger Debatte handeln kann: klarere States, weniger Mystery-Stops, schnellere Bestätigung und Eskalation, die Aufmerksamkeit respektiert. Wenn IoT funktioniert, fühlt sich die Linie weniger wie ein Gerichtssaal und mehr wie ein koordiniertes Team an — weiter laut und voll, aber orientiert an denselben Fakten.
+
+Wenn Sie die Fläche gehen und Menschen das System noch als „der Computer“ statt „unser Bild der Linie“ beschreiben, straffen Sie Kontext, Ownership und Review, bis sich die Sprache ändert. Sprachverzug ist ein Symptom, dass die Schleife noch zu dünn ist.
+
+---
+
+*DBR77 IoT hilft Werken, IoT zu institutionalisieren — mit Playbooks, geteiltem Ownership und Review-Rhythmen, die jeden einzelnen Champion überdauern. [Pilot planen](https://dbr77.com/iot) oder [Online-Demo ansehen](https://dbr77.com/demo).*

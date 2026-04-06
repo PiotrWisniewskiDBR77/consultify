@@ -2,7 +2,7 @@
  * Virtual Worker Knowledge Service
  *
  * Generalized knowledge retrieval for any virtual worker.
- * Replaces the Anna-specific annaKnowledgeService with a worker-aware version.
+ * Uses governed knowledge pills first, then RAG-scoped docs, then static fallbacks.
  */
 
 import { all as dbAll } from '../../utils/DbPromise.js';
@@ -11,12 +11,10 @@ import ragService from '../ragService.js';
 import {
   getWorkerBySlug,
   type KnowledgeAssignment,
+  type KnowledgePill,
   listKnowledgeAssignments,
+  listKnowledgePills,
 } from './virtualWorkerService.js';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 type DocRow = {
   id?: string;
@@ -45,6 +43,13 @@ type RagHit = {
   documentId?: string;
   productSlug: string;
   language: string | null;
+  pillId?: string | null;
+  sectionKey?: string | null;
+};
+
+type AssignedPill = {
+  pill: KnowledgePill;
+  assignment: KnowledgeAssignment;
 };
 
 export type WorkerKnowledgeResult = {
@@ -52,11 +57,10 @@ export type WorkerKnowledgeResult = {
   matchedProducts: string[];
   primaryProducts: string[];
   sources: string[];
+  usedPillIds: string[];
+  usedPillSections: string[];
+  fallbackReason?: string | null;
 };
-
-// ---------------------------------------------------------------------------
-// Product detection
-// ---------------------------------------------------------------------------
 
 const PRODUCT_ORDER = [
   'consultify',
@@ -78,12 +82,58 @@ const PRODUCT_MATCHERS: Record<string, RegExp[]> = {
   marketplace: [/\bmarketplace\b/i],
 };
 
+const PRODUCT_FALLBACK_CONTEXTS: Record<string, string> = {
+  consultify: `Product: Consultify
+Consultify is the main public product priority. It is an AI-powered platform for structured digital transformation work: diagnosis, roadmap building, initiatives, execution support, ROI logic, and reporting. Anna should default to explaining Consultify first, especially for value, adoption, demo, trial, workflow, onboarding, and business impact questions.`,
+  vector: `Product: DBR77 Vector
+DBR77 Vector is the DBR77 proprietary LLM and industrial reasoning layer. It is positioned as a domain-trained model for factory transformation, industrial operations, digital transformation, deployment flexibility, and enterprise-grade security. In Anna conversations, Vector should be explained mainly as the intelligence layer that can support Consultify and the broader DBR ecosystem.`,
+  dbr77: `Product: DBR77 Ecosystem
+DBR77 is presented as one connected system that includes Consultify, Vector, Digital Twin, IIoT, Marketplace, IRIS and other operational products. The priority in public conversations is still Consultify first. Other DBR products should be introduced when the user asks directly or when they help explain how Consultify creates business value.`,
+  iris: `Product: IRIS
+IRIS is the DBR77 intelligence engine for industrial risk scoring, anomaly detection and predictive maintenance. It processes real-time signals from IIoT and Digital Twin to surface operational insights for factory and supply-chain leaders.`,
+  'digital-twin': `Product: Digital Twin
+DBR77 Digital Twin creates a virtual replica of physical factory processes, enabling simulation, scenario planning and optimization without disrupting production. It integrates with IIoT data and IRIS analytics.`,
+  iiot: `Product: IIoT
+DBR77 IIoT is the Industrial Internet of Things connectivity layer that collects real-time sensor and machine data from production lines, feeding it into Digital Twin, IRIS and the broader DBR77 analytics stack.`,
+  marketplace: `Product: Marketplace
+DBR77 Marketplace is the curated catalog of pre-built transformation modules, integrations and partner solutions that organizations can plug into their Consultify-managed transformation programs.`,
+};
+
+function parseMeta(raw: DocRow['metadata']): DocMeta {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw as DocMeta;
+  try {
+    return JSON.parse(String(raw)) as DocMeta;
+  } catch {
+    return {};
+  }
+}
+
+function uniq<T>(items: T[]): T[] {
+  return Array.from(new Set(items));
+}
+
+function safeSlice(text: string, maxChars: number): string {
+  const value = String(text || '').trim();
+  return value.length <= maxChars ? value : `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+}
+
+function normalizeLanguage(value?: string | null): 'pl' | 'en' | null {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.startsWith('pl')) return 'pl';
+  if (normalized.startsWith('en')) return 'en';
+  return null;
+}
+
+function resolveKnowledgeLanguage(locale?: string): 'pl' | 'en' {
+  return normalizeLanguage(locale) === 'pl' ? 'pl' : 'en';
+}
+
 function detectProducts(query: string): string[] {
   const matched: string[] = [];
   for (const product of PRODUCT_ORDER) {
-    if ((PRODUCT_MATCHERS[product] || []).some((r) => r.test(query))) {
-      matched.push(product);
-    }
+    if ((PRODUCT_MATCHERS[product] || []).some((pattern) => pattern.test(query))) matched.push(product);
   }
   return matched;
 }
@@ -91,9 +141,7 @@ function detectProducts(query: string): string[] {
 function isDbR77PortfolioQuestion(query: string): boolean {
   const q = String(query || '').toLowerCase();
   const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
-  const mentionsAnnaOrProduct =
-    /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
-
+  const mentionsAnnaOrProduct = /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
   const portfolioKeywords =
     /\bportfolio\b/.test(q) ||
     /\bekosystem\b/.test(q) ||
@@ -112,99 +160,31 @@ function isDbR77PortfolioQuestion(query: string): boolean {
     /\btell me about your\b/.test(q) ||
     /\bopowiedz.*o.*produk\b/.test(q) ||
     /\bprzedstaw.*ofert\b/.test(q);
-
-  if (mentionsDbR && portfolioKeywords) return true;
-  if (portfolioKeywords && !mentionsAnnaOrProduct) return true;
-  return false;
-}
-
-const PRODUCT_FALLBACK_CONTEXTS: Record<string, string> = {
-  consultify: `Product: Consultify
-Consultify is the main public product priority. It is an AI-powered platform for structured digital transformation work: diagnosis, roadmap building, initiatives, execution support, ROI logic, and reporting. Anna should default to explaining Consultify first, especially for value, adoption, demo, trial, workflow, onboarding, and business impact questions.`,
-  vector: `Product: DBR77 Vector
-DBR77 Vector is the DBR77 proprietary LLM and industrial reasoning layer. It is positioned as a domain-trained model for factory transformation, industrial operations, digital transformation, deployment flexibility, and enterprise-grade security. In Anna conversations, Vector should be explained mainly as the intelligence layer that can support Consultify and the broader DBR ecosystem.`,
-  dbr77: `Product: DBR77 Ecosystem
-DBR77 is presented as one connected system that includes Consultify, Vector, Digital Twin, IIoT, Marketplace, IRIS and other operational products. The priority in public conversations is still Consultify first. Other DBR products should be introduced when the user asks directly or when they help explain how Consultify creates business value.`,
-  iris: `Product: IRIS
-IRIS is the DBR77 intelligence engine for industrial risk scoring, anomaly detection and predictive maintenance. It processes real-time signals from IIoT and Digital Twin to surface operational insights for factory and supply-chain leaders.`,
-  'digital-twin': `Product: Digital Twin
-DBR77 Digital Twin creates a virtual replica of physical factory processes, enabling simulation, scenario planning and optimization without disrupting production. It integrates with IIoT data and IRIS analytics.`,
-  iiot: `Product: IIoT
-DBR77 IIoT is the Industrial Internet of Things connectivity layer that collects real-time sensor and machine data from production lines, feeding it into Digital Twin, IRIS and the broader DBR77 analytics stack.`,
-  marketplace: `Product: Marketplace
-DBR77 Marketplace is the curated catalog of pre-built transformation modules, integrations and partner solutions that organizations can plug into their Consultify-managed transformation programs.`,
-};
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function parseMeta(raw: DocRow['metadata']): DocMeta {
-  if (!raw) return {};
-  if (typeof raw === 'object') return raw as DocMeta;
-  try {
-    return JSON.parse(String(raw)) as DocMeta;
-  } catch {
-    return {};
-  }
-}
-
-function uniq<T>(items: T[]): T[] {
-  return Array.from(new Set(items));
-}
-
-function safeSlice(text: string, maxChars: number): string {
-  const v = String(text || '').trim();
-  return v.length <= maxChars ? v : v.slice(0, Math.max(0, maxChars - 1)).trimEnd() + '…';
-}
-
-function normalizeLanguage(value?: string | null): 'pl' | 'en' | null {
-  const normalized = String(value || '')
-    .trim()
-    .toLowerCase();
-  if (!normalized) return null;
-  if (normalized.startsWith('pl')) return 'pl';
-  if (normalized.startsWith('en')) return 'en';
-  return null;
-}
-
-function resolveKnowledgeLanguage(locale?: string): 'pl' | 'en' {
-  return normalizeLanguage(locale) === 'pl' ? 'pl' : 'en';
+  return (mentionsDbR && portfolioKeywords) || (portfolioKeywords && !mentionsAnnaOrProduct);
 }
 
 function splitDocsByLanguagePreference(
   docs: IndexedDoc[],
   locale?: string
-): {
-  preferredLanguage: 'pl' | 'en';
-  preferredDocs: IndexedDoc[];
-  fallbackDocs: IndexedDoc[];
-} {
+): { preferredLanguage: 'pl' | 'en'; preferredDocs: IndexedDoc[]; fallbackDocs: IndexedDoc[] } {
   const preferredLanguage = resolveKnowledgeLanguage(locale);
   const preferredDocs: IndexedDoc[] = [];
   const fallbackDocs: IndexedDoc[] = [];
 
   for (const doc of docs) {
-    const docLanguage = normalizeLanguage(doc.language);
-    if (!docLanguage || docLanguage === preferredLanguage) {
-      preferredDocs.push(doc);
-      continue;
-    }
-    fallbackDocs.push(doc);
+    const language = normalizeLanguage(doc.language);
+    if (!language || language === preferredLanguage) preferredDocs.push(doc);
+    else fallbackDocs.push(doc);
   }
 
-  return {
-    preferredLanguage,
-    preferredDocs,
-    fallbackDocs,
-  };
+  return { preferredLanguage, preferredDocs, fallbackDocs };
 }
 
 function dedupeHits(hits: RagHit[]): RagHit[] {
   const seen = new Set<string>();
   const out: RagHit[] = [];
   for (const hit of hits) {
-    const key = `${hit.productSlug}::${hit.source}::${hit.content.slice(0, 160)}`;
+    const key = `${hit.productSlug}::${hit.source}::${hit.content.slice(0, 180)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(hit);
@@ -213,125 +193,196 @@ function dedupeHits(hits: RagHit[]): RagHit[] {
 }
 
 function scoreLanguagePreference(language: string | null, preferredLanguage: 'pl' | 'en'): number {
-  const normalizedLanguage = normalizeLanguage(language);
-  if (normalizedLanguage === preferredLanguage) return 0;
-  if (!normalizedLanguage) return 1;
+  const normalized = normalizeLanguage(language);
+  if (normalized === preferredLanguage) return 0;
+  if (!normalized) return 1;
   return 2;
 }
 
-// ---------------------------------------------------------------------------
-// Core: load docs scoped to a worker's knowledge assignments
-// ---------------------------------------------------------------------------
+function tokenizeQuery(query: string): string[] {
+  return String(query || '')
+    .toLowerCase()
+    .split(/[^a-z0-9ąćęłńóśźż-]+/i)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3);
+}
+
+async function safeListWorkerPills(workerId: string): Promise<KnowledgePill[]> {
+  try {
+    if (typeof listKnowledgePills !== 'function') return [];
+    return await listKnowledgePills({ workerId });
+  } catch {
+    return [];
+  }
+}
 
 async function loadWorkerDocs(
   assignments: KnowledgeAssignment[]
-): Promise<{ docs: IndexedDoc[]; assignedDocs: IndexedDoc[]; weightMap: Map<string, number> }> {
-  const productSlugs = assignments
-    .filter((a) => a.knowledge_source_type === 'product_pill' && a.product_slug)
-    .map((a) => a.product_slug!);
-
+): Promise<{ docs: IndexedDoc[]; weightMap: Map<string, number> }> {
+  const productSlugs = assignments.filter((a) => a.product_slug).map((a) => a.product_slug!);
   const docIds = assignments.filter((a) => a.knowledge_doc_id).map((a) => a.knowledge_doc_id!);
-
+  const pillIds = assignments.filter((a) => a.knowledge_pill_id).map((a) => a.knowledge_pill_id!);
   const weightMap = new Map<string, number>();
-  for (const a of assignments) {
-    if (a.product_slug) weightMap.set(a.product_slug, a.priority_weight);
+
+  for (const assignment of assignments) {
+    if (assignment.product_slug) weightMap.set(assignment.product_slug, assignment.priority_weight);
   }
 
   const rows = (await dbAll(
-    `SELECT id, filename, metadata FROM knowledge_docs WHERE source_type IN ('product_pill', 'tool_pack')`,
+    `SELECT id, filename, metadata
+     FROM knowledge_docs
+     WHERE source_type IN ('product_pill', 'tool_pack')`,
     [],
     { fallback: true } as any
   )) as DocRow[];
 
   const docs: IndexedDoc[] = [];
-  const assignedDocs: IndexedDoc[] = [];
   for (const row of rows || []) {
     const meta = parseMeta(row.metadata);
     const id = String(row.id || '').trim();
     const filename = String(row.filename || '').trim();
     const productSlug = String(meta.product_slug || '').trim();
     if (!id || !filename) continue;
+    const hasScopedFilters = productSlugs.length > 0 || docIds.length > 0 || pillIds.length > 0;
+    const matchesScopedFilter =
+      (productSlug && productSlugs.includes(productSlug)) ||
+      docIds.includes(id) ||
+      (meta.pill_id ? pillIds.includes(String(meta.pill_id)) : false);
+    if (hasScopedFilters && !matchesScopedFilter) {
+      continue;
+    }
 
-    const doc: IndexedDoc = {
+    docs.push({
       id,
       filename,
       productSlug: productSlug || 'unknown',
       pillId: meta.pill_id ? String(meta.pill_id) : null,
       language: meta.language ? String(meta.language) : null,
-    };
-
-    docs.push(doc);
-
-    const matchesProduct = productSlug && productSlugs.includes(productSlug);
-    const matchesDocId = docIds.includes(id);
-    if (matchesProduct || matchesDocId || productSlugs.length === 0) {
-      assignedDocs.push(doc);
-    }
+    });
   }
 
-  return { docs, assignedDocs, weightMap };
+  return { docs, weightMap };
 }
-
-// ---------------------------------------------------------------------------
-// RAG search scoped to specific docs
-// ---------------------------------------------------------------------------
 
 async function searchScoped(query: string, docs: IndexedDoc[], limit: number): Promise<RagHit[]> {
   if (docs.length === 0) return [];
-
-  const docById = new Map(docs.map((d) => [d.id, d]));
+  const docById = new Map(docs.map((doc) => [doc.id, doc]));
   const results = await ragService.searchRelevantChunks(query, {
     limit,
     minSimilarity: 0.15,
-    documentIds: docs.map((d) => d.id),
+    documentIds: docs.map((doc) => doc.id),
   });
 
   return results
-    .map((r) => {
-      const doc = r.documentId ? docById.get(String(r.documentId)) : null;
+    .map((result) => {
+      const doc = result.documentId ? docById.get(String(result.documentId)) : null;
       if (!doc) return null;
       return {
-        content: String(r.content || '').trim(),
+        content: String(result.content || '').trim(),
         source: doc.filename,
-        similarity: Number(r.similarity || 0),
+        similarity: Number(result.similarity || 0),
         documentId: doc.id,
         productSlug: doc.productSlug,
         language: doc.language,
+        pillId: doc.pillId,
       } satisfies RagHit;
     })
-    .filter((r) => Boolean(r?.content)) as RagHit[];
+    .filter((hit) => Boolean(hit?.content)) as RagHit[];
 }
 
-// ---------------------------------------------------------------------------
-// Build context text
-// ---------------------------------------------------------------------------
+function selectSections(
+  pill: KnowledgePill,
+  assignment: KnowledgeAssignment
+): Array<{ key: string; title: string; content: string }> {
+  const sections = pill.current_version?.sections || [];
+  const selectedKeys = new Set(assignment.section_keys || []);
+  return sections
+    .filter((section) => {
+      if (assignment.usage_mode === 'selected_sections' && selectedKeys.size > 0) {
+        return selectedKeys.has(section.section_key);
+      }
+      return true;
+    })
+    .map((section) => ({
+      key: section.section_key,
+      title: section.title || section.section_key,
+      content: section.content,
+    }));
+}
 
-function buildFallbackHits(primaryProducts: string[]): RagHit[] {
-  const hits: RagHit[] = [];
-  for (const product of primaryProducts) {
-    const ctx = PRODUCT_FALLBACK_CONTEXTS[product];
-    if (ctx) {
-      hits.push({
-        content: ctx,
-        source: `${product}-fallback`,
-        similarity: 0.5,
-        productSlug: product,
-        language: null,
-      });
+function searchPillHits(
+  query: string,
+  assignedPills: AssignedPill[],
+  primaryProducts: string[]
+): { primaryHits: RagHit[]; fallbackOnlyHits: RagHit[] } {
+  const tokens = tokenizeQuery(query);
+  const primaryHits: RagHit[] = [];
+  const fallbackOnlyHits: RagHit[] = [];
+
+  for (const { pill, assignment } of assignedPills) {
+    const sections = selectSections(pill, assignment);
+    for (const section of sections) {
+      const corpus = `${pill.title} ${pill.summary || ''} ${section.title} ${section.content}`.toLowerCase();
+      const tokenMatches = tokens.reduce((count, token) => count + (corpus.includes(token) ? 1 : 0), 0);
+      const productBoost = pill.product_slug && primaryProducts.includes(pill.product_slug) ? 1 : 0;
+      const coverage = tokens.length > 0 ? tokenMatches / tokens.length : 0.25;
+      const score = Math.min(0.99, coverage + productBoost * 0.2 + assignment.priority_weight * 0.08);
+      const excerpt =
+        assignment.max_context_chars && assignment.max_context_chars > 0
+          ? safeSlice(section.content, assignment.max_context_chars)
+          : safeSlice(section.content, 1400);
+
+      const hit: RagHit = {
+        content: `${pill.title} / ${section.title}\n${excerpt}`,
+        source: `pill:${pill.slug}#${section.key}`,
+        similarity: score,
+        productSlug: pill.product_slug || assignment.product_slug || 'unknown',
+        language: pill.language || null,
+        pillId: pill.id,
+        sectionKey: section.key,
+      };
+
+      if (assignment.usage_mode === 'fallback_only') fallbackOnlyHits.push(hit);
+      else if (tokens.length === 0 || tokenMatches > 0 || assignment.usage_mode === 'full_pill') {
+        primaryHits.push(hit);
+      }
     }
   }
-  return hits;
+
+  return {
+    primaryHits: primaryHits.sort((a, b) => b.similarity - a.similarity),
+    fallbackOnlyHits: fallbackOnlyHits.sort((a, b) => b.similarity - a.similarity),
+  };
+}
+
+function buildFallbackHits(primaryProducts: string[]): RagHit[] {
+  return primaryProducts.flatMap((product) => {
+    const context = PRODUCT_FALLBACK_CONTEXTS[product];
+    return context
+      ? [
+          {
+            content: context,
+            source: `${product}-fallback`,
+            similarity: 0.5,
+            productSlug: product,
+            language: null,
+          },
+        ]
+      : [];
+  });
 }
 
 function buildContextText(
   hits: RagHit[],
   defaultProduct?: string
-): { contextText: string; sources: string[] } {
+): { contextText: string; sources: string[]; usedPillIds: string[]; usedPillSections: string[] } {
   if (hits.length === 0) {
     return {
       contextText:
         'No indexed knowledge was found for this worker. Stay conservative and use only verified public claims.',
       sources: [],
+      usedPillIds: [],
+      usedPillSections: [],
     };
   }
 
@@ -342,21 +393,26 @@ function buildContextText(
       : '- Answer based on the knowledge context below.',
     '- Mention other products only when the user asks directly or when they help explain the primary product.',
   ];
-
   const sources: string[] = [];
+  const pillIds: string[] = [];
+  const sectionKeys: string[] = [];
+
   for (const hit of hits) {
     sections.push(
       `[product=${hit.productSlug} | source=${hit.source} | relevance=${hit.similarity.toFixed(2)}]\n${safeSlice(hit.content, 1400)}`
     );
     sources.push(hit.source);
+    if (hit.pillId) pillIds.push(hit.pillId);
+    if (hit.sectionKey) sectionKeys.push(hit.sectionKey);
   }
 
-  return { contextText: sections.join('\n\n'), sources: uniq(sources) };
+  return {
+    contextText: sections.join('\n\n'),
+    sources: uniq(sources),
+    usedPillIds: uniq(pillIds),
+    usedPillSections: uniq(sectionKeys),
+  };
 }
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
 
 export async function buildWorkerKnowledgeContext(opts: {
   workerSlug: string;
@@ -366,8 +422,8 @@ export async function buildWorkerKnowledgeContext(opts: {
 }): Promise<WorkerKnowledgeResult> {
   const originalQuery = String(opts.query || '').trim();
   const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
-
   const worker = await getWorkerBySlug(opts.workerSlug);
+
   if (!worker) {
     logger.warn(`[VWKnowledge] Worker not found: ${opts.workerSlug}`);
     return {
@@ -375,6 +431,9 @@ export async function buildWorkerKnowledgeContext(opts: {
       matchedProducts: [],
       primaryProducts: [],
       sources: [],
+      usedPillIds: [],
+      usedPillSections: [],
+      fallbackReason: 'worker_not_found',
     };
   }
 
@@ -385,25 +444,22 @@ export async function buildWorkerKnowledgeContext(opts: {
       matchedProducts: [],
       primaryProducts: [],
       sources: [],
+      usedPillIds: [],
+      usedPillSections: [],
+      fallbackReason: 'no_assignments',
     };
   }
 
   const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
   const detectedProducts = detectProducts(originalQuery);
   const assignedProductSlugs = uniq(
-    assignments.filter((a) => a.product_slug).map((a) => a.product_slug!)
+    assignments.filter((assignment) => assignment.product_slug).map((assignment) => assignment.product_slug!)
   );
-
-  const allKnownProducts: string[] = uniq([
-    ...assignedProductSlugs,
-    ...(PRODUCT_ORDER as unknown as string[]),
-  ]);
-
+  const allKnownProducts = uniq([...assignedProductSlugs, ...(PRODUCT_ORDER as unknown as string[])]);
   const defaultProduct = assignedProductSlugs.includes('consultify')
     ? 'consultify'
     : assignedProductSlugs[0] || undefined;
-
-  const explicitAssignedProducts = detectedProducts.filter((p) => assignedProductSlugs.includes(p));
+  const explicitAssignedProducts = detectedProducts.filter((product) => assignedProductSlugs.includes(product));
   const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
 
@@ -441,16 +497,32 @@ export async function buildWorkerKnowledgeContext(opts: {
   };
 
   try {
-    const { docs: allDocs, weightMap } = await loadWorkerDocs(assignments);
+    const [{ docs: allDocs, weightMap }, pills] = await Promise.all([
+      loadWorkerDocs(assignments),
+      safeListWorkerPills(worker.id),
+    ]);
+
+    const pillById = new Map(pills.map((pill) => [pill.id, pill]));
+    const pillByProduct = new Map(pills.map((pill) => [pill.product_slug || '', pill]));
+    const assignedPills = assignments
+      .map((assignment) => {
+        const pill =
+          (assignment.knowledge_pill_id ? pillById.get(assignment.knowledge_pill_id) : undefined) ||
+          (assignment.product_slug ? pillByProduct.get(assignment.product_slug) : undefined);
+        return pill ? ({ pill, assignment } satisfies AssignedPill) : null;
+      })
+      .filter(Boolean) as AssignedPill[];
 
     const docsByProduct = new Map<string, IndexedDoc[]>();
     for (const doc of allDocs) {
-      const existing = docsByProduct.get(doc.productSlug) || [];
-      existing.push(doc);
-      docsByProduct.set(doc.productSlug, existing);
+      const list = docsByProduct.get(doc.productSlug) || [];
+      list.push(doc);
+      docsByProduct.set(doc.productSlug, list);
     }
 
     let ragHits: RagHit[] = [];
+    const pillHits = searchPillHits(query, assignedPills, primaryProducts);
+    ragHits.push(...pillHits.primaryHits.slice(0, Math.max(limit, 8)));
 
     if (portfolioMode) {
       const portfolioHits = (
@@ -461,53 +533,44 @@ export async function buildWorkerKnowledgeContext(opts: {
               const productDocs = docsByProduct.get(product) || [];
               const scoped = splitDocsByLanguagePreference(productDocs, opts.locale);
               const hint = productQueryHints[product] || product;
-              const preferred = await searchScoped(
-                `${hint} ${originalQuery}`,
-                scoped.preferredDocs,
-                1
-              );
-              if (preferred.length > 0) return preferred;
-              return searchScoped(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
+              const preferred = await searchScoped(`${hint} ${originalQuery}`, scoped.preferredDocs, 1);
+              return preferred.length > 0
+                ? preferred
+                : searchScoped(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
             })
         )
       ).flat();
-      ragHits = portfolioHits;
+      ragHits = dedupeHits([...ragHits, ...portfolioHits]);
     } else {
-      const primaryDocs = primaryProducts.flatMap((p) => docsByProduct.get(p) || []);
-      const languageScopedPrimaryDocs = splitDocsByLanguagePreference(primaryDocs, opts.locale);
-      const languageScopedAllDocs = splitDocsByLanguagePreference(allDocs, opts.locale);
+      const primaryDocs = primaryProducts.flatMap((product) => docsByProduct.get(product) || []);
+      const scopedPrimary = splitDocsByLanguagePreference(primaryDocs, opts.locale);
+      const scopedAll = splitDocsByLanguagePreference(allDocs, opts.locale);
       const preferredDocs =
-        languageScopedPrimaryDocs.preferredDocs.length > 0
-          ? languageScopedPrimaryDocs.preferredDocs
-          : languageScopedAllDocs.preferredDocs;
+        scopedPrimary.preferredDocs.length > 0 ? scopedPrimary.preferredDocs : scopedAll.preferredDocs;
       const fallbackDocs =
-        languageScopedPrimaryDocs.preferredDocs.length > 0
-          ? languageScopedPrimaryDocs.fallbackDocs
-          : languageScopedAllDocs.fallbackDocs;
+        scopedPrimary.preferredDocs.length > 0 ? scopedPrimary.fallbackDocs : scopedAll.fallbackDocs;
 
       const preferredHits = await searchScoped(query, preferredDocs, limit);
-
-      const explicitCrossProduct = detectedProducts.some((p) => p !== 'consultify');
+      const explicitCrossProduct = detectedProducts.some((product) => product !== 'consultify');
       const shouldExpandBeyondPrimary = explicitCrossProduct || preferredHits.length === 0;
 
       if (shouldExpandBeyondPrimary && preferredHits.length < limit) {
-        const allPreferredDocs = languageScopedAllDocs.preferredDocs;
         const secondaryHits =
-          allPreferredDocs.length > 0
-            ? await searchScoped(query, allPreferredDocs, limit)
-            : [];
-        const allFallbackDocs = languageScopedAllDocs.fallbackDocs;
+          scopedAll.preferredDocs.length > 0 ? await searchScoped(query, scopedAll.preferredDocs, limit) : [];
         const fallbackHits =
-          preferredHits.length === 0 && secondaryHits.length === 0 && allFallbackDocs.length > 0
-            ? await searchScoped(query, allFallbackDocs, limit)
+          preferredHits.length === 0 && secondaryHits.length === 0 && scopedAll.fallbackDocs.length > 0
+            ? await searchScoped(query, scopedAll.fallbackDocs, limit)
             : [];
-        ragHits = dedupeHits([...preferredHits, ...secondaryHits, ...fallbackHits]);
+        ragHits = dedupeHits([...ragHits, ...preferredHits, ...secondaryHits, ...fallbackHits]);
       } else {
-        ragHits =
-          preferredHits.length > 0
-            ? preferredHits
-            : await searchScoped(query, fallbackDocs, limit);
+        const preferredOrFallback =
+          preferredHits.length > 0 ? preferredHits : await searchScoped(query, fallbackDocs, limit);
+        ragHits = dedupeHits([...ragHits, ...preferredOrFallback]);
       }
+    }
+
+    if (ragHits.length === 0 && pillHits.fallbackOnlyHits.length > 0) {
+      ragHits = dedupeHits([...pillHits.fallbackOnlyHits, ...ragHits]);
     }
 
     const fallbackProducts = portfolioMode ? allKnownProducts : primaryProducts;
@@ -523,14 +586,18 @@ export async function buildWorkerKnowledgeContext(opts: {
         const aScore = aPriority >= 0 ? aPriority : primaryProducts.length + 1;
         const bScore = bPriority >= 0 ? bPriority : primaryProducts.length + 1;
         if (aScore !== bScore) return aScore - bScore;
-        const aLanguageScore = scoreLanguagePreference(a.language, preferredLanguage);
-        const bLanguageScore = scoreLanguagePreference(b.language, preferredLanguage);
-        if (aLanguageScore !== bLanguageScore) return aLanguageScore - bLanguageScore;
+        const aLanguage = scoreLanguagePreference(a.language, preferredLanguage);
+        const bLanguage = scoreLanguagePreference(b.language, preferredLanguage);
+        if (aLanguage !== bLanguage) return aLanguage - bLanguage;
         return b.similarity - a.similarity;
       })
       .slice(0, limit);
 
-    const { contextText: rawContextText, sources } = buildContextText(sorted, defaultProduct);
+    const { contextText: rawContextText, sources, usedPillIds, usedPillSections } = buildContextText(
+      sorted,
+      defaultProduct
+    );
+
     const contextText = portfolioMode
       ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.`
       : rawContextText;
@@ -540,16 +607,30 @@ export async function buildWorkerKnowledgeContext(opts: {
       matchedProducts: detectedProducts,
       primaryProducts,
       sources,
+      usedPillIds,
+      usedPillSections,
+      fallbackReason:
+        sorted.some((hit) => hit.source.startsWith('pill:'))
+          ? null
+          : sorted.some((hit) => hit.source.endsWith('-fallback'))
+            ? 'fallback_context_only'
+            : null,
     };
   } catch (error: unknown) {
     logger.warn('[VWKnowledge] Failed:', error instanceof Error ? error.message : String(error));
     const fallbackHits = buildFallbackHits(primaryProducts);
-    const { contextText, sources } = buildContextText(fallbackHits, defaultProduct);
+    const { contextText, sources, usedPillIds, usedPillSections } = buildContextText(
+      fallbackHits,
+      defaultProduct
+    );
     return {
       contextText,
       matchedProducts: detectedProducts,
       primaryProducts,
       sources,
+      usedPillIds,
+      usedPillSections,
+      fallbackReason: 'knowledge_resolution_failed',
     };
   }
 }
@@ -558,11 +639,7 @@ export async function buildWorkerVoiceBootstrap(
   workerSlug: string,
   locale?: string
 ): Promise<WorkerKnowledgeResult> {
-  const lang = String(locale || '')
-    .toLowerCase()
-    .startsWith('pl')
-    ? 'pl'
-    : 'en';
+  const lang = String(locale || '').toLowerCase().startsWith('pl') ? 'pl' : 'en';
   const bootstrapQuery =
     lang === 'pl'
       ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem'

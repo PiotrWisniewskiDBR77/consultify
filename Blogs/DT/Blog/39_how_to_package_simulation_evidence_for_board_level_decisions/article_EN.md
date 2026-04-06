@@ -5,47 +5,44 @@ Funnel stage: Decision
 Core problem: boards see polished narratives and sparse backup, so directors cannot trace how scenario work supports the motion and what would reopen it  
 Main promise: an evidence bundle structure that is short for the room, deep in the appendix, and explicit about assumptions, limits, and invalidation logic
 
-package simulation evidence for board-level decisions as a one-page decision motion, a two-page scenario summary with ranked options and trade-offs, an assumption ledger with owners, a methods-and-limits note, and an appendix with scenario outputs directors can delegate to audit. The board packet proves traceability, not technical virtuosity. Directors defend their duty with clarity. Give them a chain they can follow.
+Package simulation evidence for board-level decisions as a one-page decision motion, a two-page scenario summary with ranked options and trade-offs, an assumption ledger with owners, a methods-and-limits note, and an appendix with scenario outputs directors can delegate to audit. The board packet proves traceability—not technical virtuosity. Directors defend their duty with clarity; give them a chain they can follow.
 
-**Job boundary:** this article owns **director-level evidence bundles** (motion, scenario summary, assumption ownership, methods and limits, delegated appendix). The **executive decision packet** article in this series owns sponsor-ready packets for internal committees; the **CAPEX stage-gates** article owns gate-by-gate simulation contracts; the **act-on-strength** article owns when outputs justify commitment rather than more study.
+**Job boundary:** this article owns director-level evidence bundles—motion, scenario summary, assumption ownership, methods and limits, delegated appendix. The executive decision packet article owns sponsor-ready packets for internal committees; the CAPEX stage-gates article owns gate-by-gate simulation contracts; the act-on-strength article owns when outputs justify commitment.
 
-## How board packs usually fail simulation scrutiny
+## How board packs usually fail scrutiny
 
-Common failure modes: outcomes without the shocks that produced them; a single base case treated as fate; missing statement of model boundary and known exclusions; no explicit invalidation triggers tied to measurable signals. Digital Twin is a decision system. Board evidence should read like governance, not marketing.
+Failure modes include outcomes without the shocks that produced them, a single base case treated as fate, missing model boundary and exclusions, and no invalidation triggers tied to measurable signals. Board evidence should read like governance—not marketing.
 
-## Evidence bundle: five layers from motion to appendix
+## Five layers from motion to appendix
 
-**Board motion layer:** the decision requested, capital bound, and date of effect; **Scenario summary layer:** options compared, scenario lens, ranking, trade-offs in business language; **Assumption and ownership layer:** top inputs, confidence tags, who owns updates; **Methods and limits layer:** what the model represents, what it excludes, known uncertainties; **Delegated review layer:** where detailed runs, sensitivity, and data lineage live for committee follow-up. Layer two fits the live discussion. Layer five protects the audit trail.
+Board motion: decision requested, capital bound, date of effect. Scenario summary: options compared, scenario lens, ranking, trade-offs in business language. Assumption and ownership: top inputs, confidence tags, who owns updates. Methods and limits: what the model represents, what it excludes, known uncertainties. Delegated review: where detailed runs, sensitivity, and lineage live for committee follow-up. Layer two fits the live discussion; layer five protects the audit trail.
 
-## Checklist: board-ready simulation evidence
+## Board-ready simulation evidence
 
-- [ ] a director can explain the choice without model access  
-- [ ] downside cases appear next to the base, not only in backup  
-- [ ] cash timing differences between options are explicit  
-- [ ] legal and safety constraints appear in limits if they bound the decision  
-- [ ] invalidation triggers name metrics or events, not moods
+A director can explain the choice without model access. Downside cases appear next to the base—not only in backup. Cash timing differences between options are explicit. Legal and safety constraints appear in limits when they bound the decision. Invalidation triggers name metrics or events.
 
-## Comparison: slide deck versus evidence bundle
+## Slide deck habit versus evidence bundle habit
 
-| Element | Slide deck habit | Evidence bundle habit |
-|---|---|---|
-| Purpose | impress | enable accountable approval |
-| Options | hero path emphasized | full short list with retire reasons |
-| Shocks | implied | named and reused across options |
-| Assumptions | scattered | ledger with owners |
-| Follow-up | vague | delegated appendix with lineage notes |
+Slide decks impress; evidence bundles enable accountable approval. Decks emphasize hero paths; bundles carry full short lists with retire reasons. Decks imply shocks; bundles name and reuse them across options. Decks scatter assumptions; bundles ledger them with owners. Decks imply follow-up; bundles delegate appendix with lineage.
 
-## What Digital Twin changes here
 
-Digital Twin is the comparison engine behind the bundle: named shocks, ranked options, and traceable assumptions directors can delegate for audit. What the room needs is a defensible chain, not a model demo loop.
+## Brownfield honesty: compare paths, not slogans
 
-Packaged well, it gives boards a defensible path from evidence to motion.
+Brownfield factories do not reward optimism; they reward comparability. Every serious path changes something physical—travel, staging, handoffs, maintenance access—and those changes interact under real demand and supplier behavior. Scenario work earns trust when each path faces the same shocks and the same evidence rules, so the conversation stays anchored to trade-offs instead of slide charisma.
+
+Keep the discussion explicit about what you are not doing this cycle. Exclusions are as important as favorites; they prevent zombie options from returning with a new name. When post-change refresh triggers are understood, teams stop quoting last quarter’s certainty after the floor has already moved. The twin should make that drift embarrassing quickly, which is healthier than discovering it during a service miss or an overtime weekend nobody budgeted.
+
+
+
+## Tie the story to what the floor can observe
+
+Scenario outputs become operational when they reference behaviors people can see: where queues form, how staging fills, when overtime pressure shows up, which handoffs get brittle under mix shifts. If the narrative only speaks in abstract utilization, it will not survive first contact with a busy Tuesday. Translate the model’s language into walk-the-floor language before you ask teams to trust it.
+
+That translation is also how finance and operations stay aligned. Cash and service effects should be traceable to those same observable behaviors, not only to a headline efficiency claim. When those links are explicit, governance gets lighter because everyone is arguing about the same mechanisms—not about competing metaphors.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin aligns board motions with appendix depth and assumption lineage, scaling from manual inputs to richer integration when governance demands repeatable capital votes.
-
-For board-facing work, it helps organizations: keep scenario comparisons consistent across major motions; preserve traceability from assumption changes to outcome shifts; reduce rework when directors ask for the backup behind a chart.
+DBR77 Digital Twin aligns board motions with appendix depth and assumption lineage, scaling from manual inputs toward richer integration when governance demands repeatable capital votes: consistent scenario comparisons across major motions; traceability from assumption changes to outcome shifts; less rework when directors ask for the backup behind a chart.
 
 ## Bottom line
 

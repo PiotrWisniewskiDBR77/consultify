@@ -1,86 +1,64 @@
-# Co dobra oferta automatyzacji powinna uwidaczniac
+# Czym powinna charakteryzować się dobra oferta na automatyzację
 
-Target persona: ewaluator techniczny / sponsor  
-Funnel stage: Evaluation  
-Core problem: mocne narracje sprzedazowe chowaja braki zakresu, ukryte zalozenia i niejasne zobowiazania, co wychodzi dopiero po politycznym zaangazowaniu w projekt  
-Main promise: checklista standardow widocznosci dla kupujacego, ktora oddziela obronna oferte od wypolerowanej historii
+Docelowa persona: Ewaluator techniczny / Sponsor biznesowy  
+Etap lejka: Ocena  
+Główny problem: silne narracje sprzedażowe ukrywają braki w zakresie, ukryte założenia i niejasne zobowiązania, które wychodzą dopiero po politycznym zobowiązaniu się do projektu  
+Główna obietnica: lista kontrolna widoczności dla kupującego, która oddziela obronną ofertę od wypolerowanej opowieści
 
-Dobra oferta automatyzacji nie jest zdefiniowana przez efektowne wizualizacje. Jest zdefiniowana przez to, co latwo sprawdzic.
+Operatorzy oceniają linię po tym, co widać, da się dotknąć i zweryfikować. Kupujący powinni oceniać oferty automatyzacji tak samo: co jest realne, co założone, co wyłączone i co się dzieje, gdy rzeczywistość nie zgadza się z dokumentem. Połysk to nie dowód. Widoczność — tak.
 
-Producent powinien oceniac oferty jak operator ocenia linie: co jest realne; co jest zalozone; co jest wylaczone; co sie zmieni, gdy rzeczywistosc nie zgadza sie z dokumentem.
+Gdy kluczowe elementy trudno znaleźć, nie patrzysz na ofertę gotową do decyzji — patrzysz na historię, która zestarzeje się źle pod presją.
 
-Jesli te elementy sa trudne do zobaczenia, oferta nie jest jeszcze gotowa pod decyzje.
+## Zakres jako włączenia i wyłączenia
 
-## Standard widocznosci 1: zakres zapisany jako wlaczenia i wylaczenia
+Włączenia definiują, co kupujesz. Wyłączenia definiują, co wciąż należy do ciebie. Oba powinny być na tyle proste, że dwaj niezależni czytelnicy zgadzą się co do granicy. Mgliste wyłączenia to sposób, w jaki późne niespodzianki dostają etykietę „poza zakresem”.
 
-Wlaczenia mowia, co kupujesz. Wylaczenia mowia, za co nadal odpowiadasz.
+## Założenia w jawności, nie domyślnie
 
-Dobra oferta czyni oba na tyle jawne, ze dwoch niezaleznych czytelnikow rozumie to samo.
+Założenia to normalna praktyka inżynierska; ich ukrywanie — nie. Obronna oferta grupuje założenia według produktu i miksów, przepustowości i cyklu, środowiska i mediów, gotowości upstream i downstream, dostępu IT i OT, etatów i pojemności szkoleniowej. Jeśli założenia żyją tylko w notatnikach, nie zarządzasz ryzykiem — je dziedziczysz.
 
-Jesli wylaczenia sa niejasne, spodziewaj sie poznych niespodzianek etykietowanych jako "poza zakresem".
+## Wydajność powiązana z koncepcją testu
 
-## Standard widocznosci 2: zalozenia sa wypisane, nie domyslne
+Obietnice potrzebują logiki dowodu: co zostanie zademonstrowane, u kogo, z jakimi próbkami, wobec jakich kryteriów odbioru. Narracja bez planu testu to nadzieja w przebraniu specyfikacji.
 
-Zalozenia nie sa slaboscia. Ukryte zalozenia sa.
+## Zmapowana własność integracji
 
-Obronna oferta dzieli zalozenia na kategorie: produkt i mix; throughput i cykl; srodowisko i media; gotowosc upstream i downstream; IT/OT i dostep do danych; obsada i pojemnosc szkoleniowa.
+Awarie zbierają się na stykach. Mocne oferty pokazują, kto posiada mechanikę, elektrykę, sterowanie, sieć, sąsiednie zadania MES lub ERP tam, gdzie to istotne, oraz odpowiedzialność za walidację BHP tam, gdzie to istotne. Szare strefy powinny być nazwane, nie rozmyte po akapitach.
 
-Jesli zalozenia zyja tylko w notatkach inzynierskich, kupujacy nie zarzadza ryzykiem.
+## Logika handlowa, która tłumaczy, co rusza ceną
 
-## Standard widocznosci 3: wydajnosc jest zwiazana z koncepcja testu
+Potrzebujesz widoczności wyzwalaczy zmian, obsługi czasu i podróży na hali, granic gwarancji i części zamiennych, głębokości szkolenia i deliverables dokumentacji. Nieprzejrzysta mechanika handlowa zamienia „tanio” w drogo przez strukturę, nie przez intencję.
 
-Dobre oferty lacza obietnice z logika dowodu: co bedzie demonstrowane; gdzie (u dostawcy czy u ciebie); na jakich probkach; wobec jakich kryteriow akceptacji. Jesli wydajnosc to tylko narracja, nie masz jeszcze planu testu. Masz plan nadziei.
+## Gdzie słabe oferty zwykle pękają
 
-## Standard widocznosci 4: wlasnosc integracji jest zmapowana
+Przy pierwszym czytaniu wiele dokumentów brzmi kompletnie. Padają, gdy przypiszesz własność linia po linii: kto płaci, gdy prawda hali odbiega od założeń, kto ponosi koszt, gdy problem wyjdzie przy uruchomieniu zamiast w wycenie, kto dowodzi gotowości do odbioru kontra kto obiecuje wsparcie. Jeśli oferta nie odpowiada na te pytania czysto, wciąż jest marketingiem.
 
-Automatyzacja rzadko pada tylko wewnatrz komorki robota. Pada na interfejsach.
+## Jak DBR77 Marketplace się łączy
 
-Mocna oferta pokazuje prosta mape wlasnosci: interfejsy mechaniczne; interfejsy elektryczne; sterowanie i siec; sasiednie zadania MES/ERP (jesli dotyczy); odpowiedzialnosc za walidacje BHP (jesli dotyczy). Szare strefy powinny byc nazwane, nie rozmyte.
+Widoczność oferty to różnica między porównywaniem dokumentów a porównywaniem decyzji. Workflow, który utrzymuje założenia, testy, własność integracji i mechanikę zmian przed zobowiązaniem, to co czyni ocenę uczciwą.
 
-## Standard widocznosci 5: logika komercyjna wyjasnia, co rusza cene
+Artykuły towarzyszące: zobacz [Jak porównywać integratorów robotów, OEM-ów i dostawców turnkey](../16_how_to_compare_robot_integrators_oems_and_turnkey_suppliers/article_PL.md) oraz [Co sprawdzić przed podpisaniem umowy na automatyzację](../20_what_to_check_before_signing_an_automation_contract/article_PL.md).
 
-Kupujacy zasluguje na widocznosc czynnikow zmian: co uruchamia ponowna wycene; jak liczone sa podroze i czas na hali; granice czesci zamiennych i gwarancji; glebokosc szkolen i deliverables dokumentacji.
+## Dlaczego widoczność to przewaga negocjacyjna
 
-Jesli logika komercyjna jest nieprzejrzysta, "tanie" oferty robia sie drogie mechanika, nie zlosliwoscia.
+Gdy luki są widoczne wcześnie, negocjujesz z prawdy, nie z paniki. Ukryte luki negocjują z tygodnia uruchomienia, gdy dźwignia jest niższa, a emocje wyższe. Nacisk na widoczność to więc nie pedanteria; to strategia czasowa. Dostawca, który opiera się strukturalnej jasności, mówi ci, jak będą wyglądać spory później.
 
-## Reality check: wiele ofert wyglada akceptowalnie, dopoki kupujacy nie probuje przypisac odpowiedzialnosci linijka po linijce
+Widoczność chroni też integratorów, którzy robią porządną robotę. Silni dostawcy często chcą uczciwego porównania z konkurentami, którzy obcinają zakres. Jasne pola nagradzają kompetencję; mgliste nagradzają opowieści.
 
-Wlasnie tutaj slabe dokumenty zwykle sie lamia. Przy pierwszym czytaniu oferta brzmi kompletnie. Problem pojawia sie, gdy zespol pyta:
+## Szybka brama czytelności (przed głębokimi warsztatami)
 
-- kto posiada interfejs, jesli warunki na obiekcie roznia sie od zalozenia
-- kto placi, jesli zmiana zostanie odkryta podczas uruchomienia zamiast na etapie wyceny
-- kto udowadnia gotowosc do akceptacji, zamiast tylko obiecywac wsparcie
+Sprawdź od razu: jawne włączenia/wyłączenia; skategoryzowane założenia; koncepcja testu powiązana z kryteriami; mapa integracji z właścicielami; jawna mechanika zmian. Jeśli większość jest słaba, zrób rundę ustrukturyzowanych doprecyzowań zamiast grzecznego Q&A.
 
-Jesli dokument nie potrafi odpowiedziec na te pytania jasno, oferta nadal jest wypolerowana narracja, a nie widocznosc gotowa do decyzji.
+## Od decyzji do zachowania hala
 
-## Szybka karta czytelnosci oferty
+Chodzi o dociśnięcie tego etapu podróży zakupowej — w praktyce „czym powinna charakteryzować się dobra oferta” — po to, by realizacja była przewidywalna. W zakładach przemysłowych niejasność nie zostaje abstrakcją: zamienia się w czekanie, przerób, ciche obejścia i spory przy urządzeniu, gdy linia potrzebowała jasności tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą odbiór z dowodem i utrzymują widoczne odpowiedzialność, dostawcy odpowiadają z mniejszą liczbą niespodzianek, a funkcje wewnętrzne mniej czasu spędzają na godzeniu sprzecznych narracji.
 
-Uzyj punktacji 0 do 2 na pozycje przed warsztatami:
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny produkt zakupowy tak, by operacje i utrzymanie mogły go zrewidować. Jeśli nie da się go prześledzić do zachowania na hali, dociśnij język, aż się da. Ta jedna dyscyplina zapobiega wielu awariom, które z perspektywy czasu wyglądają technicznie, choć od początku były problemem decyzyjnym.
 
-| Pozycja | slabe | ok | mocne |
-| --- | --- | --- | --- |
-| Zakres in/out | niejasne | czesciowe | jawne |
-| Zalozenia | ukryte | rozrzucone | skategoryzowane |
-| Plan testu | brak | luzny | powiazany z kryteriami |
-| Mapa integracji | brak | czesciowa | przypisana |
-| Mechanika zmian | niejasna | czesciowa | jawna |
+## W skrócie
 
-Wiekszosc ponizej "ok" oznacza potrzebe strukturyzowanej rundy wyjasnien, nie uprzejme Q and A.
-
-## Co to oznacza dla DBR77 Marketplace
-
-DBR77 Marketplace ma redukowac chaos sourcingu.
-
-Standaryzowane porownanie ofert jest zgodne ze standardami widocznosci takimi jak te. Marketplace to nie katalog robotow.
-
-To workflow decyzji automatyzacyjnych i warstwa zaufania przy wyborze integratora, gdy oferty musza byc porownywane uczciwie.
-
-## Bottom line
-
-Polerowanie to nie dowod.
-
-Dobra oferta uwidacznia zakres, zalozenia, testy, wlasnosc integracji i mechanike komercyjna. Jesli te pola daja sie czysto sprawdzic, mozesz decydowac. Jesli nie, decydujesz na ryzyku narracji.
+Decyduj na podstawie pól dających się zrewidować — zakres, założenia, testy, integracja, mechanika handlowa — a nie pewności narracji. Jeśli czegoś nie widać, nie da się tego bezpiecznie kupić.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace wspiera ustrukturyzowane porównanie ofert, by standardy widoczności zamieniały się w pola obok siebie zamiast w rozłączne PDF-y. [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

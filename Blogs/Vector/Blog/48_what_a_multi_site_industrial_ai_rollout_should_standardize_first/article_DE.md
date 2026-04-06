@@ -1,63 +1,36 @@
 # Was ein Multi-Site-Industrie-KI-Rollout zuerst standardisieren sollte
 
-Zielpersona: VP Operations Technology / Enterprise-Programm-Direktor / regionaler Fertigungs-Leiter  
+Zielpersona: VP Operations Technology / Enterprise-Programmdirektor / regionaler Fertigungs-Leiter  
+Funnel-Stufe: Adoption  
+Kernproblem: Teams eilen zur Use-Case-Replikation, während jedes Werk seine eigene Deployment-Story, Identity-Modell und Logging-Haltung erfindet  
+Hauptversprechen: ein kurzer Prioritäten-Stack standardisiert zuerst, was identisch sein muss, bevor lokale Anpassung Wert addiert
 
-Trichterphase: Adoption Kernproblem: Teams eilen zur Use-Case-Replikation, waehrend jedes Werk seine eigene Deployment-Story, Identity-Modell und Logging-Haltung erfindet Hauptversprechen: ein kurzer Prioritaeten-Stack standardisiert zuerst, was identisch sein muss, bevor lokale Anpassung Wert addiert
+Standardisieren Sie zuerst den Vertrag mit der Realität, bevor Sie die Feature-Liste angleichen. Ein Multi-Site-Industrie-KI-Rollout sollte zuerst standardisieren: Deployments-Modus-Katalog und nicht verhandelbare Grenzen, Identity- und Zugriffsmodell ausgerichtet an Werken, Log-Retention und Audit-Export-Schema, Workflow-Klassifikation und Freigabe-Templates, Change Control und Promotions-Pfad, Subprozessor-Register an Live-Konfigurationen gebunden sowie Trainingsdaten-Policy mit technischem Nachweis. Erst danach sind Prompt-Bibliotheken oder UI-Details sinnvoll zu vereinheitlichen — sie profitieren von lokaler Sprache und Prozess-Nuance. Gemeinsames Skelett, kontrollierte lokale Schicht: so skalieren Sie, ohne jedes Werk zur eigenen Risiko-Insel zu machen.
 
-Standardisieren Sie den Vertrag mit der Realitaet, bevor Sie die Feature-Liste standardisieren.
+## Standardisierungs-Stack von unten nach oben
 
-Ein Multi-Site-Industrie-KI-Rollout sollte zuerst Deployments-Modus-Katalog und nicht verhandelbare Grenzen, Identity- und Zugriffsmodell ausgerichtet an Werken, Log-Retention und Audit-Export-Schema, Workflow-Klassifikations- und Freigabe-Templates, Change-Control- und Promotions-Pfad, Subprozessoren-Register gebunden an Live-Configs sowie Trainingsdaten-Policy mit technischem Nachweis standardisieren. Erst danach sollten Prompt-Bibliotheken oder UI-Details standardisiert werden, die von lokaler Sprache und Prozess-Nuance profitieren. Gemeinsames Skelett, kontrollierte lokale Oberflaeche.
+Zuerst Deployments- und Daten-Grenzen: On-Premise, Private API, isolierter Tenant oder Hybrid je Workflow-Klasse — schriftlich und unterschrieben, nicht angenommen. Als Nächstes Identity und Zugriff: konsistente Rollennamen, Eskalationsregeln und Break-Glass-Disziplin über Regionen hinweg — es sei denn, Recht erzwingt Ausnahmen, und Ausnahmen müssen registriert sein. Evidenz und Audit: ein Export-Schema, eine Retention-Philosophie, ein Abgleich-Owner, damit Audits keine Übersetzungsübung werksweise werden. Workflow-Governance-Templates: gemeinsame Klassifikationsmatrix mit lokalen Parametern, nicht lokaler Risikologik. Change und Promotion: eine Pipeline-Philosophie, auch wenn regionale Infrastruktur leicht differiert. Lokale Anpassung zuletzt: Prompt-Formulierung, Beispiele und Integrationen zu Legacy, die werksweise wirklich differieren.
 
-## Rahmen: Standardisierungs-Stack (unten nach oben)
+Copy-Paste-Piloten können im dritten Monat aligned wirken und bis Monat achtzehn driften, weil niemand das Skelett standardisiert hat. Standardize-first-Stacks verbreiten Features langsamer — und liefern eine verteidigbare Multi-Site-Story, wenn die Führung fragt, was live ist und wie Sie es wissen.
 
-### Schicht 1: Deployment und Daten-Grenzen
+Binden Sie Beschaffung und Legal früh an dasselbe Skelett: wenn Vertragsvorlagen pro Region unterschiedliche Trainings- oder Logging-Aussagen erlauben, bekommt jedes Werk eine leicht andere „Wahrheit“, obwohl das Produkt gleich heißt. Ein gemeinsamer Mindeststandard in Vertrag und Architektur verhindert, dass Enterprise-Security nachträglich drei Dutzend Sonderfälle kitten muss.
 
-On-premise, private API, isolierter Tenant oder Hybrid pro Workflow-Klasse, schriftlich und unterschrieben.
+## Warum „lokale Autonomie“ der falsche Start ist
 
-### Schicht 2: Identity und Zugriff
+Werke sind zu Recht stolz auf Unterschiede: Maschinenalter, Workforce-Skills, Lieferantenmix und Legacy-Systeme variieren. Genau deshalb darf Governance nicht pro Werk neu erfunden werden. Lokale Autonomie sollte Prompts, Beispiele und Integrationen betreffen, die wirklich differieren — nicht Trainings-Defaults, Identity-Modelle oder Logging-Schemata. Wenn jedes Werk sein eigenes Grenzvokabular wählt, skaliert Enterprise-Security keine Reviews, Procurement vergleicht Anbieter nicht fair, und Audits werden zur Archäologie. Standardisierung zuerst ist keine Zentralisierung um ihrer selbst willen; sie erhält lokale Nuance ohne Gruppenkontrollverlust.
 
-Gleiche Rollennamen, gleiche Eskalationsregeln, gleiche Break-Glass-Disziplin regionenweit ausser gesetzlich erzwungener Ausnahme, Ausnahmen registriert.
+**Go/No-Go vor Werk N+1:** vergleichbare Audit-Exporte zwischen Werken; Workflow-Klassen stimmen werksübergreifend für dieselbe Prozessfamilie überein; Incident-Runbooks referenzieren denselben Eskalationsbaum; Ausnahmezähler pro Werk sind auf einem Dashboard sichtbar.
 
-### Schicht 3: Evidenz und Audit
+Der Sechs-Schichten-Stack bricht, wenn jedes Werk eigenes Grenzvokabular und eigene Promotions-Leiter erfindet. Vector ist auf Multi-Site-Skelett zuerst ausgelegt: proprietäre Industrie-KI mit Deployments-Mustern, die sich einmal beschreiben und replizieren lassen, Kundendaten nicht zum Modelltraining, Werks-Transformationswissen in der Reasoning-Schicht statt generischem Chat — damit Identity, Logging und Change-Disziplin geteilt bleiben, während lokale Use Cases darauf aufsetzen.
 
-Ein Export-Schema, eine Retention-Uhr-Philosophie, ein Abstimmungs-Eigentuemer.
+Der erste Standard ist nicht die Modell-Feature. Es ist, wie Sie KI überall dort, wo es für Risiko zählt, gleich belegen, ändern und erklären. Lokaler Geschmack gehört auf dieses Skelett — nicht an seine Stelle.
 
-### Schicht 4: Workflow-Governance-Templates
+## Werks-Checkpoint
 
-Klassifikations-Raster und Freigabe-Muster ueberall wiederverwendet, Parameter lokalisiert.
+Behandeln Sie „Was ein Multi-Site-Industrie-KI-Rollout zuerst standardisieren sollte“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Auszug aus der Trainingspolicy, Log-Probe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Fertigungs-KI reift, wenn Belege Routine werden: dieselbe Disziplin, die Sie schon vor Linienfreigabe, Lieferantenwechsel oder großem IT-Cutover erwarten. Das ist der Wechsel von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent.
 
-### Schicht 5: Aenderung und Promotion
-
-Ein Pipeline-Prinzip, auch wenn regionale Infrastruktur leicht differiert.
-
-### Schicht 6: lokale Anpassung
-
-Prompt-Formulierung, Beispiele und Integrationen zu Legacy-Systemen, die wirklich werksweise differieren.
-
-## Vergleich: zuerst standardisieren versus Copy-Paste-Piloten
-
-| Ansatz | Monat drei | Monat achtzehn |
-| --- | --- | --- |
-| Copy-Paste-Piloten | Demos wirken aligned | Audits zeigen Drift |
-| Zuerst Stack standardisieren | langsamer Feature-Faecher | verteidigbare Multi-Site-Story |
-
-## Checkliste: Go-No-Go vor Werk N plus eins
-
-- Werk N und Werk eins liefern vergleichbare Audit-Exporte
-- Workflow-Klassen passen fuer dieselbe Prozessfamilie werksuebergreifend
-- Incident-Runbooks referenzieren denselben Eskalationsbaum
-- Ausnahmeanzahl pro Werk ist auf einem Dashboard sichtbar
-
-## Produktbruecke
-
-DBR77 Vector ist die sichere Intelligenzschicht hinter dem DBR77-Oekosystem: proprietaere Industrie-KI, gebaut fuer konsistente Deployments-Narrative ueber Werke, trainiert auf Werks-Transformationswissen, ohne Kundendaten zum Modelltraining, mit industrieller Argumentation statt generischem Chat. Standardisierung haelt, wenn die Plattform Grenzen und Promotion als geteilte Infrastruktur behandelt, nicht als werksweise Handarbeit.
-
-## Abschlussfazit
-
-Der erste Standard ist nicht das Modell-Feature.
-
-Es ist, wie Sie ueberall gleich beweisen, aendern und KI erklaeren, wo Risiko zaehlt. Lokaler Geschmack gehoert auf dieses Skelett, nicht an seine Stelle.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, dann diese: benennen Sie, was vor Ausweitung der Nutzung wahr sein muss, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Trost mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/vector) oder [Produkte mit Vector erkunden](https://dbr77.com/demo).*
+*DBR77 Vector unterstützt gemeinsame Deployments-Grenzen und Promotions-Logik über Werke bei konsistentem industriellem Reasoning für den DBR77-Stack. [Demo buchen](https://dbr77.com/vector) oder [Produkte mit Vector entdecken](https://dbr77.com/demo).*

@@ -5,69 +5,55 @@ Funnel stage: Consideration to Decision (economic validation)
 Core problem: TCO spreadsheets look precise while hiding assumptions about uptime, labor, change orders, and service reality  
 Main promise: a TCO validation method that separates capex from operating cash effects and forces explicit assumptions you can audit
 
-TCO is not a number. It is a stack of assumptions wearing a spreadsheet costume.
+A single TCO cell can look authoritative while resting on hope. Automation economics go wrong when quotes are treated as full lifecycle truth, training and support load is ignored, uptime is assumed perfect, mastery is assumed instant, and spares or obsolescence never appear in the model. The spreadsheet is not lying; the assumptions are.
 
-Automation TCO goes wrong when teams: treat integrator quotes as complete lifecycle truth; ignore training load and support tickets; assume perfect uptime and instant mastery; forget spares lead times and obsolescence risk.
+Validate TCO by separating layers of cash, naming owners for each assumption, and stress-testing cases until the decision either stands or breaks honestly.
 
-Manufacturers validate TCO by making assumptions visible and stress-testing them.
+## Three cash layers
 
-Build a TCO model with three layers: acquisition cash schedule tied to milestones and acceptance; operating cash effects: labor, scrap, energy, consumables, downtime risk bands; lifecycle services: warranty boundaries, service contracts, spare parts, software maintenance. Then run three cases: baseline, conservative, and stressed.
+First, acquisition: payments mapped to milestones and acceptance—not one lump “capex” that hides timing. Second, operating effects: labor minutes, scrap and rework, energy and consumables, downtime risk expressed as bands your plant can relate to—not point fantasies. Third, lifecycle services: warranty boundaries, service access, spare parts lead times, software maintenance. If a layer is missing, the model is incomplete, not conservative.
 
-If conservative and stressed collapse the business case, the decision is not "pick a cheaper robot." The decision is redesign scope, sequencing, or readiness.
+## Scenario discipline
 
-## The assumption register (non-negotiable)
+Run at least three views: baseline, conservative, and stressed. If the case collapses only under stress, you at least know the fragility. If it collapses under conservative assumptions, the problem is not picking a cheaper robot—it is scope, readiness, or sequencing.
 
-Every TCO line item needs:
+## An assumption register you can audit
 
-| Line item | assumption | owner | evidence type |
-| --- | --- | --- | --- |
-| throughput uplift |  | engineering | measurement |
-| labor reduction |  | operations | task time study |
-| downtime risk |  | maintenance | history |
-| energy |  | facilities | meter or estimate |
-| change order rate |  | procurement | reference class |
+Every meaningful line needs a named assumption, an owner, and an evidence type—measurement, history, integrator commitment, or explicit hypothesis. If evidence is “hope,” label it as hypothesis and decide whether you can afford to bet the project on it.
 
-If evidence type is "hope," label it hypothesis, not verified.
+## Capex timing changes decisions
 
-## Capex versus cash schedule
+Deposits, equipment releases, FAT-linked payments, retention, warranty triggers—timing affects capital availability and line risk. Map cash to events, not moods.
 
-Capex totals hide timing. A validation-ready model maps cash to: deposit and equipment releases; milestones tied to FAT and SAT; retention and warranty triggers.
+## Operating levers you can observe
 
-Timing changes decisions when capital constraints and line availability matter.
+Tie the model to things the plant already tracks: minutes per unit, downtime minutes per month, scrap rate bands. Automation should move at least one observable lever. If nothing moves except a slide bullet, you are buying narrative.
 
-## Operating effects: measure what moves money
+## How DBR77 Marketplace supports finance and engineering together
 
-Focus on cash effects your plant already tracks: direct labor minutes per unit or per batch; scrap and rework rate bands; unplanned downtime minutes per month; consumables and tooling wear. Automation should change at least one lever you can observe. If no lever moves in the model, you are buying narrative.
+Structured offer comparison lets finance map milestones, service boundaries, and commercial shape without reconstructing each PDF from memory—so TCO conversations inherit the same visibility as technical scope.
 
-## Stress tests that matter (three quick ones)
+For the closest economics companion, see [What a Good Internal Business Case for Automation Should Make Visible](../39_what_a_good_internal_business_case_for_automation_should_make_visible/article_EN.md).
 
-Six-month delay to SAT because access windows slip; one major interface change requiring software rework; first-year spare parts lead time doubles versus plan. These are illustrative stressors. Pick stressors that match your plant's real failure modes.
+## TCO as a cross-functional conversation
 
-## Reality check: TCO usually breaks where one spreadsheet mixes supplier assumptions with internal wishful thinking
+Finance, operations, engineering, and procurement should be able to walk the model together—line by line—without hidden switches. If only one function understands the spreadsheet, the organization does not have a shared decision; it has a temporary truce. Make the model boring: explicit formulas, explicit owners, explicit evidence.
 
-The model can still look precise. Cells are filled. Graphs are clean. But underneath:
+Revisit assumptions at gates: after discovery, after FAT, after first stable production week. TCO is not carved in stone; it is a living hypothesis that should tighten as evidence arrives.
 
-- uptime is modeled as if stabilization is immediate
-- labor savings are counted before new support work is understood
-- service and spare assumptions are copied from the preferred bidder without proof
 
-That is not conservative economics. It is preference disguised as analysis.
+## From decision to plant behavior
 
-## Comparison rule for multiple suppliers
+The point of tightening this part of the buying journey—"How to Validate Total Cost of Ownership in Automation Projects" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
 
-When comparing supplier paths, freeze: the same operating assumptions for every bidder; the same uptime and downtime bands; the same training hours unless a bidder documents a different verifiable method. If each proposal uses a different universe, TCO comparison is theater.
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
 
-## What this means for DBR77 Marketplace
 
-DBR77 Marketplace matters here because TCO only becomes decision-grade when economic assumptions use the same comparable structure as the commercial model itself.
-
-That keeps finance from modeling one reality while procurement evaluates another.
-
-For the closest companion article, see [How to Compare Automation Commercial Models, Not Just Prices](../26_how_to_compare_automation_commercial_models_not_just_prices/article_EN.md).
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
 
 ## Bottom line
 
-Validate TCO by publishing assumptions, tying cash to milestones, and stress-testing plant-realistic shocks. A spreadsheet without owners is a story. A spreadsheet with owners is a decision tool.
+TCO is only as honest as its assumptions. Make them visible, owned, and stress-tested—then decide with a model that survives scrutiny, not just a sortable column.
 
 ---
 

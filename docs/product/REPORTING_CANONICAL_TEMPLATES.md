@@ -125,6 +125,26 @@ Verify whether delivered initiatives produce business value.
 4. Financial Impact
 5. Corrective Actions
 
+### 4.2A KPI reporting doctrine
+
+For KPI-native reporting, `R3` is the canonical family for benefits and outcome review.
+
+It should be created through a template-first flow:
+
+`scope -> observed KPI set -> template -> narrative -> snapshot`
+
+The user may:
+
+- choose initiatives in scope
+- choose KPI from the observed KPI set
+- keep the report as a snapshot by default
+- optionally refresh the report from current data later
+
+Canonical guardrail:
+
+- reporting does not create a second KPI truth,
+- reporting materializes narrative and review context from governed KPI objects.
+
 ### 4.3 Data sources
 | Section | Source | Fields / meaning |
 |---|---|---|
@@ -182,6 +202,12 @@ High-level view of transformation portfolio.
 - Export:
   - PDF
   - PPT (future)
+
+Additional KPI reporting expectations:
+
+- `Benefits` and KPI review reports must clearly show initiative scope and KPI scope used for the snapshot.
+- Reports should open as governed review documents, not as inline KPI preview cards.
+- KPI-native reports may generate action-plan drafts, but action creation stays human-confirmed.
 
 ---
 

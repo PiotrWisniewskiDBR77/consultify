@@ -1,68 +1,54 @@
-# Kiedy single sourcing jest madrzejszy niz pelny konkurs pieknosci dostawcow
+# Kiedy single sourcing jest mądrzejszy niż pełny konkurs piękności dostawców
 
-Target persona: dyrektor zakladu / wlasciciel zakupu  
-Funnel stage: Consideration (strategia zakupow przy ograniczeniach)  
-Core problem: procesy wielo-ofertowe wymuszone polityka opozniaja decyzje bez poprawy porownywalnosci, gdy problem jest juz skonstruowany  
-Main promise: jasne kryteria, kiedy wybor skierowany jest racjonalny, etyczny i szybszy bez porzucania dyscypliny dowodowej
+Docelowa persona: Dyrektor zakładu / Właściciel procesu zakupowego  
+Etap lejka: Rozważanie (strategia zakupów przy ograniczeniach)  
+Główny problem: wieloodbiorcze procesy napędzane polityką opóźniają decyzje bez poprawy porównywalności, gdy problem jest już mocno ograniczony  
+Główna obietnica: jasne kryteria, kiedy wybór skierowany jest racjonalny, etyczny i szybszy bez porzucania dyscypliny dowodzenia
 
-Konkursy wielu dostawcow to narzedzie. To nie prawo moralne. Czasem konkurs poprawia wynik.
+Konkursy wielu dostawców to narzędzie. Nie uniwersalne prawo. Czasem więcej ofert ostrzy wynik; czasem pali kalendarz, zmuszając integratorów do występu przy decyzji, którą już ograniczyła geografia, technologia, wiedza dotychczasowego dostawcy lub rzeczywistość regulacyjna. Trybem porażki jest proces dla samego procesu: zajęte arkusze, późna jasność i zakład mylący aktywność z osądem.
 
-Czasem spala kalendarz, zmuszajac integratorow do teatru ofert na decyzje juz strukturalnie skonstruowanych.
+Single sourcing może być racjonalny, gdy zbiór wykonalny jest naprawdę mały — ale tylko jeśli dyscyplina dowodzenia pozostaje nienaruszona.
 
-Producenci powinni wybierac proces dopasowany do niepewnosci, ryzyka i gotowosci wewnetrznej.
+## Kiedy konkurs mało dokłada nowej informacji
 
-## Bezposrednia odpowiedz
+Rozważ zawężenie lub skierowany wybór, gdy tylko jeden lub dwaj wiarygodni dostawcy potrafią wykonać zakres, stos technologii jest w praktyce dyktowany kompatybilnością, realia harmonogramu eliminują realne alternatywy albo powtarzalny zakres z kwalifikowanym dotychczasowym dostawcą czyni pełne powtórzenie marnotrawstwem. Chodzi nie o unikanie kontroli; o przestanie udawania, że zaproszenie sześciu nazw tworzy opcje, które nie istnieją.
 
-Single sourcing jest madrzejszy, gdy zakres jest realnie ograniczony standardami, fizyka ciaglosci lub decyzja ciaglosci, a nadal mozesz wymagac strukturalnego dowodu, referencji i negocjowanego modelu komercyjnego.
+## Dowód wciąż ma znaczenie
 
-Konkurs pieknosci jest madrzejszy, gdy potrzebujesz napiecia cenowego, roznicowania kompetencji albo gdy brief nie jest jeszcze porownywalny. Jesli prowadzisz konkurs bez porownywalnosci, dostajesz drogi chaos. Jesli single sourcujesz bez dowodu, dostajesz wygodne ryzyko.
+Mniej oferentów powinno wciąż zostawiać pisemne uzasadnienie: czemu pole jest wąskie, jakie kryteria przyjęłyby innych, jaki dowód wspiera dopasowanie i wiarygodność realizacji oraz jak testowano strukturę komercyjną. Skierowany wybór bez dokumentacji wygląda na faworyzowanie nawet wtedy, gdy nim nie jest.
 
-## Kiedy single sourcing bywa czesto racjonalny (nastawienie na producenta)
+## Etyka i governance bez teatru
 
-Wybor skierowany moze byc racjonalny, gdy: rozszerzasz istniejaca platforme a interoperacyjnosc jest ograniczeniem; masz zwalidowany standard wewnetrzny definiujacy dopuszczalne architektury; czas-do-korzysci dominuje a alternatywa to kontynuacja strat recznej pracy; przeprowadziles uczciwe porownanie niedawno a delta jest przyrostowa; zmiana dostawcy stworzy nieakceptowalne ryzyko ciaglosci produkcji. To nie "lubimy ich". To "zbior wykonalny jest waski i udokumentowany".
+Używaj przejrzystości stosownej do polityk: uczciwe zawiadomienie tam, gdzie wymagane, jasne bramki techniczne i dokumentacja, którą recenzent prześledzi bez wiedzy insidera. Prędkość i integralność nie są przeciwieństwami, gdy zapis jest czysty.
 
-## Kiedy pelna konkurencja nadal jest lepszym narzedziem
+## Kiedy wciąż warto prowadzić szerszy proces
 
-Zostan konkurencyjny, gdy: roznice kompetencji sa duze i niezmapowane; modele komercyjne nie sa jeszcze porownywalne; wlasciciele wewnetrzni nie zgadzaja sie co do realnego ograniczenia; nie masz wiarygodnej bazy ceny lub granicy zakresu; governance wymaga niezaleznego porownania ze wzgledu na audyt.
+Poszerz pole, gdy klasa rozwiązania jest otwarta, porównywalność jest zdrowa lub wewnętrzne dopasowanie wciąż potrzebuje edukacji rynkowej. Konkursy mają wartość, gdy naprawdę różnicują ścieżki — nie gdy powtarzają przesądzony wniosek.
 
-Jesli te warunki sa prawdziwe, single sourcing zwykle jest polityka w stroju procesu.
+## Jak wpasowuje się DBR77 Marketplace
 
-## Dyscyplina dowodu, ktora musi przezyc obie sciezki
+Skierowany wybór pozostaje obronny, gdy jasność wyzwania, artefakty porównania i logika komercyjna pozostają możliwe do inspekcji — nawet jeśli liczba dostawców jest mała.
 
-Niezaleznie czy zaprosisz trzech oferentow czy jednego, utrzymuj: zapisane kryteria akceptacji; protokol referencji dla istotnych twierdzen; zasady kontroli zmian; log decyzji stanowiacy wykluczenia i zalozenia.
+Najbliższy odpowiednik projektowania procesu: [Kiedy stosować shortlistę, a kiedy utrzymywać więcej dostawców w grze](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_PL.md).
 
-Single sourcing powinien redukowac liczbe ofert, nie redukowac inspekcjonowalnosci.
+## Dokumentacja chroni wszystkich
 
-## Reality check: single sourcing zwykle staje sie niebezpieczny wtedy, gdy wygode zaczyna sie opisywac jako ograniczenie techniczne
+Single sourcing zaprasza do kontroli — wewnętrznej i zewnętrznej. Traktuj dokumentację jako ochronę kupującego i dostawcy: jasne stwierdzenie ograniczeń, widoczna ocena rozważanych alternatyw oraz zapis bram technicznych i komercyjnych. To redukuje kampanie szeptane i czyni audyty nudnymi — o to chodzi.
 
-Jezyk moze brzmiec zdyscyplinowanie. Zespol mowi o ciaglosci. Sponsor mowi o pilnosci. Obecny dostawca mowi, ze juz zna linie. Te powody moga byc prawdziwe. Ale jesli ograniczenia nie da sie udokumentowac tak, by wewnetrzny recenzent mogl jej pozniej obronic, proces dryfuje od wyboru skierowanego do nieprzebadanej preferencji.
+Odróżn też „tylko jeden realistyczny oferent” od „tylko jeden oferent, którego zdołowaliśmy zaniedbać relacji”. Jeśli pole jest wąskie, bo zaniedbano relacje, poszerz je, zanim racjonalizujesz.
 
-## Lista kontrolna decyzji (piec pytan)
+## Od decyzji do zachowania hala
 
-Odpowiedz tak lub nie:
+Chodzi o dociśnięcie tej części podróży zakupowej — w praktyce single sourcing kontra pełny konkurs — by realizacja była przewidywalna. W zakładach przemysłowych niejasność nie zostaje abstrakcją: staje się czekaniem, przeróbką, cichymi obejściami i sporami przy sprzęcie, gdy linia potrzebowała jasności tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widoczną odpowiedzialność, dostawcy odpowiadają mniejszą liczbą niespodzianek, a funkcje wewnętrzne marnują mniej czasu na uzgadnianie konkurujących opowieści.
 
-1. czy brief jest na tyle stabilny, by oceniac uczciwie?
-2. czy zbior wykonalnych dostawcow jest waski z udokumentowanych powodow technicznych?
-3. czy nadal mozemy benchmarkowac logike calkowitego kosztu wobec klasy referencyjnej projektu?
-4. czy mamy akceptacje governance dla trasy sourcingowej?
-5. czy potrafimy wyjasnic decyzje operacjom bez wstydu?
+To nie teoria tylko dla funkcji sztabowych. Menedżerowie zakładów czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: pochłonięte nadgodziny, napięta czujność jakości i utrzymanie wciągane w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja produkcyjna — mniej dramatu przy montażu, mniej nagłych rozmów o zmianach i szybsza droga do stabilnego wyjścia. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-Jesli nie dojdziesz do tak na pytaniach jeden, cztery i piec, napraw proces zanim bedziesz spierac sie o liczbe dostawcow.
-
-## Co to znaczy dla DBR77 Marketplace
-
-DBR77 Marketplace wspiera zakupy automatyzacji nastawione na producenta jako workflow. Workflow nie zawsze znaczy "maksimum dostawcow".
-
-Znaczy maksimum jasnosci: co kupujesz, jak porownujesz i jak dowodzisz gotowosci. Marketplace to nie katalog robotow.
-
-To warstwa zaufania i porownania, ktora nadal pomaga, gdy zbior wykonalny jest maly, bo dyscyplina ma wieksze znaczenie, gdy opcji jest mniej.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy duży wynik zakupowy jako coś, co operacje i utrzymanie mogłyby zaudytować. Jeśli nie da się tego prześledzić do zachowania na hali, dociśnij język, aż się da.
 
 ## Podsumowanie
 
-Prowadz konkurs, gdy porownywalnosc i roznicowanie tego wymagaja.
-
-Single sourcuj, gdy ograniczenia sa realne, udokumentowane i dyscyplina dowodu zostaje. Celem jest dobra decyzja, nie zajety proces.
+Prowadź konkurs, gdy różnicowanie i porównywalność tego wymagają. Single sourcuj, gdy ograniczenia są realne, udokumentowane, a dyscyplina dowodzenia trwa. Optymalizuj pod kątem trafnej decyzji, nie pod liczbę oferentów.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*
+*DBR77 Marketplace wspiera zakupy nastawione na jasność: nawet przy wąskim zbiorze wykonalnych dostawców ustrukturyzowane wyzwanie i artefakty porównania utrzymują decyzje możliwe do inspekcji. [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*

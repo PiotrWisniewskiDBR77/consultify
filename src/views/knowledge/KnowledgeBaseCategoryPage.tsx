@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
+import { isKbCategoryForCurrentSite } from '@/config/knowledgeBaseSite';
 import { KbArticleListItem, KbCategory, useDocsArticles, useDocsCategories } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
@@ -29,7 +30,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
   const { data: categories } = useDocsCategories(docsLanguage);
   const category = categories?.find((c: KbCategory) => c.slug === categorySlug);
   const otherCategories = categories?.filter(
-    (c: KbCategory) => c.slug !== categorySlug && c.slug.startsWith('consultify-')
+    (c: KbCategory) => c.slug !== categorySlug && isKbCategoryForCurrentSite(c.slug)
   ) || [];
 
   const { data: articlesData, isLoading } = useDocsArticles({

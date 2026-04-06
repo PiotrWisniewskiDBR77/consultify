@@ -524,6 +524,11 @@ export const V8ResultsApi = {
     ),
   createKpiReport: (payload: V8ResultsCreateKpiReportPayload) =>
     v8Post<V8ResultsCreateKpiReportResponse>('/results/kpi-reports', payload),
+  refreshKpiReport: (snapshotId: string) =>
+    v8Post<V8ResultsCreateKpiReportResponse>(
+      `/results/kpi-reports/${encodeURIComponent(snapshotId)}/refresh`,
+      {}
+    ),
   updateRoiInitiativeAssumptions: (
     initiativeId: string,
     payload: V8ResultsUpdateRoiAssumptionsPayload

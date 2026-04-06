@@ -26,7 +26,14 @@ import type { PortfolioInitiative } from '@/types';
 import {
   getMenu3AiButtonClass,
 } from './menu3ActionButtonStyles';
-import type { AnalysisIssue, DependencyLink, OrgUser, QuickUpdatePayload, TimelineBar } from './types';
+import type {
+  AnalysisIssue,
+  DependencyLink,
+  OrgUser,
+  QuickUpdatePayload,
+  RegisterAnalysisWorkspacePanel,
+  TimelineBar,
+} from './types';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -75,6 +82,7 @@ interface TimelineAnalysisProps {
   initiatives?: PortfolioInitiative[];
   dependencies?: DependencyLink[];
   onRegisterActions?: (node: React.ReactNode) => void;
+  onRegisterWorkspacePanel?: RegisterAnalysisWorkspacePanel;
 }
 
 /* ------------------------------------------------------------------ */
@@ -111,6 +119,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
   users: _users = [],
   initiatives = [],
   dependencies = [],
+  onRegisterWorkspacePanel,
 }) => {
   const { t } = useTranslation();
 
@@ -131,6 +140,13 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
   const [showConflicts, setShowConflicts] = useState(false);
   const [showOptimizer, setShowOptimizer] = useState(false);
   const [showDelayImpact, setShowDelayImpact] = useState(false);
+
+  const closeWorkspacePanels = useCallback(() => {
+    setScheduleProposals(null);
+    setShowConflicts(false);
+    setShowOptimizer(false);
+    setShowDelayImpact(false);
+  }, []);
 
   /* ---------- stats ---------- */
 
@@ -224,11 +240,11 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
       const depEndDates = new Map<string, string>();
       for (const d of dependencies) {
-        const depInit = initiatives.find((i) => i.id === d.toId);
+        const depInit = initiatives.find((i) => i.id === d.fromId);
         if (depInit?.plannedEndDate) {
-          const cur = depEndDates.get(d.fromId);
+          const cur = depEndDates.get(d.toId);
           if (!cur || new Date(depInit.plannedEndDate) > new Date(cur)) {
-            depEndDates.set(d.fromId, depInit.plannedEndDate);
+            depEndDates.set(d.toId, depInit.plannedEndDate);
           }
         }
       }
@@ -446,24 +462,24 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       const affected: DelayImpact['affected'] = [];
 
       for (const dep of dependencies) {
-        if (dep.toId === bar.initiativeId) {
-          const depInit = idToInit.get(dep.fromId);
+        if (dep.fromId === bar.initiativeId) {
+          const depInit = idToInit.get(dep.toId);
           if (depInit && init?.plannedEndDate && depInit.plannedStartDate) {
             const diff = daysBetween(depInit.plannedStartDate, init.plannedEndDate);
             if (diff > 0) {
-              affected.push({ id: dep.fromId, name: dep.fromName, delayDays: diff });
+              affected.push({ id: dep.toId, name: dep.toName, delayDays: diff });
             }
           }
         }
       }
 
       for (const dep of dependencies) {
-        if (dep.toId === bar.initiativeId) {
+        if (dep.fromId === bar.initiativeId) {
           for (const dep2 of dependencies) {
-            if (dep2.toId === dep.fromId) {
-              const init2 = idToInit.get(dep2.fromId);
-              if (init2 && !affected.find((a) => a.id === dep2.fromId)) {
-                affected.push({ id: dep2.fromId, name: dep2.fromName, delayDays: 0 });
+            if (dep2.fromId === dep.toId) {
+              const init2 = idToInit.get(dep2.toId);
+              if (init2 && !affected.find((a) => a.id === dep2.toId)) {
+                affected.push({ id: dep2.toId, name: dep2.toName, delayDays: 0 });
               }
             }
           }
@@ -488,15 +504,210 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     return endDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
   }, [initiatives]);
 
+  const schedulePanel = scheduleProposals !== null ? (
+    <div className="m-4 space-y-3">
+      {scheduleProposals.length === 0 ? (
+        <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10 px-4 py-6 text-center">
+          <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+          <p className="text-sm text-slate-600 dark:text-slate-400">All initiatives already have dates</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
+          <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                AI Auto-Schedule proposals
+              </h3>
+            </div>
+            <div className="flex items-center gap-2">
+              {scheduleProposals.length > 1 && onQuickUpdate && (
+                <button
+                  onClick={handleApplyAllSchedule}
+                  disabled={scheduleRunning}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                >
+                  {scheduleRunning ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                  Apply all
+                </button>
+              )}
+              <button
+                onClick={closeWorkspacePanels}
+                className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            {scheduleProposals.map((p, idx) => (
+              <div key={`${p.initiativeId}-${idx}`} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <Clock size={14} className="text-purple-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-slate-900 dark:text-white truncate">
+                      {p.initiativeName}
+                    </span>
+                    <span className="text-xs text-purple-500 dark:text-purple-400">
+                      {new Date(p.suggestedStart).toLocaleDateString()} {'->'}{' '}
+                      {new Date(p.suggestedEnd).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{p.reason}</p>
+                </div>
+                {onQuickUpdate && (
+                  <button
+                    onClick={() => handleApplySchedule(p, idx)}
+                    disabled={applyingScheduleIdx === idx}
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {applyingScheduleIdx === idx ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                    Apply
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  const conflictsPanel = showConflicts ? (
+    <div className="m-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <AlertTriangle size={16} className="text-red-600 dark:text-red-400" />
+          <h3 className="text-sm font-semibold text-red-700 dark:text-red-300">
+            Conflicts ({conflicts.length})
+          </h3>
+        </div>
+        <button onClick={closeWorkspacePanels} className="p-1 rounded text-red-500 hover:bg-red-200/30">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="divide-y divide-red-200/40 dark:divide-red-900/20">
+        {conflicts.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
+            No owner overlaps detected
+          </div>
+        ) : (
+          conflicts.map((c, idx) => (
+            <div key={idx} className="px-4 py-3 text-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <button onClick={() => onOpenInitiative(c.initiativeA)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]">
+                  {c.nameA}
+                </button>
+                <span className="text-xs text-red-500">↔</span>
+                <button onClick={() => onOpenInitiative(c.initiativeB)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]">
+                  {c.nameB}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Owner: {c.ownerName} — {c.suggestion}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  const optimizerPanel = showOptimizer ? (
+    <div className="m-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
+          <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+            AI Timeline Optimization
+          </h3>
+        </div>
+        <button onClick={closeWorkspacePanels} className="p-1 rounded text-emerald-500 hover:bg-emerald-200/30">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="divide-y divide-emerald-200/40 dark:divide-emerald-900/20">
+        {optimizationTips.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
+            Timeline is already well-optimized
+          </div>
+        ) : (
+          optimizationTips.map((tip, idx) => (
+            <div key={idx} className="px-4 py-3 text-sm">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                  {tip.type}
+                </span>
+              </div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">{tip.description}</p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  const delayImpactPanel = showDelayImpact ? (
+    <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Zap size={16} className="text-amber-600 dark:text-amber-400" />
+          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+            Delay Impact
+          </h3>
+        </div>
+        <button onClick={closeWorkspacePanels} className="p-1 rounded text-amber-500 hover:bg-amber-200/30">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="divide-y divide-amber-200/40 dark:divide-amber-900/20">
+        {delayImpacts.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
+            No cascading delay impact detected
+          </div>
+        ) : (
+          delayImpacts.map((d) => (
+            <div key={d.delayedId} className="px-4 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={14} className="text-red-500" />
+                <button onClick={() => onOpenInitiative(d.delayedId)} className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors">
+                  {d.delayedName}
+                </button>
+              </div>
+              <div className="ml-6 space-y-1">
+                {d.affected.map((a) => (
+                  <div key={a.id} className="flex items-center gap-2 text-xs">
+                    <ArrowRight size={10} className="text-amber-400" />
+                    <button onClick={() => onOpenInitiative(a.id)} className="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition-colors">
+                      {a.name}
+                    </button>
+                    {a.delayDays > 0 && (
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        ~{a.delayDays}d cascade delay
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  ) : null;
+
   /* ---------- render ---------- */
 
   useEffect(() => {
     if (!onRegisterActions) return;
     const toggleAutoSchedulePanel = () => {
       if (scheduleProposals !== null) {
-        setScheduleProposals(null);
+        closeWorkspacePanels();
         return;
       }
+      setShowConflicts(false);
+      setShowOptimizer(false);
+      setShowDelayImpact(false);
       computeAutoSchedule();
     };
     onRegisterActions(
@@ -512,22 +723,103 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           </button>
         )}
         <button
-          onClick={() => setShowConflicts((v) => !v)}
+          onClick={() => {
+            setScheduleProposals(null);
+            setShowOptimizer(false);
+            setShowDelayImpact(false);
+            setShowConflicts((v) => !v);
+          }}
           className={getMenu3AiButtonClass(showConflicts)}
         >
           <AlertTriangle size={12} />
           Conflicts ({conflicts.length})
         </button>
         <button
-          onClick={() => setShowOptimizer((v) => !v)}
+          onClick={() => {
+            setScheduleProposals(null);
+            setShowConflicts(false);
+            setShowDelayImpact(false);
+            setShowOptimizer((v) => !v);
+          }}
           className={getMenu3AiButtonClass(showOptimizer)}
         >
           <TrendingUp size={12} />
           AI Optimizer
         </button>
+        <button
+          onClick={() => {
+            setScheduleProposals(null);
+            setShowConflicts(false);
+            setShowOptimizer(false);
+            setShowDelayImpact((v) => !v);
+          }}
+          className={getMenu3AiButtonClass(showDelayImpact)}
+        >
+          <Zap size={12} />
+          Delay Impact
+        </button>
       </>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAutoSchedule, scheduleProposals, scheduleRunning, showConflicts, conflicts.length, showOptimizer]);
+  }, [
+    onRegisterActions,
+    onQuickUpdate,
+    computeAutoSchedule,
+    scheduleProposals,
+    scheduleRunning,
+    showConflicts,
+    conflicts.length,
+    showOptimizer,
+    showDelayImpact,
+    closeWorkspacePanels,
+  ]);
+
+  useEffect(() => {
+    if (!onRegisterWorkspacePanel) return;
+    if (schedulePanel) {
+      onRegisterWorkspacePanel({
+        title: 'AI Auto-Schedule',
+        subtitle: 'Generate and apply timeline proposals for initiatives without dates.',
+        icon: <Sparkles size={16} />,
+        content: schedulePanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (conflictsPanel) {
+      onRegisterWorkspacePanel({
+        title: 'Conflicts',
+        subtitle: 'Review owner overlap conflicts and rescheduling suggestions.',
+        icon: <AlertTriangle size={16} />,
+        content: conflictsPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (optimizerPanel) {
+      onRegisterWorkspacePanel({
+        title: 'AI Optimizer',
+        subtitle: 'Compress gaps, parallelize work, and improve the portfolio timeline.',
+        icon: <TrendingUp size={16} />,
+        content: optimizerPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (delayImpactPanel) {
+      onRegisterWorkspacePanel({
+        title: 'Delay Impact',
+        subtitle: 'See which initiatives are affected by delayed work.',
+        icon: <Zap size={16} />,
+        content: delayImpactPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    onRegisterWorkspacePanel(null);
+    return undefined;
+  }, [
+    schedulePanel,
+    conflictsPanel,
+    optimizerPanel,
+    delayImpactPanel,
+    onRegisterWorkspacePanel,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -582,7 +874,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       )}
 
       {/* AI Auto-Schedule proposals */}
-      {scheduleProposals !== null && (
+      {!onRegisterWorkspacePanel && scheduleProposals !== null && (
         <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -652,7 +944,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       )}
 
       {/* Conflict detector panel */}
-      {showConflicts && (
+      {!onRegisterWorkspacePanel && showConflicts && (
         <div className={`rounded-xl border overflow-hidden ${
           conflicts.length > 0
             ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
@@ -700,7 +992,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       )}
 
       {/* AI Optimizer tips */}
-      {showOptimizer && (
+      {!onRegisterWorkspacePanel && showOptimizer && (
         <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -743,7 +1035,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       )}
 
       {/* Delay Impact panel */}
-      {showDelayImpact && (
+      {!onRegisterWorkspacePanel && showDelayImpact && (
         <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">

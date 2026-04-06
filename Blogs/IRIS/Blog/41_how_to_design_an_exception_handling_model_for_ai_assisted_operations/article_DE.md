@@ -1,85 +1,40 @@
-# Wie man ein Exception-Handling-Modell fuer KI-unterstuetzte Operationen entwirft
+# Wie man ein Exception-Handling-Modell für KI-unterstützte Operations entwirft
 
-Target persona: Operations-Architekt / Leiter Werksengineering / Owner Qualitaetssysteme  
-Funnel stage: Consideration  
-Core problem: KI-Assistenz erhoeht das Ereignisvolumen, aber Werke routen Exceptions weiter ueber informelle Chats, sodass Response-Ownership und Abschlussloops unklar bleiben  
-Main promise: ein kompaktes Exception-Modell mit typisierten Pfaden, Schwellen, Freigaben und Audit-Feldern, das Vorgesetzte unter Last bedienen koennen
+Zielpersona: Operations Architect / Werksingenieur-Leiter / Quality-Systems-Owner  
+Funnel-Stufe: Consideration  
+Kernproblem: KI-Assistenz erhöht Event-Volumen, aber Werke routen Ausnahmen weiter über informelle Chats—Response-Ownership und Abschluss-Loops bleiben unklar  
+Hauptversprechen: Ein kompaktes Exception-Modell mit typisierten Pfaden, Schwellen, Freigaben und Audit-Feldern, das Vorgesetzte unter Last fahren können
 
-Entwerfen Sie Exception-Handling fuer KI-unterstuetzte Operationen, indem Sie jedes Assist-Ergebnis einem von vier Pfaden zuordnen: Auto-Task innerhalb Policy, nur Advise mit Human-Claim, Eskalation mit Pflicht-Owner und SLA, oder Hard-Stop bis Freigabe. Definieren Sie pro Pfad Trigger, wer ueberschreiben darf, welche Pflichtfelder gelten und wie Abschluss belegt wird. Veroeffentlichen Sie das Modell neben Workflow-Maps, damit Schichten nicht improvisieren. Ein Modell ohne benannte Owner und Timeboxes ist nur ein Diagramm. Unterstuetzte Operationen scheitern selten am Tag-eins-Modell. Sie scheitern, wenn Exceptions ein zweiter Schattenprozess werden.
+Unterstützte Operations scheitern selten, weil das Modell am ersten Tag falsch ist. Sie scheitern, weil Ausnahmen zu einem zweiten Schattenprozess werden—schnelle Signale ohne passenden Execution-Pfad, Grenzfälle, die Menschen früher still absorbierten, und Volumen, das zu Anrufen wird, weil das offizielle Modell nie eine fünfte Spur hatte. Entwerfen Sie Ausnahmen mit Absicht—sonst entwirft sie die Fläche für Sie.
 
-## Warum Exceptions hochgehen, wenn Assistenz live geht
+Wenn Assistenz live geht, erwarten Sie mehr Task-Kandidaten, mehr Near-Threshold-Streit und mehr „fast auto“-Routen, die einen menschlichen Stempel brauchen. Ohne Exception-Layer werden informelle Kanäle zum echten System.
 
-Assistenz hebt Grenzfaelle hervor, die Menschen frueher still absorbierten.
+Ein brauchbares Modell klassifiziert assistierte Outputs in wenige Pfade. Auto-Task innerhalb veröffentlichter Schwellen erzeugt einen Task mit Regelversion und Timestamp und schließt mit erledigter Arbeit oder verifiziertem State. Nur-Advise-Signale brauchen menschlichen Claim, mit explizitem Dismiss oder Convert-to-Task auch bei Reject. Eskalationspfade greifen bei SLA-Risiko, Safety, Quality-Holds oder funktionsübergreifendem Konflikt—jeweils mit Tier-Owner und Frist. Hard Stops gelten bei regulatorischen Sperren, Kunden-Constraints oder unreifen Daten—mit Freigabe-Rollen, Evidence-Links und Release-Kriterien. Erscheint in der Praxis ein fünfter Pfad („frag den Engineer“), ist Ihr Modell unvollständig.
 
-Sie sehen: mehr Task-Kandidaten mit unvollstaendigem Kontext; mehr Nahe-Schwellen-Signale, die zwischen Funktionen divergieren; mehr "fast auto"-Routen, die einen Human-Stamp brauchen. Ohne Exception-Layer entwirft die Flaeche ihn per Telefon.
+Vor Go-Live definieren Sie eine Exception-Taxonomie, eine Ownership-Matrix je Schicht, eine zeitbasierte Eskalationsleiter, Freigabe-Regeln mit Deputy-Coverage, Übergabefelder, die die nächste Schicht im System sehen muss, einen Rollback-Hook, der assisted Routing pausiert ohne Audit-Historie zu verlieren, und eine Post-Incident-Schleife, die Schwellen- oder Trainings-Updates erzwingt, wenn Muster wiederkehren.
 
-## Framework: vier Exception-Pfade (einer pro Ereignistyp)
+Ticket-Kultur loggt Aktivität. Abschluss-Kultur beendet operative States. KI-Assistenz verstärkt Ticket-Kultur, es sei denn, Tasks binden an Outcomes: Time-to-Owner, Time-to-Closure und Evidence, dass die Linie safe, sortiert und dokumentiert ist.
 
-| Pfad | Wann | Pflicht-Record | Abschluss-Nachweis |
-|---|---|---|---|
-| Auto-Task | innerhalb veroeffentlichter Schwellen und Policy | Task-ID, Regelversion, Zeitstempel | abgeschlossener Workorder oder verifizierter Zustand |
-| Nur Advise | nuetzliches Signal, Human muss claimen | Suggestion-ID, Claim-Owner, Grund bei Reject | explizites Dismiss oder Convert-to-Task |
-| Eskalation | SLA-Risiko, Safety, Quality-Hold, Funktionskonflikt | Eskalationsstufe, Owner, Faelligkeit | Resolution-Note mit Ursprungssignal |
-| Hard-Stop | Regulatorik, Kunden-Lock oder unreife Daten | Freigabe-Rolle, Evidence-Link, Release-Kriterien | signiertes Release oder versionierte Regelaenderung |
+Rollout ruhig: Exceptions shadow-tagen ohne Auto-Routing, wöchentliche Themen reviewen, Version eins nur für wenige Workflows veröffentlichen, Time-to-Owner und Repeat-Eskalationen messen, Rulebook versionieren, wenn Schwellen sich bewegen.
 
-Wenn in der Praxis ein fuenfter Pfad auftaucht ("frag den Engineer"), ist das Modell unvollstaendig.
+Messbarkeit ist hier der Unterschied zwischen „wir haben ein Modell“ und „wir betreiben es“. Wenn Time-to-Owner steigt, während Volumen gleich bleibt, ist Ihr Exception-Pfad überlastet oder unklar — fixen Sie Routing, nicht nur Stimmung. Wenn Repeat-Eskalationen clustern, haben Sie entweder eine fehlende Policy oder eine Schichtlücke in der Freigabe-Abdeckung. Diese Kurven sollten im Ops-Review genauso sichtbar sein wie Produktionszahlen, sonst wird Exception-Handling zur permanenten Feuerwehr.
 
-## Checkliste: Mindestdefinitionen vor Go-Live
+IRIS passt zum Exception-Layer, wenn Assistenz, Tasks, Freigaben und Abschluss-Proof einen Execution Record teilen—Exception-Design wird Operating Contract statt Chat-Archäologie.
 
-1. Exception-Taxonomie: False Positive, fehlende Daten, Policy-Konflikt, Safety, Kunde, Lieferant  
-2. Ownership-Matrix: wer ist First Responder pro Typ pro Schicht  
-3. Eskalationsleiter: zeitbasierte Stufen, nicht persoenlichkeitsbasiert  
-4. Freigaberegeln: welcher Pfad braucht welche Rolle, inkl. Stellvertretung  
-5. Uebergabefelder: was die naechste Schicht im System sehen muss, nicht auf Papier  
-6. Rollback-Hook: wie assistiertes Routing pausieren ohne Audit-Trail zu verlieren  
-7. Post-Incident-Loop: wann Exceptions Schwellen- oder Trainingsaenderung erzwingen
+Zu benachbartem Hardening siehe [Wann ein Werk einen operativen Schiedsrichter für widersprüchliche Signale braucht](../42_when_a_factory_needs_one_operational_arbiter_for_conflicting_signals/article_DE.md), [Wie man audit-fähige Records für KI-unterstützte Werksentscheidungen erstellt](../46_how_to_create_audit_ready_records_for_ai_assisted_factory_decisions/article_DE.md) und [Wie vollständiger operativer Abschluss in einer KI-nativen Fabrik aussehen sollte](../50_what_full_operational_closure_should_look_like_in_an_ai_native_factory/article_DE.md).
 
-## Vergleich: Ticket-Kultur versus Abschluss-Kultur
+Exception-Volumen ist auch Diagnostik. Clustern sie um fehlende Felder, ist Intake unreif. Um Policy-Konflikte, sind Definitionen nicht aligned. Um Nachtschicht-Coverage, ist Ihr Freigabe-Modell unrealistisch. Ein gutes Exception-Modell ist nicht nur ein Router; es ist ein Sensor, der Führung zeigt, wo das Operating System noch fragil ist—bevor Fragilität zu Stillstand wird.
 
-| Signal | Ticket-Kultur | Abschluss-Kultur |
-|---|---|---|
-| Intent | Aktivitaet loggen | operativen Zustand beenden |
-| Metrik | Backlog-Tiefe | Time-to-Owner und Time-to-Closure |
-| Erfolg | "wir haben zugewiesen" | "Linie ist sicher, sortiert, dokumentiert" |
+Vorgesetzte adoptieren Exception-Pfade nur, wenn sie schneller sind als der informelle Pfad. Time-Boxes müssen real sein, Owner erreichbar, Eskalation muss Erleichterung bringen—nicht eine weitere Schleife. Ist der offizielle Exception-Pfad langsamer als der Lieblings-Engineer-Anruf, wird der Engineer zum System. Designen Sie für diese Wettbewerbsrealität.
 
-KI-Assistenz verstaerkt Ticket-Kultur, wenn Tasks nicht an operative Outcomes gebunden sind.
+Exception-Design ist Ownership-Design. Benennen Sie Responder, Time-Boxes und Abschlussfelder—dann kann das Werk höheres Assistenz-Volumen absorbieren ohne Kontrolle zu verlieren.
 
-## Reality check: Exception-Modelle scheitern meist, wenn die Flaeche einen fuenften Pfad erfindet
+## Operatives Fazit
 
-Die meisten Teams koennen die offiziellen Pfade im Workshop beschreiben.
+Das Versprechen dieses Artikels—ein kompaktes Exception-Modell mit typisierten Pfaden, Schwellen, Freigaben und Audit-Feldern, das Vorgesetzte unter Last fahren können—wird erst operativ, wenn es die Art ändert, wie Arbeit fließt: klarere Ownership, schnellere erste Zuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „Wie man ein Exception-Handling-Modell für KI-unterstützte Operations entwirft“ ist das der Akzeptanztest: Die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
-Der echte Test kommt spaeter, wenn das Werk inoffizielle Umgehungen nutzt wie:
-
-- "ruf zuerst die Instandhaltung an und logge spaeter"
-- "lass es im Advise-Modus bis zur Tagschicht"
-- "frag das Engineering informell, weil niemand diesen Pfad besitzt"
-
-In dem Moment, in dem dieser versteckte fuenfte Pfad normal wird, kontrolliert das Modell das Assistenzvolumen nicht mehr. Die Flaeche tut es.
-
-## Schrittfolge: Modell ohne Drama ausrollen
-
-Shadow-Mode: potenzielle Exceptions taggen ohne Auto-Routing; Weekly Review: Top-20-Themen kategorisieren und Owner setzen; v1-Pfade nur fuer drei Workflows veroeffentlichen; messen: Median Time-to-Owner, wiederholte Eskalationen, Override-Gruende; Regelbuch versionieren, wenn Schwellen wandern.
-
-## Wann dieses Modell funktioniert
-
-Vorgesetzte respektieren SLAs fuer manuelle Arbeit bereits; Sie halten ein Changelog fuer Schwellen und Modi; Qualitaet und Instandhaltung sind sich bei Hold-Regeln einig.
-
-## Wann dieses Modell scheitert
-
-ERP oder MES bleibt alleiniges System of Record und IRIS-artige Schichten sind optional; Engineering aendert Regeln ohne Operations-Sign-off; Nachtschicht hat keine Stellvertreter-Freigeber.
-
-## Warum IRIS natuerlich in die Exception-Schicht passt
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Wenn Assistenz, Tasks, Freigaben und Exceptions einen Ausfuehrungsdatensatz teilen, bauen Sie die Story nach jedem Incident nicht neu auf.
-
-## Fazit
-
-Exception-Design ist Ownership-Design.
-
-Wenn jeder Pfad einen Responder, eine Timebox und ein Abschlussfeld benennt, kann das Werk hoeheres Assist-Volumen absorbieren ohne Kontrollverlust.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur im Meeting und mehr Tage, an denen der System-Record zu dem passt, was die Fläche mitten in der Task sagen würde.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS hält Assistenz, Tasks, Freigaben und Exceptions auf einem Execution Record, damit Pfade und Ownership über Schichten sichtbar bleiben. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

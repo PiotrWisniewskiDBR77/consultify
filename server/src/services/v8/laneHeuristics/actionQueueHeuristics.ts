@@ -1,3 +1,4 @@
+import { stableHeuristicId } from './idFactory.js';
 import type { HeuristicInput, HeuristicOutput } from './types.js';
 
 let seqId = 0;
@@ -162,7 +163,7 @@ export function analyzeActionQueue(input: HeuristicInput): HeuristicOutput {
   // Suggestions
   if (unownedTasks.length > 0) {
     suggestions.push({
-      id: uid('sug-aq'),
+      id: stableHeuristicId('sug-aq', 'unowned-tasks'),
       action: `Assign owners to ${unownedTasks.length} unassigned tasks`,
       reason: 'Unassigned tasks have no one responsible for completion',
       expectedOutcome: 'Clear ownership reduces dropped-ball risk',
@@ -175,7 +176,7 @@ export function analyzeActionQueue(input: HeuristicInput): HeuristicOutput {
 
   if (noDateTasks.length > 0) {
     suggestions.push({
-      id: uid('sug-aq'),
+      id: stableHeuristicId('sug-aq', 'missing-due-dates'),
       action: `Set due dates for ${noDateTasks.length} tasks`,
       reason: 'Missing dates prevent accurate delivery forecasting',
       expectedOutcome: 'Enables delay detection and workload leveling',
@@ -188,7 +189,7 @@ export function analyzeActionQueue(input: HeuristicInput): HeuristicOutput {
 
   if (overdueDecisions.length > 0) {
     suggestions.push({
-      id: uid('sug-aq'),
+      id: stableHeuristicId('sug-aq', 'overdue-decisions-escalation'),
       action: `Escalate ${overdueDecisions.length} overdue decisions`,
       reason: 'Decision latency is blocking execution progress',
       expectedOutcome: 'Unblocks downstream initiatives and tasks',
@@ -201,7 +202,7 @@ export function analyzeActionQueue(input: HeuristicInput): HeuristicOutput {
 
   if (overdueTasks.length > 10) {
     suggestions.push({
-      id: uid('sug-aq'),
+      id: stableHeuristicId('sug-aq', 'severely-overdue-replan'),
       action: 'Review and replan severely overdue work items',
       reason: `${overdueTasks.length} tasks are overdue — systemic replanning needed`,
       expectedOutcome: 'Realistic delivery dates and reduced hidden backlog',

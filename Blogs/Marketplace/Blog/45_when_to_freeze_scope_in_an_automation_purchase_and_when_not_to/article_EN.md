@@ -5,47 +5,55 @@ Funnel stage: Evaluation (offer normalization)
 Core problem: teams freeze scope too early and bake in wrong assumptions, or never freeze and lose comparability  
 Main promise: a simple freeze rule tied to evaluation phase, not to optimism
 
-Scope freeze is a tool. It is not a virtue signal. Used wrong, it locks the wrong problem. Used right, it protects comparability and schedule sanity.
+A scope freeze is a buying tool. Used well, it makes comparison honest. Used badly, it cements wrong assumptions—or never arrives, so every clarification creates a new project shape for each supplier. Freeze when you have enough truth to compare; refuse to freeze when discovery still changes the job definition; re-freeze deliberately when material facts change.
 
-Freeze scope in an automation purchase when you have a written baseline aligned to acceptance objects, suppliers are answering the same question set, and further discovery would only shuffle labels without changing physics.
+## The two classic failure modes
 
-Do not freeze when material plant facts are still open, when interfaces are unowned, or when the freeze would block a documented exception path that the board already expects.
+The first failure mode is freezing too early: you lock a scope story before site truth, variability rules, or interface ownership are stable. Suppliers price fiction; the “winning” path becomes whoever guessed your plant best. The second failure mode is never freezing: every new email becomes a moving target, and your team compares proposals that were never answers to the same question. Good governance lives between those extremes—freeze for a round, learn, version, freeze again.
 
-## Decision matrix
+Executives can help by refusing to treat a freeze date as theater. If the brief is still unstable, moving the freeze is not weakness; it is risk reduction. If the brief is stable, breaking the freeze without version control is how comparability dies quietly.
 
-| Situation | freeze | do not freeze |
-| --- | --- | --- |
-| Acceptance objects stable | yes | no |
-| Interface owners named | yes | no |
-| SKU or mix still swinging materially | no | yes |
-| Layout or reach may change | no | yes |
-| Paid discovery is contracted to reduce ambiguity | no until discovery exit | yes during discovery |
+## Freeze for comparison rounds
 
-## Step sequence: freeze ceremony (bounded)
+During normalized evaluation, hold scope and question sets stable so responses answer the same challenge. Moving targets invite asymmetric information and political interpretation.
 
-Publish scope statement version and exclusions; Publish interface register with owners; Publish clarification rules: what can change without reopening comparison; Date-stamp the evaluation matrix version; Communicate freeze to suppliers with a single channel owner.
+## Do not freeze blind
 
-If step three is missing, you will argue about whether every email broke the freeze.
+If major unknowns still change what “the job” is, freezing is premature. Close discovery gaps, publish a new version, then freeze for the next round.
 
-## When partial freeze is the adult move
+## Re-freeze with discipline
 
-Partial freeze means: hardware envelope and acceptance objects are fixed while detailed software revision can move inside a defined compatibility rule.
+Material changes require version bumps, shared clarifications, and reset expectations on timelines—not silent edits in email.
 
-That preserves comparability better than pretending software is static in week two.
+## Connect freeze to acceptance spine
 
-## What this means for DBR77 Marketplace
+What you freeze should align with acceptance objects. Otherwise procurement stability and commissioning reality diverge.
 
-DBR77 Marketplace matters here because scope freeze is one of the main controls that protects comparability once suppliers are finally answering the same question set.
+## How DBR77 Marketplace supports the rule
 
-That makes freeze discipline a buying-system rule, not just a procurement preference.
+Stable question sets and acceptance objects across suppliers let a freeze mean comparability—not theater.
 
 For the closest companion articles, see [How to Keep Supplier Clarifications From Destroying Offer Comparability](../46_how_to_keep_supplier_clarifications_from_destroying_offer_comparability/article_EN.md), [How to Scope an Automation Project Without Overcomplicating It](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_EN.md), [When to Reopen an Automation Decision Before Signing](../32_when_to_reopen_an_automation_decision_before_signing/article_EN.md), and [When to Bundle Multiple Automation Needs Into One Buying Process and When Not To](../41_when_to_bundle_multiple_automation_needs_into_one_buying_process_and_when_not_to/article_EN.md).
 
+## Freeze with empathy for integrators
+
+Suppliers need stability to price and plan. Chaotic freezes—declared but undermined by daily exceptions—are worse than no freeze because they train integrators to ignore your process. If you must change scope, do it as a published event with consequences for timelines and comparability, not as a whisper.
+
+Pair freezes with a realistic clarification window so legitimate questions do not force silent scope drift.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"When to Freeze Scope in an Automation Purchase and When Not To" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+This is not theory for staff functions alone. Plant managers feel the consequences when buying artifacts do not match floor reality: overtime absorbed, quality vigilance stretched, and maintenance pulled into improvising around half-defined interfaces. Strong buying discipline is therefore a production investment—less drama during installation, fewer emergency change conversations, and a faster path to stable output. When in doubt, slow the document until it matches the line; speeding up a mismatched document only moves pain downstream.
+
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
 ## Bottom line
 
-Freeze when comparability needs protection.
-
-Unfreeze when facts change enough that comparability would become a lie.
+Freeze scope to compare fairly; unfreeze to learn; re-freeze deliberately. Tie freezes to evaluation phase and truth—not to wishful thinking.
 
 ---
 

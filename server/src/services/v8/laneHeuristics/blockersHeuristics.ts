@@ -1,3 +1,4 @@
+import { stableHeuristicId } from './idFactory.js';
 import type { HeuristicInput, HeuristicOutput } from './types.js';
 
 let seqId = 0;
@@ -130,7 +131,7 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
   // Suggestions
   if (byType.dependency.length > 0) {
     suggestions.push({
-      id: uid('sug-blk'),
+      id: stableHeuristicId('sug-blk', 'dependency-unblock'),
       action: `Unblock ${byType.dependency.length} dependency-blocked items`,
       reason: 'Predecessors need to be completed or dependencies need to be restructured',
       expectedOutcome: 'Blocked items can resume progress',
@@ -141,7 +142,7 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
     });
 
     suggestions.push({
-      id: uid('sug-blk'),
+      id: stableHeuristicId('sug-blk', 'create-workarounds'),
       action: 'Create workarounds for high-priority blocked items',
       reason: 'Some blockers can be circumvented with alternative approaches',
       expectedOutcome: 'Reduces blocked queue without waiting for full unblock',
@@ -154,7 +155,7 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
 
   if (byType.decision.length > 0) {
     suggestions.push({
-      id: uid('sug-blk'),
+      id: stableHeuristicId('sug-blk', 'decision-escalation'),
       action: `Escalate ${byType.decision.length} decision-blocked items`,
       reason: 'Governance decisions are holding up execution',
       expectedOutcome: 'Decision-blocked items unblocked within 48h',
@@ -167,7 +168,7 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
 
   if (blockedCount > 5) {
     suggestions.push({
-      id: uid('sug-blk'),
+      id: stableHeuristicId('sug-blk', 'formal-risk-response-plan'),
       action: 'Create formal risk response plan for blocked portfolio segment',
       reason: `${blockedCount} blocked items is systemic — needs structured resolution`,
       expectedOutcome: 'Coordinated unblock across multiple root causes',
@@ -180,7 +181,7 @@ export function analyzeBlockers(input: HeuristicInput): HeuristicOutput {
 
   if (highRisks.length > 3) {
     suggestions.push({
-      id: uid('sug-blk'),
+      id: stableHeuristicId('sug-blk', 'scope-reduction'),
       action: 'Accept scope reduction for lowest-priority blocked initiatives',
       reason: 'Unblocking everything may exceed capacity — prioritize critical path',
       expectedOutcome: 'Focus recovery on highest-value items',

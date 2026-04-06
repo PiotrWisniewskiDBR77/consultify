@@ -5,51 +5,53 @@ Funnel stage: Adoption (operating model)
 Core problem: every project reinvents templates, fights, and supplier chaos  
 Main promise: a lightweight system of record for decisions, not a heavier process for its own sake
 
-Repeatability is not bureaucracy. Repeatability is how you buy speed without buying fantasy.
+Repeatability is not bureaucracy. Repeatability is how you buy speed without buying fantasy. When every automation thread invents its own brief format, comparison columns, clarification rules, and award narrative, you pay twice: once in calendar, once in political friction. A lightweight decision system is a shared template plus version discipline—a place where the next project inherits the last project’s logic instead of reconstructing it from inboxes.
 
-Turn automation buying into a repeatable decision system by standardizing five artifacts across projects: challenge definition with acceptance objects, evaluation matrix template tied to those objects, clarification and change log rules, award record with dissent, and post-award mobilization and risk review hooks; store versions by project ID; and train sponsors to refuse ad-hoc comparisons that break the template.
+## The minimum artifact stack
 
-The system is the shared template plus version discipline, not a new department logo.
+Anchor on five reusable pieces: a challenge definition tied to acceptance objects; an evaluation matrix locked to those objects; a clarification and change log with publication rules; an award record that includes dissent and rationale; and post-award hooks for mobilization and risk review. Store versions by project ID. Train sponsors to reject ad hoc comparisons that break the template.
 
-## System map (minimum viable)
+## Map layers to owners
 
-| Layer | artifact | owner |
-| --- | --- | --- |
-| Intent | challenge brief | operations sponsor |
-| Comparison | matrix and clarifications log | procurement |
-| Decision | award record | sponsor plus procurement |
-| Delivery | mobilization one-pager | operations |
-| Governance | monthly risk log | program or PMO |
+Intent and outcomes stay with the operations sponsor. Comparison and clarification discipline sit with procurement. Decision records pair sponsor and procurement. Delivery mobilization lives with operations leadership. Program-level risk rhythm belongs to a program office or PMO when scale demands it.
 
-## Step sequence: institutionalize in ninety days (illustrative)
+## Institutionalize in a practical sequence
 
-Pick two past projects and reconstruct what actually decided the outcome; Delete steps that did not change decisions; Publish template v1 with worked example redactions; Run one pilot project under v1 and capture deltas; Publish template v1.1 with explicit change notes.
+Reconstruct two past awards honestly—what actually drove the decision, what did not matter, where comparability broke. Strip steps that produced noise. Publish template v1 with a redacted example. Run one pilot project under v1; capture deltas. Ship v1.1 with explicit change notes. Improvement beats perfection.
 
 ## When repeatability fails
 
-Repeatability fails when leadership rewards speed that skips comparability, when matrix columns drift by supplier charisma, or when only one hero knows where the real record lives. Fix the incentive and the storage rule before blaming the template.
+It fails when leadership rewards speed that skips comparability, when matrix columns drift with vendor charisma, or when only one hero knows where the record lives. Fix incentives and storage before blaming templates.
 
-## Reality check: repeatability often gets overstated because the company can name a process but cannot inherit a clean record
+## Plant-side reality: folders are not systems
 
-People say there is already a method. There may even be a folder. Templates may exist. But if the next project still has to reconstruct:
+Many plants can point to a method and a shared drive. If the next project still cannot find what was compared, which assumptions changed, or why one supplier won, you have documents—not a repeatable decision system.
 
-- what was actually compared
-- which assumptions changed
-- why one supplier won
+## How DBR77 Marketplace expresses the habit
 
-then the organization has documents, not a repeatable decision system.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because repeatability is the point where all of the library's individual controls become one operating habit instead of isolated articles.
-
-That is what turns structured comparison, award logic, mobilization, and risk review into a system the next project can actually inherit.
+Structured challenges, comparable offers, and inspectable award logic are the external face of what should become an internal habit: versioned, comparable, accountable decisions across projects.
 
 For the closest capstone references, see [How to Decide if an Automation Project Is Ready for Board Approval](../43_how_to_decide_if_an_automation_project_is_ready_for_board_approval/article_EN.md), [How to Keep Supplier Clarifications From Destroying Offer Comparability](../46_how_to_keep_supplier_clarifications_from_destroying_offer_comparability/article_EN.md), and [What a Good Manufacturer-Side Mobilization Plan Should Include After Award](../48_what_a_good_manufacturer_side_mobilization_plan_should_include_after_award/article_EN.md).
 
+## Systems learn from honest postmortems
+
+After each project, capture what mattered: which assumptions hurt, which comparison fields were useless, which gates worked. Update templates with notes—versioned—so the next team inherits learning, not lore. A system that cannot incorporate feedback becomes folklore with filenames.
+
+Train sponsors to treat templates as guardrails for speed, not obstacles. The enemy is reinventing chaos, not following a page of discipline.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"How to Turn Automation Buying Into a Repeatable Decision System" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
+Finally, tie this discipline to accountability: name who will verify assumptions on the floor and by which milestone. Myths thrive when nobody owns measurement; they weaken when verification is part of the project plan, not an afterthought.
+
+
 ## Bottom line
 
-If your next project cannot start from the last project's versioned record, you do not have a system yet. You have a memory.
+If the next project cannot start from the last project’s versioned record, you do not yet have a system—you have memory. Build the lightweight stack, govern versions, and treat comparability as a strategic capability.
 
 ---
 

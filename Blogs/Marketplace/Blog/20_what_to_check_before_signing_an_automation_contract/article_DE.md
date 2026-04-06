@@ -1,110 +1,68 @@
-# Was man vor der Unterzeichnung eines Automatisierungsvertrags prueft
+# Was vor der Unterzeichnung eines Automatisierungsvertrags zu prüfen ist
 
-Target persona: Sponsor / Einkaufs- und Engineering-Fuehrung  
-Funnel stage: Decision  
-Core problem: Vertraege werden mit optimistischer Scope-Sprache, schwachen Aenderungsregeln und diffuser Abnahme unterzeichnet, was Streit zu teuren Konflikten macht  
-Main promise: eine Pre-Signature-Checkliste zu Umfang, Annahmen, Meilensteinen, Abnahme und Aenderungsmechanik
+Zielpersona: Sponsor / Beschaffungs- und Engineering-Führung  
+Funnel-Stufe: Entscheidungsphase  
+Kernproblem: Verträge werden mit optimistischer Scope-Sprache, schwachen Änderungsregeln und unscharfer Abnahme unterzeichnet – das macht Meinungsverschiedenheiten zu teuren Streitigkeiten  
+Hauptversprechen: Eine Pre-Signatur-Inspektionsliste fokussiert auf Scope, Annahmen, Meilensteine, Abnahme und Änderungsmechanik
 
-Unterschreiben fuehlt sich wie der Zielstrich an.
+Unterschrift fühlt sich wie Abschluss an. In der Automatisierung ist es meist die Übergabe vom Verkauf zur rechenschaftspflichtigen Lieferung. Ein nützlicher Vertrag macht Ausführung inspizierbar: klare Grenzen, ehrliche Annahmen, Meilensteine, die etwas bedeuten, Abnahme, die Sie fahren können, und Änderungsmechanik, die normale Iteration in Papierarbeit statt Beziehungsschaden verwandelt.
 
-Bei Automatisierungsprojekten ist es oft der Start echter Verantwortung. Ein Vertrag soll Ausfuehrung pruefbar machen.
+Wenn das Dokument nur Vertrauen offiziell klingen lässt, haben Sie Theater – keine Kontrolle.
 
-Wenn er nur Sales-Commitments selbstbewusst klingen laesst, haben Sie Papier, keinen Schutz.
+## Scope, der testbar ist
 
-## Check 1: Scope als testbare Inklusionen und Exklusionen
+Suchen Sie Deliverables und Ausschlüsse klar genug, dass ein dritter Leser die Grenze versteht. Achten Sie auf fluffige Schlüsselfertig-Sprache ohne Ausschlüsse, „best effort“-Integration ohne Ownership und undefinierte „Standardpraxis“. Starke Verträge benennen Schnittstellen und wer sie besitzt, nicht nur Aspirationen.
 
-Sie wollen Sprache, die ein Dritter lesen und die Grenze verstehen kann. Schwache Scope-Sprache sieht so aus:
+## Annahmen, die die Unterschrift überstehen
 
-- "Turnkey" ohne Exklusionen
-- "best effort" Integration ohne Ownership
-- "Standard der Branche" ohne Definition
+Annahmen sollten sichtbar und gemanagt bleiben: was passiert, wenn sie scheitern, wie sich Preis und Zeitplan anpassen, wer sie verifiziert und wann. Wenn Annahmen in Legalprosa verschwinden, entdecken Sie sie neben der Linie bei der Inbetriebnahme neu.
 
-Starke Scope-Sprache sieht so aus:
+## Meilensteine, die an Entscheidungen gebunden sind
 
-- explizite Deliverables-Listen
-- explizite Exklusionen
-- benannte Schnittstellen und Ownership
+Daten sollten kein Gantt-Dekor sein. Jeder Meilenstein sollte sagen, was validiert wird, welcher Nachweis zählt und welche Rechte der Käufer behält, wenn der Nachweis unzureichend ist. So vermeiden Projekte Hoffnungs-Drift.
 
-## Check 2: Annahmen sind referenziert und gemanagt
+## Abnahme als Kriterien, nicht als Gefühl
 
-Annahmen duerfen bei Signatur nicht verschwinden. Gute Vertraege verbinden Annahmen mit:
+Binden Sie Abnahme an messbare Checks, wo es für den Prozess ehrlich ist – Rate, Qualität, Stillstandsgrenzen wo anwendbar; Sicherheitsvalidierungsschritte wo anwendbar; Definitionen von Trainings- und Dokumentationsvollständigkeit. Wenn Abnahme nur „erfolgreiches Go-Live“ ist, haben Sie Streit zum schlechtesten Zeitpunkt eingeladen.
 
-- was passiert, wenn eine Annahme falsch ist
-- wie Preis und Zeitplan angepasst werden
-- wer Annahmen wann verifiziert
+## Change Orders mit Rückgrat
 
-Wenn Annahmen nicht referenziert sind, finden Sie sie wieder bei Inbetriebnahme.
+Projekte ändern sich. Der Vertrag sollte sagen, wie Änderungen vorgeschlagen, gepreist, genehmigt und dokumentiert werden. Opaque Änderungsregeln verwandeln normales Engineering-Lernen in Rechnungen, die sich persönlich anfühlen.
 
-## Check 3: Meilensteine mappen auf echte Entscheidungsrechte
+## Kommerzielle Klarheit für das Leben nach Cutover
 
-Meilensteine duerfen keine Deko-Termine sein. Jeder Meilenstein beantwortet:
+Garantiegrenzen und Startbedingungen, Ersatzteilphilosophie und Lieferzeiten wo relevant, Support- und Eskalationserwartungen – das bestimmt, ob Operations sich gestützt oder im Stich gelassen fühlt. Unterschrift ist der richtige Moment, Mehrdeutigkeit zu entfernen, nicht zu verschieben.
 
-- was validiert wird
-- welcher Nachweis noetig ist
-- welche Entscheidung der Buyer bei unzureichendem Nachweis treffen kann
+## Die unbequeme Wahrheit über spätes Review
 
-So driften Projekte nicht auf Hoffnung.
+Bis zur Zirkulation kann der Lieferant sich schon „ausgewählt“ fühlen, Führungskräfte können Geschwindigkeit über Klärung priorisieren und offene Annahmen können als Site-Details umformuliert werden. Dann zählt Disziplin am meisten. Wenn das Dokument kein zeilenweises Review übersteht, schafft Unterschrift keine Kontrolle – sie fixiert Verwirrung.
 
-## Check 4: Abnahme ist als Kriterien definiert, nicht als Gefuehl
+## Ein praktisches Review-Rhythmus
 
-Abnahme sollte wo moeglich an messbare Checks gebunden sein:
+Weisen Sie technisches Ownership Scope und Ausschlüssen zu, Procurement kommerzieller Mechanik und Änderungsregeln, Operations Abnahme- und Support-Sprache. Konsolidieren Sie Fragen in ein Klärungspaket. Lösen Sie Widersprüche vor Mobilisierung, nicht währenddessen.
 
-- Takt, Qualitaet, Stillstandsgrenzen (falls relevant)
-- Safety-Validierungsschritte (falls relevant)
-- Definitionen fuer Training- und Dokumentationsvollstaendigkeit
+## Wie DBR77 Marketplace anschließt
 
-Wenn Abnahme nur "erfolgreiches Go-Live" ist, laden Sie Streit ein.
+Vertragsreview sollte dieselbe Vergleichbarkeitsdisziplin erben wie die Auswahl – Annahmen, Grenzen und Ownership, die in der Evaluation sichtbar waren, sollten bei der Unterschrift noch sichtbar sein.
 
-## Check 5: Change-Order-Mechanik ist explizit
+Als enger Begleiter siehe [Was ein gutes Automatisierungsangebot sichtbar machen sollte](../17_what_a_good_automation_offer_should_make_visible/article_DE.md).
 
-Automatisierungsprojektes aendern sich. Der Vertrag sollte definieren:
+## Unterschrift als Alignment, nicht als Erleichterung
 
-- wie Aenderungen angefragt werden
-- wie Preis- und Zeitplan-Updates freigegeben werden
-- Dokumentationserwartungen fuer Scope-Aenderungen
+Behandeln Sie Unterschrift als Moment, in dem sich die Organisation zu einer Story verpflichtet. Wenn Unterschriften kommen, während Schlüsselfunktionen intern noch uneinig sind, wird der Vertrag ein Waffenstillstand statt eines Plans – und Waffenstillstände scheitern unter Integrationsstress. Nutzen Sie den finalen Durchlauf, um diese Uneinigkeiten sichtbar zu machen: Wenn Operations nicht mit Abnahmesprache leben kann, fixen Sie es jetzt; wenn Procurement nicht mit Änderungsmechanik leben kann, fixen Sie es jetzt.
 
-Opake Aenderungsmechanik macht normale Engineering-Iteration zu Beziehungsschaeden.
+Stellen Sie auch sicher, dass der Vertrag den Evaluationsdatensatz erbt: referenzierte Annahmen, definierte Schnittstellen und Meilenstein-Nachweise. Ein Vertrag, der auf der letzten Seite neuen Optimismus erfindet, macht wochenlange disziplinierte Vergleiche rückgängig.
 
-## Check 6: kommerzielle Klarheit zu Ersatzteilen, Gewaehrleistung, Support
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Vor Signatur Sichtbarkeit bestaetigen:
+Verträge zählen, weil sie bleiben, wenn Enthusiasmus nachlässt. Auf dem Shopfloor zitieren Menschen keine Klauselnummern – sie folgen dem, was praktisch ist. Starke Vertragssprache aligniert mit operativer Realität: Abnahmetests, die Operateure ausführen können, Support-Grenzen, auf die Instandhaltung sich verlassen kann, und Änderungsregeln, die keinen Krisenaktivator brauchen.
 
-- Gewaehrleistungsgrenzen und Startbedingungen
-- Ersatzteilstrategie und Lieferzeiten (falls relevant)
-- Support-Reaktionserwartungen nach Go-Live
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Lesen Sie Abnahme- und Support-Abschnitte laut mit Operations im Raum – wenn sie zusammenziehen, fixen Sie den Text vor der Unterschrift.
 
-Diese Punkte entscheiden, ob Operations sich unterstuetzt oder verlassen fuehlt.
+## Fazit
 
-## Reality check: Vertragsschwaeche zeigt sich meist erst, wenn Begeisterung schon zu Commitment geworden ist
-
-Genau deshalb ist spaete Inspektion unangenehm, aber notwendig. Zu dem Zeitpunkt, an dem der Vertrag zirkuliert:
-
-- wird der Lieferant intern oft schon als gewaehlter Partner behandelt
-- wollen Fuehrungskraefte eher Geschwindigkeit als Klaerung
-- werden ungeloeste Annahmen leicht zu Details umgedeutet, die spaeter geklaert werden sollen
-
-Genau dann braucht der Buyer die meiste Disziplin.
-
-Wenn das Dokument in diesem Moment keine Zeile-fuer-Zeile-Inspektion uebersteht, wird die Unterschrift keine Kontrolle schaffen.
-
-## Pre-Signature Review Sequenz (praktisch)
-
-Technischen Owner: Scope und Exklusionen Zeile fuer Zeile; Einkauf: kommerzielle Mechanik und Aenderungsregeln; Operations: Abnahme- und Support-Sprache; Fragen in ein Klaerungspaket konsolidieren; Widersprueche vor Signatur loesen, nicht nach Mobilisierung.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace unterstuetzt hersteller-first Automatisierungsentscheidungen durch strukturierte Workflows mit Fokus auf Vergleichbarkeit und sichtbare Annahmen.
-
-Diese Denkweise sollte ins Contracting uebergehen: weniger versteckte Luecken; sauberere Vergleichshistorie; klarere Accountability. Marketplace ist kein Roboterkatalog.
-
-Es ist eine Vertrauensschicht und ein Workflow, der Sourcing-Chaos durch besseres Entscheidungsdesign reduziert.
-
-## Bottom line
-
-Ein Vertrag ist keine Trophae. Er ist ein Inspektionsplan fuer Geld, Zeit und Risiko.
-
-Wenn Umfang, Annahmen, Meilensteine, Abnahme und Aenderungsmechanik schwach sind, schliesst Unterschrift Risiko nicht ab. Es friert es ein.
+Behandeln Sie den Vertrag als Inspektionsplan für Geld, Zeit und Risiko. Schwacher Scope, Annahmen, Meilensteine, Abnahme und Änderungsmechanik verschwinden nicht nach Tinte – sie werden teure Gespräche neben laufendem Equipment.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt die Pre-Contract-Disziplin sichtbarer Annahmen und vergleichbarer Angebote, damit Vertragsreview aus strukturierter Vergleichshistorie startet statt aus getrennten Verhandlungen. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*

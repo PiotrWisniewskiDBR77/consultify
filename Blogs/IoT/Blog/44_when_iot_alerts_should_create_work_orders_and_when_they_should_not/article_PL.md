@@ -1,45 +1,60 @@
-# Kiedy alerty IoT powinny tworzyc work order, a kiedy nie
+# Kiedy alerty IoT powinny tworzyć zlecenia pracy, a kiedy nie
 
-Docelowa persona: Planner maintenance / Inzynier niezawodnosci / Owner CMMS we wspolnocie z operacjami  
+Docelowa persona: Planista utrzymania / inżynier niezawodności / właściciel CMMS we współpracy z operacjami  
 Etap lejka: Trial  
+Główny problem: CMMS zalewa automatycznie generowanymi zgłoszeniami, które technicy ignorują, podczas gdy realne awarie wciąż docierają jako werbalne eskalacje  
+Główna obietnica: macierz kierowania: które alerty stają się zleceniami pracy, które pozycją obserwacji, a które tylko wzbogacają istniejące prace
 
-Glowny problem: CMMS zalewa auto-generowanymi ticketami, ktore technicy ignoruja, podczas gdy prawdziwe awarie wciaz przychodza jako werbalne eskalacje Glowna obietnica: macierz routingu: ktore alerty staja sie work order, ktore sa watch item, a ktore tylko wzbogacaja istniejace prace Work order to obietnica pracy i czesci. Alerty IoT to obserwacje.
+Zlecenie pracy obiecuje pracę, części i domknięcie. Alert IoT obserwuje warunek. Gdy zakład myli te dwie rzeczy, wiarygodność CMMS się rozpada.
 
-Pomylenie dwoch rzeczy pali zaufanie szybciej niz jakikolwiek kolor na dashboardzie.
+Technicy przestają ufać systemowi, bo „pilne” przestaje znaczyć pilne. Planerzy toną w duplikatach. Realne awarie wciąż jadą na werbalnych eskalacjach, bo formalna ścieżka wydaje się nieistotna. Dyscyplina kierowania to sposób, w jaki IoT wzmacnia utrzymanie zamiast je spamować.
 
-## Bezposrednia odpowiedz
+CMMS jest księgą obietnic. IoT powinno do tej księgi dopisywać ostrożnie — wzbogacać otwarte prace, awansować pozycje z listy obserwacji z dowodem i rezerwować nowe obietnice dla warunków, które naprawdę wymagają pracy.
 
-Tworz work order z alertu IoT tylko wtedy, gdy **praca jest naprawde wymagana**, **istnieje job plan albo tryb awarii** oraz **sygnal przekroczyl prog zakladowy z korelatem**.
+## Kiedy zlecenie jest uzasadnione
 
-Nie tworz work order, gdy alert to **szum baseline**, **znany transient przy starcie**, **sytuacja szkoleniowa albo override** albo **lepiej najpierw obsluzyc jako eskalacja supervisora**.
+Twórz zlecenie, gdy praca jest naprawdę wymagana, istnieje plan pracy lub znany tryb awarii, sygnał przekroczył próg zdefiniowany w zakładzie i reguły korelacji zostały spełnione. Zakład powinien wierzyć, że opóźnienie zwiększa ryzyko dla bezpieczeństwa, jakości lub przestoju według standardów, które już posiada — nie według domyślnej paniki vendora.
 
-## Sekwencja krokow: alert do decyzji routingu
+## Kiedy wstrzymać się od zlecenia
 
-**Sklasyfikuj sygnal** wobec modelu stanu i slownika sygnalow; **Sprawdz korelat** z drugiego sygnalu, powtorzenia albo potwierdzenia operatora; **Dopasuj klase maintenance** z drabiny priorytetow; **Jesli ryzyko interrupt jest wysokie**, otworz sciezke interrupt wg regul zakladu; **Jesli celem jest uczenie**, loguj do widocznosci inzynierskiej bez obciazenia CMMS; **Co tydzien przegladaj** falszywa rate tworzenia work order i koryguj progi.
+Szum linii bazowej, znane stany przejściowe przy rozruchu, sytuacje szkoleniowe lub override oraz problemy lepiej najpierw obsłużone eskalacją supervisora nie powinny stawać się obietnicami CMMS. Widoczność może zostać; papierologia powinna poczekać, dopóki operacyjna historia nie będzie jasna.
 
-## Porownanie: spam CMMS versus zdyscyplinowany routing
+## Sekwencjonuj decyzję świadomie
 
-| Spam CMMS | Zdyscyplinowany routing |
-|---|---|
-| kazde przekroczenie progu to ticket | tickety zwiazane z job planami |
-| technicy wyciszaja powiadomienia | alerty mapuja sie na klasy |
-| planner staje sie data janitor | planner posiada reguly routingu z ops |
-| brak petli zwrotnej dla zlych regul | mierzona falszywa rate ticketow |
+Triażuj alert wobec reguł korelacji. Sprawdź, czy jest otwarte zlecenie, które należy wzbogacić zamiast duplikować. Wybierz między ścieżką listy obserwacji, kandydata zaplanowanego i przerwania. Zaloguj decyzję, by cotygodniowy przegląd mógł dostrajać kierowanie zamiast ponownie spierać się o anegdoty.
 
-## Eskalacja bez automatycznych work order
+## Wspólna odpowiedzialność z operacjami
 
-Niektore warunki wymagaja **widocznosci supervisora** albo **strukturalnego problem solving** zanim ktos zobowiaze czas na klucz. To nie slabosc.
+Operacje potwierdzają, czy sygnał zgadza się z rzeczywistością hali i czy pilność jest ograniczona przez produkcję. Bez tego uścisku dłoni IoT staje się drukarką zgłoszeń odciętą od wyniku.
 
-To szacunek dla brownfield constraints i skonczonej zdolnosci rzemieslniczej.
+**Higiena kierowania w CMMS:** reguły auto udokumentowane; duplikaty scalane w otwarte zlecenia; pozycje listy obserwacji starzeją się i są awansowane lub wygasają; cotygodniowy przegląd planisty przycina pudła z widocznym uzasadnieniem.
 
-## Co to znaczy dla DBR77 IoT
+## Co zdecydować w tym tygodniu bez czekania na perfekcję
 
-DBR77 IoT to **nie kolejny dashboard**.
+Wybierz trzy typy alertów, które w zeszłym miesiącu zrobiły najwięcej szumu w CMMS. Dla każdego napisz jedno zdanie: lista obserwacji, wzbogacenie istniejącego zlecenia albo nowe zlecenie — oraz reguła korelacji, która musi przejść. Przypnij tę notatkę o kierowaniu w biurze planisty i warsztacie utrzymania. Prostota bije czterdziestowierszową macierz, której nikt nie otwiera.
 
-To **widocznosc maszyny w czasie rzeczywistym**, **lacznosc retrofit-ready**, **szybki pilot** i **wsparcie decyzji edge-first**, ktore moze zasilac CMMS, gdy reguly routingu sa jawne, a nie gdy kazdy pixel krzyczy.
+Przejrzyj dziesięć losowo dobranych zgłoszeń pochodzących z IoT z technikiem w pokoju. Zapytaj, czy zlecenie dodało wartość czy zduplikowało pracę. Dostosuj reguły przepływu w oparciu o to, czego się nauczysz, a nie o to, co założył vendor.
 
-## Bottom line
+## DBR77 IoT i zdyscyplinowane powiązania z CMMS
 
-Work order powinny byc rzadkie i powazne.
+DBR77 IoT wspiera utrzymanie, gdy alerty zasilają drabiny triażu i ścieżki wzbogacenia — nie automatyczny rozrost zgłoszeń — tak by uwaga techników zostawała przy pracy o wysokiej pewności.
 
-IoT powinno te dyscypline pokazywac, a nie automatyzowac chaos w backlogu.
+Routuj IoT do zleceń tylko wtedy, gdy praca, plany i dowód się zgadzają. Niech wszystko innego najpierw uczy, zanim zacznie obiecywać.
+
+## Niech obietnica artykułu zostanie praktyczna
+
+Przetłumacz pomysły powyżej na jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo drill, który przebiegają. Duże programy stają, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
+
+## Punkt kontrolny kierownictwa na następny przegląd operacji
+
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest rozmyta, dociśnij zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT pokazuje się jako spokojniejsze przekazania, szybsze potwierdzenie i mniej kolistych kłótni o to, co się stało. Liczby połączeń to wejścia; zmiana zachowania to paragon.
+
+## Domknięcie na hali
+
+Ta rada nic nie znaczy, jeśli zostaje w sali sterującej. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia mniej przypomina salę sądową, a bardziej zsynchronizowany zespół — wciąż głośny i zajęty, ale ułożony wokół tych samych faktów.
+
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie języka to objaw, że pętla wciąż jest zbyt cienka.
+
+---
+
+*DBR77 IoT pomaga kierować alerty maszyn do CMMS z kontekstem, korelacją i dyscypliną — tak by zlecenia pracy pozostawały wiarygodne. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

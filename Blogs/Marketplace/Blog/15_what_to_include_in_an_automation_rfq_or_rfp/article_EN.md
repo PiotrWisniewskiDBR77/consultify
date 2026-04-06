@@ -5,75 +5,56 @@ Funnel stage: Consideration
 Core problem: RFQ packs are often incomplete or uneven, which forces suppliers to price different realities and destroys comparability  
 Main promise: a practical RFQ/RFP contents map that standardizes what must be visible before offers are evaluated
 
-An automation RFQ is not a formality.
+An automation RFQ is the moment intent becomes comparable—or not. Thin packets invite rational behavior from suppliers: they fill gaps with assumptions. Assumptions are how two “similar” prices become two different projects, and how your team discovers the divergence only after the shortlist feels politically set.
 
-It is the moment manufacturers convert intent into comparable proposals. When the RFQ is thin, suppliers do the only rational thing: they fill gaps with assumptions.
+Treat the RFQ as a comparability engine, not a template exercise.
 
-Assumptions are how two "similar" prices become two different projects.
+## RFQ versus RFP: keep the labels useful
 
-## RFQ versus RFP: keep the distinction useful
+Naming varies by company. Practically, lean toward an RFQ when the need is defined but solution variants still compete; lean toward an RFP when delivery models, partners, or architecture paths are genuinely open. Either way, you still need the same visibility fields. Format without content just produces prettier incompatibility.
 
-These labels vary by company.
+## What belongs in the package
 
-Use this practical split: **RFQ** leans toward a defined need with room for solution variants; **RFP** leans toward a broader evaluation when strategy, partners, and delivery models still compete. Either way, the manufacturer still needs the same visibility fields.
+**Commercial and process rules** set the guardrails: decision timeline and milestones, high-level payment and warranty posture, confidentiality and data handling, submission structure. Structure beats branding—enforce sections so reviewers compare substance.
 
-If you only enforce format and not content, you will still get incomparable answers.
+**Challenge definition** is buyer-owned narrative: outcomes and success criteria, process description with explicit boundaries, variability rules and representative samples, constraints such as space, utilities, rates, and environment.
 
-## The RFQ package: what should be inside
+**Technical interfaces and dependencies** name upstream and downstream equipment and systems, IT/OT constraints and required integrations, safety context and known standard references, maintenance and spares expectations.
 
-Treat this as a minimum viable comparability pack.
+**Supplier response requirements** create comparability. Ask for consistent sections: scope statement with inclusions and exclusions; solution description at useful depth, not marketing alone; explicit assumptions; timeline with dependencies; commercial structure that shows what moves price; a short, concrete risk view; bounded, verifiable experience references.
 
-### A. Commercial and process rules
+Free-form essays produce story comparison, not offer comparison.
 
-Decision timeline and milestone expectations; payment and warranty expectations at a high level; confidentiality and data handling expectations; submission format rules (structure matters more than branding).
+## Self-check before you issue
 
-### B. Challenge definition (the buyer-owned narrative)
+If success criteria are vague, variability underspecified, interfaces unclear, acceptance still fuzzy, and response structure loose, expect post-submission churn. A quick internal pass across those dimensions catches weakness while fixes are still cheap.
 
-Outcome and success criteria; process description with boundaries; variability rules and representative samples; constraints: space, utilities, rates, environment.
+## What discipline buys
 
-### C. Technical interfaces and dependencies
+Strong RFQs do not remove negotiation. They reduce hidden rework, make clarifications sharper, and protect you when leadership asks why one number is lower—whether that lower number reflects genuine efficiency or a narrower universe of work.
 
-Upstream and downstream equipment and systems; IT/OT constraints and required integrations; safety context and applicable standards references (as known); maintenance and spares expectations.
+## How DBR77 Marketplace fits
 
-### D. Supplier response requirements (this is where comparability is created)
+RFQ quality determines whether later comparison is clean or political. Structured visibility on assumptions, boundaries, dependencies, and commercial logic upstream makes downstream evaluation defensible.
 
-Require suppliers to respond in consistent sections: scope statement (inclusions/exclusions); solution description at the right depth (not only marketing); assumptions list (explicit); timeline with dependencies; commercial structure (what drives price changes); risk register or top risks (short, concrete); references or relevant experience (bounded, verifiable).
+For neighboring steps in the sequence, see [How to Write a Better Automation Challenge Brief](../14_how_to_write_a_better_automation_challenge_brief/article_EN.md) and [How to Scope an Automation Project Without Overcomplicating It](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_EN.md).
 
-If responses are free-form essays, your team will compare stories, not offers.
+## RFQ as vendor quality filter
 
-## A simple scoring frame for RFQ quality
+A strong packet signals maturity. It tells suppliers you will not reward ambiguity with a shortlist spot. Conversely, a weak packet trains the market to guess—and guessing produces scatter. Think of the RFQ as the first enforcement mechanism: if a supplier cannot follow structured response rules, that is data about how they will behave when interfaces tighten during integration.
 
-Before issuing, score your pack 0 to 2 on each item:
+Also align the RFQ with your internal approvals. If finance needs milestone logic and operations needs acceptance sketches, build those into what suppliers must answer. Otherwise procurement optimizes a packet that leadership cannot defend, and the cycle restarts at the worst moment.
 
-| Item | 0 weak | 1 ok | 2 strong |
-| --- | --- | --- | --- |
-| Success criteria | vague | partly measurable | measurable and owned |
-| Variability | missing | partial | explicit rules |
-| Interfaces | unclear | listed | prioritized |
-| Acceptance | undefined | draft | testable concept |
-| Response structure | none | loose | enforced sections |
 
-If you are mostly in the 0 to 1 band, expect post-submission churn.
+## From decision to plant behavior
 
-## What good discipline buys you
+The point of tightening this part of the buying journey—"What to Include in an Automation RFQ or RFP" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
 
-Strong RFQ discipline does not remove negotiation. It reduces hidden rework. It makes it easier to ask better questions in clarification rounds.
-
-It protects the manufacturer when leadership asks why one offer is "cheaper."
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because RFQ quality determines whether later offer comparison is clean or political.
-
-The platform logic fits best when the buyer already forces visibility on assumptions, scope boundaries, dependencies, and commercial logic before suppliers start optimizing for ambiguity.
-
-For the upstream and downstream neighbors in this sequence, see [How to Write a Better Automation Challenge Brief](../14_how_to_write_a_better_automation_challenge_brief/article_EN.md) and [How to Scope an Automation Project Without Overcomplicating It](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_EN.md).
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
 
 ## Bottom line
 
-Your RFQ is a comparability engine.
-
-If you want better decisions, design the packet so suppliers cannot hide the differences that will matter on your floor.
+Design the packet so suppliers cannot hide the differences that will matter on your floor. That is how RFQs earn their keep.
 
 ---
 

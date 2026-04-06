@@ -1,51 +1,38 @@
-# Jak skalowac asyste AI bez utraty kontroli operacyjnej
+# Jak skalować asystencję AI bez utraty kontroli operacyjnej
 
-Target persona: VP Operations / Kierownik zakladu / Lider programu IT-OT  
-Funnel stage: Decision  
-Core problem: udane pilotaze napotykaja cisnienie "wlacz wszedzie", co rozrzedza odpowiedzialnosc, rozjezdza progi i rodzi ciche obejscia  
-Main promise: playbook skalowania z limitami ekspansji, testami kontroli i kryteriami wstrzymania, aby wzrost zachowal dyscypline reakcji i audytowalnosc
+Docelowa persona: VP Operations / plant manager / lider programu IT-OT  
+Etap lejka: Decision  
+Główny problem: udane pilotaże napotykają presję „włączmy wszędzie”, co rozrzedza własność, rozjeżdża progi i rodzi ciche obejścia  
+Główna obietnica: playbook skalowania z limitami ekspansji, testami kontrolnymi i kryteriami wyłączenia, tak by wzrost zachował dyscyplinę reakcji i możliwość audytu
 
-Skaluj asyste AI bez utraty kontroli operacyjnej przez rozszerzanie w ograniczonych falach: jeden nowy workflow lub linia na raz, kazdy z opublikowanymi limitami dla akcji w trybie dzialaj, obowiazkowym okresem trybu doradzaj dla nowych kohort i cotygodniowym przegladem kontroli. Zadaj zielonej karty wynikow dla jakosci domkniecia, powodow override i powiazania z incydentami, zanim poszerzysz zakres. Jesli nie mozesz wstrzymac lub wycofac workflow w kilka minut, nie skalujesz, tylko ryzykujesz. Kontrola nie jest wrogiem predkosci. Kontrola to sposob, by predkosc przetrwala kontakt z produkcja.
+Skaluj asystencję AI w ograniczonych falach — nie jak wirusowy wdrożenie, który optymalizuje demo i karze poniedziałkowy poranek. Rozszerzaj jeden przepływ pracy lub linię na raz, publikuj limity zachowań trybu działania, wymagaj okresów trybu doradczego dla nowych kohort i prowadź cotygodniowe przeglądy kontrolne. Żądaj zielonej karty wyników jakości domknięcia, przyczyn nadpisań i powiązań z incydentami, zanim poszerzysz zakres. Jeśli nie możesz wstrzymać lub wycofać przepływ pracy w kilka minut, nie skalujesz — ryzykujesz. Kontrola nie jest wrogiem prędkości. Kontrola to sposób, w jaki prędkość przetrwa produkcję.
 
-## Reguly ekspansji chroniace zaklad
+Limity brzmią biurokratycznie, dopóki nie przyjdzie incydent. Ograniczaj liczbę równoczesnych przepływ pracy w trybie działania na kwartał, liczbę automatycznie kierowanych zadań na godzinę bez partii ludzkiego przeglądu, liczbę równoczesnych wersji reguł. Limity to dojrzałość programów, które chcą przetrwać audyty i nocne zmiany.
 
-Przyjmij jawne limity: maksymalna liczba rownoleglych workflow w trybie dzialaj w kwartale; maksymalna liczba auto-routowanych zadan na godzine na linie bez ludzkiego przegladu wsadowego; maksymalna liczba rownoczesnych wersji modelu lub regul. Limity wydaja sie biurokracja do czasu incydentu. Potem wydaja sie dojrzaloscia.
+Przed każdą falą rób ćwiczenia. Czy możesz wrócić do trybu doradczego w mniej niż piętnaście minut? Czy każda ścieżka auto potrafi wskazać rozliczalną rolę? Czy audytorzy odtworzą, czemu zadanie się uruchomiło? Czy noc zachowuje się w wąskim paśmie jak dzienne wskaźniki nadpisań? Jeśli którekolwiek ćwiczenie zawiedzie, wstrzymaj ekspansję.
 
-## Testy kontroli przed kazda fala
+Cotygodniowy przegląd kontroli operacyjnej powinien traktować czerwone flagi jako posiadaną pracę: trendy naruszeń SLA w złą stronę, skoki nadpisań bez skategoryzowanych przyczyn, krytyczne incydenty powiązane z asystowanym kierowaniem zgłoszeń bez postmortemów, powtarzające się zgłoszenia „nieznana reguła” przy przekazaniu. Metryki bez właścicieli stają się tapetą.
 
-Przed poszerzeniem zakresu uruchom: cwiczenie rollback: czy wrocisz do trybu doradzaj ponizej pietnastu minut?; cwiczenie odpowiedzialnosci: czy kazda sciezka auto wskaze role odpowiedzialna za wynik?; cwiczenie dowodu: czy audytor odtworzy, czemu zadanie sie uruchomilo?; cwiczenie rownosci zmian: czy noc miesci sie w dwoch punktach procentowych dnia pod wzgledem override?. Jesli ktorakolwiek proba pada, wstrzymaj ekspansje.
+Porównaj wirusowy wdrożenie z ograniczonymi falami. Wirusowy daje każdemu asystenta i nikomu tego samego playbooka. Ograniczone fale klonują to, co już przeszło kartę wyników. Wirusowy optymalizuje zrzuty ekranu. Fale optymalizują zmianę zmiany.
 
-## Karta wynikow: cotygodniowy przeglad kontroli operacyjnej (przykladowe pola)
+Skalowanie asystencji wymaga skalowania umiejętności: krótkie job aidy dla każdego przepływu pracy, co AI może, czego nie może i jak odrzucać; kapitanowie hali, którzy wyjaśniają progi bez IT w pokoju; kanał changelogu, który ludzie faktycznie czytają. Jeśli szkolenie nie skaluje, obejścia skalują się same.
 
-| Metryka | Pasmo docelowe | Czerwona flaga |
-|---|---|---|
-| naruszenia SLA na zadaniach oznaczonych przez AI | ponizej baseline plus uzgodniony delta | wzrost trzy tygodnie z rzedu |
-| wskaznik override | stabilne pasmo per workflow | skok bez skategoryzowanych powodow |
-| incydenty powiazane z routingiem wspieranym przez AI | zero krytycznych | jakikolwiek krytyczny bez postmortem |
-| zgloszenia nieznanej reguly przy przekazaniu | zero | jakiekolwiek powtorzenie |
+IRIS wspiera ograniczone skalowanie, gdy limity, ćwiczenia wycofania i karty wyników przyczepiają się do jednej tkaniny wykonania między funkcjami — tak by kontrola była powtarzalna, a nie improwizowana per zespół.
 
-Czerwone flagi wymagaja nazwanych wlascicieli naprawy.
+Wzorce wdrożenia opisuje [Jak wdrożyć operacje wspomagane AI bez destabilizacji zakładu](../30_how_to_roll_out_ai_assisted_operations_without_disrupting_the_plant/article_PL.md). Przegląd po dziewięćdziesięciu dniach — [Jak przeglądać operacje wspomagane AI po pierwszych 90 dniach](../40_how_to_review_ai_assisted_operations_after_the_first_90_days/article_PL.md).
 
-## Porownanie: wirusowy rollout kontra fale z ograniczeniami
+Skalowanie zmienia też to, kto czuje presję. Gdy asystencja rozlewa się bez dyscypliny kontroli, nadzorcy dziedziczą szerszą powierzchnię sugestii, wyjątków i przypadków brzegowych — często podczas gdy zespół programu świętuje procent adopcji. Zakład odczuwa to jako obciążenie poznawcze, nie jako postęp. Ograniczone fale utrzymują obciążenie proporcjonalne: każda nowa kohorta dziedziczy playbook, kartę wyników i nawyk wycofania, zanim otworzy się następna granica. Tak skaluje się asystencję bez skalowania chaosu.
 
-**Wirusowy rollout** "Kazdy dostaje asystenta."
+Wreszcie traktuj kontrolę operacyjną jak cechę produktu, nie jak dodatek po projekcie. Jeśli testy kontrolne są opcjonalne, zostaną pominięte w pędzie do szerokości demo. Jeśli karty wyników nie mają właściciela wykonawczego, stają się tapetą. Jeśli ćwiczenia wycofania zawstydzają ludzi, zespoły ich unikną — i za późno odkryją, że rollback jest teoretyczny. Organizacje, które skalują się dobrze, bywają celowo nudne: ćwiczą tryby awarii, publikują limity i chronią halę przed dynamiką wirusowego wdrożenia, które stawia zrzuty ponad poniedziałkowy poranek.
 
-**Fale z ograniczeniami** "Linia B dziedziczy playbook linii A po przejsciu karty wynikow przez A." Wirusowy rollout optymalizuje demo. Fale optymalizuja poniedzialkowy poranek.
+Skaluj w falach z limitami, ćwiczeniami i kartami wyników. Jeśli wycofanie nie jest ćwiczone, kontrola jest zmyślona.
 
-## Szkolenia i komunikacja w skali
+## Podsumowanie operacyjne
 
-Skalowanie asysty wymaga skalowania kompetencji: krotkie karty pracy per workflow: co AI moze, czego nie moze, jak odrzucic; kapitanowie hali, ktorzy wyjasniaja progi bez IT w pokoju; jeden kanal changelog, ktory ludzie naprawde czytaja. Jesli szkolenie nie skaluje, obejscia skaluja.
+Obietnica tego artykułu — playbook skalowania z limitami ekspansji, testami kontrolnymi i kryteriami wyłączenia, tak by wzrost zachował dyscyplinę reakcji i możliwość audytu — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie, które da się prześledzić bez archeologii skrzynek. Dla „Jak skalować asystencję AI bez utraty kontroli operacyjnej” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zatwierdzono i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-## Dlaczego IRIS wspiera skalowanie z ograniczeniami
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Jedna tkanina wykonania sprawia, ze limity, rollbacki i karty wynikow sa egzekwowalne miedzy funkcjami, a nie per narzedzie improwizacja.
-
-## Podsumowanie
-
-Skaluj w falach z limitami, cwiczeniami i kartami wynikow. Jesli rollback nie jest przecwiczony, kontrola jest wyimaginowana.
+Ten standard nie chodzi o idealne oprogramowanie; chodzi o uczciwość operacyjną: mniej tajemniczych przekazań, mniej prawd uzgadnianych tylko na spotkaniach i więcej dni, w których zapis systemu zgadza się z tym, co powiedziałaby hala, gdybyś zatrzymał ludzi w połowie zadania.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*
+*DBR77 IRIS egzekwuje limity, tryby i wycofania w jednej warstwie wykonania, tak by skalowanie podążało za powtarzalną operacyjną kartą wyników. [Rozpocznij 14-dniowy trial](https://dbr77.com/iris) lub [Uruchom interaktywne demo](https://dbr77.com/demo).*

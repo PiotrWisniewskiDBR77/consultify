@@ -5,44 +5,36 @@ Funnel stage: Evaluation
 Core problem: teams keep every idea alive to avoid conflict, so late-stage meetings recycle dead options and compress real analysis time  
 Main promise: explicit early-exit rules that use Digital Twin as a scenario-testing environment to kill weak paths with evidence, not politics
 
-retire weak options early by defining kill criteria before you run scenarios, forcing each option to pass the same standard stress pack, recording why an option failed against guardrails, and requiring a formal reopen ticket to bring a killed option back. Digital Twin is a decision system for de-risking layout, flow, and CAPEX before reality changes, not render-chasing theater that keeps every layout on screen for politics. Politeness is expensive.
+Retire weak options early by defining kill criteria before you run scenarios, forcing each option to pass the same standard stress pack, recording why an option failed against guardrails, and requiring a formal reopen ticket to bring a killed option back.
 
-Late democracy among twelve layouts is how factories buy the wrong one politely.
+Digital twin is a decision system for de-risking layout, flow, and CAPEX before reality changes—not render-chasing theater that keeps every layout on screen for politics. Politeness is expensive. Late democracy among a dozen layouts is how factories buy the wrong one politely.
 
-## Kill criteria you should write before the first run
+## Kill criteria to write before the first run
 
-Examples that travel well across plants: violates stated service or lead-time guardrail under agreed stress; creates a single point of failure you cannot staff or maintain; needs upstream behavior the organization will not fund or govern; fails under the delayed ramp story finance already treats as plausible; improves a local KPI while collapsing a system constraint elsewhere.
+Examples that travel: violates stated service or lead-time guardrail under agreed stress; creates a single point of failure you cannot staff or maintain; needs upstream behavior the organization will not fund or govern; fails under the delayed ramp story finance already treats as plausible; improves a local KPI while collapsing a system constraint elsewhere. Kill criteria should reference measurable model outputs and named assumptions.
 
-Kill criteria should reference measurable model outputs and named assumptions.
+## Disciplined early retirement
 
-## Step sequence: disciplined early retirement
+Publish the option register with IDs and owners. Freeze the standard stress pack for this decision cycle. Run all options through the pack without custom tuning per idea. Hold a kill session with pre-written rules—not open debate. Archive killed options with scenario IDs and failure notes. Narrow the next modeling sprint to survivors only.
 
-**Publish the option register** with IDs and owners; **Freeze the standard stress pack** for this decision cycle; **Run all options through the pack** without custom tuning per idea; **Hold a kill session** with pre-written rules, not open debate; **Archive killed options** with scenario IDs and failure notes; **Narrow the next modeling sprint** to survivors only.
+## Fair kill test
 
-## Checklist: was this a fair kill?
+The option saw the same inputs and logic classes as peers. Failure tied to a guardrail named in the charter. Sensitivity shows the kill is not a knife-edge artifact. A reopen path exists but costs a scope or evidence change.
 
-- [ ] the option saw the same inputs and logic classes as peers  
-- [ ] failure tied to a guardrail named in the charter  
-- [ ] sensitivity shows the kill is not a knife-edge artifact  
-- [ ] a reopen path exists but costs a scope or evidence change
+## Soft retirement versus hard retirement
 
-## Comparison: soft retirement versus hard retirement
+“We will keep it on the side” invites zombie options to return in week six. Archiving with scenario proof removes political fuel. Reopen only with new evidence protects focus without banning learning.
 
-| Behavior | Effect |
-|---|---|
-| "we will keep it on the side" | zombie options return in week six |
-| archived with scenario proof | politics loses fuel |
-| reopen only with new evidence | protects focus without banning learning |
 
-## What Digital Twin changes here
+## What should feel different on Monday
 
-Digital Twin makes early exits legible.
+Teams rarely fail because they lack intelligence; they fail because the next meeting repeats the same questions with fresher anxiety. When simulation work is wired into how you decide, Monday shows up with fewer circular arguments about whether a layout "ought to work." Instead, you carry a short list: which option survived the same stress vocabulary, which assumptions still carry hypothesis labels, and what would force you to rerun the pack before the next tranche. That is the practical face of governance—not a heavier process, but a clearer receipt for why the floor should trust the plan.
 
-Scenarios turn "I do not like it" into "it breaks under the stories we agreed matter."
+For capital and footprint choices, the receipt matters as much as the ranking. Approvals should be able to point to scenario identity and ranges without opening a model. If executives cannot explain the downside story in plain language, the organization is still buying animation. If operations cannot recognize the staffing and flow assumptions embedded in the memo, the twin is still a slide, not a decision system. Use the next leadership block to test whether the narrative is portable: could someone not in the room defend the choice from the packet alone? If not, tighten the assumption ledger and the executive summary before you ask for more money or more floor space.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin gives you a comparable kill lane so weak options fail under the same stress pack instead of surviving in hallway debate.
+DBR77 Digital Twin provides a comparable kill lane so weak options fail under the same stress pack instead of surviving in hallway debate.
 
 ## Bottom line
 

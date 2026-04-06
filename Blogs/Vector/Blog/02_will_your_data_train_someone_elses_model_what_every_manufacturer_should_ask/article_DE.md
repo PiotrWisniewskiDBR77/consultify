@@ -1,66 +1,44 @@
-# Trainieren Ihre Daten das Modell eines anderen? Was jeder Hersteller fragen sollte
+# Trainieren Ihre Daten fremde Modelle? Was jeder Hersteller fragen sollte
 
-Target persona: CTO  
-Funnel stage: Awareness  
-Core problem: viele Hersteller nutzen AI, ohne zu verstehen, ob ihre Daten ein fremdes Modell verbessern oder die beabsichtigte Kontrollgrenze verlassen  
-Main promise: Trainingspolitik und Deployment-Architektur sollten ein Kernkriterium im Kaufprozess sein, nicht nur ein juristischer Nebensatz
+Zielpersona: CTO  
+Funnel-Stufe: Awareness  
+Kernproblem: Viele Hersteller nutzen KI, ohne zu verstehen, ob ihre Daten das Modell anderer verbessern können oder die beabsichtigte Kontrollgrenze verlassen  
+Hauptversprechen: Einkäufer sollten Trainingspolitik und Deployments-Architektur als zentrale Kaufkriterien behandeln — nicht als juristische Fußnoten
 
-Die meisten AI-Kaufer starten mit den Funktionen. Industrieunternehmen sollten mit der Exposition starten.
+Die meisten KI-Einkaufsgespräche beginnen mit Leistungsfähigkeit. In der Fertigung sollten sie mit Exposition beginnen.
 
-Die Frage ist nicht nur, ob das Tool funktioniert. Die Frage ist, was mit den Daten passiert, sobald Operatoren, Ingenieure oder Analysten es mit echtem Fabrikkontext nutzen.
+Die Frage ist nicht nur, ob das Tool in einer Demo gut antwortet. Die Frage ist, was mit der Information passiert, sobald Bediener, Ingenieure oder Analysten echten Werkskontext einspeisen: Grenzen, Vorfälle, Kosten, Verbesserungslogik und die halbfertigen Notizen, die nur in Ihrem Werk Sinn ergeben. Wenn dieses Material ohne klare Trennungsregeln in einen Modell-Workflow gelangt, schafft das Unternehmen möglicherweise Wert für ein System, das es nicht kontrolliert — und schwächt die eigene Position jedes Mal, wenn jemand einen weiteren Absatz in das Feld einfügt.
 
-## Warum diese Frage wichtiger ist, als viele denken
+## Warum diese Frage wichtiger ist, als die meisten Käufer denken
 
-In der Industrie sind Prompts selten harmlos.
-
-Sie konnen enthalten: Prozessannahmen; Kostenstruktur; Liniengrenzen; Lieferantendaten; Verbesserungslogik; Produktionsvorfalle.
-
-Wenn diese Informationen ohne klare Trennregeln in einen Modell-Workflow gelangen, baut das Unternehmen moglicherweise Wert fur ein System auf, das es nicht kontrolliert.
+Fertigungs-Prompts sind selten harmlos. Sie tragen oft Prozessannahmen, Kostenstruktur, Linien-Grenzen, Lieferantendaten und die Erzählung, wie Probleme im letzten Quartal gelöst wurden. Selbst wenn der Nutzer glaubt, genug geschwärzt zu haben, kann der verbleibende Kontext weiterhin operativ spezifisch sein. Trainingspolitik ist der Punkt, an dem diese Exposition strukturell wird: kein einmaliges Leck, sondern eine dauerhafte Frage, ob Ihre operative Sprache in eine gemeinsame Verbesserungsschleife einfließen kann, die anderen Kunden, anderen Produkten oder künftigem Modellverhalten dient, das Sie nicht freigegeben haben.
 
 ## Trainingspolitik ist kein kleines Detail
 
-Viele Kaufer nehmen noch immer an, dass bei Aussagen wie "private" oder "secure" das Problem gelost ist. Das ist es nicht.
-
-Der Kaufer muss wissen: werden Kundendaten jemals zum Training oder Fine-Tuning genutzt?; werden Prompt-Inhalte gespeichert?; wer hat Zugriff auf Logs?; konnen Daten ausserhalb der vorgesehenen Umgebung aufbewahrt werden?; sind Unterauftragnehmer an der Verarbeitung beteiligt?. Wenn die Antwort unklar ist, ist das Risiko real.
+Viele Käufer nehmen noch an, dass das Problem gelöst ist, wenn ein Anbieter „privat“ oder „sicher“ sagt. Das ist es nicht. Der Käufer muss wissen, ob Kundendaten jemals zum Training oder Fine-Tuning des Modells genutzt werden; ob Prompt-Inhalte gespeichert werden; wer auf Logs zugreifen kann; ob Daten außerhalb der beabsichtigten Umgebung aufbewahrt werden dürfen; und ob Subprozessoren an der Verarbeitung beteiligt sind. Wenn die Antwort vage ist, ist das Risiko real — weil vage Defaults tendenziell der Plattform helfen, nicht dem Werk.
 
 ## Das industrielle Risiko ist strategisch, nicht nur technisch
 
-Wenn das Know-how eines Unternehmens ein Modell verbessert, das anderen Parteien dient, geht es nicht nur um Vertraulichkeit. Es geht um strategischen Abfluss.
+Wenn Unternehmens-Know-how ein Modell verbessert, das andere Parteien bedient, ist das Problem nicht nur Vertraulichkeit. Es ist strategisches Leck. Die Organisation kann Muster darüber preisgeben, wie sie arbeitet, optimiert, schätzt oder auf Probleme reagiert — Muster, die sich schwer „zurückholen“ lassen, sobald sie im Verbesserungszyklus des Anbieters landen. Das ist eine andere Verlustkategorie als eine einzelne falsch platzierte Datei.
 
-Das Unternehmen kann Muster preisgeben, wie es arbeitet, optimiert, kalkuliert oder auf Probleme reagiert.
+## Rechtssprache allein reicht nicht
 
-## Warum juristische Sprache nicht ausreicht
-
-Industrie-Teams verlassen sich oft auf Einkaufsformulierungen oder allgemeine Sicherheitsversprechen. Fur AI ist das zu wenig.
-
-Die Beziehung zu einem Modell umfasst: Trainingsverhalten; Inferenzgrenzen; Speicherverhalten; Governance und Auditability. Jeder dieser Punkte verandert die Kontrolle.
+Industrieteams verlassen sich oft auf Einkaufssprache oder generische Sicherheitsversprechen. Das ist für KI zu schwach. Eine Modellbeziehung umfasst Trainingsverhalten, Inferenz-Grenzen, Speicherverhalten sowie Governance und Auditierbarkeit. Jede dieser Schichten beeinflusst, ob Sie sinnvolle Kontrolle behalten. Ein Vertragsparagraf ohne technische Geschichte ist wie ein Qualitätsplan ohne Kontrollplan: er liest sich gut, bis jemand fragt, wie er durchgesetzt wird.
 
 ## Was Hersteller direkt fragen sollten
 
-Vor der Freigabe eines AI-Anbieters sollte man fragen:
+Bevor Sie einen KI-Anbieter freigeben, stellen Sie klare Fragen in einfacher Geschäftssprache. Trainieren Kundendaten jemals das Modell? Werden Prompts, Dokumente oder Outputs über die Sitzung hinaus gespeichert? Kann das Modell in einer privaten oder On-Prem-Umgebung laufen, die zu Ihrer Segmentierung passt? Wer darf unter welchen Regeln die Interaktionshistorie einsehen? Wie wird Zugriff protokolliert und geregelt?
 
-1. Trainieren Kundendaten jemals das Modell?
-2. Werden Prompts, Dokumente oder Outputs uber die Sitzung hinaus gespeichert?
-3. Kann das Modell in einer privaten oder On-Prem-Umgebung laufen?
-4. Wer kann die Interaktionshistorie einsehen?
-5. Wie wird Zugriff protokolliert und kontrolliert?
+Wenn die Antworten nicht ohne eine Kette von Nachfassgesprächen klar ausdrückbar sind, ist das Einkaufsrisiko für sensible industrielle Workloads bereits zu hoch.
 
-Wenn diese Antworten nicht klar in Geschaftssprache gegeben werden konnen, ist das Kaufrisiko bereits zu hoch.
+**Mindestmaß:** Trainings-Defaults sind explizit; Aufbewahrung ist explizit; Subprozessoren sind benannt, wo sie Nutzlasten berühren; Deployments-Modus ist gewählt, bevor Pilotdaten fließen.
 
-## Wie ein besserer Standard aussieht
+Ein seriöser Industrie-KI-Anbieter sollte drei Dinge explizit machen: Ihre Daten trainieren nicht das Modell eines anderen; Deployments-Grenzen sind kontrolliert; menschliche Freigabe bleibt bei wichtigen Entscheidungen in der Schleife. Das ist der Unterschied zwischen KI-Komfort und KI-Verantwortung.
 
-Ein ernstzunehmender Industrial-AI-Anbieter sollte drei Dinge klar machen: Ihre Daten trainieren nicht das Modell eines anderen; Deployment-Grenzen sind kontrolliert; Human approval bleibt bei wichtigen Entscheidungen im Loop. Das ist der Unterschied zwischen AI-Bequemlichkeit und AI-Verantwortung.
+DBR77 Vector ist für industrielle Umgebungen positioniert, in denen Käufer stärkere Gewissheit brauchen: kein Training auf Kundendaten, private Deployments-Optionen, industrielles Reasoning und höhere Governance-Erwartungen. Das verschiebt die Einkaufsfrage von „was kann das Modell?“ zu „welche Kontrolle behalten wir bei der Nutzung?“
 
-## Warum Vector zu diesem Standard passt
-
-DBR77 Vector ist fur industrielle Umgebungen positioniert, in denen Kaufer mehr Sicherheit brauchen bei: keinem Training auf Kundendaten; privaten Deployment-Optionen; industrial reasoning; hoheren Governance-Anforderungen.
-
-Damit verschiebt sich die Kauffrage von "was kann das Modell?" zu "welche Kontrolle behalten wir wahrend der Nutzung?"
-
-## Fazit
-
-Wenn Ihr Team nicht beantworten kann, ob Ihre Daten das Modell eines anderen trainieren, versteht es die eigene AI-Exposition noch nicht. Hersteller sollten das niemals als Nebenfrage behandeln.
+Wenn Ihr Team nicht beantworten kann, ob Ihre Daten fremde Modelle trainieren, verstehen Sie Ihre KI-Exposition noch nicht. Hersteller sollten das niemals als Nebenfrage behandeln.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*
+*DBR77 Vector hilft Herstellern, industrielle KI zu nutzen, ohne das Modell mit Kundendaten zu trainieren und mit stärkerer Deployments-Kontrolle. [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*

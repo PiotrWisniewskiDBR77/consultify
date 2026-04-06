@@ -1,0 +1,30 @@
+{
+  "article_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/43_how_to_keep_automation_supplier_governance_clean_after_award",
+  "product": "Marketplace",
+  "scope_type": "blog",
+  "asset_slug": "43_how_to_keep_automation_supplier_governance_clean_after_award",
+  "role": "hero",
+  "archive_package": "_archive_marketplace_43_49_pre_collision_packages",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "social",
+    "newsletter"
+  ],
+  "model": "cursor-builtin-generate-image",
+  "generation_notes": {
+    "contract": "DBR77_IMAGE_QC_STANDARD Mode 2; archive closeout",
+    "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | Cursor GenerateImage + PIL for social |\n| seed | n/a |\n| steps | n/a |\n| delivered_px | 1376×768 |"
+  },
+  "prompt_source": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/43_how_to_keep_automation_supplier_governance_clean_after_award/image-prompts.md",
+  "prompt_text": "Wide editorial: plant office with glass to floor; two leads review cardstock baseline spread (gray blocks only) beside slim metal change binder; neutral daylight; disciplined post-award governance; no monitor wall.",
+  "negative_prompt": "courtroom drama, NOC, fake UI, readable logos",
+  "seed": "n/a",
+  "run_id": "DBR77-Marketplace-Archive-closeout-2026-03-31",
+  "created_at": "2026-03-31T04:54:58+00:00",
+  "alt_text_en": "Buyer and operations review physical baseline packet after award.",
+  "caption_en": "Hero for clean supplier governance baseline.",
+  "crop_safe_notes": "16:9 title-safe upper third.",
+  "output_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/43_how_to_keep_automation_supplier_governance_clean_after_award/assets/images/hero_16x9_v1.png"
+}

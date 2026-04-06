@@ -5,50 +5,42 @@ Funnel stage: Consideration
 Core problem: sensitivity slides often show colorful tornado charts without explaining which levers actually move the decision or who owns them  
 Main promise: a clear standard for what sensitivity must expose before sign-off so approvers see consequence, ownership, and failure order, not decoration
 
-good sensitivity analysis before approval shows ranked levers with direction of impact, the band you tested versus what history supports, how rankings change when levers move together, which outcomes breach guardrails first, and who owns each lever. If sensitivity cannot answer "what breaks first and who fixes it," it is not ready for approval. Tornado charts are not decisions. They are invitations to ask better questions.
+Good sensitivity analysis before approval shows ranked levers with direction of impact, the band you tested versus what history supports, how rankings change when levers move together, which outcomes breach guardrails first, and who owns each lever. If sensitivity cannot answer what breaks first and who fixes it, it is not ready for approval. Tornado charts are not decisions—they are invitations to ask better questions.
 
 ## What weak sensitivity looks like
 
-Weak packs usually share these traits: many parameters listed, few tied to real operating controls; one-at-a-time tweaks that ignore coupled effects in the plant; no guardrail lines for service, cash, or safety-related outcomes; no assumption owners, so debate becomes abstract. Digital Twin should support a decision system. Sensitivity is how you show where that system is fragile.
+Weak packs list many parameters with few ties to real operating controls; tweak one variable at a time while ignoring coupled plant effects; omit guardrails for service, cash, or safety-related outcomes; lack assumption owners so debate stays abstract. Digital twin should support a decision system. Sensitivity is how you show where that system is fragile.
 
-## Framework: six elements approvers should see
+## Six elements approvers should see
 
-1. **Lever list with ownership:** each moving input names a business owner, not only a cell.  
-2. **Tested band versus evidence band:** what you simulated versus what the last twelve to twenty-four months justify.  
-3. **Direction and monotonicity notes:** does worse supplier performance always hurt the same way, or does the bottleneck migrate?  
-4. **Joint movement cases:** at least one combined stress that matches how bad quarters actually arrive.  
-5. **Guardrail breaches:** the first KPI or operational limit that fails as levers move.  
-6. **Decision flip map:** which paired changes in levers would change the recommended option.
+Lever list with ownership—each moving input names a business owner, not only a cell. Tested band versus evidence band—what you simulated versus what recent history justifies. Direction and monotonicity notes—does worse supplier performance always hurt the same way, or does the bottleneck migrate? Joint movement cases—at least one combined stress that matches how bad quarters actually arrive. Guardrail breaches—the first KPI or operational limit that fails as levers move. Decision flip map—which paired lever changes would change the recommended option.
 
-## Checklist: sensitivity pack readiness
+## Sensitivity pack readiness
 
-- [ ] top five levers are agreed across engineering, operations, and finance  
-- [ ] at least one combined case reflects correlated downside you have lived through  
-- [ ] bottleneck migration appears in narrative when it happens in the model  
-- [ ] procurement and planning see their levers explicitly  
-- [ ] invalidation triggers reference measurable signals, not vibes
+Top five levers are agreed across engineering, operations, and finance. At least one combined case reflects correlated downside you have lived through. Bottleneck migration appears in narrative when it appears in the model. Procurement and planning see their levers explicitly. Invalidation triggers reference measurable signals. For where sensitivity belongs inside a CAPEX gate sequence, use the stage-gates article as the contract map.
 
-For where sensitivity belongs inside a CAPEX gate sequence, use the stage-gates article in this series as the contract map.
+## When this works—and when it fails
 
-## When this works and when it fails
+It works when the model boundary matches the decision and levers map to controls people actually use. It fails when the team optimizes a metric leadership will not defend when service breaks.
 
-**Works** when the model boundary matches the decision and levers map to controls people actually use.
 
-**Fails** when the team optimizes a metric that leadership will not defend when service breaks.
+## Executive discipline without slowing the line
 
-## What Digital Twin changes here
+The goal is not more meetings; it is fewer surprises. A disciplined twin rhythm means the expensive conversations happen early, when options are cheap, and the later forums validate decisions that already survived a standard pack. Executives should experience simulation as a narrowing machine: it retires weak paths with evidence, clarifies what must be verified before cash moves, and forces owners to name what would invalidate the plan.
 
-Digital Twin turns sensitivity work into ranked operational consequence for layout, flow, and CAPEX before approvers sign.
+Treat sensitivity and stress as part of capital hygiene, not as a specialist hobby. If a ranking flips under plausible bands, leadership should see that flip before signatures land—otherwise the organization discovers it during ramp. If a ranking is stable but fragile under disruption stories, that fragility belongs in the memo as a managed risk, not as a private worry for operations. Digital twin is strongest when it makes those tensions visible while you still have room to sequence work, stage cutovers, or adjust buffers without heroics.
 
-Rendering polish is irrelevant when failure order, guardrail breaches, and lever ownership stay opaque.
 
-Strong sensitivity turns abstract uncertainty into ordered operational risk.
+
+## A last clarity check before the room convenes
+
+Before anyone sits down with a capital packet, ask whether the comparison was fair in the only sense that matters: same shocks, same exclusions, same time horizon. If one option had a softer supplier story or a prettier ramp, you are not choosing—you are crowning. The fix is to rerun under the standard pack and publish the failure notes when an idea does not survive. That habit saves more money than another week of mesh polish.
+
+Leaders should also insist on a single paragraph that states what would make them pause the next tranche. Without that sentence, approvals age badly the moment the floor diverges from the memo. Digital twin work is doing its job when that paragraph is easy to write because the scenarios already named the risks.
 
 ## What DBR77 Digital Twin adds
 
-DBR77 Digital Twin keeps sensitivity tied to traceable assumptions and comparable shock sets, with manual inputs scaling toward richer integration when teams need cleaner lineage.
-
-For approval conversations, it helps teams: keep sensitivity narratives consistent across projects; tie lever movement to traceable assumptions; shorten the path from chart to accountable next step.
+DBR77 Digital Twin keeps sensitivity tied to traceable assumptions and comparable shock sets, scaling from manual inputs toward richer integration when teams need cleaner lineage: consistent sensitivity narratives across projects; lever movement tied to accountable owners; shorter path from chart to next step.
 
 ## Bottom line
 

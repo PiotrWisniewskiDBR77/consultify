@@ -5,50 +5,31 @@ Funnel stage: Awareness
 Core problem: leadership hears "automation" as robots, while the bigger shift is automating prioritization, routing, and repeat decisions inside execution workflows  
 Main promise: a sober definition of decision automation, what should remain human, and how to spot theater versus operational change
 
-Decision automation in manufacturing means systems apply published rules to recurring operational choices: what to work next, who to notify, when to escalate, and what draft action to prepare, with human approval at defined thresholds. It is rising because plants drown in cross-functional coordination cost, not because every choice can or should be handed to a model. This is an executive framing article. It is still grounded in floor mechanics.
+Decision automation in manufacturing means systems apply published rules to recurring operational choices: what to work next, who to notify, when to escalate, and what draft action to prepare—with human approval at defined thresholds. It is rising because plants drown in coordination cost, not because every decision can or should be handed to a model. This is an executive topic with shop-floor consequences: if you confuse decision automation with physical automation, you fund the wrong projects and miss the bigger lever.
 
-## Decision automation versus physical automation
+Physical automation moves material and transforms parts. Decision automation moves work items, priorities, and accountability signals. The risk profile shifts from mechanical safety to governance: threshold tables, audit trails, role ownership, and proof measured in response time and closure quality rather than in cycle repeatability alone. Leaders who treat the two as interchangeable misread what is changing.
 
-| Dimension | Physical automation | Decision automation |
-|---|---|---|
-| output | motion, transfer, assembly | prioritized work, routed tasks, escalations |
-| risk profile | safety and mechanical | accountability, quality release, customer impact |
-| governance | engineering change control | threshold tables, audit trails, role ownership |
-| proof | cycle time and repeatability | response time, closure quality, override rates |
+Good automation candidates repeat weekly or daily, are bounded by clear fields, are reversible or containable quickly, and are already documented in workflow form—even if messy. Poor candidates are one-off capital judgments, customer concessions with legal exposure, and safety exceptions without a formal exception process. Maturity matters more than ambition.
 
-Leaders who confuse the two fund the wrong projects.
+Think in maturity levels without skipping steps: recorded decisions with inconsistent evidence; guided decisions with checklists but manual routing; assisted decisions with AI drafts and human confirmation; automated decisions inside explicit rules with human audit of exceptions. Many plants should live in assisted mode for a long time before claiming full automation. Skipping levels creates trust debt that shows up first on night shift.
 
-## What decisions are candidates for automation
+Real decision automation publishes thresholds tied to roles, measures override and rejection rates, reviews false positives with named owners, and defines rollback when rules misfire. Theater shows demos without production records, claims “the model decided” without field citations, and leaves nobody responsible for updating rules after a line change.
 
-Good candidates share traits: repeat weekly or daily; bounded by clear data fields; reversible or containable within minutes to hours; already documented in a workflow, even if the workflow is messy.
+IRIS treats decisions as part of execution because automation only becomes real when a ranked next step lands with an owner, timer, and audit trail inside the workflow—keeping automation accountable to operations instead of to slide bullets.
 
-Examples that often qualify at the right maturity: assigning routine maintenance work by skill and shift rules; routing a quality hold to the correct release authority; escalating a warehouse shortage when production start is within a defined window; drafting standard follow-up tasks after a known alarm pattern.
+For mode logic behind automation, see [When AI Should Watch, Advise, or Act in the Factory](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_EN.md). For approval boundaries, see [What a Human Approval Policy Should Look Like in Factory AI](../39_what_a_human_approval_policy_should_look_like_in_factory_ai/article_EN.md).
 
-Poor candidates: one-off capital judgments; customer concessions with legal exposure; safety exceptions without a formal exception process.
+Executives should also recognize the cultural shift decision automation implies. When routing becomes more explicit, informal shortcuts become harder—and some experienced people will experience that as loss of autonomy. The counterweight is clarity: published rules, visible exceptions, and a fair process for changing thresholds when reality changes. Automation without governance feels like rigidity. Automation with governance feels like relief from endless negotiation.
 
-## A simple maturity ladder (four levels)
+Operationally, decision automation is where “digital transformation” stops being a slogan and becomes a measurable rhythm: fewer ambiguous queues, faster first assignment, fewer repeated escalations, and cleaner audits because the decision record is not reconstructed after the fact. That is the rise worth pursuing—not automation for its own sake, but coordination that survives shift change.
 
-Recorded: decisions happen, evidence is inconsistent; guided: checklists and dashboards, humans do all routing; assisted: AI drafts and ranks, humans confirm; automated: system acts inside rules, humans audit exceptions. Most plants should live at 3 for a long time before claiming 4. Skipping levels creates trust debt.
+Decision automation is coordination automation. Do it with thresholds, approvals, and audit trails—or do not call it operations.
 
-## Governance signals that separate real programs from theater
+## The operational bottom line
 
-Real decision automation has: published thresholds tied to roles; measurable override and rejection rates; periodic review of false positives with owners named; explicit rollback paths when rules misfire.
+The promise of this article—a sober definition of decision automation, what should remain human, and how to spot theater versus operational change—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “The Rise of Decision Automation in Manufacturing,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-Theater has: demos without production records; "the model decided" with no citation of fields; no owner for updating rules after a line change.
-
-## Why IRIS treats decisions as part of execution
-
-DBR77 IRIS matters here because decision automation only becomes real when a ranked next step lands with an owner, timer, and audit trail inside the operating workflow.
-
-That keeps automation tied to execution instead of leaving it at the level of slide bullets and maturity slogans.
-
-If you need the mode logic behind that automation, see [When AI Should Watch, Advise, or Act in the Factory](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_EN.md); if you need the approval boundaries around it, see [What a Human Approval Policy Should Look Like in Factory AI](../39_what_a_human_approval_policy_should_look_like_in_factory_ai/article_EN.md).
-
-## Final takeaway
-
-Decision automation is coordination automation.
-
-Do it with thresholds, approvals, and audit trails, or do not call it operations.
+Hold teams to a simple rule: if an improvement cannot be shown in exports from the execution record, it is not yet an operating improvement—only a narrative improvement. That rule keeps programs honest when demos look good but handovers still feel fragile.
 
 ---
 

@@ -1,0 +1,35 @@
+{
+  "article_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/49_how_to_review_automation_buying_decisions_after_go_live_without_blame_theater",
+  "product": "Marketplace",
+  "scope_type": "blog",
+  "asset_slug": "49_how_to_review_automation_buying_decisions_after_go_live_without_blame_theater",
+  "role": "social",
+  "archive_package": "_archive_marketplace_43_49_pre_collision_packages",
+  "aspect_ratio": "1:1",
+  "usage": [
+    "website",
+    "social",
+    "newsletter"
+  ],
+  "model": "cursor-builtin-generate-image",
+  "generation_notes": {
+    "contract": "DBR77_IMAGE_QC_STANDARD Mode 2; Marketplace ARCHIVE Agent 4 wave",
+    "premium_pass": "Macro object story only—no SOC/NOC thumbnails, no screen glow legibility.",
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | Cursor built-in GenerateImage |\n| seed | n/a |\n| inference_steps | n/a |\n| native_generator_px | 1376×768 |\n| delivered_px | 1024×1024 |\n| post_process | center crop to square min(w,h); PIL Image.Resampling.LANCZOS |"
+  },
+  "prompt_source": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/49_how_to_review_automation_buying_decisions_after_go_live_without_blame_theater/image-prompts.md",
+  "prompt_text": "Square macro editorial: slate surface, wooden pawn crossed with tape X geometry only, beside precision caliper, washer, gear on technical paper with guide lines only. Shallow depth of field, natural side daylight. No text, screens, neon.",
+  "negative_prompt": "thumbs down, emoji, neon, hologram, data screen, readable label, app icon style, finger-pointing",
+  "seed": "n/a",
+  "run_id": "DBR77-Marketplace-Agent4-Archive49-2026-03-31",
+  "created_at": "2026-03-31T04:45:22+00:00",
+  "pixel_dimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "post_process_notes": "Generator returned 16:9 master; exported true 1:1 via center crop + LANCZOS resize per DBR77 pixel-aspect gate.",
+  "alt_text_en": "Still life: discarding blame metaphor; precision tools for system-side fixes—thumbnail-safe center.",
+  "caption_en": "Social visual for fixes over names after go-live.",
+  "crop_safe_notes": "Composed center-weighted for 1:1; final asset is exact 1024×1024.",
+  "output_path": "Blogs/Marketplace/Blog/_archive_marketplace_43_49_pre_collision_packages/49_how_to_review_automation_buying_decisions_after_go_live_without_blame_theater/assets/images/social_1x1_v1.png"
+}

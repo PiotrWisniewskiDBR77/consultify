@@ -1,73 +1,54 @@
-# Wann man standardisiert und wann man ein Automatisierungsprojekt customisiert
+# Wann man standardisieren und wann man ein Automatisierungsprojekt individualisieren sollte
 
-Target persona: Engineering Manager / Werksfuehrung  
-Funnel stage: Decision  
-Core problem: Teams schwanken zwischen "Standard kaufen" und "Custom bauen" ohne klares Trade-off-Modell, was spaete Nacharbeit und politischen Konflikt erzeugt  
-Main promise: ein praktisches Entscheidungsraster, das Standardisierung vs Customizing an Variabilitaet, Integrationslast und operatives Ownership bindet
+Zielpersona: Engineering-Manager / Werksführung  
+Funnel-Stufe: Entscheidungsphase  
+Kernproblem: Teams pendeln zwischen „Standard kaufen“ und „Custom bauen“ ohne klares Trade-off-Modell — was späte Nacharbeit und politischen Konflikt erzeugt  
+Hauptversprechen: Ein praktisches Entscheidungsraster, das Standardisierung versus Individualisierung an Variabilität, Integrationslast und operativem Eigentum bindet
 
-Standardisierung und Customizing sind beide valide. Der Fehler ist Wahl aus Bauchgefuehl.
+Standard und Custom sind beide legitim. Der teure Fehler ist Wahl nach Stimmung — was modern klingt, was ein Lieferant bevorzugt oder was vor fünf Jahren in einem anderen Werk funktionierte. Bessere Entscheidungen kommen von Randbedingungen: wie stabil der Prozess ist, wie einzigartig Ihre Schnittstellen sind, wie viel interne Kapazität Sie für Grauzonen haben und was Ausfallzeit oder Nacharbeit kosten würde, wenn der Fit schlecht ist.
 
-Hersteller bekommen bessere Ergebnisse, wenn sie nach Constraints waehlen: wie stabil der Prozess wirklich ist; wie einzigartig Werksschnittstellen sind; wie viel interne Kapazitaet existiert, Graubereiche zu besitzen; wie empfindlich der Betrieb gegenueber Stillstand und Aenderung ist.
+## Was Standardisierung typischerweise kauft
 
-## Was Standardisierung bringt
+Standardpfade tauschen Einzigartigkeit gegen Vorhersehbarkeit. Sie passen, wenn das Problem auf ein wiederholbares Equipment-Muster mappt, Variabilität mit expliziten Regeln begrenzt ist, Integrationsoberflächen üblich sind und Sie klarere Test- und Inbetriebnahmemuster wollen. Standardisierung ist nicht Faulheit; es ist die Wette, dass Ihre Realität nah genug an einer bekannten Form ist, dass Neu-Erfindung schlechte Ökonomie ist.
 
-Standardisierung kauft oft Vorhersagbarkeit.
+## Was Individualisierung typischerweise kauft
 
-Sie hilft oft, wenn: das Problem zu einem wiederholbaren Geraetemuster passt; Variabilitaet mit expliziten Regeln begrenzt ist; Integrationsflaechen ueblich und gut verstanden sind; Sie schnellere Inbetriebnahmemuster und klarere Lieferanten-Testpraktiken wollen. Standardisierung ist keine Faulheit.
+Maßgeschneidertes Engineering tauscht Zeitplan und Einfachheit gegen Fit. Es passt, wenn ungewöhnliche Randbedingungen Templates brechen, Mix- und Handling-Regeln echte Komplexität erzeugen, vorgelagerte oder nachgelagerte Schnittstellen unreif oder werks-spezifisch sind oder Fehlermodi teuer genug sind, dass Mismatch-Risiko dominiert. Individualisierung ist keine Sophistication um ihrer selbst willen; es ist Versicherung gegen schlechten Muster-Fit.
 
-Es ist eine Wette, dass Ihre Wirklichkeit nah genug an einem bekannten Muster liegt, dass sich Neu-Erfindung nicht lohnt.
+## Eine Linse: Stabilität und Schnittstellenlast
 
-## Was Customizing bringt
+Denken Sie in zwei Dimensionen — Prozessstabilität und Schnittstellenkomplexität — ohne starre Formel. Wenn Stabilität höher und Schnittstellen einfacher sind, neigen Sie zu Standardkernen. Wenn Stabilität höher, Schnittstellen aber schwer sind, gewinnen oft Hybride: Standard-Maschinen- oder Steuerkern mit kontrollierter Schnittstellenarbeit. Wenn Stabilität niedrig ist, fixen oder messen Sie, bevor Sie Hardware einfrieren — unabhängig von späterer Standard- oder Custom-Präferenz. Wenn Stabilität niedrig und Schnittstellen schwer sind, ist Custom ohne Stabilisierung ein häufiger Weg zu Nacharbeit; Aufschub oder interne Härtung kann klüger sein als Einkaufen.
 
-Customizing kauft oft Fit.
+## Hybrid braucht Regeln, keine Zufälle
 
-Es hilft oft, wenn: der Prozess ungewoehnliche Constraints hat, die Templates brechen; Produktmix-Regeln echte Handling-Komplexitaet erzeugen; Upstream/Downstream-Schnittstellen unreif oder werksspezifisch sind; Sie ein enges operatives Fenster schuetzen muessen, wo Fehler teuer ist. Customizing ist keine Selbstzweck-Sophistication.
+Viele Projekte werden hybrid durch Drift. Das ist das schlechteste Outcome. Wenn Sie Hybrid bewusst wählen, schreiben Sie Regeln: was individualisiert werden darf, was aus Supportgründen standard bleiben muss, wer jedes Schnittstellen-Decision besitzt und wie Changes genehmigt und dokumentiert werden. Hybrid ohne Regeln wird zu endloser Optimierung, verkauft als Responsiveness.
 
-Es ist eine Wette, dass Mismatch-Risiko hoeher ist als Kosten und Zeitplan von massgeschneidertem Engineering.
+## Halten Sie Angebote über Pfade hinweg vergleichbar
 
-## Einfache 2x2-Linse (als Linse, nicht als Gesetz)
+Standard- und Custom-Bids landen in unterschiedlichen Formen. Vergleichen Sie, was standardisiert ist und warum, was custom ist und welche Annahmen es trägt, und wie das Post-Go-Live-Support-Modell aussieht. Headline-Preise sind bedeutungslos, bis diese Maps aligned sind.
 
-Denken Sie in zwei Achsen:
+## Wie DBR77 Marketplace hilft
 
-**Achse A: Prozessstabilitaet** (niedrig bis hoch) **Achse B: Schnittstellenkomplexitaet** (niedrig bis hoch)
+Wenn Trade-offs in denselben Feldern über Lieferanten erfasst werden, hört Standard versus Custom auf, ein Slogan-Kampf zu sein, und wird zu einer prüfbaren Entscheidung.
 
-| Stabilitaet | Schnittstellen | tendenziell |
-| --- | --- | --- |
-| hoeher | niedriger | standardisieren wo moeglich |
-| hoeher | hoeher | Hybrid: Standardkern + kontrollierte Custom-Schnittstellen |
-| niedriger | niedriger | zuerst stabilisieren, dann standardisieren |
-| niedriger | hoeher | vorsichtig customisieren oder verschieben bis Stabilitaet besser ist |
+Verwandte Lektüre: [Wie man den Scope eines Automatisierungsprojekts ohne Überkomplizierung festlegt](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_DE.md) und [Was vor Unterzeichnung eines Automatisierungsvertrags zu prüfen ist](../20_what_to_check_before_signing_an_automation_contract/article_DE.md).
 
-Das entfernt kein Urteil. Es zwingt das Gespraech weg von Slogans.
+## Lebenszyklus-Denken, nicht nur Installations-Denken
 
-## Die versteckten Kosten von "Hybrid ohne Regeln"
+Standardisierung gewinnt oft bei Supportbarkeit: Ersatzteile, Schulungen, Upgrades, vorhersehbare Fehlersuche. Individualisierung gewinnt oft bei Fit, wenn Mismatch permanente Workarounds erzwingen würde. Die Entscheidung sollte ein Jahr-zwei-Sicht enthalten, nicht nur Monat zwei. Wenn Individualisierung ein schönes Demo und ein fragiles Support-Leben schafft, kehrt sich die Ökonomie schnell um.
 
-Viele Projekte werden zufaellig hybrid. Das ist teuer.
+Beziehen Sie Instandhaltung und Qualität früh in die Standard-versus-Custom-Diskussion ein. Sie leben mit den Konsequenzen, wenn Engineering zum nächsten Projekt weiterzieht. Ihre Fragen zu Diagnose, Obsoleszenz und täglicher Recovery sind Teil des echten Trade-offs.
 
-Wenn Sie Hybrid waehlen, definieren Sie Regeln: was custom sein darf; was fuer Supportierbarkeit standard bleiben muss; wer welche Schnittstellenentscheidung besitzt; wie Aenderungen freigegeben und dokumentiert werden. Hybrid ohne Regeln wird endlose Optimierung.
+## Vom Entscheid zum Werksverhalten
 
-## Auswirkungen auf Sourcing und Angebotsvergleich
+Standard versus Custom ist keine Engineering-Ästhetik — es ist das, was Ihre Bediener um zwei Uhr nachts diagnostizieren. Standardpfade sollten sich als klarere Ersatzteillogik, Schulungspfade und Lieferanten-Support-Rhythmen zeigen; Custom-Pfade als explizites Eigentum der Grauzonen. Wenn das Werk diesen Trade-off nicht artikulieren kann, ist die Entscheidung nicht bereit.
 
-Standard- und Custom-Pfade erzeugen unterschiedliche Angebotsformen.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Schreiben Sie die Support-Story parallel zur Lösungsstory — wer hält es am Laufen, mit welchen Teilen, in welchem Zeitrahmen.
 
-Buyer sollten vergleichen: was standardisiert ist und warum; was custom ist und welche Annahmen es traegt; welches Supportmodell nach Go-Live existiert. DBR77 Marketplace-Denken passt: Vergleichbarkeit zaehlt.
+## Kurz gesagt
 
-Wenn ein Lieferant aggressiv standardisiert und ein anderer aggressiv customisiert, sind Preisschilder ohne Mapping dieser Entscheidungen nicht vergleichbar.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace unterstuetzt hersteller-first Automatisierungsentscheidungen durch strukturierte Workflows.
-
-Wenn Teams zwischen Standard und Custom waehlen muessen, hilft der Plattform-Mindset: Trade-offs sichtbar machen; Angebote auf denselben Feldern vergleichen; Sourcing-Chaos reduzieren, indem klar wird, was gekauft wird. Marketplace ist kein Roboterkatalog.
-
-Es ist ein Entscheidungsworkflow und eine Vertrauensschicht fuer Integratorenauswahl.
-
-## Bottom line
-
-Standardisieren, wenn Muster-Fit real ist und Variabilitaet kontrolliert ist. Customisieren, wenn Mismatch-Risiko dominiert. Wenn Sie Hybrid waehlen, schreiben Sie Regeln.
-
-Ziel ist eine Entscheidung, die Sie Operations erklaeren koennen, kein Label fuer eine Slide-Ueberschrift.
+Standardisieren Sie, wenn Muster-Fit real ist. Individualisieren Sie, wenn Mismatch-Risiko dominiert. Wenn Sie mischen, regieren Sie die Mischung. Das Ziel ist eine Erklärung, mit der Operations leben kann — keine Titelfolie, die niemand ausführen kann.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace hilft Herstellern, Angebote auf denselben Feldern zu vergleichen, auch wenn ein Pfad standardisiert und ein anderer stark individualisiert ist — und reduziert Äpfel-Orangen-Verwirrung. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/demo).*

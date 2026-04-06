@@ -1,71 +1,58 @@
-# Kiedy IoT powinno wywolywac eskalacje do supervisora, a kiedy nie
+# Kiedy IoT powinno wywołać eskalację do przełożonego, a kiedy nie
 
-Docelowa persona: Supervisor produkcji / Kierownik obszaru / Lider operacji zakladu  
+Docelowa persona: Production supervisor / Area manager / Plant operations lead  
 Etap lejka: Consideration  
+Główny problem: przełożeni są wciągani w każdą żółtą poświatę, więc eskalacja staje się szumem, a hala przestaje traktować alarmy poważnie  
+Główna obietnica: polityka eskalacji do przełożonego: które warunki poparte maszyną przerywają kierownictwu, które zostają przy linii i jak obejścia zmieniają regułę
 
-Glowny problem: supervisory sa ciagniete w kazdy zolty blip, wiec eskalacja staje sie szumem, a hala przestaje traktowac alarmy powaznie Glowna obietnica: polityka eskalacji do supervisora: ktore warunki z maszyna przerywaja leadership, ktore zostaja na linii, jak override zmienia regule Supervisor nie powinien byc ludzkim routerem alarmow.
+Przełożeni nie powinni być ludzką „centralą” alarmów.
 
-Jesli IoT wysyla im ten sam strumien co operatorom, dodales tylko druga skrzynke.
+Jeśli IoT wysyła im ten sam strumień co operatorom, tylko powieliłeś zmęczenie skrzynki. Eskalacja to governance: określa, kiedy zmienia się władza decyzyjna, kiedy pojawia się ryzyko międzyzmianowe i kiedy ekspozycja na klienta, bezpieczeństwo lub jakość uzasadnia przerwanie kierownictwu.
 
-Eskalacja to decyzja governance, a nie domyslne ustawienie w stosie czujnikow.
+Przełożeni pilnują przepustowości, pracy i zobowiązań wobec klienta. Jeśli ich kanał równa się kanałowi operatorów, zoptymalizują przetrwanie przez ignorowanie obu. Projektuj eskalację tak, by przełożeni widzieli tylko to, co wymaga ich autorytetu — nie wszystko, co wymaga uwagi.
 
-## Bezposrednia odpowiedz
+## Kiedy eskalacja do przełożonego jest uzasadniona
 
-Wywoluj **eskalacje do supervisora**, gdy warunek zmienia, kto moze zdecydowac o kolejnym bezpiecznym kroku, albo gdy linia wyczerpala zapisany playbook w zdefiniowanym oknie czasu.
+Eskaluj, gdy warunek zmienia to, kto może zdecydować o kolejnym bezpiecznym kroku, albo gdy linia wyczerpała pisemny playbook w uzgodnionym oknie czasowym. Przykłady: powtarzające się nieplanowane postoje z nieznaną przyczyną po standardowej sekwencji sprawdzeń; sygnały degradacji przekraczające limity zakładu, gdy zaległość w utrzymaniu blokuje reakcję; proxy jakości powyżej progów uzgodnionych z kierownictwem jakości.
 
-**Nie** wywoluj eskalacji do supervisora dla sygnalow uczenia, pojedynczych skokow bez potwierdzenia albo warunkow, ktore zmiana moze zamknac istniejaca sciezka zlecenia. Widocznosc moze zostac na ekranie. Eskalacja powinna byc na tyle rzadka, by pozostac wiarygodna.
+## Kiedy nie
 
-## Oddziel powiadomienie operatora od przerwania supervisora
+Nie eskaluj sygnałów uczenia, pojedynczych skoków bez potwierdzenia ani warunków, które zmiana może zamknąć istniejącą ścieżką zlecenia. Widoczność może zostać na ekranie, podczas gdy operatorzy i utrzymanie wykonują standardową pracę. Eskalacja powinna być wystarczająco rzadka, by pozostała wiarygodna.
 
-Zaprojektuj dwa kanaly: **Kanal operatora**: szybki kontekst, lokalna weryfikacja, standardowe reakcje; **Kanal supervisora**: zmiana wladzy, ryzyko miedzy zmianami, ekspozycja klienta albo safety, konflikt zasobow.
+## Rozdziel powiadomienie operatora od przerwania przełożonemu
 
-Jesli oba kanaly dostaja te same zdarzenia, supervisory naucza sie ignorowac IoT.
+Zaprojektuj dwa kanały celowo: szybki kontekst dla operatora do weryfikacji i standardowych odpowiedzi; kanał dla przełożonego dla autorytetu, konfliktu zasobów, ekspozycji na klienta lub ryzyka bezpieczeństwa. Jeśli oba kanały dostają te same zdarzenia, przełożeni nauczą się ignorować IoT.
 
-## Macierz eskalacji
+## Zapisz kontrakt językiem zakładu
 
-| Warunek | Eskaluj do supervisora gdy |
-|---|---|
-| Nieplanowany stop | nieznana przyczyna po uzgodnionej sekwencji checkow albo powtorzony wzor w tym samym tygodniu |
-| Sygnal degradacji | trend przekracza limit zakladu AND backlog maintenance blokuje reakcje |
-| Proxy jakosci | ryzyko scrapu przekracza prog uzgodniony z quality lead |
-| Override | override blisko wygasniecia bez planu zamkniecia |
-| Safety lub compliance | jakiekolwiek naruszenie standardu niepodlegajacego negocjacji |
+Opublikuj przykłady: nieplanowany postój eskaluje, gdy przyczyna jest nieznana po uzgodnionych sprawdzeniach albo wzorzec powtarza się w ciągu tygodnia; ryzyko jakości eskaluje przy nazwanych progach; konflikty materiałowe lub kadrowe eskalują, gdy zagrażają planowi w zdefiniowanym oknie. Połącz z regułami obejść, by tymczasowe ominięcia nie poszerzały eskalacji w ciszy na zawsze.
 
-| Warunek | Zwykle nie eskaluj do supervisora |
-|---|---|
-| Pierwsze uderzenie progu na nowym baseline | loguj, weryfikuj, stroj |
-| Pojedynczy skok czujnika | najpierw potwierdz |
-| Mala wariancja cyklu | monitoruj do wzorca |
-| Alarm demo vendora | wylacz albo zmien klase |
+**Test wiarygodności eskalacji:** przełożeni dostają mniej, bardziej znaczących zdarzeń; operatorzy posiadają pierwszą warstwę reakcji; każda auto-eskalacja ma właściciela i datę przeglądu; miesięczny przegląd przycina szum z udokumentowaną racją.
 
-## Sekwencja krokow: zdefiniuj kontrakt eskalacji
+## Wróć do macierzy po nocnych zmianach
 
-Wypisz piec scenariuszy stop, ktore zaklad juz traktuje powaznie bez IoT; Mapuj kazdy na: tylko operator, zlecenie maintenance, przerwanie supervisora; Dodaj time boxy: jak dlugo linia posiada problem przed eskalacja; Opublikuj reguly override: kto moze przedluzyc time boxy i na jak dlugo; Przegladaj miesiecznie z probkami jakosci sygnalu, nie tylko licznikami alarmow.
+Eskalacja, która brzmi dobrze o dziesiątej rano, może zmiażdżyć cienką nocną załogę. Testuj kierowanie alarmów na realnym obsadzeniu, nie na idealnym. Jeśli noc nie może wykonać playbooka, zmień playbook albo pokrycie — nie udawaj, że reguła działa, bo wyglądała dobrze w sali konferencyjnej.
 
-## Checklista: utrzymuj eskalacje wiarygodnymi
+## DBR77 IoT i wiarygodna eskalacja
 
-- [ ] alerty supervisora sa podzbiorem alertow operatora, nie duplikatem feedu
-- [ ] kazdy alert supervisora ma nazwana nastepna akcje wladzy
-- [ ] powody eskalacji sa kodowane pod przeglad planowania, nie tylko heatmapy
-- [ ] falszywe eskalacje dostaja RCA jak przeglady near-miss safety
-- [ ] odwolania do standardow: safety, jakosc, dostawa, regulacje
+DBR77 IoT wspiera tę politykę, gdy alarmowanie rozdziela reakcję linii od przerwania kierownictwa, a nawyki przeglądu przycinają szum zamiast go dodać.
 
-## Kiedy widocznosc w czasie rzeczywistym nie powinna zmieniac sciezki eskalacji
+Eskalacja do przełożonego powinna być rzadka, znacząca i związana z autorytetem — nie kopią każdego sygnału do operatora. Spokojna eskalacja zachowuje powagę.
 
-Widocznosc w czasie rzeczywistym pomaga zobaczyc wczesniej. Nie podnosi automatycznie ciezaru.
+## Niech obietnica artykułu zostanie praktyczna
 
-Jesli sama widocznosc eskaluje, przeciazysz supervisory w tygodniach normalnej wariancji.
+Przełóż powyższe idee w jeden nawyk, który zakład utrzyma w przyszłym miesiącu: przegląd, który się odbywa, słownik, który ludzie otwierają, reguła kierowania zgłoszeń, której ufają, albo drill, który faktycznie realizują. Duże programy zacinają się, gdy wszystko rusza naraz. Małe pętle się mnożą, gdy się powtarzają.
 
-## Co to znaczy dla DBR77 IoT
+## Punkt kontrolny kierownictwa na następny przegląd operacji
 
-DBR77 IoT to **widocznosc maszyny w czasie rzeczywistym** z **wsparciem decyzji edge-first**, a nie dashboard pingujacy wszystkich rowno.
+Zadaj jedno proste pytanie: co zmieniło się na hali w tym miesiącu dlatego, że IoT uczyniło rzeczywistość jaśniejszą — nie głośniejszą? Jeśli odpowiedź jest mglista, dopręż zakres, definicje lub rytm przeglądu, zanim poszerzysz ślad. Pożyteczne IoT widać po spokojniejszych przejęciach zmian, szybszym potwierdzaniu i mniejszej liczbie kolowych kłótni o to, co się stało. Liczba połączeń to wejścia; zmiana zachowania to paragon.
 
-Lacznosc retrofit-ready pozwala zestawic reguly eskalacji na aktywach brownfield bez pelnego rewrite sterowania.
+## Domknięcie na hali
 
-Szybki pilot testuje obciazenie supervisora na jednym obszarze przed standaryzacja.
+Żadna z tych rad nie ma znaczenia, jeśli zostaje w slajdach sterujących. Pożyteczny test to, czy następna zmiana może działać z mniejszą debatą: jaśniejsze stany, mniej tajemniczych postojów, szybsze potwierdzenie i eskalacja szanująca uwagę. Gdy IoT działa, linia bardziej przypomina zsynchronizowany zespół niż salę sądu — wciąż głośno i intensywnie, ale wokół tych samych faktów.
 
-## Bottom line
+Jeśli na obchodzie ludzie wciąż mówią o systemie „komputer” zamiast „nasz obraz linii”, dociśnij kontekst, własność i przegląd, aż zmieni się język. Opóźnienie językowe to objaw, że pętla jest wciąż zbyt cienka.
 
-Eskalacja do supervisora powinna byc **rzadka, zakodowana i zwiazana z wladza**.
+---
 
-IoT zyskuje zaufanie, gdy hala widzi, ze leadership przerywa tylko tam, gdzie naprawde zmienia sie kolejna bezpieczna decyzja.
+*DBR77 IoT pomaga zakładom rozdzielać reakcję operatora od eskalacji do przełożonego dzięki jasnym regułom, bogatym w kontekst alertom i strojeniu przyjaznemu przeglądom. [Zaplanuj pilota](https://dbr77.com/iot) lub [Zobacz demo online](https://dbr77.com/demo).*

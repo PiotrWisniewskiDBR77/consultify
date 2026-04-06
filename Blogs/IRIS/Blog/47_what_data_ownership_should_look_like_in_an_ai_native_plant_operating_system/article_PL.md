@@ -1,61 +1,36 @@
-# Jak powinna wygladac wlasnosc danych w AI-native plant operating system
+# Jak powinna wyglądać własność danych w AI-native plant operating system
 
-Target persona: CIO / Architekt IT-OT / Lider zarzadzania danymi  
-Funnel stage: Consideration  
-Core problem: "wszyscy posiadaja dane" znaczy, ze nikt nie naprawia definicji, awarii odswiezania ani luk w pochodzeniu, gdy przybywa modeli i regul  
-Main promise: praktyczna mapa wlasnosci dla systemow zrodlowych, kuratowanych definicji operacyjnych, wynikow asysty i sladow audytu z jawnym RACI
+Docelowa persona: CIO / architekt IT-OT / lider zarządzania danymi  
+Etap lejka: Consideration  
+Główny problem: „wszyscy posiadają dane” oznacza, że nikt nie naprawia definicji, awarii odświeżania ani luk w pochodzeniu, gdy przybywa modeli i reguł  
+Główna obietnica: praktyczna mapa własności dla systemów źródłowych, kuratowanych definicji operacyjnych, wyników asysty i śladów audytu z jawnym RACI
 
-Wlasnosc danych w AI-native plant operating system powinna wskazywac jednego odpowiedzialnego za rodzine definicji operacyjnych (np. zakres OEE, drzewo przyczyn przestojow, master lokalizacji), stewarda odpowiedzialnego za jakosc dziennia oraz strony konsultowane dla kazdego konsumujacego workflow. Wyniki asysty dziedzicza wlasnosc workflow, ktorego dotykaja, nie dostawcy modelu. SLA odswiezania, obsluga wyjatkow dla przestarzalych zasilen i prawa publikacji wersji musza byc zapisane. Jesli dwa zespoly moga edytowac ten sam prog bez wpisu w changelog, nie masz wlasnosci, masz wspolna wine. AI nie tworzy nowych danych. Ujawnia, kto zaniedbal stary kontrakt danych.
+„Wszyscy posiadają dane” zwykle znaczy, że nikt tego nie naprawia, gdy pęka pod presją. W AI-native plant operating system własność musi być zapisana w rolach: jeden rozliczalny właściciel na rodzinę definicji operacyjnych, odpowiedzialny steward jakości dziennej, strony konsultowane dla odbiorców tych przepływów oraz jawne reguły dla wyników asysty — które dziedziczą reguły z przepływu pracy, którego dotykają, a nie dostawcę modelu. SLA odświeżania, wyjątki przy nieaktualnych zasileniach i prawa publikacji wersji potrzebują nazwisk. Jeśli dwa zespoły mogą edytować ten sam próg bez wpisu w dzienniku zmian, masz współwinę, nie nadzór. AI nie tworzy nowych problemów z danymi. Odsłania zaniedbane kontrakty danych.
 
-## Mapa 1: trzy warstwy wlasnosci
+Myśl warstwami. Zasilenia źródłowe potrzebują rozliczalnego przywództwa i odpowiedzialnych administratorów per system — bo cichy dryf schematu zabija zaufanie. Definicje operacyjne potrzebują właścicieli funkcji z analitykami utrzymującymi codzienną jakość — bo spory o KPI to często walki o definicje w przebraniu analitycznym. Konfiguracja asysty potrzebuje rozliczalności na poziomie zakładu z międzyfunkcyjnym zespołem konfiguracji — bo cieniste edycje progów zamieniają asystę w ruletkę.
 
-| Warstwa | Odpowiedzialny akceptujacy | Odpowiedzialny wykonawczy | Typowa porazka |
-|---|---|---|---|
-| zasilenia zrodlowe | lider rady danych zakladu | admin systemu per zrodlo | cichy dryft schematu |
-| definicje operacyjne | wlasciciel funkcji (prod, jakosc, WH) | analityk CI | spory o KPI |
-| konfiguracja asysty | kierownik zakladu | zespol konfiguracji miedzyfunkcyjnej | cien edycji progow |
+Publikuj pakiety definicji zanim modele na nich się dostrajają: definicje prostym językiem i wyłączenia, mapowania pól, kadencję odświeżania i maksymalny dopuszczalny lag, znane zniekształcenia i kompensacje oraz okna zmian z komunikacją do operatorów. Pakiety odcinają debaty „model jest zły”, które w rzeczywistości są wojnami semantycznymi.
 
-Akceptujacy zatwierdza publikacje. Wykonawczy naprawia codzienne awarie.
+Ujawnij, co zakład musi posiadać, a co dostawca może prowadzić pod kontraktem. Progi, klasy akceptacji, notatki operatora i przejęcia należą do zakładu. Wagi modelu i prompty podlegają polityce i ewaluacji zakładu, szczegóły hostingu do negocjacji. Surowe strumienie wymagają reguł dostępu i retencji. Ciche kontrakty zapraszają założenia pod najgorszy scenariusz — zamknij je wprost.
 
-## Checklist: pakiet definicji (publikuj zanim modele sie dostroja)
+Zrób półdniowy reset własności: wypisz najważniejsze KPI używane we wspomaganych przepływach pracy, przypisz po jednym rozliczalnym właścicielu (bez współdzielonych tytułów), zmapuj zasilenia i lag, uzgodnij jedną ścieżkę publikacji zmian definicji i zaplanuj comiesięczne przeglądy zdrowia danych z czerwonymi flagami powiązanymi z działaniami.
 
-- definicja w prostym jezyku i wykluczenia  
-- mapowanie pol na tabele lub tagi zrodla  
-- kadencja odswiezania i maksymalny akceptowalny lag  
-- znane znieksztalcenia i kompensacje  
-- okno zmiany i regula komunikacji dla operatorow
+Scentralizowana własność IT zawodzi, gdy operacje nie mogą czekać na zgłoszenia przy zatrzymaniu, gdy definicje potrzebują cotygodniowego osądu hali albo gdy utrzymanie i jakość spierają się o etykiety. Sparuj rozliczalność IT ze stewardami funkcji, którzy żyją wyjątkami.
 
-Pakiety zapobiegaja debatom "model jest zly", ktore sa walka o definicje.
+IRIS uwidacznia własność, gdy definicje, zadania, pochodzenie danych i konfiguracja asysty pojawiają się w tej samej warstwie wykonania — więc publikacje, naprawy lagu i odpowiedzi break-glass mają nazwiska.
 
-## Framework: dane dostawcy kontra dane zakladu
+Do gotowości danych operacyjnych i granic dostawców zobacz [Dlaczego AI bez danych operacyjnych wciąż zawodzi w produkcji](../32_why_ai_without_operational_data_still_fails_in_manufacturing/article_PL.md) oraz [Kiedy narzędzia AI dostawców powinny zasilać warstwę wykonania, a kiedy nie](../48_when_vendor_ai_tools_should_feed_the_execution_layer_and_when_not_to/article_PL.md).
 
-| Typ danych | Zaklad musi posiadac | Dostawca moze prowadzic |
-|---|---|---|
-| progi i klasy akceptacji | tak | tylko pod kontraktem i logowaniem |
-| notatki i przejecia operatora | tak | nigdy |
-| wagi modelu i prompty | polityka i ewaluacja | hosting wykonania opcjonalnie |
-| surowy strumien maszyny | reguly dostepu i retencji | urzadzenie zbierajace |
+Własność potrzebuje też „zębów” na spotkaniach operacyjnych. Jeśli zdrowie danych jest stałym punktem porządku z czerwonymi flagami powiązanymi z działaniami, definicje się naprawiają. Jeśli to temat poboczny, definicje dryfują, dopóki klient lub audytor nie wymusi kryzysu. Operacje AI-native robią ten dryf droższym szybciej — bo asysta powtarza złe definicje maszynowo. Zakład czuje to jako „złe AI”, podczas gdy pod spodem jest zaniedbana własność.
 
-Jesli kontrakt milczy o logach, zakladaj najgorsze i napraw.
+Na koniec oddziel własność konfiguracji od własności modelu. Zakład powinien posiadać progi, akceptacje i operacyjne znaczenie. Dostawcy mogą hostować modele, ale zakład musi rządzić tym, co „asysta” może zmieniać — i kto publikuje te zmiany. Jeśli własność konfiguracji jest rozmyta, każdy incydent staje się spiralą winy między IT, operacjami a dostawcą.
 
-## Sekwencja krokow: warsztat resetu wlasnosci (pol dnia)
+Własność to kto publikuje, kto naprawia lag i kto odpowiada audytorom. Zapisz to w RACI, nie w sloganach.
 
-Lista top 10 KPI uzywanych we workflow wspieranych; przypisz po jednym akceptujacym wlascicielu, bez wspolnych tytulow; mapuj zasilenia i lag dla kazdego KPI; uzgodnij jedna sciezke publikacji zmian definicji; ustaw miesieczny przeglad zdrowia danych z czerwonymi flagami powiazanymi z dzialaniami.
+## Podsumowanie operacyjne
 
-## Kiedy sama centralna wlasnosc IT nie dziala
-
-Operacje nie poczeka na zgloszenia podczas postoju; definicje wymagaja tygodniowego osadu hali; utrzymanie i jakosc spieraja sie o te same etykiety zdarzen. Polacz odpowiedzialnosc IT ze stewardami funkcji na hali.
-
-## Dlaczego IRIS czyni wlasnosc widoczna w wykonaniu
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy definicje, zadania i konfiguracja asysty dziela pochodzenie w jednej warztwie, spory o wlasnosc maleja, a zgloszenia naprawcze przyspieszaja.
-
-## Podsumowanie
-
-Wlasnosc to kto publikuje, kto naprawia lag i kto odpowiada audytorom. Zapisz to w RACI, nie w sloganach.
+Obietnica tego artykułu — praktyczna mapa własności dla systemów źródłowych, kuratowanych definicji operacyjnych, wyników asysty i śladów audytu z jawnym RACI — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Jak powinna wyglądać własność danych w AI-native plant operating system” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS ujednolica definicje, zadania i konfigurację asysty w jednej warstwie wykonania, więc własność mapuje na widoczne pochodzenie i ścieżki publikacji. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

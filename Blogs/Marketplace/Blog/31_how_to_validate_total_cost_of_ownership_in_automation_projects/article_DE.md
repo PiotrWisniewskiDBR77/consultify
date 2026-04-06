@@ -1,78 +1,58 @@
-# Wie man Total Cost of Ownership in Automatisierungsprojekten validiert
+# Wie Sie die Total Cost of Ownership in Automatisierungsprojekten validieren
 
-Target persona: Finance Partner / Werksleiter  
-Funnel stage: Consideration bis Decision (oekonomische Validierung)  
-Core problem: TCO-Spreadsheets wirken praezise, verstecken aber Annahmen zu Uptime, Personal, Change Orders und Servicerealitaet  
-Main promise: eine TCO-Validierungsmethode, die Capex von operativen Cash-Effekten trennt und explizite, auditierbare Annahmen erzwingt
+Zielpersona: Finance-Partner / Werksleiter  
+Funnel-Stufe: Überlegung bis Entscheidung (ökonomische Validierung)  
+Kernproblem: TCO-Tabellen wirken präzise, verstecken aber Annahmen zu Verfügbarkeit, Personal, Change Orders und Service-Realität  
+Hauptversprechen: eine TCO-Validierungsmethode, die CapEx von operativen Cash-Effekten trennt und explizite, prüfbare Annahmen erzwingt
 
-TCO ist keine Zahl. Es ist ein Stapel Annahmen im Spreadsheet-Kostuem.
+Eine einzelne TCO-Zelle kann autoritativ wirken und auf Hoffnung ruhen. Automatisierungsökonomie geht schief, wenn Angebote als volle Lifecycle-Wahrheit behandelt werden, Schulungs- und Support-Last ignoriert wird, Verfügbarkeit als perfekt angenommen wird, Beherrschung als sofort gilt und Ersatzteile oder Obsoleszenz nie im Modell erscheinen. Die Tabelle lügt nicht; die Annahmen tun es.
 
-Automatisierungs-TCO geht schief, wenn Teams: Integrator-Quotes als vollstaendige Lifecycle-Wahrheit behandeln; Trainingslast und Support-Tickets ignorieren; perfekte Uptime und sofortige Meisterschaft annehmen; Ersatzteil-Lead-Times und Obsoleszenzrisiko vergessen.
+Validieren Sie TCO, indem Sie Cash-Schichten trennen, Owner je Annahme benennen und Szenarien stressen, bis die Entscheidung steht oder ehrlich bricht.
 
-Hersteller validieren TCO, indem sie Annahmen sichtbar machen und sie stresstesten.
+## Drei Cash-Schichten
 
-Bauen Sie ein TCO-Modell mit drei Schichten: Akquisitions-Cash-Schedule gekoppelt an Meilensteine und Abnahme; operative Cash-Effekte: Personal, Ausschuss, Energie, Verbrauchsmaterial, Downtime-Risk-Bands; Lifecycle-Services: Warranty-Grenzen, Servicevertraege, Ersatzteile, Software-Maintenance. Dann drei Faelle fahren: Baseline, konservativ, gestresst.
+Erst Akquisition: Zahlungen auf Meilensteine und Abnahme gemappt — nicht ein Klumpen „CapEx“, der Timing versteckt. Zweit operative Effekte: Arbeitsminuten, Ausschuss und Nacharbeit, Energie und Verbrauchsmaterial, Ausfallrisiko als Bänder, die das Werk nachvollziehen kann — keine Punktfantasien. Dritt Lifecycle-Services: Garantiegrenzen, Service-Zugang, Ersatzteil-Lieferzeiten, Software-Wartung. Fehlt eine Schicht, ist das Modell unvollständig — nicht konservativ.
 
-Wenn konservativ und gestresst den Business Case kollabieren lassen, ist die Entscheidung nicht "billigeren Roboter waehlen." Die Entscheidung ist Scope, Sequencing oder Readiness neu zu designen.
+## Szenario-Disziplin
 
-## Annahmen-Register (nicht verhandelbar)
+Fahren Sie mindestens drei Ansichten: Baseline, konservativ, gestresst. Kollabiert der Case nur unter Stress, kennen Sie die Fragilität. Kollabiert er unter konservativen Annahmen, ist das Problem nicht ein billigerer Roboter — sondern Scope, Readiness oder Sequencing.
 
-Jede TCO-Zeile braucht:
+## Ein prüfbares Annahmen-Register
 
-| Zeile | Annahme | Owner | Evidence-Typ |
-| --- | --- | --- | --- |
-| Durchsatzzuwachs |  | Engineering | Messung |
-| Personalreduktion |  | Operations | Task-Time-Study |
-| Downtime-Risiko |  | Maintenance | Historie |
-| Energie |  | Facilities | Zaehler oder Schaetzung |
-| Change-Order-Rate |  | Procurement | Referenzklasse |
+Jede bedeutende Zeile braucht eine benannte Annahme, einen Owner und einen Evidence-Typ — Messung, Historie, Integratoren-Commitment oder explizite Hypothese. Ist die Evidenz „Hoffnung“, labeln Sie es als Hypothese und entscheiden Sie, ob Sie das Projekt darauf verwetten können.
 
-Wenn Evidence-Typ "Hoffnung" ist, labeln Sie hypothesis, nicht verified.
+## CapEx-Timing ändert Entscheidungen
 
-## Capex versus Cash-Schedule
+Anzahlungen, Equipment-Freigaben, FAT-gekoppelte Zahlungen, Retention, Garantie-Trigger — Timing beeinflusst Kapitalverfügbarkeit und Linienrisiko. Mappen Sie Cash auf Ereignisse, nicht auf Stimmungen.
 
-Capex-Totals verstecken Timing.
+## Operative Hebel, die Sie beobachten können
 
-Ein validierungsreifes Modell mappt Cash auf: Anzahlungen und Equipment-Releases; Meilensteine gekoppelt an FAT und SAT; Retention und Warranty-Trigger. Timing aendert Entscheidungen, wenn Kapital-Constraints und Linienverfuegbarkeit zaehlen.
+Binden Sie das Modell an Dinge, die das Werk schon trackt: Minuten pro Einheit, Ausfallminuten pro Monat, Ausschuss-Bänder. Automatisierung sollte mindestens einen beobachtbaren Hebel bewegen. Bewegt sich nichts außer einer Folienzeile, kaufen Sie Narrativ.
 
-## Operative Effekte: messen, was Geld bewegt
+## Wie DBR77 Marketplace Finance und Engineering zusammenbringt
 
-Fokus auf Cash-Effekte, die Ihr Werk schon trackt: direkte Arbeitsminuten pro Stueck oder Charge; Ausschuss- und Nacharbeits-Bands; ungeplante Downtime-Minuten pro Monat; Verbrauchsmaterial und Tooling-Verschleiss.
+Strukturierter Angebotsvergleich lässt Finance Meilensteine, Service-Grenzen und kommerzielle Form mappen, ohne jedes PDF aus dem Gedächtnis zu rekonstruieren — sodass TCO-Gespräche dieselbe Sichtbarkeit erben wie technischer Scope.
 
-Automatisierung sollte mindestens einen Hebel aendern, den Sie beobachten koennen. Wenn kein Hebel im Modell bewegt, kaufen Sie Narrative.
+Der engste ökonomische Begleiter: [Was ein guter interner Business Case für Automatisierung sichtbar machen sollte](../39_what_a_good_internal_business_case_for_automation_should_make_visible/article_DE.md).
 
-## Stresstests, die zaehlen (drei schnelle)
+## TCO als funktionsübergreifendes Gespräch
 
-Sechsmonatiger SAT-Delay, weil Zugangsfenster rutschen; eine grosse Schnittstellen-Aenderung mit Software-Rework; Ersatzteil-Lead-Time im ersten Jahr verdoppelt sich gegen Plan. Das sind illustrative Stressoren. Waehlen Sie Stressoren passend zu echten Failure Modes Ihres Werks.
+Finance, Operations, Engineering und Procurement sollten das Modell gemeinsam gehen können — Zeile für Zeile — ohne versteckte Schalter. Versteht nur eine Funktion die Tabelle, hat die Organisation keine geteilte Entscheidung — einen temporären Waffenstillstand. Machen Sie das Modell langweilig: explizite Formeln, explizite Owner, explizite Evidenz.
 
-## Reality check: TCO bricht meist dort, wo ein Spreadsheet Lieferantenannahmen mit internem Wunschdenken vermischt
+Gehen Sie Annahmen an Gates zurück: nach Discovery, nach FAT, nach der ersten stabilen Produktionswoche. TCO ist nicht in Stein gemeißelt; es ist eine lebende Hypothese, die sich mit Evidenz verschärfen sollte.
 
-Das Modell kann trotzdem praezise aussehen. Zellen sind gefuellt. Diagramme sind sauber. Aber darunter:
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-- wird Uptime so modelliert, als ob Stabilisierung sofort passiert
-- werden Personaleinsparungen gezaehlt, bevor neue Support-Arbeit verstanden ist
-- werden Service- und Ersatzteilannahmen ohne Nachweis vom bevorzugten Bieter uebernommen
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Wie Sie die Total Cost of Ownership in Automatisierungsprojekten validieren“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-Das ist keine konservative Oekonomie. Das ist Praeferenz, verkleidet als Analyse.
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
 
-## Vergleichsregel bei mehreren Lieferanten
-
-Wenn Sie Lieferantenpfade vergleichen, einfrieren: dieselben operativen Annahmen fuer jeden Bieter; dieselben Uptime- und Downtime-Bands; dieselben Trainingsstunden, ausser ein Bieter dokumentiert eine andere verifizierbare Methode.
-
-Wenn jeder Vorschlag ein anderes Universum nutzt, ist TCO-Vergleich Theater.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace soll Sourcing-Chaos durch strukturierten Vergleich reduzieren. TCO-Validierung ist Vergleich fuer Oekonomie.
-
-Wenn Angebote Inklusionen, Meilensteine und Service-Grenzen zeigen, werden Finanzmodelle weniger fiktional. Marketplace ist kein Roboterkatalog.
-
-Es ist Workflow und Vertrauensschicht, die Herstellerentscheidungen mit inspizierbarer kommerzieller Struktur unterstuetzt.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
 ## Fazit
 
-Validieren Sie TCO, indem Sie Annahmen publizieren, Cash an Meilensteine binden und werksrealistische Schocks stresstesten. Ein Spreadsheet ohne Owner ist eine Geschichte. Ein Spreadsheet mit Ownern ist ein Entscheidungswerkzeug.
+TCO ist nur so ehrlich wie seine Annahmen. Machen Sie sie sichtbar, owned und gestresst — entscheiden Sie dann mit einem Modell, das Prüfung übersteht, nicht nur mit einer sortierbaren Spalte.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt strukturierten Angebotsvergleich, sodass Finance Cash, Meilensteine und Service-Grenzen mappen kann, ohne jedes PDF aus dem Gedächtnis zu rekonstruieren. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/demo).*

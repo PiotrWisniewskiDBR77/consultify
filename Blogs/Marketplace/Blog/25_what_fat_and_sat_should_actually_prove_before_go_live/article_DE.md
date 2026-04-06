@@ -1,89 +1,56 @@
-# Was FAT und SAT vor Go-Live wirklich beweisen sollten
+# Was FAT und SAT vor dem Go-Live wirklich beweisen sollten
 
-Target persona: Qualitaets- / Engineering-Manager (Hersteller-Owner)  
-Funnel stage: Decision bis Delivery-Handoff (Assurance vor Go-Live)  
-Core problem: FAT und SAT werden zu zeremoniellen Walkthroughs, die Papier unterschreiben, aber operatives Risiko nicht reduzieren  
-Main promise: ein hersteller-first Akzeptanz-Framework, das Evidenz an das koppelt, was in der ersten echten Produktionswoche wahr sein muss
+Zielpersona: Qualitäts- / Engineering-Manager (Eigentümer Herstellerseite)  
+Funnel-Stufe: Übergang Entscheidung zu Lieferung (Absicherung vor Go-Live)  
+Kernproblem: FAT und SAT driften zu zeremoniellen Walkthroughs, die Papier unterschreiben, aber operatives Risiko nicht reduzieren  
+Hauptversprechen: Ein manufacturer-first Abnahmerahmen, der Evidenz daran bindet, was in der ersten echten Produktionswoche wahr sein muss
 
-FAT und SAT sind keine Motivations-Events. Sie sind Risikokontrollen.
+Factory Acceptance Testing und Site Acceptance Testing sind keine Moralevents. Sie sind Controls. Sie scheitern, wenn Teams sie als Demos mit Zeugen, Fotomotive oder Checkbox-Übungen behandeln, losgelöst von Produktionsrealität. Sie funktionieren, wenn sie eine Frage mit Evidenz beantworten: Was würde uns verweigern, dies in Produktion zu fahren, und wie testen wir dafür, bevor wir die Linie committen?
 
-Sie scheitern, wenn Teams sie behandeln wie: eine Demo mit Zeugen; ein Fototermin; eine Checkbox aus einer Vorlage von 2014. Sie funktionieren, wenn sie eine Frage beantworten:
+FAT soll zeigen, dass das integrierte System vertragsdefinierte Abnahmekriterien unter lieferantenkontrollierten Bedingungen erfüllt, mit nachverfolgbaren Records gebunden an Requirements – nicht „es hat sich bewegt“-Optimismus.
 
-was wuerde uns verweigern, das in Produktion zu fahren, und wie testen wir das, bevor wir die Linie committen?
+SAT soll zeigen, dass dieselben Kriterien in Ihrem Werk halten: echte Schnittstellen, echte Materialien wo anwendbar, echtes Guarding und Lockout/Tagout-Praxis und echtes operatives Ownership. Wenn FAT Bewegung beweist und SAT Hoffnung beweist, haben Sie Theater gekauft.
 
-FAT soll beweisen, dass das integrierte System die vertragsdefinierten Akzeptanzkriterien unter lieferanten-kontrollierten Bedingungen mit nachvollziehbaren Records erfuellt.
+## Starten Sie mit Abnahmeobjekten, nicht Zeremonienterminen
 
-SAT soll beweisen, dass dieselben Kriterien in Ihrem Werkskontext mit echten Schnittstellen, echten Materialien wo relevant und echter Operations-Ownership gelten.
+Bevor Sie Räume und Flüge planen, listen Sie, was wahr sein muss: Sicherheitsfunktionen verhalten sich spezifiziert; Zyklus und Durchsatz liegen in einem vereinbarten Band unter einem definierten Lastmodell; Qualitätsoutputs erfüllen den Sampling-Plan; Fehlerbehandlung und Recovery funktionieren unter realistischen Faults; Daten- und MES-Handshakes übermitteln vereinbarte Messages; Dokumentation und Training lassen Operateure Standardarbeit fahren. Was nicht gelistet ist, wird nicht getestet – darüber wird später teurer gestritten.
 
-Wenn FAT "es bewegt sich" beweist und SAT "wir hoffen," haben Sie Theater gekauft.
+## Was ein ernsthaftes FAT liefert
 
-## Akzeptanzobjekte definieren, bevor Sie Termine planen
+Sie sollten FAT mit nachverfolgbaren Testaufzeichnungen, gemappt auf Requirement-IDs, einer Punchlist mit Ownern und Daten vor Versand, expliziten Notizen, was simuliert versus real ausgeführt wurde, und eingefrorenen Identifikatoren für Software- und Firmware-Builds verlassen. Schwache FATs handeln mit subjektivem „sieht gut aus“, beweglichen Zielen („wir tunen vor Ort“) und stillen Substitutionen in Tooling, Teilen oder Builds. Hersteller sollten diese Mehrdeutigkeit ablehnen.
 
-Starten Sie mit Objekten, nicht mit Zeremonien. Mindest-Akzeptanzobjekte (an Kategorie anpassen):
+## Was ein ernsthaftes SAT liefert
 
-| Objekt | FAT-Intent | SAT-Intent |
-| --- | --- | --- |
-| Safety-Funktionen | Verhalten beim Lieferanten verifiziert | Verhalten mit Werks-Guarding und LOTO-Realitaet |
-| Takt und Durchsatzband | unter vereinbartem Lastmodell demonstriert | mit Werks-Zufuehrungs-Constraints demonstriert |
-| Qualitaetsoutputs | gegen Sampling-Plan gemessen | gegen Werks-Metrologie und Normen gemessen |
-| Fehlerhandling und Recovery | scriptete Fault-Cases bestehen | operator-realistische Faults bestehen |
-| Daten und MES-Handshake | Schnittstellen bestehen vereinbarte Testmessages | Schnittstellen bestehen unter Werksnetzbedingungen |
-| Dokumentation und Training | O&M-Paket-Vollstaendigkeit | Operatoren koennen Standard Work ausfuehren |
+SAT bestätigt werks-spezifische Annahmen, schließt Lücken mit einem begrenzten Stabilisierungsfenster und messbaren Exit-Kriterien und erzeugt eine Übergabe, die sagt, was Tag eins supported ist versus spätere Verbesserungsphase. Schwache SATs unterschreiben Abnahme, während Verriegelungen „temporär“ umgangen werden, Optimierung unendlich verschoben wird oder Training Produktionsdruck geopfert wird.
 
-Wenn ein Objekt nicht gelistet ist, wird es nicht getestet. Es wird spaeter teurer debattiert.
+## Werkseitige Realität: „kleine Lücken“ sind nicht klein
 
-## FAT: was "pass" bedeuten soll
+Unter Müdigkeit und Zeitplandruck werden ungelöste Themen als Startup-Rauschen umbenannt. Wenn eine Lücke Sicherheit, Ownership, Wiederholbarkeit oder Recovery-Verhalten berührt, ist es kein Rauschen – es ist ungeschlossenes Risiko, das auf die erste echte Produktionswoche wartet.
 
-Ein nuetzliches FAT liefert: Punch-List mit Ownern und Terminen vor Versand; traceable Testrecords mit Requirement-IDs; explizite Exclusions (simuliert versus real).
+## Ein Drei-Fragen-Gate (nutzen Sie bei FAT und SAT)
 
-Ein schwaches FAT liefert: subjektive Meinungen ("sieht gut aus"); bewegliche Ziele ("wir tunen vor Ort"); versteckte Substitutionen (anderes Tooling, andere SKU, anderer Software-Build).
+Bevor Sie einen Abnahmeschritt unterschreiben, fragen Sie: erfüllt er geschriebene Kriterien mit vereinbarter Evidenz; sind bekannte Lücken mit Ownern, Daten und expliziter Risikoakzeptanz wo nötig dokumentiert; kann Operations Standardarbeit ohne heroische Intervention ausführen? Wenn die dritte Antwort nein ist, ist Go-Live eine Wette, keine Entscheidung.
 
-Hersteller sollten eingefrorene Build-IDs fuer Software und Firmware am FAT bestehen.
+## Wann pausieren
 
-## SAT: was "pass" bedeuten soll
+Pausieren Sie, wenn Scope-Änderungen als lockere Tweaks ohne Change Control ankommen, Testmaterialien unrepräsentativ und undokumentiert sind, Site-Personal nicht zum Testplan passt oder interne Owner (Instandhaltung, IT, Qualität) fehlen, sodass Defekte kein Zuhause haben. Pausieren ist billiger als Nacharbeit auf einer laufenden Linie.
 
-Ein nuetzlicher SAT liefert: Bestaetigung, dass werks-spezifische Annahmen gehalten haben; ein begrenztes Stabilisierungsfenster mit messbaren Exit-Kriterien; eine signierte Uebergabe, was ab Tag eins supported ist versus Phase-zwei-Verbesserung.
+## Wie DBR77 Marketplace zurückbindet
 
-Ein schwacher SAT liefert: "wir optimieren nach Start"; Abnahme unterschrieben waehrend Interlocks "temporaer" umgangen werden; Training verschoben, weil Produktionsdruck gewinnt.
+Abnahmedisziplin sollte zurückverfolgen, was vor der Vergabe verglichen, vertraglich gefasst und versprochen wurde. Das hält FAT und SAT an Buying-Logik gebunden statt sie als losgelöste Rituale schweben zu lassen.
 
-## Reality check: Abnahme bricht meist dort, wo das Werk offene Punkte als beherrschbares Anlaufrauschen behandelt
+Kontinuität zwischen Vertrag und Ausführungsübergabe: [Was vor der Unterzeichnung eines Automatisierungsvertrags zu prüfen ist](../20_what_to_check_before_signing_an_automation_contract/article_DE.md) und [Wie eine saubere Übergabe von Auswahl zu Lieferung aussehen sollte](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_DE.md).
 
-Genau deshalb koennen schwache SATs sich operativ noch normal anfuehlen. Die Leute sind muede. Die Linie ist fast bereit. Der fehlende Punkt klingt klein. Aber wenn eine bekannte Luecke Safety, Ownership, Wiederholbarkeit oder Recovery-Verhalten betrifft, ist sie kein Anlaufrauschen.
+## Abnahme als Vertrag mit dem Shopfloor
 
-Sie ist ungeschlossener Risk, der auf die erste echte Produktionswoche wartet.
+FAT und SAT sind, wo abstrakter Scope gelebte Realität wird. Operateure sollten die Tests als ihre Welt erkennen: echtes Guarding, echte Materialien wo anwendbar, echte Recovery-Szenarien, echte Datenpfade. Wenn Tests „nah genug“ sind, validieren Sie nicht Produktion – Sie validieren eine Story. Dieser Unterschied zeigt sich beim ersten Lauf unter Kundendruck.
 
-## Ein einfaches Pass-Fail-Gate (drei Fragen)
-
-Nutzen Sie dieselben drei Fragen bei FAT und SAT:
-
-1. Erfuellt es die geschriebenen Akzeptanzkriterien mit vereinbarter Evidenz?
-2. Sind bekannte Luecken dokumentiert mit Ownern, Daten und Risikoakzeptanz wo noetig?
-3. Koennen Operations Standard Work ohne heroische Intervention fahren?
-
-Wenn Frage drei "nein" ist, ist Go-Live eine Wette, keine Entscheidung.
-
-## Wann FAT oder SAT pausieren
-
-Pausieren Sie, wenn: Scope-Aenderungen als "kleine Tweaks" ohne Change Control kommen; Testmaterial nicht repraesentativ ist und niemand die Substitution dokumentiert; Integrator-Besetzung vor Ort nicht zum Plan passt und kritische Tests ausfallen; interne Owner fehlen (Maintenance, IT, Quality) und Defekte verwaist sind. Pausieren ist kein Drama. Es ist guenstiger als Rework auf einer live Linie.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace soll Automatisierungseinkauf inspizierbar machen: klarere Angebote, klarerer Vergleich, klarere Accountability.
-
-Akzeptanzdisziplin ist der Moment, in dem klare Angebote klare Realitaet werden.
-
-Wenn kommerzielle Modelle und Scope frueh vergleichbar sind, sind Akzeptanzkriterien schwerer in Fussnoten zu verstecken. Marketplace ist kein Roboterkatalog.
-
-Es ist Workflow und Vertrauensschicht, die Herstellerentscheidungen durch Auswahl, Vergleich und Lieferrealitaet unterstuetzt.
+Gute Abnahmedisziplin schützt auch Lieferanten, die korrekt gearbeitet haben. Wenn Kriterien explizit sind, können starke Performer Completion ohne endlose Meinungskämpfe belegen. Schwache Kriterien bestrafen alle, indem sie Completion in Verhandlung verwandeln.
 
 ## Fazit
 
-FAT beweist das integrierte System gegen Vertragskriterien mit nachvollziehbaren Records.
-
-SAT beweist dieselben Kriterien in Ihrem Werkskontext mit Operations-Ownership.
-
-Wenn Akzeptanz spaet definiert wird, zahlen Sie fuer Mehrdeutigkeit in der ersten Produktionswoche.
+FAT beweist integrierte Performance gegen Vertragskriterien mit Records. SAT beweist dasselbe in Ihrem Kontext mit operativem Ownership. Definieren Sie Abnahme früh – oder zahlen Sie für Mehrdeutigkeit in der ersten echten Produktionswoche.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace hilft Herstellern, Scope, Schnittstellen und Accountability früh sichtbar zu halten, damit Abnahmekriterien schwerer in die Go-Live-Woche verschoben werden können. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

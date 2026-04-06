@@ -1,47 +1,46 @@
-# Was ein wiederverwendbares Fabrik-Annahme-Ledger enthalten sollte
+# Was ein wiederverwendbares Fabrik-Annahmen-Ledger enthalten sollte
 
-Target persona: Digital-Twin-Steward / Industrieingenieur, der modelluebergreifende Wahrheit haelt  
-Funnel stage: Adoption  
-Core problem: Annahmen leben in Fussnoten und Chats, sodass jedes neue Szenario Streit darueber neu startet, was "letztes Mal vereinbart" war  
-Main promise: ein kompaktes Ledger-Muster, das Digital Twin zu einem nachvollziehbaren Entscheidungssystem ueber Gates und Refreshes macht
+Zielpersona: Digital-Twin-Steward / Industrial Engineer, der modellübergreifende Wahrheit pflegt  
+Funnel-Stufe: Adoption
+Kernproblem: Annahmen leben in Folien-Fußnoten und privaten Chats – jedes neue Szenario startet Debatten darüber, was „letztes Mal vereinbart“ war  
+Hauptversprechen: ein kompaktes Ledger-Muster, das Digital Twin zu einem nachvollziehbaren Entscheidungssystem über Gates und Refreshes hinweg macht
 
-ein wiederverwendbares Fabrik-Annahme-Ledger sollte Parametername, Wert oder Band, Evidenzgrad (verifiziert, illustrativ, Hypothese), Quelle oder Owner, letztes Verifikationsdatum, Szenarien und Gate-Memos, die davon abhaengen, und einen Aenderungslog-Eintrag bei jeder Bewegung enthalten. Strukturieren Sie es so, dass Finance Baender lesen kann, Operations Bodenwahrheit schnell anfechten kann und Engineering Strukturwirkungen mappen kann. Digital Twin ist ein Szenario-Testumfeld; das Ledger haelt Szenarien im Laufe der Zeit ehrlich. Annahmen sind Verbindlichkeiten. Behandeln Sie sie wie kontrollierte Dokumente, nicht wie Meinungen.
+Stellen Sie sich die Woche vor einem Layout- oder Kapazitäts-Gate vor: Finance zitiert eine Durchsatz-Spanne aus einem älteren Memo, Operations sagt, der Shopfloor hat sich längst verschoben, und Engineering öffnet eine Tabelle, die niemand sonst wiedererkennt. Niemand handelt in böser Absicht – man streitet aus unterschiedlichen Erinnerungen an dieselben Inputs. Ein wiederverwendbares Fabrik-Annahmen-Ledger soll genau diese Mehrdeutigkeit reduzieren. Es ist der schmale, gemeinsame Datensatz, den jedes Szenario zitieren muss, bevor es CAPEX, Footprint oder Intralogistik lenken darf.
 
-## Ledger-Felder: minimale Zeile
+Ein wiederverwendbares Fabrik-Annahmen-Ledger sollte Parametername, Wert oder Band, Evidenz-Grade – verifiziert, illustrativ oder Hypothese – Quelle oder Owner, letztes Verifikationsdatum, Szenarien und Gate-Memos, die davon abhängen, und einen Change-Log-Eintrag bei jeder Bewegung enthalten. Strukturieren Sie es so, dass Finance Spannen lesen kann, Operations Shopfloor-Wahrheit schnell herausfordern und Engineering Struktur-Impacts mappen kann. Das Ledger ersetzt kein Urteil; es macht die Inputs fürs Urteil lesbar, damit dasselbe Stress-Pack neu gefahren werden kann, wenn die Realität driftet.
 
-| Feld | Zweck |
-|---|---|
-| Parameter | was das Modell konsumiert |
-| Band oder Punkt | numerisches Band oder Einzelwert mit Unsicherheitshinweis |
-| Evidenzgrad | verifiziert / illustrativ / Hypothese |
-| Owner | wer diese Woche Fragen beantwortet |
-| Quelle | System, Studie oder Studienname |
-| Abhaengige | Szenario-IDs, Gate-Memo-Links |
-| Aenderungshistorie | datierte Notiz bei Wert- oder Gradwechsel |
+Digital Twin ist Szenario-Testumgebung; das Ledger ist, wie Szenarien über Zeit ehrlich bleiben. Annahmen sind Verbindlichkeiten. Behandeln Sie sie wie kontrollierte Dokumente – nicht wie lockere Meinungen. Wenn eine Zeile wechselt, muss jedes abhängige Szenario entweder refreshen oder sein altes Ranking pensionieren; das ist das Governance-Bindeglied zwischen Modellierungsdetail und Kapitaldisziplin.
 
-## Was ueber Zykluszeiten hinaus gehoert
+## Minimum viable row
 
-Personal- und Skill-Mix-Verfuegbarkeit nach Schichtmodell; Eingangsvorlaufverhalten und Losgroessenregeln; Qualitaet, Ausbeute und Rework-Treiber, die effektive Kapazitaet aendern; Wartungs- und Ruestregeln, die Ressourcenkalender aendern; Lager- und Handling-Grenzen, die Flusspfade aendern.
+Parameter: was das Modell konsumiert. Band oder Punkt: numerisches Intervall oder Einzelwert mit Unsicherheitsnote. Evidenz-Grade: verifiziert, illustrativ oder Hypothese. Owner: wer diese Woche Fragen beantwortet. Quelle: System, Studie oder Studienname. Dependents: Szenario-IDs, Gate-Memo-Links. Change History: datierte Notiz, wenn Wert oder Grade wechselt.
 
-## Checkliste: Ledger-Gesundheit vor einem grossen Gate
+Halten Sie Zeilen kurz genug für einen Gate-Scan und reich genug für eine Audit-Frage. Wenn eine Zeile nicht beantworten kann, „wer trägt das, wenn es falsch ist“, ist sie noch nicht unterschriftsreif.
 
-- [ ] keine stillen Punkta Schaetzer, wo Baender bekannt sind  
-- [ ] jede Hypothesenzeile hat Kill-Datum oder Verifikations-Owner  
-- [ ] abhaengige Szenarien werden markiert, wenn sich eine Zeile aendert  
-- [ ] Finance-Freigabezeilen passen zur Sprache im CAPEX-Memo
+## Jenseits von Zykluszeiten
 
-## Was Digital Twin hier aendert
+Inkludieren Sie Personal- und Skill-Mix-Verfügbarkeit nach Schichtmuster; eingehendes Lead-Time-Verhalten und Losgrößen-Regeln; Qualität, Ausbeute und Nacharbeit-Treiber, die effektive Kapazität ändern; Maintenance- und Rüst-Policies, die Ressourcen-Kalender verschieben; Lager- und Handling-Limits, die Flusspfade ändern.
 
-Digital Twin skaliert, wenn Annahmen skalieren. Das Ledger ist das geteilte Gedaechtnis des Entscheidungssystems.
+In diesen Kategorien versteckt sich typischerweise Brownfield-Realität. Ein Layout, das auf Papier großzügig wirkt, bricht, wenn Paletten nicht puffern dürfen, wenn Abwesenheiten die real machbare Besetzung verschieben oder wenn Lieferanten sich nicht wie der Held aus der Tabelle verhalten. Das Ledger zwingt diese Spannungen in benannte Bänder, bevor sie teure Überraschungen auf dem Shopfloor werden.
 
-## Was DBR77 Digital Twin ergaenzt
+## Ledger-Gesundheit vor einem großen Gate
 
-DBR77 Digital Twin unterstuetzt praxisnahen Szenariovergleich und Refresh-Disziplin, die natuerlich zu Annahmen-Governance passt.
+Keine stillen Punkt-Schätzungen, wo Bänder bekannt sind. Jede Hypothese-Zeile hat Kill-Datum oder Verifikations-Owner. Abhängige Szenarien flaggen, wenn eine Zeile wechselt. Finance-Sign-off-Zeilen matchen die Sprache im CAPEX-Memo.
 
-## Bottom line
+Behandeln Sie „Ledger-Gesundheit“ als Executive-Pre-Read: Wenn kritische Zeilen noch Hypothese ohne Owner sind, bitten Sie Leadership um eine Wette auf Hoffnung. Wenn Finance und Operations dieselben Spannen nicht in Memo und Modell wiedererkennen, sind Sie nicht bereit, Optionen zu vergleichen – Sie sind bereit, Folien zu vergleichen.
 
-Wenn Sie nicht auf eine Zeile zeigen koennen, koennen Sie ein Ranking nicht verteidigen. Bauen Sie das Ledger einmal, nutzen Sie es ueber Projekte hinweg.
+## Wie das Ledger Layout- und CAPEX-Gespräche verändert
+
+Wenn Annahmen an einem Ort leben, verschiebt sich das Gespräch von „wer erinnert sich an was“ zu „was müsste wahr sein, damit eine Option attraktiv bleibt“. Das ist der Unterschied zwischen Streit über Personen und Vergleich von Szenarien. Layout-Teams sehen, welche physischen Grenzen als harte Limits modelliert sind und welche als weiche Bänder. CAPEX-Foren sehen, welche Investitionen an einem einzelnen optimistischen Punkt hängen und welche an einer verteidbaren Spanne.
+
+## Was DBR77 Digital Twin ergänzt
+
+DBR77 Digital Twin verheiratet Szenario-Refresh mit Zeilen-Governance der Annahmen, damit Finance, Operations und Engineering an jedem Gate dieselben Bänder zitieren.
+
+## Kurz gesagt
+
+Wenn Sie nicht auf eine Zeile zeigen können, können Sie ein Ranking nicht verteidigen. Bauen Sie das Ledger einmal; verwenden Sie es über Projekte hinweg.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/digital-twin) oder [Digital Twin erkunden](https://dbr77.com/demo).*
+*DBR77 Digital Twin passt zu Teams, die wiederholbare Szenario-Packs und nachvollziehbare Inputs über mehrere CAPEX-Zyklen wollen. [Demo buchen](https://dbr77.com/digital-twin) oder [Digital Twin erkunden](https://dbr77.com/demo).*

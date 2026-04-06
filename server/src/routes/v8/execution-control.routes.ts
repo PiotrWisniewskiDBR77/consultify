@@ -34,6 +34,10 @@ import {
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
 } from '../../services/v8ExecutionControlTowerService.js';
 import { getCapacityTimeline, getLevelingAlerts } from '../../services/workloadCapacityService.js';
+import {
+  applyManagerSuggestion,
+  executeManagerProblemAction,
+} from '../../services/v8/managerActionExecutionService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 
@@ -1110,6 +1114,15 @@ const LaneDecisionSchema = z.object({
   notes: z.string().optional(),
 });
 
+const ManagerProblemActionSchema = z.object({
+  problemId: z.string().min(1),
+  actionId: z.string().min(1),
+});
+
+const ManagerSuggestionApplySchema = z.object({
+  suggestionId: z.string().min(1),
+});
+
 const LaneExecuteSchema = z.object({
   decisionId: z.string().min(1),
 });
@@ -1134,6 +1147,63 @@ router.get(
     return res.json({
       data: { problems, count: problems.length },
       meta: executionControlMeta(),
+    });
+  })
+);
+
+router.post(
+  '/manager/lanes/:laneId/problem-actions/execute',
+  validateBody(ManagerProblemActionSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const { problemId, actionId } = req.body;
+    const result = await executeManagerProblemAction({
+      organizationId,
+      userId,
+      laneId,
+      problemId,
+      actionId,
+      projectId,
+    });
+    return res.json({
+      data: result,
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+router.post(
+  '/manager/lanes/:laneId/suggestions/apply',
+  validateBody(ManagerSuggestionApplySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const laneId = String(req.params.laneId);
+    if (!VALID_LANES.has(laneId)) {
+      return res.status(400).json({
+        error: `Invalid laneId: ${laneId}`,
+        code: 'MANAGER_LANE_INVALID',
+      });
+    }
+    const projectId = firstQueryString(req.query.projectId);
+    const { suggestionId } = req.body;
+    const result = await applyManagerSuggestion({
+      organizationId,
+      userId,
+      laneId,
+      suggestionId,
+      projectId,
+    });
+    return res.json({
+      data: result,
+      meta: executionControlMutationMeta(),
     });
   })
 );
@@ -1176,14 +1246,26 @@ router.post(
       return res.status(400).json({ error: 'Invalid lane', code: 'MANAGER_LANE_INVALID' });
     }
     const { suggestionId, state, notes } = req.body;
-    const id = `ldec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let decisionId = `ldec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     try {
+      const existing = await dbAll<{ id: string }>(
+        `SELECT id
+         FROM lane_decisions
+         WHERE organization_id = ? AND lane_id = ? AND suggestion_id = ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [organizationId, laneId, suggestionId]
+      );
+      if (existing[0]?.id) {
+        decisionId = existing[0].id;
+      }
+
       await dbRun(
         `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
-        [id, organizationId, laneId, suggestionId, state, userId, notes || null]
+        [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null]
       );
     } catch {
       // table may not exist — create it on the fly
@@ -1201,15 +1283,26 @@ router.post(
           updated_at TIMESTAMPTZ DEFAULT NOW()
         )
       `, []);
+      try {
+        await dbRun(
+          `CREATE UNIQUE INDEX IF NOT EXISTS lane_decisions_org_lane_suggestion_idx
+           ON lane_decisions (organization_id, lane_id, suggestion_id)`,
+          []
+        );
+      } catch {
+        // best effort for older DBs
+      }
       await dbRun(
         `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-        [id, organizationId, laneId, suggestionId, state, userId, notes || null]
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+         ON CONFLICT (organization_id, lane_id, suggestion_id)
+         DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
+        [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null]
       );
     }
 
     return res.json({
-      data: { success: true, decisionId: id },
+      data: { success: true, decisionId },
       meta: executionControlMutationMeta(),
     });
   })

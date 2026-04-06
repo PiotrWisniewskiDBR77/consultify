@@ -1,45 +1,53 @@
-# Jak porownywac resilience, nie tylko throughput, w factory scenarios
+# Jak porównywać odporność, a nie tylko przepustowość, w scenariuszach fabryki
 
-Target persona: operations director / supply chain lead stress-testing footprint i flow choices  
-Funnel stage: Evaluation  
-Core problem: scenario reviews optimize average output podczas gdy fragility under disruption, mix swings i recovery time zostaje invisible az do crisis  
-Main promise: resilience lens ktory siedzi beside throughput zeby Digital Twin zostawal decision system dla real operating risk
+Docelowa persona: dyrektor operacji / lider łańcucha dostaw testujący decyzje o układzie i przepływie  
+Etap lejka: Evaluation
+Główny problem: przeglądy scenariuszy optymalizują średni output, podczas gdy kruchość przy zakłóceniach, wahaniach mixu i czasie powrotu do normy zostaje niewidoczna aż do kryzysu  
+Główna obietnica: soczewka odporności obok przepustowości, by digital twin pozostał systemem decyzyjnym dla realnego ryzyka operacyjnego
 
-**Bezposrednia odpowiedz:** compare resilience w factory scenarios przez adding explicit disruption i recovery stories do standard stress pack, measuring time-to-recover service levels, buffer burn rates under supplier delay i constraint migration gdy one station fails, nie tylko steady-state throughput. Rank options przez how they behave under same bad weeks, nie przez their best sunny hour. Digital Twin to scenario-testing environment dla layout, flow i CAPEX, nie 3D showcase tuned do one KPI curve. Peak throughput to vanity metric. Resilience to invoice ktory placisz w wrong Tuesday.
+Większość decków bramkowych nadal nagłówkuje przepustowość w stanie ustalonym. To zrozumiałe – przepust łatwo wytłumaczyć w korytarzu. To też niekompletne. Wybór footprintu lub layoutu, który wygrywa w spokojnym tygodniu, może resztę roku spędzać na przeprosinach, gdy przyjęcia się chwieją, pada kluczowe stanowisko albo mix zmienia się szybciej niż plan. Odporność to historia tego, jak szybko wracają poziomy serwisu, dokąd migruje ograniczenie pod stresem i ile buforu spalasz w drodze do powrotu.
 
-## Resilience dimensions do score rownolegle z throughput
+Porównuj odporność w scenariuszach fabryki, dodając jawne historie zakłóceń i powrotu do standardowego pakietu stresu, mierząc czas do przywrócenia poziomów serwisu, tempo spalania buforów przy opóźnieniu dostawcy oraz migrację wąskiego gardła przy awarii stanowiska – nie tylko ustalony przepust. Rankuj opcje według zachowania w tych samych złych tygodniach, a nie według najlepszej słonecznej godziny.
 
-**time to recover** named service target po shock; **constraint migration:** gdzie bottleneck moves under failure albo absenteeism; **inventory i WIP exposure** gdy inbound slips albo quality spikes; **flex staffing feasibility** zeby cover variance bez overtime collapse; **optionality:** jak szybko mozesz re-route albo rebalance z existing assets. Label kazdy dimension z evidence grade gdy data jest thin.
+Digital twin to środowisko testów scenariuszy dla layoutu, przepływu i CAPEX – nie krzywa bohaterskiego przepustu, która ukrywa, jak złe tygodnie odczuwa hala. Szczytowy przepust może schlebiać; odporność to rachunek, który przychodzi w złym momencie tygodnia.
 
-## Framework: resilience scorecard (illustrative)
+## Wymiary odporności obok przepustowości
 
-| Scenario story | Throughput outcome | Recovery time | Constraint shift | Risk note |
-|---|---|---|---|---|
-| base | rank options | tie-breaker | stable | low |
-| supplier slip | rank options | primary | watch migration | medium |
-| station outage | rank options | primary | primary | high |
+Czas do przywrócenia nazwanego celu serwisu po szoku. Migracja wąskiego gardła przy awarii lub nieobecnościach. Ekspozycja na zapasy i WIP, gdy przyjęcia się posuwają lub jakość skacze. Wykonalność elastycznej obsady na zmienność bez załamania nadgodzin. Opcyjność: jak szybko możesz przekierować lub zbalansować istniejącymi zasobami. Etykietuj wymiary stopniem evidencji, gdy dane są cienkie.
 
-Uzyj samej table dla kazdej option zeby comparisons zostaly fair.
+Nie chodzi o przewidzenie każdego zakłócenia; chodzi o wymuszenie, by opcje pokazały kształt pod wiarygodnym napięciem. Ten kształt rozpozna operacja, gdy zniknie arkusz.
 
-## Checklist: twoj stress pack jest resilience-aware
+## Wzorzec karty wyników odporności
 
-- [ ] co najmniej jeden disruption story jest non-negotiable w pack  
-- [ ] recovery jest defined jako measurable target, nie feeling  
-- [ ] sensitivity covers absenteeism albo skill mix jesli labor jest constraint  
-- [ ] finance widzi jak resilience metrics tie do working capital i service penalties
+Używaj tej samej tabeli dla każdej opcji, by porównania były sprawiedliwe: historia scenariusza, wynik przepustowości, czas powrotu, przesunięcie ograniczenia, nota ryzyka. Przypadek bazowy może rankować opcje z tie-breakerem w postaci powrotu. Historie poślizgu dostawcy i awarii stanowiska często wynoszą powrót i migrację na pierwszy plan odczytu.
 
-## Co Digital Twin zmienia tutaj
+Trzymaj język zrozumiały dla kierownictwa: „opcja A wygrywa średnie godziny; opcja B wraca dwie zmiany szybciej, gdy pada stanowisko 3” to decyzja, nie seminarium.
 
-Digital Twin pozwala leadership zobaczyc ktory layout jest brittle zanim brittle week arrives.
+## Kontrole odporności pakietu stresu
+
+Co najmniej jedna historia zakłócenia w pakiecie jest obowiązkowa. Powrót zdefiniowany jako mierzalny cel – nie uczucie. Wrażliwość obejmuje nieobecności lub mix kompetencji, gdy praca jest ograniczeniem. Finanse widzi, jak metryki odporności wiążą się z kapitałem obrotowym i karami za serwis.
+
+Jeśli finanse widzi tylko przepustowość, wybory kapitałowe będą optymalizować złą pogodę. Kapitał obrotowy i ekspozycja serwisowa należą do tej samej ramy co szkic layoutu.
+
+## Konsekwencje dla CAPEX i footprintu
+
+Różnice w odporności zmieniają, ile buforu musisz sfinansować, jak sztywna staje się linia przy wariancji mixu i czy tańszy layout kupuje kruchą sieć. To koszty sąsiadujące z CAPEX nawet wtedy, gdy od razu nie widać ich w stali i betonie.
+
+
+## Governance pasujące do tempa fabryki
+
+Dobre governance dopasowuje się do zegara zakładu. Comiesięczne przeglądy operacyjne powinny traktować ryzyko do przodu jako pełnoprawnego obywatela agendy, nie jako dodatek, gdy skończą się slajdy. Fora kapitałowe powinny traktować ID scenariuszy i stopnie założeń jako część artefaktu akceptacji, nie jako przypis modelarza. Przeglądy po inwestycji powinny odnaleźć baseline historii, którą sfinansowano, i sprawdzić, czy rzeczywistość odbiegła w sposób zmieniający następną transzę.
+
+Gdy własność jest jasna – kto utrzymuje strukturę, kto certyfikuje prawdę hali, kto podpisuje pakiety scenariuszy – zdarzenia odświeżenia przestają być osobistymi przysługami i stają się przewidywalnym utrzymaniem. Tak digital twin przetrwa rotację: następny steward dziedziczy szablony, pakiety i rejestry zamiast dziedziczyć ustne mity. Jeśli program nie przetrwa zmiany kierownictwa, to wciąż projekt, nie infrastruktura.
 
 ## Co dodaje DBR77 Digital Twin
 
-DBR77 Digital Twin wspiera practical scenario comparison zeby resilience stories siedzialy w tym samym workflow co throughput comparisons.
+DBR77 Digital Twin trzyma historie zakłóceń i powrotu w tej samej ramie porównania co nagłówkowy przepust, by kruche opcje nie chowały się za średnimi.
 
-## Bottom line
+## Podsumowanie
 
-Jesli kazda option wygrywa on average i przegrywa inaczej under stress, average to wrong judge. Compare bad weeks on purpose.
+Jeśli każda opcja wygrywa w średniej, a inaczej przegrywa pod stresem, średnia jest złym sędzią. Porównuj złe tygodnie świadomie.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*
+*DBR77 Digital Twin pomaga trzymać historie zakłóceń w tym samym przepływie porównań co scenariusze przepustowości. [Umów demo](https://dbr77.com/digital-twin) lub [Poznaj Digital Twin](https://dbr77.com/demo).*

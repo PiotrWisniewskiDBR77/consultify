@@ -5,57 +5,59 @@ Funnel stage: Consideration
 Core problem: overrides accumulate silently, audits discover them late, and operators learn that bypass is easier than fixing the underlying signal or process  
 Main promise: a review rhythm: what gets logged, how expiries work, who approves extensions, and how reviews tie to standards and training
 
-Overrides are not shameful. Unreviewed overrides are operational debt. IoT makes bypass visible. Governance decides whether visibility becomes learning or conflict.
+Overrides are a normal part of running real equipment under time pressure. They become toxic when they live in the shadows.
 
-Review operator overrides on a **fixed calendar** with three outputs: close with confirmation that the machine and standards are safe; extend with a named approver, new expiry, and documented reason; remove the bypass path by fixing signal quality, interlock logic, or training. If overrides never expire, you do not have a workflow. You have a hidden culture.
+IoT makes bypass visible—sometimes for the first time. That visibility can spark conflict unless governance is calm and predictable. The goal is not to shame operators for keeping the line safe; it is to ensure every bypass becomes either a closed loop or a time-bound exception with an owner.
 
-## Framework: override record fields
+Overrides are often the right short-term answer in brownfield reality. The failure mode is when short-term becomes invisible long-term.
 
-Every override record should include at minimum:
+## What unreviewed overrides cost
 
-- asset, line, and shift
-- operator identity and supervisor acknowledgment where required
-- start time, expiry time, and maximum allowed duration by policy
-- reason code tied to a finite list, not free-text novels
-- link to related maintenance or engineering ticket when applicable
+Auditors find months of silent bypass. Maintenance discovers interlock logic nobody documented. Engineers spend weekends reconstructing why a line behaved “strangely” during a customer week. Operators learn that the informal path is easier than reporting a bad sensor—because reporting did not fix anything last time.
 
-Free text belongs in the ticket narrative, not as the only governance field.
+## Minimum fields every override record needs
 
-## Comparison: blame review versus learning review
+Capture who initiated the override, start and end time, asset and production context, reason class, approver when policy requires one, and links to any related work order or tuning ticket. Thin records produce thick arguments later.
 
-| Blame review | Learning review |
-|---|---|
-| focuses on who | focuses on what failed in the system |
-| hides future overrides | makes bypass expensive in time, not in fear |
-| pits safety against output | ties both to standards |
-| erodes trust | improves signal quality |
+## Put reviews on a calendar, not on mood
 
-## Step sequence: monthly override review
+Use a fixed rhythm—weekly for active pilots, monthly for stable operations—with three outcomes only: close after confirming safety and standards are satisfied; extend with a named approver, new expiry, and documented reason; remove the bypass by fixing signal quality, interlock logic, training, or material conditions.
 
-Export overrides that were active any day in the month, including expired items; Sort by repeat assets and repeat reason codes; Pick top five patterns for a 45-minute cross-functional review; Assign owners: signal fix, procedure fix, training fix, or interlock redesign; Publish decisions in the plant communication channel operators actually read.
+If overrides never expire, you do not have workflow. You have a hidden culture that will eventually collide with safety, quality, or a customer audit.
 
-## Checklist: align overrides to standards
+## Tie patterns back to standards
 
-- [ ] safety interlocks follow non-negotiable policy written with EHS
-- [ ] quality-critical overrides require quality role acknowledgment where required
-- [ ] extensions require supervisor or engineering per policy, not peer-to-peer
-- [ ] expired overrides trigger automatic escalation or machine state lock per plant rules
-- [ ] training updates happen when the same override reason repeats across shifts
+Repeating overrides often reveal unclear SOPs, unrealistic thresholds, sensors that disagree with the floor, or training gaps. Use the review to assign engineering and training work—not only to police people. Operators should see closures in public; that is how trust returns.
 
-## Signal quality connection
+**Override trust checklist:** every bypass logged; expiries mandatory; extensions require approvers; reviews happen on calendar; repeat patterns spawn fixes, not only conversations.
 
-Many overrides exist because the plant does not trust the automation path.
+## Tie overrides to training, not only to discipline
 
-Treat repeat overrides as **signal quality tickets**, not only discipline tickets.
+When the same override reason repeats, assume the system or SOP is unclear before assuming the operator is careless. Overrides are sometimes the true voice of the standard work.
 
-Override review connects back to action classification in [what machine data should trigger action and what should not](../23_what_machine_data_should_trigger_action_and_what_should_not/article_EN.md), alarm tuning in [how to reduce false alarms in IIoT systems](../28_how_to_reduce_false_alarms_in_iiot_systems/article_EN.md), closed-loop discipline in [when to expand from visibility to closed-loop response](../29_when_to_expand_from_visibility_to_closed_loop_response/article_EN.md), and floor alert culture in [why IIoT alerts fail on the shop floor and what works instead](../19_why_iiot_alerts_fail_on_the_shop_floor_and_what_works_instead/article_EN.md).
+## DBR77 IoT and visible bypass
 
-## What this means for DBR77 IoT
+DBR77 IoT supports mature workflows when overrides are logged, reviewable, and connected to corrective actions—signal fixes, playbook updates, training—rather than normalized silence.
 
-DBR77 IoT should log override start, expiry, reason code, and supervisor acknowledgment where policy requires, with events visible at the asset so monthly reviews become signal fixes and training updates, not only audits.
+Review overrides like any other operational debt: visible, expiring, owned. That is how bypass becomes learning instead of drift.
 
-The same record shape should apply across machine vintages once connectivity is in place.
 
-## Bottom line
 
-Review overrides like you review **near misses**: on a schedule, with owners, and tied to standards. Visibility without review becomes politics. Visibility with review becomes improvement.
+
+## Keep the article’s promise practical
+
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
+
+## A leadership checkpoint for the next ops review
+
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT makes operator overrides visible and reviewable so plants fix signals, training, and logic instead of normalizing bypass. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

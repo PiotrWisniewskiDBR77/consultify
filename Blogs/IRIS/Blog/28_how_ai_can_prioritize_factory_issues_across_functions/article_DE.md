@@ -1,54 +1,40 @@
-# Wie KI Fabrikthemen funktionsuebergreifend priorisieren kann
+# Wie KI Fabrikthemen über Funktionen hinweg priorisieren kann
 
-Target persona: Werksleiter / Operations Excellence Lead  
-Funnel stage: Consideration  
-Core problem: funktionsuebergreifende Themen konkurrieren mit unterschiedlicher Sprache um Aufmerksamkeit, und das Werk verliert Zeit mit Dringlichkeitsstreit statt Ausfuehrung  
-Main promise: eine pragmatische Methode, Signale zu buendeln, eine transparente Rubrik anzuwenden und priorisierte Arbeit mit menschlicher Bestaetigung an definierten Schwellen zu routen
+Zielpersona: Plant Manager / Leiter Operations Excellence  
+Funnel-Stufe: Consideration  
+Kernproblem: Funktionsübergreifende Themen konkurieren um Aufmerksamkeit mit verschiedenen Sprachen, und das Werk verliert Zeit mit Dringlichkeitsstreit statt Ausführung  
+Hauptversprechen: Eine praktische Methode, Signale zu kombinieren, eine transparente Matrix anzuwenden und priorisierte Arbeit mit menschlicher Bestätigung an definierten Schwellen zu routen
 
-KI kann Fabrikthemen funktionsuebergreifend priorisieren, indem sie Signale in ein gemeinsames Arbeitspaket-Modell normalisiert, mit einer expliziten Rubrik bewertet (Schwere, Kundenimpact, Sicherheit, Stillstandsrisiko) und priorisierte Warteschlangen routet, wobei menschliche Bestaetigung fuer hochwirksame Aenderungen reserviert bleibt.
+Funktionsübergreifende Priorisierung ist oft ein politischer Prozess im technischen Gewand. Produktion, Qualität, Instandhaltung und Logistik sprechen jeweils plausibel Dringlichkeit. Ohne gemeinsame Grammatik verliert das Werk Minuten und Stunden mit der Debatte, welches Feuer am heißesten ist—während die Linie zahlt. KI hilft nur, wenn Politik sichtbar und regelbasiert wird: gemeinsamer Intake, explizite Bewertungsdimensionen und geroutetes Follow-up, das als besessene Arbeit landet.
 
-Priorisierung ist ein politischer Prozess, der sich als technischer tarnt. KI hilft nur, wenn Politik sichtbar und regelbasiert wird.
+Beginnen Sie mit normalisiertem Intake, damit Themen vergleichbar werden. Funktionen beschreiben Schmerz unterschiedlich; Assistenz beginnt mit Struktur—gemeinsame Pflichtfelder, gemeinsame Schwere-Skala, explizite Links zu Anlage, Auftrag, Kunde oder Charge wo möglich. Freitext-only-Intake liefert beeindruckende Zusammenfassungen und schwache Priorisierung, weil das Werk nicht ranken kann, was es nicht vergleichbar gemacht hat.
 
-## Schritt 1: Intake normalisieren, damit Themen vergleichbar werden
+Bauen Sie eine Matrix, mit der jeder streiten kann—klein genug zum Merken, explizit genug zur Verteidigung. Typische Dimensionen: Sicherheits- und Compliance-Exposition, Kunden- und Planimpact, operative Belastung und Wiederkehr (derselbe Fehlermodus wie letzte Woche?). Halten Sie Gewichte zuerst simpel. Komplexität ist keine Raffinesse; sie versteckt oft unbesessenes Urteil hinter Mathematik.
 
-Funktionen beschreiben Schmerz unterschiedlich.
+Lassen Sie KI vorschlagen, während Menschen früh kalibrieren. Praktisches Muster: Vorschläge plus kurze Begründungen, Supervisor-Anpassungen mit Grundcodes für einige Wochen, dann einfrieren, bis KPIs sich materiell verschieben. Das trainiert Modell und Organisation, strukturiert uneins zu sein.
 
-KI-Unterstuetzung beginnt mit Struktur: gemeinsame Pflichtfelder; gemeinsame Schwere-Skala; explizite Verknuepfung zu Asset, Auftrag, Kunde oder Charge wenn moeglich.
+Priorisierung ohne Routing ist ein Meeting-Ersatz. Jedes priorisierte Element sollte mit Owner-Rolle, Übergabekontext, Frist und Eskalation bei Stocken landen. Einen Bericht zu ranken ist keine Ausführung. Arbeit zu bewegen ist.
 
-Ist Intake nur Freitext, bekommen Sie starke Zusammenfassungen und schwache Priorisierung.
+Nutzen Sie Schwellen, um automatische Schritte von menschlichen Toren zu trennen. Veröffentlichen Sie sie. Geheime Schwellen erzeugen Misstrauen. Eine übliche Form: unter kombiniertem Score Standard-Warteschlangen-Zuweisung; darüber Schichtleiter-Bestätigung; über höherer Stufe funktionsübergreifendes Triage. Die exakten Zahlen zählen weniger als die Tatsache, dass alle Regeln kennen.
 
-## Schritt 2: eine Rubrik bauen, mit der man streiten kann
+Anti-Patterns töten funktionsübergreifende Priorisierung: „KI-Prioritäten“ in einem Tool, aus dem niemand arbeitet; Rankings, die Instandhaltungskapazität ignorieren; Priorisierung ohne Abschlussmetriken, die zeigen, ob das System beendet, was es startet.
 
-Eine brauchbare Rubrik hat wenige Dimensionen:
+IRIS zählt, weil funktionsübergreifende Priorisierung scheitert, wenn Scoring-Logik und Ausführungsrouting an verschiedenen Orten leben. Das Werk braucht gemeinsamen Intake, sichtbare Matrix und einen Pfad von Priorität zu besessener Arbeit.
 
-**Sicherheits- und Compliance-Exposition** Binaer oder gestuft, aber nicht vage. **Kunden- und Planimpact** Verspaetungsrisiko, Linienstillstandsrisiko, Premium-Kundenflags. **Operative Belastung** Durchsatz, Schrott-Risiko, Nacharbeitsstunden wenn bekannt. **Wiederholung** Ist das derselbe Fehlermodus wie letzte Woche? Halten Sie Gewichte zuerst simpel. Komplexitaet ist keine Sophistication.
+Fehlt die Entscheidungsschicht selbst, starten Sie mit [Warum Werke eine Entscheidungsschicht brauchen, bevor sie mehr KI-Modelle hinzufügen](../27_why_factories_need_one_decision_layer_before_more_ai_models/article_DE.md).
 
-## Schritt 3: KI laesst Punkte vorschlagen, Menschen kalibrieren frueh
+Priorisierung ist emotional geladen, weil sie entscheidet, wer zuerst Hilfe bekommt. Eine sichtbare Matrix entfernt Politik nicht, macht Kompromisse aber diskutierbar. Wenn Scores veröffentlicht und mit Grundcodes anpassbar sind, kann das Werk über Gewichte und Fakten streiten statt darüber, wer „immer ignoriert wird“. Diese Verschiebung ist oft der Unterschied zwischen einem Tool, dem vertraut wird, und einem, das umgangen wird.
 
-Ein pragmatisches Rollout-Muster: KI schlaegt Scores und kurze Begruendungen vor; Vorgesetzte korrigieren mit Reason Codes fuer zwei bis vier Wochen; Gewichte nach Kalibrierung einfrieren, ausser KPI verschieben sich. Das trainiert das Modell und die Organisation.
+Denken Sie an Kapazität. Zehn dringende Themen zu ranken hilft nicht, wenn Instandhaltung nur drei Jobs schaffen und Qualität nur so viele Sperren pro Stunde freigeben kann. Gute funktionsübergreifende Priorisierung enthält Machbarkeitssignale—sonst baut das Werk eine schöne Prioritätenliste und führt weiter zufällig unter Constraint aus.
 
-## Schritt 4: priorisierte Arbeit routen, nicht nur Reports priorisieren
+KI-Priorisierung funktioniert, wenn das Werk sich zu gemeinsamem Intake, sichtbarer Matrix und geroutetem Follow-up verpflichtet. Sonst wird KI zu weiterer Meinung im Raum—und Meinungen hat das Werk schon zu viele.
 
-Priorisierung ohne Routing ist ein Meeting-Ersatz.
+## Operatives Fazit
 
-Jedes priorisierte Item soll: bei einer Owner-Rolle landen; Kontext fuer die Uebergabe tragen; eine Faelligkeitsuhr haben; eskalieren, wenn es stecken bleibt.
+Das Versprechen dieses Artikels—Signale kombinieren, transparente Matrix, geroutete Arbeit mit Bestätigung an Schwellen—wird erst operativ, wenn es verändert, wie Arbeit fließt: klareres Ownership, schnellere erste Zuweisung und Abschluss, den Sie ohne Postfach-Archäologie nachverfolgen können. Für „Wie KI Fabrikthemen über Funktionen hinweg priorisieren kann“ ist das der Akzeptanztest: die nächste Schicht sollte lesen können, was passiert ist, was freigegeben wurde und was offen bleibt—ohne sich auf mündliche Rekonstruktion zu verlassen.
 
-## Schritt 5: Schwellen fuer automatische Moves versus menschliche Tore
-
-Beispiel-Logik (illustrativ): unter einem kombinierten Score automatisch in Standard-Warteschlange; ueber dem Score Bestaetigung Schichtleitung; ueber hoeherer Stufe funktionsuebergreifendes Triage-Fenster. Schwellen sollten veroeffentlicht sein. Geheime Schwellen erzeugen Misstrauen.
-
-## Anti-Patterns, die funktionsuebergreifende Priorisierung brechen
-
-Separate "KI-Prioritaeten" in einem Tool, das niemand bedient; Ranking, das Instandhaltungskapazitaet ignoriert; Priorisierung ohne Abschlussmetriken.
-
-## Warum IRIS das richtige Substrat ist
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Aufgaben. Funktionsuebergreifende Priorisierung braucht Ranking und Ausfuehrung. IRIS verbindet beides.
-
-## Fazit
-
-KI-Priorisierung funktioniert, wenn das Werk gemeinsamen Intake, eine sichtbare Rubrik und geroutetes Follow-through verbindet. Sonst wird KI nur eine weitere Meinung im Raum.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: Priorität zeigt sich in besessener Arbeit, Fristen und Eskalationen—nicht in einem Ranking, das die Fläche weiter per Meeting und Seitenkanal erledigt.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS unterstützt funktionsübergreifende Priorisierung, indem es Scoring mit gerouteten Aufgaben, Eskalationen und nachverfolgbarem Abschluss in einer Ausführungsschicht verbindet. [Interaktive Demo starten](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

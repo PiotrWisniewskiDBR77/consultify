@@ -1,113 +1,58 @@
-# Wie man Automatisierungs-Lieferantenreferenzen prueft, ohne Zeit zu verbrennen
+# Wie man Automatisierungs-Lieferantenreferenzen prüft, ohne Zeit zu verschwenden
 
-Target persona: Engineering Director / Einkaufsowner  
-Funnel stage: Consideration (Evaluation und Vertrauensaufbau)  
-Core problem: Referenzgespraeche werden zu freundlichen Geschichten ohne Risikoreduktion, oder sie wachsen zu einem grenzenlosen Rechercheprojekt  
-Main promise: ein begrenztes Referenzprotokoll, das vergleichbare Evidenz liefert und klare Signale liefert: weiter, nachhaken, stoppen
+Zielpersona: Technischer Direktor / Einkaufsverantwortlicher  
+Funnel-Stufe: Überlegungsphase (Bewertung und Vertrauensaufbau)  
+Kernproblem: Referenzgespräche werden zu angenehmen Stories, die Risiko nicht reduzieren, oder sie expandieren zu einem unbounded Research-Projekt  
+Hauptversprechen: Ein begrenztes Referenzprotokoll, das vergleichbare Evidenz und klare Pass-, Probe- oder Fail-Signale liefert
 
-Sie lernen wenig aus "die waren super" in einem fuenfzehnminuetigen freundlichen Call. Sie lernen auch wenig, wenn Sie nur polierte PDF-Case-Sheets lesen.
+Freundliche Referenzen sind leicht zu sammeln und schwer daraus zu lernen. Fünfzehn Minuten gegenseitiger Bewunderung sagen selten, ob ein Integrator mit chaotischen Schnittstellen lebt, Zeitplan unter Druck hält oder Dokumentation ohne Kampf abschließt. Unbounded Referenz-Jagd ist das gegenteilige Failure: Dutzende Calls, kein Entscheidungsprotokoll, und ein Team, das Aktivität mit Sorgfalt verwechselt.
 
-Wenn Referenzchecks unstrukturiert sind, treten zwei Fehler wiederholt auf:
+Nutzen Sie Referenzen als strukturierte Samples, nicht als Unterhaltung oder infinite Research.
 
-- Teams pruefen zu wenig, weil hoefliche Anekdoten ausreichend wirken
-- Teams pruefen zu viel, weil niemand definiert, was "genug" bedeutet
+## Referenzen an Ihre Risikoform anpassen
 
-Hersteller ziehen Nutzen aus Referenzen, wenn das Ziel explizit ist: spezifische Lieferverhalten unter Bedingungen bestaetigen, die Ihrer Fabrik aehnlich sind. Behandeln Sie Referenzen als Entscheidungswerkzeug, nicht als Hoeflichkeitsrunde.
+Fordern Sie Sites, die Ihrem Problem ähneln: ähnliche Scope-Komplexität, vergleichbare Variabilität, analoge Integrationslast und ein Liefermodell nah dem, was Sie kaufen. Eine glänzende Story aus einem radikal anderen Kontext ist Ablenkung.
 
-Fuehren Sie ein kurzes, wiederholbares Protokoll: definieren Sie, was fuer Ihre Projektklasse wahr sein muss; fordern Sie vom Lieferanten Referenzen passend zu Umfang, Region und Integrationsdepth; nutzen Sie ein Interview-Script und ein Bewertungsblatt fuer alle Calls; stoppen Sie, wenn Sie zwei unabhaengige Bestaetigungen pro kritische Aussage haben, oder wenn Luecken material sind.
+## Das Gespräch skripten
 
-Wenn Sie nicht beschreiben koennen, was Sie verifizieren wollen, fuehlt sich jeder Call produktiv an und beweist nichts.
+Schreiben Sie acht bis zehn Fragen vorab und stellen Sie jeder Referenz denselben Kern. Sie interviewen nicht für Klatsch; Sie testen Verhaltensmuster: wie Änderungen gehandhabt wurden, wie Überraschungen eskaliert wurden, wie Abnahme lief, wie Support nach Cutover war, ob Training und Docs dem operativen Bedarf entsprachen.
 
-## Was Referenzen beweisen koennen und was nicht
+## Antworten scoren statt Vibes zu benoten
 
-Referenzen sind am staerksten fuer: wie sich der Lieferant unter Lieferstress verhaelt; wie Schnittstellen und Change Requests koordiniert wurden; wie Akzeptanzdisziplin in der Praxis aussah.
+Übersetzen Sie Antworten in einfache Signale: Pass (konsistent mit dem, was Sie brauchen), Probe (gezielte Nachprüfung), oder Fail (Mismatch bei einem Non-Negotiable). Ohne Scoring fühlt sich jeder Call „okay“ an, bis die Inbetriebnahme es widerlegt.
 
-Referenzen sind schwach fuer: Garantie Ihres exakten Outcomes; Ersatz technischer Due Diligence; Aufloesung einer Preisverhandlung.
+## Schriftliche Aufzeichnung führen
 
-Labeln Sie Claims nur als verified, wenn die Referenz eine begrenzte Aussage stuetzt.
+Eine Seite pro Call: wer sprach, Scope-Ähnlichkeit, Stärken, Bedenken und Follow-ups. Speichern Sie es mit der Entscheidungsakte. Gedächtnis ist kein System of Record.
 
-## Reality check: Referenzcalls scheitern oft, weil der Buyer in Wahrheit nach Beruhigung sucht, nicht nach Evidenz
+## Stoppen, wenn Sie Signal haben
 
-Genau deshalb wirken angenehme Gespraeche nuetzlicher, als sie wirklich sind. Alle klingen kooperativ. Die Werkstory klingt vertraut. Der Lieferant wirkt glaubwuerdig. Aber solange der Call kein konkretes Lieferverhalten unter Bedingungen bestaetigt, die Ihrem Projekt nahekommen, ist Vertrauen noch kein Beweis geworden.
+Referenzen haben abnehmenden Nutzen. Nach einem kleinen, gut gewählten Set wiederholen zusätzliche Calls meist Themen. Mehr Volumen ist Prokrastination als Vorsicht verkleidet.
 
-## Referenz-Match-Matrix (vor Outreach einfrieren)
+## Wie DBR77 Marketplace anschließt
 
-| Dimension | Ihre Fabrik | Referenzstandort | Match-Level |
-| --- | --- | --- | --- |
-| Prozessfamilie |  |  | hoch / teilweise / niedrig |
-| Durchsatzband |  |  | hoch / teilweise / niedrig |
-| Brownfield vs Greenfield |  |  | hoch / teilweise / niedrig |
-| Integrationsdepth (MES/ERP/WMS) |  |  | hoch / teilweise / niedrig |
-| Safety- und Validierungsregime |  |  | hoch / teilweise / niedrig |
-| Region und Servicemodell |  |  | hoch / teilweise / niedrig |
+Referenzchecks funktionieren am besten, wenn Verhaltensclaims neben denselben strukturierten Angebotsfeldern sitzen, die Sie in der Evaluation nutzten. Vertrauen wird inspizierbar statt von den überzeugendsten Notizen abzuhängen.
 
-Wenn Match-Level durchweg niedrig ist, pruefen Sie keine Referenz. Sie sammeln eine Moodboard.
+Benachbarter Vergleichskontext: [So vergleichen Sie Robotik-Integratoren, OEMs und schlüsselfertige Lieferanten](../16_how_to_compare_robot_integrators_oems_and_turnkey_suppliers/article_DE.md) und [Was ein gutes Automatisierungsangebot sichtbar machen sollte](../17_what_a_good_automation_offer_should_make_visible/article_DE.md).
 
-## 25-Minuten-Interview-Script (gleiche Fragen, jedes Mal)
+## Professionelle Referenzdisziplin
 
-Offene Fragen stellen, dann auf Fakten festnageln:
+Halten Sie Referenzgespräche begrenzt und professionell: kein Klatsch-Angeln, keine „off the record“-Spiele, die rechtliches und Vertrauensrisiko erzeugen. Sie bewerten Lieferverhalten unter Stress, keine sozialen Narrative. Ein ruhiges, wiederholbares Protokoll macht es auch leichter, Lieferanten fair zu vergleichen – jede Referenz wird an dieselben Verhaltensfragen gegen Ihre Risikomap gemessen.
 
-1. Was war am Tag eins im Scope versus was wurde geliefert?
-2. Wo brachen Annahmen zuerst, und wie lief Change Control?
-3. Beschreiben Sie einen Streit. Was passierte, und wie lange bis zur Aufloesung?
-4. Wer besass Integrationsaufgaben auf Ihrer Seite versus Lieferantenseite?
-5. Was wuerden Sie anders machen, wenn Sie das Projekt wiederholen?
+Wenn Referenzen schriftlichen Angebots-Commitments widersprechen, behandeln Sie das als Red Flag zur Klärung vor der Vergabe. Menschen erinnern sich, wie Teams sich verhielten, als Probleme auftauchten; Dokumente erinnern sich, was vor Problemen versprochen wurde. Sie wollen beide Stories aligned.
 
-Dann nach Artefakten fragen, die die Referenz bestaetigen darf, dass sie existierten:
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-- FAT-Plan und Punch-List-Trend
-- Trainingserwartungen
-- Ersatzteile und Dokumentationsuebergabe
+Der Punkt, diesen Teil der Buying Journey zu verschärfen – „Wie man Automatisierungs-Lieferantenreferenzen prüft, ohne Zeit zu verschwenden“ in der Praxis – ist, Ausführung vorhersehbar zu machen. Auf industriellen Sites bleibt Mehrdeutigkeit nicht abstrakt: Sie wird Warten, Nacharbeit, stille Workarounds und Streit neben Equipment, wenn die Linie Wochen zuvor Klarheit brauchte. Wenn Teams dieselben Fakten publizieren, Abnahme an Evidenz binden und Ownership sichtbar halten, antworten Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, konkurrierende Stories abzugleichen.
 
-Sie auditieren nicht deren Werk.
+Das ist nicht Theorie nur für Stabsfunktionen. Plant Manager spüren Konsequenzen, wenn Buying-Artefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die in Improvisation um halb definierte Schnittstellen gezogen wird. Starke Buying-Disziplin ist daher eine Produktionsinvestition – weniger Drama während Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel verlangsamen Sie das Dokument, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur Schmerz downstream.
 
-Sie pruefen, ob die Story oft genug zur operativen Realitaet passt, um dem naechsten Schritt zu vertrauen.
-
-## Score-Sheet (einfach, vergleichbar)
-
-Nutzen Sie eine 1 bis 5 Skala pro Item, gleiche Gewichte fuer jeden Lieferantenpfad:
-
-| Signal | Gewicht | Notizen |
-| --- | ---: | --- |
-| Scope-Stabilitaet unter Change | hoch | Ueberraschungen versus Prozess |
-| Zeitplan-Realismus | hoch | Slips begrenzt und erklaert |
-| Kommunikationsdisziplin | mittel | ein Kanal, dokumentierte Entscheidungen |
-| Dokumentationsqualitaet | mittel | O&M-Nutzen ab Tag zwei |
-| Support nach Start | mittel | Reaktionserwartungen erfuellt |
-
-Eine Freitext-Red-Flag-Zeile fuer Muster, die nicht in Zahlen passen.
-
-## Wann aufhoeren zu pruefen
-
-Stop-Regeln verhindern Referenz-Theater.
-
-Hoeren Sie auf, wenn: zwei starke Matches dasselbe kritische Verhalten bestaetigen, oder; ein starkes Match plus Vertrag und FAT/SAT-Plan die Luecke schliessen, oder; Sie eine material fehlende Uebereinstimmung finden, die Einkauf vor tieferem Spend klaeren muss.
-
-Keine Referenzcalls hinzufuegen, um eine unbequeme interne Entscheidung zu verzoegern.
-
-## Typische Fehler
-
-| Fehler | Kosten | Fix |
-| --- | --- | --- |
-| nur Lieblingskonto des Lieferanten anrufen | falsche Sicherheit | zweite Referenzklasse verlangen |
-| unterschiedliche Fragen pro Lieferant | nicht vergleichbare Antworten | Script einfrieren |
-| keine schriftlichen Notizen in CRM oder Decision Log | Gedaechtnisverlust | einseitiges Call-Summary publizieren |
-| Kollegen nach Klatsch fragen | rechtliches und Vertrauensrisiko | professionell und scoped bleiben |
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace behandelt Automatisierungseinkauf als Workflow-Entscheidung, nicht als Katalog-Browsing.
-
-Strukturierter Vergleich und vertrauensorientierte Auswahl passen zu Referenzdisziplin, weil beide wiederholbare Felder und begrenzte Evidenz belohnen.
-
-Wenn Lieferantennarrative neben vergleichbaren Angebotsstrukturen leben, schweben Ihre Referenznotizen nicht mehr in privaten Postfaechern. Marketplace ist kein Roboterkatalog.
-
-Es ist eine Vertrauensschicht, die Herstellern hilft zu vergleichen, wie Integratoren sich vorschlagen zu verhalten, und es dann mit einem Kalender-respektierenden Protokoll zu verifizieren.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes große Buying-Output als etwas, das Operations und Instandhaltung auditieren könnten. Wenn sie es nicht bis zu einem Verhalten auf dem Shopfloor zurückverfolgen können, verschärfen Sie die Sprache, bis es geht.
 
 ## Fazit
 
-Referenzen werden nuetzlich, wenn Sie sie matchen, scripten, scoren und stoppen. Ruhiger Einkauf ist nicht mehr Calls. Es sind weniger Calls mit schaerferer Absicht.
+Weniger Calls, schärfere Skripte, explizites Scoring und disziplinierte Stoppregeln verwandeln Referenzen von Theater in Evidenz.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt strukturierten Lieferantenvergleich, damit Referenzbefunde auf vergleichbare Felder mappen statt außerhalb der Entscheidungsakte zu schweben. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*

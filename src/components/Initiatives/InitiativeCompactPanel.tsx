@@ -28,7 +28,6 @@ import {
   Flag,
   FolderOpen,
   Loader2,
-  Maximize2,
   MessageSquare,
   Scale,
   Shield,
@@ -463,15 +462,6 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             </h3>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            {onOpenFull && initiative && (
-              <button
-                onClick={() => onOpenFull(initiative)}
-                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-purple-500 hover:bg-purple-500/10 transition-all"
-                title={t('initiatives.compact.openFullCard')}
-              >
-                <Maximize2 size={14} />
-              </button>
-            )}
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-all"
@@ -747,18 +737,6 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         )}
       </div>
 
-      {/* Footer */}
-      {onOpenFull && initiative && (
-        <div className="flex-shrink-0 p-3 border-t border-slate-200 dark:border-navy-700">
-          <button
-            onClick={() => onOpenFull(initiative)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500/10 to-violet-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold hover:from-purple-500/20 hover:to-violet-500/20 transition-all"
-          >
-            <Maximize2 size={14} />
-            {t('initiatives.compact.openFullCard')}
-          </button>
-        </div>
-      )}
     </motion.div>
   );
 

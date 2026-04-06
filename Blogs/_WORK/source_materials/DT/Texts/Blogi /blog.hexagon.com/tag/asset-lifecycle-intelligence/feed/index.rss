@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Asset Lifecycle Intelligence &#8211; HxGN Spotlight</title>
+	<atom:link href="https://blog.hexagon.com/tag/asset-lifecycle-intelligence/feed/" rel="self" type="application/rss+xml" />
+	<link>https://blog.hexagon.com</link>
+	<description>Hexagon’s platform for original stories from opinion leaders and customers</description>
+	<lastBuildDate>Thu, 02 Nov 2023 15:18:20 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.1</generator>
+	<item>
+		<title>Hexagon leadership series</title>
+		<link>https://blog.hexagon.com/hexagon-leadership-series/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Tue, 14 Nov 2023 08:00:30 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Thought Leadership]]></category>
+		<category><![CDATA[Women in Tech]]></category>
+		<guid isPermaLink="false">https://blog.hexagon.com/?p=14200</guid>
+
+					<description><![CDATA[In this episode, we sat down with Rachel Yee and Marion McCann, both from Hexagon's Asset Lifecycle Intelligence division. They discuss their career journeys, leadership perspectives, the importance of continuous learning and the value of teamwork in achieving success.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Cybersecurity &#8211; The customer viewpoint</title>
+		<link>https://blog.hexagon.com/cybersecurity-customer-viewpoint/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 02 Nov 2023 07:00:33 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Cybersecurity]]></category>
+		<guid isPermaLink="false">https://blog.hexagon.com/?p=14197</guid>
+
+					<description><![CDATA[In this episode, Nick Cappi, Hexagon Asset Lifecycle Intelligence division, discusses the importance of centralized asset inventory, its impact on safety, and the significance of visibility, alerting and reporting in industrial facilities.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>A global HxGN SDx deployment journey</title>
+		<link>https://blog.hexagon.com/global-hxgn-sdx-deployment-journey/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 26 Oct 2023 07:00:06 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Cargill]]></category>
+		<category><![CDATA[HxGN SDx]]></category>
+		<category><![CDATA[ReVisionz]]></category>
+		<guid isPermaLink="false">https://blog.hexagon.com/?p=14193</guid>
+
+					<description><![CDATA[In this podcast, Brian Moura from Hexagon's Asset Lifecycle Intelligence division sits down with Carrie Knight from Cargill and Sharon Wildey from ReVisionz to discuss the successes and challenges of global HxGN SDx enterprise-wide deployment.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Digitally transforming project execution</title>
+		<link>https://blog.hexagon.com/digitally_transforming_project_execution/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Tue, 17 Oct 2023 07:00:05 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Digital Transformation]]></category>
+		<category><![CDATA[Digitalisation]]></category>
+		<category><![CDATA[Smart Digital Realities]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=14181</guid>
+
+					<description><![CDATA[In this podcast episode, hosted by Jay Schwartz, VP Strategy &#038; Enablement at Hexagon's Asset Lifecycle Intelligence division, we discuss how digital transformation continues to change the way EPC companies execute complex projects. Jay is joined by Vijaykumar Mali, Digital Transformation Manager at Lamprell, and Lorne Jensen, Global Data Manager at Fluor.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Harbour Energy – Implementation of digital twins</title>
+		<link>https://blog.hexagon.com/harbour-energy-implementation-digital-twins/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 14 Sep 2023 07:00:36 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Digital Twin]]></category>
+		<category><![CDATA[Harbour Energy]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=14147</guid>
+
+					<description><![CDATA[In our third installment of the podcast series "Digital Twins: The Gateway to Autonomous Industrial Facilities", we examine Harbour Energy's digital twin initiative - what has been achieved and how the platform is used to ensure collaborative execution of sustaining engineering projects.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Digital Twins: Promoting project performance</title>
+		<link>https://blog.hexagon.com/digital-twins-promoting-project-performance/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 27 Jul 2023 08:00:17 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Autonomous]]></category>
+		<category><![CDATA[Digital Twin]]></category>
+		<category><![CDATA[Smart Industrial Facilities]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=14079</guid>
+
+					<description><![CDATA[Digital twins are increasingly being deployed during the project phases of the facility lifecycle. In the second episode of the podcast series "Digital Twins: The gateway to autonomous industrial facilities", created in partnership with Petroleum Economist, we discuss how the digital twin provides benefits during the project phase.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Digital Twins: The gateway to autonomous industrial facilities (Part I)</title>
+		<link>https://blog.hexagon.com/digital-twins-gateway-autonomous-industrial-facilities-part/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 13 Jul 2023 07:00:02 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Autonomous]]></category>
+		<category><![CDATA[Digital Twin]]></category>
+		<category><![CDATA[Smart Industrial Facilities]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=14057</guid>
+
+					<description><![CDATA[What is the true business value of Digital Twins? Listen to part I in the podcast series, “Digital Twins: The gateway to autonomous industrial facilities”, created in collaboration with Petroleum Economist.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Hexagon mentioned in 13 Gartner® Hype Cycle™ reports</title>
+		<link>https://blog.hexagon.com/hexagon-mentioned-in-13-gartner-hype-cycle-reports/</link>
+		
+		<dc:creator><![CDATA[Keri Tomsic]]></dc:creator>
+		<pubDate>Fri, 14 Apr 2023 16:55:36 +0000</pubDate>
+				<category><![CDATA[HxGN Blog]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[IoT]]></category>
+		<category><![CDATA[Manufacturing Intelligence]]></category>
+		<category><![CDATA[Safety Infrastructure & Geospatial]]></category>
+		<category><![CDATA[Smart Factories]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13924</guid>
+
+					<description><![CDATA[Check out some key insights from select 2022 Gartner Hype Cycle reports that feature Hexagon. ]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Operational Technology (OT) cybersecurity – the vital next step in digitalisation (Part 3)</title>
+		<link>https://blog.hexagon.com/operational-technology-ot-cybersecurity-vital-next-step-digitalisation-part-3/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Mon, 28 Nov 2022 13:00:48 +0000</pubDate>
+				<category><![CDATA[HxGN Radio]]></category>
+		<category><![CDATA[Podcast]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Autonomous]]></category>
+		<category><![CDATA[Cybersecurity]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13676</guid>
+
+					<description><![CDATA[In the third episode of our 'Operational Technology (OT) cybersecurity – the vital next step in digitalisation' podcast series, we discuss the importance of choosing the right strategic cybersecurity program for critical infrastructure.]]></description>
+		
+		
+		
+			</item>
+		<item>
+		<title>Building a stronger house: Three foundational elements for OT/ICS security</title>
+		<link>https://blog.hexagon.com/building-stronger-house-three-foundational-elements-ot-ics-security-h-1116/</link>
+		
+		<dc:creator><![CDATA[Jason Makar]]></dc:creator>
+		<pubDate>Thu, 10 Nov 2022 13:00:13 +0000</pubDate>
+				<category><![CDATA[HxGN TV]]></category>
+		<category><![CDATA[Video]]></category>
+		<category><![CDATA[Asset Lifecycle Intelligence]]></category>
+		<category><![CDATA[Smart Industrial Facilities]]></category>
+		<category><![CDATA[Software]]></category>
+		<guid isPermaLink="false">https://hxgnspotlight.com/?p=13649</guid>
+
+					<description><![CDATA[In this episode, Nick Cappi, Vice President of Portfolio Strategy and Enablement Cyber at Hexagon’s Asset Lifecycle Intelligence division, discusses the three foundational elements for OT/ICS security and how Hexagon solutions can help to protect against cyber threats.]]></description>
+		
+		
+		
+			</item>
+	</channel>
+</rss>

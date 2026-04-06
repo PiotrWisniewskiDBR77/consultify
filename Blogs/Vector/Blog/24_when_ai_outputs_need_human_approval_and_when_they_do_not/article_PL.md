@@ -1,62 +1,44 @@
-# Kiedy wyniki AI wymagaja ludzkiej aprobaty, a kiedy nie
+# Kiedy rezultaty AI wymagają ludzkiej akceptacji, a kiedy nie
 
-Target persona: COO / szef operacji  
-Funnel stage: Consideration  
-Core problem: zespoly wahaja sie miedzy zakazem AI a zbytnim zaufaniem, bo brakuje prostej reguly dla bramek aprobaty  
-Main promise: producenci moga oddzielic niskoryzykowna asyste AI od decyzji o wysokich konsekwencjach, uzywajac macierzy aprobaty opartej na konsekwencjach, systemach i wydatkach
+Docelowa persona: COO / szef operacji  
+Etap lejka: Rozważanie  
+Główny problem: zespoły oscylują między zakazem AI a zbytnim zaufaniem, bo brakuje prostej reguły decyzyjnej dla bramek akceptacji  
+Główna obietnica: producenci mogą oddzielić niskoryzykowne wsparcie AI od decyzji o wysokich konsekwencjach, używając macierzy akceptacji opartej na konsekwencjach, systemach i wydatkach
 
-Ludzka aprobata to nie filozofia. To kontrola stosowana tam, gdzie bledy sa drogie lub nieodwracalne.
+Ludzka akceptacja to nie stanowisko filozoficzne. To kontrola stosowana tam, gdzie błędy są drogie lub nieodwracalne. Produkcja potrzebuje ścieżki pośrodku: wystarczająco szybkiej, by była używana, wystarczająco ścisłej, by była bezpieczna, oraz na tyle jawnej, by zachowanie na nocnej zmianie odpowiadało intencji zmiany dziennej.
 
-## Bezposrednia odpowiedz
+Wymagajcie ludzkiej akceptacji, gdy wynik AI może zmienić fizyczną rzeczywistość, zobowiązania finansowe, obietnice jakości wobec klienta, systemy bezpieczeństwa, rejestry regulowane lub harmonogramy produkcji bez łatwego cofnięcia. Akceptacja zwykle nie jest potrzebna, gdy wynik jest eksploracyjny, wyłącznie wewnętrzny, łatwy do zweryfikowania i nie może wywołać zautomatyzowanych działań ani zewnętrznych zobowiązań. Tryb awarii do unikania to traktowanie obu klas tak samo — albo spowalnianie wszystkiego, albo zbytnie ufanie wszystkiemu.
 
-Wymagaj ludzkiej aprobaty, gdy wynik AI moze zmienic rzeczywistosc fizyczna, zobowiazania finansowe, obietnice jakosci wobec klienta, systemy bezpieczenstwa, rejestry regulowane lub harmonogram produkcji bez latwego cofniecia.
+## Dlaczego prosta reguła bija polityki kocowe
 
-Aprobata jest zwykle niepotrzebna, gdy wynik jest eksploracyjny, tylko wewnetrzny, latwy do weryfikacji i nie moze wyzwolic automatycznych dzialan ani zewnetrznych zobowiazan.
+Kocowe zakazy spowalniają adopcję. Kocowe zaufanie tworzy incydenty. Macierz oparta na konsekwencjach zamienia spory w klasyfikację: co robimy, co może pójść nie tak i jaki zapis potrzebujemy, gdy ktoś zapyta później?
 
-## Dlaczego prosta regula wygrywa z politykami obustronnymi
+## Macierz akceptacji: cztery pytania
 
-Calkowity zakaz spowalnia adopcje. Calkowite zaufanie rodzi incydenty. Produkcja potrzebuje srodka opartego na konsekwencjach.
+Pytajcie o odwracalność: czy efekt da się cofnąć w minutach bez szkody dla klienta lub regulatora? O promień eksplozji: czy błąd rozlewa się na linie, lokacje lub dostawców? O wymagania dowodowe: czy audytor zapyta, kto to zatwierdził i dlaczego? O sprzężenie z automatyką: czy wynik zasila system wykonujący bez drugiego spojrzenia? Jeśli odwracalność jest niska, promień wysoki, popyt na dowody wysoki albo sprzężenie wysokie, domyślnie wymagajcie akceptacji.
 
-## Macierz aprobaty: cztery pytania
+## Przykłady, gdzie akceptacja jest zwykle wymagana
 
-Pytaj:
+Przypadki o wysokich konsekwencjach często obejmują: zmiany BOM lub decyzje sourcingowe wpływające na koszt lub lead time; instrukcje rozstrzygnięć jakościowych powiązane z wysyłką; działania utrzymania mogące zatrzymać linę lub osłabić interlocki bezpieczeństwa; aktualizacje certyfikatów lub dokumentacji zgodności widocznej dla klienta; zmiany harmonogramu łamiące zobowiązania dostawcze. To nie stanowiska anty-AI. To proporcjonalne kontrole.
 
-1. Odwracalnosc Czy mozesz cofnac skutek w minutach bez szkody dla klienta lub regulatora?
+## Przykłady, gdzie akceptacja jest często opcjonalna
 
-2. Promien razenia Czy blad rozlewa sie na linie, zaklady lub dostawcow? 3. Wymog dowodu Czy audytor zapyta, kto to zatwierdzil i dlaczego?
+Przypadki o niższych konsekwencjach często obejmują: szkicowanie wewnętrznych podsumowań spotkań bez twierdzeń operacyjnych; generowanie quizów szkoleniowych z publicznych procedur; burzę mózgów nad pomysłami usprawnień nadal wymagającą walidacji inżynierskiej; streszczanie dokumentu, który człowiek już posiada i i tak przeczyta. Nawet tu liczy się dyscyplina: zespoły powinny unikać wgrywania wrażliwych danych do złego środowiska.
 
-4. Sprzezenie z automatyzacja Czy wynik zasila system wykonujacy bez drugiego spojrzenia?
+## Gdzie AI przemysłowe powinno ułatwiać akceptację, nie ją chować
 
-Jesli odwracalnosc jest niska, promien wysoki, dowod wymagany lub sprzezenie automatyczne wysokie, domyslnie wymagaj aprobaty.
+Dobry projekt AI przemysłowego oddziela rekomendacje od wykonywalnych działań, pokazuje fragmenty uzasadnienia i kontekst źródłowy tam, gdzie to możliwe, wspiera recenzentów opartych o role oraz loguje decyzje do późniejszej rekonstrukcji. Celem jest prędkość z rozliczalnością, nie prędkość bez śladu. Narzędzia „najpierw czat” zachęcają do improwizacji; narzędzia przemysłowe „najpierw proces” kodują moment, w którym świat się zmienia. Nabywcy powinni preferować dostawców, którzy rozumieją tę różnicę.
 
-## Przyklady, gdzie aprobata jest zwykle wymagana
+Intensywność akceptacji powinna śledzić wpływ, nie nagłówki. Vector jest zgodny z tą dyscypliną: rozumowanie przemysłowe w ekosystemie DBR77 z jasnymi granicami wdrożenia, brakiem treningu na danych klienta oraz miejscem na połączenie decyzji o wysokiej stawce z ludzkim osądem tam, gdzie wasza macierz każe — zamiast traktować każdy wynik jako autonomiczny.
 
-Typowe przypadki wysokich konsekwencji obejmuja: zmiany BOM lub decyzje sourcingowe wplywajace na koszt lub lead time; decyzje o statusie jakosci powiazane z wysylka; dzialania utrzymaniowe mogace zatrzymac linie lub obejsc blokady bezpieczenstwa; aktualizacje certyfikatow lub dokumentacji compliance widocznej dla klienta; zmiany harmonogramu lamace zobowiazania OTIF. To nie jest anty-AI. To proporcjonalne kontrole.
+Akceptacja nie polega na braku zaufania do modelu. Chodzi o dopasowanie intensywności kontroli do wpływu. Producenci, którzy publikują jasną macierz, redukują cieniste IT i jednocześnie incydenty.
 
-## Przyklady, gdzie aprobata jest czesto opcjonalna
+## Punkt kontrolny zakładu
 
-Nizsze konsekwencje czesto obejmuja: szkicowanie wewnetrznych podsumowan spotkan bez twierdzen operacyjnych; generowanie quizow szkoleniowych z publicznych procedur; burze mozgow nad pomyslami usprawnien wymagajacymi i tak walidacji inzynierskiej; streszczanie dokumentu, ktory czlowiek juz posiada i i tak przeczyta. Nawet tu liczy sie dyscyplina. Zespoly powinny unikac wrzucania wrazliwych danych w zle srodowisko.
+Traktujcie „Kiedy rezultaty AI wymagają ludzkiej akceptacji, a kiedy nie” jako narzędzie decyzyjne, nie lekturę tła. Przed następnym spotkaniem sterującym poproście o jeden artefakt dowodzący postawy — diagram architektury, fragment polityki treningu, próbkę logów, podpisaną klasyfikację procesu lub zapis promocji. Jeśli sala potrafi tylko opowiadać historie, nadal jesteście w pozorach pilotażu. AI w produkcji dojrzewa, gdy dowody stają się rutyną: ta sama dyscyplina, której już oczekujecie przed zwolnieniem linii, zmianą dostawcy czy dużym cięciem IT. To przejście od ekscytacji do infrastruktury — i to utrzymuje program spójny przez audyty, rotację i ekspansję wielolokalizacyjną.
 
-## Gdzie AI przemyslowe powinno ulatwiac aprobate, nie ja ukrywac
-
-Dobre projektowanie AI przemyslowego: rozdziela rekomendacje od wykonywalnych akcji; pokazuje fragmenty uzasadnienia i kontekst zrodlowy, gdy to mozliwe; wspiera recenzentow opartych o role; loguje decyzje do pozniejszej rekonstrukcji. Celem jest szybkosc z odpowiedzialnoscia, nie szybkosc bez sladu.
-
-## Porownanie: postawa chat-first versus workflow-first
-
-Narzedzia chat-first zachecaja do improwizacji. Narzedzia workflow-first koduja miejsce, gdzie swiat sie zmienia. Kupujacy powinni preferowac dostawcow, ktorzy rozumieja te roznice.
-
-## Most produktowy
-
-DBR77 Vector jest pozycjonowany jako rozumowanie przemyslowe w ekosystemie DBR77, a nie generyczny czat: granice wdrozenia, brak treningu na danych klienta oraz oczekiwanie, ze konsekwentne decyzje produkcyjne pozostaja rzadzalne z ludzkim osadem tam, gdzie to adekwatne.
-
-Ta postawa pasuje do strategii aprobaty opartej na konsekwencjach, a nie do hypesu o pelnej autonomii.
-
-## Podsumowanie
-
-Aprobata nie polega na braku zaufania do modelu. Chodzi o dopasowanie intensywnosci kontroli do wplywu.
-
-Producenci, ktorzy publikuja jasna macierz, redukuja shadow IT i incydenty jednoczesnie.
+Jeśli kierownictwo chce jednego zwięzłego nawyku decyzyjnego, niech brzmi: nazwijcie, co musi być prawdą, zanim użycie się poszerzy, a potem przeglądajcie co stałą częstotliwością, czy to prawda. Tak governance przestaje być komfortem narracyjnym i staje się metryką operacyjną, którą zakłady potrafią wykonać.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Umów demo](https://dbr77.com/vector) lub [Poznaj produkty z Vector](https://dbr77.com/demo).*
+*DBR77 Vector wspiera zarządzane procesy przemysłowe z jasnymi granicami wdrożenia oraz rozumowaniem nastawionym na decyzje fabryczne zamiast nieograniczonej autonomii czatu. [Umów demo](https://dbr77.com/vector) lub [Poznaj produkty z Vector](https://dbr77.com/demo).*

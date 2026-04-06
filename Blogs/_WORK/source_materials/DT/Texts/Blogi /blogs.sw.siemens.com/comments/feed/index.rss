@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	
+	>
+<channel>
+	<title>
+	Comments for Siemens Blog Network	</title>
+	<atom:link href="https://blogs.sw.siemens.com/comments/feed/" rel="self" type="application/rss+xml" />
+	<link>https://blogs.sw.siemens.com</link>
+	<description>Siemens Software</description>
+	<lastBuildDate>Wed, 04 Mar 2026 20:06:42 +0000</lastBuildDate>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	
+</channel>
+</rss>
+
+<!--
+Performance optimized by W3 Total Cache. Learn more: https://www.boldgrid.com/w3-total-cache/?utm_source=w3tc&utm_medium=footer_comment&utm_campaign=free_plugin
+
+Content Delivery Network via Amazon Web Services: CloudFront: blogs.sw.siemens.com
+
+Served from: blogs.sw.siemens.com @ 2026-03-26 07:00:35 by W3 Total Cache
+-->

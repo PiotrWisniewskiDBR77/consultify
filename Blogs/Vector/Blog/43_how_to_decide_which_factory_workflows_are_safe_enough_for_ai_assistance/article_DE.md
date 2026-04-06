@@ -1,64 +1,40 @@
-# Wie Sie entscheiden, welche Werks-Workflows fuer KI-Unterstuetzung sicher genug sind
+# Wie Sie entscheiden, welche Werks-Workflows für KI-Unterstützung sicher genug sind
 
-Zielpersona: Werksleiter / Engineering-Manager / Leiter kontinuierliche Verbesserung  
+Zielpersona: Werksleitung / Engineering-Leitung / Leitung kontinuierliche Verbesserung  
+Funnel-Stufe: Consideration  
+Kernproblem: Teams wollen Geschwindigkeit durch KI, während Sicherheit, Qualität und Arbeitsregeln klare Grenzen brauchen, was „Unterstützung“ praktisch bedeutet  
+Hauptversprechen: ein wiederholbares Scoring-Modell verschiebt Debatten von Meinung zu unterschriebenen Workflow-Klassen mit Freigaberegeln
 
-Trichterphase: Consideration Kernproblem: Teams wollen Geschwindigkeit durch KI, waehrend Sicherheit, Qualitaet und Tariflogik klare Grenzen brauchen, was "Unterstuetzung" praktisch bedeutet Hauptversprechen: ein wiederholbares Scoring-Modell verschiebt Debatten von Meinung zu unterschriebenen Workflow-Klassen mit Freigaberegeln "Sicher genug" ist kein Gefuehl.
+„Sicher genug“ ist kein Gefühl. Es ist eine dokumentierte Klassifikation mit Ownern, Blast-Radius und Rollback — weil Fertigung in Schichten läuft und Schichten auf Klarheit laufen. Wenn die Regel vage ist, improvisieren Menschen. Und Improvisation ist oft der Weg, wie gut gemeinte Teams sensiblen Kontext durch die falsche Tool-Klasse routen.
 
-Es ist eine dokumentierte Klassifikation mit Eigentuemern, Blast-Radius und Rollback.
+Debatten über „ob wir KI hier nutzen dürfen“ enden schneller, wenn die Matrix schon im Raum hängt: dieselben Dimensionen, dieselben Klassen, dieselbe Eskalation, wenn zwei Funktionen uneins sind. Ohne diese Vereinbarung gewinnt meist das lauteste Team — und das ist selten dasselbe wie das Team mit der vollständigsten Risikosicht.
 
-Entscheiden Sie, welche Werks-Workflows fuer KI-Unterstuetzung sicher genug sind, indem Sie jeden Kandidaten nach Datensensitivitaet, Entscheidungsreversibilitaet, Zeitdruck, menschlicher Kompetenzabhaengigkeit, Integrations-Tiefe mit MES oder QMS und regulatorischer Exposition bewerten. Hohe Werte bei Sensitivitaet, Irreversibilitaet und flachem menschlichem Oversight erfordern strengere Klassen: nur Beobachtung, Entwurf mit Freigabe oder gesperrt bis die Architektur nachzieht. Veroeffentlichen Sie die Matrix, schulen Sie Vorgesetzte und pruefen Sie Klassifikationen quartalsweise bei Modell- und Konnektor-Aenderungen. Konsistenz schlaegt Heldenurteil auf der Nachtschicht.
+Entscheiden Sie, welche Werks-Workflows für KI-Unterstützung sicher genug sind, indem Sie jeden Kandidaten nach Datensensitivität, Entscheidungsreversibilität, Zeitdruck, Abhängigkeit von menschlicher Kompetenz, Integrationstiefe mit MES oder QMS und regulatorischer Exposition bewerten. Hohe Werte bei Sensitivität, Irreversibilität und flachem menschlichem Oversight erfordern strengere Klassen: nur beobachten, Entwurf mit Freigabe oder gesperrt, bis die Architektur nachzieht. Veröffentlichen Sie die Matrix, schulen Sie die Führungskräfte und reviewen Sie die Klassifikation quartalsweise, wenn sich Modelle und Konnektoren ändern. Konsistenz schlägt Heldenurteil in der Nachtschicht.
 
-## Rahmen: sechs Bewertungsdimensionen
+## Sechs Bewertungsdimensionen
 
-### Dimension 1: Datensensitivitaet
+Datensensitivität: Layouts, Kosten, Ausbeuten und kundenspezifische Rezepte scoren höher als bereits öffentliche generische Wartungsanleitungen. Entscheidungsreversibilität: eine schlechte Empfehlung, die Sie in Minuten rückgängig machen, ist etwas anderes als eine Disposition, die Produkt ausliefert. Zeitdruck: enger Takt verringert den Spielraum für Doppelprüfung — es sei denn, Freigabe ist im Workflow vorgebacken. Kompetenzabhängigkeit: schichten mit vielen Einsteigern brauchen engere Leitplanken als Experten-Schichten — während Experten dennoch prüfen. Systemintegrations-Tiefe: reine Lese-Analytics unterscheidet sich von Rückschreiben in Planung oder Qualitätsdaten. Regulatorische Exposition: regulierte Kontexte erhöhen die Anforderungen an Nachweise und Freigaben.
 
-Layouts, Kosten, Ausbeuten und kundenspezifische Rezepturen scoren hoeher als generische, oeffentliche Wartungshandbuecher.
+## Vier Workflow-Klassen, die die Sprache bodenständig halten
 
-### Dimension 2: Entscheidungsreversibilitaet
+Beobachten: Zusammenfassungen und Suche mit moderaten Freigabe-Erwartungen. Entwurf: schlägt Text oder Pläne vor — mit rollenbasierter Freigabe. Empfehlung mit Ranking: sortierte Listen mit Begründung — oft zweistufig, wenn Produktionswirkung real ist. Halten: noch nicht zulässig, bis Architektur- oder Policy-Gates geschlossen sind — besonders wenn Automationskopplung unklar ist.
 
-Ein rueckgaengig machbarer Rat in Minuten unterscheidet sich von einer Freigabe, die Produkt verschickt.
+Bevor Sie einen Workflow um eine Klasse anheben, fordern Sie ein aktualisiertes Risiko-Review mit Integrationsdiagramm, Schulungsnachweise für Rollen, verifiziertes Logging und Retention für diesen Workflow, einen dokumentierten und einmal getesteten Rollback-Pfad sowie einen Eintrag im Ausnahmeregister, wenn ein Shortcut temporär ist.
 
-### Dimension 3: Zeitdruck
+Workflow-Klassen halten nur, wenn Bediener sehen, wie sich das Tool innerhalb der versprochenen Grenze verhält. Vector passt zu dieser Disziplin: proprietäre Industrie-KI auf Werks-Transformationswissen trainiert, On-Premise- / Private-API- / isolierte Deployments-Optionen, Kundendaten nicht zum Modelltraining, industrielles Reasoning für Fertigungsurteil statt generischem Chat — damit das Label „sicher genug“, das Sie veröffentlichen, zur Laufzeit-Haltung passt.
 
-Enger Takt verringert Spielraum fuer Doppelchecks, ausser Freigabe ist im Workflow vorgebacken.
+Sicher genug ist eine Programmentscheidung, keine Pilotenstimmung. Bewerten, klassifizieren, freigeben und kalendermäßig neu bewerten.
 
-### Dimension 4: Kompetenzabhaengigkeit
+Klassifikationen erneut prüfen, wenn sich Integrationen ändern: ein Read-only-Workflow kann über Nacht zu einem Schreibpfad werden, wenn jemand einen Konnektor „zur Zeitersparnis“ ergänzt.
 
-Schichten mit vielen Einsteigern brauchen engere Leitplanken als Experten-Schichten, sofern Experten dennoch pruefen.
+Wenn ein Workflow an die Grenze zwischen zwei Klassen rutscht, dokumentieren Sie die Spannung explizit: was ist erlaubt, was ist verboten, und wer trifft die Ausnahmeentscheidung unter Zeitdruck? Klassifikationen altern nicht nur durch Modelle — sie altern durch kleine Integrationsänderungen, die im Engineering harmlos klingen und auf dem Shopfloor neue Risiken erzeugen.
 
-### Dimension 5: Systemintegrations-Tiefe
+## Werks-Checkpoint
 
-Read-only-Analytik unterscheidet sich von Write-Back in Planung oder Qualitaetsdatensaetze.
+Behandeln Sie „Wie Sie entscheiden, welche Werks-Workflows für KI-Unterstützung sicher genug sind“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Auszug aus der Trainingspolicy, Log-Probe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Fertigungs-KI reift, wenn Belege Routine werden: dieselbe Disziplin, die Sie schon vor Linienfreigabe, Lieferantenwechsel oder großem IT-Cutover erwarten. Das ist der Wechsel von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent.
 
-### Dimension 6: regulatorische Exposition
-
-Medizinprodukte, Luftfahrt, Lebensmittelsicherheit und exportkontrolliertes Umfeld erhoehen die Evidenz- und Freigabeleiste.
-
-## Vergleich: vier Workflow-Klassen
-
-| Klasse | KI-Rolle | typische Freigabe | Beispiel |
-| --- | --- | --- | --- |
-| A: beobachten | Zusammenfassung und Suche | leicht | internes Wissensretrieval |
-| B: entwerfen | schlaegt Text oder Plaene vor | rollenbasiert | Wartungsauftrags-Entwurf |
-| C: ranken | sortierte Optionen mit Begruendung | zweistufig bei Produktionswirkung | Planungsvorschlaege |
-| D: halten | noch nicht zulaessig | Architektur- oder Policy-Gate | Auto-Disposition ohne Menschenpfad |
-
-## Checkliste: bevor ein Workflow eine Klasse aufsteigt
-
-- aktualisiertes Risiko-Review mit Integrationsdiagramm
-- Schulungsnachweis fuer betroffene Rollen
-- Logging und Retention fuer diesen Workflow verifiziert
-- Rollback dokumentiert und einmal getestet
-- Ausnahme-Register-Eintrag falls Abkuerzung temporaer ist
-
-## Produktbruecke
-
-DBR77 Vector ist die sichere Intelligenzschicht hinter dem DBR77-Oekosystem: proprietaere Industrie-KI trainiert auf echtem Werks-Transformationswissen, deploybar mit starken Grenzen inklusive on-premise, private API oder isoliertem Deployment, ohne Kundendaten zum Modelltraining, mit industrieller Argumentation statt generischem Chat. Klassifikation haelt, wenn Plattform-Verhalten zur veroeffentlichten Klasse passt.
-
-## Abschlussfazit
-
-Sicher genug ist eine Programmentscheidung, keine Pilot-Stimmung. Scoren, klassifizieren, freigeben und kalenderbasiert neu bewerten.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, dann diese: benennen Sie, was vor Ausweitung der Nutzung wahr sein muss, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Trost mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Produkte mit Vector erkunden](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*
+*DBR77 Vector unterstützt industrielles Reasoning und Deployments-Grenzen, die zu veröffentlichten Workflow-Klassen von Beobachtung bis zu gestufter Empfehlung passen. [Produkte mit Vector entdecken](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*

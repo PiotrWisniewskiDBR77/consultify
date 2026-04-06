@@ -1,74 +1,40 @@
-# Wie man KI-Entscheidungen ueber Schichten und Funktionen hinweg regelt
+# Wie man KI-Entscheidungen über Schichten und Funktionen hinweg regiert
 
-Target persona: Werksleiter / Transformations-PMO / Qualitaetssystem-Owner  
-Funnel stage: Decision  
-Core problem: KI-Governance-Dokumente leben in der IT, waehrend Nachtschicht andere Gewohnheiten hat und Qualitaet, Instandhaltung und Logistik "Assistenz" jeweils anders interpretieren  
-Main promise: ein praktisches Governance-Grid: Ownership, Change Control, Schichtuebergaben und Ausnahmepfade, die KI-Regeln 24/7 bedienbar machen
+Zielpersona: Werksleiter / Transformations-PMO / Quality-Systems-Owner  
+Funnel-Stufe: Decision  
+Kernproblem: KI-Governance-Dokumente leben in IT, während Nachtschicht mit anderen Gewohnheiten läuft und Qualität, Instandhaltung und Logistik „Assist“ jeweils anders interpretieren  
+Hauptversprechen: Ein praktisches Governance-Grid: Ownership, Change Control, Schichtübergaben und Ausnahmepfade, die KI-Regeln 24/7 operabel machen
 
-Regeln Sie KI-Entscheidungen ueber Schichten und Funktionen mit einem Rulebook, das an Workflows haengt: wer Schwellen aendern darf, wie Aenderungen versioniert werden, was Schichtuebergang enthalten muss und welche Funktion welchen Ausnahmepfad signiert. Messen Sie Drift: Override-Rate pro Schicht, veraltete Vorschlagsrate und Zeit bis Owner fuer KI-getaggte Arbeit. Governance, die nicht im Schichtwechsel sichtbar wird, ist nur Compliance-Theater. Das ist Operations-Governance. Kein Ethik-PDF in der Schublade.
+Regieren Sie KI-Entscheidungen dort, wo Arbeit passiert—nicht in einem PDF, das um zwei niemand öffnet. Veröffentlichen Sie ein Rulebook, gebunden an Workflows: wer Schwellen ändern darf, wie Änderungen versioniert werden, was Schichtübergabe erfassen muss und welche Funktion welchen Ausnahmepfad signiert. Messen Sie Drift dann über Override-Rates je Schicht, stale Suggestion Rates und Time-to-Owner für KI-getaggte Arbeit. Governance, die Schichtwechsel nicht überlebt, ist Compliance-Theater. Das ist Operations-Governance.
 
-## Grid 1: RACI fuer KI-Regelaenderungen
+Wenn Nacht und Tag unterschiedliche „informelle“ Regeln fahren, ist das kein Kulturproblem allein — es ist ein Hinweis, dass das Rulebook zu abstrakt ist oder Änderungen zu leise passieren. Machen Sie Regelupdates sichtbar wie ein Wartungsfenster: kurz, klar, mit Pflichtlektüre für die nächste Übergabe.
 
-Einfach halten.
+Halten Sie Accountability für Regeländerungen klar. Jemand muss für Vorschlagen, Testen, Veröffentlichen und Rollback von Schwellen-Edits rechenschaftspflichtig sein. Ist „accountable“ leer, gibt es stille Edits und nicht nachvollziehbare Überraschungen. Emergency Rollback muss real sein: Act-Mode pausieren, auf Advise zurück, Incident innerhalb eines Tages dokumentieren. Ohne Emergency-Track hot-fixen Teams Produktion leise—und Audits erben das Chaos.
 
-| Aktivitaet | Accountable | Responsible | Consulted | Informed |
-|---|---|---|---|---|
-| Schwellenaenderung vorschlagen | Funktionsowner | CI Lead | IT-OT, Qualitaet | Werksleiter |
-| Shadow-Test | IT-OT | Systemadmin | Funktionsowner | Vorgesetzte |
-| Version veroeffentlichen | Werksleiter | Systemadmin | Legal oder Qualitaet nach Bedarf | alle Schichten |
-| Notfall-Rollback | Bereitschaft Operations Lead | Systemadmin | Sicherheit, Qualitaet | Werksleiter |
+Schichtübergabe muss denselben Vertrag wie Tag erben. Mindest-Sichtbarkeit umfasst aktive Modi pro Workflow, bekannte Regel- oder Modellversions-IDs, Exception-Queue-Tiefe und -Alter, Top-False-Positive-Themen der Vor-Schicht und explizite Flags bei Incidents, die Auto-Routing deaktivieren. Papier-Summaries können ergänzen; sie können Systemfelder nicht ersetzen, ohne Tribal Knowledge neu zu erzeugen.
 
-Wenn "Accountable" leer ist, gibt es stille Edits.
+KI-Oberflächen beschleunigen Konflikte—also Arbitration vorbelegen. Benennen Sie wöchentlich einen Schiedsrichter für Produktions-versus-Instandhaltungs-Prioritätsstreitigkeiten, veröffentlichen Sie Eskalationsleitern für Quality-Release versus Termindruck und begrenzen Sie gemeinsame Act-Mode-Moves bei Lager-versus-Linien-Engpässen, wenn Risiko hoch ist. Unbesetzte Konfliktlösung wird Volumen-Wettbewerb. Das frisst Vertrauen in Assistenz.
 
-## Grid 2: Schichtuebergabefelder fuer KI-unterstuetzte Workflows
+Change Control braucht zwei Geschwindigkeiten: einen Standard-Wochenrhythmus mit Shadow-Testing und veröffentlichtem Changelog sowie einen Emergency-Pfad, der Safety und Kontinuität priorisiert. Fabriken bewegen sich schnell; Governance muss schnell sein, ohne Records aufzugeben.
 
-Nacht muss denselben Vertrag wie Tag erben.
+Die meisten Werke können Governance im Konferenzraum erklären. Der härtere Test: Kann die eingehende Schicht in unter zwei Minuten sagen, welcher Mode aktiv ist, welche Regelversion live ist, welche Ausnahmen altern und wer die nächste Eskalation besitzt, wenn Drift weitergeht. Braucht das Gedächtnis oder einen Anruf, ist Governance noch informell.
 
-Mindest-Uebergabeprotokoll: aktive Modi pro Workflow (watch, advise, act); bekannte Modell- oder Regelversions-IDs; offene Ausnahmewarteschlange und Alter des aeltesten Items; Top-drei False-Positive-Themen der vorherigen Schicht; explizite "kein Auto-Routing"-Flags waehrend Incidents. Papieruebergaben ohne Systemfelder erzeugen Stammeswissen.
+Tracken Sie wöchentliche Signale: Overrides je Schicht und Workflow, mediane Accept-Zeit im Advise-Mode, KI-getaggte Tasks jenseits SLA, Incidents, bei denen die eingehende Schicht die Regelversion nicht kannte. Steigender Drift ohne benannten Owner ist Governance-Failure—kein Modell-Failure.
 
-## Funktionsgrenzen: wer Cross-Team-Konflikte besitzt
+IRIS macht Governance konkret, wenn Versionen, Tasks, Freigaben und Übergabe-State in einem operativen Layer leben—damit Tag, Nacht, Qualität und Instandhaltung denselben Vertrag erben statt ihn lokal neu zu erfinden.
 
-KI wird Konflikte schneller sichtbar machen.
+Zu Deployment-Modi siehe [Wann KI im Werk beobachten, beraten oder handeln soll](../36_when_ai_should_watch_advise_or_act_in_the_factory/article_DE.md). Zu Skalen-Kontrollen nach Governance siehe [Wie man KI-Assistenz skaliert, ohne operative Kontrolle zu verlieren](../38_how_to_scale_ai_assistance_without_losing_operational_control/article_DE.md).
 
-Arbitration vorab vergeben: Produktion versus Instandhaltung Prioritaet: eine Arbitrationsrolle pro Woche; Qualitaetsfreigabe versus Planungsdruck: veroeffentlichte Eskalationsleiter; Lager versus Linie Fehlmengen: gemeinsames Morgen-Cap fuer Act-Mode-Moves. Unbesetzte Konfliktloesung wird "wer am lautesten schreit." Das bricht Vertrauen in Assistenz.
+Regieren Sie KI dort, wo Arbeit passiert: Versionen, Schichten und benannte Schiedsrichter. Kann Nachtschicht den Regel-State im System nicht lesen, regieren Sie noch nicht.
 
-## Change Control in Werksgeschwindigkeit
+## Operatives Fazit
 
-Zwei Spuren: **Standard** Woechentliches Review, dokumentierter Shadow-Test, veroeffentlichtes Changelog.
+Das Versprechen dieses Artikels—ein praktisches Governance-Grid: Ownership, Change Control, Schichtübergaben und Ausnahmepfade, die KI-Regeln 24/7 operabel machen—wird erst operativ, wenn es die Art ändert, wie Arbeit fließt: klarere Ownership, schnellere erste Zuweisung und nachvollziehbarer Abschluss ohne Postfach-Archäologie. Für „Wie man KI-Entscheidungen über Schichten und Funktionen hinweg regiert“ ist das der Akzeptanztest: Die nächste Schicht soll lesen können, was passierte, was freigegeben wurde und was offen bleibt—ohne mündliche Rekonstruktion.
 
-**Notfall** Act-Mode pausieren, auf advise zurueck, Incident-Notiz innerhalb 24 Stunden. Ohne Notfallspur hot-fixen Teams still in Produktion.
+Dieser Standard geht nicht um Software-Perfektion; er geht um operative Ehrlichkeit: weniger mysteriöse Übergaben, weniger Wahrheiten nur im Meeting und mehr Tage, an denen der System-Record zu dem passt, was die Fläche mitten in der Task sagen würde.
 
-## Reality check: Governance bricht meist an Schichtgrenzen, nicht in Steering Meetings
-
-Die meisten Werke koennen ihr Governance-Modell im Konferenzraum erklaeren.
-
-Die haertere Frage ist, ob die ankommende Schicht in unter zwei Minuten sagen kann:
-
-- welcher Modus aktiv ist
-- welche Regelversion live ist
-- welche Exceptions bereits altern
-- wer die naechste Eskalation besitzt, wenn der Drift weiter steigt
-
-Wenn diese Antwort von Erinnerung, Anrufen oder einer einzelnen erfahrenen Fuehrungskraft abhaengt, ist Governance noch informell.
-
-## Metriken, die Schicht- und Funktionsdrift zeigen
-
-Woechentlich tracken: Override-Rate pro Schicht und Workflow; Median-Akzeptanzzeit fuer advise-Mode-Vorschlaege; Anzahl KI-getaggter Aufgaben ueber SLA gealtert; Incidents, bei denen eingehende Schicht die Regelversion nicht kannte.
-
-Steigende Drift ohne benannten Owner ist Governance-Versagen, kein Modellversagen.
-
-## Warum IRIS Cross-Funktions-Governance konkret macht
-
-DBR77 IRIS ist ein KI-natives Werksbetriebssystem mit vereinheitlichter Ausfuehrungsschicht fuer Produktion, Lager, Qualitaet, Instandhaltung und Tasking.
-
-Wenn Regeln, Aufgaben und Freigaben eine Schicht teilen, werden Schichtuebergaben und Funktionsgrenzen pruefbar statt tribal.
-
-## Fazit
-
-Regeln Sie KI dort, wo Arbeit passiert: Versionen, Schichten, benannte Schiedsrichter.
-
-Wenn Nachtschicht den Regelzustand nicht im System lesen kann, regieren Sie noch nicht.
+Halten Sie Teams an einer einfachen Regel: Wenn sich eine Verbesserung nicht in Exporten aus dem Ausführungsdatensatz zeigen lässt, ist es noch keine operative Verbesserung—nur eine Erzählung davon. Diese Regel hält Programme ehrlich, wenn Demos gut aussehen, Übergaben aber noch fragil wirken.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Walkthrough ansehen](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*
+*DBR77 IRIS legt Regel-Modi, Versionen, Tasks und Freigaben in einem Layer offen, damit Schichtübergaben und Funktions-Ownership für Operations sichtbar bleiben. [Walkthrough ansehen](https://dbr77.com/iris) oder [14-Tage-Trial starten](https://dbr77.com/demo).*

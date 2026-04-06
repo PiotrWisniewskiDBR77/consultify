@@ -1,84 +1,52 @@
-# Was ein CTO vor der Anbindung von KI an Werksysteme fragen sollte
+# Was ein CTO fragen sollte, bevor KI mit Werksystemen verbunden wird
 
-Target persona: CTO  
-Funnel stage: Decision  
-Core problem: KI-zu-Werk-Integrationen werden oft als einfache APIs verkauft, waehrend echtes Risiko in Credentials, Schreib-Berechtigung, Datenlinie und Fehlermodellen sitzt  
-Main promise: CTOs koennen einen fokussierten Fragenkatalog zu Identitaet, Scope, Nebenwirkungen, Monitoring, Rollback und Ownership nutzen, bevor produktive Kopplung entsteht
+Zielpersona: CTO  
+Funnel-Stufe: Decision  
+Kernproblem: KI-zu-Werk-Integrationen werden oft als einfache APIs verkauft, während das echte Risiko in Credentials, Schreibberechtigung, Datenlinie und Ausfallmodellen sitzt  
+Hauptversprechen: CTOs können einen fokussierten Fragenkatalog zu Identität, Umfang, Nebenwirkungen, Monitoring, Rollback und Ownership nutzen — bevor eine produktive Kopplung entsteht
 
-KI an Werksysteme zu koppeln ist kein Feature-Schalter. Es ist eine Vergroesserung des Betriebsrisikos.
-
-Bevor KI an MES, ERP, QMS, CMMS oder aehnliche Systeme gekoppelt wird, sollte der CTO Identitaet und Least-Privilege-Scopes, Lese- versus Schreib-Posture, idempotentes Verhalten, Fehler- und Timeout-Handling, Audit-Logs, Change Control, Rollback-Pfade und ob Outputs bis zur expliziten Freigabe nur beratend bleiben, bestaetigen. Sind diese Themen duenn, Kopplung verzoegern.
+KI mit Werksystemen zu verbinden ist kein Feature-Schalter. Es ist eine Ausweitung des operativen Risikos — der Moment, in dem Abstraktion endet und sich Zustand ändern kann. Bevor Sie KI an MES, ERP, QMS, CMMS oder ähnliche Systeme koppeln, sollte der CTO Identität und Least-Privilege-Scopes, Lese- versus Schreib-Posture, idempotentes Verhalten, Ausfall- und Timeout-Handling, Audit-Logs, Change Control, Rollback-Pfade, Incident-Ownership und ob Outputs bis zur expliziten Freigabe nur Empfehlung bleiben, bestätigen. Wenn diese Themen dünn sind, verzögern Sie die Kopplung — nicht weil Innovation schlecht ist, sondern weil unbesessenes Risiko schlecht ist.
 
 ## Warum Integration der echte Wendepunkt ist
 
-Viele KI-Debatten bleiben abstrakt, bis ein System Zustand aendern kann. Integration endet die Abstraktion.
+Viele KI-Debatten bleiben abstrakt, bis ein System Records, Pläne oder Qualitätszustände ändern kann. Integration ist der Punkt, an dem „Assistent“ zu Infrastruktur wird. Es ist auch der Punkt, an dem Security- und Operations-Teams aufhören, nach Demos zu fragen, und nach Blast-Radius fragen — genau das Gespräch, das Sie wollen, solange Sie noch Optionen haben.
 
-## Fragenblock A: Identitaet und Zugriff
+## Identität und Zugriff
 
-Fragen Sie:
+Fragen Sie, welche Servicekonten existieren und wer Rotation besitzt, wie Secrets gespeichert und injiziert werden, ob Zugriff auf die minimale API-Oberfläche begrenzt ist und wie Admin-Aktionen von operativen Aufrufen getrennt sind. Integrationsidentitäten sollten so diszipliniert sein wie jede andere werksnahe Integration — nicht „der KI-Benutzer“.
 
-- welche Servicekonten existieren und wer Rotation besitzt?
-- wie werden Secrets gespeichert und injiziert?
-- ist Zugriff auf minimale API-Oberflaeche begrenzt?
-- wie sind Admin-Aktionen von operativen Calls getrennt?
+## Lesen versus Schreiben
 
-## Fragenblock B: Lesen versus Schreiben
+Fragen Sie, ob die Integration schreiben oder nur lesen kann. Wenn Schreibvorgänge existieren: welche Objekte können sich ändern? Stehen Schreibvorgänge hinter expliziter menschlicher Freigabe? Gibt es Dry-Run- oder Simulationsmodus? Nur-Lese-Beratung ist leichter zu verteidigen; Schreibpfade verlangen stärkere Gates und klareres Ownership.
 
-Fragen Sie:
+## Nebenwirkungen und Blast-Radius
 
-- kann die Integration schreiben oder nur lesen?
-- wenn Schreiben existiert, welche Objekte duerfen sich aendern?
-- liegt Schreiben hinter expliziter menschlicher Freigabe?
-- gibt es Dry-Run oder Simulation?
+Fragen Sie, was passiert, wenn das Modell die falsche Aktion empfiehlt, ob Teil-Ausfälle Systeme inkonsistent lassen können und ob Transaktionen begrenzt und retry-sicher sind. Ziel sind nicht perfekte Modelle, sondern kontrollierte Ausfallmodi.
 
-## Fragenblock C: Nebenwirkungen und Blast Radius
+## Observability
 
-Fragen Sie:
+Fragen Sie, welche Logs pro API-Aufruf existieren, ob Logs KI-Ereignisse mit Fertigungsdatensätzen korrelieren können und welche Metriken Drift oder steigende Fehlerraten signalisieren. Ohne Sicht auf Integrationsgesundheit können Sie sie nicht betreiben.
 
-- was passiert bei falscher Empfehlung?
-- kann partieller Ausfall Systeme inkonsistent lassen?
-- sind Transaktionen begrenzt und retry-sicher?
+## Change Control und Umgebungen
 
-## Fragenblock D: Observability
+Fragen Sie, wie Sie vom Piloten in Produktion promoten, wie Modell- oder Prompt-Updates versioniert werden und ob Konfiguration unabhängig von Werksreleases zurückgerollt werden kann. KI-Systeme ändern sich oft; Werke brauchen vorhersagbare Promotion.
 
-Fragen Sie:
+## Ownership und Incident Response
 
-- welche Logs existieren pro API-Call?
-- korrelieren Logs KI-Events mit Fertigungsdatensaetzen?
-- welche Metriken zeigen Drift oder steigende Fehlerraten?
+Fragen Sie, wer bei Integrationsausfällen gepaged wird, wo die Verantwortungsgrenze des Anbieters liegt und welche Recovery-Zeit für Ihre Linienklasse tolerierbar ist. Unbesessene Integrationen werden im schlimmsten Moment jedermanns Problem.
 
-## Fragenblock E: Change Control und Umgebungen
+Nur-Lese-Beratung ist leichter zu verteidigen. Closed-Loop-Unterstützung verlangt stärkere Gates. Käufer sollten benennen, in welchem Modus sie sind, und stilles Driften zwischen den Modi verhindern.
 
-Fragen Sie:
+Fragenkataloge brauchen weiterhin benannte Owner und schriftliche Antworten; die KI-Schicht ersetzt keine Integrationsdisziplin. Vector ist als Industrie-KI im DBR77-Ökosystem positioniert, mit Deployments-Optionen, die Sie durch dieselben Segmentierungs-, Identitäts- und Logging-Standards führen können wie andere werksnahe Systeme, mit fertigungsorientiertem Reasoning statt generischem Chat und ohne Kundendaten-Training des Modells.
 
-- wie promoten Sie von Pilot zu Produktion?
-- wie werden Modell- oder Prompt-Updates versioniert?
-- koennen Sie Konfiguration unabhaengig von Werk-Releases zurueckrollen?
+Die CTO-Rolle ist, Innovation nicht zu unbesessenem operativem Risiko werden zu lassen. Stellen Sie Integrationsfragen früh, schriftlich, mit Ownern. Sind die Antworten stark, kann die Kopplung mit Zuversicht weitergehen.
 
-## Fragenblock F: Ownership und Incident Response
+## Werks-Checkpoint
 
-Fragen Sie:
+Behandeln Sie „Was ein CTO fragen sollte, bevor KI mit Werksystemen verbunden wird“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt ein, das Ihre Haltung belegt — Architekturdiagramm, Auszug aus der Trainingspolicy, Log-Probe, unterzeichnete Workflow-Klassifikation oder Promotions-Nachweis. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotenkleidung. Fertigungs-KI reift, wenn Belege Routine werden: dieselbe Disziplin, die Sie schon vor Linienfreigabe, Lieferantenwechsel oder großem IT-Cutover erwarten. Das ist der Wechsel von Begeisterung zu Infrastruktur — und er hält Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent.
 
-- wer wird bei Integrationsausfaellen gerufen?
-- wo liegt die Vendor-Verantwortungsgrenze?
-- welche maximale Wiederherstellungszeit ist fuer Ihre Linienklasse tolerierbar?
-
-## Vergleich: rein beratend versus geschlossene Schleife
-
-Rein beratend ist leichter zu verteidigen. Geschlossene Schleife braucht staerkere Gates.
-
-Kaeufer:innen sollten den Modus benennen, statt still zwischen Modi zu gleiten.
-
-## Produktbruecke
-
-DBR77 Vector ist als industrielle KI mit kontrollierten Bereitstellungsoptionen im DBR77-Oekosystem positioniert, mit Reasoning aus Fertigungs-Transformationswissen statt generischem Chat und klarer Haltung ohne Modelltraining mit Kundendaten.
-
-Das ersetzt Integrationsdisziplin nicht, richtet die KI-Schicht aber an dem aus, was CTOs von ernsten Systemen erwarten.
-
-## Fazit
-
-CTO-Arbeit heisst, Innovation nicht zu unbesessenem Betriebsrisiko werden zu lassen. Stellen Sie Integrationsfragen frueh, schriftlich, mit Ownern. Sind die Antworten stark, kann Kopplung mit Ruhe erfolgen.
+Wenn die Führung eine knappe Entscheidungsgewohnheit will, dann diese: benennen Sie, was vor Ausweitung der Nutzung wahr sein muss, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance kein narrativer Trost mehr, sondern eine Betriebsmetrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*
+*DBR77 Vector unterstützt CTO-geführte Bewertungen mit expliziten Deployments-Grenzen, ohne Kundendaten-Training und mit industriellem Reasoning für reglementierte Kopplung mit Werksystemen. [Demo buchen](https://dbr77.com/vector) oder [Sicherheit prüfen](https://dbr77.com/demo).*

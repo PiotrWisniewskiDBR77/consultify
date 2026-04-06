@@ -5,53 +5,51 @@ Funnel stage: Nurture / Adoption
 Core problem: leadership declares IoT live while the floor treats signals as "computer guesses" and reverts to habit  
 Main promise: a trust ladder that pairs physical verification, transparent thresholds, and bounded promises until credibility compounds
 
-Distrust is not sabotage. It is a rational response to history.
+Distrust is not sabotage. It is memory.
 
-Many plants have lived through noisy alarms, broken dashboards, and projects that disappeared after the kickoff video. IoT has to earn the floor the way a new teammate would.
+Plants have lived through noisy alarms, dashboards that lied politely, and projects that vanished after kickoff videos. IoT has to earn credibility the way a new teammate would: show your work, admit limits, fix mistakes visibly, and never ask people to bet a shift on a black box.
 
-## Start by naming the trust gap in plain language
+Trust is also a leadership behavior. If managers punish people for reporting bad signals, the floor hides uncertainty. If tuning tickets disappear into a void, people assume IoT is ornamental. Pair technical steps with visible accountability.
 
-In a short kickoff with operators, acknowledge: what the system will do now; what it will not do yet; how a wrong signal will be handled without blame; who can change a threshold and how quickly.
+## Name the gap in plain language
 
-If leadership skips this, people fill the gap with worst-case assumptions.
+In a short floor conversation, say what the system does now, what it does not do yet, how a bad signal gets handled without blame, and who can change a threshold—and how fast. Silence invites worst-case assumptions. Clarity invites partnership.
 
-## Trust ladder: five steps that work on real shifts
+## Build trust in visible steps
 
-1. **Show the signal next to the familiar gauge** Parallel display for a bounded period. No forced decision from IoT alone.
+Run new signals beside familiar cues for a bounded period so people can compare without being forced to obey IoT alone. Co-sign first thresholds with maintenance and operators and write the rationale where shifts can see it. Treat false positives as tuning tickets that close in public view; nothing erodes trust faster than “ignore that one” with no follow-through.
 
-2. **Co-sign the first thresholds** Maintenance and operators agree on initial limits with written rationale.
+Keep human authority explicit: IoT recommends; humans authorize except for pre-agreed automatic stops everyone understands. Publish a short weekly note—three bullets on tuning, training, or scope—so people watch the system learn instead of guessing whether anyone is listening.
 
-3. **Reward honest false positives** Every false alarm becomes a tuning ticket with visible closure.
+## Avoid trust-killing habits
 
-4. **Keep human authority explicit** IoT recommends; humans authorize except for pre-agreed auto-stops.
+Hidden threshold changes, blaming operators for ignoring alarms instead of fixing tuning ownership, dashboards without next steps, and day-one hero promises all teach the floor that IoT is theater. Replace them with documented changes, shared SLAs, context-rich signals, and bounded promises with dates.
 
-5. **Publish a weekly "what we changed" note** One screen or paper: three bullets on tuning, training, or scope. Trust compounds when people see the system learn in public.
+**Operator readiness before promoting action:** operators can state the pilot goal without marketing words; a no-penalty path exists to report bad signals; shift overlap includes a few minutes on IoT handoffs; supervisors know which alerts are informational; training includes physical verification for high-risk cases.
 
-## Checklist: operator readiness before promoting action
+## DBR77 IoT and visible learning
 
-- [ ] operators can describe the pilot goal without marketing words
-- [ ] there is a no-penalty path to report a bad signal
-- [ ] shift overlap includes 10 minutes of handoff on IoT themes
-- [ ] supervisors know which alerts are informational only
-- [ ] training includes a physical verification step for high-risk cases
+DBR77 IoT fits a trust gap when deployment makes improvement visible: parallel truth, co-signed thresholds, closed tuning tickets, short weekly change notes, and fast cycles between a bad signal and a visible fix. Edge context helps when it speaks the floor’s language; dashboards hurt when they look smart but hide limits.
 
-## Comparison: trust-killing versus trust-building behaviors
+Trust is built shift by shift: parallel truth, honest thresholds, public tuning, explicit human authority, and weekly proof that the system learns. Slides do not substitute for that rhythm.
 
-| Trust-killing | Trust-building |
-|---|---|
-| hidden threshold changes | documented changes with reason |
-| blaming operators for ignoring alarms | tuning ownership and SLA |
-| dashboards without context | signal plus next step |
-| big promises on day one | bounded promises with dates |
 
-## What not to do
 
-Do not measure operator trust with vanity click metrics alone; do not roll more alerts to "prove engagement"; do not skip the parallel verification window on critical assets.
 
-## What this means for DBR77 IoT
+## Keep the article’s promise practical
 
-DBR77 IoT fits a trust gap when deployment makes learning visible: parallel truth beside familiar cues, co-signed thresholds, tuning tickets that close in public, and short weekly change notes. Fast pilots help when they shorten the loop between a bad signal and a visible fix; edge context helps when it carries language the floor already uses. The failure mode to avoid is dashboards that look smart while ownership and limits stay opaque.
+Translate the ideas above into one habit your plant can sustain next month: a review that happens, a dictionary people open, a routing rule people trust, or a drill people run. Big programs stall when everything moves at once. Small loops compound when they repeat.
 
-## Bottom line
+## A leadership checkpoint for the next ops review
 
-When operators do not trust IoT yet, run a trust ladder: parallel truth, co-signed thresholds, honest tuning, explicit human authority, and weekly change notes. Credibility is built shift by shift, not slide by slide.
+Ask one plain question: what changed on the floor this month because IoT made reality clearer—not louder? If the answer is vague, tighten scope, definitions, or review cadence before expanding footprint. Useful IoT shows up as calmer handovers, faster confirmation, and fewer circular arguments about what happened. Connection counts are inputs; behavior change is the receipt.
+
+## Bringing it home on the floor
+
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
+
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
+
+---
+
+*DBR77 IoT helps plants earn operator trust with transparent signals, co-signed thresholds, and fast cycles from bad data to visible fixes on the floor. [Plan a pilot](https://dbr77.com/iot) or [See online demo](https://dbr77.com/demo).*

@@ -1,61 +1,54 @@
-# Kiedy obecny dostawca nie powinien wygrac nastepnego projektu automatyzacji
+# Kiedy dotychczasowy dostawca nie powinien wygrać następnego projektu automatyzacji
 
-Target persona: sponsor / kierownictwo sterujace i zarzadzanie integratorami  
-Funnel stage: Evaluation do Decision (logika przyznania i strategiczna kontrola)  
-Core problem: bezwlad relacji i strach przed kosztem przelaczenia zamieniaja powtarzalne zakupy w domyslne single sourcing bez swiezej porownywalnosci  
-Main promise: jawne, pozbawione emocji kryteria, kiedy sciezka obecnego dostawcy jest niebezpieczna dla nowego zakresu
+Docelowa persona: Sponsor / kierownictwo wykonawcze i nadzór nad integratorami  
+Etap lejka: Od oceny do decyzji (logika przyznania i kontrola strategiczna)  
+Główny problem: inercja relacji i strach przed kosztem zmiany zamienia powtarzalny zakup w domyślny single sourcing bez świeżej porównywalności  
+Główna obietnica: jawne, pozaemocjonalne kryteria, kiedy ścieżka incumbenta jest niebezpieczna dla nowego zakresu
 
-Lojalnosc to nie strategia zakupowa.
+Komfort jest uwodzicielski. Znasz zespół, numery telefonów i dziwactwa ich dokumentacji. Ta znajomość może być kompetencją — albo inercją w masce rozwagi. Incumbent wygrywa następny projekt domyślnie, gdy strach przed kosztem przełączenia, polityczna łatwość albo „znają nasz zakład” skraca ścieżkę do świeżej porównywalności. Czasem to racjonalne. Czasem blokuje was w ścieżce, która nie pasuje już do zakresu, profilu ryzyka ani poprzeczki wydajności, której teraz potrzebujecie.
 
-To uczucie, ktore nalezy testowac wobec rezultatow, interfejsow i wlascicielstwa ryzyka. Obecny dostawca czesto zasluguje na nastepny projekt. Czasem zaklad kupuje ciaglosc problemu.
+Celem jest udokumentowana decyzja, nie odruch.
 
-## Bezposrednia odpowiedz
+## Kiedy ścieżka incumbenta jest niebezpieczna
 
-Obecny dostawca nie powinien wygrac nastepnego projektu automatyzacji, gdy porownywalnosc pokazuje slabsze dowody na nowy zakres, gdy wzorce zarzadzania lub dostaw z poprzedniej pracy nie nadaja sie do naprawy w timebox, gdy ryzyko konfliktu interesow lub zaleznosci jest materialne, lub gdy wewnetrzne wyrownanie wymaga czystego zapisu porownania dla odpowiedzialnosci. Komfort nie zastepuje zapisu decyzji.
+Ponownie rozegraj pole, gdy nowy zakres przekracza ich sprawdzony obszar, gdy wynik wcześniejszej pracy był akceptowalny, ale nie powtarzalny, gdy założenia z ostatniego projektu przestały obowiązywać, gdy zachowanie komercyjne lub przy zamówieniach zmian stworzyło ukryte koszty, gdy technologia poszła naprzód, a model incumbenta słabo pasuje, albo gdy governance wymaga dowodu, że wąskie pole nadal jest uzasadnione. Żaden z tych sądów nie wymaga dramatu — tylko uczciwości.
 
-## Sygnal 1: nowy zakres nie jest powtorzeniem starego zwyciestwa
+## Inercja przebrana za strategię
 
-Niedopasowania (ilustracyjne): inny mix produktow lub gestosc przezbrojen; nowe wymagania regulacyjne lub identyfikowalnosc klienta; inni wlasciciele interfejsow po zmianie IT lub MES.
+Uważaj na język unikający porównania: „z nimi będzie szybciej”, „zmiana jest ryzykowna”, „już nas rozumieją”. Te stwierdzenia mogą być prawdziwe. Potrzebują dowodu powiązanego z tym zakresem, nie z pamięcią.
 
-Jesli przewaga obecnego to pamiec starej linii, zadaj dowodu wobec nowej definicji ukonczenia.
+## Dyscyplina dowodu przy powtarzalnych przyznaniach
 
-## Sygnal 2: poprzednia dostawa pokazala wzorzec, nie incydent
+Jeśli zawężasz pole, udokumentuj, dlaczego alternatywy nie są wiarygodne, jakie kryteria dopuszczałyby innych oraz jak testowano strukturę komercyjną. Historia relacji to wejście, nie wyrok.
 
-Rozrozniaj jeden zly tydzien od powtarzajacego sie wzorca (kategorie ilustracyjne):
+## Porównywalność wciąż ma znaczenie
 
-| typ wzorca | przyklad | dlaczego zagraza nastepnemu przyznaniu |
-| --- | --- | --- |
-| realizm harmonogramu | chroniczne opoznienia przy zaleznosciach zakladu | sugeruje niedopasowanie modelu planowania |
-| dyscyplina zmian | czeste nieformalne poslizgi zakresu | slaba higiena bazy przenosi sie dalej |
-| tarcie commissioning | spory o akceptacje sie powtarzaja | obiekty akceptacji moga nadal byc mgliste |
-| wsparcie po go-live | wolna reakcja przy cisnieniu przestoju | ryzyko operacyjne jest ciagle |
+Nawet „przyjazne” odnowienia powinny odpowiadać na te same pytania o zakres, założenia i ryzyko co zimny start. W przeciwnym razie nie odnawiacie — dryfujecie.
 
-Wzorce zasluguja na strukturalne porownanie, nie na odnowienie z korytarza.
+## Jak pomaga DBR77 Marketplace
 
-## Sygnal 3: postawa komercyjna lub IP blokuje inspektowalnosc
+Ta sama struktura porównania dla incumbentów i wyzwańców wymusza, by odnowienie było zapisaną decyzją — z widocznymi założeniami i obronną logiką przyznania — zamiast grawitacji.
 
-Czerwone flagi (ilustracyjne): nieprzejrzyste podwykonawstwo bez mapowania odpowiedzialnosci; ograniczenia uniemozliwiajace ponowne uzycie ograniczen w konkurencyjnym briefie; wycena, ktorej nie da sie mapowac na obiekty akceptacji. Jesli nie mozesz porownac, nie obronisz przyznania wewnetrznie.
+Najbliżsi sąsiedzi ścieżki sourcowania: [Jak sprawdzać referencje dostawcy automatyzacji bez marnowania czasu](../23_how_to_check_automation_supplier_references_without_wasting_time/article_PL.md), [Kiedy stosować shortlistę, a kiedy utrzymywać więcej dostawców w grze](../24_when_to_use_a_shortlist_and_when_to_keep_more_suppliers_in_play/article_PL.md) oraz [Kiedy single sourcing jest mądrzejszy niż pełny konkurs piękności dostawców](../27_when_single_sourcing_is_smarter_than_running_a_full_supplier_beauty_contest/article_PL.md).
 
-## Sygnal 4: wewnetrzni interesariusze nie maja pewnosci co do zamknietego odnowienia
+## Kapitał relacyjny jest realny — i wyczerpywalny
 
-Jesli operacje, jakosc lub kierownictwo IT nie podpisze krotkiego pisanego uzasadnienia, dlaczego odnowienie jest najnizszym ryzykiem, traktuj to jako dane. Wymuszona zgoda bez dowodu tworzy po przyznaniu obwinianie.
+Długie partnerstwa mogą być aktywami: zaufanie, skróty komunikacji, znane dziwactwa. Mogą też tworzyć ślepe plamki: niekwestionowane założenia, tolerowana słaba dokumentacja albo wzorce komercyjne, które nie pasują do nowego zakresu. Pytanie przy następnym przyznaniu brzmi nie „czy relacja istnieje”, lecz „czy nadal zasługuje na wynik, którego teraz potrzebujemy”.
 
-## Ograniczony protokol decyzji
+Szanowna przegrana incumbenta jest możliwa, gdy zapis pokazuje uczciwe porównanie i obronną przyczynę, dlaczego inna ścieżka pasuje do nowej geometrii. To chroni integralność pod przyszłą pracę zamiast zatruwać studnię polityką.
 
-Uzyj prostej bramki (ilustracyjnie): opublikuj nowy zakres i obiekty akceptacji; wymagaj od obecnego odpowiedzi w tych samych polach strukturalnych co od konkurentow; przeprowadz przeglad referencji i dostawy wobec listy wzorcow; zdecyduj: przyznaj obecnemu, poszerz porownanie lub wstrzymaj zakres.
+## Od decyzji do zachowania hali
 
-## Co to znaczy dla DBR77 Marketplace
+Chodzi tu o dociśnięcie tego fragmentu podróży zakupowej — w praktyce „kiedy obecny dostawca nie powinien wygrać następnego projektu automatyzacji” — żeby realizacja była przewidywalna. W zakładach przemysłowych dwuznaczność nie zostaje w abstrakcji: zamienia się w czekanie, przeróbki, ciche obejścia i spięcia przy urządzeniach wtedy, gdy linia potrzebowała jasności już tygodnie wcześniej. Gdy zespoły publikują te same fakty, wiążą akceptację z dowodem i utrzymują widzialną odpowiedzialność, dostawcy reagują mniej zaskakująco, a funkcje wewnętrzne marnują mniej czasu na godzenie sprzecznych narracji.
 
-DBR77 Marketplace to workflow decyzji automatyzacji i warstwa zaufania przy wyborze integratora.
+To nie teoria tylko dla działów sztabowych. Kierownicy produkcji czują konsekwencje, gdy artefakty zakupowe nie zgadzają się z rzeczywistością hali: nadgodziny pochłaniające skoki, rozciągnięta czujność jakościowa i konserwacja wciągana w improwizację wokół w połowie zdefiniowanych interfejsów. Silna dyscyplina zakupów to więc inwestycja w produkcję — mniej dramatu przy instalacji, mniej nagłych rozmów o zmianach i szybsza droga do stabilnej wydajności. W razie wątpliwości zwolnij dokument, aż dopasuje się do linii; przyspieszanie niedopasowanego dokumentu tylko przesuwa ból w dół strumienia.
 
-Dyscyplina obecnego dostawcy pasuje do tego modelu: te same pola, ten sam standard dowodu, ta sama porownywalnosc. Marketplace to nie katalog robotow.
-
-To system pierwszy dla producenta, by redukowac chaos sourcingu i czynic logike przyznania inspektowalna.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: traktuj każdy ważny wynik zakupów jako coś, co operacje i utrzymanie mogłyby zrewidować. Jeśli nie da się tego przełożyć na zachowanie na hali, dociśnij język, aż da się. Ta jedna dyscyplina powstrzymuje wiele porażek, które z perspektywy czasu wyglądają na techniczne, a naprawdę wynikają z problemów decyzyjnych od początku.
 
 ## Podsumowanie
 
-Odnow obecnego, gdy zapis decyzji to wspiera na nowym zakresie. Domyslnie wybieraj obecnego, gdy unikasz pracy porownania.
+Incumbent powinien wygrywać, gdy zasługuje na merytach tego zakresu — nie dlatego, że porównanie było niewygodne. Zapisz kryteria, uruchom te same pola i decyduj jak właściciele.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*
+*DBR77 Marketplace wymusza tę samą strukturę porównania dla incumbentów i wyzwańców, więc odnowienie jest zapisaną decyzją, a nie inercją w przebraniu strategii. [Porównaj oferty](https://dbr77.com/marketplace) lub [Uruchom demo producenta](https://dbr77.com/demo).*

@@ -1,0 +1,27 @@
+{
+  "article_path": "Blogs/DBR77/Pages/01_ai_native_operating_system_for_industry",
+  "product": "DBR77",
+  "scope_type": "page",
+  "asset_slug": "01_ai_native_operating_system_for_industry",
+  "role": "hero",
+  "aspect_ratio": "16:9",
+  "usage": [
+    "website",
+    "social",
+    "newsletter"
+  ],
+  "model": "google:imagen-4.0-generate-001",
+  "prompt_source": "Blogs/DBR77/Pages/01_ai_native_operating_system_for_industry/image-prompts.md",
+  "prompt_text": "Editorial industrial ecosystem scene showing a modern manufacturing environment connected by one clear operating logic across machine data, simulation, execution control, automation sourcing, and governance, expressed through embedded industrial cues, abstract control surfaces, and physical operating continuity rather than hologram clutter, overlay graphics, or readable dashboards, premium B2B strategic style, realistic factory context, calm intelligent mood, wide landscape composition, no sci-fi hologram clutter, no generic dashboard wall no text, no logos, no brand names, realistic industrial or executive context, no staged stock-photo poses, no sci-fi UI, no floating overlay graphics, all screens and boards must stay abstract and non-legible Target aspect ratio: 16:9 Critical render rule: do not generate any readable text, letters, numbers, captions, labels, logos, watermarks, slide titles, document copy, dashboard copy, UI text, headline text, wall text, or typographic overlays anywhere in the image. If a screen, board, document, dashboard, scorecard, or interface is visible, it must contain only abstract non-readable blocks, simple shapes, and soft placeholder marks. Never place large title words, marketing slogans, section headers, or composited text for later overlay; leave that area visually quiet and empty instead. Use environmental storytelling and people, not presentation slides or readable screens. Google-specific output rule: produce a photorealistic or editorial-realistic business image with no readable text anywhere. Do not place words on walls, tables, screens, reports, dashboards, scorecards, or overlays. Any interface elements must stay abstract, minimal, and completely non-legible. Avoid: generic stock meeting scene, flashy sci-fi, neon overlays, cartoon metaphor, fake futuristic interface",
+  "negative_prompt": "generic stock meeting scene, flashy sci-fi, neon overlays, cartoon metaphor, fake futuristic interface",
+  "seed": "n/a",
+  "run_id": "n/a",
+  "created_at": "2026-03-28T17:46:59.275112+00:00",
+  "alt_text_en": "show DBR77 as one intelligent industrial operating system rather than a disconnected set of tools.",
+  "caption_en": "show DBR77 as one intelligent industrial operating system rather than a disconnected set of tools.",
+  "crop_safe_notes": "Exported 1376×768 (center-cover from generator master) per DBR77 pixel-aspect gate.",
+  "output_path": "Blogs/DBR77/Pages/01_ai_native_operating_system_for_industry/assets/images/hero_16x9_v2.png",
+  "generation_notes": {
+    "table_markdown": "| field | value |\n|---|---|\n| pipeline | cursor-builtin-generate-image |\n| seed | n/a |\n| steps | n/a |\n| generator_native_px | varied |\n| delivered_px | 1376×768 |\n| post_process | center-cover crop + LANCZOS to 16:9 contract |\n| run | DBR77-Agent3-PaczkaC25-2026-03-31 |"
+  }
+}

@@ -1,127 +1,56 @@
-# Wie man ein Automatisierungs-Pilotprojekt durchführt
+# Wie Sie ein Automatisierungs-Pilotprojekt fahren
 
-Zielpersona: Operations Leader / Executive Sponsor  
-Funnel-Stufe: Decision  
-Kernproblem: viele Hersteller wollen mit einem Pilot starten, definieren ihn aber zu breit oder zu vage, was Verzögerung, Verwirrung und schwaches Lernen erzeugt  
-Hauptversprechen: ein Automatisierungs-Pilot funktioniert, wenn er als Entscheidungswerkzeug und nicht als Mini-Version einer vollständigen Transformation aufgebaut wird
+Zielpersona: Operations-Leitung / Führungssponsor  
+Funnel-Stufe: Entscheidungsphase  
+Kernproblem: Viele Hersteller wollen mit einem Pilot starten, definieren ihn aber zu breit oder zu vage — was Verzögerung, Verwirrung und schwaches Lernen erzeugt  
+Hauptversprechen: Ein Automatisierungspilot funktioniert, wenn er als Entscheidungsinstrument scoped ist, nicht als Miniversion einer vollen Transformation
 
-Viele Automatisierungsprojekte scheitern vor der Skalierung, weil der Pilot schlecht gestaltet wurde. Er ist entweder zu groß, zu vage oder zu politisch. Das Team sagt, es will einen Pilot.
+Ein Pilot ist kein kleiner Weg, alles zu tun. Er ist ein begrenzter Weg, etwas Spezifisches zu lernen. Wenn Teams das vergessen, schmuggeln sie ganze Programmambitionen in ein „Phase-eins“-Label: mehrere Produktfamilien, vage Erfolgssprache und ein Erfolgskriterium, das wechselt, sobald jemand neu am Steering-Call teilnimmt. Die Technologie kann in Ordnung sein. Das Experiment nicht.
 
-Was es oft baut, ist ein langsames, überladenes Projekt mit unklaren Erfolgskriterien. Damit wird der Zweck des Piloten verfehlt. Ein guter Pilot sollte Unsicherheit schnell reduzieren. Er sollte nicht schon am ersten Tag Enterprise-Komplexität nachbauen.
+Das Werk geht mit verbrauchten Monaten, berührten Budgets und ohne klare Antwort auf die Frage heraus, die die Führung wirklich brauchte — skalieren, pivotieren oder stoppen.
 
-## Mit einer Geschäftsfrage starten
+## Verankern Sie den Piloten in einer Entscheidung
 
-Die besten Pilotprojekte beginnen mit einer klaren Frage. Zum Beispiel:
+Bevor Sie Lösungen einladen, schreiben Sie die Entscheidung auf, die der Pilot unterstützen soll. Beispiele: Kann dieser Engpass unter realen Zuführungsrandbedingungen Zieltempo mit akzeptabler Qualität halten? Können wir die Arbeitsintensität in dieser Zelle reduzieren, ohne neues Qualitätsrisiko zu schaffen? Können wir dieses Equipment mit bestehenden Steuerungen und Ownership-Modell ohne heldenhaften IT-Aufwand integrieren?
 
-- lässt sich dieser Prozess zuverlässig genug automatisieren, um einen Rollout zu rechtfertigen?
-- können wir den Throughput an diesem Bottleneck stabilisieren?
-- können wir die Labor-Abhängigkeit in dieser Zelle reduzieren?
+Ein Pilot, der in einem Schwung Lieferant, Business Case, Rollout-Plan und kulturelle Bereitschaft beweisen will, beweist meist nichts klar. Engen Sie die Frage ein, bis eine ehrliche Antwort in der Zeit und für das Geld möglich ist, das Sie ausgeben wollen.
 
-Das ist wichtig, weil Piloten nicht nur technische Tests sind. Sie sind Entscheidungswerkzeuge.
+## Wählen Sie Terrain, das Sie kontrollieren können
 
-## Einen Prozess wählen, der klein genug ist, um ihn zu kontrollieren
+Politisch heiße Linien und operativ chaotische Prozesse sind schlechte Lernumgebungen. Sie verbringen den Piloten mit Theater — Eskalationen, Ausnahmen, konkurrierenden Sponsoren — statt das System zu beobachten. Suchen Sie wiederholbaren Fluss, bereitwillige Bediener- und Instandhaltungspartner und Schmerz, der real, aber begrenzt genug ist, dass ein Rückschlag Ihr Jahr nicht definiert.
 
-Ein Pilot sollte nicht im politisch sensibelsten oder operativ chaotischsten Prozess starten.
+## Definieren Sie Erfolg vor Angeboten, nicht danach
 
-Er sollte dort starten, wo das Team schnell lernen kann, ohne unnötige Exposure zu erzeugen.
+Wenn Erfolgskriterien spät kommen, optimieren Lieferanten für unterschiedliche Ziellinien und Ihr Team argumentiert im Kreis. Einigen Sie sich intern auf das operative Outcome, das am meisten zählt, die minimal akzeptable Leistungsbandbreite, das Zeitfenster, das wirklich glaubwürdig ist, und welcher Nachweis ein „Go“ für den nächsten Schritt rechtfertigt. Halten Sie Angebote dann an diesen Rahmen.
 
-Gute Pilotkandidaten haben meist: sichtbaren Pain; wiederholbaren Prozessfluss; beherrschbaren Scope; ein Team, das mitziehen will. Es geht nicht darum, den einfachsten Prozess zu wählen. Es geht darum, den klarsten zu wählen.
+## Halten Sie den Scope absichtlich dünn
 
-## Erfolg definieren, bevor Vendoren antworten
+Eine Prozessgrenze, ein Liniensegment oder eine Zelle, eine kohärente Produktfamilie, wenn Variabilität das zu testende Risiko ist — wählen Sie die kleinste Hülle, die Ihre Entscheidung noch beantwortet. Breite wirkt ambitioniert; in Piloten verwässert sie meist das Signal. Sie wollen klares Lernen, keine Vorschau auf jedes zukünftige Argument.
 
-Viele Piloten laufen schief, weil Erfolg erst nach Eingang der Angebote diskutiert wird. Das dreht die Logik um. Das Team sollte Erfolg definieren, bevor der Vergleich beginnt. Das bedeutet meist Einigung auf:
+## Vergleichen Sie Lieferanten auf Pilot-Fit, nicht nur auf Roadmap-Charisma
 
-- welches operative Ergebnis am wichtigsten ist
-- welches minimale Performance-Niveau akzeptabel ist
-- welche Timeline realistisch ist
-- welches Learning den nächsten Schritt rechtfertigt
+Einige Organisationen glänzen bei großen Rollouts und kämpfen mit engen Proof-Phasen; andere umgekehrt. Bewerten Sie Klarheit der Annahmen, Ehrlichkeit der Meilensteine, Reaktionsagilität und Bereitschaft, Fortschritt an beobachtbaren Checks zu binden. Ein Partner, der „fertig“ für den Piloten nicht definieren kann, wird es für das Programm nicht definieren.
 
-Ohne das wird der Pilot zum beweglichen Ziel.
+## Legen Sie Annahmen wie Inventar offen
 
-## Pilot-Scope bewusst eng halten
+Site-Bereitschaft, Bedienerbeteiligung, Probenverfügbarkeit, IT-Sicherheitsschritte, Support-Grenzen — diese Details entscheiden, ob der Pilot fair ist. Wenn sie implizit bleiben, wirkt der Pilot sicherer, als er ist. Machen Sie sie früh sichtbar, damit Überraschungen in der Planung passieren, nicht in der ersten Produktionswoche.
 
-Ein Pilot soll nicht alles lösen. Er soll einige kritische Unsicherheiten beantworten.
+## Meilensteine machen Absicht zu Verantwortung
 
-Darum ist starker Pilot-Scope meist eng rund um: einen Prozess; eine Linie oder Zelle; eine Produktfamilie; einen Entscheidungspunkt. Breite Ambition macht das Pilot-Lernen schwächer, nicht stärker.
+Scope-Alignment, eingefrorene Konfigurationspunkte, Readiness-Gates, Go-Live, frühe Leistungsreview — einfache Meilensteine halten den Aufwand davon ab, in endlose Experimente zu driften. Sie geben Sponsoren auch einen Weg einzugreifen, ohne Drama, wenn die Realität vom Plan abweicht.
 
-## Vergleich um Pilot-Fit herum aufbauen
+## Erfassung des Lernens wie ein Produkt
 
-Nicht jeder Vendor ist für einen Pilot gleich gut geeignet.
+Planen Sie ein strukturiertes Review: was hielt, was brach, welche Annahmen sich änderten, was vor Skalierung wahr sein müsste. Ohne diese Schleife ist der Pilot ein Ereignis. Mit ihr ist Pilot Kapital für ein Entscheidungsprotokoll, das die Organisation wiederverwenden kann.
 
-Manche sind stärker in großen Rollouts als in schnellen, sauber abgegrenzten Proof-Phasen.
+## Wie DBR77 Marketplace erste Projekte unterstützt
 
-Buyer sollten Vendoren nicht nur nach Technologie vergleichen, sondern auch nach:
+DBR77 Marketplace hilft Teams, von Pilotabsicht zu klarerem erstem Engagement zu kommen: strukturierte Herausforderungsdefinition, vergleichbare Angebote und sichtbare Annahmen, damit der Pilot an eine Entscheidung gebunden bleibt — nicht an Lieferanten-Storytelling.
 
-- Fit zum Pilot-Scope
-- Klarheit der Annahmen
-- Realismus der Timeline
-- Reaktionsgeschwindigkeit
-- Bereitschaft, Milestones zu definieren
+## Kurz gesagt
 
-Hier verbessern sich viele Pilot-Entscheidungen deutlich.
-
-## Reality check: viele Piloten scheitern, weil das Unternehmen zu viele Fragen gleichzeitig testen will
-
-Ein Team sagt, es will einen Piloten. In der Praxis bedeutet das oft:
-
-- die Technologie testen
-- den Vendor testen
-- das interne Team testen
-- den Business Case testen
-- Annahmen fuer einen spaeteren Rollout testen
-
-Das ist zu viel Unsicherheit fuer ein einziges begrenztes Projekt.
-
-Wenn der Pilot versucht, jede strategische Frage gleichzeitig zu beantworten, beantwortet er am Ende meist keine davon sauber.
-
-## Annahmen früh sichtbar machen
-
-Piloten wirken oft einfach, bis versteckte Annahmen auftauchen.
-
-Darum sollten Buyer Folgendes sichtbar machen: Site-Readiness-Annahmen; Operator-Involvement-Annahmen; Daten- und Integrationsannahmen; Produktvariabilitätsannahmen; Support- und Eskalationsannahmen.
-
-Wenn Annahmen verborgen bleiben, wirkt der Pilot sicherer, als er wirklich ist.
-
-## Milestones setzen, nicht vagen Optimismus
-
-Ein echter Pilot braucht Milestones.
-
-Nicht aus Liebe zur Bürokratie, sondern weil Fortschritt sichtbar bleiben muss.
-
-Typische Milestones sind: Scope Alignment; Solution Confirmation; Implementation Readiness; Go-live; frühes Performance Review. So driftet der Pilot nicht in ein offenes Experiment ohne Ende.
-
-## Die Lernschleife schützen
-
-Ein Automatisierungs-Pilot ist nur wertvoll, wenn das Team lernt und dieses Lernen festhält.
-
-Das bedeutet Review von: was funktioniert hat; was nicht funktioniert hat; was sich an den Annahmen geändert hat; was vor einem Rollout angepasst werden müsste.
-
-Ohne diese Schleife wird der Pilot zu einem Einmalereignis statt zu einer Skalierungsentscheidung.
-
-## Warum Piloten scheitern, obwohl die Technologie funktioniert
-
-Manche Piloten scheitern aus Gründen, die wenig mit dem technischen Konzept zu tun haben.
-
-Häufige Ursachen sind: unklare Ownership; schwache interne Ausrichtung; überladener Scope; langsame Entscheidungen; keine Einigung auf Next-Step-Kriterien.
-
-Das ist wichtig, weil Pilot-Erfolg genauso von Workflow- und Entscheidungsqualität abhängt wie von Engineering.
-
-## Was das für DBR77 Marketplace bedeutet
-
-DBR77 Marketplace passt zu dieser Phase, weil es Herstellern hilft, von Automatisierungsinteresse zu einem saubereren ersten Projekt zu kommen.
-
-Sein Wert umfasst: Challenge Clarification; Zugang zu vergleichbaren Angeboten; klarere Annahmen; strukturierten Fortschritt von Pilot-Definition bis Execution.
-
-Das ist wichtig, weil ein Pilot Unsicherheit verkürzen und nicht ausweiten sollte.
-
-## Bottom line
-
-Der Zweck eines Automatisierungs-Piloten ist nicht, alles zu beweisen.
-
-Er soll die wichtigsten Entscheidungsfragen mit beherrschbarem Risiko beantworten.
-
-Die stärksten Piloten sind: eng abgegrenzt; klar gemessen; milestone-basiert; auf Lernen und Next-Step-Vertrauen ausgelegt. So wird ein Pilot zum Launchpad statt zum Verzogerungsmechanismus.
+Fahren Sie Piloten, um eine kleine Menge kritischer Fragen mit handhabbarer Exposition zu beantworten. Enger Scope, expliziter Erfolg, sichtbare Annahmen, datierte Meilensteine und ehrliches Lernen — so verdient ein Pilot das Recht zu skalieren.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Hersteller-Demo starten](https://dbr77.com/marketplace) oder [Ihre Herausforderung beschreiben](https://dbr77.com/demo).*
+*DBR77 Marketplace hilft Herstellern, eine Pilotidee über strukturierte Herausforderungsdefinition, vergleichbare Angebote und meilensteinbereiten Workflow in ein klareres erstes Projekt zu verwandeln. [Hersteller-Demo starten](https://dbr77.com/marketplace) oder [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/demo).*

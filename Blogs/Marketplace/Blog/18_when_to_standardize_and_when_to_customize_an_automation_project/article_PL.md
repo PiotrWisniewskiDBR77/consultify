@@ -1,74 +1,54 @@
-# Kiedy standaryzowac, a kiedy customizowac projekt automatyzacji
+# Kiedy standaryzować, a kiedy dostosowywać projekt automatyzacji
 
-Target persona: menedzer inzynierii / przywodztwo zakladu  
-Funnel stage: Decision  
-Core problem: zespoly oscyluja miedzy "kup standard" a "buduj custom" bez wyraznego modelu kompromisow, co daje pozne przerobki i konflikt polityczny  
-Main promise: praktyczna siatka decyzyjna laczaca standaryzacje i customizacje ze zmiennoscia, obciazeniem integracji i wlasnoscia operacyjna
+Docelowa persona: Kierownik inżynierii / Kierownictwo zakładu  
+Etap lejka: Decyzja  
+Główny problem: zespoły oscylują między „kup standard” a „buduj na zamówienie” bez wyraźnego modelu trade-offów, co produkuje późny przerób i konflikt polityczny  
+Główna obietnica: praktyczna siatka decyzyjna wiążąca standaryzację z customizacją ze zmiennością, obciążeniem integracji i operacyjnym odpowiedzialność
 
-Standaryzacja i customizacja sa obie uzasadnione. Blad polega na wyborze przez instynkt. Producenci dostaja lepsze wyniki, gdy wybieraja wedlug ograniczen:
+Standard i custom są oba uzasadnione. Kosztowny błąd to wybór nastrojem — przez to, co brzmi nowocześnie, co woli dostawca, albo co zadziałało w innym zakładzie pięć lat temu. Lepsze decyzje pochodzą od ograniczeń: jak stabilny jest proces, jak unikalne interfejsy, ile wewnętrznej pojemności macie na szare strefy i ile kosztowałby przestój lub przerób, gdy dopasowanie jest złe.
 
-- jak stabilny jest proces naprawde
-- jak unikalne sa interfejsy zakladu
-- ile wewnetrznej pojemnosci jest, by posiadac szare strefy
-- jak wrazliwa jest operacja na przestoje i zmiany
+## Co zwykle kupuje standaryzacja
 
-## Co daje standaryzacja
+Ścieżki standardowe wymieniają unikalność na przewidywalność. Pasują, gdy problem mapuje się na powtarzalny wzorzec sprzętu, zmienność jest ograniczona jawnymi regułami, powierzchnie integracji są powszechne, a chcecie jaśniejszych wzorców testów i uruchomień. Standaryzacja to nie lenistwo; to zakład, że wasza rzeczywistość jest wystarczająco blisko znanego kształtu, by reinwencja była złą ekonomią.
 
-Standaryzacja zwykle kupuje przewidywalnosc.
+## Co zwykle kupuje customizacja
 
-Czesto pomaga, gdy: problem pasuje do powtarzalnego wzorca sprzetowego; zmiennosc jest ograniczona jawnymi reglami; powierzchnie integracji sa powszechne i dobrze zrozumiane; chcecie szybszych wzorcow uruchomienia i wyrazniejszych praktyk testowych dostawcy. Standaryzacja to nie lenistwo.
+Inżynieria szyta na miarę wymienia harmonogram i prostotę na dopasowanie. Pasuje, gdy nietypowe ograniczenia łamią szablony, reguły miksów i obchodzenia tworzą realną złożoność, interfejsy upstream/downstream są niedojrzałe lub specyficzne dla zakładu, albo tryby awarii są na tyle drogie, że ryzyko złego dopasowania dominuje. Customizacja to nie finezja dla samej finezji; to ubezpieczenie przed złym dopasowaniem wzorca.
 
-To zaklad, ze rzeczywistosc zakladu jest na tyle blisko znanego wzorca, ze nie warto za to placic od nowa.
+## Soczewka: stabilność i obciążenie interfejsów
 
-## Co daje customizacja
+Myśl w dwóch wymiarach — stabilność procesu i złożoność interfejsów — bez sztywnej formuły. Gdy stabilność jest wyższa, a interfejsy prostsze, skłaniaj się ku standardowym rdzeniom. Gdy stabilność jest wyższa, ale interfejsy ciężkie, często wygrywają hybrydy: standardowy rdzeń maszyny lub sterowania z kontrolowaną pracą interfejsową. Gdy stabilność jest niska, napraw lub mierz, zanim zamrozisz sprzęt — niezależnie od późniejszego upodobania do standardu czy customu. Gdy stabilność jest niska, a interfejsy ciężkie, custom bez stabilizacji to częsta droga do przeróbu; odroczenie lub wewnętrzne wzmocnienie bywa mądrzejsze niż zakupy.
 
-Customizacja zwykle kupuje dopasowanie.
+## Hybryda potrzebuje zasad, nie przypadków
 
-Czesto pomaga, gdy: proces ma nietypowe ograniczenia lamace szablony; reguly mixu produktu tworza realna zlozonosc manipulacji; interfejsy upstream/downstream sa niedojrzale lub specyficzne dla zakladu; musicie chronic waskie okno operacyjne, gdzie porazka jest droga. Customizacja to nie wyrafinowanie dla samego wyrafinowania.
+Wiele projektów staje się hybrydą przez dryf. To najgorszy wynik. Jeśli wybieracie hybrydę świadomie, zapiszcie zasady: co wolno customizować, co musi zostać standardem dla wspieralności, kto posiada każdą decyzję interfejsową oraz jak zmiany są zatwierdzane i dokumentowane. Hybryda bez zasad staje się wieczną optymalizacją sprzedawaną jako elastyczność.
 
-To zaklad, ze ryzyko niedopasowania jest wyzsze niz koszt i harmonogram dopasowanego inzynieringu.
+## Utrzymuj oferty porównywalne między ścieżkami
 
-## Prosta soczewka decyzyjna 2x2 (jako soczewka, nie prawo)
+Oferty standardowe i na zamówienie mają różne kształty. Porównujcie, co jest standaryzowane i dlaczego, co jest custom i jakie założenia niesie, oraz jak wygląda model wsparcia po starcie. Nagłówkowe ceny są bez znaczenia, dopóki te mapy się nie zestawią.
 
-Mysl w dwoch osiach:
+## Jak DBR77 Marketplace pomaga
 
-**Os A: stabilnosc procesu** (nisko do wysoko) **Os B: zlozonosc interfejsow** (nisko do wysoko)
+Gdy trade-offy trafiają do tych samych pól u różnych dostawców, standard kontra custom przestaje być walką sloganów i staje się decyzją dającą się zrewidować.
 
-| Stabilnosc | Interfejsy | Sklaniaj sie ku |
-| --- | --- | --- |
-| wyzsza | nizsze | standaryzuj tam, gdzie mozliwe |
-| wyzsza | wyzsza | hybryda: rdzen standard + kontrolowane custom interfejsy |
-| nizsza | nizsza | najpierw stabilizuj, potem standaryzuj |
-| nizsza | wyzsza | custom ostroznie lub odloz, az poprawi sie stabilnosc |
+Powiązane lektury: [Jak określić zakres projektu automatyzacji bez przesady](../21_how_to_scope_an_automation_project_without_overcomplicating_it/article_PL.md) oraz [Co sprawdzić przed podpisaniem umowy na automatyzację](../20_what_to_check_before_signing_an_automation_contract/article_PL.md).
 
-To nie wzor usuwajacy osad. Wymusza rozmowe z dala od sloganow.
+## Myślenie cyklem życia, nie tylko montażem
 
-## Ukryty koszt "hybrydy bez regul"
+Standaryzacja często wygrywa na wspieralności: części zamienne, szkolenia, upgrade’y, przewidywalne diagnozowanie. Custom często wygrywa na dopasowaniu, gdy niezgodność wymuszałaby wieczne obejścia. Decyzja powinna uwzględniać drugi rok, nie tylko drugi miesiąc. Jeśli custom tworzy piękne demo i kruche życie wsparcia, ekonomia szybko się odwraca.
 
-Wiele projektow staje sie hybryda przypadkowo. To jest drogie.
+Zaangażuj utrzymanie i jakość wcześnie w debacie standard versus custom. Żyją z konsekwencjami, gdy inżynieria przechodzi do następnego projektu. Ich pytania o diagnostykę, przestarzałość i codzienne odzyskiwanie są częścią realnego trade-offu.
 
-Jesli wybierasz hybryde, zdefiniuj reguly: co wolno customizowac; co musi pozostac standardem ze wzgledu na utrzymanie; kto posiada kazda decyzje interfejsowa; jak zmiany sa zatwierdzane i dokumentowane. Hybryda bez regul staje sie nieskonczona optymalizacja.
+## Od decyzji do zachowania hala
 
-## Jak to wplywa na sourcing i porownanie ofert
+Standard versus custom to nie estetyka inżynierska — to to, co wasi operatorzy będą diagnozować o drugiej w nocy. Ścieżki standardowe powinny przełożyć się na jaśniejszą logikę części, ścieżki szkoleń i rytm wsparcia dostawcy; ścieżki custom — na jawne odpowiedzialność szarych stref. Jeśli zakład nie potrafi tego trade-offu wypowiedzieć, decyzja nie jest gotowa.
 
-Sciezki standard i custom produkuja rozne ksztalty ofert.
+Jeśli masz zabrać jeden nawyk, niech to będzie to: pisz historię wsparcia równolegle z historią rozwiązania — kto utrzymuje to w ruchu, z jakimi częściami, w jakim horyzoncie czasu.
 
-Kupujacy powinien porownywac: co jest standaryzowane i dlaczego; co jest custom i jakie zalozenia niesie; jaki model wsparcia istnieje po starcie. Mysleniu DBR77 Marketplace odpowiada tu: porownywalnosc ma znaczenie.
+## W skrócie
 
-Jesli jeden dostawca standaryzuje agresywnie, a drugi customizuje agresywnie, cenniki nie sa porownywalne bez zmapowania tych wyborow.
-
-## Co to oznacza dla DBR77 Marketplace
-
-DBR77 Marketplace wspiera decyzje automatyzacji producenta-first przez ustrukturyzowane workflow.
-
-Gdy zespol musi wybrac miedzy standardem a customem, mindset platformy pomaga: uwidocznic kompromisy; porownywac oferty na tych samych polach; redukowac chaos sourcingu przez wyjasnienie, co jest kupowane. Marketplace to nie katalog robotow. To workflow decyzji i warstwa zaufania przy wyborze integratora.
-
-## Bottom line
-
-Standaryzuj, gdy dopasowanie wzorca jest realne, a zmiennosc kontrolowana. Customizuj, gdy dominuje ryzyko niedopasowania. Jesli wybierasz hybryde, zapisz reguly.
-
-Celem jest decyzja, ktora mozesz wytlumaczyc operacjom, nie etykieta do obrony w tytule slajdu.
+Standaryzuj, gdy dopasowanie wzorca jest realne. Customizuj, gdy dominuje ryzyko niezgodności. Jeśli mieszasz, rządź mieszaniną. Celem jest wyjaśnienie, z którym operacje mogą żyć — nie slajd tytułowy, którego nikt nie wykona.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*
+*DBR77 Marketplace pomaga producentom porównywać oferty na tych samych polach nawet wtedy, gdy jedna ścieżka jest standaryzowana, a druga mocno dostosowana, ograniczając zamęt „jabłka i pomarańcze”. [Porównaj oferty](https://dbr77.com/marketplace) lub [Opisz swoje wyzwanie](https://dbr77.com/demo).*

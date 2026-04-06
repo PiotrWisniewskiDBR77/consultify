@@ -520,7 +520,7 @@ export async function registerGovernedTableSheetArtifact(params: {
   tableId: string;
   tableName: string;
 }): Promise<ArtifactRecord> {
-  return registerArtifactOrigin({
+  const artifact = await registerArtifactOrigin({
     organizationId: params.organizationId,
     outputType: 'sheet',
     artifactFamily: 'sheet',
@@ -537,6 +537,10 @@ export async function registerGovernedTableSheetArtifact(params: {
       governanceMode: 'governed',
     },
   });
+  if (!artifact) {
+    throw new Error('Failed to register governed table sheet artifact');
+  }
+  return artifact;
 }
 
 async function getOriginLinkByOrigin(
@@ -1461,7 +1465,7 @@ export async function listArtifactsForUserByExecutionRunId(params: {
   const limit = Math.max(1, Math.min(params.limit ?? 50, 200));
   const allowDemo = Boolean(params.allowDemo);
 
-  const rows = await dbAll<ArtifactListItemRow>(
+  const rows = await dbAll<ArtifactListRow>(
     `SELECT a.*,
             l.origin_runtime,
             l.origin_record_id,
@@ -1870,7 +1874,22 @@ async function resolveMaterializedPresentationParams(
       sourceArtifacts,
       sourceType: resolvedSourceType,
       sourceId: resolvedSourceId,
-      visuals,
+      visuals:
+        visuals && typeof visuals === 'object'
+          ? {
+              enabled: visuals.enabled,
+              priority:
+                visuals.priority === 'cost' || visuals.priority === 'quality'
+                  ? visuals.priority
+                  : undefined,
+              imageDensity:
+                visuals.imageDensity === 'low' ||
+                visuals.imageDensity === 'medium' ||
+                visuals.imageDensity === 'high'
+                  ? visuals.imageDensity
+                  : undefined,
+            }
+          : undefined,
     },
     originSummary: {
       sourceType: resolvedSourceType || null,
@@ -2398,7 +2417,7 @@ export async function materializeArtifactRun(
       // Auto-create table when Excele pipeline doesn't provide one
       if (!tableId) {
         try {
-          const { metadataService } = await import('../tablePlatform/MetadataService.js');
+          const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
 
           // Find or create a base for this org's Excele artifacts
           let baseId: string | null = null;

@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { KNOWLEDGE_BASE_SITE, type KnowledgeBaseSiteKey } from '../../config/knowledgeBaseSite';
 import { normalizeLanguageCode } from '../../i18n';
 import { ROUTES } from '../../routes/routeConfig';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -33,6 +34,7 @@ type AnnaSurfaceContext = {
 };
 
 type VoiceStatus = 'idle' | 'connecting' | 'live' | 'error';
+type AnnaUiLanguage = 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar';
 
 type AnnaCopy = {
   title: string;
@@ -69,7 +71,7 @@ const LIVE_VOICE_NAME = 'Kore';
 const FRONTEND_GEMINI_KEY =
   process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
 
-const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
+const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
   en: {
     title: 'Anna',
     subtitle: 'Guided product entry assistant',
@@ -91,7 +93,7 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
     voiceReady: 'Tap the microphone to start a live voice conversation.',
     voiceConnecting: 'Connecting voice mode...',
-    voiceListening: 'Anna is listening live. Start typing anytime to switch back to text.',
+    voiceListening: 'Anna is listening live.',
     voiceUnavailable: 'Live voice is currently unavailable. You can still chat with Anna by text.',
     voiceError: 'Live voice ran into an issue. You can continue with Anna by text.',
     voiceStart: 'Start voice conversation',
@@ -122,7 +124,7 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Nasz asystent AI jest tymczasowo niedostepny. Przejrzyj prosze strone lub skontaktuj sie z nami bezposrednio.',
     voiceReady: 'Kliknij mikrofon, aby uruchomic rozmowe glosowa na zywo.',
     voiceConnecting: 'Lacze tryb glosowy...',
-    voiceListening: 'Anna slucha na zywo. Zacznij pisac w dowolnym momencie, aby wrocic do tekstu.',
+    voiceListening: 'Anna slucha na zywo.',
     voiceUnavailable: 'Tryb glosowy jest tymczasowo niedostepny. Nadal mozesz pisac z Anna.',
     voiceError: 'Wystapil problem z trybem glosowym. Mozesz kontynuowac rozmowe w tekscie.',
     voiceStart: 'Uruchom rozmowe glosowa',
@@ -153,8 +155,7 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Nuestro asistente AI no esta disponible temporalmente. Explora la pagina o contactanos directamente.',
     voiceReady: 'Toca el microfono para iniciar una conversacion de voz en vivo.',
     voiceConnecting: 'Conectando modo de voz...',
-    voiceListening:
-      'Anna esta escuchando en vivo. Empieza a escribir en cualquier momento para volver al texto.',
+    voiceListening: 'Anna esta escuchando en vivo.',
     voiceUnavailable: 'La voz en vivo no esta disponible temporalmente. Aun puedes chatear por texto.',
     voiceError: 'La voz en vivo tuvo un problema. Puedes continuar por texto.',
     voiceStart: 'Iniciar conversacion de voz',
@@ -185,7 +186,7 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'Unser AI-Assistent ist vorubergehend nicht verfugbar. Schau dir bitte die Seite an oder kontaktiere uns direkt.',
     voiceReady: 'Tippe auf das Mikrofon, um ein Live-Sprachgesprach zu starten.',
     voiceConnecting: 'Sprachmodus wird verbunden...',
-    voiceListening: 'Anna hort live zu. Du kannst jederzeit tippen, um zum Text zuruckzukehren.',
+    voiceListening: 'Anna hort live zu.',
     voiceUnavailable: 'Live-Sprachmodus ist vorubergehend nicht verfugbar. Du kannst weiter tippen.',
     voiceError: 'Live-Sprachmodus hatte ein Problem. Du kannst per Text fortfahren.',
     voiceStart: 'Sprachgesprach starten',
@@ -216,7 +217,7 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'AIアシスタントは現在一時的に利用できません。ページをご覧いただくか、直接お問い合わせください。',
     voiceReady: 'マイクをタップするとライブ音声会話を開始できます。',
     voiceConnecting: '音声モードに接続中...',
-    voiceListening: 'Annaがライブで聞いています。いつでも入力してテキストに戻れます。',
+    voiceListening: 'Annaがライブで聞いています。',
     voiceUnavailable: 'ライブ音声は現在利用できません。テキストでチャットできます。',
     voiceError: 'ライブ音声で問題が発生しました。テキストで続けられます。',
     voiceStart: '音声会話を開始',
@@ -247,7 +248,7 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
       'مساعد الذكاء الاصطناعي غير متاح مؤقتا حاليا. يرجى استكشاف الصفحة أو التواصل معنا مباشرة.',
     voiceReady: 'اضغط على الميكروفون لبدء محادثة صوتية مباشرة.',
     voiceConnecting: 'جار الاتصال بوضع الصوت...',
-    voiceListening: 'Anna تستمع الآن مباشرة. يمكنك البدء بالكتابة في أي وقت للعودة إلى النص.',
+    voiceListening: 'Anna تستمع الآن مباشرة.',
     voiceUnavailable: 'المحادثة الصوتية المباشرة غير متاحة حاليا. يمكنك المتابعة بالكتابة.',
     voiceError: 'حدثت مشكلة في المحادثة الصوتية. يمكنك المتابعة بالكتابة.',
     voiceStart: 'بدء المحادثة الصوتية',
@@ -258,6 +259,230 @@ const COPY: Record<'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar', AnnaCopy> = {
     contactCta: 'تواصل معنا',
   },
 };
+
+const ANNA_SITE_OVERRIDES: Record<
+  KnowledgeBaseSiteKey,
+  {
+    introEn: string;
+    introPl: string;
+    suggestionsEn: string[];
+    suggestionsPl: string[];
+    voiceFocusEn: string;
+    voiceFocusPl: string;
+  }
+> = {
+  consultify: {
+    introEn:
+      'I can explain Consultify and help you choose the right next step: demo, trial, or contact. I do not have access to client or project data.',
+    introPl:
+      'Moge wyjasnic Consultify i pomóc wybrać właściwy kolejny krok: demo, trial albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
+    suggestionsEn: [
+      'What is Consultify?',
+      'How does DBR77 Vector fit into Consultify?',
+      'Who is Consultify for?',
+      'Why start with a demo or trial?',
+    ],
+    suggestionsPl: [
+      'Czym jest Consultify?',
+      'Jak DBR77 Vector wspiera Consultify?',
+      'Dla kogo jest Consultify?',
+      'Dlaczego warto zaczac od demo lub triala?',
+    ],
+    voiceFocusEn:
+      'Consultify is the structured transformation decision layer. Prioritize Consultify first, then use other DBR77 products only when they genuinely clarify value or cross-sell logic.',
+    voiceFocusPl:
+      'Consultify jest warstwa uporzadkowanych decyzji transformacyjnych. Priorytetowo omawiaj Consultify, a pozostale produkty DBR77 pokazuj tylko wtedy, gdy realnie dopelniaja wartosc lub cross-sell.',
+  },
+  iot: {
+    introEn:
+      'I can explain DBR77 IoT, machine visibility, pilot rollout, ROI, and how it connects with IRIS, Digital Twin, Vector, and Consultify. I do not have access to client or project data.',
+    introPl:
+      'Moge wyjasnic DBR77 IoT, widocznosc maszyn, pilotaż, rollout, ROI oraz to, jak laczy sie z IRIS, Digital Twin, Vector i Consultify. Nie mam dostepu do danych klienta ani projektow.',
+    suggestionsEn: [
+      'What is DBR77 IoT?',
+      'How do you start an IoT pilot without disrupting production?',
+      'How does IoT connect with IRIS or Digital Twin?',
+      'What is the right next step after this page?',
+    ],
+    suggestionsPl: [
+      'Czym jest DBR77 IoT?',
+      'Jak zaczac pilotaż IoT bez ryzyka dla produkcji?',
+      'Jak IoT laczy sie z IRIS albo Digital Twin?',
+      'Jaki kolejny krok ma sens po tej stronie?',
+    ],
+    voiceFocusEn:
+      'DBR77 IoT is the visibility and signal layer for machine data, downtime, rollout, and edge logic. Start with IoT, then connect to IRIS, Digital Twin, Vector, Marketplace, or Consultify when useful.',
+    voiceFocusPl:
+      'DBR77 IoT jest warstwa widocznosci i sygnalow dla danych maszynowych, przestojow, rolloutow i edge logic. Zaczynaj od IoT, a potem lacz z IRIS, Digital Twin, Vector, Marketplace lub Consultify, gdy to pomaga.',
+  },
+  iris: {
+    introEn:
+      'I can explain DBR77 IRIS, AI-assisted plant operations, execution closure, governance, ROI, and how it connects with IoT, Digital Twin, Vector, and Consultify. I do not have access to client or project data.',
+    introPl:
+      'Moge wyjasnic DBR77 IRIS, AI-assisted plant operations, domkniecie egzekucji, governance, ROI oraz to, jak laczy sie z IoT, Digital Twin, Vector i Consultify. Nie mam dostepu do danych klienta ani projektow.',
+    suggestionsEn: [
+      'What is DBR77 IRIS?',
+      'How does IRIS connect AI with execution on the plant floor?',
+      'When does IRIS need IoT or Digital Twin around it?',
+      'What is the best next step after this page?',
+    ],
+    suggestionsPl: [
+      'Czym jest DBR77 IRIS?',
+      'Jak IRIS laczy AI z egzekucja na hali?',
+      'Kiedy IRIS potrzebuje wokol siebie IoT albo Digital Twin?',
+      'Jaki kolejny krok ma sens po tej stronie?',
+    ],
+    voiceFocusEn:
+      'DBR77 IRIS is the plant operating system and AI-assisted execution layer. Start with IRIS, then connect to IoT, Digital Twin, Vector, Marketplace, or Consultify when useful.',
+    voiceFocusPl:
+      'DBR77 IRIS jest plant operating system i warstwa AI-assisted execution. Zaczynaj od IRIS, a potem lacz z IoT, Digital Twin, Vector, Marketplace lub Consultify, gdy to pomaga.',
+  },
+  dt: {
+    introEn:
+      'I can explain DBR77 Digital Twin, scenario planning, flow and layout simulation, CAPEX decisions, and how it connects with IoT, IRIS, Vector, Marketplace, and Consultify. I do not have access to client or project data.',
+    introPl:
+      'Moge wyjasnic DBR77 Digital Twin, planowanie scenariuszy, symulacje flow i layoutu, decyzje CAPEX oraz to, jak laczy sie z IoT, IRIS, Vector, Marketplace i Consultify. Nie mam dostepu do danych klienta ani projektow.',
+    suggestionsEn: [
+      'What is DBR77 Digital Twin?',
+      'What decisions should be simulated before live change?',
+      'How does Digital Twin connect with IoT or IRIS?',
+      'What is the right next step after this page?',
+    ],
+    suggestionsPl: [
+      'Czym jest DBR77 Digital Twin?',
+      'Jakie decyzje warto zasymulowac przed zmiana na zywo?',
+      'Jak Digital Twin laczy sie z IoT albo IRIS?',
+      'Jaki kolejny krok ma sens po tej stronie?',
+    ],
+    voiceFocusEn:
+      'DBR77 Digital Twin is the simulation and scenario layer for layout, flow, automation, and CAPEX decisions. Start with Digital Twin, then connect to IoT, IRIS, Vector, Marketplace, or Consultify when useful.',
+    voiceFocusPl:
+      'DBR77 Digital Twin jest warstwa symulacji i scenariuszy dla decyzji layout, flow, automatyzacji i CAPEX. Zaczynaj od Digital Twin, a potem lacz z IoT, IRIS, Vector, Marketplace lub Consultify, gdy to pomaga.',
+  },
+  marketplace: {
+    introEn:
+      'I can explain DBR77 Marketplace, supplier matching, automation buying logic, offer comparison, and how it connects with Consultify, Vector, IoT, Digital Twin, and IRIS. I do not have access to client or project data.',
+    introPl:
+      'Moge wyjasnic DBR77 Marketplace, matching dostawcow, logike zakupu automatyzacji, porownanie ofert oraz to, jak laczy sie z Consultify, Vector, IoT, Digital Twin i IRIS. Nie mam dostepu do danych klienta ani projektow.',
+    suggestionsEn: [
+      'What is DBR77 Marketplace?',
+      'How do you compare suppliers and offers on Marketplace?',
+      'How does Marketplace connect with Consultify or Vector?',
+      'What is the right next step after this page?',
+    ],
+    suggestionsPl: [
+      'Czym jest DBR77 Marketplace?',
+      'Jak porownywac dostawcow i oferty w Marketplace?',
+      'Jak Marketplace laczy sie z Consultify albo Vector?',
+      'Jaki kolejny krok ma sens po tej stronie?',
+    ],
+    voiceFocusEn:
+      'DBR77 Marketplace is the sourcing and buying coordination layer for industrial automation. Start with Marketplace, then connect to Consultify, Vector, IoT, Digital Twin, or IRIS when useful.',
+    voiceFocusPl:
+      'DBR77 Marketplace jest warstwa sourcingu i koordynacji zakupu automatyzacji przemyslowej. Zaczynaj od Marketplace, a potem lacz z Consultify, Vector, IoT, Digital Twin lub IRIS, gdy to pomaga.',
+  },
+  vector: {
+    introEn:
+      'I can explain DBR77 Vector, industrial AI reasoning, governance, deployment control, and how it connects with Consultify, IRIS, Digital Twin, IoT, and Marketplace. I do not have access to client or project data.',
+    introPl:
+      'Moge wyjasnic DBR77 Vector, industrial AI reasoning, governance, deployment control oraz to, jak laczy sie z Consultify, IRIS, Digital Twin, IoT i Marketplace. Nie mam dostepu do danych klienta ani projektow.',
+    suggestionsEn: [
+      'What is DBR77 Vector?',
+      'How does Vector strengthen Consultify or IRIS?',
+      'How should AI governance work around Vector?',
+      'What is the right next step after this page?',
+    ],
+    suggestionsPl: [
+      'Czym jest DBR77 Vector?',
+      'Jak Vector wzmacnia Consultify albo IRIS?',
+      'Jak powinien wygladac AI governance wokol Vectora?',
+      'Jaki kolejny krok ma sens po tej stronie?',
+    ],
+    voiceFocusEn:
+      'DBR77 Vector is the industrial reasoning and AI layer. Start with Vector, then connect to Consultify, IRIS, Digital Twin, IoT, or Marketplace when useful.',
+    voiceFocusPl:
+      'DBR77 Vector jest przemyslowa warstwa reasoningowa i AI. Zaczynaj od Vectora, a potem lacz z Consultify, IRIS, Digital Twin, IoT lub Marketplace, gdy to pomaga.',
+  },
+};
+
+function buildGenericSiteIntro(lang: AnnaUiLanguage, brandName: string): string {
+  if (lang === 'es') {
+    return `Puedo explicar ${brandName}, como encaja en el ecosistema DBR77 y cual es el mejor siguiente paso. No tengo acceso a datos de clientes ni de proyectos.`;
+  }
+  if (lang === 'de') {
+    return `Ich kann ${brandName}, seine Rolle im DBR77-Okosystem und den besten nachsten Schritt erklaren. Ich habe keinen Zugriff auf Kunden- oder Projektdaten.`;
+  }
+  if (lang === 'jp') {
+    return `${brandName}、そのDBR77エコシステム内での役割、そして適切な次のステップを説明できます。顧客データやプロジェクトデータにはアクセスできません。`;
+  }
+  if (lang === 'ar') {
+    return `يمكنني شرح ${brandName} ودوره داخل منظومة DBR77 وما هي الخطوة التالية المناسبة. لا أملك وصولا إلى بيانات العملاء أو المشاريع.`;
+  }
+  return `I can explain ${brandName}, how it fits in the DBR77 ecosystem, and what the right next step is. I do not have access to client or project data.`;
+}
+
+function buildGenericSiteSuggestions(lang: AnnaUiLanguage, brandName: string): string[] {
+  if (lang === 'es') {
+    return [
+      `Que es ${brandName}?`,
+      `Para quien es ${brandName}?`,
+      `Como encaja ${brandName} en DBR77?`,
+      'Cual es el siguiente paso correcto?',
+    ];
+  }
+  if (lang === 'de') {
+    return [
+      `Was ist ${brandName}?`,
+      `Fur wen ist ${brandName} gedacht?`,
+      `Wie passt ${brandName} zu DBR77?`,
+      'Was ist der richtige nachste Schritt?',
+    ];
+  }
+  if (lang === 'jp') {
+    return [
+      `${brandName}とは何ですか？`,
+      `${brandName}は誰のためのものですか？`,
+      `${brandName}はDBR77の中でどう位置づけられますか？`,
+      '次の適切なステップは何ですか？',
+    ];
+  }
+  if (lang === 'ar') {
+    return [
+      `ما هو ${brandName}؟`,
+      `لمن صمم ${brandName}؟`,
+      `كيف ينسجم ${brandName} مع DBR77؟`,
+      'ما هي الخطوة التالية المناسبة؟',
+    ];
+  }
+  return [
+    `What is ${brandName}?`,
+    `Who is ${brandName} for?`,
+    `How does ${brandName} fit into DBR77?`,
+    'What is the right next step?',
+  ];
+}
+
+function buildAnnaCopy(lang: AnnaUiLanguage, siteKey: KnowledgeBaseSiteKey, brandName: string): AnnaCopy {
+  const base = COPY[lang];
+  const override = ANNA_SITE_OVERRIDES[siteKey];
+  if (!override) return base;
+
+  return {
+    ...base,
+    intro:
+      lang === 'pl'
+        ? override.introPl
+        : lang === 'en'
+          ? override.introEn
+          : buildGenericSiteIntro(lang, brandName),
+    suggestions:
+      lang === 'pl'
+        ? override.suggestionsPl
+        : lang === 'en'
+          ? override.suggestionsEn
+          : buildGenericSiteSuggestions(lang, brandName),
+  };
+}
 
 function inferAnnaLpSourceIntent(input: string): AnnaLpSourceIntent {
   const text = String(input || '').toLowerCase();
@@ -278,117 +503,127 @@ function resolveAnnaLpChannel(voiceStatus: VoiceStatus): AnnaLpChannel {
 }
 
 function buildVoiceSystemInstruction(
-  lang: 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar',
+  lang: AnnaUiLanguage,
+  siteKey: KnowledgeBaseSiteKey,
+  brandName: string,
   knowledgeContext?: string
 ): string {
+  const override = ANNA_SITE_OVERRIDES[siteKey];
+  const voiceFocusEn =
+    override?.voiceFocusEn ||
+    `${brandName} is the primary landing-page product. Start with ${brandName} first, then use other DBR77 products only when they genuinely improve clarity or cross-sell logic.`;
+  const voiceFocusPl =
+    override?.voiceFocusPl ||
+    `${brandName} jest glownym produktem tej strony. Zaczynaj od ${brandName}, a pozostale produkty DBR77 pokazuj tylko wtedy, gdy realnie pomagaja doprecyzowac odpowiedz albo cross-sell.`;
+
   if (lang === 'pl') {
-    return `Jestes Anna, publiczna asystentka glosowa Consultify i DBR77 Vector.
+    return `Jestes Anna, publiczna asystentka glosowa ${brandName}.
 
 Twoj glos ma byc cieply, spokojny, profesjonalny i kobiecy. Brzmisz jak doswiadczona strategiczna konsultantka AI, a nie chatbot ani agresywny handlowiec.
 
 Zasady:
 - Odpowiadaj zawsze w jezyku uzytkownika.
-- Priorytetem jest Consultify. O innych produktach DBR mow dopiero wtedy, gdy uzytkownik pyta wprost albo gdy to pomaga wyjasnic role Consultify.
+- Priorytetem jest produkt aktualnej strony: ${brandName}.
 - Odpowiedzi maja byc krotkie, naturalne i mowione: zwykle 2-4 zdania.
 - Nie wymyslaj faktow i nie obiecuj funkcji, ktorych nie opisano publicznie.
 - Gdy to pasuje, wspomnij o demo lub trialu.
 
 Publiczna wiedza:
-Consultify to platforma AI do doradztwa strategicznego. DBR77 Vector to wyspecjalizowany model dla transformacji przemyslu i operacji. Mozesz wyjasniac produkt, wartosc biznesowa, wdrozenia, bezpieczenstwo i kolejne kroki rozmowy, ale nie masz dostepu do danych klienta ani projektow.
+${voiceFocusPl} Mozesz wyjasniac produkt, wartosc biznesowa, wdrozenia, bezpieczenstwo i kolejne kroki rozmowy, ale nie masz dostepu do danych klienta ani projektow.
 
 Kontekst wiedzy:
 ${String(knowledgeContext || 'Brak dodatkowego kontekstu produktowego. Pozostan przy ostroznych, publicznych faktach.')}`;
   }
 
   if (lang === 'es') {
-    return `Eres Anna, la asistente publica de voz para Consultify y DBR77 Vector.
+    return `Eres Anna, la asistente publica de voz para ${brandName}.
 
 Tu voz debe ser calida, tranquila, profesional y femenina. Suenas como una consultora senior de estrategia AI, no como un chatbot ni una vendedora agresiva.
 
 Reglas:
 - Responde siempre en el idioma del usuario.
-- Da prioridad a Consultify por defecto. Habla de otros productos DBR solo cuando el usuario lo pida de forma explicita o cuando eso ayude a explicar el papel de Consultify.
+- Da prioridad al producto actual de la pagina: ${brandName}.
 - Mantén las respuestas cortas, naturales y faciles de escuchar: normalmente 2-4 frases.
 - No inventes hechos ni prometas capacidades que no sean publicas.
 - Cuando ayude, menciona el demo o el trial.
 
 Conocimiento publico:
-Consultify es una plataforma de consultoria estrategica impulsada por AI. DBR77 Vector es un modelo especializado para transformacion industrial y operaciones. Puedes explicar valor del producto, opciones de despliegue, seguridad y siguientes pasos, pero no tienes acceso a datos de clientes ni de proyectos.
+${brandName} es el producto principal de esta pagina. Empieza por ${brandName} y menciona otros productos DBR77 solo cuando ayuden a aclarar valor, encaje o siguiente paso. Puedes explicar valor del producto, opciones de despliegue, seguridad y siguientes pasos, pero no tienes acceso a datos de clientes ni de proyectos.
 
 Contexto de conocimiento:
 ${String(knowledgeContext || 'No se cargo contexto adicional del producto. Manten solo hechos publicos verificados.')}`;
   }
 
   if (lang === 'de') {
-    return `Du bist Anna, die offentliche Sprachassistentin fur Consultify und DBR77 Vector.
+    return `Du bist Anna, die offentliche Sprachassistentin fur ${brandName}.
 
 Deine Stimme soll warm, ruhig, professionell und weiblich wirken. Du klingst wie eine erfahrene Senior-Beraterin fur AI-Strategie, nicht wie ein Chatbot oder eine aufdringliche Verkauferin.
 
 Regeln:
 - Antworte immer in der Sprache des Nutzers.
-- Priorisiere standardmassig Consultify. Sprich uber andere DBR-Produkte nur, wenn der Nutzer direkt danach fragt oder wenn es hilft, die Rolle von Consultify zu erklaren.
+- Priorisiere das aktuelle Seitenprodukt: ${brandName}.
 - Halte Antworten kurz, naturlich und gut sprechbar: normalerweise 2-4 Satze.
 - Erfinde keine Fakten und verspreche keine Funktionen, die nicht offentlich beschrieben sind.
 - Wenn es passt, erwahne Demo oder Trial.
 
 Offentliches Wissen:
-Consultify ist eine AI-gestutzte Plattform fur strategische Beratung. DBR77 Vector ist ein spezialisiertes Modell fur industrielle Transformation und Operations. Du kannst Produktwert, Bereitstellungsoptionen, Sicherheit und nachste Schritte erklaren, hast aber keinen Zugriff auf Kunden- oder Projektdaten.
+${brandName} ist das primare Produkt dieser Seite. Beginne mit ${brandName} und nenne andere DBR77-Produkte nur dann, wenn sie Wert, Einsatz oder den nachsten Schritt klarer machen. Du kannst Produktwert, Bereitstellungsoptionen, Sicherheit und nachste Schritte erklaren, hast aber keinen Zugriff auf Kunden- oder Projektdaten.
 
 Wissenskontext:
 ${String(knowledgeContext || 'Es wurde kein zusatzlicher Produktkontext geladen. Bleibe bei verifizierten offentlichen Fakten.')}`;
   }
 
   if (lang === 'jp') {
-    return `あなたはConsultifyとDBR77 Vectorの公開向け音声アシスタントAnnaです。
+    return `あなたは${brandName}の公開向け音声アシスタントAnnaです。
 
 声は温かく、落ち着いていて、プロフェッショナルで、女性らしい印象にしてください。チャットボットや押しの強い営業ではなく、経験豊富なAI戦略コンサルタントのように話します。
 
 ルール:
 - いつもユーザーの言語で答えてください。
-- 基本的にはConsultifyを優先してください。他のDBR製品については、ユーザーが明示的に尋ねた場合や、Consultifyの役割を説明するのに必要な場合だけ触れてください。
+- 現在のページの製品である${brandName}を優先してください。
 - 回答は短く自然で、音声向きにしてください。通常は2〜4文です。
 - 公開されていない事実や機能を作り上げないでください。
 - 必要ならデモやトライアルに触れてください。
 
 公開情報:
-ConsultifyはAIを活用した戦略コンサルティングプラットフォームです。DBR77 Vectorは産業変革とオペレーション向けの特化モデルです。製品価値、導入オプション、セキュリティ、次のステップは説明できますが、顧客データやプロジェクトデータにはアクセスできません。
+${brandName}がこのページの主役です。まず${brandName}を説明し、他のDBR77製品は価値や次のステップを明確にする場合にのみ補足してください。製品価値、導入オプション、セキュリティ、次のステップは説明できますが、顧客データやプロジェクトデータにはアクセスできません。
 
 知識コンテキスト:
 ${String(knowledgeContext || '追加の製品コンテキストは読み込まれていません。公開された検証済みの事実だけを使ってください。')}`;
   }
 
   if (lang === 'ar') {
-    return `أنت Anna، المساعدة الصوتية العامة لـ Consultify وDBR77 Vector.
+    return `أنت Anna، المساعدة الصوتية العامة لـ ${brandName}.
 
 يجب أن يكون صوتك دافئا وهادئا ومهنيا وأنثويا. تبدين مثل مستشارة استراتيجية ذكاء اصطناعي خبيرة، لا مثل روبوت محادثة أو بائعة ضاغطة.
 
 القواعد:
 - أجيبي دائما بلغة المستخدم.
-- أعطي الأولوية لـ Consultify بشكل افتراضي. اذكري منتجات DBR الأخرى فقط عندما يطلب المستخدم ذلك صراحة أو عندما يساعد ذلك في شرح دور Consultify.
+- أعطي الأولوية للمنتج الحالي في الصفحة: ${brandName}.
 - اجعلي الإجابات قصيرة وطبيعية وسهلة الاستماع، عادة من جملتين إلى أربع جمل.
 - لا تختلقي حقائق ولا تعدي بقدرات غير معلنة علنا.
 - عندما يكون ذلك مفيدا، اذكري العرض التجريبي أو النسخة التجريبية.
 
 المعرفة العامة:
-Consultify منصة استشارات استراتيجية مدعومة بالذكاء الاصطناعي. وDBR77 Vector نموذج متخصص للتحول الصناعي والعمليات. يمكنك شرح قيمة المنتج وخيارات النشر والأمان والخطوات التالية، لكنك لا تملكين وصولا إلى بيانات العملاء أو المشاريع.
+${brandName} هو المنتج الرئيسي في هذه الصفحة. ابدئي بشرح ${brandName} واذكري منتجات DBR77 الاخرى فقط عندما تساعد على توضيح القيمة او الخطوة التالية. يمكنك شرح قيمة المنتج وخيارات النشر والأمان والخطوات التالية، لكنك لا تملكين وصولا إلى بيانات العملاء أو المشاريع.
 
 سياق المعرفة:
 ${String(knowledgeContext || 'لم يتم تحميل سياق إضافي للمنتج. التزمي فقط بالحقائق العامة المتحقق منها.')}`;
   }
 
-  return `You are Anna, the public voice assistant for Consultify and DBR77 Vector.
+  return `You are Anna, the public voice assistant for ${brandName}.
 
 Your voice is warm, calm, professional, and feminine. You sound like a senior AI strategy consultant, not a chatbot or a pushy salesperson.
 
 Rules:
 - Always respond in the user's language.
-- Prioritize Consultify by default. Discuss other DBR products only when the user explicitly asks or when they clarify how Consultify fits the wider DBR system.
+- Prioritize the current landing-page product: ${brandName}.
 - Keep answers short, natural, and voice-friendly: usually 2-4 sentences.
 - Do not invent facts or promise capabilities that are not public.
 - When helpful, mention the demo or free trial path.
 
 Public knowledge:
-Consultify is an AI-powered strategic consulting platform. DBR77 Vector is a specialized model for industrial transformation and operations. You can explain product value, deployment options, security, and next steps, but you do not have access to any client or project data.
+${voiceFocusEn} You can explain product value, deployment options, security, and next steps, but you do not have access to any client or project data.
 
 Knowledge context:
 ${String(knowledgeContext || 'No additional product context was loaded. Stay conservative and use only verified public facts.')}`;
@@ -452,7 +687,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       window.location.hostname === '127.0.0.1' ||
       window.location.hostname.startsWith('stage.'));
   const resolvedLanguage = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language);
-  const lang: 'en' | 'pl' | 'es' | 'de' | 'jp' | 'ar' =
+  const lang: AnnaUiLanguage =
     resolvedLanguage === 'pl' ||
     resolvedLanguage === 'es' ||
     resolvedLanguage === 'de' ||
@@ -460,7 +695,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     resolvedLanguage === 'ar'
       ? resolvedLanguage
       : 'en';
-  const copy = COPY[lang];
+  const copy = buildAnnaCopy(lang, KNOWLEDGE_BASE_SITE.key, KNOWLEDGE_BASE_SITE.brandName);
   const isRtl = lang === 'ar';
 
   const [isOpen, setIsOpen] = useState(false);
@@ -493,65 +728,6 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   const nextPlayTimeRef = useRef(0);
   const visibleSessionRef = useRef(0);
   const voiceAttemptRef = useRef(0);
-  const voiceUserDraftRef = useRef<{ id: string | null; text: string }>({ id: null, text: '' });
-  const voiceAssistantDraftRef = useRef<{ id: string | null; text: string }>({
-    id: null,
-    text: '',
-  });
-
-  const resetVoiceTranscriptDrafts = useCallback(() => {
-    voiceUserDraftRef.current = { id: null, text: '' };
-    voiceAssistantDraftRef.current = { id: null, text: '' };
-  }, []);
-
-  const upsertVoiceTranscriptMessage = useCallback(
-    (
-      role: AnnaMessage['role'],
-      content: string,
-      draftRef: React.MutableRefObject<{ id: string | null; text: string }>
-    ) => {
-      const trimmedContent = content.trim();
-      if (!trimmedContent) return;
-
-      const messageId =
-        draftRef.current.id || `voice-${role}-${visibleSessionRef.current}-${Date.now()}`;
-
-      if (draftRef.current.id === messageId && draftRef.current.text === trimmedContent) {
-        return;
-      }
-
-      draftRef.current = {
-        id: messageId,
-        text: trimmedContent,
-      };
-
-      setMessages((prev) => {
-        const existingIndex = prev.findIndex((message) => message.id === messageId);
-        if (existingIndex >= 0) {
-          if (prev[existingIndex]?.content === trimmedContent) {
-            return prev;
-          }
-
-          const next = [...prev];
-          next[existingIndex] = {
-            ...next[existingIndex],
-            content: trimmedContent,
-          };
-          return next;
-        }
-
-        return [
-          ...prev,
-          {
-            id: messageId,
-            role,
-            content: trimmedContent,
-          },
-        ];
-      });
-    },
-    []
-  );
 
   const openWidget = useCallback(
     (draftPrompt?: string, draftContext?: AnnaSurfaceContext | null) => {
@@ -598,10 +774,9 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
 
   const closeWidget = useCallback(() => {
     visibleSessionRef.current += 1;
-    resetVoiceTranscriptDrafts();
     setIsLoading(false);
     setIsOpen(false);
-  }, [resetVoiceTranscriptDrafts]);
+  }, []);
 
   useEffect(() => {
     const welcomeMessage: AnnaMessage = {
@@ -612,16 +787,14 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
 
     setMessages((prev) => {
       if (prev.length === 0) {
-        resetVoiceTranscriptDrafts();
         return [welcomeMessage];
       }
       if (prev.length === 1 && prev[0]?.id === 'anna-welcome') {
-        resetVoiceTranscriptDrafts();
         return [welcomeMessage];
       }
       return prev;
     });
-  }, [copy.intro, resetVoiceTranscriptDrafts]);
+  }, [copy.intro]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -760,7 +933,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     () =>
       messages
         .filter((message) => message.id !== 'anna-welcome')
-        .slice(-8)
+        .slice(-12)
         .map((message) => ({
           role: message.role,
           content: message.content,
@@ -806,7 +979,6 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     setError(null);
     setVoiceError(null);
     setVoiceStatus('connecting');
-    resetVoiceTranscriptDrafts();
     await teardownVoice();
 
     const browserWindow = window as AnnaWindow;
@@ -818,7 +990,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       let voiceKnowledgeContext = '';
       try {
         const contextResponse = await fetch(
-          `/api/public/anna/voice-context?locale=${encodeURIComponent(voiceSessionLang)}`
+          `/api/public/anna/voice-context?locale=${encodeURIComponent(voiceSessionLang)}&siteKey=${encodeURIComponent(KNOWLEDGE_BASE_SITE.key)}&sessionId=${encodeURIComponent(sessionIdRef.current)}`
         );
         if (contextResponse.ok) {
           const contextData = await contextResponse.json();
@@ -862,8 +1034,6 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         model: LIVE_VOICE_MODEL,
         config: {
           responseModalities: [Modality.AUDIO],
-          inputAudioTranscription: {},
-          outputAudioTranscription: {},
           speechConfig: {
             voiceConfig: {
               prebuiltVoiceConfig: { voiceName },
@@ -871,6 +1041,8 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           },
           systemInstruction: buildVoiceSystemInstruction(
             voiceSessionLang,
+            KNOWLEDGE_BASE_SITE.key,
+            KNOWLEDGE_BASE_SITE.brandName,
             mergedVoiceKnowledgeContext
           ),
         },
@@ -924,18 +1096,6 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
               });
               activeSourcesRef.current = [];
               nextPlayTimeRef.current = audioContext.currentTime;
-            }
-
-            const inputTranscript = message.serverContent?.inputTranscription?.text?.trim();
-            if (inputTranscript) {
-              voiceAssistantDraftRef.current = { id: null, text: '' };
-              upsertVoiceTranscriptMessage('user', inputTranscript, voiceUserDraftRef);
-            }
-
-            const outputTranscript = message.serverContent?.outputTranscription?.text?.trim();
-            if (outputTranscript) {
-              voiceUserDraftRef.current = { id: null, text: '' };
-              upsertVoiceTranscriptMessage('assistant', outputTranscript, voiceAssistantDraftRef);
             }
 
             const base64Audio = message.serverContent?.modelTurn?.parts?.find(
@@ -1054,9 +1214,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     i18n.resolvedLanguage,
     isLoading,
     lang,
-    resetVoiceTranscriptDrafts,
     teardownVoice,
-    upsertVoiceTranscriptMessage,
     voiceHistoryTurns,
     voiceApiKey,
     voiceAvailable,
@@ -1127,6 +1285,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         body: JSON.stringify({
           message: content,
           locale: i18n.resolvedLanguage || i18n.language || lang,
+          siteKey: KNOWLEDGE_BASE_SITE.key,
           sessionId: sessionIdRef.current,
           history,
           surfaceContext,

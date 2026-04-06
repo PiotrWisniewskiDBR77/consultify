@@ -1,4 +1,17 @@
-import { Calendar, Link2, Pencil, Target, Trash2, TrendingUp, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Calendar,
+  Clock3,
+  GitBranch,
+  Link2,
+  Pencil,
+  ShieldAlert,
+  Sigma,
+  Target,
+  Trash2,
+  TrendingUp,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +35,8 @@ interface KPITimeSeriesDrawerProps {
 }
 
 type QuickStat = { label: string; value: string; color?: string };
+type MetricStat = { label: string; value: string; hint: string; color?: string; icon: React.ReactNode };
+type TimelineItem = { label: string; value: string; hint: string };
 
 type DeviationAction = {
   id: string;
@@ -62,6 +77,21 @@ const measurementDate = (measurement: KPIMeasurement): string =>
 
 const measurementLabel = (measurement: KPIMeasurement): string =>
   measurement.periodKey || measurementDate(measurement);
+
+const formatMetricValue = (value: number | null | undefined, unit?: string | null): string => {
+  if (value == null || !Number.isFinite(Number(value))) return '—';
+  return `${Number(value).toLocaleString()}${unit ? ` ${unit}` : ''}`;
+};
+
+const frequencyWindowDays = (
+  frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | string | null
+): number => {
+  const normalized = String(frequency || 'MONTHLY').toUpperCase();
+  if (normalized === 'DAILY') return 1;
+  if (normalized === 'WEEKLY') return 7;
+  if (normalized === 'QUARTERLY') return 90;
+  return 30;
+};
 
 export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   kpiId,
@@ -479,6 +509,52 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     ];
   }, [kpi, t]);
 
+  const expectationStats: QuickStat[] = useMemo(() => {
+    if (!kpi) return [];
+    const latestDate = (kpi.latestMeasurementDate || '').slice(0, 10);
+    const staleDays = latestDate
+      ? Math.max(
+          0,
+          Math.floor((Date.now() - new Date(`${latestDate}T00:00:00`).getTime()) / (1000 * 60 * 60 * 24))
+        )
+      : null;
+    return [
+      {
+        label: t('results.columns.phase', 'Phase'),
+        value:
+          kpi.observationPhase === 'realization'
+            ? t('results.phase.realization', 'Realization')
+            : kpi.observationPhase === 'both'
+              ? t('results.phase.both', 'Both phases')
+              : t('results.phase.postImplementation', 'Post-implementation'),
+      },
+      {
+        label: t('results.kpi.realizationTarget', 'Realization target'),
+        value:
+          kpi.realizationExpectation?.targetValue != null
+            ? `${kpi.realizationExpectation.targetValue}${kpi.unit ? ` ${kpi.unit}` : ''}`
+            : '—',
+      },
+      {
+        label: t('results.kpi.postImplementationTarget', 'Post-implementation target'),
+        value:
+          kpi.postImplementationExpectation?.targetValue != null
+            ? `${kpi.postImplementationExpectation.targetValue}${kpi.unit ? ` ${kpi.unit}` : ''}`
+            : '—',
+      },
+      {
+        label: t('results.kpi.freshness', 'Freshness'),
+        value:
+          staleDays == null
+            ? t('results.status.noData', 'No data')
+            : staleDays === 0
+              ? t('results.kpi.freshnessToday', 'Updated today')
+              : `${staleDays}d`,
+        color: kpi.needsEntry ? 'text-amber-400' : 'text-slate-900 dark:text-white',
+      },
+    ];
+  }, [kpi, t]);
+
   const maxVal = useMemo(() => {
     if (measurements.length === 0) return 100;
     return Math.max(...measurements.map((m) => m.value), kpi?.targetValue || 0) * 1.2 || 100;
@@ -487,6 +563,191 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const chartBars = useMemo(() => {
     return [...measurements].reverse().slice(-12);
   }, [measurements]);
+
+  const chartSemantics = useMemo(() => {
+    if (!kpi) return [];
+    const ordered = [...measurements].reverse();
+    const latest = ordered.at(-1) || null;
+    const previous = ordered.length > 1 ? ordered.at(-2) || null : null;
+    const delta =
+      latest && previous && Number.isFinite(Number(latest.value)) && Number.isFinite(Number(previous.value))
+        ? Number(latest.value) - Number(previous.value)
+        : null;
+    const latestValue = latest ? Number(latest.value) : null;
+    const achievement =
+      latestValue != null &&
+      kpi.targetValue != null &&
+      Number.isFinite(Number(kpi.targetValue)) &&
+      Number(kpi.targetValue) !== 0
+        ? (latestValue / Number(kpi.targetValue)) * 100
+        : null;
+    const projection =
+      latestValue != null && delta != null && Number.isFinite(latestValue + delta)
+        ? latestValue + delta
+        : null;
+    return [
+      {
+        label: t('results.drawer.calculation', 'Calculation'),
+        value: t('results.drawer.calculationMethod', 'Latest actual'),
+        hint: t(
+          'results.drawer.calculationHint',
+          'The runtime reads the latest governed measurement as the primary period value.'
+        ),
+        icon: <Sigma size={14} className="text-primary-400" />,
+      },
+      {
+        label: t('results.drawer.periodOnPeriod', 'Period on period'),
+        value:
+          delta == null
+            ? '—'
+            : `${delta > 0 ? '+' : ''}${delta.toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ''}`,
+        hint: previous
+          ? `${measurementLabel(previous)} -> ${measurementLabel(latest!)}`
+          : t('results.drawer.periodOnPeriodHint', 'Need at least two measurements'),
+        color: delta == null ? undefined : delta >= 0 ? 'text-emerald-400' : 'text-red-400',
+        icon: <GitBranch size={14} className="text-sky-400" />,
+      },
+      {
+        label: t('results.drawer.achievement', 'Target achievement'),
+        value: achievement == null ? '—' : `${Math.round(achievement)}%`,
+        hint: t('results.drawer.achievementHint', 'Current actual compared to governed target'),
+        color:
+          achievement == null ? undefined : achievement >= 100 ? 'text-emerald-400' : 'text-amber-400',
+        icon: <Target size={14} className="text-violet-400" />,
+      },
+      {
+        label: t('results.drawer.projection', 'Projection'),
+        value: formatMetricValue(projection, kpi.unit),
+        hint: t(
+          'results.drawer.projectionHint',
+          'Simple next-period projection based on the latest measured delta.'
+        ),
+        color:
+          projection == null || kpi.targetValue == null
+            ? undefined
+            : projection >= Number(kpi.targetValue)
+              ? 'text-emerald-400'
+              : 'text-red-400',
+        icon: <TrendingUp size={14} className="text-emerald-400" />,
+      },
+    ] satisfies MetricStat[];
+  }, [kpi, measurements, t]);
+
+  const alertSemantics = useMemo(() => {
+    if (!kpi) return [];
+    const staleDays = kpi.latestMeasurementDate
+      ? Math.max(
+          0,
+          Math.floor(
+            (Date.now() - new Date(String(kpi.latestMeasurementDate)).getTime()) / (1000 * 60 * 60 * 24)
+          )
+        )
+      : null;
+    const expectedWindow = frequencyWindowDays(kpi.measurementFrequency);
+    const overdueBy = staleDays == null ? null : Math.max(0, staleDays - expectedWindow);
+    const actionAgeing = (() => {
+      const dueDates = (openCase?.actions || [])
+        .map((action) => action.dueDate)
+        .filter(Boolean)
+        .map((dueDate) => new Date(`${String(dueDate).slice(0, 10)}T00:00:00`).getTime())
+        .filter((value) => Number.isFinite(value));
+      if (!dueDates.length) return null;
+      const oldest = Math.min(...dueDates);
+      return Math.max(0, Math.floor((Date.now() - oldest) / (1000 * 60 * 60 * 24)));
+    })();
+    return [
+      {
+        label: t('results.drawer.alertFreshness', 'Freshness posture'),
+        value:
+          staleDays == null
+            ? t('results.status.noData', 'No data')
+            : overdueBy && overdueBy > 0
+              ? `${t('results.drawer.overdue', 'Overdue')} +${overdueBy}d`
+              : t('results.drawer.inCadence', 'In cadence'),
+        hint: t(
+          'results.drawer.alertFreshnessHint',
+          'Compares the latest measurement date with the declared reporting cadence.'
+        ),
+        color: kpi.needsEntry ? 'text-amber-400' : 'text-emerald-400',
+        icon: <Clock3 size={14} className="text-amber-400" />,
+      },
+      {
+        label: t('results.drawer.alertThreshold', 'Threshold posture'),
+        value:
+          kpi.status === 'below'
+            ? t('results.filters.below', 'Below')
+            : kpi.status === 'on-target'
+              ? t('results.filters.onTarget', 'On target')
+              : t('results.filters.noData', 'No data'),
+        hint: t(
+          'results.drawer.alertThresholdHint',
+          'Uses governed direction and threshold mode to assess operating posture.'
+        ),
+        color:
+          kpi.status === 'below'
+            ? 'text-red-400'
+            : kpi.status === 'on-target'
+              ? 'text-emerald-400'
+              : 'text-slate-400',
+        icon: <AlertTriangle size={14} className="text-red-400" />,
+      },
+      {
+        label: t('results.drawer.alertReconciliation', 'Reconciliation'),
+        value: openCase ? `${openCase.severity} · ${openCase.status}` : t('results.drawer.aligned', 'Aligned'),
+        hint: t(
+          'results.drawer.alertReconciliationHint',
+          'Deviation cases stay visible until evidence, RCA, and closure are complete.'
+        ),
+        color: openCase ? (openCase.severity === 'RED' ? 'text-red-400' : 'text-amber-400') : 'text-emerald-400',
+        icon: <ShieldAlert size={14} className="text-cyan-400" />,
+      },
+      {
+        label: t('results.drawer.alertActionAgeing', 'Action ageing'),
+        value:
+          actionAgeing == null
+            ? t('results.drawer.noOpenActions', 'No open actions')
+            : `${actionAgeing}d`,
+        hint: t(
+          'results.drawer.alertActionAgeingHint',
+          'Shows how long the oldest due action has been sitting in the deviation lane.'
+        ),
+        color: actionAgeing != null && actionAgeing > 7 ? 'text-red-400' : 'text-slate-900 dark:text-white',
+        icon: <Calendar size={14} className="text-violet-400" />,
+      },
+    ] satisfies MetricStat[];
+  }, [kpi, openCase, t]);
+
+  const targetTimeline = useMemo(() => {
+    if (!kpi) return [];
+    return [
+      {
+        label: t('results.drawer.timeline.baseline', 'Baseline'),
+        value: formatMetricValue((kpi as any).baselineValue ?? null, kpi.unit),
+        hint: t('results.drawer.timeline.baselineHint', 'Starting reference for the KPI lane'),
+      },
+      {
+        label: t('results.kpi.realizationTarget', 'Realization target'),
+        value: formatMetricValue(kpi.realizationExpectation?.targetValue ?? null, kpi.unit),
+        hint: t(
+          'results.drawer.timeline.realizationHint',
+          'Expected operating result while the initiative is still being realized.'
+        ),
+      },
+      {
+        label: t('results.kpi.postImplementationTarget', 'Post-implementation target'),
+        value: formatMetricValue(kpi.postImplementationExpectation?.targetValue ?? null, kpi.unit),
+        hint: t(
+          'results.drawer.timeline.postImplementationHint',
+          'Expected steady-state result after go-live and stabilization.'
+        ),
+      },
+      {
+        label: t('results.columns.target', 'Target'),
+        value: formatMetricValue(kpi.targetValue ?? null, kpi.unit),
+        hint: t('results.drawer.timeline.currentTargetHint', 'Current governed target used by the runtime lane'),
+      },
+    ] satisfies TimelineItem[];
+  }, [kpi, t]);
 
   useEffect(() => {
     const targets: Partial<Record<KpiDrawerSection, string>> = {
@@ -741,6 +1002,74 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                 ))}
               </div>
 
+              <div className="grid grid-cols-2 gap-2">
+                {expectationStats.map((s) => (
+                  <div
+                    key={s.label}
+                    className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
+                  >
+                    <p className="text-[10px] uppercase text-slate-500 mb-1">{s.label}</p>
+                    <p
+                      className={`text-sm font-semibold ${s.color || 'text-slate-900 dark:text-white'}`}
+                    >
+                      {s.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 p-3">
+                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.drawer.chartSemanticsTitle', 'Chart semantics')}
+                  </div>
+                  <div className="space-y-2">
+                    {chartSemantics.map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            {item.icon}
+                            {item.label}
+                          </div>
+                          <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
+                            {item.value}
+                          </div>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 p-3">
+                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.drawer.alertSemanticsTitle', 'Alert semantics')}
+                  </div>
+                  <div className="space-y-2">
+                    {alertSemantics.map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            {item.icon}
+                            {item.label}
+                          </div>
+                          <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
+                            {item.value}
+                          </div>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               {/* Deviation case (R1) */}
               {openCase ? (
                 <div
@@ -973,6 +1302,18 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         </div>
                       );
                     })}
+                    {chartSemantics[3]?.value !== '—' && kpi?.targetValue != null ? (
+                      <div
+                        className="absolute right-0 w-5 border-t-2 border-dotted border-emerald-400/80"
+                        style={{
+                          bottom: `${(Number(String(chartSemantics[3].value).replace(/[^\d.-]/g, '')) / maxVal) * 100}%`,
+                        }}
+                      >
+                        <span className="absolute -top-3 right-0 text-[10px] text-emerald-400">
+                          {t('results.drawer.projection', 'Projection')}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <div className="h-32 flex items-center justify-center text-sm text-slate-500 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
@@ -1012,7 +1353,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     className={inputCls}
                     value={newNotes}
                     onChange={(e) => setNewNotes(e.target.value)}
-                    placeholder={t('results.drawer.notesPlaceholder', 'Notes (optional)')}
+                    placeholder={t(
+                      'results.drawer.notesPlaceholder',
+                      'Notes, source, or audit comment (optional)'
+                    )}
                   />
                   <button
                     type="submit"
@@ -1034,6 +1378,27 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     <span className="ml-1 text-slate-600">({measurements.length})</span>
                   )}
                 </h3>
+                <div className="mb-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-800/50 p-3">
+                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.drawer.timelineTitle', 'Governed target checkpoints')}
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                    {targetTimeline.map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
+                      >
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          {item.label}
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                          {item.value}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 {measurements.length > 0 ? (
                   <div className="border border-slate-200 dark:border-navy-700 rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
@@ -1044,6 +1409,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           </th>
                           <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">
                             {t('results.drawer.historyValue', 'Value')}
+                          </th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">
+                            {t('results.drawer.historyVariance', 'Variance')}
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">
                             {t('results.drawer.historyNotes', 'Notes')}
@@ -1074,6 +1442,21 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                               {kpi?.unit && (
                                 <span className="ml-0.5 text-xs text-slate-500">{kpi.unit}</span>
                               )}
+                            </td>
+                            <td className="px-3 py-2 text-right text-xs">
+                              <span
+                                className={
+                                  kpi?.targetValue != null && Number(m.value) >= Number(kpi.targetValue)
+                                    ? 'text-emerald-400'
+                                    : 'text-red-400'
+                                }
+                              >
+                                {kpi?.targetValue != null
+                                  ? `${Number(m.value) - Number(kpi.targetValue) > 0 ? '+' : ''}${(
+                                      Number(m.value) - Number(kpi.targetValue)
+                                    ).toLocaleString()}${kpi?.unit ? ` ${kpi.unit}` : ''}`
+                                  : '—'}
+                              </span>
                             </td>
                             <td className="px-3 py-2 text-slate-500 truncate max-w-[120px]">
                               {m.notes || '—'}

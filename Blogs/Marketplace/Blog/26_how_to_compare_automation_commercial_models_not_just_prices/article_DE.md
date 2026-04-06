@@ -1,92 +1,58 @@
-# Wie man Automatisierungs-Geschaeftsmodelle vergleicht, nicht nur Preise
+# Wie man Automatisierungs-Geschäftsmodelle vergleicht – nicht nur Preise
 
-Target persona: CFO / Werksleiter (wirtschaftlicher Owner)  
-Funnel stage: Consideration bis Decision (kommerzielle Vergleichbarkeit)  
-Core problem: Teams vergleichen Headline-Totals und verpassen, wer Risiko, Aenderung, Stillstand und Lifecycle-Cashflows traegt  
-Main promise: ein Vergleichsraster, das kommerzielle Struktur so sichtbar macht wie Preis, ohne so zu tun, Finanzen ersetzten Engineering-Wahrheit
+Zielpersona: CFO / Werksleiter (wirtschaftlicher Eigentümer)  
+Funnel-Stufe: Von Überlegung zu Entscheidung (kommerzielle Vergleichbarkeit)  
+Kernproblem: Teams vergleichen Kopfzeilen-Summen und verpassen, wer Risiko, Änderung, Ausfallzeit und Lifecycle-Cashflows trägt  
+Hauptversprechen: Ein Vergleichsraster, das kommerzielle Struktur so sichtbar macht wie den Preis – ohne so zu tun, als ersetze Finance ingenieurtechnische Wahrheit
 
-Das guenstigste Angebot ist selten das guenstigste Projekt.
+Das günstigste Angebot ist oft das, das das meiste Risiko auf Ihre Seite der Linie parkt. Kopfzeilen-Summen fühlen sich entscheidend an, weil sie auf eine Folie passen. Echte Ökonomie verlangt, Zahlungsrhythmus, Meilenstein-Gates, was Repricing auslöst, wie Garantie und Ersatzteile begrenzt sind, wer Integrationsüberraschungen bezahlt und was passiert, wenn der Zeitplan rutscht.
 
-Es ist oft das Angebot mit dem meisten Risiko auf Ihrer Seite der Linie.
+Vergleichen Sie kommerzielle Modelle mit derselben Ernsthaftigkeit wie technischen Umfang.
 
-Automatisierungs-Geschaeftsmodelle unterscheiden sich bei: wie Aenderungen bepreist und regiert werden; was inklusive versus optional ist; wie Meilensteine an Cash und Abnahme gekoppelt sind; wer zahlt, wenn Realitaet nicht zur Broschuere passt.
+## Preis von Cash-Verhalten trennen
 
-Hersteller entscheiden besser, wenn sie Modelle vergleichen, nicht nur Zahlen.
+Fragen Sie, wann Cash Ihr Geschäft verlässt relativ zum erhaltenen Wert. Front-loaded Zahlungen mit schwachen Gates verschieben Risiko zu Ihnen. An Evidenz gebundene Meilensteine verschieben Risiko zur Lieferdisziplin. Zwei „gleiche“ Summen können gegensätzliche Cash- und Kontrollimplikationen haben.
 
-Bauen Sie ein kommerzielles Vergleichsraster neben Ihre technische Matrix.
+## Änderungsmechanik mappen, bevor Sie die Nummer romantisieren
 
-Fuer jeden Lieferantenpfad sichtbar machen: Zahlungsmeilensteine gekoppelt an Akzeptanzobjekte; Change-Order-Regeln und Rate Cards; Warranty, Ersatzteile und Service-Annahmen; Performance-Remedies und deren Caps; was passiert, wenn Integrationsabhaengigkeiten auf Ihrer Seite rutschen.
+Automatisierungsprojekte lernen unterwegs. Wenn Änderungsregeln vage sind, wird normales Lernen emotional. Sie wollen explizite Pfade: wie Änderungen vorgeschlagen, gepreist, genehmigt und dokumentiert werden – damit Iteration langweilig statt persönlich ist.
 
-Dann Total-Cost-Logik unter zwei Szenarien vergleichen: Baseline-Plan und Stress mit einem Scope-Increase und einem Schedule-Slip.
+## Garantie, Ersatzteile und Service sind Teil des Modells
 
-Wenn Sie nur Ein-Punkt-Totals vergleichen, optimieren Sie Praesentation, nicht Outcomes.
+Niedriger Preis mit enger Garantie oder langen Ersatzteillieferzeiten kann in Betriebs-Cash und Ausfallrisiko teuer sein. Machen Sie Grenzen sichtbar: was startet die Uhr, was ist ausgeschlossen, wie Support nach Cutover erreichbar ist.
 
-## Warum Headline-Preis irrefuehrend ist
+## Wer besitzt Ausfallzeiten und Integrationsüberraschungen?
 
-Headline-Preis versteckt: ausgeschlossene Integrationsaufgaben, die Change Orders werden; Annahmen zu Uptime-Fenstern und Zugang; Software-Lizenz-Ramps; Trainingsdepth, die spaeter Support-Last bestimmt.
+Manche Modelle nehmen an, Ihr Team absorbiert Schnittstellenarbeit, Site-Readiness-Lücken oder IT-Security-Schritte. Andere rollen mehr in Lieferanten-Scope. Bis dieser Split sichtbar ist, vergleichen Sie keine Preise – Sie vergleichen verschiedene Arbeitsuniversen.
 
-Das ist illustrativ, nicht universal: zwei Vorschlaege koennen dieselbe Summe zeigen und dennoch Risiko durch unterschiedliche Klauseln verschieben.
+## Engineering und Finance in einem Gespräch behalten
 
-## Kommerzielle Modell-Archtypen (als Linsen, nicht Stereotypen)
+Kommerzielle Struktur muss mit technischer Realität kompatibel sein. Finance sollte Zahlung nicht so optimieren, dass Integrator-Incentives zerstört werden; Engineering sollte Cash-Timing nicht ignorieren, das Covenants oder Working-Capital-Pläne bricht. Das Vergleichsraster ist ein gemeinsames Artefakt.
 
-| Modell-Linse | was es tendenziell optimiert | was zu verifizieren |
-| --- | --- | --- |
-| Festpreis fester Scope | Preissicherheit fuer definierte Grenze | Grenzdefinition und Exclusions-Liste |
-| phasierter Meilenstein | Cash an Lieferrealitaet gekoppelt | Meilenstein-Tests und Punch-Disziplin |
-| T&M mit Cap | Fruehflexibilitaet | Governance und Burn-Rate-Kontrollen |
-| performance-gekoppelt | Outcome-Incentive | messbare KPIs, die Sie auditieren koennen |
+## Wie DBR77 Marketplace die Arbeit unterstützt
 
-Die meisten realen Projekte mischen Linsen.
+Kommerzieller Vergleich wird glaubwürdig, wenn Meilensteinlogik, Änderungsregeln, Garantiegrenzen und Service-Annahmen in einer vergleichbaren Struktur sitzen – damit Economic Owners Modelle stress-testen können, bevor der Kopfzeilenpreis zu falscher Sicherheit erstarrt.
 
-Ihre Aufgabe ist, die Mischung zu benennen und Mischungen fair zu vergleichen.
+Engste Begleitstücke: [Wie man Total Cost of Ownership in Automatisierungsprojekten validiert](../31_how_to_validate_total_cost_of_ownership_in_automation_projects/article_DE.md), [Was ein gutes Automatisierungsangebot sichtbar machen sollte](../17_what_a_good_automation_offer_should_make_visible/article_DE.md) und [Was vor der Unterzeichnung eines Automatisierungsvertrags zu prüfen ist](../20_what_to_check_before_signing_an_automation_contract/article_DE.md).
 
-## Praktisches kommerzielles Vergleichsraster
+## Modell stress-testen, nicht nur die Zahl
 
-Diese Zeilen fuer jeden Bieter einfrieren:
+Fragen Sie, was bei Verzögerung, teilweiser Readiness, Scope-Verfeinerung oder Performance in einer Grauzone passiert. Kommerzielle Modelle zeigen unter Stress Charakter: wer Rework finanziert, wie Meilensteine rutschen, ob Support zugänglich bleibt, wenn Produktion laut ist. Wenn diese Antworten unscharf sind, verstehen Sie noch nicht, was Sie kaufen.
 
-| Zeile | warum es zaehlt |
-| --- | --- |
-| Inkludierte Scope-Statement-ID | verhindert stillen Drift |
-| Zahlungsmeilensteine | Cash-Risiko-Ausrichtung |
-| Akzeptanzkriterien-Referenz | bindet Geld an Proof |
-| Change-Order-Mechanismus | verhindert informelles Scope-Creep-Pricing |
-| Warranty-Start-Trigger | vermeidet Streit nach SAT |
-| Ersatzteilpaket | reduziert Early-Life-Ueberraschungen |
-| Trainingsstunden und Audience | reduziert versteckte Support-Nachfrage |
-| Service-Response-Erwartungen | reduziert Stillstandsargumente |
-| IP- und Lizenzbedingungen | reduziert IT- und Legal-Rework |
-| Exit- und Transition-Klausel | reduziert Lock-in-Risiko |
+Bringen Sie Legal und Procurement in denselben Raum wie Engineering. Sonst bekommen Sie eleganten technischen Scope gepaart mit spröder kommerzieller Mechanik – oder umgekehrt.
 
-Wenn eine Zeile leer ist, nehmen Sie an, sie ist nicht zu Ihren Gunsten, bis das Gegenteil bewiesen ist.
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-## Reality check: kommerzieller Vergleich bricht meist dann, wenn der Buyer die Logik eines Lieferanten als Default-Basis akzeptiert
+Der Punkt, diesen Teil der Buying Journey zu verschärfen – „Wie man Automatisierungs-Geschäftsmodelle vergleicht, nicht nur Preise“ in der Praxis – ist, Ausführung vorhersehbar zu machen. Auf industriellen Sites bleibt Mehrdeutigkeit nicht abstrakt: Sie wird Warten, Nacharbeit, stille Workarounds und Streit neben Equipment, wenn die Linie Wochen zuvor Klarheit brauchte. Wenn Teams dieselben Fakten publizieren, Abnahme an Evidenz binden und Ownership sichtbar halten, antworten Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, konkurrierende Stories abzugleichen.
 
-Das passiert leise. Ein Bieter rahmt Meilensteine selbstbewusster. Ein anderer wirkt einfacher, weil die Exclusions kuerzer sind.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes große Buying-Output als etwas, das Operations und Instandhaltung auditieren könnten. Wenn sie es nicht bis zu einem Verhalten auf dem Shopfloor zurückverfolgen können, verschärfen Sie die Sprache, bis es geht.
 
-Ein dritter erscheint sicherer, weil die Service-Sprache breiter klingt.
-
-Wenn das Team zulaesst, dass eine kommerzielle Struktur die Vergleichslogik fuer alle anderen definiert, ist die Matrix schon verzerrt, bevor ueber Preis gesprochen wird.
-
-## Szenario-Stresstest (zwei Szenarien, gleiches Raster)
-
-Raster zweimal laufen lassen: Baseline: Lieferantenplan wie vorgeschlagen; Stress: ein realistischer Scope-Increase (Schnittstellenchange oder Durchsatz-Tweak) und ein Vier-bis-Sechs-Wochen-Slip durch Werkszugangs-Constraints. Sie prognostizieren nicht die Zukunft.
-
-Sie pruefen, ob das kommerzielle Modell unter milder Realitaet vernuenftig reagiert.
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace soll Sourcing-Chaos reduzieren, indem Automatisierungsentscheidungen inspizierbar werden. Kommerzielle Vergleichbarkeit ist Teil von Inspizierbarkeit.
-
-Wenn Angebote strukturiert vergleichbar sind, treten Modellunterschiede frueher auf, wenn Optionen noch existieren. Marketplace ist kein Roboterkatalog.
-
-Es ist Workflow und Vertrauensschicht fuer Integratorauswahl auf Basis vergleichbarer Artefakte, nicht schoenerer PDFs.
+Koppeln Sie diese Disziplin schließlich an Accountability: Benennen Sie, wer Annahmen auf dem Shopfloor verifiziert und bis zu welchem Meilenstein. Mythen gedeihen, wenn niemand Messung besitzt; sie schwächen, wenn Verifikation Teil des Projektplans ist, kein Nachgedanken.
 
 ## Fazit
 
-Vergleichen Sie kommerzielle Modelle mit derselben Disziplin wie technischen Scope.
-
-Wenn Zahlung, Aenderung, Warranty und Integrationsownership vage sind, sagt der Preis nicht das, was Sie glauben.
+Wenn Zahlung, Änderung, Garantie und Ownership vage sind, sagt der Preis nicht, was Sie glauben, dass er sagt. Machen Sie kommerzielle Struktur neben Engineering-Scope sichtbar – dann entscheiden Sie.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*
+*DBR77 Marketplace ist so designed, dass strukturierte Angebote kommerzielle Struktur früher sichtbar machen, wenn Teams noch mit Klarheit verhandeln können. [Angebote vergleichen](https://dbr77.com/marketplace) oder [Hersteller-Demo starten](https://dbr77.com/demo).*

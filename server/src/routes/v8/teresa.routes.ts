@@ -33,6 +33,7 @@ import {
   P08_COPILOT_CONTRACT,
   P08_DEGRADED_SCENARIOS,
   P08_HANDOFF_TARGETS,
+  type HandoffTargetModule,
   P08_VOICE_POSTURE,
   P08_WRITE_OWNERSHIP,
 } from '../../services/v8/teresaCopilotCanon.js';
@@ -74,7 +75,7 @@ router.post(
         userId,
         sessionId,
         handoffContext,
-        targetModule,
+        targetModule: targetModule as HandoffTargetModule,
         targetPayload: targetPayload ?? {},
         idempotencyKey: typeof idempotencyKey === 'string' ? idempotencyKey : undefined,
       });

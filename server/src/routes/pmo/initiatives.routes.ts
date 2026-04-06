@@ -19,6 +19,7 @@ import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import blueprintService from '../../services/blueprintService.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
+import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
 import {
@@ -982,21 +983,61 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
     const kpis = template.suggestedKpis || [];
     for (const kpi of kpis) {
       try {
-        const kpiId = uuidv4();
-        await queryHelpers.queryRun(
-          `INSERT INTO initiative_kpis (id, initiative_id, organization_id, name, unit, target_value, frequency, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            kpiId,
-            String(id),
-            String(orgId),
-            String(kpi.name || 'Untitled KPI'),
-            String(kpi.unit || '%'),
-            kpi.targetValue ?? kpi.target_value ?? null,
-            String(kpi.frequency || kpi.measurementFrequency || 'monthly'),
-            now,
-          ]
-        );
+        const observationPhase =
+          String(kpi.observationPhase || '').trim() === 'realization' ||
+          String(kpi.observationPhase || '').trim() === 'both'
+            ? String(kpi.observationPhase)
+            : 'post-implementation';
+        const measurementFrequency =
+          String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() === 'DAILY'
+            ? 'DAILY'
+            : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() === 'WEEKLY'
+              ? 'WEEKLY'
+              : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
+                  'QUARTERLY'
+                ? 'QUARTERLY'
+                : 'MONTHLY';
+        const baselineValue = kpi.baselineValue ?? kpi.baseline ?? null;
+        const targetValue = kpi.targetValue ?? kpi.target ?? kpi.target_value ?? null;
+        const realizationTargetValue =
+          kpi.realizationExpectation?.targetValue ?? kpi.realizationTarget ?? targetValue;
+        const postImplementationTargetValue =
+          kpi.postImplementationExpectation?.targetValue ??
+          kpi.postImplementationTarget ??
+          targetValue;
+
+        await upsertInitiativeKpiAssignment({
+          initiativeId: String(id),
+          organizationId: String(orgId),
+          userId: String(userId || 'system'),
+          name: String(kpi.name || 'Untitled KPI'),
+          description: String(kpi.description || ''),
+          category: String(kpi.category || 'benefits'),
+          unit: String(kpi.unit || '%'),
+          baselineValue,
+          targetValue,
+          measurementFrequency,
+          currentValue: baselineValue,
+          definitionSource: 'initiative-custom',
+          observationPhase:
+            observationPhase === 'realization' || observationPhase === 'both'
+              ? (observationPhase as 'realization' | 'both')
+              : 'post-implementation',
+          trackedInRealization:
+            observationPhase === 'realization' || observationPhase === 'both',
+          trackedPostImplementation:
+            observationPhase === 'post-implementation' || observationPhase === 'both',
+          realizationExpectation: {
+            baselineValue,
+            targetValue: realizationTargetValue,
+            measurementFrequency,
+          },
+          postImplementationExpectation: {
+            baselineValue,
+            targetValue: postImplementationTargetValue,
+            measurementFrequency,
+          },
+        });
         created.kpis++;
       } catch {
         // skip

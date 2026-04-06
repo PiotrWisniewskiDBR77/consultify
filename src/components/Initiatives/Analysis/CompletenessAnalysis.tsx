@@ -31,7 +31,12 @@ import type { PortfolioInitiative } from '@/types';
 import {
   getMenu3AiButtonClass,
 } from './menu3ActionButtonStyles';
-import type { AnalysisIssue, OrgUser, QuickUpdatePayload } from './types';
+import type {
+  AnalysisIssue,
+  OrgUser,
+  QuickUpdatePayload,
+  RegisterAnalysisWorkspacePanel,
+} from './types';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -77,6 +82,7 @@ interface CompletenessAnalysisProps {
   users?: OrgUser[];
   rawInitiatives?: PortfolioInitiative[];
   onRegisterActions?: (node: React.ReactNode) => void;
+  onRegisterWorkspacePanel?: RegisterAnalysisWorkspacePanel;
 }
 
 /* ------------------------------------------------------------------ */
@@ -104,6 +110,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
   onRegisterActions,
   users = [],
   rawInitiatives = [],
+  onRegisterWorkspacePanel,
 }) => {
   const { t } = useTranslation();
 
@@ -120,6 +127,12 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
   const [showTriage, setShowTriage] = useState(false);
   const [showBulkFix, setShowBulkFix] = useState(false);
   const [bulkFixRunning, setBulkFixRunning] = useState(false);
+
+  const closeWorkspacePanels = useCallback(() => {
+    setAutoFillSuggestions(null);
+    setShowTriage(false);
+    setShowBulkFix(false);
+  }, []);
 
   /* ---------- stats ---------- */
 
@@ -337,15 +350,159 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     return hints;
   };
 
+  const autoFillPanel = autoFillSuggestions !== null ? (
+    <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+          <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+            AI Auto-Fill suggestions
+          </h3>
+          <span className="text-xs text-purple-500">({autoFillSuggestions.length})</span>
+        </div>
+        <button onClick={closeWorkspacePanels} className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+        {autoFillSuggestions.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
+            All fillable fields are already populated
+          </div>
+        ) : (
+          autoFillSuggestions.map((s, idx) => (
+            <div key={`${s.initiativeId}-${s.field}-${idx}`} className="flex items-center gap-3 px-4 py-3 text-sm">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
+                    {s.initiativeName}
+                  </span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-purple-200/50 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400">
+                    {s.field}
+                  </span>
+                  <span className="text-xs text-slate-500">→ {s.suggestedValue}</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.reason}</p>
+              </div>
+              {s.autoPayload && onQuickUpdate ? (
+                <button
+                  onClick={() => handleApplyAutoFill(s, idx)}
+                  disabled={applyingAutoFill === idx}
+                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                >
+                  {applyingAutoFill === idx ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                  Apply
+                </button>
+              ) : (
+                <button
+                  onClick={() => onOpenInitiative(s.initiativeId)}
+                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                >
+                  <ExternalLink size={12} />
+                  Open
+                </button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  const bulkFixPanel = showBulkFix ? (
+    <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Zap size={16} className="text-amber-600 dark:text-amber-400" />
+          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+            Bulk Fix
+          </h3>
+        </div>
+        <button onClick={closeWorkspacePanels} className="p-1 rounded text-amber-500 hover:bg-amber-200/30">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="divide-y divide-amber-200/40 dark:divide-amber-900/20">
+        {bulkFixGroups.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
+            No common gaps found
+          </div>
+        ) : (
+          bulkFixGroups.map((group) => (
+            <div key={group.field} className="flex items-center gap-3 px-4 py-3 text-sm">
+              <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+              <div className="flex-1">
+                <span className="font-medium text-slate-900 dark:text-white">{group.label}</span>
+                <span className="ml-2 text-xs text-slate-500">{group.count} initiative(s)</span>
+              </div>
+              <button
+                onClick={() => handleBulkFix(group)}
+                disabled={bulkFixRunning}
+                className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 disabled:opacity-50 transition-colors"
+              >
+                {bulkFixRunning ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                Fix all
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  const triagePanel = showTriage ? (
+    <div className="m-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
+      <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Target size={16} className="text-indigo-600 dark:text-indigo-400" />
+          <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+            AI Priority Triage
+          </h3>
+        </div>
+        <button onClick={closeWorkspacePanels} className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="divide-y divide-indigo-200/50 dark:divide-indigo-900/30">
+        {triageItems.map((item) => (
+          <div key={item.initiativeId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+            <span
+              className={`shrink-0 w-2.5 h-2.5 rounded-full ${
+                item.gateReady
+                  ? 'bg-emerald-500'
+                  : item.effort === 'low'
+                    ? 'bg-blue-500'
+                    : item.effort === 'medium'
+                      ? 'bg-amber-500'
+                      : 'bg-red-500'
+              }`}
+            />
+            <button onClick={() => onOpenInitiative(item.initiativeId)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]">
+              {item.initiativeName}
+            </button>
+            <span className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-300">
+              {item.completeness}%
+            </span>
+            <span className="flex-1 text-xs text-slate-500 dark:text-slate-400 truncate">
+              {item.recommendation}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
   /* ---------- render ---------- */
 
   useEffect(() => {
     if (!onRegisterActions) return;
     const toggleAutoFillPanel = () => {
       if (autoFillSuggestions !== null) {
-        setAutoFillSuggestions(null);
+        closeWorkspacePanels();
         return;
       }
+      setShowBulkFix(false);
+      setShowTriage(false);
       computeAutoFill();
     };
     onRegisterActions(
@@ -362,7 +519,11 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         )}
         {onQuickUpdate && (
           <button
-            onClick={() => setShowBulkFix((v) => !v)}
+            onClick={() => {
+              setAutoFillSuggestions(null);
+              setShowTriage(false);
+              setShowBulkFix((v) => !v);
+            }}
             className={getMenu3AiButtonClass(showBulkFix)}
           >
             <Zap size={12} />
@@ -370,7 +531,11 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
           </button>
         )}
         <button
-          onClick={() => setShowTriage((v) => !v)}
+          onClick={() => {
+            setAutoFillSuggestions(null);
+            setShowBulkFix(false);
+            setShowTriage((v) => !v);
+          }}
           className={getMenu3AiButtonClass(showTriage)}
         >
           <Target size={12} />
@@ -378,7 +543,49 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
         </button>
       </>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAutoFill, autoFillRunning, autoFillSuggestions, showBulkFix, showTriage]);
+  }, [
+    onRegisterActions,
+    onQuickUpdate,
+    computeAutoFill,
+    autoFillRunning,
+    autoFillSuggestions,
+    showBulkFix,
+    showTriage,
+    closeWorkspacePanels,
+  ]);
+
+  useEffect(() => {
+    if (!onRegisterWorkspacePanel) return;
+    if (autoFillPanel) {
+      onRegisterWorkspacePanel({
+        title: 'AI Auto-Fill',
+        subtitle: 'Fill missing owner, dates, and budget fields with one-click suggestions.',
+        icon: <Sparkles size={16} />,
+        content: autoFillPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (bulkFixPanel) {
+      onRegisterWorkspacePanel({
+        title: 'Bulk Fix',
+        subtitle: 'Resolve common completeness gaps across multiple initiatives.',
+        icon: <Zap size={16} />,
+        content: bulkFixPanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    if (triagePanel) {
+      onRegisterWorkspacePanel({
+        title: 'AI Priority Triage',
+        subtitle: 'Identify which initiatives need attention first and how much effort they need.',
+        icon: <Target size={16} />,
+        content: triagePanel,
+      });
+      return () => onRegisterWorkspacePanel(null);
+    }
+    onRegisterWorkspacePanel(null);
+    return undefined;
+  }, [autoFillPanel, bulkFixPanel, triagePanel, onRegisterWorkspacePanel]);
 
   return (
     <div className="space-y-6">
@@ -413,7 +620,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
       </div>
 
       {/* AI Auto-Fill panel */}
-      {autoFillSuggestions !== null && (
+      {!onRegisterWorkspacePanel && autoFillSuggestions !== null && (
         <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -462,7 +669,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
                         bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors">
                       <ExternalLink size={12} />
-                      Open
+                      Preview
                     </button>
                   )}
                 </div>
@@ -473,7 +680,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
       )}
 
       {/* Bulk Fix panel */}
-      {showBulkFix && (
+      {!onRegisterWorkspacePanel && showBulkFix && (
         <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -517,7 +724,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
       )}
 
       {/* AI Priority Triage panel */}
-      {showTriage && (
+      {!onRegisterWorkspacePanel && showTriage && (
         <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
           <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -647,7 +854,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
                             bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors">
                           <ExternalLink size={12} />
-                          Open initiative
+                          Preview
                         </button>
                       </td>
                     </tr>

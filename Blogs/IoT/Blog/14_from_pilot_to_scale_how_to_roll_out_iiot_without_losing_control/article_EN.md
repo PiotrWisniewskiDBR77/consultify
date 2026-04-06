@@ -5,82 +5,56 @@ Funnel stage: Decision
 Core problem: many manufacturers prove IIoT on one line and then lose momentum or control when rollout expands beyond the first pilot  
 Main promise: IIoT rollout scales better when the plant expands a proven operating loop step by step instead of turning a pilot into a rushed plant-wide program
 
-Starting IIoT is one problem. Scaling it is another. Many manufacturers can run a useful pilot. Fewer turn that pilot into a stable rollout model. That is where the next layer of risk appears.
+A pilot can succeed for reasons that do not automatically survive contact with scale. Early phases are narrow, visibly sponsored, and easier to babysit. Rollout introduces variation: more users, more exceptions, more interpretations of what “the system” is supposed to do. If expansion outruns operating discipline, the plant trades clarity for noise.
 
-Once the first proof works, the pressure usually rises: expand faster; connect more lines; involve more teams; answer more expectations at once.
+Scaling IIoT is less like copying files and more like copying a habit. The habit has to be defined before it multiplies.
 
-If the rollout model is not disciplined, the plant can lose the clarity it had during the first phase.
+Expansion without definitions is how a plant trades one good line for ten confused ones. Control means the second line speaks the same operational language as the first—not that it bought the same hardware SKU.
 
-## Why pilot success does not automatically scale
+## Why a good pilot is not yet a scale model
 
-A pilot usually works because it is: narrow; visible; well-supported; easier to govern. Rollout changes the conditions.
+Pilot conditions are forgiving. Support is concentrated. Exceptions are managed by memory. At scale, memory becomes inconsistent. The organization needs shared definitions, stable escalation, and a review rhythm that survives normal plant chaos.
 
-The plant now has to manage: more variation; more users; more exceptions; more ownership handoffs. That is why a strong pilot is not yet a strong scale model.
+## The classic post-pilot mistake
 
-## The first mistake after pilot: expanding scope faster than operating logic
+Teams accelerate connection counts faster than they stabilize response logic. More data arrives, alert culture inflates, and each line quietly invents its own dialect for reasons and ownership. Leadership sees activity; the floor feels overload.
 
-Many teams try to scale connection count faster than they scale operating discipline.
+## What must be proven before expansion
 
-That creates a familiar pattern: more screens; more alerts; more data; but not enough shared response rules. When that happens, rollout creates noise faster than control.
+Know which signals matter most, how reasons are captured, who reacts first, when escalation is appropriate, and how value is reviewed. If those elements are still fluid, scaling spreads ambiguity. For month-one discipline, see [what the first 30 days should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md). For early measurement habits, see [what to measure in the first 90 days](../16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_EN.md). For the checkpoint conversation, see [how to review IIoT value after the first pilot](../20_how_to_review_iiot_value_after_the_first_pilot/article_EN.md).
 
-## What should be proven before wider rollout
+## Choose the next area by similarity, not convenience
 
-Before the plant expands, it should already know: which signal matters most; how reasons are captured; who reacts first; when escalation happens; how value is reviewed. If those rules are still unclear, scaling usually spreads ambiguity.
+The second wave should resemble the first in machine behavior, loss patterns, team structure, and review needs. Similarity makes replication teachable. Random expansion makes every new line a bespoke science project.
 
-The same evidence usually shows up across a disciplined first month, the first-quarter measurement habit, and a candid post-pilot review before expansion pressure wins. For that sequence, see [what the first 30 days should look like in a brownfield factory](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_EN.md), [what to measure in the first 90 days](../16_what_to_measure_in_the_first_90_days_of_iiot_rollout/article_EN.md), and [how to review IIoT value after the first pilot](../20_how_to_review_iiot_value_after_the_first_pilot/article_EN.md).
+## Standardize the few things that must travel
 
-## Why rollout should follow operating similarity
+You do not need uniformity everywhere on day one. You do need stable cores: event definitions, reason categories, escalation rules, ownership expectations, and review cadence. Without shared bones, each area becomes its own product.
 
-Not every next line or area should be chosen for rollout just because it is available. A stronger rule is operating similarity.
+## Fragmentation dressed up as flexibility
 
-Expand first into areas that are close to the original pilot in terms of: machine behavior; production rhythm; loss patterns; team structure; reporting needs. That makes the second phase easier to stabilize.
+If every line interprets alerts, reasons, and ownership differently, you do not have a rollout. You have parallel experiments sharing a vendor logo. Durability comes from scaling one operating model, not many local versions.
 
-## What should standardize before scale
+## A wave sequence that preserves control
 
-Rollout should not standardize everything at once. But some things do need to become stable early: event definitions; reason categories; escalation rules; review cadence; ownership logic.
-
-Without that, each new area starts inventing its own version of the system. That weakens the whole rollout.
-
-## Reality check: rollout fails when every line gets a different story
-
-One of the biggest scaling risks is local reinterpretation. The plant says it is rolling out one system. In reality, each line starts using:
-
-- different reason logic
-- different alert behavior
-- different ownership assumptions
-- different review habits
-
-That is not scale. That is fragmentation.
-
-The rollout only becomes durable when the plant scales one operating model, not many local versions.
-
-## What the rollout sequence should usually look like
-
-In many factories, the stronger sequence looks like this: prove the loop on one line; stabilize definitions and response logic; expand to a similar area; review what changes under wider usage; scale in waves, not in one jump. This does not make rollout slower. It makes scale safer and more believable.
+Prove the loop in one place. Stabilize language and response. Expand to a similar pocket. Review what broke under real usage. Scale in waves with explicit go/no-go criteria. This is often faster in outcomes than a single reckless jump, even if it looks slower on a connection chart.
 
 ## How leadership should review rollout
 
-Leadership should not review rollout as a connection count only. It should review:
+Judge stability of the loop, strength of response behavior, adoption friction, emerging value signals, and readiness for the next wave—not raw counts of connected assets. Rollout quality beats rollout vanity.
 
-- where the operating loop is stable
-- where response logic is weak
-- where adoption is slowing
-- where value is becoming visible
-- where the next expansion wave should begin
+## DBR77 IoT in the scale transition
 
-This is important because rollout quality matters more than rollout speed.
+DBR77 IoT fits when expansion is described as copying a disciplined model: definitions, escalation paths, and review habits travel with the footprint. Retrofit expansion is credible when it repeats an operating pattern instead of racing connection totals.
 
-## What this means for DBR77 IoT
+Pilot to scale is not multiplication. It is the controlled expansion of a loop people trust enough to repeat. Keep the model coherent, and the plant gains breadth without surrendering control.
 
-DBR77 IoT fits this scale transition when the story stays honest about replication risk: event definitions, escalation paths, and review cadence have to travel with the footprint, not get reinvented on each line. The positioning is most credible here as retrofit expansion that copies one operating model, not as a connection-count race, so leadership can run rollout waves without losing the discipline that made the pilot believable.
 
-## Bottom line
+## Bringing it home on the floor
 
-The move from pilot to scale should not be treated as a simple multiplication step.
+None of this advice matters if it stays in a steering deck. The useful test is whether the next shift can act with less debate: clearer states, fewer mystery stops, faster confirmation, and escalation that respects attention. When IoT is working, the line feels less like a courtroom and more like a coordinated team—still loud, still busy, but oriented around the same facts.
 
-It should be treated as the controlled expansion of one proven operating loop.
-
-That is how manufacturers scale IIoT without losing clarity, ownership, and control.
+If you walk the floor and people still describe the system as “the computer” instead of “our picture of the line,” keep tightening context, ownership, and review until the language changes. Language lag is a symptom that the loop is still too thin.
 
 ---
 

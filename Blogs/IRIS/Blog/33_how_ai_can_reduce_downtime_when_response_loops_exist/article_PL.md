@@ -1,63 +1,36 @@
-# Jak AI moze skrocic przestoje, gdy istnieja petle reakcji
+# Jak AI może skracać przestoje, gdy istnieją pętle reakcji
 
-Target persona: Kierownik zakladu / Kierownik utrzymania / Lider doskonalenia operacyjnego  
-Funnel stage: Consideration  
-Core problem: zaklady zbieraja sygnaly przestoju, ale traca minuty na przekazania, niejasna odpowiedzialnosc i wolne akceptacje, wiec analityka nie zamienia sie w krotsze postoje  
-Main promise: konkretny obraz petli reakcji, ktora AI moze przyspieszyc, plus gdzie AI nic nie daje bez zlecania i progow
+Docelowa persona: Kierownik zakładu / Kierownik utrzymania / Lider doskonałości operacyjnej  
+Etap lejka: Consideration  
+Główny problem: zakłady zbierają sygnały przestojów, ale tracą minuty na przekazaniach, niejasnym właścicielstwie i wolnych akceptacjach — więc analityka nigdy nie staje się krótszymi postojami  
+Główna obietnica: konkretny obraz pętli reakcji, którą AI może przyspieszyć, plus miejsca, gdzie bez zadaniowania i progów AI nic nie daje
 
-AI moze skracac przestoje, gdy istnieje petla reakcji: wykryj zdarzenie, przypisz wlasciciela, zlecz kroki naprawcze, eskaluj po przekroczeniu progu, domknij z dowodem. W tej petli AI pomaga przez szybsza triaz, lepsza priorytetyzacje miedzy funkcjami, szkice pakietow pracy i podobne domkniecia z przeszlosci. Bez petli AI tylko opowiada o przestoju po czasie. Ten artykul unika magicznych procent. Koncentruje sie na minutach odzyskanych przez dyscypline plus asyste.
+AI może skracać przestoje tylko wtedy, gdy pętla reakcji już istnieje: wykryj zdarzenie, zarejestruj je z kontekstem, przydziel właściciela, zadaniuj kroki naprawcze, eskaluj przy progach i domknij z dowodem. W tej pętli AI może ściskać czas przez szybszy triage, lepszą międzyfunkcyjną priorytetyzację, szkice pakietów pracy i wyciąganie podobnych domknięć z przeszłości. Bez pętli AI opowiada o przestoju po fakcie — grzecznie, być może wnikliwie, ale nie użytecznie w skali minut.
 
-## Zdefiniuj petle reakcji na przestoj w jezyku fabryki
+Zdefiniuj pętlę językiem fabryki. Wiarygodny łańcuch obejmuje wyzwalacz, znacznikowany rekord z kontekstem aktywa i linii, nazwaną rolę odpowiedzialną za następne działanie (nie listę mailingową), zadaniowanie z oczekiwanym ukończeniem i zależnościami, eskalację gdy czas lub ryzyko przekracza granicę oraz domknięcie wiążące kategorie przyczyn głównych z działaniami i potwierdzenie restartu tam, gdzie wymagane. Jeśli którykolwiek krok jest miękki, AI nie ściska czasu w sposób przewidywalny. Ściska zamęt w ładniejsze zdania.
 
-Wiarygodna petla ma szesc czesci: wyzwalacz: stan maszyny, postoj linii, sygnal jakosci lub planowe okno; zapis: znacznik czasu, aktyw, kontekst linii, wstepny wybor przyczyny; wlasciciel: nazwana rola odpowiedzialna za nastepny krok, nie lista mailingowa; zlecanie: elementy pracy z oczekiwanym domknieciem i zaleznosciami; eskalacja: reguly gdy czas lub ryzyko przekracza prog; domkniecie: kategoria przyczyny glownej, dzialania, potwierdzenie restartu tam gdzie wymagane. Jesli ktorys krok jest miekki, AI nie zawezi czasu wiarygodnie. Zawezi zamieszanie w ladniejsze zdania.
+Tam, gdzie AI często pomaga — gdy dane i przydział właściciela odpowiadają rzeczywistości — to grupowanie hałaśliwych alarmów w uporządkowaną krótką listę, proponowanie przydziału wg umiejętności, zmiany i historii, wstępne wypełnianie tekstu zlecenia i notatek BHP do edycji człowieka, wyciąganie wcześniejszych domknięć pasujących do objawów oraz podświetlanie, gdy postój czeka na zwolnienie jakości, a nie na pracę mechaniczną. Każdy punkt wciąż wymaga potwierdzenia człowieka przy właściwych progach.
 
-## Gdzie AI skraca petle (ilustracyjnie, bez gwarancji)
+Gotowość da się zmierzyć. Postoje powinny szybko tworzyć zadania. Kody przyczyn powinny być egzekwowane przy linii. Pola przekazania powinny być zrozumiałe między utrzymaniem, jakością i produkcją. Ścieżki eskalacji powinny istnieć dla powtarzalnych problemów i aktywów krytycznych dla bezpieczeństwa. Średni czas do przydzielenia właściciela należy mierzyć — nie zgadywać. Jeśli nie mierzysz czasu do przydzielenia, nie oczekuj, że AI to naprawi.
 
-To typowe dzwignie, gdy dane i odpowiedzialnosc sa prawdziwe: triaz: grupuj halasowe alarmy w ranking zwiazany z aktywami; routing: proponuj wlasciwego maintainera lub zespol wg umiejetnosci, zmiany i historii; szkicowanie: wypelnij wstepnie tekst zlecenia, podpowiedzi czesci i notatki BHP do edycji czlowieka; podobienstwo: pokaz trzy wczesniejsze domkniecia pasujace do objawow; miedzyfunkcyjnie: podswietl, ze postoj czeka na zwolnienie jakosci, nie na mechanike.
+Kultura przestojów napędzana dashboardami przegląda na spotkaniach. Kultura oparta na pętlach przydziela właścicieli i zadania. AI wyrównuje się do pętli, bo pętle dają asyście co przyspieszać. Bez pętli AI wyrównuje się do komentarza.
 
-Kazdy punkt nadal wymaga potwierdzenia czlowieka przy wlasciwych progach.
+Trzymaj AI w trybie doradczym, gdy dominują blokady lub regulowane kroki zwolnienia, gdy dyscyplina zleceń jest wciąż niedojrzała albo gdy technicy zgłaszają, że sugestie zakłócają osąd przy diagnozie. Tryb doradczy wciąż może oszczędzać czas na szkicach i wyciągać historię.
 
-## Checklist: czy zaklad jest gotowy na AI pod przestoje?
+IRIS wyrównuje asystencję przy przestojach z wykonaniem, gdy wykrycie, właścicielstwo, eskalacja i domknięcie siedzą w jednej tkaninie zadań i akceptacji — więc asystencja mapuje się na nazwanych właścicieli i realne domknięcia zamiast unosić się w kanałach pobocznych.
 
-Odpowiedz uczciwie.
+Szerszy kontekst połączonego wykonania opisuje [Jak AI zmienia operacje fabryczne, gdy wykonanie jest połączone](../21_how_ai_is_changing_factory_operations_when_execution_is_connected/article_PL.md).
 
-- postoje tworza zadania automatycznie lub w kilka minut  
-- kody przyczyn sa wymuszane na linii, nie dopisywane nazajutrz  
-- utrzymanie, jakosc i produkcja znaja swoje pola przekazania  
-- sa sciezki eskalacji dla powtarzalnych winowajcow i aktywow krytycznych dla BHP  
-- sredni czas do przypisania wlasciciela jest mierzony, nie zgadywany
+Pomyśl o minutach, które znikają po tym, jak postój jest już widoczny. Często idą na ustalanie, czy postój jest „prawdziwy”, kogo wezwać, czy jakość musi być w grze, czy utrzymanie czy produkcja jest właścicielem oraz czy linia może bezpiecznie wystartować. AI może te minuty skracać tylko wtedy, gdy zakład już ustalił, jakiego dowodu wymaga, co znaczy priorytet i jak wygląda „przydzielone” w systemie. W przeciwnym razie asystencja staje się kolejnym szybkim kanałem opinii.
 
-Jesli nie potrafisz zmierzyc czasu do przypisania, nie oczekuj ze AI to naprawi.
+Zmiana kulturowa jest równie ważna: poprawa przestojów to nie KPI tylko utrzymania, gdy przyczyny przecinają funkcje. Zakład oparty na pętlach traktuje postój jako zdarzenie zakładu z reakcją zakładu — przy zachowaniu jasnego właścicielstwa ról. To środowisko, w którym asystencja pomaga najbardziej, bo może pokazywać powiązania międzyfunkcyjne bez rozmywania rozliczalności.
 
-## Porownanie: kultura przestoju pod dashboard kontra pod petle
+AI skraca przestoje, gdy zakład mierzy reakcję, a nie tylko postój. Zbuduj najpierw pętlę. Potem pozwól asystencji ściskać słabe odcinki.
 
-| Zachowanie | Pod dashboard | Pod petle |
-|---|---|---|
-| pierwszy ruch | spotkanie przegladu | przypisz wlasciciela i zadanie |
-| odpowiedzialnosc | wspolna skrzynka | nazwany wlasciciel per element pracy |
-| metryka sukcesu | swiezosc raportu | czas do pierwszej akcji, czas do domkniecia |
-| dopasowanie AI | streszczenia | triaz, routing, szkice pakietow |
+## Podsumowanie operacyjne
 
-AI pasuje do kultury petli.
-
-Ma trudnosci w kulturze dashboardow, bo nie ma co przyspieszac poza komentarzem.
-
-## Kiedy AI powinno zostac tylko doradcze
-
-Trzymaj AI doradcze, gdy: chodzi o blokady bezpieczenstwa lub kroki regulacyjnego zwolnienia; dyscyplina zlecen jest swieza i nadal nierowna; technicy zglaszaja, ze sugestie zaklocaja osad troubleshootingu.
-
-Tryb doradczy nadal pomaga, jesli oszczedza czas szkicow i pokazuje historie.
-
-## Dlaczego IRIS laczy asyste przestoju z wykonaniem
-
-DBR77 IRIS to AI-native plant operating system z ujednolicona warstwa wykonania dla produkcji, magazynu, jakosci, utrzymania i zlecania.
-
-Gdy zdarzenia przestoju zyja w tej samej tkance zadan i akceptacji co jakosc i logistyka, sugestie AI mapuja na wlascicieli i domkniecia zamiast wisiec w osobnym czacie.
-
-## Podsumowanie
-
-AI skraca przestoje, gdy zaklad mierzy reakcje, nie tylko postoj. Najpierw zbuduj petle. Potem pozwol asyscie scisnac slabe odcinki.
+Obietnica tego artykułu — konkretny obraz pętli reakcji, którą AI może przyspieszyć, plus miejsca, gdzie bez zadaniowania i progów AI nic nie daje — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Jak AI może skracać przestoje, gdy istnieją pętle reakcji” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*
+*DBR77 IRIS trzyma zdarzenia przestojów, zadania utrzymania, blokady jakości i sygnały produkcji w jednej warstwie wykonania, żeby AI mapowało na właścicieli i domknięcia. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Rozpocznij 14-dniowy trial](https://dbr77.com/demo).*

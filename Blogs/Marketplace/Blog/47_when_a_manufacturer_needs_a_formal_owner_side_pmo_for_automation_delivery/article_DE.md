@@ -1,50 +1,52 @@
-# Wann ein Hersteller ein formales Owner-Seiten-PMO fuer Automatisierungs-Delivery braucht
+# Wann ein Hersteller ein formales Owner-seitiges PMO für die Automatisierungslieferung braucht
 
-Target persona: Werksleiter oder Programmsponsor nach Award  
-Funnel stage: Decision to Delivery (Execution Governance)  
-Core problem: der Integrator faehrt einen Projektplan, waehrend das Werk drei inkompatible informelle Plaene faehrt  
-Main promise: klare Trigger fuer Owner-Seiten-PMO ohne Bureaucracy um der Bureaucracy willen
+Zielpersona: Werksleiter oder Programm-Sponsor nach der Vergabe  
+Funnel-Stufe: Entscheidung bis Lieferung (Ausführungs-Governance)  
+Kernproblem: der Integrator führt einen Projektplan, während das Werk drei inkompatible informelle Pläne fährt  
+Hauptversprechen: klare Trigger für ein Owner-seitiges PMO ohne Bürokratie um der Bürokratie willen
 
-Nicht jedes Automatisierungsprojekt braucht ein PMO-Label.
+Integratoren bringen Zeitpläne, Ressourcen und Liefer-Rituale. Hersteller schulden weiterhin einen kohärenten Owner-seiten-Plan: Bereitschaftsaufgaben, Schnittstellenentscheidungen, Zugangsfenster, Stakeholder-Alignment und Risiko-Reviews, die an Werksrealität gebunden sind. Wenn diese Fäden nur in informellen Kanälen leben, haben Sie drei Pläne — Operations, Engineering, Procurement — während der Lieferant einen vierten auf seinem Portal veröffentlicht.
 
-Jedes braucht einen einzigen Owner-Seiten-Thread, der fuer das Werk Nein sagen kann.
+Owner-seitiges PMO ist keine Papierarbeit um ihrer selbst willen. Es ist die minimale Governance-Schicht, die Ihre Organisation als Einheit bewegt, während Integrationsdruck steigt.
 
-Ein Hersteller braucht ein formales Owner-Seiten-PMO fuer Automatisierungs-Delivery, wenn Schnittstellen mehr als zwei Funktionen mit konkurrierenden Prioritaeten kreuzen, Akzeptanz mehrere Standorte oder Schichten umfasst, Kapitalfreigabe meilensteingekoppelt und drift-empfindlich ist, Operations-Readiness ein board-sichtbares Risiko ist oder Lieferanten-Governance so schwach ist, dass informelle Helden Entscheidungen in Chats tragen.
+## Trigger für formales PMO
 
-Wenn diese Trigger fehlen und das Projekt einen Sponsor mit Linienautoritaet hat, kann ein leichtgewichtiger integratorgefuehrter Rhythmus reichen.
+Stellen Sie es auf, wenn mehrere Funktionen kritische Pfadaufgaben besitzen, Schnittstellen politisch heiß sind, mehrere Linien oder Projekte Ressourcen teilen, Risiko-Reviews einen Takt brauchen, der an Vertragsmeilensteine gebunden ist, oder Executive-Sichtbarkeit nötig ist ohne tägliches Chaos im Sponsor-Postfach.
 
-## Trigger-Checkliste
+## Was Owner-seitiges PMO tatsächlich tut
 
-| Trigger | warum PMO hilft |
-| --- | --- |
-| Multi-Funktions-Schnittstellen | verhindert IT-versus-Operations-Ping-Pong |
-| Multi-Schicht-Validierung | verhindert SAT-Lotterie |
-| Meilenstein-gekoppeltes Cash | verhindert, dass Zahlungsstreit Scope-Drift versteckt |
-| Safety- oder Qualitaetskritikalitaet | erzwingt nachvollziehbare Entscheidungen |
-| wiederholte Change Orders | braucht neutralen Owner-Seiten-Recorder |
+Integriert Werksbereitschaft zu Lieferanten-Meilensteinen; führt funktionsübergreifende Risiko-Reviews durch; erzwingt Eskalation; hält Annahmen und Changes sichtbar; sorgt dafür, dass Operations, IT, Instandhaltung und Qualität mit klarem RACI im Loop bleiben.
 
-## Was Owner-Seiten-PMO nicht ist
+## Wann leichtgewichtig reicht
 
-Es ist kein zweiter Integratoren-Projektmanager. Es ist keine Meeting-Fabrik.
+Kleine, begrenzte Scopes mit starkem Single-Owner brauchen möglicherweise nur einen disziplinierten Rhythmus — keine neue Abteilung. Passen Sie Governance-Gewicht an Kopplung und Risiko an.
 
-Es ist die kleinste Struktur, die Entscheidungsrecords, Abhaengigkeitsdaten und Eskalations-Ownership auf Buyer-Seite haelt.
+## Wie DBR77 Marketplace anschließt
 
-## Minimum-PMO-Cadence (illustrativ)
+Marketplace endet mit einem gewählten Pfad; Owner-seitiges PMO ist, wie das Werk verhindert, dass dieser Pfad nach Integrator-Mobilisierung in informelle Kanäle zerfließt.
 
-Woechentliches integriertes Review mit benannten Entscheidungsrechten; ein einziger Clarification- und Change-Intake-Pfad in den Werk-Record; Risiko- und Issue-Log mit werksseitigen Ownern; Akzeptanz-Readiness-Review mindestens vier Wochen vor FAT, wenn der Zeitplan es erlaubt.
+Für die nächsten Liefer-Nachbarn siehe [Wie eine saubere Übergabe von Auswahl zu Lieferung aussehen sollte](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_DE.md), [Was ein guter herstellerseitiger Mobilisierungsplan nach der Vergabe enthalten sollte](../48_what_a_good_manufacturer_side_mobilization_plan_should_include_after_award/article_DE.md), [Wie Sie den richtigen internen Owner für ein Automatisierungsprojekt wählen](../33_how_to_choose_the_right_internal_owner_for_an_automation_project/article_DE.md) und [Welches Change-Order-Risiko man prüfen sollte, bevor ein Automatisierungsprojekt startet](../35_what_change_order_risk_to_check_before_an_automation_project_starts/article_DE.md).
 
-## Was das fuer DBR77 Marketplace bedeutet
+## PMO als Übersetzungsschicht
 
-DBR77 Marketplace ist ein Workflow fuer Automatisierungsentscheidungen, eine Vertrauensschicht fuer Integratorenauswahl und ein System zum Angebotsvergleich.
+Owner-seitiges PMO ist oft weniger Gantt-Chart-Schönheit als Übersetzung: Integratorplan in Werkskalender, Werks-Constraints in Integrator-Erwartungen, Executive-Fragen in Shopfloor-Wahrheit. Diese Übersetzung scheitert, wenn jede Funktion in unterschiedlichen Meetings aneinander vorbeiredet.
 
-PMO ist, wie das Werk schuetzt, was Marketplace bei der Auswahl half: Vergleichbarkeit wird nur dann Vertragsrealitaet, wenn Owner-Seiten-Governance nach dem Award bleibt. Marketplace ist kein Roboterkatalog.
+Halten Sie PMO leicht genug, um schnell zu bleiben: klare Rituale, sichtbare Logs und Eskalation, die nicht drei Ebenen braucht, um eine Entscheidung zu bewegen.
 
-Es ist, wie Hersteller Sourcing-Chaos reduzieren und Execution mit dem Freigegebenen ausrichten.
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-## Bottom line
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Wann ein Hersteller ein formales Owner-seitiges PMO für die Automatisierungslieferung braucht“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-Formales Owner-Seiten-PMO aufstellen, wenn informelle Heldenprojektmanagement aus Versehen machen. Wenn Helden das System sind, haben Sie kein System.
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
+
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
+
+Verknüpfen Sie diese Disziplin schließlich mit Rechenschaft: Benennen Sie, wer Annahmen auf dem Shopfloor und zu welchem Meilenstein verifiziert. Mythen gedeihen, wenn niemand Messung besitzt; sie verlieren an Kraft, wenn Verifikation Teil des Projektplans ist — kein Nachgedanken.
+
+## Fazit
+
+Wenn Integrationskomplexität und funktionsübergreifende Kopplung steigen, ist formales Owner-seitiges PMO, wie der Hersteller einen Plan behält — sodass der Integrator-Zeitplan auf der anderen Seite des Tischs einen einzigen erwachsenen Gegenpart trifft.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Hersteller-Demo starten](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace endet mit einem gewählten Pfad; Owner-seitiges PMO ist, wie Werke verhindern, dass dieser Pfad nach Integrator-Mobilisierung in informelle Kanäle zerfließt. [Hersteller-Demo starten](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

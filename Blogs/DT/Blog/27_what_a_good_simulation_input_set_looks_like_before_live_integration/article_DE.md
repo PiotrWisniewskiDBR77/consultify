@@ -1,80 +1,51 @@
-# Wie ein guter Simulations-Input-Satz vor Live-Integration aussieht
+# Wie ein gutes Simulations-Input-Set vor Live-Integration aussieht
 
-Target persona: Digital-Transformation Lead / IT-OT Partner / Engineering Manager zur Bewertung des Reifegradpfads  
-Funnel stage: Evaluation  
-Core problem: Teams verzoegern Simulation, weil sie glauben, Live-Datenintegration sei Pflicht, waehrend der groessere Fehlmodus vage Inputs sind, die keinen echten Entscheidungsvergleich tragen  
-Main promise: ein konkreter Input-Standard, der gut genug ist, um Szenarien zu testen, Annahmen nachvollziehbar zu machen und den naechsten Integrationsschritt zu rechtfertigen, ohne so zu tun, als sei die Fabrik voll instrumentiert
+Zielpersona: Leiter Digital Transformation / IT-OT-Partner / Engineering Manager auf dem Reifepfad  
+Funnel-Stufe: Evaluation
+Kernproblem: Teams verschieben Simulation, weil Live-Datenintegration vermeintlich Pflicht ist – der größere Fehlermodus sind jedoch vage Inputs, die keinen echten Optionsvergleich tragen  
+Hauptversprechen: ein konkreter Input-Standard, der gut genug ist, um Szenarien zu testen, Annahmen nachzuvollziehen und den nächsten Integrationsschritt zu rechtfertigen – ohne so zu tun, die Anlage sei voll instrumentiert
 
-ein guter Input-Satz vor der Integration umfasst eine begrenzte Systemkarte, zeitbasierte Prozesslogik, kalibrierten Durchsatz und Variabilitaet an Constraints, realistisches Ruest- und Zuverlaessigkeitsverhalten, Material- und Staffing-Regeln, die der tatsaechlichen Freigabe von Arbeit entsprechen, sowie eine kurze Liste klar benannter Kernannahmen mit Ownern. Damit laufen aussagekraeftige Szenario-Tests. Live-Feeds verbessern spaeter Treue und Aktualisierungsrhythmus, ersetzen aber keine Entscheidungsdisziplin. Live-Integration ist ein Reifegradpfad. Sie ist keine moralische Startvoraussetzung.
+Ein gutes Pre-Integration-Input-Set umfasst eine begrenzte Systemkarte, zeitbasierte Prozesslogik, kalibrierten Durchsatz und Variabilität an Engpässen, realistisches Rüst- und Zuverhaltensverhalten, Material- und Personalregeln, die der tatsächlichen Freigabe der Arbeit entsprechen, und eine kurze Liste zentraler Annahmen mit klarem Owner. Damit lassen sich sinnvolle Szenariotests fahren. Live-Feeds verbessern Fidelity und Aktualisierungsrhythmus; sie ersetzen keine Entscheidungsdisziplin. Live-Integration ist ein Reifepfad, keine moralische Startvoraussetzung.
 
-## Der minimale entscheidungsfaehige Input-Stack
+Den frühen Twin killt nicht „manuell“, sondern vage: Scope Creep ohne Grenzen, Mittelwerte ohne Spannen, Regeln für die ideale statt für die echte Woche. Beheben Sie das, und die ersten Vergleiche werden verteidigbar. Sensoren verdrahten Sie später dort, wo sie ändern, was entschieden wird.
 
-### 1) Begrenzte Systemkarte
+## Der minimale entscheidungsfähige Stack
 
-Definieren Sie, was im Modell ist und was bewusst ausgeschlossen ist.
+Definieren Sie eine begrenzte Systemkarte – was drin ist, was bewusst draußen bleibt – damit stille Auslassungen nicht verstecken können. Kodieren Sie zeitbasierte Prozesslogik: Sequenzen, Routings, Joins, Nacharbeitswege, wenn sie für die Entscheidung zählen. An Schlüsselengpässen erfassen Sie Median-Bearbeitungszeit und Streuung, belegt oder als kontrollierte Annahme; Mikrostops, wenn sie die effektive Kapazität verschieben. Nur-Mittelwert-Inputs sind eine häufige Quelle falscher Sicherheit.
 
-Klare Out-of-Scope-Grenzen verhindern stille Auslassungen, die spaeter Vertrauen zerstoeren.
+Wenn Mix zählt: Familien, die Operateure erkennen, Rüstregeln an realistische Sequenzen gebunden, und Scheduling-Policies, die Planer wirklich fahren. Ergänzen Sie Materialfreigabe und Logistikregeln, die Warten erzeugen, auch wenn Stationen frei wirken. Personal und Schichtmechanik als durchsetzbare Deckung, nicht theoretische Kapazität. Nachfrageformen, Lieferverzögerungsmuster und Schockereignisse in einer kontrollierten Schicht, die Sie editieren können, ohne das ganze Modell neu zu bauen.
 
-### 2) Zeitbasierte Prozesslogik
+## Qualitätschecks, bevor Sie Outputs trauen
 
-Sequenzen, Routings und Join-Punkte sollten zeigen, wie Auftraege wirklich fliessen, inklusive Rework-Pfade, wenn sie fuer die Entscheidung zaehlen.
+Das As-Is-Modell soll eine bekannte schlechte Woche qualitativ reproduzieren. Engpass-Ranking in der Baseline sollte Shopfloor-Intuition treffen. Eine zentrale Annahme zu ändern sollte Ergebnisse in eine erklärbare Richtung bewegen. Zwei unabhängige Reviewer sollten Inputs bis zu Quellen oder Annahmen zurückverfolgen können. Der Entscheidungssatz sollte den ersten Modeling-Sprint überstehen, ohne zu mutieren. Besteht der Bad-Week-Test nicht, reparieren Sie Inputs, bevor Sie Szenarien debattieren.
 
-### 3) Constraint-Timing mit Variabilitaet
+## Was Live-Integration bringt – und was nicht
 
-An Schluessel-Constraints erfassen Sie: mediane Zyklus- oder Bearbeitungszeit; Streuung oder Verteilungswahl begruendet durch Daten oder kontrollierte Annahme; Micro-Stop-Verhalten, wenn es effektive Kapazitaet aendert. Nur-Durchschnitts-Inputs sind eine haeufige Quelle falscher Sicherheit.
+Live-Integration bringt schnellere Aktualisierung, weniger manuelle Transkription und engere Ausrichtung auf kurzfristigen Betrieb. Sie klärt nicht automatisch, welche Entscheidung getestet wird, schützt nicht vor falschem Scope und schafft keine Führungs-Alignment ohne explizite Annahmen.
 
-### 4) Ruest- und Familienlogik
 
-Wenn der Mix fuer die Entscheidung zaehlt, muss der Input-Satz enthalten: Familien-Definitionen, die Bediener wiedererkennen; Ruestzeiten oder -regeln mit realistischen Sequenzen; Scheduling-Politiken, die zeigen, wie Planer wirklich priorisieren.
+## Brownfield-Ehrlichkeit: Pfade vergleichen, nicht Slogans
 
-### 5) Materialfreigabe und Logistikregeln
+Brownfield belohnt keinen Optimismus; es belohnt Vergleichbarkeit. Jeder ernsthafte Pfad ändert etwas Physisches – Wege, Staging, Übergaben, Wartungszugang – und diese Änderungen interagieren unter realer Nachfrage und Lieferanten-Verhalten. Szenario-Arbeit verdient Vertrauen, wenn jeder Pfad dieselben Schocks und Evidenz-Regeln sieht, damit das Gespräch bei Trade-offs bleibt statt bei Folien-Charisma.
 
-Staging, Transport-Schleifen und Freigabepolitiken einbeziehen, die Warten erzeugen, obwohl Stationen frei wirken.
+Halten Sie die Diskussion explizit darüber, was Sie in diesem Zyklus nicht tun. Ausschlüsse sind so wichtig wie Favoriten; sie verhindern Zombie-Optionen unter neuem Namen. Wenn Refresh-Trigger nach Change verstanden sind, hören Teams auf, letzte Quartals-Gewissheit zu zitieren, nachdem der Shopfloor sich schon bewegt hat. Der Twin sollte diesen Drift schnell peinlich machen – gesünder als die Entdeckung bei einem Service-Miss oder einem Überstunden-Wochenende, das niemand budgetiert hat.
 
-### 6) Staffing- und Schichtmechanik
 
-Schichten, Pausen, Skills und Abdeckung sollten durchsetzbar sein, nicht nur theoretisch moeglich.
 
-### 7) Szenarienparameter als kontrollierte Schicht
+## Die Story an das binden, was der Shopfloor beobachten kann
 
-Nachfrageformen, Lieferverzoegerungsmuster und Schockereignisse sollten editierbar sein, ohne das ganze Modell neu zu bauen.
+Szenario-Outputs werden operativ, wenn sie sich auf Verhalten beziehen, das Menschen sehen: wo Queues entstehen, wie Staging füllt, wann Überstunden-Druck auftritt, welche Übergaben unter Mix-Schwankungen spröde werden. Wenn die Narrative nur in abstrakter Auslastung spricht, überlebt sie den ersten Kontakt mit einem vollen Dienstag nicht. Übersetzen Sie die Modell-Sprache in Rundgang-Sprache, bevor Sie Teams um Vertrauen bitten.
 
-## Qualitaetspruefungen, bevor Sie Outputs trauen
+Diese Übersetzung ist auch, wie Finance und Operations aligned bleiben. Cash- und Service-Effekte sollten auf dieselben beobachtbaren Mechanismen zurückführbar sein, nicht nur auf eine Headline-Effizienz-Behauptung. Wenn diese Links explizit sind, wird Governance leichter, weil alle über dieselben Mechanismen streiten – nicht über konkurrierende Metaphern.
 
-Nutzen Sie diese Checkliste:
+## Was DBR77 Digital Twin ergänzt
 
-- [ ] das Ist-Modell reproduziert qualitativ eine bekannte schlechte Woche  
-- [ ] Bottleneck-Ranking passt im Basisfall zur Shopfloor-Intuition  
-- [ ] eine Aenderung einer Kernannahme verschiebt Ergebnisse in eine erklaerbare Richtung  
-- [ ] zwei unabhaengige Reviewer koennen Inputs zu Quellen oder Annahmen zurueckverfolgen  
-- [ ] der Entscheidungssatz bleibt nach dem ersten Modeling-Sprint unveraendert
+DBR77 Digital Twin hält frühe Modelle ehrlich: Der Pfad von manuell zu Integration bleibt diszipliniert, Pre-Feed-Vergleiche bleiben verteidigbar, und Teams können Wert nachweisen, bevor sie sich voller Live-Komplexität aussetzen.
 
-Wenn das Modell den Bad-Week-Test nicht besteht, Inputs fixieren, bevor Sie Szenarien debattieren.
+## Kurz gesagt
 
-## Was Live-Integration hinzufuegt (und was nicht)
-
-Live-Integration fuegt hinzu: schnellere Aktualisierung; weniger manuelle Transkription; engere Ausrichtung auf kurzfristigen Betrieb.
-
-Sie fuegt nicht hinzu: automatische Klarheit, welche Entscheidung getestet wird; Schutz vor Modellierung des falschen Umfangs; Executive-Alignment ohne explizite Annahmen.
-
-## Was Digital Twin hier bedeutet
-
-Digital Twin ist ein Entscheidungssystem und Szenario-Testumfeld. Es ist kein 3D-Showcase.
-
-Gute Inputs machen es zu einer verlaesslichen Vergleichsmaschine, bevor Streams angebunden sind.
-
-## Was DBR77 Digital Twin hinzufuegt
-
-DBR77 Digital Twin unterstuetzt einen praktischen Pfad von manuellen Inputs zu reicherer Integration.
-
-Der Pfad ist so gedacht, dass Teams Wert nachweisen, bevor sie volle Live-Komplexitaet festzurren.
-
-## Fazit
-
-Ein guter Simulations-Input-Satz vor Live-Integration ist begrenzt, zeitrelevant, variability-bewusst und annahmen-nachvollziehbar.
-
-Wenn Sie Kernannahmen nicht benennen koennen, haben Sie kein Modellproblem. Sie haben ein Governance-Problem mit technischer Maske.
+Ein gutes Simulations-Input-Set vor Live-Integration ist begrenzt, zeitgenau, variabilitätsbewusst und nachvollziehbar in den Annahmen. Wenn Sie Ihre Kernannahmen nicht benennen können, haben Sie kein Modellproblem – Sie haben ein Governance-Problem in technischer Maske.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Demo buchen](https://dbr77.com/digital-twin) oder [Digital Twin erkunden](https://dbr77.com/demo).*
+*DBR77 Digital Twin ist darauf ausgelegt, mit disziplinierten manuellen Inputs zu starten und ohne Blockade früher Szenario-Werte in tiefere Integration zu wachsen. [Demo buchen](https://dbr77.com/digital-twin) oder [Digital Twin erkunden](https://dbr77.com/demo).*

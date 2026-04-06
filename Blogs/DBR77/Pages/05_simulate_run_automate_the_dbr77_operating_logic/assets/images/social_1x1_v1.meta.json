@@ -1,0 +1,30 @@
+{
+  "article_path": "Blogs/DBR77/Pages/05_simulate_run_automate_the_dbr77_operating_logic",
+  "product": "DBR77",
+  "scope_type": "page",
+  "asset_slug": "05_simulate_run_automate_the_dbr77_operating_logic",
+  "role": "social",
+  "aspect_ratio": "1:1",
+  "usage": [
+    "website",
+    "social",
+    "newsletter"
+  ],
+  "model": "cursor:composer-generate-image",
+  "model_params": {
+    "provider": "cursor:composer-generate-image",
+    "seed": "n/a",
+    "steps": "n/a"
+  },
+  "generation_notes": "Agent2 multi-product batch; GenerateImage; retries on timeout with shorter prompts where needed.",
+  "prompt_source": "Blogs/DBR77/Pages/05_simulate_run_automate_the_dbr77_operating_logic/image-prompts.md",
+  "prompt_text": "Three steel dowels traveling puck macro—sequence without text.",
+  "negative_prompt": "readable text, logos, legible UI, sci-fi HUD, stock governance theatre, infographic labels",
+  "seed": "n/a",
+  "run_id": "DBR77-agent2-batch-32",
+  "created_at": "2026-03-31T12:00:00+00:00",
+  "alt_text_en": "Three steel dowels traveling puck macro—sequence without text.",
+  "caption_en": "Three steel dowels traveling puck macro—sequence without text.",
+  "crop_safe_notes": "768×768 center crop from generator master (offset x=304,y=0).",
+  "output_path": "Blogs/DBR77/Pages/05_simulate_run_automate_the_dbr77_operating_logic/assets/images/social_1x1_v1.png"
+}

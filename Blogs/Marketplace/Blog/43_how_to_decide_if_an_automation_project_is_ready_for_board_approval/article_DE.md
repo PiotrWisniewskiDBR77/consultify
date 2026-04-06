@@ -1,57 +1,54 @@
-# Wie Sie entscheiden, ob ein Automatisierungsprojekt bereit fuer den Board-Freigabe ist
+# Wie Sie entscheiden, ob ein Automatisierungsprojekt bereit für die Board-Freigabe ist
 
-Target persona: Werksleiter / CFO-Sponsor mit Board-Exposure  
-Funnel stage: Consideration (Kapital-Gate vor Commitment)  
-Core problem: Teams beantragen Kapital beim Board, waehrend Vergleichbarkeit, Ownership und Akzeptanzlogik noch implizit sind  
-Main promise: ein Readiness-Gate, das Sie in einer fuenfzehnminuetigen Board-Unterhaltung verteidigen koennen, ohne offene Risiken zu verstecken
+Zielpersona: Werksleiter / CFO-Sponsor mit Board-Exposure  
+Funnel-Stufe: Überlegung (Kapital-Gate vor Verpflichtung)  
+Kernproblem: Teams bitten um Geld, während Vergleichbarkeit, Ownership und Abnahmelogik noch implizit sind  
+Hauptversprechen: ein Readiness-Gate, das Sie in einer fünfzehnminütigen Board-Unterhaltung verteidigen können — ohne offene Risiken zu verstecken
 
-Board-Freigabe ist kein Stimmungsbild.
+Board-Zeit ist knapp. Schwache Packs recyceln Lieferantenfolien, vergraben Award-Logik und behandeln Abnahme wie einen späteren Streit. Eine board-reife Entscheidung ist eine, die Sie als kohärente Story erklären können: was Sie kaufen, warum dieser Pfad, was es in Cash und Zeit kostet, was für Erfolg wahr sein muss, welche Risiken offen bleiben und wer sie besitzt.
 
-Es ist eine Verlagerung der Verantwortung vom Projektteam auf die Unternehmensbilanz.
+Readiness bedeutet, dass diese Elemente explizit sind — nicht implizit, nicht verschoben auf „das Projektteam regelt das“.
 
-Wenn das Paket Begeisterung mit fehlender Vergleichbarkeit mischt, wird Theater finanziert.
+## Das Gespräch, das Sie führen können sollten
 
-Ein Automatisierungsprojekt ist bereit fuer Board-Freigabe, wenn Sie in einem Paket zeigen koennen: abgestimmte interne Scope-Baseline, mindestens zwei vergleichbare Bewertungspfade oder eine dokumentierte Ausnahme, benannte Akzeptanzobjekte auf Owner-Seite, einen Zeitplan mit werksseitigen Abhaengigkeiten, explizites Risiko-Ownership bis Go-Live und einen Kapitalantrag, der an Meilensteine gebunden ist, nicht nur an Lieferantenrechnungen.
+In klarer Sprache sollten Sie beantworten: welches operative Ergebnis anvisiert ist; wie Scope-Grenzen und Ausschlüsse lauten; welche Annahmen Returns tragen; wie Angebote verglichen wurden; warum dieser Lieferant und dieses Modell; was Abnahme beweist; was das Werk liefern muss; und was passiert, wenn Zeitplan oder Scope sich bewegen. Wenn eine Antwort einen Sidebar braucht, sind Sie nicht bereit für den Raum, den Sie gebucht haben.
 
-Wenn eines davon fehlt, beantragen Sie einen Blankocheck im Projektgewand.
+## Vergleichbarkeit ist ein Governance-Thema
 
-## Readiness-Checkliste (Minimum)
+Ausschüsse sollten sehen, dass die Auswahl auf strukturierten Kriterien ruhte — nicht auf der letzten Demo. Award-Logik gehört ins Pack, nicht nur ins Einkaufsgedächtnis.
 
-| Gate | was "bereit" bedeutet |
-| --- | --- |
-| Scope | Inklusiven und Exklusiven sind geschrieben und intern freigegeben |
-| Vergleichbarkeit | Angebote oder Szenarien sind auf dieselben Akzeptanzobjekte normalisiert |
-| Ownership | Operations, Instandhaltung, IT, Qualitaet und HSE haben benannte Freigeber |
-| Commercial | TCO-Logik ist sichtbar, nicht nur CapEx-Positionen |
-| Risiko | Top-5-Risiken haben Mitigationen und werksseitige Owner |
-| Zeitplan | Validierungsfenster stehen im Werkkalender |
+## Risiken benannt mit Ownern
 
-## Wann pausieren statt einreichen
+Offene Risiken sind in Ordnung, wenn sie Mitigation und Rechenschaft haben. Versteckte Risiken werden zu Überraschungen, die wie Managementversagen wirken.
 
-Pausieren Sie die Board-Einreichung, wenn: der bevorzugte Lieferant den Scope nach Shortlist ohne frischen Vergleichsrecord geaendert hat; Akzeptanzkriterien nur in der Lieferantenvorlage existieren; ein ehrlicher interner Alignment-Check heute scheitern wuerde.
+## Wirtschaftsstory jenseits von ROI
 
-Pausieren ist guenstiger als ein Board-Comeback nach fehlgeschlagenem FAT.
+Cash-Timing, operative Effekte und Sensitivität zu Durchsatz oder Mix gehören ins Bild. Ein einzelner Index reicht für fiduziarisches Urteil nicht.
 
-## Reality check: Board-Pakete wirken oft staerker, als sie wirklich sind, weil Senior-Leute sie verbal retten koennen
+## Wie DBR77 Marketplace das Pack unterstützt
 
-Genau das ist die Gefahr. Der Sponsor kennt das Projekt. Der Werksleiter kann die Nuance erklaeren. Der CFO kann ein fehlendes Detail glaetten. Aber wenn das Paket verbale Rettung braucht, um Vergleichbarkeit, Ownership oder Akzeptanzlogik verstaendlich zu machen, bittet das Projekt das Board, Vertrauen zu genehmigen, nicht Readiness.
+Strukturierte Bewertung weiter upstream macht Board-Materialien rückverfolgbar zu denselben Abnahmeobjekten und derselben Vergleichsdisziplin, die Führung erwartet — statt die Story aus PDFs neu zu bauen.
 
-## Begrenztes Protokoll: fuenfzehnminuetige Board-Story
+Für die engsten Begleitartikel siehe [Was ein Gremium-taugliches Automatisierungs-Entscheidungspaket enthalten sollte](../44_what_a_board_ready_automation_decision_packet_should_include/article_DE.md), [Was ein guter interner Business Case für Automatisierung sichtbar machen sollte](../39_what_a_good_internal_business_case_for_automation_should_make_visible/article_DE.md) und [So führen Sie das finale interne Alignment-Review vor dem Automatisierungs-Kickoff durch](../42_how_to_run_a_final_internal_alignment_review_before_automation_kickoff/article_DE.md).
 
-Problem und operatives Boundary in zwei Saetzen; Was verglichen wurde und wie Angebote vergleichbar gemacht wurden; Was gekauft wird: Akzeptanzobjekte in klarer Sprache; Was das Werk liefern muss: Schnittstellen, Stillstand, Training, Ersatzteile; Kapitalanfrage gemappt auf Meilensteine und Go-Live-Readiness; Top-3-Risiken und wer die Response besitzt. Wenn Schritt zwei vage ist, sind Sie nicht bereit.
+## Der „Fünfzehn-Minuten-Test“
 
-## Was das fuer DBR77 Marketplace bedeutet
+Stellen Sie sich fünfzehn Minuten und keine Folien vor. Können Sie die Entscheidung so erklären, dass ein aufmerksamer Außenstehender folgen kann: Problem, erwogene Optionen, warum dieser Pfad, was es kostet, was gutgehen muss, was Sie nach Cutover zuerst beobachten? Wenn Sie für Basfragen einen privaten Anhang brauchen, sind Sie nicht bereit für den Raum, den Sie gebucht haben.
 
-DBR77 Marketplace ist ein Workflow fuer Automatisierungsentscheidungen, eine Vertrauensschicht fuer Integratorenauswahl und ein System zum Angebotsvergleich, damit Sourcing-Chaos den Sitzungssaal nicht erreicht.
+Board-Readiness ist auch emotionale Readiness: Sponsoren sollten wissen, wo sie irren dürfen und welches frühe Signal eine Kurskorrektur ohne Panik auslösen würde.
 
-Board-Readiness ist der interne Spiegel: Nachweis, dass Vergleichbarkeit und Award-Logik vor Kapitalanfragen diszipliniert waren. Marketplace ist kein Roboterkatalog.
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Es ist ein herstellerzentriertes System fuer strukturierte Bewertung, das boardfaehige Unterlagen erzeugt.
+Es geht darum, diesen Teil der Einkaufsreise zu schärfen — in der Praxis „Wie Sie entscheiden, ob ein Automatisierungsprojekt bereit für die Board-Freigabe ist“ — damit Ausführung vorhersehbar wird. In Industriewerken bleibt Mehrdeutigkeit nicht abstrakt: Sie wird zu Warten, Nacharbeit, stillen Workarounds und Diskussionen neben Anlagen, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Abnahme an Nachweise binden und Verantwortung sichtbar halten, reagieren Lieferanten mit weniger Überraschungen und interne Funktionen verbringen weniger Zeit damit, widersprüchliche Stories zu versöhnen.
 
-## Bottom line
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Shopfloor-Realität passen: absorbierte Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die zu Improvisation um halb definierte Schnittstellen gezogen wird. Starke Einkaufsdisziplin ist deshalb eine Produktionsinvestition — weniger Drama während der Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel das Dokument bremsen, bis es zur Linie passt; ein nicht passendes Dokument zu beschleunigen verschiebt nur den Schmerz nach unten.
 
-Board-Freigabe sollte langweilig wirken, weil die Arbeit schon sichtbar ist. Wenn das Paket verbal gerettet werden muss, zurueck ans Team.
+Wenn Sie eine Gewohnheit mitnehmen, dann diese: Behandeln Sie jedes wichtige Einkaufsergebnis so, als könnten Operations und Instandhaltung es prüfen. Wenn sie es nicht auf ein Verhalten auf dem Shopfloor zurückführen können, schärfen Sie die Sprache, bis es geht. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
+
+## Fazit
+
+Board-Readiness ist narrative Klarheit plus prüfbare Logik. Wenn Sie Vergleichbarkeit, Abnahme und Ownership in einem kurzen, direkten Gespräch nicht verteidigen können, verschieben Sie den Antrag, bis Sie es können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace strukturiert Bewertung und Vergleichbarkeit upstream, sodass Board-Packs auf denselben Abnahmeobjekten und derselben Vergleichsdisziplin ruhen, die Führung erwartet. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

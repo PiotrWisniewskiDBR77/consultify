@@ -1,91 +1,56 @@
-# Co FAT i SAT powinny naprawde udowodnic przed startem produkcyjnym
+# Co FAT i SAT powinny naprawdę udowodnić przed startem produkcyjnym
 
-Target persona: menedzer jakosci / inzynierii (wlasciciel po stronie producenta)  
-Funnel stage: Decision do przekazania dostawy (zapewnienie przed go-live)  
-Core problem: FAT i SAT wplywaja w ceremonialne przejscia, ktore podpisuje papier, ale nie redukuja ryzyka operacyjnego  
-Main promise: ramy akceptacji nastawione na producenta, ktore wiaza dowody z tym, co musi byc prawda w pierwszym prawdziwym tygodniu produkcji
+Docelowa persona: Kierownik jakości / Kierownik inżynierii (właściciel po stronie producenta)  
+Etap lejka: Przekazanie od decyzji do realizacji (zapewnienie przed startem produkcyjnym)  
+Główny problem: FAT i SAT dryfują w ceremonie, które podpisują papier, ale nie redukują ryzyka operacyjnego  
+Główna obietnica: ramy akceptacji nastawione na producenta, które wiążą dowód z tym, co musi być prawdą w pierwszym realnym tygodniu produkcji
 
-FAT i SAT nie sa eventami motywacyjnymi. To kontrole ryzyka.
+Factory Acceptance Testing i Site Acceptance Testing to nie eventy morale. To kontrole. Zawodzą, gdy zespoły traktują je jak demo ze świadkami, okazje do zdjęć lub ćwiczenia z checkboxami oderwane od produkcyjnej rzeczywistości. Działają, gdy odpowiadają na jedno pytanie dowodem: co sprawiłoby, że odmówimy uruchomienia w produkcji i jak to testujemy, zanim zobowiążemy linię?
 
-Zawodza, gdy zespoly traktuja je jak: demo ze swiadkami; okazje do zdjec; checkbox wymagany przez szablon sciagniety w 2014. Dzialaja, gdy odpowiadaja na jedno pytanie:
+FAT powinien pokazać, że zintegrowany system spełnia kryteria akceptacji zdefiniowane w kontrakcie w warunkach kontrolowanych przez dostawcę, ze śledzalnymi zapisami powiązanymi z wymaganiami — nie optymizmem typu „ruszyło się”.
 
-co sprawi, ze odmowimy uruchomienia w produkcji i jak to testujemy zanim oddamy linie?
+SAT powinien pokazać, że te same kryteria trzymają się w waszym zakładzie: realne interfejsy, realne materiały tam, gdzie ma to zastosowanie, realne zabezpieczenia i praktyka lockoutu oraz realny odpowiedzialność operacyjny. Jeśli FAT dowodzi ruchu, a SAT nadziei, kupiliście teatr.
 
-## Bezposrednia odpowiedz
+## Zacznij od obiektów akceptacji, nie od dat ceremonii
 
-FAT powinien udowodnic, ze zintegrowany system spelnia kryteria akceptacji zdefiniowane w kontrakcie w warunkach kontrolowanych przez dostawce, z mozliwym do sledzenia zapisem.
+Zanim zaplanujesz sale i loty, wypisz, co musi być prawdą: funkcje bezpieczeństwa zachowują się jak w specyfikacji; cykl i przepustowość mieszczą się w uzgodnionym paśmie pod zdefiniowanym modelem obciążenia; wyjścia jakościowe spełniają plan próbkowania; obsługa błędów i powrót do ruchu działają przy realistycznych usterkach; dane i wymiana komunikatów z MES realizują uzgodnione przepływy; dokumentacja i szkolenie pozwalają operatorom prowadzić standardową pracę. Czego nie wypiszesz, tego nie przetestujesz — o tym będziecie się spierać później wyższym kosztem.
 
-SAT powinien udowodnic, ze te same kryteria obowiazuja w kontekscie Twojej fabryki, z prawdziwymi interfejsami, prawdziwymi materialami tam gdzie to stosowne i prawdziwa operacyjna odpowiedzialnoscia.
+## Co daje poważny FAT
 
-Jesli FAT udowadnia "ze sie rusza", a SAT "ze mamy nadzieje", kupiles teatr.
+Powinieneś wyjść z FAT ze śledzialnymi zapisami testów zmapowanymi na ID wymagań, listą otwartych punktów z właścicielami i datami przed wysyłką, jawnymi notatkami, co było symulowane, a co wykonane realnie, oraz zamrożonymi identyfikatorami buildów oprogramowania i firmware. Słabe FAT-y handlują subiektywnym „wygląda dobrze”, ruchomymi celami („dostroimy na miejscu”) i cichymi podmianami w oprzyrządowaniu, częściach lub buildach. Producenci powinni odmawiać tej niejasności.
 
-## Zdefiniuj obiekty akceptacji zanim zaplanujesz daty
+## Co daje poważny SAT
 
-Zacznij od obiektow, nie od ceremonii. Minimalne obiekty akceptacji (dostosuj do kategorii):
+SAT potwierdza założenia specyficzne dla zakładu, zamyka luki z ograniczonym oknem stabilizacji i mierzalnymi kryteriami wyjścia oraz produkuje przekazanie, które mówi, co jest wspierane pierwszego dnia, a co jest usprawnieniem późniejszej fazy. Słabe SAT-y podpisują akceptację, gdy blokady są „tymczasowo” ominięte, optymalizacja jest w nieskończoność odkładana lub szkolenie poświęcone presji produkcyjnej.
 
-| Obiekt | intencja FAT | intencja SAT |
-| --- | --- | --- |
-| funkcje bezpieczenstwa | zachowanie zweryfikowane u dostawcy | zachowanie z realnym ogrodzeniem i LOTO w zakladzie |
-| cykl i pasmo przepustowosci | pokazane przy uzgodnionym modelu obciazenia | pokazane przy ograniczeniach zasilania w zakladzie |
-| wyniki jakosci | zmierzone wg uzgodnionego planu probkowania | zmierzone wg metrologii i norm zakladu |
-| obsluga bledow i powrot | scenariusze usterek przechodza | realistyczne dla operatora usterki przechodza |
-| dane i polaczenie MES | interfejsy przechodza uzgodnione komunikaty | interfejsy przechodza w sieci zakladu |
-| dokumentacja i szkolenie | kompletnosc pakietu O&M | operatorzy wykonuja standard pracy |
+## Rzeczywistość po stronie zakładu: „małe luki” nie są małe
 
-Jesli obiektu nie ma na liscie, nie zostanie przetestowany. Zostanie spierany pozniej za wyzszy koszt.
+Pod zmęczeniem i presją harmonogramu nierozwiązane kwestie dostają etykietę szumu rozruchowego. Jeśli luka dotyka bezpieczeństwa, odpowiedzialności, powtarzalności lub zachowania przy powrocie do ruchu, to nie szum — to niezamknięte ryzyko czekające na pierwszy realny tydzień produkcji.
 
-## FAT: co powinno znaczyc "pass"
+## Bramka trzech pytań (użyj przy FAT i SAT)
 
-Uzyteczny FAT daje: liste punch z wlascicielami i terminami przed wysylka; mozliwe do sledzenia zapisy testow powiazane z ID wymagan; jawne wykluczenia (co bylo symulowane versus co bylo realne).
+Zanim podpiszesz krok akceptacji, zapytaj: czy spełnia pisane kryteria uzgodnionym dowodem; czy znane luki są udokumentowane z właścicielami, datami i jawną akceptacją ryzyka tam, gdzie wymagane; czy operacje mogą wykonać standardową pracę bez bohaterskiej interwencji? Jeśli trzecia odpowiedź brzmi nie, go-live to zakład, nie decyzja.
 
-Slaby FAT daje: subiektywne opinie ("wyglada dobrze"); ruchome cele ("dostrajamy na miejscu"); ukryte podmiany (inne narzedzie, inny SKU, inna wersja oprogramowania).
+## Kiedy zawieś
 
-Producenci powinni nalegac na zamrozone identyfikatory buildu oprogramowania i firmware przy FAT.
+Zawieś, gdy zmiany zakresu przychodzą jako luźne poprawki bez kontroli zmian, materiały testowe są niereprezentatywne i niedokumentowane, obsada w zakładzie nie odpowiada planowi testów lub wewnętrzni właściciele (utrzymanie, IT, jakość) są nieobecni, więc wady nie mają domu. Zawieszenie jest tańsze niż przeróbka na działającej linii.
 
-## SAT: co powinno znaczyc "pass"
+## Jak wiąże się DBR77 Marketplace
 
-Uzyteczny SAT daje: potwierdzenie, ze zalozenia specyficzne dla zakladu sie sprawdzily; ograniczone okno stabilizacji z mierzalnymi kryteriami wyjscia; podpisane przekazanie, co jest wspierane od dnia pierwszego versus co jest usprawnieniem fazy dwa.
+Dyscyplina akceptacji powinna śledzić to, co porównano, skontraktowano i obiecano przed wyborem dostawcy. To utrzymuje FAT i SAT przy logice zakupów zamiast unosić je jako oderwane rytuały.
 
-Slaby SAT daje: "zoptymalizujemy po starcie"; akceptacja podpisana przy obejsciach blokad "tymczasowo"; szkolenia odlozone, bo presja produkcji wygrywa.
+Ciągłość między kontraktem a przekazaniem realizacji: [Co sprawdzić przed podpisaniem kontraktu automatyzacyjnego](../20_what_to_check_before_signing_an_automation_contract/article_PL.md) oraz [Jak powinno wyglądać czyste przekazanie od wyboru do realizacji](../30_what_a_clean_handoff_from_selection_to_delivery_should_look_like/article_PL.md).
 
-## Reality check: akceptacja zwykle psuje sie tam, gdzie zaklad traktuje nierozwiazane kwestie jak mozliwy do opanowania szum rozruchowy
+## Akceptacja jako kontrakt z halą
 
-Wlasnie dlatego slabe SAT-y moga nadal wydawac sie operacyjnie normalne. Ludzie sa zmeczeni. Linia jest prawie gotowa. Brakujacy element brzmi jak drobiazg. Ale jesli znana luka dotyczy bezpieczenstwa, wlascicielstwa, powtarzalnosci albo zachowania przy odzysku, to nie jest szum rozruchowy.
+FAT i SAT to miejsce, w którym abstrakcyjny zakres staje się żytą rzeczywistością. Operatorzy powinni rozpoznawać testy jako swój świat: realne zabezpieczenia, realne materiały tam, gdzie ma to zastosowanie, realne scenariusze powrotu, realne ścieżki danych. Jeśli testy są „wystarczająco blisko”, nie walidujecie produkcji — walidujecie opowieść. Ta różnica pokazuje się przy pierwszym uruchomieniu pod presją klienta.
 
-To niezamkniete ryzyko czekajace na pierwszy prawdziwy tydzien produkcji.
-
-## Prosta brama pass lub fail (trzy pytania)
-
-Uzyj tych samych trzech pytan przy FAT i SAT:
-
-1. czy spelnia zapisane kryteria akceptacji z uzgodnionym dowodem?
-2. czy znane luki sa udokumentowane z wlascicielami, datami i akceptacja ryzyka tam gdzie wymagane?
-3. czy operacje moga prowadzic standard pracy bez heroicznej interwencji?
-
-Jesli pytanie trzecie brzmi "nie", go-live to zaklad, nie decyzja.
-
-## Kiedy wstrzymac FAT lub SAT
-
-Wstrzymaj, gdy: zmiany zakresu przychodza jako "male poprawki" bez kontroli zmian; materialy testowe nie sa reprezentatywne i nikt nie dokumentuje podmiany; obsada integratora na miejscu nie zgadza sie z planem i pomijane sa krytyczne testy; brakuje wlascicieli wewnetrznych (utrzymanie, IT, jakosc) a defekty zostana osierocone. Wstrzymanie to nie dramat. To taniej niz przerobki na zywej linii.
-
-## Co to znaczy dla DBR77 Marketplace
-
-DBR77 Marketplace ma sprawic, ze zakupy automatyzacji sa mozliwe do inspekcji: jasniejsze oferty, jasniejsze porownanie, jasniejsza odpowiedzialnosc.
-
-Dyscyplina akceptacji to moment, w ktorym jasne oferty staja sie jasna rzeczywistoscia.
-
-Gdy modele komercyjne i zakres sa wczesnie porownywalne, kryteria akceptacji trudniej ukryc w przypisach. Marketplace to nie katalog robotow.
-
-To workflow i warstwa zaufania, ktora wspiera decyzje producenta przez wybor, porownanie i rzeczywistosc dostawy.
+Dobra dyscyplina akceptacji chroni też dostawców, którzy wykonali robotę poprawnie. Gdy kryteria są jawne, silni wykonawcy mogą udowodnić domknięcie bez wiecznych bitów o opinię. Słabe kryteria karzą wszystkich, zamieniając domknięcie w negocjację.
 
 ## Podsumowanie
 
-FAT udowadnia zintegrowany system wzgledem kryteriow kontraktu z mozliwym do sledzenia zapisem.
-
-SAT udowadnia te same kryteria w kontekscie Twojej fabryki z operacyjnym wlascicielem.
-
-Jesli akceptacja jest definiowana pozno, zaplacisz za niejasnosc w pierwszym tygodniu produkcji.
+FAT dowodzi zintegrowanej wydajności wobec kryteriów kontraktu z zapisami. SAT dowodzi tego samego w waszym kontekście z operacyjnym odpowiedzialnością. Zdefiniuj akceptację wcześnie — albo zapłać za niejasność w pierwszym realnym tygodniu produkcji.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*
+*DBR77 Marketplace pomaga producentom utrzymać zakres, interfejsy i odpowiedzialność widoczne wcześnie, by kryteria akceptacji trudniej było odkładać na tydzień go-live. [Opisz swoje wyzwanie](https://dbr77.com/marketplace) lub [Porównaj oferty](https://dbr77.com/demo).*

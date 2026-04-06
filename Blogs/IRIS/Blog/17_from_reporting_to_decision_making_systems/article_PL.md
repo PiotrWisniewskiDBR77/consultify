@@ -1,74 +1,36 @@
-# Od raportowania do systemow decision-making
+# Od raportowania do systemów decyzyjnych
 
-Target persona: COO / Plant Director  
-Funnel stage: Decision  
-Core problem: wiele fabryk ma warstwy raportowe, ale nadal nie potrafi reagowac z odpowiednia szybkoscia i dyscyplina, bo raporty opisuja przeszlosc zamiast prowadzic kolejny ruch  
-Main promise: nowoczesne zaklady potrzebuja systemow, ktore robia wiecej niz raportowanie; potrzebuja systemow, ktore interpretuja rzeczywistosc, routuja ownership i pomagaja zamieniac decyzje w execution
+Docelowa persona: COO / dyrektor zakładu  
+Etap lejka: Decision  
+Główny problem: wiele fabryk ma warstwy raportowania, ale wciąż nie potrafi odpowiadać z wystarczającą szybkością i dyscypliną, bo raporty opisują przeszłość bez napędzania następnego ruchu  
+Główna obietnica: nowoczesne zakłady potrzebują systemów, które robią więcej niż raportują; potrzebują systemów, które interpretują rzeczywistość, kierują odpowiedzialność i pomagają decyzjom przejść w wykonanie
 
-Raportowanie ma znaczenie. Po prostu nie prowadzi fabryki.
+Raportowanie ma znaczenie. To też nie to samo co prowadzenie fabryki. Wiele zakładów spędziło lata na usprawnianiu dashboardów, metryk i widoczności — i wciąż zmaga się z wolną reakcją, niejasną odpowiedzialność, powtarzającą się eskalacją i słabym domykanie działań. Sygnał jest często widoczny. Następny ruch — nie. Ta luka to nie porażka wykresów. To porażka struktury operacyjnej.
 
-Wiele zakladow spedzilo lata na ulepszaniu dashboardow, metryk i visibility. A mimo to nadal zmaga sie z: wolna reakcja; niejasnym ownership; powtarzalna eskalacja; slabym follow-through.
+Raporty opisują. Systemy decyzyjne kierują. Raport może pokazać, co się stało, co się zmieniło i gdzie wydajność dryfuje. Zakład wciąż potrzebuje systemu, który pomaga odpowiedzieć, co to teraz znaczy, kto powinien działać, co powinno się wydarzyć dalej i czy odpowiedź zadziałała. To różnica między widzeniem a sterowaniem. To też różnica między zakładem, który wyjaśnia straty, a zakładem, który je redukuje.
 
-Dzieje sie tak dlatego, ze raportowanie i decision-making to nie to samo. Sygnal moze byc widoczny. Kolejny ruch bardzo czesto nie jest.
+Widoczność może dawać fałszywe poczucie postępu. Więcej dashboardów może oznaczać jaśniejszy obraz tego, jak mało kontroli zakład faktycznie ma — zwłaszcza gdy działanie wciąż zależy od ręcznej koordynacji poza systemem. W tym świecie widoczność staje się lustrem fragmentacji: wszystko widać, mało da się niezawodnie wykonać.
 
-## Raporty opisuja. Systemy decyzyjne kieruja.
+Podejmowanie decyzji wymaga kontekstu, odpowiedzialność i timingu. Mocniejszy system operacyjny nie kończy się na metrykach. Dodaje kontekst biznesowy, logikę priorytetów, przypisaną odpowiedzialność, tasking i uzupełnienie po spotkaniu — tak by organizacja mogła przejść od obserwacji do działania w tempie zmiany. Jeśli supervisor musi zadzwonić do trzech osób, by zinterpretować odchylenie, fabryka jeszcze nie działa przez system decyzyjny. Działa przez osobistą przepustowość.
 
-Raport moze pokazac: co sie stalo; co sie zmienilo; gdzie performance sie rozjezdza. To jest uzyteczne. Ale zaklad nadal potrzebuje systemu, ktory pomoze odpowiedziec: co to znaczy?; kto powinien dzialac?; co powinno wydarzyc sie dalej?; czy reakcja zadzialala?. To jest roznica miedzy widzeniem a sterowaniem.
+Fabryki utykają w trybie raportowania częściowo dlatego, że raporty łatwiej kupić i wdrożyć niż prawdziwą logikę wykonania. Prościej pokazać problem niż przeprojektować model odpowiedzi za nim. Ta prostota robi się droga: wolniejsze przekazania, powracające pętle koordynacji i ten sam operacyjny spór powtarzany przez zmiany.
 
-## Dlaczego sama visibility tworzy falszywe poczucie postepu
+Następny krok po raportowaniu to nie więcej raportowania. To system, który potrafi połączyć żywy sygnał, interpretację, rekomendację, akceptację, działanie i domknięcie. To skok, którego wiele zakładów nie zrobiło — i który oddziela dojrzałość cyfrową od cyfrowej dekoracji.
 
-Fabryki czesto zakladaja, ze wiecej dashboardow oznacza lepsza kontrole.
+Raporty same z siebie nie niosą odpowiedzialność. Dashboard może sprawić, że fabryka wygląda na poinformowaną, podczas gdy prawdziwa reakcja wciąż dzieje się przez telefony, wątki czatu, arkusze i wyjaśnienia na koniec zmiany. Gdy tak jest, warstwa raportowania opisuje pracę, która wciąż jest koordynowana ręcznie.
 
-Czasem oznacza to tylko lepsza swiadomosc tego, jak malo kontroli zaklad naprawde ma.
+Systemy decyzyjne zmieniają rytm operacyjny. Następny ruch staje się jaśniejszy. Odpowiedź międzyfunkcyjna przyspiesza. Eskalacja staje się bardziej zdyscyplinowana. Kierownictwo dostaje więcej niż wyjaśnienie post factum. Dojrzałość operacyjna zaczyna się mnożyć, bo zakład może zarządzać pracą jako pracą — nie jako sekwencją prezentacji.
 
-Jesli dzialanie nadal zalezy od recznej koordynacji poza systemem, sama visibility nie wystarcza.
+IRIS jest pozycjonowany jako coś więcej niż dashboard czy warstwa raportowania. Jest zbudowany jako ujednolicone środowisko wykonania, w którym żywa operacyjna prawda może wywołać kontekst, rekomendację, akceptację ludzką, tasking i domykanie działań. To przesunięcie od raportowania do decyzji w formie, którą hala rozpozna.
 
-## Decision-making potrzebuje kontekstu, ownership i timingu
+Fabryki nie stają się lepiej prowadzone dlatego, że lepiej raportują. Stają się lepiej prowadzone, gdy system pomaga ludziom decydować i działać lepiej w czasie rzeczywistym. To prawdziwy ruch — i to standard, któremu samo raportowanie nie podoła.
 
-Silniejszy system operacyjny nie zatrzymuje sie na metrykach.
+## Podsumowanie operacyjne
 
-Dodaje: biznesowy kontekst; logike priorytetu; routed ownership; tasking i follow-through. To wlasnie pozwala zakladowi przejsc od obserwacji do dzialania. To ma znaczenie takze w tempie zmiany.
+Obietnica tego artykułu — że nowoczesne zakłady potrzebują systemów, które robią więcej niż raportują; potrzebują systemów interpretujących rzeczywistość, przypisujących odpowiedzialność i pomagających decyzjom przejść w wykonanie — staje się operacyjna dopiero wtedy, gdy zmienia się sposób przepływu pracy: wyraźniejsze przypisanie odpowiedzialności, szybsze pierwsze przydzielenie i domknięcie możliwe do prześledzenia bez archeologii skrzynek. Dla „Od raportowania do systemów decyzyjnych” traktuj to jako test akceptacji: następna zmiana powinna móc odczytać, co się stało, co zostało zatwierdzone i co pozostaje otwarte — bez polegania na werbalnej rekonstrukcji.
 
-Jesli supervisor nadal musi zadzwonic do trzech osob, by zrozumiec co oznacza odchylenie, fabryka wciaz nie pracuje przez system decyzyjny.
-
-## Dlaczego fabryki tkwia w trybie raportowania
-
-Tkwia tam, bo raporty latwiej kupic i latwiej wdrozyc niz prawdziwa logike execution.
-
-Latwiej pokazac problem niz przeprojektowac model reakcji, ktory stoi za problemem. Ale ta prostota z czasem robi sie kosztowna.
-
-Widac to w wolniejszych handoverach, powracajacych petlach koordynacyjnych i w tych samych operacyjnych sporach powtarzanych miedzy zmianami.
-
-## Kolejnym krokiem po raportowaniu nie jest wiecej raportowania
-
-Jest nim system, ktory potrafi polaczyc: live signal; interpretacje; rekomendacje; approval; action; closure. To jest operacyjny skok, ktorego wiele zakladow jeszcze nie wykonalo.
-
-## Reality check: raport sam z siebie nie niesie ownership
-
-To wlasnie tutaj wiele zakladow przecenia swoja dojrzalosc.
-
-Dashboard moze sprawiac, ze fabryka wyglada na poinformowana, podczas gdy prawdziwa reakcja nadal dzieje sie przez telefony, wiadomosci, arkusze i wyjasnienia na koncu zmiany.
-
-Gdy tak jest, warstwa raportowa jedynie opisuje prace, ktora nadal koordynowana jest recznie.
-
-## Co zmieniaja systemy decision-making
-
-Gdy zaklad pracuje przez system decyzyjny zamiast tylko przez warstwe raportowa: kolejny ruch staje sie jasniejszy; reakcja miedzy funkcjami przyspiesza; eskalacja staje sie bardziej zdyscyplinowana; leadership dostaje cos wiecej niz wyjasnienie po fakcie. To tutaj zaczyna kumulowac sie dojrzalosc operacyjna.
-
-## Dlaczego IRIS jest tu istotny
-
-DBR77 IRIS jest pozycjonowany jako cos wiecej niz dashboard albo warstwa raportowa.
-
-Jest budowany jako unified execution environment, w ktorym live operational truth moze uruchamiac kontekst, rekomendacje, human approval, tasking i follow-through.
-
-Dlatego pasuje do przejscia od raportowania do systemow decision-making.
-
-## Wniosek
-
-Fabryki nie sa lepiej zarzadzane tylko dlatego, ze lepiej raportuja.
-
-Sa lepiej zarzadzane wtedy, gdy system pomaga ludziom lepiej decydowac i dzialac w czasie rzeczywistym. To jest prawdziwy ruch od raportowania do decision-making.
+Trzymaj zespoły przy prostej regule: jeśli usprawnienia nie da się pokazać w eksportach z rekordu wykonania, to jeszcze nie usprawnienie operacyjne — tylko narracyjne. Ta regula utrzymuje programy w rzetelności, gdy demo wygląda dobrze, a przekazania wciąż są kruche.
 
 ---
 
-*Chcesz zobaczyć, jak to działa w praktyce? [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Obejrzyj prezentację](https://dbr77.com/demo).*
+*DBR77 IRIS pomaga fabrykom wyjść poza raportowanie, łącząc żywą prawdę, rekomendację, akceptację ludzką, tasking i śledzone domykanie działań w jednym środowisku wykonania. [Uruchom interaktywne demo](https://dbr77.com/iris) lub [Obejrzyj walkthrough](https://dbr77.com/demo).*

@@ -5,81 +5,55 @@ Funnel stage: Consideration to Decision (commercial comparability)
 Core problem: teams compare headline totals while missing who owns risk, change, downtime, and lifecycle cash flows  
 Main promise: a comparison grid that makes commercial structure as visible as price, without pretending finance replaces engineering truth
 
-The cheapest offer is rarely the cheapest project.
+The cheapest offer is often the one that parked the most risk on your side of the line. Headline totals feel decisive because they fit on a slide. Real economics require you to see payment rhythm, milestone gates, what triggers re-pricing, how warranty and spares are bounded, who pays for integration surprises, and what happens when schedule shifts.
 
-It is often the offer with the most risk parked on your side of the line.
+Compare commercial models with the same seriousness you bring to technical scope.
 
-Automation commercial models differ in: how changes are priced and governed; what is included versus optional; how milestones tie to cash and acceptance; who pays when reality disagrees with the brochure.
+## Separate price from cash behavior
 
-Manufacturers make better decisions when they compare models, not only numbers. Build a commercial comparison grid alongside your technical matrix.
+Ask when cash leaves your business relative to value received. Front-loaded payments with weak gates shift risk to you. Milestones tied to evidence shift risk toward delivery discipline. Two “equal” totals can have opposite cash and control implications.
 
-For each supplier path, make visible: payment milestones tied to acceptance objects; change order rules and rate cards; warranty, spare parts, and service assumptions; performance remedies and their caps; what happens when integration dependencies slip on your side.
+## Map change mechanics before you romanticize the number
 
-Then compare total cost logic under two scenarios: baseline plan and a stressed plan with one scope increase and one schedule slip.
+Automation projects learn as they go. If change rules are vague, normal learning becomes emotional. You want explicit paths: how changes are proposed, priced, approved, and documented—so iteration is boring instead of personal.
 
-If you only compare single-point totals, you are optimizing for presentation, not outcomes.
+## Warranty, spares, and service are part of the model
 
-## Why headline price misleads
+Low price with narrow warranty or long spares lead times can be expensive in operating cash and downtime risk. Make boundaries visible: what starts the clock, what is excluded, how support is accessed after cutover.
 
-Headline price hides: excluded integration tasks that become change orders; assumptions about uptime windows and access; software licensing ramps; training depth that determines support load later.
+## Who owns downtime and integration surprises?
 
-This is illustrative, not universal: two proposals can show the same total while moving tens of percent of risk through different clauses.
+Some models assume your team absorbs interface work, site readiness gaps, or IT security steps. Others roll more inside supplier scope. Until that split is visible, you are not comparing prices—you are comparing different universes of work.
 
-## Commercial model archetypes (use as lenses, not stereotypes)
+## Keep engineering and finance in one conversation
 
-| Model lens | what it tends to optimize | what to verify |
-| --- | --- | --- |
-| fixed scope lump sum | price certainty for defined boundary | boundary definition and exclusion list |
-| phased milestone | cash aligned to delivery reality | milestone tests and punch list discipline |
-| T&M with cap | flexibility early | governance and burn rate controls |
-| performance-linked | outcome incentive | measurable KPIs you can audit |
+Commercial structure must be compatible with technical reality. Finance should not optimize payment in a way that destroys integrator incentives; engineering should not ignore cash timing that breaks covenant or working capital plans. The comparison grid is a shared artifact.
 
-Most real projects blend lenses. Your job is to name the blend and compare blends fairly.
+## How DBR77 Marketplace supports the work
 
-## A practical commercial comparison grid
-
-Freeze these rows for every bidder:
-
-| Row | why it matters |
-| --- | --- |
-| included scope statement ID | prevents silent drift |
-| payment milestones | cash versus risk alignment |
-| acceptance criteria reference | ties money to proof |
-| change order mechanism | prevents informal scope creep pricing |
-| warranty start trigger | avoids arguments after SAT |
-| spare parts package | reduces early-life surprises |
-| training hours and audience | reduces hidden support demand |
-| service response expectations | reduces downtime arguments |
-| IP and license terms | reduces IT and legal rework |
-| exit and transition clause | reduces lock-in risk |
-
-If a row is blank, assume it is not in your favor until proven otherwise.
-
-## Reality check: commercial comparison usually breaks when the buyer accepts one supplier's logic as the default baseline
-
-This happens quietly. One bidder frames milestones more confidently. Another looks simpler because exclusions are shorter. A third appears safer because service language sounds broad.
-
-If the team lets one commercial structure define the comparison logic for everyone else, the matrix is already biased before price is discussed.
-
-## Scenario stress test (two scenarios, same grid)
-
-Run the grid twice: baseline: supplier plan as proposed; stressed: add one realistic scope increase (interface change or throughput tweak) and one four-to-six-week slip driven by plant access constraints. You are not predicting the future.
-
-You are checking whether the commercial model behaves reasonably under mild reality.
-
-## What this means for DBR77 Marketplace
-
-DBR77 Marketplace matters here because commercial comparison becomes credible only when milestone logic, change rules, warranty boundaries, and service assumptions sit in one comparable structure.
-
-That gives economic owners a way to test model behavior before headline price turns into false certainty.
+Commercial comparison becomes credible when milestone logic, change rules, warranty boundaries, and service assumptions sit in one comparable structure—so economic owners can stress-test models before headline price hardens into false certainty.
 
 For the closest companion pieces, see [How to Validate Total Cost of Ownership in Automation Projects](../31_how_to_validate_total_cost_of_ownership_in_automation_projects/article_EN.md), [What a Good Automation Offer Should Make Visible](../17_what_a_good_automation_offer_should_make_visible/article_EN.md), and [What to Check Before Signing an Automation Contract](../20_what_to_check_before_signing_an_automation_contract/article_EN.md).
 
+## Stress-test the model, not only the number
+
+Ask what happens under delay, partial readiness, scope refinement, or performance that lands in a gray band. Commercial models reveal their character under stress: who funds rework, how milestones slip, whether support remains accessible when production is loud. If those answers are fuzzy, you do not yet understand what you are buying.
+
+Bring legal and procurement into the same room as engineering for this conversation. Otherwise you get elegant technical scope paired with brittle commercial mechanics—or the reverse.
+
+
+## From decision to plant behavior
+
+The point of tightening this part of the buying journey—"How to Compare Automation Commercial Models, Not Just Prices" in practice—is to make execution predictable. On industrial sites, ambiguity does not stay abstract: it becomes waiting, rework, quiet workarounds, and arguments beside equipment when the line needed clarity weeks earlier. When teams publish the same facts, tie acceptance to evidence, and keep ownership visible, suppliers respond with fewer surprises and internal functions spend less time reconciling competing stories.
+
+If you take one habit away, make it this: treat every major buying output as something operations and maintenance could audit. If they cannot trace it to a behavior on the floor, tighten the language until they can. That single discipline prevents many failures that look technical in hindsight but were actually decision problems from the start.
+
+Finally, tie this discipline to accountability: name who will verify assumptions on the floor and by which milestone. Myths thrive when nobody owns measurement; they weaken when verification is part of the project plan, not an afterthought.
+
+
 ## Bottom line
 
-Compare commercial models with the same discipline you use for technical scope.
-
-If payment, change, warranty, and integration ownership are vague, the price is not telling you what you think it is telling you.
+If payment, change, warranty, and ownership are vague, the price is not saying what you think it says. Make commercial structure visible alongside engineering scope—then decide.
 
 ---
 

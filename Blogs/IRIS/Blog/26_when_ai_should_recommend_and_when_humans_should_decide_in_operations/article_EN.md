@@ -5,60 +5,32 @@ Funnel stage: Decision
 Core problem: plants either over-trust models or ban AI entirely, because they lack a simple decision-rights map tied to risk, traceability, and accountability  
 Main promise: a clear decision-rights framework using risk class, reversibility, and regulatory exposure, plus how to implement it as approval thresholds in workflows
 
-AI should recommend by default for operational decisions with ambiguous context, cross-functional tradeoffs, or safety and quality exposure. Humans should decide when the action is hard to reverse, triggers regulatory record-keeping, or crosses a pre-agreed risk threshold, even if the model looks confident. This is not about mistrusting AI. It is about matching decision rights to accountability in real plants.
+AI should recommend by default when context is ambiguous, tradeoffs cross functions, or safety and quality exposure is material. Humans should decide when the action is hard to reverse, triggers regulatory record-keeping, or crosses a pre-agreed risk threshold—even if the model looks confident. This is not mistrust of AI. It is matching decision rights to accountability in environments where “move fast and apologize” is not an acceptable operating principle.
 
-## The factory rule: recommendation is the default, not the exception
+In healthy industrial programs, AI behaves like a strong staff function: it prepares options, highlights constraints, and surfaces history. Humans retain authority where the organization carries liability. That division is how adoption survives first contact with audits, customers, and night shift pressure.
 
-In healthy industrial programs, AI behaves like a senior staff function: it prepares options; it highlights constraints; it surfaces history. Humans retain authority where the organization carries liability.
+Risk class is a blunt but useful lens. Low-risk work—noise categorization, draft internal notes—can often be assisted freely. Medium-risk work—suggested priority bands, proposed routing—typically belongs in recommend-and-confirm patterns. High-risk work—releases that change customer-facing quality state, actions that flirt with interlock intent—usually requires explicit human decision-making with evidence. Critical actions—safety overrides, ship-to-customer sign-offs—should remain human-led with formal records, with AI supporting evidence, not owning the stamp.
 
-## A practical risk-class model
+Reversibility sharpens the same picture. Easily reversible moves—reordering non-critical tasks, reassigning work items that do not change protected states—can tolerate faster loops. Slow or costly reversals—scrap disposition, major line speed changes, actions that trigger capital or customer commitments—should tighten human gates even when the model sounds sure.
 
-Assign each decision type a class. Keep it blunt.
+Philosophy becomes operational only when it becomes thresholds. Publish rules operators can recognize: severity scores that force supervisor confirmation, protected fields that require role-based approval, regulated objects that demand auditable human steps. Thresholds should be visible to the floor—not hidden inside model code where nobody can explain a miss under pressure.
 
-| Risk class | Examples | Typical AI role |
-|---|---|---|
-| Low | categorize noise, draft internal notes | assist freely |
-| Medium | suggest priority band, propose routing | recommend, human confirm |
-| High | release quality hold, bypass interlock intent | human decide, AI supports evidence |
-| Critical | safety override, ship-to-customer sign-off | human decide with formal record |
+Mixed models break when AI recommends in one tool, humans decide in another, and the audit trail splits. The decision record should live with the work item, because the work item is what the plant will defend tomorrow.
 
-This is a framework, not a legal document. Your compliance team should still validate.
+Training should include refusal, not only acceptance. Teams should practice accepting a good recommendation quickly, rejecting with a reason code, and escalating when context is missing. Reason codes are how the plant learns without turning overrides into shame—or into invisible rebellion.
 
-## Use reversibility as a second axis
+IRIS matters because recommendation, approval, rejection, and audit trail should live in one governed workflow story. That makes decision rights inspectable at operator depth instead of dissolving into policy text nobody follows when the line is hot.
 
-Even with the same risk class, reversibility matters.
+For agent scope, see [What an AI Agent Can Do in a Factory Today](../22_what_an_ai_agent_can_do_in_a_factory_today/article_EN.md). For leadership trust criteria, see [What Makes Factory AI Trustworthy for Operations Leaders](../29_what_makes_factory_ai_trustworthy_for_operations_leaders/article_EN.md).
 
-**Easily reversible** Change a task order, reassign a non-critical work item, adjust a non-binding draft schedule suggestion.
+The right split is not “AI versus humans.” It is “recommendation versus decision,” mapped to risk, reversibility, and governance. Do that mapping explicitly—or the plant will do it informally in the hallway, where nobody can audit the outcome.
 
-**Slow or costly to reverse** Scrap disposition, customer shipment, major line speed changes, capital-triggering actions. When reversal is costly, tighten human gates.
+## The operational bottom line
 
-## Thresholds turn philosophy into workflow
+The promise of this article—a clear decision-rights framework using risk class, reversibility, and regulatory exposure, plus how to implement it as approval thresholds in workflows—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “When AI Should Recommend and When Humans Should Decide in Operations,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-Make rules operational: any suggestion above a severity score requires supervisor confirmation; any recommendation that changes a protected field requires role-based approval; any action that touches a regulated object requires an auditable human step. Thresholds should be visible to operators, not hidden in model code.
-
-## Handoffs: where mixed models break
-
-Mixed models break when: AI recommends in one tool; humans decide in another; the audit trail is split. The decision record should live with the work item.
-
-## Training note: teach refusal, not only acceptance
-
-Teams should practice: accepting a good recommendation quickly; rejecting a recommendation with a reason code; escalating when context is missing. Reason codes are how the plant learns.
-
-## Why IRIS supports decision-rights discipline
-
-DBR77 IRIS matters here because recommendation, approval, rejection, and audit trail should live in one governed workflow story, not in three disconnected tools.
-
-That makes decision rights inspectable at operator depth instead of turning them into policy text nobody follows under pressure.
-
-If you are deciding agent scope first, see [What an AI Agent Can Do in a Factory Today](../22_what_an_ai_agent_can_do_in_a_factory_today/article_EN.md); if you are testing whether leadership can trust the system, see [What Makes Factory AI Trustworthy for Operations Leaders](../29_what_makes_factory_ai_trustworthy_for_operations_leaders/article_EN.md).
-
-## Final takeaway
-
-The right split is not "AI versus humans."
-
-It is "recommendation versus decision" mapped to risk, reversibility, and governance.
-
-Do that mapping explicitly, or the plant will do it informally in the hallway.
+Hold teams to a simple rule: if an improvement cannot be shown in exports from the execution record, it is not yet an operating improvement—only a narrative improvement. That rule keeps programs honest when demos look good but handovers still feel fragile.
+If the record is thin, fix the record before you expand the ambition.
 
 ---
 

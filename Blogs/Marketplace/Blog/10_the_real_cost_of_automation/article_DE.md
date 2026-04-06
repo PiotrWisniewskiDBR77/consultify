@@ -1,103 +1,56 @@
 # Die wahren Kosten der Automatisierung
 
-Zielpersona: Executive Buyer / Purchasing Director  
-Funnel-Stufe: Consideration  
-Kernproblem: viele Hersteller bewerten Automatisierung nur uber sichtbares Capex und ubersehen die breitere Okonomie von Zeit, Integration und Risiko, die die echten Projektkosten pragt  
-Hauptversprechen: die wahren Kosten der Automatisierung werden klarer, wenn Buyer den Hardwarepreis von der gesamten Projektrealitat trennen und mit den Kosten des manuellen Zustands vergleichen
+Zielpersona: Strategischer Einkäufer / Einkaufsleitung  
+Funnel-Stufe: Überlegungsphase  
+Kernproblem: Viele Hersteller bewerten Automatisierung nur über sichtbares CapEx und verpassen die breitere Ökonomie von Zeit, Integration und Risiko, die die realen Projektkosten prägt  
+Hauptversprechen: Die wahren Kosten der Automatisierung werden klarer, wenn Käufer Hardwarepreis von der vollen Projektrealität trennen und sie gegen die Kosten des manuellen Bleibens vergleichen
 
-Wenn Hersteller uber die Kosten von Automatisierung sprechen, meinen sie oft eine Sache: den Preis im Angebot. Diese Zahl ist wichtig. Sie ist aber unvollstandig.
+Die Zahl auf dem Deckblatt ist emotional laut. Sie ist auch leicht falsch zu lesen. CapEx ist ein Stück eines Projekts, das an Scope-Vollständigkeit, Integrationsaufwand, Zeitplanverhalten, interner Koordination und dem lebt oder stirbt, was nach dem ersten Lauf passiert. Das Angebot als ganze Geschichte zu behandeln überrascht Sie später. Es als einen Input in ein strukturiertes Wirtschaftsbild zu behandeln, lässt Sie mit offenen Augen entscheiden.
 
-Die wahren Kosten der Automatisierung gehen uber die Equipment-Zeile hinaus.
+Die andere Hälfte von Ehrlichkeit ist die Kosten des Wartens: Was der aktuelle Prozess Ihnen jeden Monat nimmt, während die Entscheidung kreist.
 
-Sie umfassen: Vollstandigkeit des Scope; Implementierungsaufwand; Optimierungszeit; interne Koordination; Projektrisiko. Und sie sollten immer gegen die laufenden Kosten des Nicht-Handelns gewichtet werden.
+## Preis ist nicht Gesamtkosten
 
-## Preis ist nicht gleich Gesamtkosten
+Zwei Summen können aus guten Gründen differieren — unterschiedliche Grenzen, unterschiedliche Risikoplatzierung — oder aus schlechten, wie fehlende Inbetriebnahme, Schulungskonsum oder Schnittstellenarbeit, die Ihr Team absorbieren muss. Ihre Aufgabe ist zu verstehen, welche. Ohne diese Disziplin sind „Einsparungen“ verschobene Ausgaben, und „teuer“ kann das Angebot sein, das die Arbeit tatsächlich eingerechnet hat.
 
-Zwei Angebote konnen sehr unterschiedliche Preise zeigen. Das heisst nicht automatisch, dass ein Projekt gunstiger ist. Der Buyer muss weiter fragen:
+## Unvollständiger Scope verzerrt jeden Vergleich
 
-- was ist enthalten
-- was ist ausgeschlossen
-- welche Annahmen treiben die Kosten
-- welche Zusatzarbeit ist nach Zuschlag wahrscheinlich
+Teil-Scopes wirken erschwinglich, bis technische Klärung, Site-Review oder Übergabeplanung den Job erweitern. Das Muster ist vertraut: Das Projekt wächst nach Commitment — nicht weil jemand log, sondern weil das erste Dokument nie mit voller operativer Realität aligned war. Drücken Sie Scope und Exklusionen früh in die Offenheit, solange Lieferanten zu gleichen Bedingungen konkurrieren.
 
-Ohne diese Struktur kann Preis falschen Komfort oder falsche Angst erzeugen.
+## Zeit ist buchstäblich Geld
 
-## Die versteckten Kosten unvollstandigen Scope
+Längere Pfade zum Wert verbrennen Cash durch fortgesetzten manuellen Betrieb, verzögerte Output-Verbesserungen, verlängerte Managementaufmerksamkeit und Opportunitätskosten auf der Fläche. Ein auf dem Papier günstigeres Angebot mit gestrecktem Zeitplan kann in der Gesamtökonomie schwächer sein als ein engerer Pfad mit höherer Kopfzeile. Zeitplanrisiko gehört in die Kostendiskussion, nicht in ein Schulterzucken nach der Entscheidung.
 
-Einer der schnellsten Wege, Automatisierungsokonomie zu verzerren, ist ein Teil-Scope wie einen Vollprojektpreis zu lesen.
+## Die Pre-Award-Phase hat auch einen Preis
 
-Das passiert meist, wenn Angebote Folgendes verbergen oder verschieben: Integrationsaufwand; Safety-Elemente; Commissioning; Training; Site Preparation; Change Requests aus Annahmen. Das Projekt kann anfangs gunstiger aussehen und spater teurer werden. Das ist keine Kostentransparenz. Das ist Kostenverschiebung. In der Praxis beginnen hier viele Budgets uberraschend zu wachsen.
+Suche, Meetings, Normalisierung, Verhandlung und Klärungsschleifen verbrauchen Senior-Stunden. Das sind echte Kosten — oft unterschätzt, weil sie nicht die CapEx-Zeile treffen. Ein strukturierter Beschaffungsworkflow schützt diese Stunden, indem er Nacharbeit und Neuinterpretation reduziert.
 
-Das Angebot wirkt beherrschbar, aber das reale Projekt dehnt sich erst nach technischer Klarung, Site Review oder Ubergabeplanung aus.
+## Optimierung endet nicht bei Inbetriebnahme
 
-## Zeit ist Teil der Kosten
+Systeme brauchen weiter Tuning, Bedieneradoption, Stabilisierung und manchmal Anpassung bei Mix-Änderungen. Projektökonomie sollte dieses Fenster nüchtern einplanen — nicht Fantasy-Uptime ab Tag eins. Das Ziel ist kein Pessimismus; das Ziel ist ein Business Case zu vermeiden, der nur in der ersten idealen Woche funktioniert.
 
-Automatisierungskosten sind nicht nur Capex. Sie sind auch Zeit.
+## Vergleichen Sie mit manuellem Bleiben
 
-Langere Projekte erzeugen oft Zusatzkosten durch: langsamere Output-Verbesserung; langere Abhangigkeit von manueller Arbeit; verzogerte Returns; verlangerte Aufmerksamkeit des Managements.
+Fragen Sie nicht nur, was Automatisierung kostet, sondern was der Status quo an Personalkapazitätsdruck, Variabilität, Qualitätsexposition und gebremster Reaktion kostet. Ohne dieses Paar wirkt CapEx immer „extra“. Damit wird die Entscheidung eine Wahl zwischen zwei Zukunften — kein Referendum über Ausgaben.
 
-Darum kann ein gunstigeres Angebot okonomisch schwacher sein, wenn es mehr Schedule-Reibung erzeugt.
+## „Am billigsten“ ist der falsche Pokal
 
-## Reality check: Auch Terminverzug kostet
+Sie jagen die verteidigbarste Ökonomie: Scopetiefe, Preislogik, Zeitplanrealismus, verstecktes Risiko und Glaubwürdigkeit von Optimierungsplänen. Das ist ein härteres Gespräch als eine Spalte zu sortieren. Es ist das Gespräch, das den ersten Produktionsmonat übersteht.
 
-Viele Teams behandeln Zeitrisiko wie ein reines Delivery-Problem. Es ist auch ein okonomisches Problem.
+## Wie DBR77 Marketplace die Sicht schärft
 
-Wenn sich die Implementierung verzogert, bezahlt das Unternehmen oft weiter fur das bestehende manuelle Modell und tragt gleichzeitig zusatzlichen Koordinations-, Eskalations- und Replanungsaufwand.
+DBR77 Marketplace hilft Teams, Kosten strukturierter zu bewerten — standardisierte Angebote, sichtbare Annahmen und sauberer Vergleich von Scope, Timing und Risiko — damit die Wirtschaftsdebatte passt, wie Projekte sich wirklich verhalten.
 
-Das bedeutet, dass Terminunsicherheit als Teil der Kostendiskussion bewertet werden sollte und nicht erst nach der Kaufentscheidung.
+## Die Entscheidung, die Sie wirklich treffen
 
-## Auch Entscheidungskosten zahlen
+Jedes Automatisierungsgespräch vergleicht heimlich Zukunft: weiter die versteckten Steuern des manuellen Systems finanzieren oder Cash und Aufmerksamkeit in ein Projekt mit Integrationsrisiko umlenken. Wenn nur CapEx sichtbar ist, gewinnt die manuelle Zukunft standardmäßig, weil sie „kostenlos“ wirkt. Ein vollständiges Bild stellt Parität zwischen Optionen her. Das garantiert keinen Automatisierungssieg; es garantiert einen intellektuell ehrlichen Trade — Mindeststandard für dauerhaftes Führungsalignment.
 
-Viele Buyer unterschatzen, wie teuer die Vorprojektphase werden kann.
+Nutzen Sie die Wirtschaftsprüfung, um explizite Wahlen zum Risikoappetit zu erzwingen: Zeitplan-Aggressivität, operative Bereitschaft und wie viel Unsicherheit Finance unterfängt. Diese Wahlen gehören vor Vergabe sichtbar, solange Lieferanten noch darum konkurrieren, Risiko sauber zu tragen — nicht danach, wenn die Debatte in Rechnungen kollabiert.
 
-Diese Phase verbraucht Zeit durch: Technologie-Suche; Vendor-Meetings; internen Vergleich; Vertragsverhandlung; Klarungsschleifen.
+## Kurz gesagt
 
-Darum sind die wahren Kosten der Automatisierung nicht nur Engineering. Sie sind auch Sourcing- und Entscheidungsaufwand.
-
-## Optimierung ist Teil der Okonomie
-
-Viele Teams horen beim Denken an der Installation auf.
-
-Das echte Kostenbild umfasst aber auch, was nach Go-live passiert: Tuning; Optimierung; Change-Anpassungen; Operator-Adoption; Performance-Stabilisierung.
-
-Darum sollte die Projektokonomie uber den Tag des Commissioning hinausgehen. Das System muss in der Praxis erst produktiv werden.
-
-## Kosten gegen die Kosten des manuellen Zustands vergleichen
-
-Einer der grossten Buying-Fehler ist, nur zu fragen:
-
-- was kostet Automatisierung
-
-Die starkere Frage lautet: was kostet uns der aktuelle Prozess in jedem Monat, in dem wir warten.
-
-Dazu gehoren: Labor-Druck; wiederkehrende Ineffizienz; Qualitatsverlust; instabiler Output; verzogerte Skalierung. Erst dann beginnt der echte Vergleich.
-
-## Warum billigste oft die falsche Kategorie ist
-
-Hersteller brauchen nicht das billigste Angebot. Sie brauchen die am besten vertretbare okonomische Entscheidung.
-
-Das bedeutet Vergleich von: Scope-Vollstandigkeit; Preislogik; Delivery-Timeline; Optimierungspfad; wahrscheinlichem Hidden-Cost-Risiko.
-
-Das schafft eine deutlich genauere Kostendiskussion als Headline-Capex allein.
-
-## Wie bessere Kostenbewertung aussieht
-
-Eine starkere Automatisierungskostenbewertung umfasst typischerweise: Preis; Scope-Tiefe; Timeline-Effekt; Hidden-Risk-Exposure; Kosten der Verzogerung; Wert von verbessertem Output oder Stabilitat. Das macht die Entscheidung nicht einfacher. Es macht sie ehrlicher.
-
-## Was das fur DBR77 Marketplace bedeutet
-
-DBR77 Marketplace ist hier relevant, weil es Herstellern hilft, Kosten strukturierter zu bewerten.
-
-Sein Wert umfasst: standardisierte Angebote; sichtbarere Annahmen; leichteren Vergleich von Scope und Timeline; schnelleren Weg von Kostendebatte zu entscheidungsreifer Okonomie.
-
-Das ist wichtig, weil die wahren Kosten der Automatisierung oft verzerrt werden, noch bevor die Implementierung beginnt.
-
-## Bottom line
-
-Die wahren Kosten der Automatisierung sind nicht nur die Zahl im Angebot.
-
-Sie sind die gesamte okonomische Form von: Scope; Zeit; Risiko; Optimierungsaufwand; Verzogerung versus Aktion. Das ist der Vergleich, den Buyer wirklich brauchen.
+Die wahren Kosten der Automatisierung sind die volle Form von Scope, Zeit, Risiko und Post-Go-Live-Realität — gegen die laufenden Kosten von Verzögerung und manuellem Betrieb gesetzt. Bringen Sie dieses Bild in Ordnung, und der Headline-Preis hört auf, Sie in die Irre zu führen.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Ihre Herausforderung beschreiben](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace hilft Käufern, Automatisierungskosten ehrlicher über standardisierte Angebote, sichtbare Annahmen und saubereren Vergleich von Scope, Timing und Risiko zu bewerten. [Beschreiben Sie Ihre Herausforderung](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

@@ -1,77 +1,58 @@
-# Wie ein gutes Maschinenzustandsmodell vor dem IoT-Scale aussieht
+# Wie ein guter Maschinenzustands-Modell vor dem IoT-Scale aussieht
 
-Zielpersona: Fertigungsingenieur / OT-Systems Lead / Zuverlaessigkeitsingenieur  
+Zielpersona: Manufacturing Engineer / OT Systems Lead / Reliability Engineer  
+Funnel-Phase: Evaluation  
+Kernproblem: Teams skalieren Sensoren, bevor sie vereinbaren, was „gut laufen“ in Maschinensprache bedeutet — jeder Standort erfindet unter Druck eigene Labels  
+Hauptversprechen: ein minimales Zustandsmodell, das man regieren kann: stabile Zustände, erlaubte Übergänge, Evidenz für jeden Übergang und explizite Unbekannte
 
-Funnel-Phase: Evaluation Kernproblem: Teams skalieren Sensoren, bevor sie vereinbaren, was "gut laufen" in Maschinensprache heisst, jeder Standort erfindet unter Druck eigene Labels Hauptversprechen: ein minimales, regierbares Zustandsmodell: stabile Zustaende, erlaubte Uebergaenge, Evidenz je Uebergang und explizite Unbekannt-Zustaende
+IoT zu skalieren, bevor Sie sich auf den Maschinenzustand verständigt haben, ist der Weg, Sensoren und Streit gleichzeitig zu multiplizieren.
 
-IoT ohne Zustandsmodell zu skalieren ist wie Werkserweiterung ohne Linienbalance. Sie werden schneller und finden Konflikte spaeter. Ein Zustandsmodell ist keine Vendor-Featureliste.
+Ein Zustandsmodell ist keine Vendor-Feature-Liste. Es ist der Werkvertrag, wie Rohsignale auf die nächste operative Entscheidung mappen. Gute Modelle sind klein, langweilig und durchsetzbar.
 
-Es ist die werksinterne Vereinbarung, wie Maschinenrealitaet auf die naechste operative Entscheidung abbildet.
+Gehen Sie vor dem Scale das Modell anhand des schlimmsten Tages des letzten Monats durch. Spielen Sie Stillstände, Holds und eingeschränkte Läufe nach. Wenn die Zuständen gelogen hätten oder falsche Präzision erzwungen hätten, fixen Sie das Modell — nicht die Menschen, die Produktion fahren.
 
-Ein gutes **Maschinenzustandsmodell** vor dem Scale hat: eine kleine Menge **benannter Zustaende**, die Bediener und Instandhaltung schon im Gespraech nutzen; **klare Uebergaenge**, gekoppelt an Signale oder physische Checks, nicht an Bauchgefuehl; **einen Owner pro Uebergang**, wenn der Zustand eine andere Folgeaktion impliziert; einen **Unbekannt**-Eimer, der kurzzeitig erlaubt ist mit zeitgebundenem Follow-up.
+## Zustände sind Verpflichtungen; Tags sind Tiefe
 
-Wenn Sie es nicht auf eine Seite zeichnen koennen, ist es nicht scale-reif.
+Tags dürfen für Engineering-Analytik wuchern. Zustände sollten wenige und sich gegenseitig ausschließend für einen Moment auf einem Asset bleiben. Zustände treiben Playbooks jetzt; Tags können spätere Studien informieren. Wenn Sie das Zustandsdiagramm nicht auf eine Seite zeichnen können, sind Sie nicht scale-bereit.
 
-## Zustaende versus Tags
+## Ein Sechs-Zustände-Starter, den Sie anpassen können
 
-Tags sind freie Labels. Zustaende sind operative Verpflichtungen.
+Benennen Sie sie für Ihre Kultur, halten Sie die Logik: Laufen im Plan innerhalb vereinbarter Varianz; laufen eingeschränkt durch Material, Werkzeug, Personal oder vorgelagerten Fluss; angehalten für geplante Arbeit wie Rüsten; ungeplant gestoppt mit Owner-Pfad; gehalten aus Qualitäts- oder regulatorischen Gründen; vorübergehend unbekannt mit zeitgebundener Nachverfolgung. Unbekannt ist kurzfristig legitim; es wird ein Defekt, wenn es zur dauerhaften Tarnung wird.
 
-| Tags | Zustaende |
-|---|---|
-| viele, ueberlappend | wenige, sich gegenseitig ausschliessend fuer einen Asset-Moment |
-| spaeter nett fuer Analytics | treiben Playbooks jetzt |
-| leicht in Software hinzuzufuegen | schwer ueber Schichten zu alignen |
+## Jeder Übergang braucht Evidenz und Ownership
 
-Tags fuer Engineering-Tiefe behalten. Zustaende langweilig genug fuer die Flaeche halten.
+Übergänge sollten an Signale, physische Checks oder Bedienerbestätigungen gebunden sein — nicht an Bauchgefühl. Wenn ein Zustand eine andere nächste Aktion impliziert, muss jemand diesen Übergang explizit besitzen.
 
-## Framework: Sechs-Zustaende-Starterset
+## Vor dem Scale validieren
 
-Namen ans Werk anpassen, Logik behalten:
+Gehen Sie das Modell mit Bedienern auf jeder Schicht durch. Vergleichen Sie Modellsprache mit gesprochener Sprache auf der Fläche. Spielen Sie jüngste Vorfälle nach und fragen Sie, ob die Zustände die Wahrheit gesagt hätten. Beheben Sie Kollisionen, wenn zwei Zustände denselben Moment beschreiben.
 
-1. **Planmaessiger Lauf** Innerhalb vereinbarter Varianzbaender fuer Zyklus, Qualitaetsproxies und Randbedingungen
+**Pre-Scale-Validierung:** Ein-Pager-Diagramm; Schicht-für-Schicht-Vokabular-Check; Incident-Replay besteht; Unbekannt-Bucket hat SLA; Alarme und Arbeitsaufträge referenzieren Zustände, keine Adjektive.
 
-2. **Eingeschraenkter Lauf** Laeuft, aber limitiert durch Material, Werkzeug, Personal oder Upstream-Fluss
+## Zustände mit Playbooks verknüpfen
 
-3. **Degradierend** Trend weg von Baseline ohne noch Stop; Instandhaltungs-Prioritaet steigt
+Jeder Zustand sollte eine Standard-nächste Aktion oder Owner-Klasse implizieren: wer benachrichtigt wird, welches Arbeitsauftrags-Template, welcher Eskalationspfad. Zustände ohne Playbooks werden dekorative Labels.
 
-4. **Stopp bekannt** Grundcode passt zu bekanntem Fehlerbild oder verifizierter Bedingung 5. **Stopp unbekannt** Stopp ohne vertrauenswuerdigen Grund; Untersuchungszustand
+## DBR77 IoT und State-first-Skalierung
 
-6. **Ausser Betrieb** Geplante Arbeit, Ruesten oder Lockout; kein Fehlerzustand
+DBR77 IoT verdient Scale, wenn Deployment Zustandsmodelle als regierende Objekte behandelt — stabile Definitionen, die Bediener teilen — bevor Sensorzähler zum Fortschrittsproxy werden.
 
-Dieses Set reicht, um IoT, CMMS und Schichtsprache zu alignen, bevor Sie Standorte multiplizieren.
+Ein gutes Maschinenzustands-Modell ist minimal, regiert und ehrlich zu Unbekanntem. Bauen Sie diese Vereinbarung, bevor Sie den Fußabdruck verbreitern.
 
-## Checkliste: Modell vor Scale validieren
+## Das Versprechen des Artikels praktisch halten
 
-- [ ] Bediener koennen Zustaende ohne Handbuch zuweisen
-- [ ] jeder Zustand mappt auf eine Default-Rolle: Bediener, Instandhaltung, Engineering
-- [ ] Uebergaenge loggen, wer physische Realitaet bestaetigt hat, wenn Sensoren widersprechen
-- [ ] Standards referenzieren fuer Safety- und Qualitaets-Gates zwischen Zustaenden
-- [ ] unbekannte Stopps haben ein Maximalalter vor Eskalation
+Übersetzen Sie die Ideen oben in eine Gewohnheit, die Ihr Werk im nächsten Monat halten kann: ein Review, das stattfindet, ein Wörterbuch, das Menschen öffnen, eine Routing-Regel, der sie vertrauen, oder ein Drill, den sie laufen lassen. Große Programme stocken, wenn alles gleichzeitig losläuft. Kleine Schleifen verstärken sich, wenn sie sich wiederholen.
 
-## Vergleich: Sensor-first Scale versus Zustand-first
+## Leadership-Checkpoint für das nächste Ops-Review
 
-| Sensor-first | Zustand-first |
-|---|---|
-| mehr Punkte, unklare Bedeutung | weniger Punkte, vereinbarte Bedeutung |
-| Schwellwert-Debatten in jedem Meeting | einmal debattieren, dann regieren |
-| Dashboard-Sprawl | gemeinsame Sprache fuer Planung |
+Stellen Sie eine einfache Frage: Was hat sich diesen Monat auf der Fläche geändert, weil IoT die Realität klarer — nicht lauter — gemacht hat? Wenn die Antwort vage ist, straffen Sie Umfang, Definitionen oder Review-Takt, bevor Sie den Fußabdruck erweitern. Nützliches IoT zeigt sich in ruhigeren Übergaben, schnellerer Bestätigung und weniger Kreisdiskussionen darüber, was passiert ist. Verbindungszahlen sind Inputs; Verhaltensänderung ist der Beleg.
 
-## Wann es scheitert
+## Auf dem Shopfloor ankommen
 
-**Scheitert**, wenn Fuehrung das Modell als IT-Dokument statt als lebenden Operationsvertrag behandelt.
+Dieser Rat zählt nichts, wenn er im Lenkungsdeck bleibt. Der nützliche Test ist, ob die nächste Schicht mit weniger Debatte handeln kann: klarere States, weniger Mystery-Stops, schnellere Bestätigung und Eskalation, die Aufmerksamkeit respektiert. Wenn IoT funktioniert, fühlt sich die Linie weniger wie ein Gerichtssaal und mehr wie ein koordiniertes Team an — weiter laut und voll, aber orientiert an denselben Fakten.
 
-**Scheitert**, wenn Vendor-Zustaende nicht zur Instandhaltungs-Triage am Asset passen.
+Wenn Sie die Fläche gehen und Menschen das System noch als „der Computer“ statt „unser Bild der Linie“ beschreiben, straffen Sie Kontext, Ownership und Review, bis sich die Sprache ändert. Sprachverzug ist ein Symptom, dass die Schleife noch zu dünn ist.
 
-## Was das fuer DBR77 IoT bedeutet
+---
 
-DBR77 IoT unterstuetzt **Echtzeit-Maschinensichtbarkeit** und **Edge-first Entscheidungsunterstuetzung**, damit Zustandsuebergaenge nah am Asset bewertet werden koennen.
-
-Retrofit-freundliche Konnektivitaet hilft Brownfield-Maschinen in dasselbe Zustandsvokabular ohne Rip-and-Replace.
-
-Schnelle Piloten haerten das Modell auf einer Linienklasse, bevor Sie ausrollen.
-
-## Bottom line
-
-Vereinbaren Sie das **Zustandsmodell, bevor Sie Sensoren multiplizieren**.
-
-Kleine, langweilige, regierte Zustaende schlagen eine grosse Wolke cleverer Tags, denen niemand in der Nachtschicht vertraut.
+*DBR77 IoT unterstützt IoT-Skalierung „State-first“ mit klarer Maschinenzustands-Sichtbarkeit, Bediener-Kontext und regierten Definitionen, bevor der Fußabdruck wächst. [Pilot planen](https://dbr77.com/iot) oder [Online-Demo ansehen](https://dbr77.com/demo).*

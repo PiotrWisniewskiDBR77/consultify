@@ -12495,6 +12495,8 @@ router.get(
       };
 
       const collaborationHealth = roomHealths.filter(Boolean);
+      const inboxByStatus = (inboxStats.byStatus || {}) as Record<string, number>;
+      const inboxBySlaStatus = (inboxStats.bySlaStatus || {}) as Record<string, number>;
       const degradedRoomCount = collaborationHealth.filter(
         (room) => room && (room.state === 'error' || room.degradedSince)
       ).length;
@@ -12502,8 +12504,8 @@ router.get(
         (sum, room) => sum + (room?.activePresenceCount ?? 0),
         0
       );
-      const inboxPendingCount = Number(inboxStats.byStatus?.pending || 0);
-      const inboxAtRiskCount = Number(inboxStats.bySlaStatus?.at_risk || 0);
+      const inboxPendingCount = Number(inboxByStatus.pending || 0);
+      const inboxAtRiskCount = Number(inboxBySlaStatus.at_risk || 0);
       const reviewSharedOutputCount = outputFlow.filter(
         (artifact) => artifact.visibilityScope === 'review_shared'
       ).length;
@@ -13335,8 +13337,8 @@ router.get(
               },
             ],
             runtimeSummary: {
-              inboxPending: Number(inboxStats.byStatus?.pending || 0),
-              inboxAtRisk: Number(inboxStats.bySlaStatus?.at_risk || 0),
+              inboxPending: Number(inboxByStatus.pending || 0),
+              inboxAtRisk: Number(inboxBySlaStatus.at_risk || 0),
               recentOutputs: outputFlow.length,
               reviewSharedOutputs: outputFlow.filter(
                 (artifact) => artifact.visibilityScope === 'review_shared'

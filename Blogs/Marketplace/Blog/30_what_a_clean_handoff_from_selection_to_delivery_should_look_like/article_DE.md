@@ -1,74 +1,50 @@
-# Wie ein sauberer Uebergang von Auswahl zu Auslieferung aussehen sollte
+# Wie eine saubere Übergabe von Auswahl zu Lieferung aussehen sollte
 
-Target persona: Projektmanager / Operations-Sponsor  
-Funnel stage: Decision bis Delivery (Umsetzungsuebergang)  
-Core problem: Auswahl-Gewinner kommen vor Ort, waehrend Operations, IT und Maintenance noch denken, das Projekt sei "Sache Einkauf"  
-Main promise: ein Uebergabe-Paket und Meeting-Rhythmus, der Ownership, Schnittstellen und Akzeptanz-Kontinuitaet explizit macht
+Zielpersona: Projektleitung / Operations-Sponsor  
+Funnel-Stufe: Von Entscheidung zu Lieferung (Übergang in die Ausführung)  
+Kernproblem: Auswahlgewinner kommen vor Ort, während Operations, IT und Instandhaltung das Projekt noch als „Sache des Einkaufs“ behandeln  
+Hauptversprechen: ein Handover-Pack und ein Meeting-Rhythmus, der Ownership, Schnittstellen und Akzeptanzkontinuität explizit macht
 
-Auswahl endet mit einem Namen auf einer Folie. Delivery startet mit einer Linie, die morgen noch laufen muss. Die Luecke ist, wo Budgets lecken und Vertrauen bricht. Ein sauberer Uebergang ist kein laengerer Vertragsanhang.
+Auswahl endet mit einem Namen auf einer Folie. Lieferung beginnt mit einer Linie, die morgen früh laufen muss. In der Lücke dazwischen lecken Budgets aus, Vertrauen bröckelt und Integratoren lernen, dass Ihre Organisation noch mit sich selbst verhandelt. Sauberes Handover ist kein längerer Vertragsanhang—es ist ein kurzer, veröffentlichter Satz Artefakte und Owner, der verhindert, dass das Projekt zum Ping-Pong wird.
 
-Es ist ein kurzer Satz Artefakte und Owner, der verhindert, dass das Projekt zu Ping-Pong zwischen Einkaeufer und Integrator wird.
+## Was das Paket enthalten sollte
 
-Ein sauberer Uebergang enthaelt: einen integrierten Projektplan mit Meilensteinen gekoppelt an Akzeptanzobjekte; ein RACI mit benannten Operations-, Maintenance-, IT-, Quality- und Safety-Ownern; eine eingefrorene Konfigurationsbaseline (Hardware, Software-Build-IDs, Scope-Statement-Version); ein Kommunikationsprotokoll: Kadenz, Kanaele, Eskalationspfad; einen 30-bis-60-Tage-Operations-Readiness-Plan (Training, Ersatzteile, Dokumentationskonsum).
+Veröffentlichen Sie einen integrierten Plan mit Meilensteinen, die an Akzeptanzobjekte gebunden sind, nicht nur an Daten. Fügen Sie ein RACI hinzu, das Operations, Instandhaltung, IT, Qualität und Safety benennt—nicht generische „Werksunterstützung“. Frierten Sie den Konfigurationskontext ein: Hardware-Scope-Statement-Version, Software- und Firmware-Build-IDs soweit relevant und Schnittstellenlisten. Definieren Sie Kommunikationscadence, Kanäle und Eskalationspfade. Ergänzen Sie einen 30–60-Tage-Operations-Readiness-Pfad: Trainingskonsum, Ersatzteildenken, Dokumentationsownership und Validierungsfenster, die zum realen Produktionsdruck passen.
 
-Publizieren Sie es in einem internen Uebergabe-Meeting und einem Lieferanten-Kickoff mit demselben Deck-Skeleton.
+## Führen Sie ein Kickoff mit „Biss“
 
-Wenn nach Woche eins zwei Stories existieren, haben Sie Rework bereits bezahlt.
+Das Kickoff soll dieselbe Geschichte bestätigen, die der Einkauf der Führung erzählt hat: Umfang, Annahmen, Akzeptanz-Rückgrat und Werkpflichten. Wenn Operations einen anderen Film hört als Engineering, beheben Sie das, bevor Mobilisierung Geld verbrennt.
 
-## Uebergabe-Pack-Checkliste (Minimum)
+## Halten Sie Akzeptanz kontinuierlich
 
-| Artefakt | Zweck |
-| --- | --- |
-| Scope-Statement-ID + Exclusions | verhindert stillen Drift |
-| Schnittstellen-Register | verhindert IT-Fiktion |
-| Risiko-Register mit Ownern | verhindert verwaiste Issues |
-| Testplan-Outline bis FAT und SAT | verhindert spaete Ueberraschungen |
-| Trainingsplan mit Audiences | verhindert unsupported Go-Live |
-| Ersatzteilliste und Lead Times | verhindert Early-Downtime-Drama |
+FAT und SAT sollten auf vor Vergabe vereinbarte Kriterien zurückführbar sein—nicht unter Druck neben der Linie erfunden. Kontinuität ist, wie strukturierter Vergleich den ersten Kontakt mit der Realität übersteht.
 
-Fehlende Artefakte sollten als explizite Risiken mit Daten gelistet werden, nicht als Hoffnung.
+## Wie DBR77 Marketplace einbindet
 
-## Uebergabe-Meeting-Agenda (90 Minuten, illustrativ)
+Handover-Qualität hängt davon ab, ob ausgewählte Angebote, Vertragsbedingungen und Akzeptanzerwartungen in die Ausführung intakt bleiben. Strukturierter Vergleich soll Lieferkontinuität werden—kein Gedächtnisübung.
 
-Was ausgewaehlt wurde und warum (Decision-Log-Summary); welche Aenderungen erlaubt sind und wie (Change Control); wer intern was besitzt (RACI-Walk); was Lieferanten woechentlich vom Werk brauchen (Abhaengigkeitskarte); wie "gruen" bei FAT und SAT aussieht (Akzeptanz-Anker).
+Die engsten Kontinuitätsstücke: [Was FAT und SAT vor Go-Live tatsächlich beweisen sollten](../25_what_fat_and_sat_should_actually_prove_before_go_live/article_DE.md), [Wann man eine Automatisierungsentscheidung vor der Unterzeichnung wieder öffnet](../32_when_to_reopen_an_automation_decision_before_signing/article_DE.md) und [Was vor der Unterzeichnung eines Automatisierungsvertrags zu prüfen ist](../20_what_to_check_before_signing_an_automation_contract/article_DE.md).
 
-Ende mit Action Items: Namen, Datum, eine ausgehende Lieferantennotiz, die dasselbe Verstaendnis bestaetigt.
+## Handover als Change Management
 
-## Was sich nach Uebergang aendert (Verhalten, kein Papier)
+Auswahl schafft auch interne Gewinner: wer sich gehört fühlt, und wer überrascht ist. Handover ist der Moment, alle wieder auf einen Plan zu verankern. Veröffentlichen Sie das Paket, lesen Sie es in einem funktionsübergreifenden Raum und schaffen Sie Raum für Einwände schriftlich—nicht als Seitengespräche, die bei SAT zurückkommen.
 
-Nach Uebergang hoert der Einkaufsowner auf, der einzige Hals zu sein. Operations spricht in woechentlicher Integrationskadenz. Maintenance signiert Zugangs- und LOTO-Realitaet. IT committet Netzwerk- und Credential-Timelines. Einkauf ueberwacht kommerzielle Change-Disziplin, nicht taegliches Engineering-Trivia.
+Behandeln Sie das Handover-Pack als lebendes Dokument mit Versionskontrolle. Wenn Integrationsrealität den Plan ändert, aktualisieren Sie den Record und kommunizieren Sie Deltas so, wie Sie einen Line-Changeover kommunizieren würden—bewusst, mit Ownern.
 
-## Reality check: Uebergang scheitert meist dann, wenn die Organisation annimmt, der gewinnende Lieferant "hat das Projekt jetzt"
+## Von der Entscheidung zum Verhalten auf dem Shopfloor
 
-Diese Annahme klingt effizient. Sie ist meist der Punkt, an dem Ownership zu verschwimmen beginnt. Der Lieferant erwartet Inputs vom Werk. Das Werk erwartet, dass der Lieferant jeden naechsten Schritt treibt. Der Einkauf nimmt an, dass Execution bereits uebernommen hat.
+Der Sinn, diesen Teil der Einkaufsreise zu schärfen—„Wie eine saubere Übergabe von Auswahl zu Lieferung aussehen sollte“ in der Praxis—ist vorhersagbare Ausführung. Auf Industrieanlagen bleibt Mehrdeutigkeit nicht abstrakt: sie wird zu Warten, Nacharbeit, stillen Workarounds und Streit am Equipment, wenn die Linie Wochen zuvor Klarheit gebraucht hätte. Wenn Teams dieselben Fakten veröffentlichen, Akzeptanz an Evidence binden und Ownership sichtbar halten, liefern Lieferanten weniger Überraschungen und Funktionen verbringen weniger Zeit mit dem Abgleich konkurrierender Stories.
 
-Wenn nach der Auswahl niemand Ownership neu publiziert, erbt das Projekt einen Gewinner, aber kein funktionierendes Betriebsmodell.
+Das ist keine Theorie nur für Stabsfunktionen. Werksleiter spüren die Folgen, wenn Einkaufsartefakte nicht zur Halle passen: aufgefangene Überstunden, gestreckte Qualitätswachsamkeit und Instandhaltung, die bei halb definierten Schnittstellen improvisiert. Starke Einkaufsdisziplin ist damit eine Produktionsinvestition—weniger Drama bei Installation, weniger Notfall-Change-Gespräche und ein schnellerer Weg zu stabilem Output. Im Zweifel: das Dokument verlangsamen, bis es zur Linie passt; ein unpassendes Dokument zu beschleunigen verschiebt nur den Schmerz stromabwärts.
 
-## typische Uebergabe-Fehler
+Wenn Sie einen Gewohnheit mitnehmen, dann diese: behandeln Sie jedes wesentliche Einkaufsergebnis so, dass Operations und Instandhaltung es auditieren könnten. Wenn sie es nicht bis zu einem Verhalten auf dem Shopfloor zurückverfolgen können, schärfen Sie die Sprache. Diese eine Disziplin verhindert viele Scheitern, die im Nachhinein technisch wirken, aber von Anfang an Entscheidungsprobleme waren.
 
-| Fehler | Kosten | Fix |
-| --- | --- | --- |
-| kein IT-Sitzplatz | Schnittstellen-Slips | Teilnahme erzwingen |
-| Training als optional | Support-Load-Spikes | Training an Meilensteine binden |
-| undocumented baseline | Scope-Streit | Build-IDs einfrieren |
-| doppelte Narrative | Misstrauen | ein Kickoff-Deck |
-
-## Was das fuer DBR77 Marketplace bedeutet
-
-DBR77 Marketplace unterstuetzt hersteller-first Automatisierungseinkauf als Workflow von Challenge-Klarheit bis strukturiertem Vergleich.
-
-Uebergang ist der Moment, wo Vergleichbarkeit zu Ausfuehrungsrealitaet wird.
-
-Wenn Auswahl sauber dokumentiert ist, startet Delivery mit weniger versteckten Substitutionen. Marketplace ist kein Roboterkatalog.
-
-Es ist Vertrauen und Workflow-Schicht, die zu ernsthaften Werken passen sollte, die Projekte nach Award fuehren.
+Verknüpfen Sie das schließlich mit Accountability: wer prüft Annahmen auf dem Shopfloor und zu welchem Meilenstein? Mythen gedeihen, wenn niemand Messung besitzt; sie schwächen, wenn Verifikation Teil des Projektplans ist, kein Nachgedanken.
 
 ## Fazit
 
-Auswahl ohne Uebergang ist eine Entscheidung ohne Owner.
-
-Publizieren Sie das Paket, richten Sie den Kickoff aus und machen Sie FAT- und SAT-Kontinuitaet planbar statt heroisch.
+Auswahl ohne Handover ist eine Entscheidung ohne Owner. Veröffentlichen Sie das Paket, richten Sie das Kickoff aus und machen Sie Akzeptanz vorhersagbar statt heroisch.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Hersteller-Demo starten](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*
+*DBR77 Marketplace unterstützt strukturierten Vergleich in der Auswahl; dieselbe Disziplin soll in ein veröffentlichtes Handover-Pack übergehen, damit der Gewinnerpfad nach Vergabe weiterhin inspizierbar bleibt. [Hersteller-Demo starten](https://dbr77.com/marketplace) oder [Angebote vergleichen](https://dbr77.com/demo).*

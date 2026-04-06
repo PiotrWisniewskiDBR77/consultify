@@ -1529,25 +1529,28 @@ export async function getResultsKpiCatalog(
       redThresholdPct: row.red_threshold_pct,
       amberThresholdAbs: row.amber_threshold_abs,
       redThresholdAbs: row.red_threshold_abs,
-      definitionSource:
+      definitionSource: (
         String(row.definition_source || '').trim().toLowerCase() === 'library'
           ? 'library'
-          : 'initiative-custom',
-      observationPhase:
+          : 'initiative-custom'
+      ) as 'library' | 'initiative-custom',
+      observationPhase: (
         String(row.observation_phase || '').trim().toLowerCase() === 'realization'
           ? 'realization'
           : String(row.observation_phase || '').trim().toLowerCase() === 'both'
             ? 'both'
-            : 'post-implementation',
+            : 'post-implementation'
+      ) as 'realization' | 'both' | 'post-implementation',
       trackedInRealization: Boolean(row.tracked_in_realization),
       trackedPostImplementation:
         row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
-      observationStatus:
+      observationStatus: (
         String(row.observation_status || '').trim().toLowerCase() === 'paused'
           ? 'paused'
           : String(row.observation_status || '').trim().toLowerCase() === 'completed'
             ? 'completed'
-            : 'active',
+            : 'active'
+      ) as 'active' | 'completed' | 'paused',
       realizationExpectation: {
         baselineValue: row.realization_baseline_value,
         targetValue: row.realization_target_value,
@@ -1577,25 +1580,28 @@ export async function getResultsKpiCatalog(
     kpiId: row.kpi_id,
     kpiName: row.kpi_name,
     impactDirection: row.impact_direction,
-    definitionSource:
+    definitionSource: (
       String(row.definition_source || '').trim().toLowerCase() === 'library'
         ? 'library'
-        : 'initiative-custom',
-    observationPhase:
+        : 'initiative-custom'
+    ) as 'library' | 'initiative-custom',
+    observationPhase: (
       String(row.observation_phase || '').trim().toLowerCase() === 'realization'
         ? 'realization'
         : String(row.observation_phase || '').trim().toLowerCase() === 'both'
           ? 'both'
-          : 'post-implementation',
+          : 'post-implementation'
+    ) as 'realization' | 'both' | 'post-implementation',
     trackedInRealization: Boolean(row.tracked_in_realization),
     trackedPostImplementation:
       row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
-    observationStatus:
+    observationStatus: (
       String(row.observation_status || '').trim().toLowerCase() === 'paused'
         ? 'paused'
         : String(row.observation_status || '').trim().toLowerCase() === 'completed'
           ? 'completed'
-          : 'active',
+          : 'active'
+    ) as 'active' | 'completed' | 'paused',
   }));
 
   const initiatives = await listResultsTrackedInitiatives(organizationId, kpis);

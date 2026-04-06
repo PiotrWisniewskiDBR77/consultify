@@ -1,76 +1,52 @@
-# Wie man industrielle KI-Trainingsrichtlinien ohne Marketing-Nebel vergleicht
+# Wie man Industrie-KI-Trainingspolitiken ohne Marketing-Nebel vergleicht
 
-Target persona: CTO / Beschaffungs-Sponsor  
-Funnel stage: Consideration  
-Core problem: Trainings-Policy-Sprache ist oft vage, sodass Anbieter Default-Daten-Nutzung hinter freundlichen Privacy-Seiten verstecken  
-Main promise: Kaeufer:innen koennen Trainings-Politiken mit fixem Vokabular vergleichen: Defaults, Umfang, Aufbewahrung, Subprozessoren, technische Durchsetzung
+Zielpersona: CTO / Procurement-Sponsor  
+Funnel-Stufe: Überlegung  
+Kernproblem: Trainingspolicy-Sprache ist oft vage — das lässt Anbieter default-on Datenverwendung hinter freundlichen Privacy-Seiten verbergen  
+Hauptversprechen: Käufer können Trainingspolitiken mit festem Vokabular vergleichen: Defaults, Scope, Aufbewahrung, Subprozessoren und technische Durchsetzung
 
-Trainings-Policy ist der dichteste Marketing-Nebel. Dort sitzt oft auch echte Exposition.
+Trainingspolitik ist, wo Marketing-Nebel am dicksten ist. Hier lebt oft auch echte Exposition — weil „privat“ und „sicher“ nicht automatisch die Frage beantworten, die Ihr Security-Team zuerst stellt: kann unsere operative Sprache Treibstoff für fremde Modellverbesserungsschleifen werden?
 
-Vergleichen Sie Politiken mit fuenf konkreten Fragen: Default fuer Kundendaten in Modellverbesserung, welche Datenklassen genau im Scope sind, wie lange Daten bei Vendor-Systemen bleiben, welche Subprozessoren sie beruehren duerfen, und welche technischen Kontrollen die schriftliche Policy durchsetzen. Ist eine Antwort schwammig, werten Sie es als offenes Risiko.
+Vergleichen Sie Politiken mit fünf konkreten Fragen: was ist der Default für Kundendaten in Modellverbesserung; welche exakten Datenklassen sind im Scope; wie lange persistieren Daten in Anbietersystemen; welche Subprozessoren können sie berühren; und welche technischen Kontrollen setzen die schriftliche Politik durch. Wenn eine Antwort schwammig ist, behandeln Sie sie als ungelöstes Risiko — kein Detail, das Sie im Pilotplan glätten.
 
-## Warum "wir verkaufen Ihre Daten nicht" nicht reicht
+## Warum „wir verkaufen Ihre Daten nicht“ nicht reicht
 
-Der Satz adressiert eine andere Angst. Trainings- und Verbesserungsschleifen sind ein eigener Mechanismus.
+Dieser Satz adressiert eine andere Angst. Trainings- und Verbesserungsschleifen sind ein separater Mechanismus. Ein Anbieter kann starke Privacy beanspruchen und trotzdem Prompts für Quality-Tuning nutzen, es sei denn, Vertrag und Architektur sagen anderes. Industrielle Käufer brauchen beides: Sprache, die Verhalten matcht, und Verhalten, das zur Datenklasse des Werks passt.
 
-Ein Anbieter kann starke Privacy behaupten und dennoch Prompts fuer Qualitaetstuning nutzen, wenn Vertrag und Architektur nichts anderes sagen.
+## Vergleichsrahmen: fünf Policy-Schichten
 
-## Vergleichsrahmen: fuenf Policy-Schichten
+Default-Postur: ist Kundeninhalt standardmäßig in Verbesserung enthalten? Sie wollen Klarheit zu Opt-in versus Opt-out versus always-off. Always-off mit technischer Durchsetzung ist die stärkste industrielle Postur bei sensiblen Nutzlasten.
 
-### Schicht 1: Default-Haltung
+Scope der Datenklassen: trennen Sie User-Prompts, hochgeladene Dokumente, System-Outputs, Feedback-Signale wie Thumbs-up-Metadaten und Telemetrie. Fertigungskäufer sollten wissen, welche Klassen Modellverbesserung berühren können — selbst wenn Training „off“ ist, kann Aufbewahrung noch Exposition schaffen.
 
-Fragen Sie, ob Kundeninhalte standardmaessig in Verbesserung einfliessen. Sie brauchen Klarheit: Opt-in, Opt-out oder immer aus.
+Aufbewahrungsfenster: selbst wenn Training aus ist, kann Aufbewahrung Risiko schaffen. Fragen Sie, wie lange Inputs gespeichert werden, ob Speicher segmentiert ist und wie Löschanfragen propagieren.
 
-Immer aus mit technischer Durchsetzung ist die staerkste industrielle Haltung.
+Subprozessoren und Geografie: mappen Sie, wer Daten verarbeiten darf und wo. Industrielle Käufer brauchen oft Regions-Constraints, benannte Subprozessoren und Änderungs-Benachrichtigungsregeln, die zu Enterprise-Standards passen.
 
-### Schicht 2: Umfang der Datenklassen
+Technische Durchsetzung versus Policy-Versprechen: fordern Sie, wie Defaults durchgesetzt werden — Konfigurationspostur, vertragliche Verpflichtungen, Audit-Rechte und Test-Erwartungen. Policy ohne Durchsetzung ist Marketing im Anzug.
 
-Trennen Sie: Nutzer-Prompts; hochgeladene Dokumente; Systemausgaben; Feedback-Signale; Metadaten und Telemetrie.
+## Einfache Scoring-Rubrik
 
-Industrielle Kaeufer:innen sollten wissen, welche Klassen Modellverbesserung beruehren koennen.
+Bewerten Sie jede Schicht: explizit und käuferfreundlich mit technisch plausibler Geschichte; teilweise klar oder bedingt; vage, schweigend oder default-on-Risiko. Wiederholte niedrige Scores signalisieren: die Plattform mag für Wegwerfaufgaben passen und für sensible Fertigungsworkloads falsch sein.
 
-### Schicht 3: Aufbewahrungsfenster
+## Red-Flag-Phrasen übersetzt
 
-Selbst ohne Training kann Aufbewahrung Risiko sein. Fragen Sie:
+„Wir können Daten nutzen, um Services zu verbessern“ signalisiert oft breite Verbesserungsrechte. „Aggregiert und de-identifiziert“ braucht in KI-Kontexten trotzdem Prozessdetail. „Enterprise-Controls verfügbar“ kann Add-ons bedeuten, nicht Baseline-Postur — fragen Sie, was die Baseline für Ihren Vertragstier ist.
 
-- wie lange Eingaben gespeichert werden
-- ob Speicher verschluesselt und segmentiert ist
-- wie Loeschungen propagieren
+## Wie Piloten Politik testen sollten — nicht nur Genauigkeit
 
-### Schicht 4: Subprozessoren und Geografie
+Ein ernsthafter Pilot umfasst eine schriftliche Trainingspostur für den Pilot-Mandanten, Log-Review-Erwartungen und Szenarien, die Handling-Grenzen validieren — nicht nur Modellqualität. Genauigkeits-Demos ohne Policy-Beweis sind unvollständig, weil der erste Produktionsvorfall oft ein Grenzvorfall ist — kein Rechenfehler.
 
-Mappen Sie, wer verarbeiten darf und wo. Industrielle Kaeufer:innen brauchen oft: Regionsgrenzen; benannte Subprozessoren; Aenderungs-Benachrichtigungsregeln.
+Trainingspolicy-Vergleiche beißen nur, wenn dieselben Aussagen in Verträgen, Architektur-Narrativen und Logs auftauchen, die Sie im Piloten samplen können. Vector matcht diese Latte als Basisclaim wie jeder andere zu verifizieren: Kundendaten trainieren das Modell nicht, neben On-Premise-, Private-API- oder isolierten Deployments-Optionen und proprietärem industriellem Reasoning, trainiert auf Werks-Transformationswissen statt umfunktioniertem Consumer-Chat-Verhalten.
 
-### Schicht 5: Technische Durchsetzung versus Policy-Versprechen
+Trainingspolicy-Vergleiche sind kein juristisches Kleinzeug. Sie definieren, ob Ihr operatives Wissen fremder Verbesserungstreibstoff wird. Nutzen Sie einen festen Rahmen, damit Anbieter das Gespräch nicht einnebeln.
 
-Fordern Sie, wie Defaults erzwungen werden: Konfigurationsflags; vertragliche SLAs; Audit-Rechte; Penetrationstest-Zusammenfassungen falls verfuegbar. Policy ohne Durchsetzung ist Marketing.
+## Werks-Checkpoint
 
-## Einfache Bewertungsskala
+Behandeln Sie „Wie man Industrie-KI-Trainingspolitiken ohne Marketing-Nebel vergleicht“ als Entscheidungswerkzeug, nicht als Hintergrundlektüre. Fordern Sie vor dem nächsten Steuerungstreffen ein Artefakt, das Ihre Haltung belegt — Architekturdiagramm, Trainingspolicy-Auszug, Log-Muster, unterzeichnete Workflow-Klassifikation oder Promotionsdatensatz. Wenn der Raum nur Geschichten erzählen kann, tragen Sie noch Pilotkleidung. Fertigungs-KI reift, wenn Evidenz Routine wird: dieselbe Disziplin, die Sie bereits vor Linienfreigabe, Lieferantenwechsel oder großem IT-Cutover erwarten. Das ist der Shift von Begeisterung zu Infrastruktur — und was Programme über Audits, Fluktuation und Multi-Site-Ausbau kohärent hält.
 
-Bewerten Sie jede Schicht: 2: explizit, kaeuferfreundlich, technisch plausibel; 1: teilweise klar oder bedingt; 0: vage, schweigend oder Default-on-Risiko. Wiederholte Nullen sind nicht bereit fuer sensible Fertigungslasten.
-
-## Rotflaggen uebersetzt
-
-"Wir koennen Daten zur Serviceverbesserung nutzen" bedeutet oft breite Verbesserungsrechte; "Aggregiert und anonymisiert" braucht in KI-Kontexten Prozessdetail; "Enterprise-Kontrollen verfuegbar" kann kostenpflichtige Add-ons meinen, nicht Baseline. Fragen Sie nach dem Default fuer Ihre Vertragsstufe.
-
-## Wie Piloten Policy testen sollten, nicht nur Genauigkeit
-
-Ein serioeser Pilot enthaelt: schriftliche Trainings-Haltung fuer den Pilot-Mandanten; Log-Review-Erwartungen; ein Szenario mit synthetisch sensiblen Inhalten zur Validierung des Umgangs. Genauigkeits-Demos ohne Policy-Beweis sind unvollstaendig.
-
-## Produktbruecke
-
-DBR77 Vector ist mit klarer industrieller Haltung positioniert: Kundendaten trainieren das Modell nicht, passend zu privaten Bereitstellungsoptionen und der Rolle als sichere Intelligenzschicht im DBR77-Oekosystem.
-
-Das ist die Art Explizitheit, die Kaeufer:innen als Baseline verlangen und dann verifizieren sollten.
-
-## Fazit
-
-Trainings-Policy-Vergleiche sind kein juristisches Detail.
-
-Sie definieren, ob Ihr Betriebswissen zum Verbesserungstreibstoff anderer wird.
-
-Nutzen Sie einen fixen Rahmen, damit Anbieter das Gespraech nicht einnebeln.
+Wenn Führung eine knappe Entscheidungsgewohnheit will, sollte sie lauten: benennen Sie, was wahr sein muss, bevor sich die Nutzung ausweitet, und prüfen Sie in festem Rhythmus, ob es wahr ist. So wird Governance keine narrative Behaglichkeit, sondern eine operative Metrik, die Ihre Werke ausführen können.
 
 ---
 
-*Möchten Sie sehen, wie das in der Praxis funktioniert? [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*
+*DBR77 Vector formuliert eine klare industrielle Trainingspostur mit ausgeschlossenen Kundendaten aus Modelltraining, aligned zu privaten Deployments-Optionen. [Sicherheit prüfen](https://dbr77.com/vector) oder [Demo buchen](https://dbr77.com/demo).*

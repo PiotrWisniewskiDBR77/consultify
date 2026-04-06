@@ -24,6 +24,13 @@ import type {
   TimelineBar,
 } from './types';
 
+interface PortfolioDependencyRecord {
+  id: string;
+  fromInitiativeId: string;
+  toInitiativeId: string;
+  type: string;
+}
+
 function buildDataFromPortfolio(i: PortfolioInitiative): Record<string, unknown> {
   const data: Record<string, unknown> = {
     name: i.name,
@@ -42,7 +49,10 @@ function buildDataFromPortfolio(i: PortfolioInitiative): Record<string, unknown>
   return data;
 }
 
-export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
+export function usePortfolioAnalysisData(
+  initiatives: PortfolioInitiative[],
+  dependencySource: PortfolioDependencyRecord[] | null = null
+) {
   return useMemo(() => {
     const idToName = new Map(initiatives.map((i) => [i.id, i.name]));
 
@@ -157,38 +167,52 @@ export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
     // Logic: dependencies
     const deps: DependencyLink[] = [];
     const logicIssues: AnalysisIssue[] = [];
-    const depsList = (i: PortfolioInitiative) => i.dependencies ?? (i as any).dependsOnIds ?? [];
-    for (const i of initiatives) {
-      const fromIds = depsList(i);
-      for (const toId of fromIds) {
-        const toName = idToName.get(toId) ?? toId;
-        const toInit = initiatives.find((x) => x.id === toId);
-        let hasTimingConflict = false;
-        if (toInit && i.plannedStartDate && toInit.plannedEndDate) {
-          if (new Date(i.plannedStartDate) < new Date(toInit.plannedEndDate)) {
-            hasTimingConflict = true;
-            const suggestedStart = toInit.plannedEndDate;
-            logicIssues.push({
-              id: `logic-${i.id}-${toId}`,
-              severity: 'critical',
-              description: `${i.name} starts before dependency ${toName} completes`,
-              initiativeId: i.id,
-              initiativeName: i.name,
-              fixSuggestion: `Move start date to ${new Date(suggestedStart).toLocaleDateString()}`,
-              issueType: 'dependency_timing',
-              autoFixPayload: { plannedStartDate: suggestedStart },
-            });
-          }
+    const localFallbackDependencies =
+      dependencySource === null
+        ? initiatives.flatMap((initiative) => {
+            const predecessorIds = initiative.dependencies ?? (initiative as any).dependsOnIds ?? [];
+            return predecessorIds.map((predecessorId: string, idx: number) => ({
+              id: `derived-${initiative.id}-${predecessorId}-${idx}`,
+              fromInitiativeId: predecessorId,
+              toInitiativeId: initiative.id,
+              type: 'depends_on',
+            }));
+          })
+        : dependencySource;
+
+    for (const dep of localFallbackDependencies) {
+      const predecessor = initiatives.find((x) => x.id === dep.fromInitiativeId);
+      const successor = initiatives.find((x) => x.id === dep.toInitiativeId);
+      const predecessorName = idToName.get(dep.fromInitiativeId) ?? dep.fromInitiativeId;
+      const successorName = idToName.get(dep.toInitiativeId) ?? dep.toInitiativeId;
+      let hasTimingConflict = false;
+
+      if (predecessor && successor?.plannedStartDate && predecessor.plannedEndDate) {
+        if (new Date(successor.plannedStartDate) < new Date(predecessor.plannedEndDate)) {
+          hasTimingConflict = true;
+          const suggestedStart = predecessor.plannedEndDate;
+          logicIssues.push({
+            id: `logic-${dep.toInitiativeId}-${dep.fromInitiativeId}`,
+            severity: 'critical',
+            description: `${successorName} starts before predecessor ${predecessorName} completes`,
+            initiativeId: dep.toInitiativeId,
+            initiativeName: successorName,
+            fixSuggestion: `Move start date to ${new Date(suggestedStart).toLocaleDateString()}`,
+            issueType: 'dependency_timing',
+            autoFixPayload: { plannedStartDate: suggestedStart },
+          });
         }
-        deps.push({
-          fromId: i.id,
-          fromName: i.name,
-          toId,
-          toName,
-          type: 'depends_on',
-          hasTimingConflict,
-        });
       }
+
+      deps.push({
+        id: dep.id,
+        fromId: dep.fromInitiativeId,
+        fromName: predecessorName,
+        toId: dep.toInitiativeId,
+        toName: successorName,
+        type: dep.type,
+        hasTimingConflict,
+      });
     }
 
     // Timeline: bars
@@ -243,7 +267,7 @@ export function usePortfolioAnalysisData(initiatives: PortfolioInitiative[]) {
       timelineIssues,
       initiatives: initiatives as any[],
     };
-  }, [initiatives]);
+  }, [dependencySource, initiatives]);
 }
 
 /** Compute completeness for a single initiative (pure, no hooks) */

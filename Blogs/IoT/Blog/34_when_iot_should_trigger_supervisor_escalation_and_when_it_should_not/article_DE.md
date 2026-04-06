@@ -1,66 +1,58 @@
-# Wann IoT eine Supervisor-Eskalation ausloesen sollte und wann nicht
+# Wann IoT eine Supervisor-Eskalation auslösen sollte — und wann nicht
 
-Zielpersona: Produktionsvorgesetzter / Bereichsleitung / Werksleitung Operations  
+Zielpersona: Produktionsvorgesetzter / Bereichsleiter / Plant Operations Lead  
+Funnel-Phase: Consideration  
+Kernproblem: Vorgesetzte werden in jeden gelben Blip gezogen, Eskalation wird zu Rauschen und die Fläche hört auf, Alarme ernst zu nehmen  
+Hauptversprechen: eine Supervisor-Eskalationspolicy: welche maschinengestützten Bedingungen die Führung unterbrechen, welche bei der Linie bleiben und wie Overrides die Regel ändern
 
-Funnel-Phase: Consideration Kernproblem: Vorgesetzte werden in jeden gelben Ausschlag gezogen, Eskalation wird zum Rauschen und die Flaeche hoert auf, Alarme ernst zu nehmen Hauptversprechen: eine Supervisor-Eskalationspolicy: welche maschinengestuetzten Bedingungen Fuehrung unterbrechen, welche bei der Linie bleiben und wie Overrides die Regel aendern Vorgesetzte sollten kein menschlicher Alarm-Router sein.
+Vorgesetzte sollten kein menschlicher Alarm-Router sein.
 
-Wenn IoT denselben Stream wie Bediener sendet, haben Sie nur ein zweites Postfach hinzugefuegt. Eskalation ist eine Governance-Entscheidung, keine Default-Einstellung im Sensor-Stack.
+Wenn IoT ihnen denselben Stream wie den Bedienern schickt, haben Sie nur Postfach-Müdigkeit dupliziert. Eskalation ist Governance: Sie definiert, wann sich Entscheidungsbefugnis ändert, wann risiko über Schichten hinweg entsteht und wann Kunden-, Sicherheits- oder Qualitätsexposition die Unterbrechung der Führung rechtfertigt.
 
-Loesen Sie **Supervisor-Eskalation** aus, wenn eine Bedingung aendert, wer den naechsten sicheren Schritt entscheiden darf, oder wenn die Linie ihr schriftliches Playbook innerhalb eines definierten Zeitfensters ausgeschoepft hat.
+Vorgesetzte bewachen Durchsatz, Arbeit und Kundenverpflichtungen. Wenn ihr Kanal dem Bedienerkanal gleicht, optimieren sie ums Überleben, indem sie beide ignorieren. Entwerfen Sie Eskalation so, dass Vorgesetzte nur sehen, was ihre Autorität braucht — nicht alles, was Aufmerksamkeit braucht.
 
-Loesen Sie **keine** Supervisor-Eskalation aus fuer Lernsignale, Einzelspitzen ohne Bestaetigung oder Bedingungen, die die Schicht mit einem bestehenden Arbeitsauftragspfad schliessen kann. Sichtbarkeit kann auf dem Screen bleiben. Eskalation sollte selten genug sein, um glaubwuerdig zu bleiben.
+## Wann Supervisor-Eskalation gerechtfertigt ist
+
+Eskalieren Sie, wenn die Bedingung ändert, wer den nächsten sicheren Schritt entscheiden darf, oder wenn die Linie ihr schriftliches Playbook innerhalb eines vereinbarten Zeitfensters erschöpft hat. Beispiele: wiederholte ungeplante Stillstände mit unbekannter Ursache nach der Standard-Check-Sequenz; sich verschlechternde Signale, die Werksgrenzen kreuzen, während Wartungsrückstand die Reaktion blockiert; Qualitäts-Proxies, die Schwellen kreuzen, die mit der Qualitätsführung vereinbart sind.
+
+## Wann nicht
+
+Eskalieren Sie keine Lernsignale, keine Einzelspitzen ohne Korrelation und keine Bedingungen, die die Schicht über einen bestehenden Arbeitsauftragspfad schließen kann. Sichtbarkeit kann auf dem Bildschirm bleiben, während Bediener und Instandhaltung Standardarbeit ausführen. Eskalation sollte selten genug sein, um glaubwürdig zu bleiben.
 
 ## Bediener-Notify von Supervisor-Interrupt trennen
 
-Entwerfen Sie zwei Kanaele: **Bedienerkanal**: schneller Kontext, lokale Verifikation, Standardreaktionen; **Supervisorkanal**: Autoritaetswechsel, risiko ueber Schichten, Kunden- oder Sicherheits-Exposure, Ressourcenkonflikt.
+Entwerfen Sie zwei Kanäle mit Absicht: bedienerseitig schneller Kontext für Verifikation und Standardreaktionen; vorgesetztenseitig Autorität, Ressourcenkonflikt, Kundenexposition oder Sicherheitsrisiko. Wenn beide Kanäle dieselben Events bekommen, trainieren Vorgesetzte sich, IoT zu ignorieren.
 
-Wenn beide Kanaele dieselben Events erhalten, trainieren Vorgesetzte, IoT zu ignorieren.
+## Den Vertrag in Werkssprache schreiben
 
-## Eskalationsmatrix
+Veröffentlichen Sie Beispiele: ungeplanter Stillstand eskaliert, wenn die Ursache nach den vereinbarten Checks unbekannt ist oder sich das Muster innerhalb der Woche wiederholt; Qualitätsrisiko eskaliert an benannten Schwellen; Material- oder Personalkonflikte eskalieren, wenn sie den Plan in einem von Ihnen definierten Fenster bedrohen. Kombinieren Sie mit Override-Regeln, damit temporäre Umgehungen die Eskalation nicht still und für immer weiten.
 
-| Bedingung | Eskalation zum Supervisor wenn |
-|---|---|
-| Ungeplanter Stopp | unbekannte Ursache nach vereinbarter Check-Sequenz oder Wiederholungsmuster in derselben Woche |
-| degradierendes Signal | Trend kreuzt werksdefiniertes Limit UND Instandhaltungs-Backlog blockiert Reaktion |
-| Qualitaetsproxy | Ausschussrisiko kreuzt mit Qualitaetsleitung vereinbarten Schwellwert |
-| Override aktiv | Override laeuft ohne Schliessungsplan ab |
-| Sicherheit oder Compliance | jede Verletzung nicht verhandelbarer Standards |
+**Eskalations-Vertrauens-Check:** Vorgesetzte erhalten weniger, höher bedeutungsvolle Events; Bediener besitzen die erste Reaktionsschicht; jede Auto-Eskalation hat Owner und Review-Datum; monatliches Review schneidet Rauschen mit dokumentierter Begründung zu.
 
-| Bedingung | Supervisor meist nicht eskalieren |
-|---|---|
-| Erster Schwellwert auf neuer Baseline | loggen, pruefen, tunen |
-| Einzel-Sensor-Spike | zuerst bestaetigen |
-| kleine Zyklusvarianz | beobachten bis Muster entsteht |
-| Vendor-Demo-Alarm | deaktivieren oder umklassifizieren |
+## Die Matrix nach Nachtschichten neu prüfen
 
-## Schrittfolge: Eskalationsvertrag definieren
+Eskalation, die um zehn Uhr morgens richtig wirkt, kann eine dünne Nachtcrew erdrücken. Testen Sie Routing gegen echte Besetzung, nicht ideale. Wenn die Nacht das Playbook nicht ausführen kann, ändern Sie das Playbook oder die Abdeckung — tun Sie nicht so, als ob die Regel funktioniert, weil sie im Konferenzraum gut aussah.
 
-Fuenf Stopp-Szenarien listen, die Ihr Werk ohne IoT schon ernst nimmt; jedes mappen auf: nur Bediener, Instandhaltungs-Ticket, Supervisor-Interrupt; Timeboxen ergaenzen: wie lange die Linie das Problem besitzt, bevor eskaliert wird; Override-Regeln veroeffentlichen: wer Timeboxen verlaengern darf und wie lange; monatlich mit Signalqualitaets-Stichproben reviewen, nicht nur mit Alarmzaehlern.
+## DBR77 IoT und glaubwürdige Eskalation
 
-## Checkliste: Eskalation vertrauenswuerdig halten
+DBR77 IoT unterstützt diese Policy, wenn Alerting Linienreaktion von Führungs-Interrupt trennt und Review-Gewohnheiten Rauschen kürzen statt es zu addieren.
 
-- [ ] Supervisor-Alarme sind Teilmenge der Bediener-Alarme, kein Duplikat-Feed
-- [ ] jeder Supervisor-Alarm hat eine benannte naechste Autoritaetsaktion
-- [ ] Eskalationsgruende sind fuer Planungsreviews codiert, nicht nur fuer Heatmaps
-- [ ] falsche Eskalationen erhalten RCA wie Safety-Near-Miss-Reviews
-- [ ] Standards referenzieren: Sicherheit, Qualitaet, Lieferung, Regulatorik
+Supervisor-Eskalation sollte selten, bedeutsam und an Autorität gebunden sein — keine Kopie jedes Bediener-Pings. Ruhige Eskalation bewahert Ernsthaftigkeit.
 
-## Wann Echtzeit-Sichtbarkeit den Eskalationspfad nicht aendern soll
+## Das Versprechen des Artikels praktisch halten
 
-Echtzeit-Sichtbarkeit hilft frueher zu sehen. Sie hebt nicht automatisch die Schwere.
+Übersetzen Sie die Ideen oben in eine Gewohnheit, die Ihr Werk im nächsten Monat halten kann: ein Review, das stattfindet, ein Wörterbuch, das Menschen öffnen, eine Routing-Regel, der sie vertrauen, oder ein Drill, den sie laufen lassen. Große Programme stocken, wenn alles gleichzeitig losläuft. Kleine Schleifen verstärken sich, wenn sie sich wiederholen.
 
-Wenn Sichtbarkeit allein eskaliert, ueberlasten Sie Vorgesetzte in normalen Varianzwochen.
+## Leadership-Checkpoint für das nächste Ops-Review
 
-## Was das fuer DBR77 IoT bedeutet
+Stellen Sie eine einfache Frage: Was hat sich diesen Monat auf der Fläche geändert, weil IoT die Realität klarer — nicht lauter — gemacht hat? Wenn die Antwort vage ist, straffen Sie Umfang, Definitionen oder Review-Takt, bevor Sie den Fußabdruck erweitern. Nützliches IoT zeigt sich in ruhigeren Übergaben, schnellerer Bestätigung und weniger Kreisdiskussionen darüber, was passiert ist. Verbindungszahlen sind Inputs; Verhaltensänderung ist der Beleg.
 
-DBR77 IoT ist **Echtzeit-Maschinensichtbarkeit** mit **Edge-first Entscheidungsunterstuetzung**, kein Dashboard, das alle gleich pingt.
+## Auf dem Shopfloor ankommen
 
-Retrofit-freundliche Konnektivitaet laesst Eskalationsregeln auf Brownfield-Assets ausrichten, ohne vollstaendiges Steuerungs-Rewrite.
+Dieser Rat zählt nichts, wenn er im Lenkungsdeck bleibt. Der nützliche Test ist, ob die nächste Schicht mit weniger Debatte handeln kann: klarere States, weniger Mystery-Stops, schnellere Bestätigung und Eskalation, die Aufmerksamkeit respektiert. Wenn IoT funktioniert, fühlt sich die Linie weniger wie ein Gerichtssaal und mehr wie ein koordiniertes Team an — weiter laut und voll, aber orientiert an denselben Fakten.
 
-Schnelle Piloten testen Supervisor-Last in einem Bereich vor Standardisierung.
+Wenn Sie die Fläche gehen und Menschen das System noch als „der Computer“ statt „unser Bild der Linie“ beschreiben, straffen Sie Kontext, Ownership und Review, bis sich die Sprache ändert. Sprachverzug ist ein Symptom, dass die Schleife noch zu dünn ist.
 
-## Bottom line
+---
 
-Supervisor-Eskalation sollte **selten, codiert und an Autoritaet gebunden** sein.
-
-IoT gewinnt Vertrauen, wenn die Flaeche sieht, dass Fuehrung nur bei Bedingungen unterbricht, die die naechste sichere Entscheidung wirklich aendern.
+*DBR77 IoT hilft Werken, Bedienerreaktion und Supervisor-Eskalation mit klaren Regeln, kontextreichen Alarmen und review-freundlichem Tuning zu trennen. [Pilot planen](https://dbr77.com/iot) oder [Online-Demo ansehen](https://dbr77.com/demo).*

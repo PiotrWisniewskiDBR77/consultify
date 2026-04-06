@@ -1,93 +1,70 @@
-# Was man in den ersten 90 Tagen eines IIoT Rollouts messen sollte
+# Was Sie in den ersten 90 Tagen des IIoT-Rollouts messen sollten
 
 Zielpersona: Plant Manager / Operations Leader / COO  
+Funnel-Stufe: Decision  
+Kernproblem: Viele Hersteller starten IIoT-Piloten, verfolgen aber in der ersten Phase die falschen Indikatoren, was es schwerer macht, operativen Wert zu beweisen und zu entscheiden, was skaliert werden soll  
+Hauptversprechen: Die ersten 90 Tage des IIoT-Rollouts sollten messen, ob eine operative Schleife klarer, schneller und wiederholbarer wird – nicht nur, ob das Werk mehr Assets verbunden hat
 
-Funnel-Phase: Decision Kernproblem: viele Hersteller starten IIoT-Piloten, verfolgen in der ersten Phase aber die falschen Kennzahlen, wodurch es schwerer wird, operativen Wert zu beweisen und zu entscheiden, was skaliert werden soll Hauptversprechen: in den ersten 90 Tagen eines IIoT Rollouts sollte gemessen werden, ob ein operativer Loop klarer, schneller und wiederholbarer wird und nicht nur, ob mehr Assets verbunden wurden
+Das erste Quartal eines IIoT-Piloten beantwortet eine Frage, ob Sie sie laut stellen oder nicht: wird das Teil davon, wie wir das Werk führen, oder wird es zu einem weiteren Bildschirm, den wir tolerieren?
 
-Die ersten 90 Tage eines IIoT Rollouts praegen, wofuer das Werk das System haelt.
+Belohnen frühe Metriken Aktivität – Verbindungen, Dashboards, Alarmvolumen – optimiert die Organisation das Falsche. Belohnen sie Kontrolle – Vertrauen, Kontextqualität, Reaktionsverhalten, ehrliches Review – verdient der Pilot eine glaubwürdige nächste Entscheidung.
 
-Wenn das Team frueh die falschen Dinge misst, kann der Rollout aktiv wirken, ohne nuetzlich zu werden. Deshalb sind die ersten Kennzahlen so wichtig.
+Der erste Monat ist, wo Gewohnheiten entstehen; das Quartal testet, ob sie echtem Druck standhalten. Für diesen Monats-eins-Rhythmus siehe [wie die ersten 30 Tage IIoT in einem Brownfield-Werk aussehen sollten](../21_what_the_first_30_days_of_iiot_should_look_like_in_a_brownfield_factory/article_DE.md).
 
-Sie definieren, ob der Pilot bewertet wird als: Verbindungsprojekt; Reporting-Layer; oder operativer Verbesserungs-Loop. Die staerkste Wahl ist die dritte.
+Behandeln Sie frühe Metriken wie Fluginstrumente beim Start: wenige kritische Anzeigen, nicht jeder mögliche Sensor. Zu viele Indikatoren früh macht es leicht, Bewegung zu feiern, während man verpasst, ob das Flugzeug steigt.
 
-## Warum fruehe Messung oft schieflaeuft
+## Warum frühe Messung in die falsche Richtung driftet
 
-Viele Teams beginnen mit Kennzahlen, die leicht zu zaehlen sind: Anzahl verbundener Maschinen; Anzahl von Dashboards; Anzahl von Nutzern; Anzahl von Alerts. Diese Kennzahlen sind sichtbar. Aber sie beweisen nicht, dass das Werk besser reagiert.
+Einfache Zähler sind verführerisch. Sie wirken in Lenkungstreffen entschieden. Sie umgehen das härtere Urteil: hat jemand wegen dieses Systems anders reagiert? Bevorzugen Sie in den ersten 90 Tagen Maße, die Schleifenqualität zeigen, nicht Geschäftigkeit.
 
-In den ersten 90 Tagen sollte die Messung zeigen, ob das System die Kontrolle verbessert und nicht nur Aktivitaet.
+## Metriken an dem Problem verankern, das Sie lösen wollen
 
-## Mit dem Problem beginnen, das der Rollout verbessern soll
+Bevor Sie Indikatoren wählen, formulieren Sie die operative Absicht klar: welches wiederkehrende Thema, wo es auftaucht, wer heute reagiert, welche Verzögerung schmerzt und wie bessere Kontrolle auf dem Shopfloor aussehen würde. Vage Absicht produziert generische Metriken und schwache Schlüsse.
 
-Bevor das Werk Kennzahlen auswaehlt, sollte es beantworten: welches wiederkehrende Problem wir adressieren; wo es auftritt; wer heute reagiert; welche Verzoegerung heute besteht; wie bessere Kontrolle aussehen wuerde.
+## Signalzuverlässigkeit: kann der Shopfloor eine Schicht darauf setzen?
 
-Wenn diese Antworten vage sind, werden die ersten Kennzahlen meist generisch und schwach.
+Werden Stopps konsistent erfasst? Trenden fehlende oder falsche Ereignisse nach unten? Handeln Menschen auf dem Signal oder hedgen sie, weil sie ihm nicht vertrauen? Schwache Zuverlässigkeit vergiftet alles stromabwärts – Gründe, Alarme, Reviews – weil niemand Fiktion besitzen will.
 
-## Die fuenf Messgruppen, die frueh am meisten zaehlen
+## Kontextqualität: hält die Geschichte?
 
-In vielen IIoT Rollouts liegen die staerksten Kennzahlen fuer die ersten 90 Tage in fuenf Gruppen: Signalzuverlaessigkeit; Kontextqualitaet; Reaktionsgeschwindigkeit; Rueckgang von Wiederholungen; Review-Disziplin. Zusammen zeigen sie, ob der operative Loop nutzbar wird.
+Maschinenwahrheit ohne strukturierte Gründe und Ownership ist eine halbe Geschichte. Tracken Sie, ob Klassifikationen sich verbessern, ob Bedienereingabe nutzbar ist und ob Übergaben wie Kontinuität statt Neu-Erfindung lesen.
 
-## 1. Signalzuverlaessigkeit
+## Reaktionsgeschwindigkeit: wo das Geld oft steckt
 
-Das Werk sollte wissen, ob das System die richtigen Ereignisse konsistent genug erkennt, um dem Loop zu vertrauen. Nuetzliche Fragen sind:
+Zeit von Ereignis zu Bewusstsein, Bewusstsein zu Aktion, Aktion zu Eskalation und Wiedererkennung innerhalb derselben Schicht. Diese Intervalle bewegen sich oft, bevor Headline-Produktivität sich bewegt – und sie sind im Pilotfenster ehrlicher zu beobachten.
 
-- werden Stops konsistent erfasst
-- nimmt die Zahl fehlender Ereignisse ab
-- erzeugen falsche Ereignisse zu viel Rauschen
-- vertraut das Team dem Signal genug, um danach zu handeln
+## Wiederholung: lernt das Werk?
 
-Wenn die Signalzuverlaessigkeit schwach ist, wird jede nachgelagerte Kennzahl schwerer zu verteidigen.
+Der Pilot soll Wiederholungen schwerer ignorierbar machen. Beobachten Sie, ob dasselbe Ausfallskript mit derselben Ambiguität zurückkehrt oder ob die Organisation Muster schneller diskutiert und adressiert. Lernen ist operativ, nicht rhetorisch.
 
-## 2. Kontextqualitaet
+## Review-Disziplin: ändern die Daten Meetings?
 
-Maschinendaten allein erklaeren selten genug.
+Live-Systeme sterben, wenn Review-Gewohnheiten informell bleiben. Messen Sie, ob Kadenz hält, Definitionen stabil bleiben, Aktionen zugewiesen werden und das Team erklären kann, was sich seit dem letzten Review geändert hat. IIoT-Wert ist so viel Kalenderdisziplin wie Byte-Fluss.
 
-In den ersten 90 Tagen sollte auch gemessen werden, ob das Werk den Kontext verbessert, etwa bei: Stopgruenden; Qualitaet von Operator-Inputs; Konsistenz der Klassifikation; Klarheit der Ownership.
+Wenn das Quartal endet, verbinden Sie diese Gewohnheit mit [wie man IIoT-Wert nach dem ersten Pilot reviewt](../20_how_to_review_iiot_value_after_the_first_pilot/article_DE.md).
 
-Das ist wichtig, weil ein Live-Feed ohne nutzbaren Kontext Transparenz ohne Verstaendnis schafft.
+## Gestufte Wahrheit erwarten, keine sofortige Transformation
 
-## 3. Reaktionsgeschwindigkeit
+Ein Quartal kann Schleifenverbesserung beweisen, ohne unternehmensweite finanzielle Transformation zu beweisen. Das ist Erfolg, wenn der Proof real ist. Zu frühes Überfordern zerstört Glaubwürdigkeit schneller als ein bescheidener, ehrlicher Win.
 
-Einer der klarsten fruehen Indikatoren ist, ob das Werk schneller reagiert, sobald der Loop live ist.
+**90-Tage-Entscheidungslinse:** vertrauenswürdiges Signal, nutzbarer Kontext, schnellere Reaktion, weniger blinde Wiederholungen, stabiles Review. Wenn das hält, werden Expansionsdebatten sicherer.
 
-Das kann beinhalten: Zeit vom Ereignis bis zur Wahrnehmung; Zeit von der Wahrnehmung bis zur Reaktion; Zeit von der Reaktion bis zur Eskalation; verlorene Zeit, bevor ein wiederkehrendes Problem besprochen wird.
+## Eitelkeit früh herunterspielen
 
-Das ist frueh oft aussagekraeftiger, als zu schnell breite Produktivitaetsveraenderungen behaupten zu wollen.
+Dashboard-Sprawl, vorzeitiges ROI-Theater und Architektur-Vollständigkeit sind Ablenkungen, es sei denn, sie verbessern direkt die Schleife, die Sie pilotiert haben. Halten Sie die Kernfrage sichtbar: wird ein operativer Pfad messbar besser?
 
-## 4. Rueckgang von Wiederholungen
+## DBR77 IoT im ersten Quartal
 
-Der Pilot sollte auch zeigen, ob bekannte Probleme seltener auftreten oder mit besserer Disziplin bearbeitet werden. Dafuer braucht es keine dramatischen Aussagen.
+DBR77 IoT ist relevant, wenn Leadership frühe Evidenz um Signal, Kontext, Reaktion, Wiederholung und Review gruppiert will – Kontrollsignale statt Konnektivitäts-Prahlerei.
 
-Es braucht die Beobachtung, ob: derselbe Stop seltener wiederkehrt; dieselbe Ursache klarer erfasst wird; Follow-up-Aktionen verlaesslicher stattfinden; das Team schneller aus wiederkehrenden Mustern lernt. Das ist der Beginn echten operativen Werts.
+Messen Sie die ersten 90 Tage als Test einer operativen Schleife, nicht als Wettbewerb verbundener Assets. So verdient IIoT das Recht zu skalieren.
 
-## 5. Review-Disziplin
+## Auf dem Shopfloor ankommen
 
-Viele Rollouts werden schwach, weil die Daten live sind, die Review-Gewohnheit aber schwach bleibt.
+Dieser Rat zählt nichts, wenn er im Lenkungsdeck bleibt. Der nützliche Test ist, ob die nächste Schicht mit weniger Debatte handeln kann: klarere States, weniger Mystery-Stops, schnellere Bestätigung und Eskalation, die Aufmerksamkeit respektiert.
 
-In den ersten 90 Tagen sollte das Werk messen: ob Review-Meetings wirklich stattfinden; ob jedes Mal dieselben Definitionen verwendet werden; ob Aktionen klar zugewiesen werden; ob das Team erklaeren kann, was sich seit dem letzten Review veraendert hat.
+Wenn Menschen das System noch als „der Computer“ statt „unser Bild der Linie“ beschreiben, straffen Sie Kontext, Ownership und Review, bis sich die Sprache ändert. Sprachverzögerung ist ein Symptom, dass die Schleife noch zu dünn ist.
 
-Das ist wichtig, weil IIoT-Wert genauso stark von operativem Rhythmus wie von Datenfluss abhaengt.
+---
 
-## Reality check: die ersten 90 Tage sollten nicht als volle Transformation bewertet werden
-
-Einer der groessten fruehen Fehler ist die Erwartung, dass der Pilot in einem Quartal eine vollstaendige Transformation beweist. Das erzeugt Druck zu uebertriebenen Behauptungen. Die staerkere Erwartung ist einfacher. Die ersten 90 Tage sollten beweisen:
-
-- das Signal ist vertrauenswuerdig genug
-- der Kontext ist nutzbar genug
-- der Reaktions-Loop ist schneller
-- die Review-Gewohnheit wird konsistenter
-
-Wenn das geschieht, hat das Werk eine staerkere Basis fuer einen breiteren Rollout.
-
-## Was man nicht zu frueh ueberbetonen sollte
-
-In der ersten Phase ueberbetonen Teams oft: Dashboard-Volumen; breite ROI-Behauptungen; Gesamtwerk-Transparenz; Vollstaendigkeit der Architektur. Diese Dinge koennen spaeter wichtig sein. Sie sollten aber nicht von der Kernfrage ablenken: wird ein operativer Loop messbar besser?
-
-## Was das fuer DBR77 IoT bedeutet
-
-DBR77 IoT unterstuetzt diese Logik fuer die ersten 90 Tage gut, weil das Positioning bereits fokussiert ist auf: Proof auf Linienebene; Erfassung von Operator-Kontext; Alerts und Eskalation; schnelle Pilot-Deployment; Rollout-Disziplin vor dem Scale.
-
-So kann das Werk nuetzliche fruehe Kennzahlen reviewen, statt sich hinter hochrangiger Reporting-Aktivitaet zu verstecken.
-
-## Fazit
-
-In den ersten 90 Tagen eines IIoT Rollouts sollte das Werk messen, ob ein operativer Loop verlaesslicher, besser erklaert, schneller in der Reaktion und konsistenter im Review wird. Das gibt der Fuehrung Vertrauen fuer die Skalierung. Nicht allein die Zahl verbundener Assets.
+*DBR77 IoT hilft Werken, IIoT-Wert in den ersten 90 Tagen mit Schichtsichtbarkeit, Bedienerkontext, Alarmen und review-fertiger operativer Wahrheit zu beweisen. [Pilot planen](https://dbr77.com/iot) oder [Online-Demo ansehen](https://dbr77.com/demo).*

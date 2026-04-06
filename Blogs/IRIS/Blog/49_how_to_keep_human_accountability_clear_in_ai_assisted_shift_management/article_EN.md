@@ -5,60 +5,31 @@ Funnel stage: Decision
 Core problem: when assistance suggests or routes work, day-to-day accountability blurs between "the system said" and "I decided," especially across handoffs  
 Main promise: named accountability per shift slice for claims, approvals, overrides, and closures with simple language operators can repeat
 
-Keep human accountability clear by assigning non-overlapping roles: who must claim assisted items, who can approve act behaviors, who owns overrides and reason codes, and who signs closure for safety and quality holds. Publish a one-page shift charter that repeats the same fields in the system. Train supervisors to forbid "the AI decided" as a verbal handoff; the record must show a named human state change. If accountability needs a meeting to interpret, operators will fill the gap with informal ownership. Assistance can recommend. Humans still carry the line.
+Assistance can recommend. Humans still carry the line. Accountability blurs when nobody can tell whether a state change was a suggestion, a draft, an approval, or an override—especially across handoffs, vacation coverage, and night shift pressure. Keep accountability clear by assigning non-overlapping roles: who must claim assisted items, who can approve act behaviors, who owns overrides with mandatory reason codes, and who signs closure where standard work requires it. Publish a one-page shift charter that repeats the same fields the system uses. Train supervisors to forbid “the AI decided” as a verbal handoff; the record must show a named human state change.
 
-## Charter template: four accountability slots per shift
+The charter should name four slots each shift: a claim owner for first response on assisted queues, approval authority for releasing protected actions or holds, override authority with reason codes, and closure signers where required—plus deputies written down, not “call someone.”
 
-Claim owner: first human responsible for acting on assisted queue items; approval authority: roles that can release act behaviors or holds; override authority: who may change routing with mandatory reason codes; closure signer: who attests completion against standard work where required. Deputies must be named in the same document, not "call someone."
+Handoff fields protect accountability when they live in the system: counts of open assisted items by severity, items waiting on approval with role and age, false-positive themes from the prior shift, flags for trials, vendor feeds, or degraded sensors, and open incidents with linked task IDs. Paper can supplement; it cannot become the system of record without rebuilding ambiguity.
 
-## Checklist: handoff fields that protect accountability
+Language shapes liability. Say “I approved release under policy version X” instead of “the system cleared it.” Say “I overrode with reason code Y” instead of “it was wrong.” Say “I claim this queue now” instead of “someone should look.” Shared accountability feels comfortable early and becomes a liability sponge later. Named accountability feels strict until audits and labor conversations go smoothly.
 
-- count of open assisted items by severity  
-- list of items waiting on approval with role and age  
-- known false-positive themes from prior shift  
-- explicit flags: trials, vendor tool feeds, degraded sensors  
-- incidents still open with linked task IDs
+Pause assistance when training gaps appear on required roles, when sensor maintenance creates known bad data, or when labor coverage falls below published approval minimums. Pausing is a decision: log who authorized it and for how long.
 
-Paper summaries may supplement. They cannot replace system fields.
+IRIS keeps names attached to states—not to chat—when claims, approvals, overrides, pauses, and closures are recorded as operational state changes in one execution record the next shift can read.
 
-## Framework: language rules for supervisors (printable)
+For governance and exception neighbors, see [How to Govern AI Decisions Across Shifts and Functions](../37_how_to_govern_ai_decisions_across_shifts_and_functions/article_EN.md), [What Factory Jobs Change First in AI-Assisted Operations](../35_what_factory_jobs_change_first_in_ai_assisted_operations/article_EN.md), and [How to Design an Exception Handling Model for AI-Assisted Operations](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_EN.md).
 
-| Do say | Do not say |
-|---|---|
-| "I approved release under policy v12" | "the system cleared it" |
-| "I overrode with reason code X" | "it was wrong" |
-| "I claim this queue now" | "someone should look" |
+Shift management is where abstract AI policy meets muscle memory. If the incoming lead cannot tell what changed overnight—modes, queues, approvals pending, vendor feeds active—then accountability will default to stories. The fix is not more meetings at handover. It is fewer mysteries: system fields that answer the questions supervisors already ask, repeated the same way across teams, so “I thought someone handled it” stops being a normal sentence.
 
-Language shapes liability and training.
+Union and works council contexts add a fairness requirement: accountability rules must be predictable, evenly applied, and visible enough to review when disputes arise. That is another reason “the AI decided” is poisonous language. It hides the human decision that actually moved state. Clear language and clear records protect workers and supervisors alike—because they make disagreements resolvable without turning every incident into a credibility contest.
 
-## Comparison: shared accountability versus named accountability
+Clarity is a document plus a system habit. Name the roles, enforce the fields, and coach the language on the floor.
 
-| Element | Shared | Named |
-|---|---|---|
-| speed feels | comfortable on day one | strict |
-| audit outcome | ambiguous | traceable |
-| union or council clarity | weak | stronger |
-| repeat issues | frequent | easier to correct |
+## The operational bottom line
 
-Shared accountability is a liability sponge.
+The promise of this article—named accountability per shift slice for claims, approvals, overrides, and closures with simple language operators can repeat—becomes operational only when it changes how work moves: clearer ownership, faster first assignment, and closure you can trace without inbox archaeology. For “How to Keep Human Accountability Clear in AI-Assisted Shift Management,” treat that as the acceptance test: the next shift should be able to read what happened, what was approved, and what remains open—without relying on verbal reconstruction.
 
-## When assistance should pause for a shift
-
-Training gap detected on a required role; sensor maintenance window with known bad data; labor coverage below published minimum for approvals. Pausing is a decision. Log who authorized the pause and for how long.
-
-## Why IRIS keeps names attached to states, not to chat
-
-DBR77 IRIS matters here because accountability stays clear only when claims, approvals, overrides, pauses, and closures are state changes in one record instead of stories retold at handoff.
-
-That turns responsibility into a field the next shift can read, not an interpretation they inherit verbally.
-
-For the closest governance neighbors, see [How to Govern AI Decisions Across Shifts and Functions](../37_how_to_govern_ai_decisions_across_shifts_and_functions/article_EN.md), [What Factory Jobs Change First in AI-Assisted Operations](../35_what_factory_jobs_change_first_in_ai_assisted_operations/article_EN.md), and [How to Design an Exception Handling Model for AI-Assisted Operations](../41_how_to_design_an_exception_handling_model_for_ai_assisted_operations/article_EN.md).
-
-## Final takeaway
-
-Clarity is a document plus a system habit.
-
-Name the roles, enforce the fields, and coach the language on the floor.
+That standard is not about software perfection; it is about operational honesty: fewer mystery handoffs, fewer truths reconciled only in meetings, and more days where the system record matches what the floor would say if you stopped them mid-task.
 
 ---
 
