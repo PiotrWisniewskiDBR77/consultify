@@ -33,6 +33,7 @@ import {
   type ResultsTrackedInitiative,
 } from './kpiDomain';
 import { loadResultsKpis } from './kpiRuntime';
+import { createResultsShowcaseSnapshot } from './resultsShowcaseData';
 
 interface ResultsRuntimeChipProps {
   label: string;
@@ -47,6 +48,35 @@ const ResultsRuntimeChip: React.FC<ResultsRuntimeChipProps> = ({ label, value, d
     <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
       {value}
     </span>
+  </div>
+);
+
+interface ResultsControlSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  ariaLabel: string;
+}
+
+const ResultsControlSelect: React.FC<ResultsControlSelectProps> = ({
+  value,
+  onChange,
+  options,
+  ariaLabel,
+}) => (
+  <div className="relative">
+    <select
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="h-9 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] px-3 pr-8 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   </div>
 );
 
@@ -74,6 +104,7 @@ export const ResultsHub: React.FC = () => {
   const [trackedInitiatives, setTrackedInitiatives] = useState<ResultsTrackedInitiative[]>([]);
   const [loading, setLoading] = useState(true);
   const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
+  const [resultsSource, setResultsSource] = useState<'v8' | 'legacy' | 'empty' | 'showcase'>('empty');
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('results');
@@ -84,9 +115,11 @@ export const ResultsHub: React.FC = () => {
       const result = await loadResultsKpis();
       setTrackedInitiatives(result.initiatives);
       setKpis(result.kpis);
+      setResultsSource(result.source);
     } catch {
       setTrackedInitiatives([]);
       setKpis([]);
+      setResultsSource('empty');
     } finally {
       setLoading(false);
     }
@@ -215,6 +248,80 @@ export const ResultsHub: React.FC = () => {
     return items;
   }, [trackedInitiatives, lifecycleFilter, searchQuery]);
 
+  const activeSignalFilter = useMemo(() => {
+    const needsEntryFilter = activeFilters.find((filter) => filter.column === 'needsEntry');
+    if (needsEntryFilter?.value === 'true') return 'needs-entry';
+
+    const statusFilter = activeFilters.find((filter) => filter.column === 'status');
+    if (statusFilter?.value) return statusFilter.value;
+
+    const queueFilter = activeFilters.find((filter) => filter.column === 'queue');
+    if (queueFilter?.value) return queueFilter.value;
+
+    return 'all';
+  }, [activeFilters]);
+
+  const replaceResultsFilters = useCallback((nextFilter: FilterChip | null, columns: string[]) => {
+    setActiveFilters((previous) => {
+      const rest = previous.filter((filter) => !columns.includes(filter.column));
+      return nextFilter ? [...rest, nextFilter] : rest;
+    });
+  }, []);
+
+  const applySignalFilter = useCallback(
+    (value: string) => {
+      if (value === 'all') {
+        replaceResultsFilters(null, ['needsEntry', 'status', 'queue']);
+        return;
+      }
+
+      if (value === 'needs-entry') {
+        replaceResultsFilters(
+          {
+            id: 'needsEntry:true',
+            column: 'needsEntry',
+            value: 'true',
+            label: t('results.filters.needsEntry', 'Needs entry'),
+          },
+          ['needsEntry', 'status', 'queue']
+        );
+        return;
+      }
+
+      if (value === 'discrepancy' || value === 'requires-review') {
+        replaceResultsFilters(
+          {
+            id: `queue:${value}`,
+            column: 'queue',
+            value,
+            label:
+              value === 'discrepancy'
+                ? t('results.kpi.queue.discrepancy', 'Discrepancy')
+                : t('results.kpi.queue.requiresReview', 'Requires review'),
+          },
+          ['needsEntry', 'status', 'queue']
+        );
+        return;
+      }
+
+      replaceResultsFilters(
+        {
+          id: `status:${value}`,
+          column: 'status',
+          value,
+          label:
+            value === 'below'
+              ? t('results.filters.below', 'Below')
+              : value === 'on-target'
+                ? t('results.filters.onTarget', 'On target')
+                : t('results.filters.noData', 'No data'),
+        },
+        ['needsEntry', 'status', 'queue']
+      );
+    },
+    [replaceResultsFilters, t]
+  );
+
   const handleDeleteKpi = useCallback(
     async (kpiId: string) => {
       const ok = window.confirm(
@@ -283,266 +390,219 @@ export const ResultsHub: React.FC = () => {
 
   const openRoiPicker = useCallback(() => setRoiOpenModal(true), []);
 
+  const runtimeSnapshot = useMemo(() => {
+    if (
+      resultsSource === 'showcase' &&
+      (!v8Snapshot || (v8Snapshot.kpiScorecard.totalKpis || 0) === 0)
+    ) {
+      return createResultsShowcaseSnapshot();
+    }
+    return v8Snapshot;
+  }, [resultsSource, v8Snapshot]);
+
   const governedRuntimeStrip = useMemo(() => {
-    if (!v8Snapshot) {
+    if (!runtimeSnapshot) {
       return null;
     }
 
     return (
       <>
+        {resultsSource === 'showcase' && (
+          <ResultsRuntimeChip
+            label={t('results.runtime.showcase', 'Showcase data')}
+            value={t('results.runtime.local', 'local')}
+            dotClassName="bg-sky-400"
+          />
+        )}
         <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
         <ResultsRuntimeChip
           label={t('results.runtime.governedKpis', 'Governed KPIs')}
-          value={String(v8Snapshot.kpiScorecard.totalKpis || 0)}
+          value={String(runtimeSnapshot.kpiScorecard.totalKpis || 0)}
           dotClassName="bg-emerald-400"
         />
         <ResultsRuntimeChip
           label={t('results.runtime.deviations', 'Deviations')}
-          value={String(v8Snapshot.activeDeviationsCount || 0)}
+          value={String(runtimeSnapshot.activeDeviationsCount || 0)}
           dotClassName="bg-amber-400"
         />
         <ResultsRuntimeChip
           label={t('results.runtime.realizedRoi', 'Realized ROI')}
-          value={v8Snapshot.roiDashboard.totalRealized.toLocaleString()}
+          value={runtimeSnapshot.roiDashboard.totalRealized.toLocaleString()}
           dotClassName="bg-violet-400"
         />
         <ResultsRuntimeChip
           label={t('results.runtime.reconciliation', 'Reconciliation')}
-          value={String(v8Snapshot.reconciliationHealth.unresolvedCount || 0)}
+          value={String(runtimeSnapshot.reconciliationHealth.unresolvedCount || 0)}
           dotClassName="bg-cyan-400"
         />
       </>
     );
-  }, [t, v8Snapshot]);
+  }, [resultsSource, runtimeSnapshot, t]);
 
   const setCatalogFilter = useCallback((filters: FilterChip[] = []) => {
     setActiveTab('results_kpi');
     setActiveFilters(filters);
   }, []);
 
+  const rightControls = useMemo(() => {
+    const lifecycleOptions = [
+      { value: 'all', label: t('common.all', 'All') },
+      { value: 'in-realization', label: t('results.lifecycle.inRealization', 'In realization') },
+      { value: 'realized', label: t('results.lifecycle.realized', 'Realized') },
+    ];
+
+    if (activeTab === 'results_initiatives' || activeTab === 'results_reports') {
+      return (
+        <ResultsControlSelect
+          ariaLabel={t('results.filters.lifecycle', 'Lifecycle filter')}
+          value={lifecycleFilter}
+          onChange={(value) => setLifecycleFilter(value as ResultsLifecycleFilter)}
+          options={lifecycleOptions}
+        />
+      );
+    }
+
+    if (activeTab === 'results_kpi') {
+      return (
+        <div className="flex items-center gap-2">
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.lifecycle', 'Lifecycle filter')}
+            value={lifecycleFilter}
+            onChange={(value) => setLifecycleFilter(value as ResultsLifecycleFilter)}
+            options={lifecycleOptions}
+          />
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.phase', 'Observation phase filter')}
+            value={observationPhaseFilter}
+            onChange={(value) =>
+              setObservationPhaseFilter(value as 'all' | 'realization' | 'post-implementation')
+            }
+            options={[
+              { value: 'all', label: `${t('common.phase', 'Phase')}: ${t('common.all', 'All')}` },
+              { value: 'realization', label: t('results.phase.realization', 'Realization') },
+              {
+                value: 'post-implementation',
+                label: t('results.phase.postImplementation', 'Post-implementation'),
+              },
+            ]}
+          />
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.signal', 'Signal filter')}
+            value={activeSignalFilter}
+            onChange={applySignalFilter}
+            options={[
+              { value: 'all', label: t('common.all', 'All signals') },
+              { value: 'needs-entry', label: t('results.filters.needsEntry', 'Needs entry') },
+              { value: 'below', label: t('results.filters.below', 'Below') },
+              { value: 'on-target', label: t('results.filters.onTarget', 'On target') },
+              { value: 'no-data', label: t('results.filters.noData', 'No data') },
+              { value: 'discrepancy', label: t('results.kpi.queue.discrepancy', 'Discrepancy') },
+              {
+                value: 'requires-review',
+                label: t('results.kpi.queue.requiresReview', 'Requires review'),
+              },
+            ]}
+          />
+        </div>
+      );
+    }
+
+    return null;
+  }, [activeSignalFilter, activeTab, applySignalFilter, lifecycleFilter, observationPhaseFilter, t]);
+
   const commandRowContent = useMemo(() => {
     const chipBase =
       'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-    const badgeBase =
-      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
-    const lifecycleChip = (value: ResultsLifecycleFilter, label: string) => (
+    const actionButton = (label: string, onClick: () => void, active = false) => (
       <button
         type="button"
-        onClick={() => setLifecycleFilter(value)}
+        onClick={onClick}
         className={`${chipBase} ${
-          lifecycleFilter === value
+          active
             ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
             : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
         }`}
       >
-        <span>{label}</span>
+        {label}
       </button>
     );
 
     if (activeTab === 'results_initiatives') {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
-          {lifecycleChip('all', t('common.all', 'All'))}
-          {lifecycleChip('in-realization', t('results.lifecycle.inRealization', 'In realization'))}
-          {lifecycleChip('realized', t('results.lifecycle.realized', 'Realized'))}
-          <button
-            type="button"
-            onClick={() => setActiveTab('results_kpi')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
-          >
-            <Target size={14} className="text-emerald-400" />
-            <span>{t('results.tabs.kpi', 'KPI')}</span>
-          </button>
+          {actionButton(t('results.actions.openKpiLane', 'Open KPI lane'), () => setActiveTab('results_kpi'))}
+          {actionButton(
+            t('results.actions.createReport', 'Create KPI report'),
+            () => {
+              setActiveTab('results_reports');
+              setKpiReportCreateNonce(Date.now());
+            }
+          )}
           {governedRuntimeStrip}
         </div>
       );
     }
 
     if (activeTab === 'results_kpi') {
-      const base = (() => {
-        let items = [...lifecycleScopedKpis];
-        if (searchQuery) {
-          const q = searchQuery.toLowerCase();
-          items = items.filter(
-            (k) =>
-              k.name.toLowerCase().includes(q) ||
-              k.initiativeName?.toLowerCase().includes(q) ||
-              (k.linkedInitiatives || []).some((i) => i.name.toLowerCase().includes(q)) ||
-              k.description?.toLowerCase().includes(q)
-          );
-        }
-        return items;
-      })();
-
-      const counts = base.reduce(
+      const queueCounts = lifecycleScopedKpis.reduce(
         (acc, k) => {
-          acc.total += 1;
           if (k.needsEntry) acc.needsEntry += 1;
-          acc.status[String(k.status)] = (acc.status[String(k.status)] || 0) + 1;
+          if (k.status === 'below') acc.below += 1;
+          if (k.status === 'on-target') acc.onTarget += 1;
+          if (k.status === 'no-data') acc.noData += 1;
+          if (k.openDeviationCase) acc.discrepancy += 1;
+          if (k.needsEntry || k.status === 'below' || k.openDeviationCase) acc.requiresReview += 1;
           return acc;
         },
         {
-          total: 0,
           needsEntry: 0,
-          status: {} as Record<string, number>,
+          below: 0,
+          onTarget: 0,
+          noData: 0,
+          discrepancy: 0,
+          requiresReview: 0,
         }
       );
 
-      const setFilter = (col: string, value: string, label: string) => {
-        setActiveFilters([{ id: `${col}:${value}`, column: col, value, label }]);
-      };
-
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
-          {lifecycleChip('all', t('common.all', 'All'))}
-          {lifecycleChip('in-realization', t('results.lifecycle.inRealization', 'In realization'))}
-          {lifecycleChip('realized', t('results.lifecycle.realized', 'Realized'))}
-          <button
-            type="button"
-            onClick={() => setActiveFilters([])}
-            className={`${chipBase} ${
-              activeFilters.length === 0
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title={t('common.all', 'All')}
-          >
-            <span>{t('common.all', 'All')}</span>
-            <span
-              className={`${badgeBase} ${
-                activeFilters.length === 0
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              {counts.total}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setObservationPhaseFilter('all')}
-            className={`${chipBase} ${
-              observationPhaseFilter === 'all'
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-          >
-            <span>{t('common.phase', 'Phase')}: {t('common.all', 'All')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setObservationPhaseFilter('realization')}
-            className={`${chipBase} ${
-              observationPhaseFilter === 'realization'
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-          >
-            <span>{t('results.phase.realization', 'Realization')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setObservationPhaseFilter('post-implementation')}
-            className={`${chipBase} ${
-              observationPhaseFilter === 'post-implementation'
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-          >
-            <span>{t('results.phase.postImplementation', 'Post-implementation')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              setFilter('needsEntry', 'true', t('results.filters.needsEntry', 'Needs entry'))
+          {actionButton(
+            `${t('results.filters.needsEntry', 'Needs entry')} ${queueCounts.needsEntry}`,
+            () => applySignalFilter('needs-entry'),
+            activeSignalFilter === 'needs-entry'
+          )}
+          {actionButton(
+            `${t('results.filters.below', 'Below')} ${queueCounts.below}`,
+            () => applySignalFilter('below'),
+            activeSignalFilter === 'below'
+          )}
+          {actionButton(
+            `${t('results.filters.onTarget', 'On target')} ${queueCounts.onTarget}`,
+            () => applySignalFilter('on-target'),
+            activeSignalFilter === 'on-target'
+          )}
+          {actionButton(
+            `${t('results.filters.noData', 'No data')} ${queueCounts.noData}`,
+            () => applySignalFilter('no-data'),
+            activeSignalFilter === 'no-data'
+          )}
+          {actionButton(
+            `${t('results.kpi.queue.discrepancy', 'Discrepancy')} ${queueCounts.discrepancy}`,
+            () => applySignalFilter('discrepancy'),
+            activeSignalFilter === 'discrepancy'
+          )}
+          {actionButton(
+            `${t('results.kpi.queue.requiresReview', 'Requires review')} ${queueCounts.requiresReview}`,
+            () => applySignalFilter('requires-review'),
+            activeSignalFilter === 'requires-review'
+          )}
+          {actionButton(
+            t('results.actions.createReport', 'Create KPI report'),
+            () => {
+              setActiveTab('results_reports');
+              setKpiReportCreateNonce(Date.now());
             }
-            className={`${chipBase} ${
-              activeFilters.some((f) => f.column === 'needsEntry' && f.value === 'true')
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title={t('results.filters.needsEntry', 'Needs entry')}
-          >
-            <span>{t('results.filters.needsEntry', 'Needs entry')}</span>
-            <span
-              className={`${badgeBase} ${
-                activeFilters.some((f) => f.column === 'needsEntry' && f.value === 'true')
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              {counts.needsEntry}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFilter('status', 'below', t('results.filters.below', 'Below'))}
-            className={`${chipBase} ${
-              activeFilters.some((f) => f.column === 'status' && f.value === 'below')
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title={t('results.filters.below', 'Below')}
-          >
-            <span>{t('results.filters.below', 'Below')}</span>
-            <span
-              className={`${badgeBase} ${
-                activeFilters.some((f) => f.column === 'status' && f.value === 'below')
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              {counts.status['below'] || 0}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              setFilter('status', 'on-target', t('results.filters.onTarget', 'On target'))
-            }
-            className={`${chipBase} ${
-              activeFilters.some((f) => f.column === 'status' && f.value === 'on-target')
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title={t('results.filters.onTarget', 'On target')}
-          >
-            <span>{t('results.filters.onTarget', 'On target')}</span>
-            <span
-              className={`${badgeBase} ${
-                activeFilters.some((f) => f.column === 'status' && f.value === 'on-target')
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              {counts.status['on-target'] || 0}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFilter('status', 'no-data', t('results.filters.noData', 'No data'))}
-            className={`${chipBase} ${
-              activeFilters.some((f) => f.column === 'status' && f.value === 'no-data')
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-            }`}
-            title={t('results.filters.noData', 'No data')}
-          >
-            <span>{t('results.filters.noData', 'No data')}</span>
-            <span
-              className={`${badgeBase} ${
-                activeFilters.some((f) => f.column === 'status' && f.value === 'no-data')
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              {counts.status['no-data'] || 0}
-            </span>
-          </button>
+          )}
           {governedRuntimeStrip}
         </div>
       );
@@ -594,26 +654,12 @@ export const ResultsHub: React.FC = () => {
     if (activeTab === 'results_reports') {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
-          {lifecycleChip('all', t('common.all', 'All'))}
-          {lifecycleChip('in-realization', t('results.lifecycle.inRealization', 'In realization'))}
-          {lifecycleChip('realized', t('results.lifecycle.realized', 'Realized'))}
-          <button
-            type="button"
-            onClick={() => setKpiReportCreateNonce(Date.now())}
-            className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
-            title={t('results.kpiReports.new', '+ New report')}
-          >
-            <Plus size={14} />
-            <span>{t('results.kpiReports.new', '+ New report')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('results_kpi')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
-          >
-            <Target size={14} className="text-amber-400" />
-            <span>{t('results.kpiReports.reviewQueue', 'Review KPI set')}</span>
-          </button>
+          {actionButton(t('results.kpiReports.new', '+ New report'), () => setKpiReportCreateNonce(Date.now()))}
+          {actionButton(t('results.kpiReports.reviewQueue', 'Review KPI set'), () => setActiveTab('results_kpi'))}
+          {actionButton(
+            t('results.actions.observedInitiatives', 'Observed initiatives'),
+            () => setActiveTab('results_initiatives')
+          )}
           {governedRuntimeStrip}
         </div>
       );
@@ -623,15 +669,13 @@ export const ResultsHub: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
     ) : null;
   }, [
-    activeFilters,
+    activeFilters.length,
+    activeSignalFilter,
     activeTab,
+    applySignalFilter,
     governedRuntimeStrip,
-    kpis,
-    lifecycleFilter,
     lifecycleScopedKpis,
-    observationPhaseFilter,
     openRoiPicker,
-    searchQuery,
     t,
   ]);
 
@@ -664,6 +708,8 @@ export const ResultsHub: React.FC = () => {
         onNewItem={
           activeTab === 'results_kpi'
             ? () => setShowCreateModal(true)
+            : activeTab === 'results_reports'
+                ? () => setKpiReportCreateNonce(Date.now())
             : activeTab === 'roi'
                 ? () => setRoiOpenModal(true)
                 : undefined
@@ -671,11 +717,14 @@ export const ResultsHub: React.FC = () => {
         newItemLabel={
           activeTab === 'results_kpi'
             ? t('results.addKpi', '+ Add KPI')
+            : activeTab === 'results_reports'
+                ? t('results.kpiReports.new', '+ New report')
             : activeTab === 'roi'
                 ? t('results.roi.add', '+ Record ROI')
                 : undefined
         }
         availableViewModes={activeTab === 'results_kpi' ? ['table', 'grid'] : ['table']}
+        rightControls={rightControls}
         commandRowContent={commandRowContent}
       >
         {activeTab === 'results_initiatives' ? (

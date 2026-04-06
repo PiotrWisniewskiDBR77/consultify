@@ -17,6 +17,10 @@ import { type RowAction } from '../shared/RowActionsMenu';
 import { buildKpiQueueGroups } from './kpiDomain';
 import { loadResultsKpis } from './kpiRuntime';
 import type { ResultsKPI, ResultsLifecycleFilter, ResultsTrackedInitiative } from './kpiDomain';
+import {
+  createResultsShowcaseReports,
+  shouldUseResultsShowcaseData,
+} from './resultsShowcaseData';
 
 export interface ResultsKpiReportsViewProps {
   activeFilters: FilterChip[];
@@ -105,13 +109,14 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     try {
       const res: any = await Api.get('/results/kpi-reports');
       const list = (res?.data || []) as any[];
+      const reports = list.length === 0 && shouldUseResultsShowcaseData() ? createResultsShowcaseReports() : list;
       setRows(
-        (list || []).map((r: any) => ({
+        reports.map((r: any) => ({
           id: r.reportId || r.id,
           reportId: r.reportId || r.id,
           snapshotId: r.snapshotId,
           type: 'KPI',
-          name: r.title,
+          name: r.title || r.name,
           period:
             r.periodStart && r.periodEnd
               ? `${r.periodStart} → ${r.periodEnd}`
@@ -121,7 +126,20 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         }))
       );
     } catch {
-      setRows([]);
+      setRows(
+        shouldUseResultsShowcaseData()
+          ? createResultsShowcaseReports().map((r) => ({
+              id: r.id,
+              reportId: r.reportId,
+              snapshotId: r.snapshotId,
+              type: 'KPI',
+              name: r.title,
+              period: `${r.periodStart} → ${r.periodEnd}`,
+              status: r.status,
+              updatedAt: new Date(r.updatedAt).toLocaleDateString(),
+            }))
+          : []
+      );
     } finally {
       setLoading(false);
     }

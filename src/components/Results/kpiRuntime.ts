@@ -6,22 +6,38 @@ import {
   type ResultsKPI,
   type ResultsTrackedInitiative,
 } from './kpiDomain';
+import {
+  createResultsShowcaseInitiatives,
+  createResultsShowcaseKpis,
+  shouldUseResultsShowcaseData,
+} from './resultsShowcaseData';
 
 export interface KpiCatalogRuntimeResult {
   initiatives: ResultsTrackedInitiative[];
   kpis: ResultsKPI[];
-  source: 'v8' | 'legacy' | 'empty';
+  source: 'v8' | 'legacy' | 'empty' | 'showcase';
 }
 
 export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
   try {
     const catalog = await V8ResultsApi.getKpiCatalog();
+    const initiatives = Array.isArray(catalog?.initiatives) ? catalog.initiatives : [];
+    const kpis = mapResultsKpis(
+      Array.isArray(catalog?.kpis) ? catalog.kpis : [],
+      Array.isArray(catalog?.mappings) ? catalog.mappings : []
+    );
+
+    if (initiatives.length === 0 && kpis.length === 0 && shouldUseResultsShowcaseData()) {
+      return {
+        initiatives: createResultsShowcaseInitiatives(),
+        kpis: createResultsShowcaseKpis(),
+        source: 'showcase',
+      };
+    }
+
     return {
-      initiatives: Array.isArray(catalog?.initiatives) ? catalog.initiatives : [],
-      kpis: mapResultsKpis(
-        Array.isArray(catalog?.kpis) ? catalog.kpis : [],
-        Array.isArray(catalog?.mappings) ? catalog.mappings : []
-      ),
+      initiatives,
+      kpis,
       source: 'v8',
     };
   } catch (error) {
@@ -37,10 +53,21 @@ export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
     const kpisPayload: any = kpisRes.status === 'fulfilled' ? kpisRes.value : null;
     const mappingsPayload: any = mappingsRes.status === 'fulfilled' ? mappingsRes.value : null;
 
+    const initiatives: ResultsTrackedInitiative[] = [];
+    const kpis = mapResultsKpis(kpisPayload?.data || [], mappingsPayload?.data || []);
+
+    if (initiatives.length === 0 && kpis.length === 0 && shouldUseResultsShowcaseData()) {
+      return {
+        initiatives: createResultsShowcaseInitiatives(),
+        kpis: createResultsShowcaseKpis(),
+        source: 'showcase',
+      };
+    }
+
     return {
       initiatives: [],
-      kpis: mapResultsKpis(kpisPayload?.data || [], mappingsPayload?.data || []),
-      source: (kpisPayload?.data || mappingsPayload?.data) ? 'legacy' : 'empty',
+      kpis,
+      source: kpis.length > 0 ? 'legacy' : 'empty',
     };
   }
 }

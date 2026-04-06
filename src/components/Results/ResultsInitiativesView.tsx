@@ -16,11 +16,32 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
 
   if (initiatives.length === 0) {
     return (
-      <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-        {t(
-          'results.initiatives.empty',
-          'No tracked initiatives for the selected lifecycle bucket yet.'
-        )}
+      <div className="p-4">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('results.initiatives.emptyTitle', 'No tracked initiatives in this bucket')}
+          </div>
+          <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            {t(
+              'results.initiatives.empty',
+              'No tracked initiatives for the selected lifecycle bucket yet.'
+            )}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+              {t('results.lifecycle.inRealization', 'In realization')}
+            </span>
+            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+              {t('results.lifecycle.realized', 'Realized')}
+            </span>
+            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+              {t('results.tabs.kpi', 'KPI')}
+            </span>
+            <span className="rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1">
+              {t('results.tabs.kpiReports', 'Reports')}
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
