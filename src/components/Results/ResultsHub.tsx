@@ -51,6 +51,22 @@ const ResultsRuntimeChip: React.FC<ResultsRuntimeChipProps> = ({ label, value, d
   </div>
 );
 
+interface ResultsInfoChipProps {
+  label: string;
+  value: string | number;
+  dotClassName?: string;
+}
+
+const ResultsInfoChip: React.FC<ResultsInfoChipProps> = ({ label, value, dotClassName = 'bg-slate-400' }) => (
+  <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60">
+    <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotClassName}`} />
+    <span>{label}</span>
+    <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200">
+      {value}
+    </span>
+  </div>
+);
+
 interface ResultsControlSelectProps {
   value: string;
   onChange: (value: string) => void;
@@ -446,9 +462,12 @@ export const ResultsHub: React.FC = () => {
 
   const rightControls = useMemo(() => {
     const lifecycleOptions = [
-      { value: 'all', label: t('common.all', 'All') },
-      { value: 'in-realization', label: t('results.lifecycle.inRealization', 'In realization') },
-      { value: 'realized', label: t('results.lifecycle.realized', 'Realized') },
+      { value: 'all', label: t('results.filters.lifecycleAll', 'Lifecycle: All') },
+      {
+        value: 'in-realization',
+        label: t('results.filters.lifecycleInRealization', 'Lifecycle: In realization'),
+      },
+      { value: 'realized', label: t('results.filters.lifecycleRealized', 'Lifecycle: Realized') },
     ];
 
     if (activeTab === 'results_initiatives' || activeTab === 'results_reports') {
@@ -478,11 +497,11 @@ export const ResultsHub: React.FC = () => {
               setObservationPhaseFilter(value as 'all' | 'realization' | 'post-implementation')
             }
             options={[
-              { value: 'all', label: `${t('common.phase', 'Phase')}: ${t('common.all', 'All')}` },
-              { value: 'realization', label: t('results.phase.realization', 'Realization') },
+              { value: 'all', label: t('results.filters.phaseAll', 'Phase: All') },
+              { value: 'realization', label: t('results.filters.phaseRealization', 'Phase: Realization') },
               {
                 value: 'post-implementation',
-                label: t('results.phase.postImplementation', 'Post-implementation'),
+                label: t('results.filters.phasePostImplementation', 'Phase: Post-implementation'),
               },
             ]}
           />
@@ -491,15 +510,15 @@ export const ResultsHub: React.FC = () => {
             value={activeSignalFilter}
             onChange={applySignalFilter}
             options={[
-              { value: 'all', label: t('common.all', 'All signals') },
-              { value: 'needs-entry', label: t('results.filters.needsEntry', 'Needs entry') },
-              { value: 'below', label: t('results.filters.below', 'Below') },
-              { value: 'on-target', label: t('results.filters.onTarget', 'On target') },
-              { value: 'no-data', label: t('results.filters.noData', 'No data') },
-              { value: 'discrepancy', label: t('results.kpi.queue.discrepancy', 'Discrepancy') },
+              { value: 'all', label: t('results.filters.signalAll', 'Signal: All') },
+              { value: 'needs-entry', label: t('results.filters.signalNeedsEntry', 'Signal: Needs entry') },
+              { value: 'below', label: t('results.filters.signalBelow', 'Signal: Below target') },
+              { value: 'on-target', label: t('results.filters.signalOnTarget', 'Signal: On target') },
+              { value: 'no-data', label: t('results.filters.signalNoData', 'Signal: No data') },
+              { value: 'discrepancy', label: t('results.filters.signalDiscrepancy', 'Signal: Discrepancy') },
               {
                 value: 'requires-review',
-                label: t('results.kpi.queue.requiresReview', 'Requires review'),
+                label: t('results.filters.signalRequiresReview', 'Signal: Requires review'),
               },
             ]}
           />
@@ -528,24 +547,16 @@ export const ResultsHub: React.FC = () => {
     );
 
     if (activeTab === 'results_initiatives') {
-      return (
-        <div className="flex items-center gap-2 overflow-x-auto">
-          {actionButton(t('results.actions.openKpiLane', 'Open KPI lane'), () => setActiveTab('results_kpi'))}
-          {actionButton(
-            t('results.actions.createReport', 'Create KPI report'),
-            () => {
-              setActiveTab('results_reports');
-              setKpiReportCreateNonce(Date.now());
-            }
-          )}
-          {governedRuntimeStrip}
-        </div>
-      );
+      return governedRuntimeStrip ? (
+        <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
+      ) : null;
     }
 
     if (activeTab === 'results_kpi') {
-      const queueCounts = lifecycleScopedKpis.reduce(
+      const scopeKpis = filterKpisByObservationPhase(lifecycleScopedKpis, observationPhaseFilter);
+      const queueCounts = scopeKpis.reduce(
         (acc, k) => {
+          acc.total += 1;
           if (k.needsEntry) acc.needsEntry += 1;
           if (k.status === 'below') acc.below += 1;
           if (k.status === 'on-target') acc.onTarget += 1;
@@ -555,6 +566,7 @@ export const ResultsHub: React.FC = () => {
           return acc;
         },
         {
+          total: 0,
           needsEntry: 0,
           below: 0,
           onTarget: 0,
@@ -567,42 +579,37 @@ export const ResultsHub: React.FC = () => {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
           {actionButton(
-            `${t('results.filters.needsEntry', 'Needs entry')} ${queueCounts.needsEntry}`,
-            () => applySignalFilter('needs-entry'),
-            activeSignalFilter === 'needs-entry'
-          )}
-          {actionButton(
-            `${t('results.filters.below', 'Below')} ${queueCounts.below}`,
-            () => applySignalFilter('below'),
-            activeSignalFilter === 'below'
-          )}
-          {actionButton(
-            `${t('results.filters.onTarget', 'On target')} ${queueCounts.onTarget}`,
-            () => applySignalFilter('on-target'),
-            activeSignalFilter === 'on-target'
-          )}
-          {actionButton(
-            `${t('results.filters.noData', 'No data')} ${queueCounts.noData}`,
-            () => applySignalFilter('no-data'),
-            activeSignalFilter === 'no-data'
-          )}
-          {actionButton(
-            `${t('results.kpi.queue.discrepancy', 'Discrepancy')} ${queueCounts.discrepancy}`,
-            () => applySignalFilter('discrepancy'),
-            activeSignalFilter === 'discrepancy'
-          )}
-          {actionButton(
-            `${t('results.kpi.queue.requiresReview', 'Requires review')} ${queueCounts.requiresReview}`,
-            () => applySignalFilter('requires-review'),
-            activeSignalFilter === 'requires-review'
-          )}
-          {actionButton(
             t('results.actions.createReport', 'Create KPI report'),
             () => {
               setActiveTab('results_reports');
               setKpiReportCreateNonce(Date.now());
             }
           )}
+          <ResultsInfoChip
+            label={t('results.runtime.kpiSet', 'KPI set')}
+            value={queueCounts.total}
+            dotClassName="bg-sky-400"
+          />
+          <ResultsInfoChip
+            label={t('results.filters.needsEntry', 'Needs entry')}
+            value={queueCounts.needsEntry}
+            dotClassName="bg-amber-400"
+          />
+          <ResultsInfoChip
+            label={t('results.filters.below', 'Below')}
+            value={queueCounts.below}
+            dotClassName="bg-red-400"
+          />
+          <ResultsInfoChip
+            label={t('results.kpi.queue.discrepancy', 'Discrepancy')}
+            value={queueCounts.discrepancy}
+            dotClassName="bg-rose-400"
+          />
+          <ResultsInfoChip
+            label={t('results.kpi.queue.requiresReview', 'Requires review')}
+            value={queueCounts.requiresReview}
+            dotClassName="bg-violet-400"
+          />
           {governedRuntimeStrip}
         </div>
       );
@@ -652,29 +659,19 @@ export const ResultsHub: React.FC = () => {
     }
 
     if (activeTab === 'results_reports') {
-      return (
-        <div className="flex items-center gap-2 overflow-x-auto">
-          {actionButton(t('results.kpiReports.new', '+ New report'), () => setKpiReportCreateNonce(Date.now()))}
-          {actionButton(t('results.kpiReports.reviewQueue', 'Review KPI set'), () => setActiveTab('results_kpi'))}
-          {actionButton(
-            t('results.actions.observedInitiatives', 'Observed initiatives'),
-            () => setActiveTab('results_initiatives')
-          )}
-          {governedRuntimeStrip}
-        </div>
-      );
+      return governedRuntimeStrip ? (
+        <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
+      ) : null;
     }
 
     return governedRuntimeStrip ? (
       <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
     ) : null;
   }, [
-    activeFilters.length,
-    activeSignalFilter,
     activeTab,
-    applySignalFilter,
     governedRuntimeStrip,
     lifecycleScopedKpis,
+    observationPhaseFilter,
     openRoiPicker,
     t,
   ]);
