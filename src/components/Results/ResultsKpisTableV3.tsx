@@ -25,7 +25,7 @@ import {
   type TableRow,
 } from '../shared/ModuleHub/FilterableTable';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import type { KPIStatus, KPITrend, ResultsKPI } from './ResultsHub';
+import type { KPIStatus, KPITrend, KpiDrawerSection, ResultsKPI } from './kpiDomain';
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
@@ -91,7 +91,7 @@ export interface ResultsKpisTableV3Props {
   kpis: ResultsKPI[];
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
-  onOpenKpi: (kpiId: string) => void;
+  onOpenKpi: (kpiId: string, section?: KpiDrawerSection) => void;
   onDeleteKpi?: (kpiId: string) => void | Promise<void>;
 }
 
@@ -335,7 +335,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         setSelectedId(id);
         setDetailsExpanded(false);
       }}
-      onOpenFull={(id) => onOpenKpi(id)}
+      onOpenFull={(id) => onOpenKpi(id, 'summary')}
       itemIds={itemIds}
       getItemById={(id) => list.find((x) => x.id === id) ?? null}
       renderPreview={(kpi) => {
@@ -535,14 +535,14 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
               {
                 label: t('common.open', 'Open'),
                 icon: ExternalLink,
-                onClick: () => onOpenKpi(kpi.id),
+                onClick: () => onOpenKpi(kpi.id, 'summary'),
                 colorScheme: 'primary',
                 shortcut: 'O',
               },
               {
                 label: t('results.actions.recordValue', 'Record value'),
                 icon: Target,
-                onClick: () => onOpenKpi(kpi.id),
+                onClick: () => onOpenKpi(kpi.id, 'record'),
                 colorScheme: 'neutral',
                 shortcut: 'V',
               },
@@ -580,32 +580,38 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
         emptyMessage={t('results.emptyState', 'No KPIs found')}
         onRowClick={(row) => setSelectedId(row.id)}
-        onRowDoubleClick={(row) => onOpenKpi(row.id)}
+        onRowDoubleClick={(row) => onOpenKpi(row.id, 'summary')}
         getRowActions={(row) => [
           {
             id: 'open',
             label: t('common.open', 'Open'),
             icon: ExternalLink,
             variant: 'primary',
-            onClick: () => onOpenKpi(row.id),
+            onClick: () => onOpenKpi(row.id, 'summary'),
           },
           {
             id: 'record',
             label: t('results.actions.recordValue', 'Record value'),
             icon: Target,
-            onClick: () => onOpenKpi(row.id),
+            onClick: () => onOpenKpi(row.id, 'record'),
           },
           {
             id: 'edit',
             label: t('common.edit', 'Edit'),
             icon: Pencil,
-            onClick: () => onOpenKpi(row.id),
+            onClick: () => onOpenKpi(row.id, 'settings'),
           },
           {
             id: 'links',
             label: t('results.actions.manageLinks', 'Manage links'),
             icon: Link2,
-            onClick: () => onOpenKpi(row.id),
+            onClick: () => onOpenKpi(row.id, 'links'),
+          },
+          {
+            id: 'history',
+            label: t('results.drawer.history', 'History'),
+            icon: Copy,
+            onClick: () => onOpenKpi(row.id, 'history'),
           },
           ...(onDeleteKpi
             ? ([

@@ -44,14 +44,6 @@ vi.mock('../../../src/components/shared/ModuleHub/useModuleOpenDocuments', () =>
   }),
 }));
 
-vi.mock('../../../src/components/Results/ResultsSummaryView', () => ({
-  ResultsSummaryView: () => <div>results-summary-view</div>,
-}));
-
-vi.mock('../../../src/components/Results/OperationalAnalysisView', () => ({
-  OperationalAnalysisView: () => <div>operational-analysis-view</div>,
-}));
-
 vi.mock('../../../src/components/Results/ResultsKpiReportsView', () => ({
   ResultsKpiReportsView: () => <div>results-kpi-reports-view</div>,
 }));
@@ -181,6 +173,7 @@ describe('ResultsHub V8 runtime strip', () => {
       organizationId: 'dbr77',
       kpis: [],
       mappings: [],
+      initiatives: [],
     } as any);
   });
 
@@ -205,7 +198,7 @@ describe('ResultsHub V8 runtime strip', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
 
     await waitFor(() => {
-      expect(screen.getByTestId('active-tab')).toHaveTextContent('kpis');
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
     });
 
     expect(screen.getByText('Governed KPIs')).toBeInTheDocument();
@@ -236,7 +229,7 @@ describe('ResultsHub V8 runtime strip', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
 
     await waitFor(() => {
-      expect(screen.getByTestId('active-tab')).toHaveTextContent('kpis');
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
       expect(screen.getByTestId('results-kpi-count')).toHaveTextContent('0');
     });
 
@@ -261,6 +254,7 @@ describe('ResultsHub V8 runtime strip', () => {
         },
       ],
       mappings: [],
+      initiatives: [],
     } as any);
     vi.mocked(V8ResultsApi.deleteKpi).mockResolvedValue({ success: true } as any);
 
@@ -307,6 +301,7 @@ describe('ResultsHub V8 runtime strip', () => {
         },
       ],
       mappings: [],
+      initiatives: [],
     } as any);
     vi.mocked(V8ResultsApi.deleteKpi).mockRejectedValue({ status: 404 });
     vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
@@ -354,6 +349,7 @@ describe('ResultsHub V8 runtime strip', () => {
         },
       ],
       mappings: [],
+      initiatives: [],
     } as any);
 
     render(
@@ -369,7 +365,7 @@ describe('ResultsHub V8 runtime strip', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
     await waitFor(() => {
-      expect(screen.getByTestId('active-tab')).toHaveTextContent('kpis');
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'add-action' }));

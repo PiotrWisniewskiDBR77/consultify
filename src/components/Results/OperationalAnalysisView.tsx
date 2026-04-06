@@ -13,7 +13,15 @@ import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/r
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
-import type { KPIStatus, KPITrend, ResultsKPI } from './ResultsHub';
+import {
+  deriveNeedsEntry,
+  deriveStatus,
+  deriveTrend,
+  mapResultsKpis,
+  type KPIStatus,
+  type KPITrend,
+  type ResultsKPI,
+} from './kpiDomain';
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
@@ -26,42 +34,6 @@ const TREND_ICON: Record<KPITrend, { Icon: typeof ArrowUp; color: string }> = {
   down: { Icon: ArrowDown, color: 'text-red-400' },
   stable: { Icon: ArrowRight, color: 'text-slate-400' },
 };
-
-function deriveStatus(kpi: { latestValue?: number | null; isOnTarget?: boolean }): KPIStatus {
-  if (kpi.latestValue == null) return 'no-data';
-  return kpi.isOnTarget ? 'on-target' : 'below';
-}
-
-function deriveTrend(kpi: { latestValue?: number | null; prevValue?: number | null }): KPITrend {
-  if (kpi.latestValue == null || kpi.prevValue == null) return 'stable';
-  const a = Number(kpi.latestValue);
-  const b = Number(kpi.prevValue);
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return 'stable';
-  if (a > b) return 'up';
-  if (a < b) return 'down';
-  return 'stable';
-}
-
-function deriveNeedsEntry(kpi: {
-  latestMeasurementDate?: string | null;
-  measurementFrequency?: string;
-}): boolean {
-  const latest = kpi.latestMeasurementDate;
-  if (!latest) return true;
-  const d = new Date(latest);
-  if (Number.isNaN(d.getTime())) return true;
-  const now = new Date();
-  const freq = String(kpi.measurementFrequency || 'MONTHLY').toUpperCase();
-  const diffDays = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
-  if (freq === 'DAILY') return diffDays > 2;
-  if (freq === 'WEEKLY') return diffDays > 8;
-  if (freq === 'MONTHLY')
-    return d.getFullYear() < now.getFullYear() || d.getMonth() < now.getMonth();
-  // QUARTERLY
-  const q = (dt: Date) => Math.floor(dt.getMonth() / 3) + 1;
-  if (d.getFullYear() !== now.getFullYear()) return d.getFullYear() < now.getFullYear();
-  return q(d) < q(now);
-}
 
 type SortOption = 'worst' | 'best' | 'recent';
 
@@ -129,30 +101,7 @@ export const OperationalAnalysisView: React.FC<OperationalAnalysisViewProps> = (
         byKpi.set(kpiId, arr);
       }
 
-      const mapped: ResultsKPI[] = (kpisList || []).map((k: any) => {
-        const kpiId = String(k?.id ?? '').trim();
-        const linked = kpiId ? byKpi.get(kpiId) || [] : [];
-        const legacyInitiativeName = k?.initiativeName || k?.initiative_name || null;
-        const derivedInitiativeName =
-          legacyInitiativeName ||
-          (linked.length === 1
-            ? linked[0]?.name
-            : linked.length > 1
-              ? `${linked[0]?.name} +${linked.length - 1}`
-              : null);
-
-        return {
-          ...k,
-          initiativeName: derivedInitiativeName || undefined,
-          linkedInitiatives: linked,
-          linkedInitiativesCount: linked.length,
-          status: deriveStatus(k),
-          trend: deriveTrend(k),
-          needsEntry: deriveNeedsEntry(k),
-        } as ResultsKPI;
-      });
-
-      setKpis(mapped);
+      setKpis(mapResultsKpis(kpisList, mappingsList));
     } catch {
       // silently fail
     } finally {

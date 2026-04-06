@@ -12,10 +12,13 @@ import {
 } from '@/services/api/v8/results';
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
+import type { KpiDrawerSection } from './kpiDomain';
+
 interface KPITimeSeriesDrawerProps {
   kpiId: string;
   onClose: () => void;
   onValueRecorded?: () => void;
+  initialSection?: KpiDrawerSection;
 }
 
 type QuickStat = { label: string; value: string; color?: string };
@@ -64,6 +67,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   kpiId,
   onClose,
   onValueRecorded,
+  initialSection,
 }) => {
   const { t } = useTranslation();
   const [kpi, setKpi] = useState<InitiativeKPI | null>(null);
@@ -107,6 +111,11 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [initiativeSearch, setInitiativeSearch] = useState('');
   const [mappings, setMappings] = useState<KpiMappingRow[]>([]);
   const [mappingBusy, setMappingBusy] = useState(false);
+  const [activeSection, setActiveSection] = useState<KpiDrawerSection>(initialSection || 'summary');
+
+  useEffect(() => {
+    setActiveSection(initialSection || 'summary');
+  }, [initialSection, kpiId]);
 
   useEffect(() => {
     (async () => {
@@ -479,6 +488,26 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     return [...measurements].reverse().slice(-12);
   }, [measurements]);
 
+  useEffect(() => {
+    const targets: Partial<Record<KpiDrawerSection, string>> = {
+      deviation: 'kpi-drawer-deviation',
+      record: 'kpi-drawer-record',
+      history: 'kpi-drawer-history',
+      settings: 'kpi-drawer-settings',
+      links: 'kpi-drawer-links',
+      danger: 'kpi-drawer-danger',
+    };
+
+    const targetId = targets[activeSection];
+    if (!targetId) return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 40);
+
+    return () => window.clearTimeout(timer);
+  }, [activeSection, loading]);
+
   const inputCls =
     'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors';
 
@@ -671,8 +700,32 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             </div>
           ) : (
             <div className="p-5 space-y-6">
+              <div className="flex flex-wrap gap-2">
+                {([
+                  ['summary', t('common.overview', 'Overview')],
+                  ['deviation', t('results.deviation.title', 'Deviation case')],
+                  ['record', t('results.drawer.recordTitle', 'Record New Value')],
+                  ['history', t('results.drawer.history', 'History')],
+                  ['settings', t('results.drawer.settingsTitle', 'Settings')],
+                  ['links', t('results.drawer.linksTitle', 'Linked initiatives')],
+                ] as Array<[KpiDrawerSection, string]>).map(([section, label]) => (
+                  <button
+                    key={section}
+                    type="button"
+                    onClick={() => setActiveSection(section)}
+                    className={`h-8 rounded-full border px-3 text-xs font-medium transition-colors ${
+                      activeSection === section
+                        ? 'border-primary-500/40 bg-primary-500/10 text-primary-700 dark:text-primary-200'
+                        : 'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               {/* Quick Stats */}
-              <div className="grid grid-cols-4 gap-2">
+              <div id="kpi-drawer-summary" className="grid grid-cols-4 gap-2 scroll-mt-4">
                 {quickStats.map((s) => (
                   <div
                     key={s.label}
@@ -690,7 +743,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
               {/* Deviation case (R1) */}
               {openCase ? (
-                <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3">
+                <div
+                  id="kpi-drawer-deviation"
+                  className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {t('results.deviation.title', 'Deviation case')}
@@ -926,7 +982,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               </div>
 
               {/* Record new value */}
-              <div>
+              <div id="kpi-drawer-record" className="scroll-mt-4">
                 <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
                   {t('results.drawer.recordTitle', 'Record New Value')}
                 </h3>
@@ -971,7 +1027,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               </div>
 
               {/* History table */}
-              <div>
+              <div id="kpi-drawer-history" className="scroll-mt-4">
                 <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
                   {t('results.drawer.history', 'History')}
                   {measurements.length > 0 && (
@@ -1040,7 +1096,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               </div>
 
               {/* Settings */}
-              <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3">
+              <div
+                id="kpi-drawer-settings"
+                className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {t('results.drawer.settingsTitle', 'Settings')}
@@ -1274,7 +1333,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               </div>
 
               {/* Links */}
-              <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3">
+              <div
+                id="kpi-drawer-links"
+                className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {t('results.drawer.linksTitle', 'Linked initiatives')}
@@ -1349,7 +1411,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               </div>
 
               {/* Danger zone */}
-              <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+              <div
+                id="kpi-drawer-danger"
+                className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 scroll-mt-4"
+              >
                 <button
                   type="button"
                   disabled={deleting}

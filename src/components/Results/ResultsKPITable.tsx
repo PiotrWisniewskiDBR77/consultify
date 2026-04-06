@@ -15,7 +15,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import type { KPIStatus, KPITrend, ResultsKPI } from './ResultsHub';
+import type { KPIStatus, KPITrend, ResultsKPI } from './kpiDomain';
 
 // ---------------------------------------------------------------------------
 // Status Badge

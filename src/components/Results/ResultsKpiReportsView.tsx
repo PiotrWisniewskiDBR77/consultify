@@ -14,17 +14,26 @@ import {
   type TableRow,
 } from '../shared/ModuleHub/FilterableTable';
 import { type RowAction } from '../shared/RowActionsMenu';
+import { buildKpiQueueGroups } from './kpiDomain';
+import { loadResultsKpis } from './kpiRuntime';
+import type { ResultsKPI, ResultsLifecycleFilter, ResultsTrackedInitiative } from './kpiDomain';
 
 export interface ResultsKpiReportsViewProps {
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
   createNonce?: number;
+  selectedLifecycleFilter?: ResultsLifecycleFilter;
+  selectedInitiatives?: ResultsTrackedInitiative[];
+  selectedKpis?: ResultsKPI[];
 }
 
 export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   activeFilters,
   onFilterChange,
   createNonce,
+  selectedLifecycleFilter = 'all',
+  selectedInitiatives = [],
+  selectedKpis = [],
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -49,9 +58,18 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   const [availableKpis, setAvailableKpis] = useState<
     Array<{ id: string; name: string; initiativeName?: string | null }>
   >([]);
+  const [availableInitiatives, setAvailableInitiatives] = useState<
+    Array<{ id: string; name: string; status?: string | null }>
+  >([]);
   const [kpisLoading, setKpisLoading] = useState(false);
   const [kpiSearch, setKpiSearch] = useState('');
   const [selectedKpiIds, setSelectedKpiIds] = useState<string[]>([]);
+  const [selectedInitiativeIds, setSelectedInitiativeIds] = useState<string[]>([]);
+  const [reviewContext, setReviewContext] = useState({
+    requiresReview: 0,
+    discrepancy: 0,
+    needsEntry: 0,
+  });
 
   const [tasksModalOpen, setTasksModalOpen] = useState(false);
   const [tasksLoading, setTasksLoading] = useState(false);
@@ -124,32 +142,38 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     (async () => {
       setKpisLoading(true);
       try {
-        let list: any[] = [];
-        try {
-          const catalog = await V8ResultsApi.getKpiCatalog();
-          list = Array.isArray(catalog?.kpis) ? catalog.kpis : [];
-        } catch (error) {
-          if (!shouldFallbackToLegacyResults(error)) {
-            throw error;
-          }
-          const res: any = await Api.get('/benefits/kpis');
-          list = (res?.data || []) as any[];
-        }
-        const items = (list || [])
-          .map((k: any) => ({
+        const runtime = await loadResultsKpis();
+        const items = runtime.kpis
+          .map((k) => ({
             id: String(k.id || '').trim(),
             name: String(k.name || '').trim(),
-            initiativeName: (k.initiativeName || k.initiative_name || null) as string | null,
+            initiativeName: (k.initiativeName || null) as string | null,
           }))
           .filter((k) => k.id && k.name)
           .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        const queue = buildKpiQueueGroups(runtime.kpis);
         if (cancelled) return;
         setAvailableKpis(items);
         setSelectedKpiIds(items.map((k) => k.id));
+        const scopedInitiatives = (selectedInitiatives || []).map((initiative) => ({
+          id: initiative.initiativeId,
+          name: initiative.initiativeName,
+          status: initiative.initiativeStatus,
+        }));
+        setAvailableInitiatives(scopedInitiatives);
+        setSelectedInitiativeIds(scopedInitiatives.map((initiative) => initiative.id));
+        setReviewContext({
+          requiresReview: queue.requiresReview.length,
+          discrepancy: queue.discrepancy.length,
+          needsEntry: queue.needsEntry.length,
+        });
       } catch {
         if (cancelled) return;
         setAvailableKpis([]);
         setSelectedKpiIds([]);
+        setAvailableInitiatives([]);
+        setSelectedInitiativeIds([]);
+        setReviewContext({ requiresReview: 0, discrepancy: 0, needsEntry: 0 });
       } finally {
         if (!cancelled) setKpisLoading(false);
       }
@@ -157,7 +181,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [createOpen]);
+  }, [createOpen, selectedInitiatives]);
 
   const filteredKpis = useMemo(() => {
     const q = kpiSearch.trim().toLowerCase();
@@ -179,6 +203,11 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
           periodStart,
           periodEnd: periodEnd || null,
           title: title.trim() || undefined,
+          filters: {
+            lifecycleFilter: selectedLifecycleFilter,
+            initiativeIds: selectedInitiativeIds,
+          },
+          initiativeIds: selectedInitiativeIds.length ? selectedInitiativeIds : undefined,
           kpiIds: selectedKpiIds.length ? selectedKpiIds : undefined,
         };
         let res: any;
@@ -201,7 +230,16 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         setCreating(false);
       }
     },
-    [periodStart, periodEnd, title, selectedKpiIds, fetchReports, navigate]
+    [
+      periodStart,
+      periodEnd,
+      title,
+      selectedInitiativeIds,
+      selectedKpiIds,
+      fetchReports,
+      navigate,
+      selectedLifecycleFilter,
+    ]
   );
 
   const inputCls =
@@ -320,6 +358,35 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         }
       />
 
+      <div className="px-4 pb-4">
+        <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-4">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                {t('results.kpiReports.scorecardFlow', 'Scorecard and reconciliation flow')}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'results.kpiReports.scorecardFlowHint',
+                  'Reports should package signal review, discrepancy evidence, and next actions into one artifact.'
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+                {t('results.kpi.queue.requiresReview', 'Requires review')}: {reviewContext.requiresReview}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-red-500">
+                {t('results.kpi.queue.discrepancy', 'Discrepancy')}: {reviewContext.discrepancy}
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-amber-600 dark:text-amber-300">
+                {t('results.filters.needsEntry', 'Needs entry')}: {reviewContext.needsEntry}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
@@ -356,6 +423,72 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                     'e.g. Monthly KPI Review'
                   )}
                 />
+              </div>
+
+              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t('results.kpiReports.create.workflow', 'Closed-loop content')}
+                </div>
+                <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-3">
+                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] px-3 py-2">
+                    {t('results.kpiReports.create.workflowSignal', 'Signal snapshot and KPI selection')}
+                  </div>
+                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] px-3 py-2">
+                    {t('results.kpiReports.create.workflowReconcile', 'Discrepancy and reconciliation evidence')}
+                  </div>
+                  <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] px-3 py-2">
+                    {t('results.kpiReports.create.workflowActions', 'Next actions ready for execution')}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] p-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t('results.kpiReports.create.initiatives', 'Observed initiatives')}
+                </div>
+                <div className="mt-2 max-h-32 overflow-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/40 dark:bg-navy-800/40">
+                  {availableInitiatives.length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500">
+                      {t('results.initiatives.empty', 'No tracked initiatives selected.')}
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-200 dark:divide-navy-700">
+                      {availableInitiatives.map((initiative) => {
+                        const checked = selectedInitiativeIds.includes(initiative.id);
+                        return (
+                          <label
+                            key={initiative.id}
+                            className="flex items-start gap-2 p-3 cursor-pointer hover:bg-white/60 dark:hover:bg-navy-800/70 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-0.5"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked;
+                                setSelectedInitiativeIds((prev) =>
+                                  next
+                                    ? Array.from(new Set([...prev, initiative.id]))
+                                    : prev.filter((id) => id !== initiative.id)
+                                );
+                              }}
+                            />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                {initiative.name}
+                              </div>
+                              {initiative.status ? (
+                                <div className="text-xs text-slate-500 truncate">
+                                  {initiative.status}
+                                </div>
+                              ) : null}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

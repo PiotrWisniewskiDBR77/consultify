@@ -1603,6 +1603,18 @@ router.get('/:id/kpis', InitiativeController.getInitiativeKpis);
  */
 router.post('/:id/kpis', InitiativeController.createInitiativeKpi);
 
+/**
+ * PUT /api/initiatives/:id/kpis/:kpiId
+ * Update KPI assignment for an initiative
+ */
+router.put('/:id/kpis/:kpiId', InitiativeController.updateInitiativeKpi);
+
+/**
+ * DELETE /api/initiatives/:id/kpis/:kpiId
+ * Delete KPI assignment for an initiative
+ */
+router.delete('/:id/kpis/:kpiId', InitiativeController.deleteInitiativeKpi);
+
 // ==========================================
 // ROADMAP MODULE: MILESTONES ENDPOINTS
 // ==========================================

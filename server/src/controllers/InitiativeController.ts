@@ -21,6 +21,12 @@ import auditEventsService from '../services/AuditEventsService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import {
+  deleteInitiativeKpiAssignment,
+  listInitiativeKpiAssignments,
+  updateInitiativeKpiAssignment,
+  upsertInitiativeKpiAssignment,
+} from '../services/initiative/initiativeKpiAssignmentService.js';
+import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
@@ -3191,122 +3197,16 @@ export class InitiativeController {
         return;
       }
 
-      let kpis: any[] = [];
       try {
-        kpis = await queryHelpers.queryAll(
-          `SELECT 
-            id,
-            initiative_id as initiativeId,
-            name,
-            description,
-            category,
-            unit,
-            baseline_value as baselineValue,
-            target_value as targetValue,
-            current_value as currentValue,
-            progress_percentage as progressPercentage,
-            status,
-            measurement_frequency as measurementFrequency,
-            trend_data as trendData,
-            created_at as createdAt,
-            updated_at as updatedAt,
-            CASE WHEN current_value >= target_value THEN 1 ELSE 0 END as isOnTarget,
-            current_value as latestValue
-          FROM initiative_kpis 
-          WHERE initiative_id = ?
-          ORDER BY created_at DESC`,
-          [initiativeId]
-        );
+        const kpis = await listInitiativeKpiAssignments(initiativeId, orgId);
+        res.json({ kpis });
       } catch (err: any) {
-        const msg = String(err?.message || '').toLowerCase();
-        if (!msg.includes('no such column') && !msg.includes('does not exist')) {
-          throw err;
+        if (String(err?.message || '').includes('Initiative not found')) {
+          res.status(404).json({ error: 'Initiative not found' });
+          return;
         }
-        // Backward-compatible fallback for legacy initiative_kpis schema (061)
-        kpis = await queryHelpers.queryAll(
-          `SELECT
-            ik.id,
-            ik.initiative_id as initiativeId,
-            ik.name,
-            ik.description,
-            'benefits' as category,
-            ik.unit,
-            0 as baselineValue,
-            ik.target_value as targetValue,
-            COALESCE(
-              (
-                SELECT km.value
-                FROM kpi_measurements km
-                WHERE km.kpi_id = ik.id
-                ORDER BY km.measured_at DESC, km.created_at DESC
-                LIMIT 1
-              ),
-              0
-            ) as currentValue,
-            0 as progressPercentage,
-            'on_track' as status,
-            LOWER(COALESCE(ik.measurement_frequency, 'monthly')) as measurementFrequency,
-            '[]' as trendData,
-            ik.created_at as createdAt,
-            ik.updated_at as updatedAt,
-            CASE
-              WHEN COALESCE(
-                (
-                  SELECT km.value
-                  FROM kpi_measurements km
-                  WHERE km.kpi_id = ik.id
-                  ORDER BY km.measured_at DESC, km.created_at DESC
-                  LIMIT 1
-                ),
-                0
-              ) >= COALESCE(ik.target_value, 0)
-              THEN 1 ELSE 0
-            END as isOnTarget,
-            COALESCE(
-              (
-                SELECT km.value
-                FROM kpi_measurements km
-                WHERE km.kpi_id = ik.id
-                ORDER BY km.measured_at DESC, km.created_at DESC
-                LIMIT 1
-              ),
-              0
-            ) as latestValue
-          FROM initiative_kpis ik
-          WHERE ik.initiative_id = ?
-          ORDER BY ik.created_at DESC`,
-          [initiativeId]
-        );
+        throw err;
       }
-
-      // Parse trend_data JSON
-      const parsedKpis = kpis.map((kpi: any) => {
-        const baselineValue = Number(kpi.baselineValue ?? 0) || 0;
-        const targetValue = Number(kpi.targetValue ?? 0) || 0;
-        const currentValue = Number(kpi.currentValue ?? kpi.latestValue ?? baselineValue) || 0;
-        const progressPercentageRaw = Number(kpi.progressPercentage);
-        const progressPercentage = Number.isFinite(progressPercentageRaw)
-          ? progressPercentageRaw
-          : targetValue > 0
-            ? Number(((currentValue / targetValue) * 100).toFixed(1))
-            : 0;
-        return {
-          ...kpi,
-          category: kpi.category || 'benefits',
-          baselineValue,
-          targetValue,
-          currentValue,
-          latestValue: Number(kpi.latestValue ?? currentValue) || currentValue,
-          progressPercentage,
-          status: kpi.status || 'on_track',
-          trendData: safeJsonParse(kpi.trendData, []),
-          isOnTarget: Boolean(
-            kpi.isOnTarget ?? (targetValue > 0 ? currentValue >= targetValue : false)
-          ),
-        };
-      });
-
-      res.json({ kpis: parsedKpis });
     }
   );
 
@@ -3325,6 +3225,13 @@ export class InitiativeController {
         baselineValue,
         targetValue,
         measurementFrequency,
+        observationPhase,
+        trackedInRealization,
+        trackedPostImplementation,
+        observationStatus,
+        definitionSource,
+        realizationExpectation,
+        postImplementationExpectation,
       } = req.body;
 
       if (!orgId) {
@@ -3332,105 +3239,110 @@ export class InitiativeController {
         return;
       }
 
-      if (!name || !category || !unit) {
-        res.status(400).json({ error: 'Name, category, and unit are required' });
+      if (!name || !unit) {
+        res.status(400).json({ error: 'Name and unit are required' });
         return;
       }
+      try {
+        const kpi = await upsertInitiativeKpiAssignment({
+          initiativeId,
+          organizationId: orgId,
+          userId: req.user?.id || null,
+          name,
+          description: description || null,
+          category: category || 'benefits',
+          unit,
+          baselineValue,
+          targetValue,
+          measurementFrequency,
+          observationPhase,
+          trackedInRealization,
+          trackedPostImplementation,
+          observationStatus,
+          definitionSource,
+          realizationExpectation,
+          postImplementationExpectation,
+        });
 
-      // Verify initiative belongs to org
-      const initiative = await queryHelpers.queryOne(
-        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
+        res.status(201).json({
+          success: true,
+          kpi,
+        });
+      } catch (err: any) {
+        const message = String(err?.message || '');
+        if (message.includes('Initiative not found')) {
+          res.status(404).json({ error: 'Initiative not found' });
+          return;
+        }
+        if (message.includes('KPI name is required')) {
+          res.status(400).json({ error: 'KPI name is required' });
+          return;
+        }
+        throw err;
+      }
+    }
+  );
 
-      if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
+  /**
+   * Update KPI assignment for an initiative
+   */
+  static updateInitiativeKpi = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, kpiId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
         return;
       }
-
-      const kpiId = uuidv4();
-      const now = new Date().toISOString();
 
       try {
-        await queryHelpers.queryRun(
-          `INSERT INTO initiative_kpis (
-            id, initiative_id, organization_id, name, description, category, unit, 
-            baseline_value, target_value, current_value, progress_percentage, status,
-            measurement_frequency, trend_data, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'on_track', ?, '[]', ?, ?)`,
-          [
-            kpiId,
-            initiativeId,
-            orgId,
-            name,
-            description || null,
-            category,
-            unit,
-            baselineValue || 0,
-            targetValue || 0,
-            baselineValue || 0,
-            measurementFrequency || 'monthly',
-            now,
-            now,
-          ]
-        );
+        const kpi = await updateInitiativeKpiAssignment({
+          initiativeId,
+          organizationId: orgId,
+          userId: req.user?.id || null,
+          kpiId,
+          ...req.body,
+        });
+
+        res.json({ success: true, kpi });
       } catch (err: any) {
-        const msg = String(err?.message || '').toLowerCase();
-        if (!msg.includes('no column named')) {
-          throw err;
+        const message = String(err?.message || '');
+        if (message.includes('Initiative not found') || message.includes('KPI not found')) {
+          res.status(404).json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
+          return;
         }
-        // Backward-compatible insert for legacy SQLite schema
-        await queryHelpers.queryRun(
-          `INSERT INTO initiative_kpis (
-            id, initiative_id, name, description, target_value, unit, measurement_frequency, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            kpiId,
-            initiativeId,
-            name,
-            description || null,
-            targetValue || 0,
-            unit,
-            String(measurementFrequency || 'monthly').toUpperCase(),
-            now,
-            now,
-          ]
-        );
-        if (Number.isFinite(Number(baselineValue))) {
-          await queryHelpers.queryRun(
-            `INSERT INTO kpi_measurements (id, kpi_id, value, measured_at, notes, created_by, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-              uuidv4(),
-              kpiId,
-              Number(baselineValue || 0),
-              now,
-              'Initial baseline',
-              req.user?.id || null,
-              now,
-            ]
-          );
-        }
+        throw err;
+      }
+    }
+  );
+
+  /**
+   * Delete KPI assignment for an initiative
+   */
+  static deleteInitiativeKpi = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId, kpiId } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
       }
 
-      res.status(201).json({
-        success: true,
-        kpi: {
-          id: kpiId,
+      try {
+        await deleteInitiativeKpiAssignment({
           initiativeId,
-          name,
-          description,
-          category,
-          unit,
-          baselineValue: baselineValue || 0,
-          targetValue: targetValue || 0,
-          currentValue: baselineValue || 0,
-          progressPercentage: 0,
-          status: 'on_track',
-          measurementFrequency: measurementFrequency || 'monthly',
-          createdAt: now,
-        },
-      });
+          organizationId: orgId,
+          kpiId,
+        });
+        res.json({ success: true });
+      } catch (err: any) {
+        const message = String(err?.message || '');
+        if (message.includes('Initiative not found') || message.includes('KPI not found')) {
+          res.status(404).json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
+          return;
+        }
+        throw err;
+      }
     }
   );
 

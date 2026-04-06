@@ -128,10 +128,13 @@ export interface V8ResultsRoiInitiativeDetail {
 
 export interface V8ResultsKpiCatalogEntry {
   id: string;
+  mappingId?: string | null;
   initiativeId?: string | null;
   initiativeName?: string | null;
+  initiativeStatus?: string | null;
   name: string;
   description?: string | null;
+  category?: string | null;
   unit?: string | null;
   baselineValue?: number | null;
   targetValue: number | null;
@@ -155,6 +158,21 @@ export interface V8ResultsKpiCatalogEntry {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  definitionSource?: 'library' | 'initiative-custom';
+  observationPhase?: 'realization' | 'post-implementation' | 'both';
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: 'active' | 'paused' | 'completed';
+  realizationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
+  postImplementationExpectation?: {
+    baselineValue?: number | null;
+    targetValue?: number | null;
+    measurementFrequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  };
   openDeviationCase?: {
     id: string;
     severity: 'AMBER' | 'RED';
@@ -166,13 +184,37 @@ export interface V8ResultsKpiCatalogMapping {
   id: string;
   initiativeId: string;
   initiativeName?: string | null;
+  initiativeStatus?: string | null;
   kpiId: string;
   kpiName?: string | null;
   impactDirection?: string | null;
+  definitionSource?: 'library' | 'initiative-custom';
+  observationPhase?: 'realization' | 'post-implementation' | 'both';
+  trackedInRealization?: boolean;
+  trackedPostImplementation?: boolean;
+  observationStatus?: 'active' | 'paused' | 'completed';
+}
+
+export interface V8ResultsTrackedInitiativeEntry {
+  initiativeId: string;
+  initiativeName: string;
+  initiativeStatus: string;
+  lifecycleBucket: 'in-realization' | 'realized';
+  trackedKpiCount: number;
+  realizationKpiCount: number;
+  postImplementationKpiCount: number;
+  belowTargetCount: number;
+  needsEntryCount: number;
+  openDeviationCount: number;
+  openReportCount: number;
+  lastReportTitle?: string | null;
+  lastReportId?: string | null;
+  lastReportCreatedAt?: string | null;
 }
 
 export interface V8ResultsKpiCatalog {
   organizationId: string;
+  initiatives: V8ResultsTrackedInitiativeEntry[];
   kpis: V8ResultsKpiCatalogEntry[];
   mappings: V8ResultsKpiCatalogMapping[];
 }
@@ -372,6 +414,7 @@ export interface V8ResultsCreateKpiReportPayload {
   title?: string;
   filters?: Record<string, unknown> | null;
   kpiIds?: string[];
+  initiativeIds?: string[];
 }
 
 export interface V8ResultsCreateKpiReportResponse {

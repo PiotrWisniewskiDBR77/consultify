@@ -31,7 +31,13 @@ export type ModuleTab =
   // V3-H01 — Results Hub
   | 'summary'
   | 'kpis'
+  | 'kpi_overview'
+  | 'kpi_catalog'
   | 'kpi_reports'
+  | 'kpi_queue'
+  | 'results_initiatives'
+  | 'results_kpi'
+  | 'results_reports'
   | 'roi'
   | 'all_kpis'
   | 'by_initiative'

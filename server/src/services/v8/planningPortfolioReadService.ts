@@ -6,6 +6,7 @@ import {
 import logger from '../../utils/Logger.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
 import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
 import {
@@ -1244,125 +1245,41 @@ export async function getInitiativeKpisRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[] | null> {
-  const initiative = await queryHelpers.queryOne(
-    'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
-    [initiativeId, organizationId]
-  );
-  if (!initiative) return null;
-
-  let kpis: any[] = [];
   try {
-    kpis = await queryHelpers.queryAll(
-      `SELECT
-        id,
-        initiative_id as initiativeId,
-        name,
-        description,
-        category,
-        unit,
-        baseline_value as baselineValue,
-        target_value as targetValue,
-        current_value as currentValue,
-        progress_percentage as progressPercentage,
-        status,
-        measurement_frequency as measurementFrequency,
-        trend_data as trendData,
-        created_at as createdAt,
-        updated_at as updatedAt,
-        CASE WHEN current_value >= target_value THEN 1 ELSE 0 END as isOnTarget,
-        current_value as latestValue
-      FROM initiative_kpis
-      WHERE initiative_id = ?
-      ORDER BY created_at DESC`,
-      [initiativeId]
-    );
-  } catch (error: any) {
-    const message = String(error?.message || '').toLowerCase();
-    if (!message.includes('no such column') && !message.includes('does not exist')) {
-      throw error;
-    }
-    kpis = await queryHelpers.queryAll(
-      `SELECT
-        ik.id,
-        ik.initiative_id as initiativeId,
-        ik.name,
-        ik.description,
-        'benefits' as category,
-        ik.unit,
-        0 as baselineValue,
-        ik.target_value as targetValue,
-        COALESCE(
-          (
-            SELECT km.value
-            FROM kpi_measurements km
-            WHERE km.kpi_id = ik.id
-            ORDER BY km.measured_at DESC, km.created_at DESC
-            LIMIT 1
-          ),
-          0
-        ) as currentValue,
-        0 as progressPercentage,
-        'on_track' as status,
-        LOWER(COALESCE(ik.measurement_frequency, 'monthly')) as measurementFrequency,
-        '[]' as trendData,
-        ik.created_at as createdAt,
-        ik.updated_at as updatedAt,
-        CASE
-          WHEN COALESCE(
-            (
-              SELECT km.value
-              FROM kpi_measurements km
-              WHERE km.kpi_id = ik.id
-              ORDER BY km.measured_at DESC, km.created_at DESC
-              LIMIT 1
-            ),
-            0
-          ) >= COALESCE(ik.target_value, 0)
-          THEN 1 ELSE 0
-        END as isOnTarget,
-        COALESCE(
-          (
-            SELECT km.value
-            FROM kpi_measurements km
-            WHERE km.kpi_id = ik.id
-            ORDER BY km.measured_at DESC, km.created_at DESC
-            LIMIT 1
-          ),
-          0
-        ) as latestValue
-      FROM initiative_kpis ik
-      WHERE ik.initiative_id = ?
-      ORDER BY ik.created_at DESC`,
-      [initiativeId]
-    );
-  }
-
-  return kpis.map((kpi: any) => {
-    const baselineValue = Number(kpi.baselineValue ?? 0) || 0;
-    const targetValue = Number(kpi.targetValue ?? 0) || 0;
-    const currentValue = Number(kpi.currentValue ?? kpi.latestValue ?? baselineValue) || 0;
-    const progressPercentageRaw = Number(kpi.progressPercentage);
-    const progressPercentage = Number.isFinite(progressPercentageRaw)
-      ? progressPercentageRaw
-      : targetValue > 0
-        ? Number(((currentValue / targetValue) * 100).toFixed(1))
-        : 0;
-
-    return {
-      ...kpi,
+    const assignments = await listInitiativeKpiAssignments(initiativeId, organizationId);
+    return assignments.map((kpi) => ({
+      id: kpi.id,
+      mappingId: kpi.mappingId,
+      initiativeId: kpi.initiativeId,
+      name: kpi.name,
+      description: kpi.description,
       category: kpi.category || 'benefits',
-      baselineValue,
-      targetValue,
-      currentValue,
-      latestValue: Number(kpi.latestValue ?? currentValue) || currentValue,
-      progressPercentage,
+      unit: kpi.unit,
+      baselineValue: kpi.baselineValue,
+      targetValue: kpi.targetValue,
+      currentValue: kpi.currentValue,
+      latestValue: kpi.latestValue,
+      latestMeasurementDate: kpi.latestMeasurementDate,
+      progressPercentage: kpi.progressPercentage,
       status: kpi.status || 'on_track',
-      trendData: safeJsonParse(kpi.trendData, []),
-      isOnTarget: Boolean(
-        kpi.isOnTarget ?? (targetValue > 0 ? currentValue >= targetValue : false)
-      ),
-    };
-  });
+      measurementFrequency: kpi.measurementFrequency,
+      createdAt: kpi.createdAt,
+      updatedAt: kpi.updatedAt,
+      isOnTarget: kpi.isOnTarget,
+      definitionSource: kpi.definitionSource,
+      observationPhase: kpi.observationPhase,
+      trackedInRealization: kpi.trackedInRealization,
+      trackedPostImplementation: kpi.trackedPostImplementation,
+      observationStatus: kpi.observationStatus,
+      realizationExpectation: kpi.realizationExpectation,
+      postImplementationExpectation: kpi.postImplementationExpectation,
+      trendData: [],
+    }));
+  } catch (error: any) {
+    const message = String(error?.message || '');
+    if (message.includes('Initiative not found')) return null;
+    throw error;
+  }
 }
 
 export async function getInitiativeBudgetItemsRead(

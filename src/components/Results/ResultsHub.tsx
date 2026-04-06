@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardList, DollarSign, FileText, Plus, Target } from 'lucide-react';
+import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,7 +8,6 @@ import {
   V8ResultsApi,
   type V8ResultsDashboardSnapshot,
 } from '@/services/api/v8/results';
-import { InitiativeKPI } from '@/types/core';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
@@ -16,31 +15,24 @@ import { ModuleTab, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { KPICreateModal } from './KPICreateModal';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
-import { OperationalAnalysisView } from './OperationalAnalysisView';
+import { ResultsInitiativesView } from './ResultsInitiativesView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
 import { ResultsGridView } from './ResultsKPITable';
-import { ResultsSummaryView } from './ResultsSummaryView';
 import { ROIAnalysisView } from './ROIAnalysisView';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
 import { ROIOpenModal } from './ROIOpenModal';
 import { ROITrackingView } from './ROITrackingView';
-
-export type KPIStatus = 'on-target' | 'below' | 'no-data';
-export type KPITrend = 'up' | 'down' | 'stable';
-
-export interface ResultsKPI extends InitiativeKPI {
-  initiativeName?: string;
-  ownerName?: string;
-  ownerAvatar?: string;
-  baselineValue?: number | null;
-  openDeviationCase?: { id: string; severity: 'AMBER' | 'RED'; status: string } | null;
-  linkedInitiatives?: Array<{ id: string; name: string }>;
-  linkedInitiativesCount?: number;
-  status: KPIStatus;
-  trend: KPITrend;
-  needsEntry: boolean;
-}
+import {
+  filterKpisByLifecycle,
+  filterKpisByObservationPhase,
+  filterTrackedInitiatives,
+  type KpiDrawerSection,
+  type ResultsKPI,
+  type ResultsLifecycleFilter,
+  type ResultsTrackedInitiative,
+} from './kpiDomain';
+import { loadResultsKpis } from './kpiRuntime';
 
 interface ResultsRuntimeChipProps {
   label: string;
@@ -58,60 +50,28 @@ const ResultsRuntimeChip: React.FC<ResultsRuntimeChipProps> = ({ label, value, d
   </div>
 );
 
-function deriveStatus(kpi: InitiativeKPI): KPIStatus {
-  if (kpi.latestValue == null) return 'no-data';
-  return kpi.isOnTarget ? 'on-target' : 'below';
-}
-
-function deriveTrend(kpi: InitiativeKPI): KPITrend {
-  const prev = (kpi as any).prevValue;
-  const latest = kpi.latestValue;
-  if (latest == null || prev == null) return 'stable';
-  const a = Number(latest);
-  const b = Number(prev);
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return 'stable';
-  if (a > b) return 'up';
-  if (a < b) return 'down';
-  return 'stable';
-}
-
-function deriveNeedsEntry(kpi: InitiativeKPI): boolean {
-  const latest = kpi.latestMeasurementDate;
-  if (!latest) return true;
-  const d = new Date(latest);
-  if (Number.isNaN(d.getTime())) return true;
-
-  const now = new Date();
-  const freq = kpi.measurementFrequency || 'MONTHLY';
-
-  const diffDays = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
-  if (freq === 'DAILY') return diffDays > 2;
-  if (freq === 'WEEKLY') return diffDays > 8;
-  if (freq === 'MONTHLY')
-    return d.getFullYear() < now.getFullYear() || d.getMonth() < now.getMonth();
-
-  // QUARTERLY
-  const q = (dt: Date) => Math.floor(dt.getMonth() / 3) + 1;
-  if (d.getFullYear() !== now.getFullYear()) return d.getFullYear() < now.getFullYear();
-  return q(d) < q(now);
-}
-
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState<ModuleTab>('summary');
+  const [activeTab, setActiveTab] = useState<ModuleTab>('results_initiatives');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  const [lifecycleFilter, setLifecycleFilter] = useState<ResultsLifecycleFilter>('all');
+  const [observationPhaseFilter, setObservationPhaseFilter] = useState<
+    'all' | 'realization' | 'post-implementation'
+  >('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
-  const [drawerKpiId, setDrawerKpiId] = useState<string | null>(null);
+  const [drawerState, setDrawerState] = useState<{ kpiId: string; section?: KpiDrawerSection } | null>(
+    null
+  );
   const [roiOpenModal, setRoiOpenModal] = useState(false);
   const [roiDrawer, setRoiDrawer] = useState<{ id: string; name: string } | null>(null);
   const [roiRefreshNonce, setRoiRefreshNonce] = useState(0);
-  const [resultsRefreshNonce, setResultsRefreshNonce] = useState(0);
 
   const [kpis, setKpis] = useState<ResultsKPI[]>([]);
+  const [trackedInitiatives, setTrackedInitiatives] = useState<ResultsTrackedInitiative[]>([]);
   const [loading, setLoading] = useState(true);
   const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
 
@@ -121,67 +81,11 @@ export const ResultsHub: React.FC = () => {
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
     try {
-      let kpisList: any[] = [];
-      let mappingsList: any[] = [];
-
-      try {
-        const catalog = await V8ResultsApi.getKpiCatalog();
-        kpisList = Array.isArray(catalog?.kpis) ? catalog.kpis : [];
-        mappingsList = Array.isArray(catalog?.mappings) ? catalog.mappings : [];
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        const [kpisRes, mappingsRes] = await Promise.allSettled([
-          Api.get('/benefits/kpis'),
-          Api.get('/benefits/kpi-mappings'),
-        ]);
-
-        const kpisPayload: any = kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
-        kpisList = (kpisPayload?.data || []) as any[];
-
-        const mappingsPayload: any =
-          mappingsRes.status === 'fulfilled' ? (mappingsRes.value as any) : null;
-        mappingsList = (mappingsPayload?.data || []) as any[];
-      }
-
-      const byKpi = new Map<string, Array<{ id: string; name: string }>>();
-      for (const m of mappingsList || []) {
-        const kpiId = String(m.kpi_id ?? m.kpiId ?? '').trim();
-        const initiativeId = String(m.initiative_id ?? m.initiativeId ?? '').trim();
-        const initiativeName = String(m.initiative_name ?? m.initiativeName ?? '').trim();
-        if (!kpiId || !initiativeId) continue;
-        const arr = byKpi.get(kpiId) || [];
-        if (!arr.some((x) => x.id === initiativeId)) {
-          arr.push({ id: initiativeId, name: initiativeName || initiativeId });
-        }
-        byKpi.set(kpiId, arr);
-      }
-
-      const mapped: ResultsKPI[] = (kpisList || []).map((k: any) => {
-        const kpiId = String(k?.id ?? '').trim();
-        const linked = kpiId ? byKpi.get(kpiId) || [] : [];
-        const legacyInitiativeName = k?.initiativeName || k?.initiative_name || null;
-        const derivedInitiativeName =
-          legacyInitiativeName ||
-          (linked.length === 1
-            ? linked[0]?.name
-            : linked.length > 1
-              ? `${linked[0]?.name} +${linked.length - 1}`
-              : null);
-
-        return {
-          ...k,
-          initiativeName: derivedInitiativeName || undefined,
-          linkedInitiatives: linked,
-          linkedInitiativesCount: linked.length,
-          status: deriveStatus(k),
-          trend: deriveTrend(k),
-          needsEntry: deriveNeedsEntry(k),
-        } as ResultsKPI;
-      });
-      setKpis(mapped);
+      const result = await loadResultsKpis();
+      setTrackedInitiatives(result.initiatives);
+      setKpis(result.kpis);
     } catch {
+      setTrackedInitiatives([]);
       setKpis([]);
     } finally {
       setLoading(false);
@@ -206,11 +110,8 @@ export const ResultsHub: React.FC = () => {
   }, [loadV8Snapshot]);
 
   const refreshResultsTruth = useCallback(
-    async (options?: { refreshSummary?: boolean; refreshRoi?: boolean }) => {
+    async (options?: { refreshRoi?: boolean }) => {
       await Promise.allSettled([fetchKPIs(), loadV8Snapshot()]);
-      if (options?.refreshSummary !== false) {
-        setResultsRefreshNonce((prev) => prev + 1);
-      }
       if (options?.refreshRoi !== false) {
         setRoiRefreshNonce(Date.now());
       }
@@ -221,19 +122,20 @@ export const ResultsHub: React.FC = () => {
   const tabs: TabConfig[] = useMemo(
     () => [
       {
-        id: 'summary' as ModuleTab,
-        label: t('results.tabs.summary', 'Zestawienie'),
-        icon: <ClipboardList size={16} />,
+        id: 'results_initiatives' as ModuleTab,
+        label: t('results.tabs.initiatives', 'Initiatives'),
+        icon: <ListChecks size={16} />,
+        count: trackedInitiatives.length,
       },
       {
-        id: 'kpis' as ModuleTab,
-        label: t('results.tabs.kpis', 'KPI'),
+        id: 'results_kpi' as ModuleTab,
+        label: t('results.tabs.kpi', 'KPI'),
         icon: <Target size={16} />,
         count: kpis.length,
       },
       {
-        id: 'kpi_reports' as ModuleTab,
-        label: t('results.tabs.kpiReports', 'Raporty KPI'),
+        id: 'results_reports' as ModuleTab,
+        label: t('results.tabs.kpiReports', 'Reports'),
         icon: <FileText size={16} />,
       },
       {
@@ -242,21 +144,21 @@ export const ResultsHub: React.FC = () => {
         icon: <DollarSign size={16} />,
       },
       {
-        id: 'operational' as ModuleTab,
-        label: t('results.tabs.operational', 'KPI Analysis'),
-        icon: <BarChart3 size={16} />,
-      },
-      {
         id: 'roi_analysis' as ModuleTab,
         label: t('results.tabs.roiAnalysis', 'ROI Analysis'),
         icon: <DollarSign size={16} />,
       },
     ],
-    [t, kpis]
+    [t, kpis.length, trackedInitiatives.length]
+  );
+
+  const lifecycleScopedKpis = useMemo(
+    () => filterKpisByLifecycle(kpis, lifecycleFilter),
+    [kpis, lifecycleFilter]
   );
 
   const filteredKpis = useMemo(() => {
-    let items = [...kpis];
+    let items = filterKpisByObservationPhase(lifecycleScopedKpis, observationPhaseFilter);
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -278,6 +180,17 @@ export const ResultsHub: React.FC = () => {
 
       Object.entries(byColumn).forEach(([col, vals]) => {
         items = items.filter((k) => {
+          if (col === 'queue') {
+            return vals.some((value) => {
+              if (value === 'needs-entry') return k.needsEntry;
+              if (value === 'below-target') return k.status === 'below';
+              if (value === 'discrepancy') return Boolean(k.openDeviationCase);
+              if (value === 'requires-review') {
+                return k.needsEntry || k.status === 'below' || Boolean(k.openDeviationCase);
+              }
+              return false;
+            });
+          }
           const v = (k as any)[col];
           return vals.includes(String(v));
         });
@@ -285,7 +198,22 @@ export const ResultsHub: React.FC = () => {
     }
 
     return items;
-  }, [kpis, searchQuery, activeFilters]);
+  }, [lifecycleScopedKpis, observationPhaseFilter, searchQuery, activeFilters]);
+
+  const filteredInitiatives = useMemo(() => {
+    let items = filterTrackedInitiatives(trackedInitiatives, lifecycleFilter);
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (initiative) =>
+          initiative.initiativeName.toLowerCase().includes(q) ||
+          initiative.initiativeStatus.toLowerCase().includes(q)
+      );
+    }
+
+    return items;
+  }, [trackedInitiatives, lifecycleFilter, searchQuery]);
 
   const handleDeleteKpi = useCallback(
     async (kpiId: string) => {
@@ -308,22 +236,35 @@ export const ResultsHub: React.FC = () => {
       } catch {
         // silent
       } finally {
-        setDrawerKpiId((prev) => (prev === kpiId ? null : prev));
+        setDrawerState((prev) => (prev?.kpiId === kpiId ? null : prev));
         void refreshResultsTruth();
       }
     },
     [refreshResultsTruth, t]
   );
 
+  const openKpiDrawer = useCallback((kpiId: string, section?: KpiDrawerSection) => {
+    setDrawerState({ kpiId, section });
+  }, []);
+
   const handleRowAction = useCallback(
     (action: string, kpi: ResultsKPI) => {
       switch (action) {
         case 'open':
         case 'preview':
+          openKpiDrawer(kpi.id, 'summary');
+          break;
         case 'record':
+          openKpiDrawer(kpi.id, 'record');
+          break;
         case 'edit':
+          openKpiDrawer(kpi.id, 'settings');
+          break;
         case 'links':
-          setDrawerKpiId(kpi.id);
+          openKpiDrawer(kpi.id, 'links');
+          break;
+        case 'history':
+          openKpiDrawer(kpi.id, 'history');
           break;
         case 'delete':
           void handleDeleteKpi(kpi.id);
@@ -332,7 +273,7 @@ export const ResultsHub: React.FC = () => {
           break;
       }
     },
-    [handleDeleteKpi]
+    [handleDeleteKpi, openKpiDrawer]
   );
 
   const handleCreateSuccess = useCallback(() => {
@@ -374,50 +315,52 @@ export const ResultsHub: React.FC = () => {
     );
   }, [t, v8Snapshot]);
 
+  const setCatalogFilter = useCallback((filters: FilterChip[] = []) => {
+    setActiveTab('results_kpi');
+    setActiveFilters(filters);
+  }, []);
+
   const commandRowContent = useMemo(() => {
     const chipBase =
       'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
     const badgeBase =
       'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+    const lifecycleChip = (value: ResultsLifecycleFilter, label: string) => (
+      <button
+        type="button"
+        onClick={() => setLifecycleFilter(value)}
+        className={`${chipBase} ${
+          lifecycleFilter === value
+            ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+        }`}
+      >
+        <span>{label}</span>
+      </button>
+    );
 
-    if (activeTab === 'summary') {
+    if (activeTab === 'results_initiatives') {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
+          {lifecycleChip('all', t('common.all', 'All'))}
+          {lifecycleChip('in-realization', t('results.lifecycle.inRealization', 'In realization'))}
+          {lifecycleChip('realized', t('results.lifecycle.realized', 'Realized'))}
           <button
             type="button"
-            onClick={() => setActiveTab('kpis')}
+            onClick={() => setActiveTab('results_kpi')}
             className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
-            title={t('results.tabs.kpis', 'KPI')}
           >
             <Target size={14} className="text-emerald-400" />
-            <span>{t('results.tabs.kpis', 'KPI')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('kpi_reports')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
-            title={t('results.tabs.kpiReports', 'Raporty KPI')}
-          >
-            <FileText size={14} className="text-slate-400" />
-            <span>{t('results.tabs.kpiReports', 'Raporty KPI')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('roi')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
-            title={t('results.tabs.roi', 'ROI')}
-          >
-            <DollarSign size={14} className="text-amber-400" />
-            <span>{t('results.tabs.roi', 'ROI')}</span>
+            <span>{t('results.tabs.kpi', 'KPI')}</span>
           </button>
           {governedRuntimeStrip}
         </div>
       );
     }
 
-    if (activeTab === 'kpis') {
+    if (activeTab === 'results_kpi') {
       const base = (() => {
-        let items = [...kpis];
+        let items = [...lifecycleScopedKpis];
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
           items = items.filter(
@@ -451,6 +394,9 @@ export const ResultsHub: React.FC = () => {
 
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
+          {lifecycleChip('all', t('common.all', 'All'))}
+          {lifecycleChip('in-realization', t('results.lifecycle.inRealization', 'In realization'))}
+          {lifecycleChip('realized', t('results.lifecycle.realized', 'Realized'))}
           <button
             type="button"
             onClick={() => setActiveFilters([])}
@@ -471,6 +417,39 @@ export const ResultsHub: React.FC = () => {
             >
               {counts.total}
             </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setObservationPhaseFilter('all')}
+            className={`${chipBase} ${
+              observationPhaseFilter === 'all'
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+          >
+            <span>{t('common.phase', 'Phase')}: {t('common.all', 'All')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setObservationPhaseFilter('realization')}
+            className={`${chipBase} ${
+              observationPhaseFilter === 'realization'
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+          >
+            <span>{t('results.phase.realization', 'Realization')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setObservationPhaseFilter('post-implementation')}
+            className={`${chipBase} ${
+              observationPhaseFilter === 'post-implementation'
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+          >
+            <span>{t('results.phase.postImplementation', 'Post-implementation')}</span>
           </button>
 
           <button
@@ -612,25 +591,32 @@ export const ResultsHub: React.FC = () => {
       );
     }
 
-    if (activeTab === 'kpi_reports') {
+    if (activeTab === 'results_reports') {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
+          {lifecycleChip('all', t('common.all', 'All'))}
+          {lifecycleChip('in-realization', t('results.lifecycle.inRealization', 'In realization'))}
+          {lifecycleChip('realized', t('results.lifecycle.realized', 'Realized'))}
           <button
             type="button"
             onClick={() => setKpiReportCreateNonce(Date.now())}
             className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
-            title={t('results.kpiReports.new', '+ New KPI report')}
+            title={t('results.kpiReports.new', '+ New report')}
           >
             <Plus size={14} />
-            <span>{t('results.kpiReports.new', '+ New KPI report')}</span>
+            <span>{t('results.kpiReports.new', '+ New report')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('results_kpi')}
+            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+          >
+            <Target size={14} className="text-amber-400" />
+            <span>{t('results.kpiReports.reviewQueue', 'Review KPI set')}</span>
           </button>
           {governedRuntimeStrip}
         </div>
       );
-    }
-
-    if (activeTab === 'operational') {
-      return <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>;
     }
 
     return governedRuntimeStrip ? (
@@ -641,9 +627,11 @@ export const ResultsHub: React.FC = () => {
     activeTab,
     governedRuntimeStrip,
     kpis,
+    lifecycleFilter,
+    lifecycleScopedKpis,
+    observationPhaseFilter,
     openRoiPicker,
     searchQuery,
-    setKpiReportCreateNonce,
     t,
   ]);
 
@@ -674,50 +662,37 @@ export const ResultsHub: React.FC = () => {
         onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((f) => f.id !== id))}
         onClearFilters={() => setActiveFilters([])}
         onNewItem={
-          activeTab === 'kpis'
+          activeTab === 'results_kpi'
             ? () => setShowCreateModal(true)
-            : activeTab === 'kpi_reports'
-              ? () => setKpiReportCreateNonce(Date.now())
-              : activeTab === 'roi'
+            : activeTab === 'roi'
                 ? () => setRoiOpenModal(true)
                 : undefined
         }
         newItemLabel={
-          activeTab === 'kpis'
+          activeTab === 'results_kpi'
             ? t('results.addKpi', '+ Add KPI')
-            : activeTab === 'kpi_reports'
-              ? t('results.kpiReports.new', '+ New KPI report')
-              : activeTab === 'roi'
+            : activeTab === 'roi'
                 ? t('results.roi.add', '+ Record ROI')
                 : undefined
         }
-        // A03 canon: Results hub uses the canonical subset order (table→grid).
-        // Non-KPI tabs can ignore viewMode; we keep the toggle consistent across the hub.
-        availableViewModes={['table', 'grid']}
+        availableViewModes={activeTab === 'results_kpi' ? ['table', 'grid'] : ['table']}
         commandRowContent={commandRowContent}
       >
-        {activeTab === 'summary' ? (
-          <ResultsSummaryView
-            searchQuery={searchQuery}
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            governedSnapshot={v8Snapshot}
-            refreshNonce={resultsRefreshNonce}
-            onResultsTruthChange={refreshResultsTruth}
-          />
-        ) : activeTab === 'operational' ? (
-          <OperationalAnalysisView
-            kpis={kpis}
-            loading={loading}
-            onResultsTruthChange={refreshResultsTruth}
+        {activeTab === 'results_initiatives' ? (
+          <ResultsInitiativesView
+            initiatives={filteredInitiatives}
+            onOpenInitiativeKpis={() => setActiveTab('results_kpi')}
           />
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
-        ) : activeTab === 'kpi_reports' ? (
+        ) : activeTab === 'results_reports' ? (
           <ResultsKpiReportsView
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
             createNonce={kpiReportCreateNonce}
+            selectedLifecycleFilter={lifecycleFilter}
+            selectedInitiatives={filteredInitiatives}
+            selectedKpis={filteredKpis}
           />
         ) : activeTab === 'roi' ? (
           <ROITrackingView refreshNonce={roiRefreshNonce} />
@@ -728,18 +703,18 @@ export const ResultsHub: React.FC = () => {
               <span className="text-sm">{t('common.loading', 'Loading...')}</span>
             </div>
           </div>
-        ) : activeTab === 'kpis' && viewMode === 'table' ? (
+        ) : activeTab === 'results_kpi' && viewMode === 'table' ? (
           <ResultsKpisTableV3
             kpis={filteredKpis}
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
-            onOpenKpi={(id) => setDrawerKpiId(id)}
+            onOpenKpi={openKpiDrawer}
             onDeleteKpi={handleDeleteKpi}
           />
-        ) : activeTab === 'kpis' ? (
+        ) : activeTab === 'results_kpi' ? (
           <ResultsGridView
             kpis={filteredKpis}
-            onItemClick={(kpi) => setDrawerKpiId(kpi.id)}
+            onItemClick={(kpi) => openKpiDrawer(kpi.id, 'summary')}
             onItemAction={handleRowAction}
             onNewItem={() => setShowCreateModal(true)}
           />
@@ -750,10 +725,11 @@ export const ResultsHub: React.FC = () => {
         <KPICreateModal onClose={() => setShowCreateModal(false)} onSuccess={handleCreateSuccess} />
       )}
 
-      {drawerKpiId && (
+      {drawerState && (
         <KPITimeSeriesDrawer
-          kpiId={drawerKpiId}
-          onClose={() => setDrawerKpiId(null)}
+          kpiId={drawerState.kpiId}
+          initialSection={drawerState.section}
+          onClose={() => setDrawerState(null)}
           onValueRecorded={() => {
             void refreshResultsTruth();
           }}

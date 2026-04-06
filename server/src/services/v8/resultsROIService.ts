@@ -874,10 +874,13 @@ interface LegacyRoiRealizedRow {
 
 interface LegacyResultsKpiRow {
   id: string;
+  mapping_id: string | null;
   initiative_id: string | null;
   initiative_name: string | null;
+  initiative_status: string | null;
   name: string;
   description: string | null;
+  category: string | null;
   unit: string | null;
   baseline_value: number | null;
   target_value: number | null;
@@ -903,6 +906,17 @@ interface LegacyResultsKpiRow {
   open_case_id: string | null;
   open_case_severity: 'AMBER' | 'RED' | null;
   open_case_status: string | null;
+  definition_source: string | null;
+  observation_phase: string | null;
+  tracked_in_realization: number | null;
+  tracked_post_implementation: number | null;
+  observation_status: string | null;
+  realization_baseline_value: number | null;
+  realization_target_value: number | null;
+  realization_measurement_frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | null;
+  post_implementation_baseline_value: number | null;
+  post_implementation_target_value: number | null;
+  post_implementation_measurement_frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -911,9 +925,142 @@ interface LegacyResultsKpiMappingRow {
   id: string;
   initiative_id: string;
   initiative_name: string | null;
+  initiative_status: string | null;
   kpi_id: string;
   kpi_name: string | null;
   impact_direction: string | null;
+  definition_source: string | null;
+  observation_phase: string | null;
+  tracked_in_realization: number | null;
+  tracked_post_implementation: number | null;
+  observation_status: string | null;
+}
+
+interface ResultsSnapshotRow {
+  id: string;
+  title: string | null;
+  filters_json: string | null;
+  created_at: string | null;
+}
+
+function normalizeLifecycleBucket(status: string | null | undefined): 'in-realization' | 'realized' | null {
+  const normalized = String(status || '').trim().toUpperCase();
+  if (['APPROVED', 'SCHEDULED', 'EXECUTING'].includes(normalized)) return 'in-realization';
+  if (['DONE', 'TRACKING'].includes(normalized)) return 'realized';
+  return null;
+}
+
+function isNeedsEntry(
+  latestMeasurementDate: string | null,
+  measurementFrequency: string | null
+): boolean {
+  if (!latestMeasurementDate) return true;
+  const latest = new Date(latestMeasurementDate);
+  if (Number.isNaN(latest.getTime())) return true;
+  const now = new Date();
+  const freq = String(measurementFrequency || 'MONTHLY').toUpperCase();
+  const diffDays = (now.getTime() - latest.getTime()) / 86400000;
+  if (freq === 'DAILY') return diffDays > 2;
+  if (freq === 'WEEKLY') return diffDays > 8;
+  if (freq === 'MONTHLY') {
+    return latest.getFullYear() < now.getFullYear() || latest.getMonth() < now.getMonth();
+  }
+  const latestQuarter = Math.floor(latest.getMonth() / 3);
+  const currentQuarter = Math.floor(now.getMonth() / 3);
+  return latest.getFullYear() < now.getFullYear() || latestQuarter < currentQuarter;
+}
+
+async function listResultsTrackedInitiatives(
+  organizationId: string,
+  kpis: ResultsKpiCatalog['kpis']
+): Promise<ResultsKpiCatalog['initiatives']> {
+  const byInitiative = new Map<
+    string,
+    {
+      initiativeId: string;
+      initiativeName: string;
+      initiativeStatus: string;
+      lifecycleBucket: 'in-realization' | 'realized';
+      trackedKpiCount: number;
+      realizationKpiCount: number;
+      postImplementationKpiCount: number;
+      belowTargetCount: number;
+      needsEntryCount: number;
+      openDeviationCount: number;
+      openReportCount: number;
+      lastReportTitle: string | null;
+      lastReportId: string | null;
+      lastReportCreatedAt: string | null;
+    }
+  >();
+
+  for (const kpi of kpis) {
+    const initiativeId = String(kpi.initiativeId || '').trim();
+    if (!initiativeId) continue;
+    const lifecycleBucket = normalizeLifecycleBucket(kpi.initiativeStatus);
+    if (!lifecycleBucket) continue;
+
+    const existing = byInitiative.get(initiativeId) || {
+      initiativeId,
+      initiativeName: String(kpi.initiativeName || initiativeId),
+      initiativeStatus: String(kpi.initiativeStatus || ''),
+      lifecycleBucket,
+      trackedKpiCount: 0,
+      realizationKpiCount: 0,
+      postImplementationKpiCount: 0,
+      belowTargetCount: 0,
+      needsEntryCount: 0,
+      openDeviationCount: 0,
+      openReportCount: 0,
+      lastReportTitle: null,
+      lastReportId: null,
+      lastReportCreatedAt: null,
+    };
+
+    existing.trackedKpiCount += 1;
+    if (kpi.trackedInRealization) existing.realizationKpiCount += 1;
+    if (kpi.trackedPostImplementation) existing.postImplementationKpiCount += 1;
+    if (!kpi.isOnTarget && kpi.latestValue != null) existing.belowTargetCount += 1;
+    if (isNeedsEntry(kpi.latestMeasurementDate || null, kpi.measurementFrequency || null)) {
+      existing.needsEntryCount += 1;
+    }
+    if (kpi.openDeviationCase) existing.openDeviationCount += 1;
+
+    byInitiative.set(initiativeId, existing);
+  }
+
+  const initiativeIds = Array.from(byInitiative.keys());
+  if (initiativeIds.length > 0) {
+    const snapshots = await dbAll<ResultsSnapshotRow>(
+      `SELECT id, title, filters_json, created_at
+       FROM results_kpi_report_snapshots
+       WHERE organization_id = ?
+       ORDER BY created_at DESC`,
+      [organizationId],
+      { fallback: true }
+    ).catch(() => []);
+
+    for (const snapshot of snapshots || []) {
+      const filters = safeJsonParse<Record<string, unknown>>(snapshot.filters_json, {});
+      const linkedInitiativeIds = Array.isArray(filters.initiativeIds)
+        ? (filters.initiativeIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
+        : [];
+
+      for (const initiativeId of linkedInitiativeIds) {
+        if (!initiativeIds.includes(initiativeId)) continue;
+        const item = byInitiative.get(initiativeId);
+        if (!item) continue;
+        item.openReportCount += 1;
+        if (!item.lastReportId) {
+          item.lastReportId = snapshot.id;
+          item.lastReportTitle = snapshot.title || null;
+          item.lastReportCreatedAt = snapshot.created_at || null;
+        }
+      }
+    }
+  }
+
+  return Array.from(byInitiative.values()).sort((a, b) => a.initiativeName.localeCompare(b.initiativeName));
 }
 
 interface LegacyKpiTimeSeriesRow {
@@ -1229,11 +1376,14 @@ export async function getResultsKpiCatalog(
 
   const kpiRows = await dbAll<LegacyResultsKpiRow>(
     `SELECT
+       m.id AS mapping_id,
        k.id,
        k.initiative_id,
        i.name AS initiative_name,
+       i.status AS initiative_status,
        k.name,
        k.description,
+       k.category,
        k.unit,
        k.baseline_value,
        k.target_value,
@@ -1259,10 +1409,22 @@ export async function getResultsKpiCatalog(
        c.id AS open_case_id,
        c.severity AS open_case_severity,
        c.status AS open_case_status,
+       COALESCE(m.definition_source, CASE WHEN k.initiative_id IS NULL THEN 'library' ELSE 'initiative-custom' END) AS definition_source,
+       COALESCE(m.observation_phase, 'post-implementation') AS observation_phase,
+       COALESCE(m.tracked_in_realization, 0) AS tracked_in_realization,
+       COALESCE(m.tracked_post_implementation, 1) AS tracked_post_implementation,
+       COALESCE(m.observation_status, 'active') AS observation_status,
+       COALESCE(m.realization_baseline_value, k.baseline_value) AS realization_baseline_value,
+       COALESCE(m.realization_target_value, k.target_value) AS realization_target_value,
+       COALESCE(m.realization_measurement_frequency, k.measurement_frequency) AS realization_measurement_frequency,
+       COALESCE(m.post_implementation_baseline_value, k.baseline_value) AS post_implementation_baseline_value,
+       COALESCE(m.post_implementation_target_value, k.target_value) AS post_implementation_target_value,
+       COALESCE(m.post_implementation_measurement_frequency, k.measurement_frequency) AS post_implementation_measurement_frequency,
        k.created_at,
        k.updated_at
      FROM initiative_kpis k
      LEFT JOIN initiatives i ON i.id = k.initiative_id
+     LEFT JOIN initiative_kpi_mappings m ON m.kpi_id = k.id AND m.organization_id = ?
      LEFT JOIN users u ON u.id = k.owner_user_id
      LEFT JOIN LATERAL (
        SELECT value, period_start
@@ -1286,9 +1448,9 @@ export async function getResultsKpiCatalog(
        ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC
        LIMIT 1
      ) c ON TRUE
-     WHERE COALESCE(k.organization_id, i.organization_id) = ?${kpiFilterSql}
+     WHERE COALESCE(k.organization_id, i.organization_id, m.organization_id) = ?${kpiFilterSql}
      ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC`,
-    params,
+    [organizationId, ...params],
     { fallback: true }
   );
 
@@ -1304,9 +1466,15 @@ export async function getResultsKpiCatalog(
        m.id,
        m.initiative_id,
        i.name AS initiative_name,
+       i.status AS initiative_status,
        m.kpi_id,
        ik.name AS kpi_name,
-       m.impact_direction
+       m.impact_direction,
+       COALESCE(m.definition_source, CASE WHEN ik.initiative_id IS NULL THEN 'library' ELSE 'initiative-custom' END) AS definition_source,
+       COALESCE(m.observation_phase, 'post-implementation') AS observation_phase,
+       COALESCE(m.tracked_in_realization, 0) AS tracked_in_realization,
+       COALESCE(m.tracked_post_implementation, 1) AS tracked_post_implementation,
+       COALESCE(m.observation_status, 'active') AS observation_status
      FROM initiative_kpi_mappings m
      LEFT JOIN initiative_kpis ik ON ik.id = m.kpi_id
      LEFT JOIN initiatives i ON i.id = m.initiative_id
@@ -1328,10 +1496,13 @@ export async function getResultsKpiCatalog(
 
     return {
       id: row.id,
+      mappingId: row.mapping_id,
       initiativeId: row.initiative_id,
       initiativeName: row.initiative_name,
+      initiativeStatus: row.initiative_status,
       name: row.name,
       description: row.description,
+      category: row.category,
       unit: row.unit,
       baselineValue: row.baseline_value,
       targetValue,
@@ -1358,6 +1529,36 @@ export async function getResultsKpiCatalog(
       redThresholdPct: row.red_threshold_pct,
       amberThresholdAbs: row.amber_threshold_abs,
       redThresholdAbs: row.red_threshold_abs,
+      definitionSource:
+        String(row.definition_source || '').trim().toLowerCase() === 'library'
+          ? 'library'
+          : 'initiative-custom',
+      observationPhase:
+        String(row.observation_phase || '').trim().toLowerCase() === 'realization'
+          ? 'realization'
+          : String(row.observation_phase || '').trim().toLowerCase() === 'both'
+            ? 'both'
+            : 'post-implementation',
+      trackedInRealization: Boolean(row.tracked_in_realization),
+      trackedPostImplementation:
+        row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
+      observationStatus:
+        String(row.observation_status || '').trim().toLowerCase() === 'paused'
+          ? 'paused'
+          : String(row.observation_status || '').trim().toLowerCase() === 'completed'
+            ? 'completed'
+            : 'active',
+      realizationExpectation: {
+        baselineValue: row.realization_baseline_value,
+        targetValue: row.realization_target_value,
+        measurementFrequency: row.realization_measurement_frequency || row.measurement_frequency || 'MONTHLY',
+      },
+      postImplementationExpectation: {
+        baselineValue: row.post_implementation_baseline_value,
+        targetValue: row.post_implementation_target_value,
+        measurementFrequency:
+          row.post_implementation_measurement_frequency || row.measurement_frequency || 'MONTHLY',
+      },
       openDeviationCase: row.open_case_id
         ? {
             id: row.open_case_id,
@@ -1372,13 +1573,36 @@ export async function getResultsKpiCatalog(
     id: row.id,
     initiativeId: row.initiative_id,
     initiativeName: row.initiative_name,
+    initiativeStatus: row.initiative_status,
     kpiId: row.kpi_id,
     kpiName: row.kpi_name,
     impactDirection: row.impact_direction,
+    definitionSource:
+      String(row.definition_source || '').trim().toLowerCase() === 'library'
+        ? 'library'
+        : 'initiative-custom',
+    observationPhase:
+      String(row.observation_phase || '').trim().toLowerCase() === 'realization'
+        ? 'realization'
+        : String(row.observation_phase || '').trim().toLowerCase() === 'both'
+          ? 'both'
+          : 'post-implementation',
+    trackedInRealization: Boolean(row.tracked_in_realization),
+    trackedPostImplementation:
+      row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
+    observationStatus:
+      String(row.observation_status || '').trim().toLowerCase() === 'paused'
+        ? 'paused'
+        : String(row.observation_status || '').trim().toLowerCase() === 'completed'
+          ? 'completed'
+          : 'active',
   }));
+
+  const initiatives = await listResultsTrackedInitiatives(organizationId, kpis);
 
   return {
     organizationId,
+    initiatives,
     kpis,
     mappings,
   };
