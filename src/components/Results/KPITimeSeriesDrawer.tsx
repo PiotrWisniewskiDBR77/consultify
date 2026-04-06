@@ -72,6 +72,24 @@ type KpiMappingRow = {
   impact_direction?: string | null;
 };
 
+type KpiConnectorRow = {
+  id: string;
+  connectorName: string;
+  connectorType?: string | null;
+  targetKpiIds?: string[];
+  scheduleCron?: string | null;
+  lastRunAt?: string | null;
+  lastRunStatus?: string | null;
+  isActive?: boolean;
+  config?: Record<string, unknown>;
+};
+
+const normalizeDrawerSection = (section?: KpiDrawerSection): KpiDrawerSection => {
+  if (section === 'settings') return 'definition';
+  if (section === 'links') return 'lineage';
+  return section || 'summary';
+};
+
 const measurementDate = (measurement: KPIMeasurement): string =>
   String(measurement.periodStart || measurement.measuredAt || '');
 
@@ -102,6 +120,19 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const { t } = useTranslation();
   const [kpi, setKpi] = useState<InitiativeKPI | null>(null);
   const [measurements, setMeasurements] = useState<KPIMeasurement[]>([]);
+  const [auditLog, setAuditLog] = useState<
+    Array<{
+      id: string;
+      section: string;
+      eventType: string;
+      source: string;
+      actorUserId?: string | null;
+      summary?: string | null;
+      before: Record<string, unknown>;
+      after: Record<string, unknown>;
+      createdAt: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
 
   const [openCase, setOpenCase] = useState<DeviationCase | null>(null);
@@ -140,11 +171,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [initiatives, setInitiatives] = useState<InitiativeOption[]>([]);
   const [initiativeSearch, setInitiativeSearch] = useState('');
   const [mappings, setMappings] = useState<KpiMappingRow[]>([]);
+  const [connectors, setConnectors] = useState<KpiConnectorRow[]>([]);
   const [mappingBusy, setMappingBusy] = useState(false);
-  const [activeSection, setActiveSection] = useState<KpiDrawerSection>(initialSection || 'summary');
+  const [activeSection, setActiveSection] = useState<KpiDrawerSection>(
+    normalizeDrawerSection(initialSection)
+  );
 
   useEffect(() => {
-    setActiveSection(initialSection || 'summary');
+    setActiveSection(normalizeDrawerSection(initialSection));
   }, [initialSection, kpiId]);
 
   useEffect(() => {
@@ -155,6 +189,18 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         setInitiatives((data || []).map((i: any) => ({ id: i.id, name: i.name || i.title })));
       } catch {
         // silent
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res: any = await Api.get('/results-v4/kpi-connectors');
+        const payload = (res?.connectors ?? res?.data?.connectors ?? res?.data ?? res) as any[];
+        setConnectors(Array.isArray(payload) ? payload : []);
+      } catch {
+        setConnectors([]);
       }
     })();
   }, []);
@@ -171,6 +217,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       let catalogMappings: any[] = [];
       let drawerMeasurements: any[] = [];
       let drawerOpenCase: any = null;
+      let drawerAuditLog: any[] = [];
       if (catalogRes.status === 'fulfilled') {
         catalogKpis = Array.isArray(catalogRes.value?.kpis) ? catalogRes.value.kpis : [];
         catalogMappings = Array.isArray(catalogRes.value?.mappings)
@@ -185,6 +232,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           ? drawerRes.value.measurements
           : [];
         drawerOpenCase = drawerRes.value?.openCase ?? null;
+        drawerAuditLog = Array.isArray(drawerRes.value?.auditLog) ? drawerRes.value.auditLog : [];
       } else if (!shouldFallbackToLegacyResults(drawerRes.reason)) {
         throw drawerRes.reason;
       }
@@ -228,6 +276,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             new Date(measurementDate(b)).getTime() - new Date(measurementDate(a)).getTime()
         )
       );
+      setAuditLog(
+        (drawerAuditLog || []).sort(
+          (a: any, b: any) =>
+            new Date(String(b?.createdAt || 0)).getTime() - new Date(String(a?.createdAt || 0)).getTime()
+        )
+      );
 
       if (drawerOpenCase) {
         const first = drawerOpenCase as DeviationCase;
@@ -247,6 +301,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       setMappings((catalogMappings || []) as KpiMappingRow[]);
     } catch {
       // silent
+      setAuditLog([]);
     } finally {
       setLoading(false);
     }
@@ -554,6 +609,93 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       },
     ];
   }, [kpi, t]);
+
+  const normalizedSection = useMemo(() => normalizeDrawerSection(activeSection), [activeSection]);
+
+  const connectedConnectors = useMemo(
+    () =>
+      (connectors || []).filter((connector) =>
+        Array.isArray(connector.targetKpiIds)
+          ? connector.targetKpiIds.some((id) => String(id) === String(kpiId))
+          : false
+      ),
+    [connectors, kpiId]
+  );
+
+  const definitionStats: QuickStat[] = useMemo(() => {
+    if (!kpi) return [];
+    return [
+      {
+        label: t('results.drawer.definitionSource', 'Definition source'),
+        value:
+          kpi.definitionSource === 'library'
+            ? t('results.kpi.source.library', 'Library')
+            : t('results.kpi.source.custom', 'Initiative custom'),
+      },
+      {
+        label: t('results.columns.owner', 'Owner'),
+        value: (kpi as any).ownerName || kpi.ownerUserId || '—',
+      },
+      {
+        label: t('results.drawer.directionTitle', 'Direction'),
+        value:
+          (kpi as any).direction === 'LOWER_IS_BETTER'
+            ? t('results.direction.decrease', 'Decrease')
+            : t('results.direction.increase', 'Increase'),
+      },
+      {
+        label: t('results.createModal.frequency', 'Frequency'),
+        value: String(kpi.measurementFrequency || 'MONTHLY'),
+      },
+    ];
+  }, [kpi, t]);
+
+  const targetStats: QuickStat[] = useMemo(() => {
+    if (!kpi) return [];
+    return [
+      {
+        label: t('results.drawer.baseline', 'Baseline'),
+        value: formatMetricValue((kpi as any).baselineValue, kpi.unit),
+      },
+      {
+        label: t('results.columns.target', 'Target'),
+        value: formatMetricValue(kpi.targetValue, kpi.unit),
+      },
+      {
+        label: t('results.drawer.amberThreshold', 'Amber threshold'),
+        value:
+          settingsThresholdMode === 'ABSOLUTE'
+            ? settingsAmberThreshold || '—'
+            : settingsAmberThreshold
+              ? `${settingsAmberThreshold}%`
+              : '—',
+      },
+      {
+        label: t('results.drawer.redThreshold', 'Red threshold'),
+        value:
+          settingsThresholdMode === 'ABSOLUTE'
+            ? settingsRedThreshold || '—'
+            : settingsRedThreshold
+              ? `${settingsRedThreshold}%`
+              : '—',
+      },
+    ];
+  }, [kpi, settingsAmberThreshold, settingsRedThreshold, settingsThresholdMode, t]);
+
+  const definitionAudit = useMemo(
+    () => auditLog.filter((entry) => entry.section === 'definition').slice(0, 5),
+    [auditLog]
+  );
+
+  const targetAudit = useMemo(
+    () => auditLog.filter((entry) => entry.section === 'targets').slice(0, 5),
+    [auditLog]
+  );
+
+  const historyAudit = useMemo(
+    () => auditLog.filter((entry) => entry.section === 'history').slice(0, 8),
+    [auditLog]
+  );
 
   const maxVal = useMemo(() => {
     if (measurements.length === 0) return 100;
@@ -964,18 +1106,19 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               <div className="flex flex-wrap gap-2">
                 {([
                   ['summary', t('common.overview', 'Overview')],
+                  ['definition', t('results.drawer.definitionTitle', 'Definition')],
+                  ['targets', t('results.drawer.targetsTitle', 'Targets')],
                   ['deviation', t('results.deviation.title', 'Deviation case')],
                   ['record', t('results.drawer.recordTitle', 'Record New Value')],
                   ['history', t('results.drawer.history', 'History')],
-                  ['settings', t('results.drawer.settingsTitle', 'Settings')],
-                  ['links', t('results.drawer.linksTitle', 'Linked initiatives')],
+                  ['lineage', t('results.drawer.lineageTitle', 'Lineage')],
                 ] as Array<[KpiDrawerSection, string]>).map(([section, label]) => (
                   <button
                     key={section}
                     type="button"
                     onClick={() => setActiveSection(section)}
                     className={`h-8 rounded-full border px-3 text-xs font-medium transition-colors ${
-                      activeSection === section
+                      normalizedSection === section
                         ? 'border-primary-500/40 bg-primary-500/10 text-primary-700 dark:text-primary-200'
                         : 'border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                     }`}
@@ -985,97 +1128,102 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                 ))}
               </div>
 
-              {/* Quick Stats */}
-              <div id="kpi-drawer-summary" className="grid grid-cols-4 gap-2 scroll-mt-4">
-                {quickStats.map((s) => (
-                  <div
-                    key={s.label}
-                    className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
-                  >
-                    <p className="text-[10px] uppercase text-slate-500 mb-1">{s.label}</p>
-                    <p
-                      className={`text-sm font-semibold ${s.color || 'text-slate-900 dark:text-white'}`}
-                    >
-                      {s.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                {expectationStats.map((s) => (
-                  <div
-                    key={s.label}
-                    className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
-                  >
-                    <p className="text-[10px] uppercase text-slate-500 mb-1">{s.label}</p>
-                    <p
-                      className={`text-sm font-semibold ${s.color || 'text-slate-900 dark:text-white'}`}
-                    >
-                      {s.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-                <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 p-3">
-                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('results.drawer.chartSemanticsTitle', 'Chart semantics')}
-                  </div>
-                  <div className="space-y-2">
-                    {chartSemantics.map((item) => (
+              {normalizedSection === 'summary' && (
+                <>
+                  {/* Quick Stats */}
+                  <div id="kpi-drawer-summary" className="grid grid-cols-4 gap-2 scroll-mt-4">
+                    {quickStats.map((s) => (
                       <div
-                        key={item.label}
-                        className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-3"
+                        key={s.label}
+                        className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            {item.icon}
-                            {item.label}
-                          </div>
-                          <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
-                            {item.value}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                        <p className="text-[10px] uppercase text-slate-500 mb-1">{s.label}</p>
+                        <p
+                          className={`text-sm font-semibold ${s.color || 'text-slate-900 dark:text-white'}`}
+                        >
+                          {s.value}
+                        </p>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 p-3">
-                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('results.drawer.alertSemanticsTitle', 'Alert semantics')}
-                  </div>
-                  <div className="space-y-2">
-                    {alertSemantics.map((item) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {expectationStats.map((s) => (
                       <div
-                        key={item.label}
-                        className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-3"
+                        key={s.label}
+                        className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            {item.icon}
-                            {item.label}
-                          </div>
-                          <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
-                            {item.value}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                        <p className="text-[10px] uppercase text-slate-500 mb-1">{s.label}</p>
+                        <p
+                          className={`text-sm font-semibold ${s.color || 'text-slate-900 dark:text-white'}`}
+                        >
+                          {s.value}
+                        </p>
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
+
+                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 p-3">
+                      <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('results.drawer.chartSemanticsTitle', 'Chart semantics')}
+                      </div>
+                      <div className="space-y-2">
+                        {chartSemantics.map((item) => (
+                          <div
+                            key={item.label}
+                            className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-3"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                {item.icon}
+                                {item.label}
+                              </div>
+                              <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
+                                {item.value}
+                              </div>
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 p-3">
+                      <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t('results.drawer.alertSemanticsTitle', 'Alert semantics')}
+                      </div>
+                      <div className="space-y-2">
+                        {alertSemantics.map((item) => (
+                          <div
+                            key={item.label}
+                            className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] p-3"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                {item.icon}
+                                {item.label}
+                              </div>
+                              <div className={`text-sm font-semibold ${item.color || 'text-slate-900 dark:text-white'}`}>
+                                {item.value}
+                              </div>
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Deviation case (R1) */}
-              {openCase ? (
-                <div
-                  id="kpi-drawer-deviation"
-                  className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
-                >
+              {normalizedSection === 'deviation' ? (
+                openCase ? (
+                  <div
+                    id="kpi-drawer-deviation"
+                    className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
+                  >
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {t('results.deviation.title', 'Deviation case')}
@@ -1264,16 +1412,22 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       )}
                     </div>
                   </div>
-                </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    {t('results.deviation.empty', 'No active deviation case for this KPI.')}
+                  </div>
+                )
               ) : null}
 
               {/* Simple bar chart */}
-              <div>
-                <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
-                  {t('results.drawer.chartTitle', 'Value Over Time')}
-                </h3>
-                {chartBars.length > 0 ? (
-                  <div className="relative h-32 flex items-end gap-1">
+              {normalizedSection === 'summary' && (
+                <div>
+                  <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
+                    {t('results.drawer.chartTitle', 'Value Over Time')}
+                  </h3>
+                  {chartBars.length > 0 ? (
+                    <div className="relative h-32 flex items-end gap-1">
                     {kpi?.targetValue != null && (
                       <div
                         className="absolute left-0 right-0 border-t border-dashed border-primary-500/40"
@@ -1314,16 +1468,18 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         </span>
                       </div>
                     ) : null}
-                  </div>
-                ) : (
-                  <div className="h-32 flex items-center justify-center text-sm text-slate-500 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
-                    {t('results.drawer.noMeasurements', 'No measurements yet')}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ) : (
+                    <div className="h-32 flex items-center justify-center text-sm text-slate-500 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
+                      {t('results.drawer.noMeasurements', 'No measurements yet')}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Record new value */}
-              <div id="kpi-drawer-record" className="scroll-mt-4">
+              {normalizedSection === 'record' && (
+                <div id="kpi-drawer-record" className="scroll-mt-4">
                 <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
                   {t('results.drawer.recordTitle', 'Record New Value')}
                 </h3>
@@ -1368,10 +1524,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       : t('results.drawer.record', 'Record')}
                   </button>
                 </form>
-              </div>
+                </div>
+              )}
 
               {/* History table */}
-              <div id="kpi-drawer-history" className="scroll-mt-4">
+              {normalizedSection === 'history' && (
+                <div id="kpi-drawer-history" className="scroll-mt-4">
                 <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
                   {t('results.drawer.history', 'History')}
                   {measurements.length > 0 && (
@@ -1476,177 +1634,313 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     {t('results.drawer.noMeasurements', 'No measurements yet')}
                   </p>
                 )}
-              </div>
-
-              {/* Settings */}
-              <div
-                id="kpi-drawer-settings"
-                className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('results.drawer.settingsTitle', 'Settings')}
+                <div className="mt-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('results.drawer.measurementAudit', 'Measurement audit')}
                   </div>
-                  {!editMode ? (
-                    <button
-                      type="button"
-                      onClick={() => setEditMode(true)}
-                      className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <Pencil size={14} />
-                        {t('common.edit', 'Edit')}
-                      </span>
-                    </button>
-                  ) : null}
+                  <div className="space-y-2">
+                    {historyAudit.length > 0 ? (
+                      historyAudit.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
+                        >
+                          <div className="text-sm font-medium text-slate-900 dark:text-white">
+                            {entry.summary || entry.eventType}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {new Date(entry.createdAt).toLocaleString()} · {entry.source}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
+                        {t('results.drawer.noMeasurementAuditYet', 'No measurement audit entries yet.')}
+                      </div>
+                    )}
+                  </div>
                 </div>
+                </div>
+              )}
 
-                <div className="space-y-3">
-                  <div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                      {t('results.createModal.name', 'Name')} *
+              {(normalizedSection === 'definition' || normalizedSection === 'targets') && (
+                <div
+                  id="kpi-drawer-settings"
+                  className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-4 scroll-mt-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {normalizedSection === 'definition'
+                        ? t('results.drawer.definitionTitle', 'Definition')
+                        : t('results.drawer.targetsTitle', 'Targets')}
                     </div>
-                    <input
-                      className={inputCls}
-                      value={settingsName}
-                      onChange={(e) => setSettingsName(e.target.value)}
-                      disabled={!editMode}
-                    />
-                  </div>
-
-                  <div>
-                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                      {t('results.createModal.description', 'Description')}
-                    </div>
-                    <textarea
-                      className={`${inputCls} h-20 resize-none py-2`}
-                      value={settingsDescription}
-                      onChange={(e) => setSettingsDescription(e.target.value)}
-                      disabled={!editMode}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.createModal.unit', 'Unit')}
-                      </div>
-                      <input
-                        className={inputCls}
-                        value={settingsUnit}
-                        onChange={(e) => setSettingsUnit(e.target.value)}
-                        disabled={!editMode}
-                      />
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.columns.baseline', 'Baseline')}
-                      </div>
-                      <input
-                        className={inputCls}
-                        type="number"
-                        value={settingsBaseline}
-                        onChange={(e) => setSettingsBaseline(e.target.value)}
-                        disabled={!editMode}
-                      />
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.columns.target', 'Target')}
-                      </div>
-                      <input
-                        className={inputCls}
-                        type="number"
-                        value={settingsTarget}
-                        onChange={(e) => setSettingsTarget(e.target.value)}
-                        disabled={!editMode}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.createModal.frequency', 'Frequency')}
-                      </div>
-                      <select
-                        className={`${inputCls} appearance-none`}
-                        value={settingsFrequency}
-                        onChange={(e) => setSettingsFrequency(e.target.value as any)}
-                        disabled={!editMode}
+                    {!editMode ? (
+                      <button
+                        type="button"
+                        onClick={() => setEditMode(true)}
+                        className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
                       >
-                        <option value="DAILY">Daily</option>
-                        <option value="WEEKLY">Weekly</option>
-                        <option value="MONTHLY">Monthly</option>
-                        <option value="QUARTERLY">Quarterly</option>
-                      </select>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.createModal.direction', 'Direction')}
-                      </div>
-                      <select
-                        className={`${inputCls} appearance-none`}
-                        value={settingsDirection}
-                        onChange={(e) => setSettingsDirection(e.target.value as any)}
-                        disabled={!editMode}
-                      >
-                        <option value="increase">
-                          {t('results.direction.increase', 'Increase')}
-                        </option>
-                        <option value="decrease">
-                          {t('results.direction.decrease', 'Decrease')}
-                        </option>
-                      </select>
-                    </div>
+                        <span className="inline-flex items-center gap-2">
+                          <Pencil size={14} />
+                          {t('common.edit', 'Edit')}
+                        </span>
+                      </button>
+                    ) : null}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.drawer.thresholdMode', 'Threshold mode')}
+                  {normalizedSection === 'definition' ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        {definitionStats.map((item) => (
+                          <div
+                            key={item.label}
+                            className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
+                          >
+                            <p className="text-[10px] uppercase text-slate-500 mb-1">{item.label}</p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.value}</p>
+                          </div>
+                        ))}
                       </div>
-                      <select
-                        className={`${inputCls} appearance-none`}
-                        value={settingsThresholdMode}
-                        onChange={(e) => setSettingsThresholdMode(e.target.value as any)}
-                        disabled={!editMode}
-                      >
-                        <option value="PERCENT_FROM_TARGET">
-                          {t('results.drawer.thresholdPercent', 'Percent from target')}
-                        </option>
-                        <option value="ABSOLUTE">
-                          {t('results.drawer.thresholdAbsolute', 'Absolute gap')}
-                        </option>
-                      </select>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.drawer.amberThreshold', 'Amber threshold')}
+
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.createModal.name', 'Name')} *
+                          </div>
+                          <input
+                            className={inputCls}
+                            value={settingsName}
+                            onChange={(e) => setSettingsName(e.target.value)}
+                            disabled={!editMode}
+                          />
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.createModal.description', 'Description')}
+                          </div>
+                          <textarea
+                            className={`${inputCls} h-20 resize-none py-2`}
+                            value={settingsDescription}
+                            onChange={(e) => setSettingsDescription(e.target.value)}
+                            disabled={!editMode}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                              {t('results.createModal.unit', 'Unit')}
+                            </div>
+                            <input
+                              className={inputCls}
+                              value={settingsUnit}
+                              onChange={(e) => setSettingsUnit(e.target.value)}
+                              disabled={!editMode}
+                            />
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                              {t('results.createModal.direction', 'Direction')}
+                            </div>
+                            <select
+                              className={`${inputCls} appearance-none`}
+                              value={settingsDirection}
+                              onChange={(e) => setSettingsDirection(e.target.value as any)}
+                              disabled={!editMode}
+                            >
+                              <option value="increase">
+                                {t('results.direction.increase', 'Increase')}
+                              </option>
+                              <option value="decrease">
+                                {t('results.direction.decrease', 'Decrease')}
+                              </option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
-                      <input
-                        className={inputCls}
-                        type="number"
-                        step="any"
-                        value={settingsAmberThreshold}
-                        onChange={(e) => setSettingsAmberThreshold(e.target.value)}
-                        disabled={!editMode}
-                      />
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        {t('results.drawer.redThreshold', 'Red threshold')}
+
+                      <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {t('results.drawer.changeHistory', 'Change history')}
+                        </div>
+                        <div className="space-y-2">
+                          {definitionAudit.length > 0 ? (
+                            definitionAudit.map((entry) => (
+                              <div
+                                key={entry.id}
+                                className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
+                              >
+                                <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                  {entry.summary || entry.eventType}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  {new Date(entry.createdAt).toLocaleString()} · {entry.source}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                              {t('results.drawer.noAuditYet', 'No definition changes recorded yet.')}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <input
-                        className={inputCls}
-                        type="number"
-                        step="any"
-                        value={settingsRedThreshold}
-                        onChange={(e) => setSettingsRedThreshold(e.target.value)}
-                        disabled={!editMode}
-                      />
-                    </div>
-                  </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        {targetStats.map((item) => (
+                          <div
+                            key={item.label}
+                            className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
+                          >
+                            <p className="text-[10px] uppercase text-slate-500 mb-1">{item.label}</p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {t('results.drawer.timelineTitle', 'Governed target checkpoints')}
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                          {targetTimeline.map((item) => (
+                            <div
+                              key={item.label}
+                              className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
+                            >
+                              <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                {item.label}
+                              </div>
+                              <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                                {item.value}
+                              </div>
+                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.hint}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.columns.baseline', 'Baseline')}
+                          </div>
+                          <input
+                            className={inputCls}
+                            type="number"
+                            value={settingsBaseline}
+                            onChange={(e) => setSettingsBaseline(e.target.value)}
+                            disabled={!editMode}
+                          />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.columns.target', 'Target')}
+                          </div>
+                          <input
+                            className={inputCls}
+                            type="number"
+                            value={settingsTarget}
+                            onChange={(e) => setSettingsTarget(e.target.value)}
+                            disabled={!editMode}
+                          />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.createModal.frequency', 'Frequency')}
+                          </div>
+                          <select
+                            className={`${inputCls} appearance-none`}
+                            value={settingsFrequency}
+                            onChange={(e) => setSettingsFrequency(e.target.value as any)}
+                            disabled={!editMode}
+                          >
+                            <option value="DAILY">Daily</option>
+                            <option value="WEEKLY">Weekly</option>
+                            <option value="MONTHLY">Monthly</option>
+                            <option value="QUARTERLY">Quarterly</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.drawer.thresholdMode', 'Threshold mode')}
+                          </div>
+                          <select
+                            className={`${inputCls} appearance-none`}
+                            value={settingsThresholdMode}
+                            onChange={(e) => setSettingsThresholdMode(e.target.value as any)}
+                            disabled={!editMode}
+                          >
+                            <option value="PERCENT_FROM_TARGET">
+                              {t('results.drawer.thresholdPercent', 'Percent from target')}
+                            </option>
+                            <option value="ABSOLUTE">
+                              {t('results.drawer.thresholdAbsolute', 'Absolute gap')}
+                            </option>
+                          </select>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.drawer.amberThreshold', 'Amber threshold')}
+                          </div>
+                          <input
+                            className={inputCls}
+                            type="number"
+                            step="any"
+                            value={settingsAmberThreshold}
+                            onChange={(e) => setSettingsAmberThreshold(e.target.value)}
+                            disabled={!editMode}
+                          />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.drawer.redThreshold', 'Red threshold')}
+                          </div>
+                          <input
+                            className={inputCls}
+                            type="number"
+                            step="any"
+                            value={settingsRedThreshold}
+                            onChange={(e) => setSettingsRedThreshold(e.target.value)}
+                            disabled={!editMode}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {t('results.drawer.targetHistory', 'Target change log')}
+                        </div>
+                        <div className="space-y-2">
+                          {targetAudit.length > 0 ? (
+                            targetAudit.map((entry) => (
+                              <div
+                                key={entry.id}
+                                className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
+                              >
+                                <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                  {entry.summary || entry.eventType}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  {new Date(entry.createdAt).toLocaleString()}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                              {t('results.drawer.noTargetAuditYet', 'No target changes recorded yet.')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {editMode ? (
                     <div className="flex items-center gap-2">
@@ -1656,9 +1950,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         onClick={() => void handleSaveSettings()}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
                       >
-                        {savingSettings
-                          ? t('common.saving', 'Saving...')
-                          : t('common.save', 'Save')}
+                        {savingSettings ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
                       </button>
                       <button
                         type="button"
@@ -1669,24 +1961,16 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           setSettingsDescription(String((kpi as any)?.description || ''));
                           setSettingsUnit(String((kpi as any)?.unit || ''));
                           setSettingsBaseline(
-                            (kpi as any)?.baselineValue != null
-                              ? String((kpi as any).baselineValue)
-                              : ''
+                            (kpi as any)?.baselineValue != null ? String((kpi as any).baselineValue) : ''
                           );
                           setSettingsTarget(
-                            (kpi as any)?.targetValue != null
-                              ? String((kpi as any).targetValue)
-                              : ''
+                            (kpi as any)?.targetValue != null ? String((kpi as any).targetValue) : ''
                           );
-                          setSettingsFrequency(
-                            ((kpi as any)?.measurementFrequency || 'MONTHLY') as any
-                          );
+                          setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
                           setSettingsDirection(
                             (kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase'
                           );
-                          setSettingsThresholdMode(
-                            ((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any
-                          );
+                          setSettingsThresholdMode(((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any);
                           setSettingsAmberThreshold(
                             (kpi as any)?.thresholdMode === 'ABSOLUTE'
                               ? (kpi as any)?.amberThresholdAbs != null
@@ -1712,102 +1996,177 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       </button>
                     </div>
                   ) : null}
-                </div>
-              </div>
 
-              {/* Links */}
-              <div
-                id="kpi-drawer-links"
-                className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('results.drawer.linksTitle', 'Linked initiatives')}
-                  </div>
-                  <Link2 size={16} className="text-slate-400" />
-                </div>
-
-                {(mappings || []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {mappings.map((m) => (
-                      <span
-                        key={m.id}
-                        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-200"
+                  {normalizedSection === 'definition' && (
+                    <div
+                      id="kpi-drawer-danger"
+                      className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 scroll-mt-4"
+                    >
+                      <button
+                        type="button"
+                        disabled={deleting}
+                        onClick={() => void handleDeleteKpi()}
+                        className="w-full h-9 text-sm font-medium rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300 hover:bg-red-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
                       >
-                        <span className="truncate max-w-[220px]">
-                          {m.initiative_name || t('common.unknown', 'Unknown')}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={mappingBusy}
-                          onClick={() => void handleUnlinkMapping(m.id)}
-                          className="text-slate-400 hover:text-red-400 transition-colors disabled:opacity-60"
-                          title={t('common.remove', 'Remove')}
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('results.drawer.noLinks', 'No linked initiatives')}
-                  </div>
-                )}
+                        <Trash2 size={16} />
+                        {deleting ? t('common.deleting', 'Deleting...') : t('common.delete', 'Delete')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
-                <div className="space-y-2">
-                  <input
-                    className={inputCls}
-                    value={initiativeSearch}
-                    onChange={(e) => setInitiativeSearch(e.target.value)}
-                    placeholder={t('results.drawer.linkSearch', 'Search initiatives to link...')}
-                    disabled={mappingBusy}
-                  />
-                  <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30">
-                    {initiatives
-                      .filter((i) => {
-                        if (!initiativeSearch.trim()) return true;
-                        return i.name.toLowerCase().includes(initiativeSearch.toLowerCase());
-                      })
-                      .filter(
-                        (i) => !mappings.some((m) => String(m.initiative_id) === String(i.id))
-                      )
-                      .slice(0, 25)
-                      .map((i) => (
-                        <button
-                          key={i.id}
-                          type="button"
-                          disabled={mappingBusy}
-                          onClick={() => void handleLinkInitiative(i.id)}
-                          className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
-                        >
-                          {i.name}
-                        </button>
-                      ))}
-                    {initiatives.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-                        {t('common.loading', 'Loading...')}
+              {normalizedSection === 'lineage' && (
+                <div
+                  id="kpi-drawer-links"
+                  className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-4 scroll-mt-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.drawer.lineageTitle', 'Lineage')}
+                    </div>
+                    <GitBranch size={16} className="text-slate-400" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700">
+                      <p className="text-[10px] uppercase text-slate-500 mb-1">
+                        {t('results.drawer.definitionSource', 'Definition source')}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {kpi?.definitionSource === 'library'
+                          ? t('results.kpi.source.library', 'Library')
+                          : t('results.kpi.source.custom', 'Initiative custom')}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700">
+                      <p className="text-[10px] uppercase text-slate-500 mb-1">
+                        {t('results.columns.phase', 'Phase')}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {kpi?.observationPhase || '—'}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700">
+                      <p className="text-[10px] uppercase text-slate-500 mb-1">
+                        {t('results.drawer.lineageConnectors', 'Connectors')}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {connectedConnectors.length}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700">
+                      <p className="text-[10px] uppercase text-slate-500 mb-1">
+                        {t('results.tabs.initiatives', 'Initiatives')}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{mappings.length}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.drawer.linksTitle', 'Linked initiatives')}
+                    </div>
+                    {(mappings || []).length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {mappings.map((m) => (
+                          <span
+                            key={m.id}
+                            className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-200"
+                          >
+                            <span className="truncate max-w-[220px]">
+                              {m.initiative_name || t('common.unknown', 'Unknown')}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={mappingBusy}
+                              onClick={() => void handleUnlinkMapping(m.id)}
+                              className="text-slate-400 hover:text-red-400 transition-colors disabled:opacity-60"
+                              title={t('common.remove', 'Remove')}
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
                       </div>
-                    ) : null}
+                    ) : (
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
+                        {t('results.drawer.noLinks', 'No linked initiatives')}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.drawer.lineageConnectors', 'Connector lineage')}
+                    </div>
+                    {connectedConnectors.length > 0 ? (
+                      <div className="space-y-2">
+                        {connectedConnectors.map((connector) => (
+                          <div
+                            key={connector.id}
+                            className="rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.02] p-3"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                  {connector.connectorName}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  {connector.connectorType || 'api'} · {connector.scheduleCron || 'manual'}
+                                </div>
+                              </div>
+                              <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+                                <div>{connector.lastRunStatus || 'never'}</div>
+                                <div>{connector.lastRunAt ? new Date(connector.lastRunAt).toLocaleString() : '—'}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
+                        {t('results.drawer.lineageNoConnectors', 'No connectors linked to this KPI yet.')}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <input
+                      className={inputCls}
+                      value={initiativeSearch}
+                      onChange={(e) => setInitiativeSearch(e.target.value)}
+                      placeholder={t('results.drawer.linkSearch', 'Search initiatives to link...')}
+                      disabled={mappingBusy}
+                    />
+                    <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30">
+                      {initiatives
+                        .filter((i) => {
+                          if (!initiativeSearch.trim()) return true;
+                          return i.name.toLowerCase().includes(initiativeSearch.toLowerCase());
+                        })
+                        .filter((i) => !mappings.some((m) => String(m.initiative_id) === String(i.id)))
+                        .slice(0, 25)
+                        .map((i) => (
+                          <button
+                            key={i.id}
+                            type="button"
+                            disabled={mappingBusy}
+                            onClick={() => void handleLinkInitiative(i.id)}
+                            className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
+                          >
+                            {i.name}
+                          </button>
+                        ))}
+                      {initiatives.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                          {t('common.loading', 'Loading...')}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Danger zone */}
-              <div
-                id="kpi-drawer-danger"
-                className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 scroll-mt-4"
-              >
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => void handleDeleteKpi()}
-                  className="w-full h-9 text-sm font-medium rounded-full border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300 hover:bg-red-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
-                >
-                  <Trash2 size={16} />
-                  {deleting ? t('common.deleting', 'Deleting...') : t('common.delete', 'Delete')}
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>

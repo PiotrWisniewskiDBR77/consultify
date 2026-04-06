@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
+import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
 import {
   createKpiReportSnapshot,
@@ -266,7 +267,7 @@ router.post(
 router.put(
   '/kpis/:kpiId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     if (!kpiId) {
       return res.status(400).json({
@@ -295,7 +296,9 @@ router.put(
 
     const row = await dbGet<any>(
       `
-      SELECT k.id
+      SELECT k.id, k.name, k.description, k.unit, k.baseline_value, k.target_value,
+             k.measurement_frequency, k.direction, k.threshold_mode,
+             k.amber_threshold_pct, k.red_threshold_pct, k.amber_threshold_abs, k.red_threshold_abs
       FROM initiative_kpis k
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
@@ -350,6 +353,82 @@ router.put(
         kpiId,
       ]
     );
+
+    const afterState = {
+      name: name != null && String(name).trim() ? String(name).trim() : row.name,
+      description: description != null ? String(description).trim() : row.description,
+      unit: unit != null ? String(unit).trim() : row.unit,
+      baselineValue:
+        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : row.baseline_value,
+      targetValue: targetValue != null && targetValue !== '' ? Number(targetValue) : row.target_value,
+      measurementFrequency: measurementFrequency || row.measurement_frequency,
+      direction: direction || row.direction,
+      thresholdMode: thresholdMode || row.threshold_mode,
+      amberThresholdPct:
+        amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : row.amber_threshold_pct,
+      redThresholdPct:
+        redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : row.red_threshold_pct,
+      amberThresholdAbs:
+        amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : row.amber_threshold_abs,
+      redThresholdAbs:
+        redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : row.red_threshold_abs,
+    };
+    const beforeDefinition = {
+      name: row.name,
+      description: row.description,
+      unit: row.unit,
+      measurementFrequency: row.measurement_frequency,
+      direction: row.direction,
+    };
+    const afterDefinition = {
+      name: afterState.name,
+      description: afterState.description,
+      unit: afterState.unit,
+      measurementFrequency: afterState.measurementFrequency,
+      direction: afterState.direction,
+    };
+    const beforeTargets = {
+      baselineValue: row.baseline_value,
+      targetValue: row.target_value,
+      thresholdMode: row.threshold_mode,
+      amberThresholdPct: row.amber_threshold_pct,
+      redThresholdPct: row.red_threshold_pct,
+      amberThresholdAbs: row.amber_threshold_abs,
+      redThresholdAbs: row.red_threshold_abs,
+    };
+    const afterTargets = {
+      baselineValue: afterState.baselineValue,
+      targetValue: afterState.targetValue,
+      thresholdMode: afterState.thresholdMode,
+      amberThresholdPct: afterState.amberThresholdPct,
+      redThresholdPct: afterState.redThresholdPct,
+      amberThresholdAbs: afterState.amberThresholdAbs,
+      redThresholdAbs: afterState.redThresholdAbs,
+    };
+    if (JSON.stringify(beforeDefinition) !== JSON.stringify(afterDefinition)) {
+      await resultsEnterpriseService.createMetricAuditEntry(organizationId, {
+        kpiId,
+        section: 'definition',
+        eventType: 'definition_updated',
+        source: 'v8_results_update',
+        actorUserId: userId || null,
+        summary: `Definition updated for ${afterState.name || row.name || kpiId}`,
+        before: beforeDefinition,
+        after: afterDefinition,
+      }).catch(() => null);
+    }
+    if (JSON.stringify(beforeTargets) !== JSON.stringify(afterTargets)) {
+      await resultsEnterpriseService.createMetricAuditEntry(organizationId, {
+        kpiId,
+        section: 'targets',
+        eventType: 'targets_updated',
+        source: 'v8_results_update',
+        actorUserId: userId || null,
+        summary: `Targets updated for ${afterState.name || row.name || kpiId}`,
+        before: beforeTargets,
+        after: afterTargets,
+      }).catch(() => null);
+    }
 
     return res.json({
       data: { success: true },
@@ -953,6 +1032,21 @@ router.post(
     } catch {
       // Do not fail the write on deviation side effects.
     }
+    await resultsEnterpriseService.createMetricAuditEntry(organizationId, {
+      kpiId,
+      section: 'history',
+      eventType: 'measurement_recorded',
+      source: source ? String(source) : 'manual',
+      actorUserId: userId || null,
+      summary: `Measurement recorded for ${periodStart}`,
+      before: {},
+      after: {
+        value: Number(value),
+        periodStart,
+        periodEnd,
+        source: source || 'manual',
+      },
+    }).catch(() => null);
 
     return res.json({
       data: {

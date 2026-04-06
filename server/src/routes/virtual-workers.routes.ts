@@ -10,6 +10,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { requireRole } from '../middleware/rbac.middleware.js';
 import * as ConversationLogger from '../services/ai/virtualWorkerConversationLogger.js';
 import * as InsightsEngine from '../services/ai/virtualWorkerInsightsEngine.js';
+import * as PreviewService from '../services/ai/virtualWorkerPreviewService.js';
 import * as WorkerService from '../services/ai/virtualWorkerService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -279,6 +280,31 @@ router.get(
   })
 );
 
+router.post(
+  '/:id/conversations/:convId/redact',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const redacted = await ConversationLogger.redactConversation({
+      workerId: req.params.id,
+      conversationId: req.params.convId,
+      redactedBy: (req as any).user?.id || null,
+    });
+    if (!redacted) return res.status(404).json({ error: 'Conversation not found' });
+    return res.json({ success: true });
+  })
+);
+
+router.delete(
+  '/:id/conversations/:convId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const removed = await ConversationLogger.deleteConversation({
+      workerId: req.params.id,
+      conversationId: req.params.convId,
+    });
+    if (!removed) return res.status(404).json({ error: 'Conversation not found' });
+    return res.json({ success: true });
+  })
+);
+
 // ==========================================
 // ANALYTICS
 // ==========================================
@@ -297,6 +323,14 @@ router.get(
 );
 
 router.get(
+  '/:id/release-readiness',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const readiness = await WorkerService.getWorkerReleaseReadiness(req.params.id);
+    return res.json({ success: true, data: readiness });
+  })
+);
+
+router.get(
   '/:id/evaluations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const evaluations = await WorkerService.listWorkerEvaluations(req.params.id);
@@ -309,16 +343,23 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const body = req.body as any;
     if (!body?.name) return res.status(400).json({ error: 'name is required' });
-    const evaluation = await WorkerService.createWorkerEvaluation({
-      worker_id: req.params.id,
-      name: body.name,
-      dataset_json: body.dataset_json,
-      results_json: body.results_json,
-      score: body.score,
-      status: body.status,
-      created_by: (req as any).user?.id || null,
-    });
-    return res.status(201).json({ success: true, data: evaluation });
+    try {
+      const evaluation = await WorkerService.createWorkerEvaluation({
+        worker_id: req.params.id,
+        name: body.name,
+        dataset_json: body.dataset_json,
+        results_json: body.results_json,
+        score: body.score,
+        status: body.status,
+        created_by: (req as any).user?.id || null,
+      });
+      return res.status(201).json({ success: true, data: evaluation });
+    } catch (error) {
+      if (error instanceof WorkerService.VirtualWorkerValidationError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
   })
 );
 
@@ -334,26 +375,61 @@ router.post(
   '/:id/releases',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const body = req.body as any;
-    const release = await WorkerService.createWorkerRelease({
-      worker_id: req.params.id,
-      profile_id: body.profile_id,
-      evaluation_id: body.evaluation_id,
-      release_type: body.release_type,
-      status: body.status,
-      notes: body.notes,
-      payload_json: body.payload_json,
-      created_by: (req as any).user?.id || null,
-    });
-    return res.status(201).json({ success: true, data: release });
+    try {
+      const release = await WorkerService.createWorkerRelease({
+        worker_id: req.params.id,
+        profile_id: body.profile_id,
+        evaluation_id: body.evaluation_id,
+        release_type: body.release_type,
+        status: body.status,
+        notes: body.notes,
+        payload_json: body.payload_json,
+        created_by: (req as any).user?.id || null,
+      });
+      return res.status(201).json({ success: true, data: release });
+    } catch (error) {
+      if (error instanceof WorkerService.VirtualWorkerValidationError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
   })
 );
 
 router.post(
   '/:id/releases/:releaseId/activate',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const release = await WorkerService.activateWorkerRelease(req.params.releaseId);
-    if (!release) return res.status(404).json({ error: 'Release not found' });
-    return res.json({ success: true, data: release });
+    try {
+      const release = await WorkerService.activateWorkerRelease(req.params.releaseId);
+      if (!release) return res.status(404).json({ error: 'Release not found' });
+      return res.json({ success: true, data: release });
+    } catch (error) {
+      if (error instanceof WorkerService.VirtualWorkerValidationError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/:id/preview',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const body = req.body as any;
+    try {
+      const preview = await PreviewService.previewVirtualWorkerResponse({
+        workerIdOrSlug: req.params.id,
+        message: String(body?.message || ''),
+        locale: body?.locale,
+        userEnabledWebSearch: Boolean(body?.userEnabledWebSearch),
+      });
+      return res.json({ success: true, data: preview });
+    } catch (error) {
+      if (error instanceof WorkerService.VirtualWorkerValidationError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
   })
 );
 

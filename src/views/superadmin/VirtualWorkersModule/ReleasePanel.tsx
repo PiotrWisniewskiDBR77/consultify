@@ -17,6 +17,25 @@ interface Release {
 interface ReleasePanelProps {
   workerId: string;
   profileId?: string | null;
+  profileVersion?: number | null;
+}
+
+interface EvaluationOption {
+  id: string;
+  name: string;
+  status: string;
+  score: number | null;
+}
+
+interface ReleaseReadiness {
+  activeProfileId: string | null;
+  activeProfileVersion: number | null;
+  latestPassedEvaluationId: string | null;
+  latestPassedEvaluationName: string | null;
+  latestPassedEvaluationScore: number | null;
+  passedEvaluationCount: number;
+  releaseable: boolean;
+  blockers: string[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -26,21 +45,36 @@ const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 };
 
-export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId }) => {
+export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId, profileVersion }) => {
   const [items, setItems] = useState<Release[]>([]);
+  const [evaluations, setEvaluations] = useState<EvaluationOption[]>([]);
+  const [readiness, setReadiness] = useState<ReleaseReadiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState('draft');
+  const [evaluationId, setEvaluationId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchItems = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await Api.get(`/api/virtual-workers/${workerId}/releases`);
-      const payload = response?.data?.data ?? response?.data;
-      setItems(Array.isArray(payload) ? payload : []);
+      const [releasesResponse, evaluationsResponse, readinessResponse] = await Promise.all([
+        Api.get(`/api/virtual-workers/${workerId}/releases`),
+        Api.get(`/api/virtual-workers/${workerId}/evaluations`),
+        Api.get(`/api/virtual-workers/${workerId}/release-readiness`),
+      ]);
+      const releasesPayload = releasesResponse?.data?.data ?? releasesResponse?.data;
+      const evaluationsPayload = evaluationsResponse?.data?.data ?? evaluationsResponse?.data;
+      const readinessPayload = readinessResponse?.data?.data ?? readinessResponse?.data;
+      setItems(Array.isArray(releasesPayload) ? releasesPayload : []);
+      setEvaluations(Array.isArray(evaluationsPayload) ? evaluationsPayload : []);
+      setReadiness(readinessPayload || null);
+      setEvaluationId(readinessPayload?.latestPassedEvaluationId || '');
     } catch (err) {
       console.error('Failed to fetch releases:', err);
+      setError('Failed to load release control data.');
     } finally {
       setLoading(false);
     }
@@ -52,21 +86,26 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId 
 
   const handleCreate = async () => {
     setSaving(true);
+    setError(null);
     try {
       await Api.post(`/api/virtual-workers/${workerId}/releases`, {
         profile_id: profileId || null,
-        release_type: 'profile',
+        evaluation_id: evaluationId || null,
+        release_type: 'profile_version',
         status,
         notes: notes.trim() || null,
         payload_json: {
           created_from: 'virtual_workers_superadmin',
+          active_profile_version: profileVersion || null,
         },
       });
       setNotes('');
       setStatus('draft');
+      setEvaluationId('');
       fetchItems();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create release:', err);
+      setError(err?.response?.data?.error || 'Failed to create release.');
     } finally {
       setSaving(false);
     }
@@ -74,12 +113,16 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId 
 
   const handleActivate = async (releaseId: string) => {
     try {
+      setError(null);
       await Api.post(`/api/virtual-workers/${workerId}/releases/${releaseId}/activate`, {});
       fetchItems();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to activate release:', err);
+      setError(err?.response?.data?.error || 'Failed to activate release.');
     }
   };
+
+  const passedEvaluations = evaluations.filter((item) => item.status === 'passed');
 
   return (
     <div className="space-y-6">
@@ -89,7 +132,50 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId 
           Create governed release entries and activate a verified worker version.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+        {readiness && (
+          <div className="mt-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  Release readiness
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Active profile: {readiness.activeProfileVersion ? `v${readiness.activeProfileVersion}` : 'none'}
+                  {' · '}
+                  Passed evaluations: {readiness.passedEvaluationCount}
+                </p>
+              </div>
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  readiness.releaseable
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                }`}
+              >
+                {readiness.releaseable ? 'Ready to package' : 'Blocked'}
+              </span>
+            </div>
+            {readiness.latestPassedEvaluationName && (
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-3">
+                Recommended evaluation: {readiness.latestPassedEvaluationName}
+                {readiness.latestPassedEvaluationScore !== null
+                  ? ` (${readiness.latestPassedEvaluationScore})`
+                  : ''}
+              </p>
+            )}
+            {readiness.blockers.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {readiness.blockers.map((blocker) => (
+                  <p key={blocker} className="text-xs text-amber-700 dark:text-amber-300">
+                    {blocker}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -97,7 +183,18 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId 
           >
             <option value="draft">Draft</option>
             <option value="ready">Ready</option>
-            <option value="rolled_back">Rolled Back</option>
+          </select>
+          <select
+            value={evaluationId}
+            onChange={(e) => setEvaluationId(e.target.value)}
+            className="px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+          >
+            <option value="">Select passed evaluation</option>
+            {passedEvaluations.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name} {item.score !== null ? `(${item.score})` : ''}
+              </option>
+            ))}
           </select>
           <input
             type="text"
@@ -108,9 +205,24 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId 
           />
         </div>
 
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          `ready` releases require an active profile and a passed evaluation with dataset, results,
+          and score.
+        </p>
+
+        {error && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
         <button
           onClick={handleCreate}
-          disabled={saving}
+          disabled={
+            saving ||
+            !profileId ||
+            (status === 'ready' && (!evaluationId || !readiness?.releaseable))
+          }
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
         >
           <Send size={14} />
@@ -157,6 +269,7 @@ export const ReleasePanel: React.FC<ReleasePanelProps> = ({ workerId, profileId 
                 {item.status !== 'active' && (
                   <button
                     onClick={() => handleActivate(item.id)}
+                    disabled={item.status !== 'ready'}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
                   >
                     <CheckCircle2 size={13} />

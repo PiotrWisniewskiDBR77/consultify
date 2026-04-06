@@ -14267,6 +14267,13 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to get ingestion log');
   },
+  resultsRunKPIConnector: async (connectorId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-connectors/${connectorId}/run`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run KPI connector');
+  },
   resultsCreateROIEvidence: async (data: {
     value: number;
     period: string;
@@ -14303,6 +14310,8 @@ export const Api = {
     kpiIds: string[];
     recipientPolicy: Record<string, unknown>;
     scheduleCron?: string;
+    sendAt?: string;
+    templateConfig?: Record<string, unknown>;
     approvalRequired?: boolean;
   }) => {
     const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules`, {
@@ -14318,6 +14327,12 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to get report schedules');
   },
+  resultsGetReportScheduleDeliveryLog: async (scheduleId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/delivery-log`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to get report schedule delivery log');
+  },
   resultsApproveReportSchedule: async (scheduleId: string) => {
     const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/approve`, {
       method: 'POST',
@@ -14325,11 +14340,26 @@ export const Api = {
     });
     return handleResponse(res, 'Failed to approve report schedule');
   },
+  resultsRunReportSchedule: async (scheduleId: string) => {
+    const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/run`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run report schedule');
+  },
+  resultsRunDueEnterpriseWork: async () => {
+    const res = await fetch(`${API_URL}/results-v4/runtime/run-due`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run enterprise work');
+  },
   resultsCreateWallboard: async (data: {
     name: string;
     kpiIds: string[];
     refreshIntervalSeconds?: number;
     autoRotationSeconds?: number;
+    alertThresholds?: Record<string, unknown>;
   }) => {
     const res = await fetch(`${API_URL}/results-v4/wallboards`, {
       method: 'POST',

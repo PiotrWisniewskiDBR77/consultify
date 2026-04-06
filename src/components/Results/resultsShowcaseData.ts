@@ -14,6 +14,64 @@ export interface ResultsShowcaseReportRow {
   updatedAt: string;
 }
 
+export interface ResultsShowcaseScheduleRow {
+  id: string;
+  reportName: string;
+  scheduleCron: string;
+  sendAt?: string | null;
+  approvalRequired: boolean;
+  approvalStatus: string;
+  status: string;
+  lastSentAt?: string | null;
+  lastRunStatus?: string | null;
+  nextRunAt?: string | null;
+  kpiIds: string[];
+  recipientPolicy: Record<string, unknown>;
+}
+
+export interface ResultsShowcaseWallboardRow {
+  id: string;
+  name: string;
+  refreshIntervalSeconds: number;
+  autoRotationSeconds: number;
+  isActive: boolean;
+  kpiIds: string[];
+  alertThresholds: Record<string, unknown>;
+}
+
+export interface ResultsShowcaseConnectorRow {
+  id: string;
+  connectorName: string;
+  connectorType: string;
+  config: Record<string, unknown>;
+  targetKpiIds: string[];
+  scheduleCron?: string | null;
+  lastRunAt?: string | null;
+  lastRunStatus?: string | null;
+  lastRunMessage?: string | null;
+  nextRunAt?: string | null;
+  isActive: boolean;
+}
+
+export interface ResultsShowcaseGoalRow {
+  id: string;
+  parentGoalId?: string | null;
+  goalType: string;
+  title: string;
+  description?: string | null;
+  ownerId?: string | null;
+  timeFrame?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: string;
+  progress: number;
+  targetValue?: number | null;
+  currentValue?: number | null;
+  unit?: string | null;
+  linkedInitiativesCount: number;
+  rollupProgress: number;
+}
+
 function toIsoDate(daysFromNow: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);
@@ -265,6 +323,142 @@ export function createResultsShowcaseReports(): ResultsShowcaseReportRow[] {
       periodEnd: toDateOnly(-1),
       status: 'DRAFT',
       updatedAt: toIsoDate(-7),
+    },
+  ];
+}
+
+export function createResultsShowcaseSchedules(): ResultsShowcaseScheduleRow[] {
+  return [
+    {
+      id: 'showcase-schedule-1',
+      reportName: 'Weekly rollout digest',
+      scheduleCron: '0 8 * * MON',
+      sendAt: '08:00',
+      approvalRequired: true,
+      approvalStatus: 'pending',
+      status: 'active',
+      lastSentAt: toIsoDate(-7),
+      kpiIds: ['showcase-kpi-1', 'showcase-kpi-2'],
+      recipientPolicy: { channel: 'email', audience: 'ops-review' },
+    },
+    {
+      id: 'showcase-schedule-2',
+      reportName: 'Monthly benefits scorecard',
+      scheduleCron: '0 9 1 * *',
+      sendAt: '09:00',
+      approvalRequired: false,
+      approvalStatus: 'approved',
+      status: 'active',
+      lastSentAt: toIsoDate(-30),
+      kpiIds: ['showcase-kpi-1', 'showcase-kpi-3', 'showcase-kpi-4'],
+      recipientPolicy: { channel: 'teams', audience: 'leadership' },
+    },
+  ];
+}
+
+export function createResultsShowcaseWallboards(): ResultsShowcaseWallboardRow[] {
+  return [
+    {
+      id: 'showcase-wallboard-1',
+      name: 'Shopfloor KPI wallboard',
+      refreshIntervalSeconds: 45,
+      autoRotationSeconds: 20,
+      isActive: true,
+      kpiIds: ['showcase-kpi-1', 'showcase-kpi-2', 'showcase-kpi-4'],
+      alertThresholds: { belowTarget: true, staleEntry: true },
+    },
+    {
+      id: 'showcase-wallboard-2',
+      name: 'Benefits realization board',
+      refreshIntervalSeconds: 120,
+      autoRotationSeconds: 30,
+      isActive: true,
+      kpiIds: ['showcase-kpi-1', 'showcase-kpi-3'],
+      alertThresholds: { discrepancy: true },
+    },
+  ];
+}
+
+export function createResultsShowcaseConnectors(): ResultsShowcaseConnectorRow[] {
+  return [
+    {
+      id: 'showcase-connector-1',
+      connectorName: 'MES production feed',
+      connectorType: 'api',
+      config: { source: 'MES', mode: 'batch-sync' },
+      targetKpiIds: ['showcase-kpi-1', 'showcase-kpi-2'],
+      scheduleCron: '*/30 * * * *',
+      lastRunAt: toIsoDate(-1),
+      lastRunStatus: 'success',
+      isActive: true,
+    },
+    {
+      id: 'showcase-connector-2',
+      connectorName: 'Energy CSV import',
+      connectorType: 'csv',
+      config: { source: 'Energy report', mode: 'manual-drop' },
+      targetKpiIds: ['showcase-kpi-3'],
+      scheduleCron: '0 6 * * 1',
+      lastRunAt: toIsoDate(-6),
+      lastRunStatus: 'warning',
+      isActive: true,
+    },
+  ];
+}
+
+export function createResultsShowcaseGoals(): ResultsShowcaseGoalRow[] {
+  return [
+    {
+      id: 'showcase-goal-1',
+      goalType: 'scorecard',
+      title: 'Rollout performance scorecard',
+      description: 'Operator scorecard for execution-phase KPI during rollout.',
+      ownerId: 'ops-lead',
+      timeFrame: 'Q2 2026',
+      startDate: toDateOnly(-14),
+      endDate: toDateOnly(75),
+      status: 'active',
+      progress: 62,
+      targetValue: 100,
+      currentValue: 62,
+      unit: '%',
+      linkedInitiativesCount: 2,
+      rollupProgress: 58,
+    },
+    {
+      id: 'showcase-goal-2',
+      goalType: 'objective',
+      title: 'Benefits stabilization after deployment',
+      description: 'Post-implementation scorecard tracking benefits realization discipline.',
+      ownerId: 'benefits-owner',
+      timeFrame: 'Q3 2026',
+      startDate: toDateOnly(-30),
+      endDate: toDateOnly(120),
+      status: 'active',
+      progress: 48,
+      targetValue: 95,
+      currentValue: 46,
+      unit: '%',
+      linkedInitiativesCount: 1,
+      rollupProgress: 52,
+    },
+    {
+      id: 'showcase-goal-3',
+      parentGoalId: 'showcase-goal-2',
+      goalType: 'key_result',
+      title: 'Keep energy intensity below target',
+      description: 'Key result linked to post-implementation energy KPI.',
+      ownerId: 'energy-owner',
+      timeFrame: 'Monthly',
+      startDate: toDateOnly(-7),
+      endDate: toDateOnly(30),
+      status: 'at_risk',
+      progress: 41,
+      targetValue: 6.2,
+      currentValue: 5.9,
+      unit: 'kWh',
+      linkedInitiativesCount: 1,
+      rollupProgress: 41,
     },
   ];
 }

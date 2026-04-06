@@ -629,6 +629,17 @@ export interface ResultsKpiDrawerDetail {
     };
   }>;
   openCase: ResultsKpiDrawerCase | null;
+  auditLog: Array<{
+    id: string;
+    section: string;
+    eventType: string;
+    source: string;
+    actorUserId?: string | null;
+    summary?: string | null;
+    before: Record<string, unknown>;
+    after: Record<string, unknown>;
+    createdAt: string;
+  }>;
 }
 
 export interface ReviewPackTimelineEntry {

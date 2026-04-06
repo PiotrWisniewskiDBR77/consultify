@@ -200,8 +200,8 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 - `docs/product/KPI_FULL_SYSTEM_CANON_V8.md`
   - **Owner**: Product + Engineering
-  - **Scope**: canonical cross-module doctrine for KPI across Initiatives, Results, Reporting, Finance linkage, alerts, action workflow and AI support
-  - **Authority**: Highest for full-system KPI architecture, documentation read-order, cross-module ownership split and the premium rollout delta that remains above the historical bounded `P04` lane
+  - **Scope**: canonical cross-module doctrine for KPI across Initiatives, Results, Reporting, Goals/Scorecards, distribution surfaces, Finance linkage, alerts, action workflow and AI support
+  - **Authority**: Highest for full-system KPI architecture, documentation read-order, cross-module ownership split and the premium rollout delta that remains above the historical bounded `P04` lane, including metric foundation, scorecards and reporting-adjacent enterprise surfaces
 
 - `docs/product/RESULTS_V8_SSOT.md`
   - **Owner**: Product + Engineering

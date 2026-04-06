@@ -12,6 +12,7 @@ interface KpiOverviewViewProps {
   governedSnapshot?: V8ResultsDashboardSnapshot | null;
   onOpenCatalog: (filters?: FilterChip[]) => void;
   onOpenQueue: (filters?: FilterChip[]) => void;
+  onOpenScorecards: () => void;
   onOpenReports: () => void;
   onOpenKpi: (kpiId: string) => void;
 }
@@ -59,6 +60,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
   governedSnapshot,
   onOpenCatalog,
   onOpenQueue,
+  onOpenScorecards,
   onOpenReports,
   onOpenKpi,
 }) => {
@@ -117,7 +119,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={onOpenReports}
+              onClick={onOpenScorecards}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
             >
               <ClipboardList size={16} />

@@ -1682,6 +1682,26 @@ export async function getResultsKpiDrawerDetail(
       )
     : [];
 
+  const auditRows = await dbAll<{
+    id: string;
+    section: string;
+    event_type: string;
+    source: string;
+    actor_user_id?: string | null;
+    summary?: string | null;
+    before_json?: string | null;
+    after_json?: string | null;
+    created_at: string;
+  }>(
+    `SELECT *
+     FROM kpi_metric_audit_log
+     WHERE organization_id = ? AND kpi_id = ?
+     ORDER BY created_at DESC
+     LIMIT 30`,
+    [organizationId, kpiId],
+    { fallback: true }
+  ).catch(() => []);
+
   return {
     organizationId,
     kpiId,
@@ -1735,6 +1755,17 @@ export async function getResultsKpiDrawerDetail(
           })),
         }
       : null,
+    auditLog: (auditRows || []).map((row) => ({
+      id: row.id,
+      section: row.section,
+      eventType: row.event_type,
+      source: row.source || 'results_runtime',
+      actorUserId: row.actor_user_id || null,
+      summary: row.summary || null,
+      before: safeJsonParse(row.before_json, {}),
+      after: safeJsonParse(row.after_json, {}),
+      createdAt: row.created_at,
+    })),
   };
 }
 

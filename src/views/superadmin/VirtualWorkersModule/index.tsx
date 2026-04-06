@@ -2,6 +2,7 @@ import {
   BarChart3,
   Bot,
   Brain,
+  Eye,
   FlaskConical,
   MessageSquare,
   Rocket,
@@ -28,6 +29,7 @@ export const VirtualWorkersModule: React.FC<VirtualWorkersModuleProps> = ({ init
       ? [
           { id: 'profile', label: 'Profile', icon: <Bot size={16} /> },
           { id: 'knowledge', label: 'Knowledge', icon: <Brain size={16} /> },
+          { id: 'preview', label: 'Preview', icon: <Eye size={16} /> },
           { id: 'conversations', label: 'Conversations', icon: <MessageSquare size={16} /> },
           { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
           { id: 'insights', label: 'AI Insights', icon: <Sparkles size={16} /> },

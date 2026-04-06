@@ -12,6 +12,9 @@ export type KpiDrawerSection =
   | 'deviation'
   | 'record'
   | 'history'
+  | 'definition'
+  | 'targets'
+  | 'lineage'
   | 'settings'
   | 'links'
   | 'danger';

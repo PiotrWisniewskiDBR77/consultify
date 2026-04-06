@@ -107,6 +107,11 @@ It should provide:
   - `Overview`
   - `Queue`
   - `Catalog`
+- governed metric-definition surfaces:
+  - `Definition`
+  - `Targets`
+  - `History`
+  - `Lineage`
 - table plus preview working surface
 - actual entry and history
 - target vs actual vs baseline
@@ -121,6 +126,25 @@ Premium expectation beyond the original bounded lane:
 - `Queue` is the operational triage surface grouped by stale entry, below target, discrepancy and requires-review lanes
 - `Catalog` is the detailed KPI workspace with table/grid, preview and governed drill-in
 - the workspace must support visible transitions between these surfaces without leaving the module
+- KPI management must evolve from field-editing into governed metric management with explicit aggregation semantics, dimensions, slices, provenance and target change audit
+
+### 4.3A Results - Goals and scorecards
+
+The full KPI system also requires a governed `Goals / Scorecards` layer inside `Results`.
+
+It should provide:
+
+- `Goal`
+- `Objective`
+- `Key Result`
+- `Scorecard`
+- `Check-in`
+- `Subgoal / roll-up`
+- links back to initiatives and KPI definitions
+
+Canonical rule:
+
+`KPI provides measurable truth; Goals and Scorecards organize that truth into managed outcome commitments`
 
 ### 4.4 Results - Reporting
 
@@ -133,6 +157,11 @@ It must be:
 - optionally refreshable from current data
 - able to choose KPI from the observed KPI set
 - able to materialize corrective actions and review outputs
+- able to expose distribution sub-surfaces:
+  - `Reports`
+  - `Schedules`
+  - `Wallboards`
+  - `Connectors`
 
 ### 4.5 Finance linkage
 
@@ -171,6 +200,11 @@ Every KPI should support five governed layers:
 - owner
 - linked initiatives
 - category
+- dimensions
+- slices
+- aggregation method
+- semantic version
+- lineage metadata
 
 ### 5.2 Expectation
 
@@ -180,6 +214,8 @@ Every KPI should support five governed layers:
 - thresholds
 - cadence
 - phase split between realization and post-implementation
+- status-rule logic
+- target history
 
 ### 5.3 Measurement
 
@@ -189,6 +225,8 @@ Every KPI should support five governed layers:
 - freshness
 - note
 - audit trail
+- ingest provenance
+- quality score / trust posture
 
 ### 5.4 Interpretation
 
@@ -206,6 +244,9 @@ Every KPI should support five governed layers:
 - corrective action plan
 - execution follow-up
 - report inclusion
+- check-in
+- escalation / reminder policy
+- wallboard alert broadcast where appropriate
 
 ---
 
@@ -236,6 +277,9 @@ Premium expectation:
 - every report row should show the template used, scope size and open-action load
 - snapshot refresh must be possible from the reporting surface without rebuilding scope manually
 - the artifact should remain a governed scorecard with `summary / KPI overview / deviation cases / action plan / appendix`
+- scheduled distribution must support recurring sends, approval gates and recipient policy
+- wallboards must support refresh cadence, alert banners and TV-style operating visibility
+- connectors must expose ingest provenance and refresh posture without becoming a second source of KPI truth
 
 ---
 
@@ -306,7 +350,10 @@ The KPI system is complete only when:
 - initiative-linked and standalone KPI coexist coherently
 - phase-aware targets and actuals are explicit
 - operator can move from signal to action without ambiguity
+- metric definitions are governed, reusable and source-aware
+- scorecards and goals can organize KPI into explicit business commitments
 - reporting is template-first and traceable
+- distribution supports reports, schedules and wallboards without fragmenting truth
 - finance linkage explains economic meaning without overwriting KPI truth
 - documentation tells one coherent story across modules
 
@@ -320,6 +367,10 @@ The active product target still includes the visible premium delta below.
 - template-first scorecard artifact with visible template metadata and snapshot refresh
 - richer chart semantics, target history and auditability
 - stronger alerting, reconciliation evidence and next-action materialization
+- governed metric foundation with dimensions, slices, aggregation semantics and provenance
+- goals / scorecards / check-ins / roll-ups as explicit Results objects
+- reporting-adjacent distribution surfaces: schedules, wallboards and connectors
+- enterprise governance hardening: lineage, permission posture, auditability and source trust
 
 Canonical interpretation:
 

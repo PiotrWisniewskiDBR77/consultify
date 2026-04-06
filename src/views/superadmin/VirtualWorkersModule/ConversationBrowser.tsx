@@ -1,10 +1,12 @@
 import {
   ArrowLeft,
   Clock,
+  EyeOff,
   MessageSquare,
   Mic,
   RefreshCw,
   Tag,
+  Trash2,
   Type,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -82,13 +84,16 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [privacyActionLoading, setPrivacyActionLoading] = useState(false);
   const [channelFilter, setChannelFilter] = useState<string>('');
   const [outcomeFilter, setOutcomeFilter] = useState<string>('');
   const [topicFilter, setTopicFilter] = useState('');
   const [intentFilter, setIntentFilter] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const fetchConversations = async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({ limit: '50' });
       if (channelFilter) params.set('channel', channelFilter);
@@ -113,6 +118,7 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
 
   const fetchMessages = async (convId: string) => {
     setLoadingMessages(true);
+    setError(null);
     try {
       const response = await Api.get(`/api/virtual-workers/${workerId}/conversations/${convId}`);
       if (response?.data) {
@@ -135,19 +141,79 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
     fetchMessages(convId);
   };
 
+  const handleRedactConversation = async () => {
+    if (!selectedConv) return;
+    setPrivacyActionLoading(true);
+    setError(null);
+    try {
+      await Api.post(`/api/virtual-workers/${workerId}/conversations/${selectedConv}/redact`, {});
+      await fetchMessages(selectedConv);
+      await fetchConversations();
+    } catch (err: any) {
+      console.error('Failed to redact conversation:', err);
+      setError(err?.response?.data?.error || 'Failed to redact conversation.');
+    } finally {
+      setPrivacyActionLoading(false);
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!selectedConv) return;
+    setPrivacyActionLoading(true);
+    setError(null);
+    try {
+      await Api.delete(`/api/virtual-workers/${workerId}/conversations/${selectedConv}`);
+      setSelectedConv(null);
+      setMessages([]);
+      await fetchConversations();
+    } catch (err: any) {
+      console.error('Failed to delete conversation:', err);
+      setError(err?.response?.data?.error || 'Failed to delete conversation.');
+    } finally {
+      setPrivacyActionLoading(false);
+    }
+  };
+
   if (selectedConv) {
     return (
       <div className="space-y-4">
-        <button
-          onClick={() => {
-            setSelectedConv(null);
-            setMessages([]);
-          }}
-          className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-        >
-          <ArrowLeft size={16} />
-          Back to conversations
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            onClick={() => {
+              setSelectedConv(null);
+              setMessages([]);
+              setError(null);
+            }}
+            className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            <ArrowLeft size={16} />
+            Back to conversations
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRedactConversation}
+              disabled={privacyActionLoading}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-navy-600 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+            >
+              {privacyActionLoading ? <RefreshCw size={13} className="animate-spin" /> : <EyeOff size={13} />}
+              Redact transcript
+            </button>
+            <button
+              onClick={handleDeleteConversation}
+              disabled={privacyActionLoading}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+            >
+              <Trash2 size={13} />
+              Delete conversation
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            {error}
+          </div>
+        )}
 
         {loadingMessages ? (
           <div className="flex items-center justify-center h-32">
@@ -274,6 +340,17 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
           />
         </div>
       </div>
+
+      <div className="text-xs text-slate-500 dark:text-slate-400">
+        Privacy controls are available inside a conversation: redact transcript content or delete the
+        conversation entirely.
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center h-32">

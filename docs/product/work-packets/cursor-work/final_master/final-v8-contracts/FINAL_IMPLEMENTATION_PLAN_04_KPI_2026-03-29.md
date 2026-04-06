@@ -84,6 +84,10 @@ The broader target state for cross-module KPI evolution now lives in `docs/produ
 | Operator cockpit surfaces | overview + queue + governed catalog | bounded lane shipped table-first workspace | Dowieźć widoczne `Overview / Queue / Catalog` w `Results > KPI` jako realny cockpit operatora | P0 |
 | Reporting artifact maturity | template identity + scope load + refresh | snapshot create exists, artifact visibility still thin | Pokazać template metadata, scope size i dodać snapshot refresh z listy reportów | P0 |
 | Alert and queue semantics | stale / below / discrepancy / requires-review lanes | signals exist but lane visibility is limited | Uczytelnić queue semantics i wejścia do pracy operatora | P1 |
+| Metric foundation maturity | governed definitions, dimensions, slices, provenance | backend primitives exist, UI contract still thin | Dowieźć widoczną warstwę `MetricDefinition` z aggregation semantics, lineage i source trust | P0 |
+| Goals / scorecards runtime | goals, check-ins, roll-ups, status rules | ownership exists in SSOT, user-facing runtime missing | Dodać `Goals / Scorecards` surfaces oparte o KPI truth, bez budowy równoległego systemu | P0 |
+| Distribution surfaces | schedules, wallboards, connector posture | routes/API exist, active Results UI still report-list only | Ujawnić `Reports / Schedules / Wallboards / Connectors` jako realne powierzchnie pracy | P0 |
+| Governance and audit posture | lineage, permission posture, audit cues | bounded lane covers only part of runtime truth | Pokazać provenance, freshness, downstream usage i denied/error posture w aktywnym UX | P1 |
 
 ## 5. Product contract (user-facing)
 ### 5.1 Primary flows
@@ -248,6 +252,19 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
   - Report artifact pokazuje template/scope i może być odświeżony bez ręcznego rebuildu scope.
   - Rozszerzenie nie narusza granic truth ownership z sekcji 3.
 
+#### P04-E — Enterprise KPI activation surfaces
+- **Goal**: zacząć ujawniać enterprise capabilities, które już mają fundament API/runtime, bez zmiany core doktryny KPI.
+- **Acceptance**: `Results` pokazuje pierwsze realne surfaces dla `Schedules / Wallboards / Connectors`, a dokumentacja zamyka scope `MetricDefinition / Goals / Scorecards`.
+- **Evidence**: UI runtime for reporting-adjacent surfaces + targeted regression.
+- **Tasks**:
+  - Rozszerzyć `Results > Reporting` o podpowierzchnie `Reports / Schedules / Wallboards / Connectors`.
+  - Pokazać source posture i target KPI scope w tych widokach.
+  - Przygotować grunt pod kolejne aktywacje `Goals / Scorecards` i richer metric-definition UX.
+- **DoD**:
+  - Operator widzi i otwiera powierzchnie dystrybucji bez wychodzenia z modułu `Results`.
+  - UI nie tworzy równoległej prawdy; wszystkie surfaces konsumują governed KPI truth.
+  - Scope premium jest dopisany do aktualnych źródeł prawdy.
+
 ### 8.2 Rollout strategy
 - Feature-flag / gradual exposure; prefer “read-first” zanim włączymy mutacje szeroko.
 - Brak silent scope merge z `Finanse` i `Wdrożenia`.
@@ -267,4 +284,5 @@ When the system cannot provide the ideal loop, it must degrade visibly with a cl
 | P04-B | verified(evidence) | (this commit) | 30 tests (15 integration + 6 health posture + 4 permissions + 3 workflow transitions + 1 E2E + 1 checklist) — all green | E2E: signal→inspect→next-action chain; degraded posture for all 4 scenarios; org-health breakdown | Existing 93 ROI service + 20 route tests still green (113 total). |
 | P04-C | verified(evidence) | (this commit) | Regression: 113 existing + 30 new = 143 total, 0 failures | Contract checklist 12/12 checked; evidence closeout doc created | Known limits: reconciliation UX depends on Finance module (P05); chart aggregation methods are bounded to last/sum/average. |
 | P04-D | in_delivery | pending | To be updated after premium cockpit/report regression passes | UI walkthrough: `Overview / Queue / Catalog` + report refresh | This packet extends visibility and operating ergonomics without changing bounded-lane doctrine. |
+| P04-E | planned | pending | To be updated after `Reporting` enterprise surfaces ship | UI walkthrough: `Reports / Schedules / Wallboards / Connectors` | This packet reveals enterprise-adjacent Results surfaces and closes the doc scope for metric/goals/distribution layers. |
 

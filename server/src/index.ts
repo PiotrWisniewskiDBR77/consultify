@@ -382,6 +382,19 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
   })();
 
+  // Results enterprise runtime executor - non-blocking
+  (async () => {
+    try {
+      const { resultsEnterpriseRuntimeExecutor } = await import(
+        './services/results/ResultsEnterpriseRuntimeExecutor.js'
+      );
+      resultsEnterpriseRuntimeExecutor.start(60_000);
+      logger.info('[Server] ✅ Results Enterprise Runtime Executor started (60s interval)');
+    } catch (err: any) {
+      logger.error('[Server] Results Enterprise Runtime Executor failed:', err?.message);
+    }
+  })();
+
   // ============================================================
   // LLM CONFIG INITIALIZATION - Create tables & sync providers
   // ============================================================

@@ -19,7 +19,12 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 
-import { findOrCreateConversation, logVoiceEvent } from '../virtualWorkerConversationLogger.js';
+import {
+  deleteConversation,
+  findOrCreateConversation,
+  logVoiceEvent,
+  redactConversation,
+} from '../virtualWorkerConversationLogger.js';
 
 describe('virtualWorkerConversationLogger channel continuity', () => {
   beforeEach(() => {
@@ -103,6 +108,79 @@ describe('virtualWorkerConversationLogger channel continuity', () => {
       3,
       expect.stringContaining("SET ended_at = NOW(), duration_seconds = $2, channel = 'voice'"),
       [expect.any(String), 14]
+    );
+  });
+
+  it('redacts a conversation transcript and clears privacy-sensitive fields', async () => {
+    mockQuery
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'conv-1',
+            worker_id: 'worker-anna',
+            metadata: { source: 'public' },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({});
+
+    const redacted = await redactConversation({
+      workerId: 'worker-anna',
+      conversationId: 'conv-1',
+      redactedBy: 'admin-1',
+    });
+
+    expect(redacted).toBe(true);
+    expect(mockQuery).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('UPDATE virtual_worker_messages'),
+      [
+        'conv-1',
+        '[REDACTED BY ADMIN]',
+        JSON.stringify({ redacted: true, redacted_by: 'admin-1' }),
+      ]
+    );
+    expect(mockQuery).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('visitor_fingerprint = NULL'),
+      expect.arrayContaining([
+        'conv-1',
+        'Conversation redacted by admin.',
+        '[REDACTED BY ADMIN]',
+        expect.stringContaining('"redacted_by":"admin-1"'),
+      ])
+    );
+  });
+
+  it('deletes a conversation with its messages', async () => {
+    mockQuery
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'conv-1',
+            worker_id: 'worker-anna',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rowCount: 1 });
+
+    const deleted = await deleteConversation({
+      workerId: 'worker-anna',
+      conversationId: 'conv-1',
+    });
+
+    expect(deleted).toBe(true);
+    expect(mockQuery).toHaveBeenNthCalledWith(
+      2,
+      'DELETE FROM virtual_worker_messages WHERE conversation_id = $1',
+      ['conv-1']
+    );
+    expect(mockQuery).toHaveBeenNthCalledWith(
+      3,
+      'DELETE FROM virtual_worker_conversations WHERE id = $1 AND worker_id = $2',
+      ['conv-1', 'worker-anna']
     );
   });
 });

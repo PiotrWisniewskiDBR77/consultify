@@ -48,6 +48,16 @@ vi.mock('../../../src/components/Results/ResultsKpiReportsView', () => ({
   ResultsKpiReportsView: () => <div>results-kpi-reports-view</div>,
 }));
 
+vi.mock('../../../src/components/Results/ResultsKpiScorecardsView', () => ({
+  ResultsKpiScorecardsView: () => <div>results-kpi-scorecards-view</div>,
+}));
+
+vi.mock('../../../src/components/Results/ResultsReportingEnterpriseViews', () => ({
+  ResultsReportSchedulesView: () => <div>results-report-schedules-view</div>,
+  ResultsWallboardsView: () => <div>results-wallboards-view</div>,
+  ResultsKpiConnectorsView: () => <div>results-kpi-connectors-view</div>,
+}));
+
 vi.mock('../../../src/components/Results/KpiOverviewView', () => ({
   KpiOverviewView: () => <div>kpi-overview-view</div>,
 }));
@@ -270,6 +280,57 @@ describe('ResultsHub V8 runtime strip', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
     expect(screen.getByText('results-kpis-table')).toBeInTheDocument();
+  });
+
+  it('switches KPI workspace to scorecards surface', async () => {
+    render(
+      <MemoryRouter>
+        <ResultsHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalled();
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('kpi-overview-view')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scorecards' }));
+    expect(screen.getByText('results-kpi-scorecards-view')).toBeInTheDocument();
+  });
+
+  it('switches reporting workspace between reports, schedules, wallboards and connectors', async () => {
+    render(
+      <MemoryRouter>
+        <ResultsHub />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(V8ResultsApi.getDashboard).toHaveBeenCalled();
+      expect(V8ResultsApi.getKpiCatalog).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Reports' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('results_reports');
+      expect(screen.getByText('results-kpi-reports-view')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Schedules' }));
+    expect(screen.getByText('results-report-schedules-view')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wallboards' }));
+    expect(screen.getByText('results-wallboards-view')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Connectors' }));
+    expect(screen.getByText('results-kpi-connectors-view')).toBeInTheDocument();
   });
 
   it('deletes KPI from the hub through the governed V8 seam first', async () => {

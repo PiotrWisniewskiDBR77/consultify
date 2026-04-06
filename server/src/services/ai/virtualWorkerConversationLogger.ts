@@ -79,6 +79,16 @@ function parseJsonb<T>(raw: unknown, fallback: T): T {
   }
 }
 
+function mergeMetadata(
+  current: Record<string, unknown> | null,
+  patch: Record<string, unknown>
+): Record<string, unknown> {
+  return {
+    ...(current || {}),
+    ...patch,
+  };
+}
+
 function toConversation(row: Row): Conversation {
   return {
     id: String(row.id || ''),
@@ -427,6 +437,68 @@ export async function getConversationMessages(conversationId: string): Promise<C
     [conversationId]
   );
   return (result.rows || []).map(toMessage);
+}
+
+export async function redactConversation(opts: {
+  workerId: string;
+  conversationId: string;
+  redactedBy?: string | null;
+}): Promise<boolean> {
+  const existing = await getConversationById(opts.conversationId);
+  if (!existing || existing.worker_id !== opts.workerId) return false;
+
+  const redactionMarker = '[REDACTED BY ADMIN]';
+  const metadata = mergeMetadata(existing.metadata, {
+    redacted_at: new Date().toISOString(),
+    redacted_by: opts.redactedBy || null,
+    privacy_action: 'redact',
+  });
+
+  await db().query(
+    `UPDATE virtual_worker_messages
+     SET content = $2,
+         retrieval_query = NULL,
+         metadata = COALESCE(metadata, '{}'::jsonb) || $3::jsonb
+     WHERE conversation_id = $1`,
+    [
+      opts.conversationId,
+      redactionMarker,
+      JSON.stringify({
+        redacted: true,
+        redacted_by: opts.redactedBy || null,
+      }),
+    ]
+  );
+
+  await db().query(
+    `UPDATE virtual_worker_conversations
+     SET visitor_fingerprint = NULL,
+         summary = $2,
+         session_memory = '{}'::jsonb,
+         last_user_message = $3,
+         last_assistant_message = $3,
+         metadata = $4,
+         updated_at = NOW()
+     WHERE id = $1`,
+    [opts.conversationId, 'Conversation redacted by admin.', redactionMarker, JSON.stringify(metadata)]
+  );
+
+  return true;
+}
+
+export async function deleteConversation(opts: {
+  workerId: string;
+  conversationId: string;
+}): Promise<boolean> {
+  const existing = await getConversationById(opts.conversationId);
+  if (!existing || existing.worker_id !== opts.workerId) return false;
+
+  await db().query('DELETE FROM virtual_worker_messages WHERE conversation_id = $1', [opts.conversationId]);
+  const result = await db().query('DELETE FROM virtual_worker_conversations WHERE id = $1 AND worker_id = $2', [
+    opts.conversationId,
+    opts.workerId,
+  ]);
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function getWorkerAnalytics(opts: {

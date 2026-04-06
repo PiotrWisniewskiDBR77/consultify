@@ -29,7 +29,18 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
   const [name, setName] = useState('');
   const [status, setStatus] = useState('draft');
   const [score, setScore] = useState('');
+  const [datasetJson, setDatasetJson] = useState('[]');
+  const [resultsJson, setResultsJson] = useState('{}');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const tryParseJson = (value: string) => {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return undefined;
+    }
+  };
 
   const fetchItems = async () => {
     setLoading(true);
@@ -51,20 +62,24 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
   const handleCreate = async () => {
     if (!name.trim()) return;
     setSaving(true);
+    setError(null);
     try {
       await Api.post(`/api/virtual-workers/${workerId}/evaluations`, {
         name: name.trim(),
         status,
         score: score.trim() ? Number(score) : null,
-        dataset_json: [],
-        results_json: {},
+        dataset_json: tryParseJson(datasetJson),
+        results_json: tryParseJson(resultsJson),
       });
       setName('');
       setStatus('draft');
       setScore('');
+      setDatasetJson('[]');
+      setResultsJson('{}');
       fetchItems();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create evaluation:', err);
+      setError(err?.response?.data?.error || 'Failed to create evaluation.');
     } finally {
       setSaving(false);
     }
@@ -118,9 +133,42 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
           />
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+          <textarea
+            value={datasetJson}
+            onChange={(e) => setDatasetJson(e.target.value)}
+            rows={6}
+            placeholder='[{"input":"What is Consultify?","expected":"..."}]'
+            className="px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white font-mono resize-y"
+          />
+          <textarea
+            value={resultsJson}
+            onChange={(e) => setResultsJson(e.target.value)}
+            rows={6}
+            placeholder='{"summary":"passed regression set","checks":[...]}'
+            className="px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white font-mono resize-y"
+          />
+        </div>
+
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
+          Passed and failed evaluations now require a non-empty dataset, non-empty results, and a
+          score.
+        </p>
+
+        {error && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
         <button
           onClick={handleCreate}
-          disabled={saving || !name.trim()}
+          disabled={
+            saving ||
+            !name.trim() ||
+            tryParseJson(datasetJson) === undefined ||
+            tryParseJson(resultsJson) === undefined
+          }
           className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
         >
           <Plus size={14} />

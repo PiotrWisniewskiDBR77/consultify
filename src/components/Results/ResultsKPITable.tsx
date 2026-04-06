@@ -532,7 +532,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                               >
                                 <Pencil size={14} />
-                                {t('common.edit', 'Edit')}
+                                {t('results.drawer.definitionTitle', 'Definition')}
                               </button>
                               <button
                                 onClick={(e) => {
@@ -543,7 +543,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                               >
                                 <Link2 size={14} />
-                                {t('results.actions.manageLinks', 'Manage links')}
+                                {t('results.drawer.lineageTitle', 'Lineage')}
                               </button>
                               <button
                                 onClick={(e) => {
@@ -687,7 +687,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                           >
                             <Pencil size={14} />
-                            {t('common.edit', 'Edit')}
+                            {t('results.drawer.definitionTitle', 'Definition')}
                           </button>
                           <button
                             type="button"
@@ -699,7 +699,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
                           >
                             <Link2 size={14} />
-                            {t('results.actions.manageLinks', 'Manage links')}
+                            {t('results.drawer.lineageTitle', 'Lineage')}
                           </button>
                           <button
                             type="button"

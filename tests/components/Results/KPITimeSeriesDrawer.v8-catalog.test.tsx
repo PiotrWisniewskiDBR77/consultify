@@ -120,6 +120,10 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lineage' }));
+    await waitFor(() => {
       expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
     });
 
@@ -174,6 +178,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Record New Value' }));
     fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: '24' } });
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
@@ -215,6 +220,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Record New Value' }));
     fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: '24' } });
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
@@ -269,6 +275,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Definition' }));
     fireEvent.click(screen.getByText('Edit'));
     fireEvent.change(screen.getByDisplayValue('KPI Alpha'), {
       target: { value: 'KPI Alpha Updated' },
@@ -359,10 +366,12 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     await waitFor(() => {
       expect(screen.getByText('Calculation')).toBeInTheDocument();
       expect(screen.getByText('Freshness posture')).toBeInTheDocument();
-      expect(screen.getByText('Governed target checkpoints')).toBeInTheDocument();
-      expect(screen.getAllByText('Projection').length).toBeGreaterThan(0);
       expect(screen.getByText('Action ageing')).toBeInTheDocument();
+      expect(screen.getAllByText('Projection').length).toBeGreaterThan(0);
     });
+
+    fireEvent.click(screen.getByRole('button', { name: 'History' }));
+    expect(screen.getByText('Governed target checkpoints')).toBeInTheDocument();
   });
 
   it('falls back to legacy KPI settings save only for bounded compatibility errors', async () => {
@@ -402,6 +411,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Definition' }));
     fireEvent.click(screen.getByText('Edit'));
     fireEvent.click(screen.getByText('Save'));
 
@@ -452,9 +462,12 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
-      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Lineage' }));
+    await waitFor(() => {
+      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Initiative Alpha'));
 
     await waitFor(() => {
@@ -495,9 +508,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Lineage' }));
+    await waitFor(() => {
+      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Initiative Alpha'));
 
     await waitFor(() => {
@@ -542,9 +559,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Lineage' }));
+    await waitFor(() => {
+      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByTitle('Remove'));
 
     await waitFor(() => {
@@ -586,9 +607,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Lineage' }));
+    await waitFor(() => {
+      expect(screen.getByText('Initiative Alpha')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByTitle('Remove'));
 
     await waitFor(() => {
@@ -628,6 +653,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Definition' }));
     fireEvent.click(screen.getByText('Delete'));
 
     await waitFor(() => {
@@ -673,6 +699,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Definition' }));
     fireEvent.click(screen.getByText('Delete'));
 
     await waitFor(() => {
@@ -716,9 +743,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Acknowledge'));
 
     await waitFor(() => {
@@ -761,9 +792,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Acknowledge'));
 
     await waitFor(() => {
@@ -804,9 +839,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
     fireEvent.change(screen.getByPlaceholderText('Explain the root cause...'), {
       target: { value: 'Root cause analysis details' },
     });
@@ -855,9 +894,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Acknowledge')).toBeInTheDocument();
+    });
     fireEvent.change(screen.getByPlaceholderText('Explain the root cause...'), {
       target: { value: 'Root cause analysis details' },
     });
@@ -905,9 +948,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     const { container } = render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Add action')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Add action')).toBeInTheDocument();
+    });
     fireEvent.change(screen.getByPlaceholderText('New action'), {
       target: { value: 'Create mitigation plan' },
     });
@@ -959,9 +1006,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     const { container } = render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Add action')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Add action')).toBeInTheDocument();
+    });
     fireEvent.change(screen.getByPlaceholderText('New action'), {
       target: { value: 'Create mitigation plan' },
     });
@@ -1017,9 +1068,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Create mitigation plan')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Create mitigation plan')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Create mitigation plan'));
 
     await waitFor(() => {
@@ -1074,9 +1129,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Create mitigation plan')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Create mitigation plan')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Create mitigation plan'));
 
     await waitFor(() => {
@@ -1118,9 +1177,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Resolve')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Resolve')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Resolve'));
 
     await waitFor(() => {
@@ -1163,9 +1226,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Resolve')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Resolve')).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText('Resolve'));
 
     await waitFor(() => {
@@ -1205,9 +1272,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Close')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Close')).toBeInTheDocument();
+    });
     fireEvent.change(
       screen.getByPlaceholderText('Describe the evidence that confirms the deviation is closed.'),
       { target: { value: 'Verified mitigation in review pack' } },
@@ -1262,9 +1333,13 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     render(<KPITimeSeriesDrawer kpiId="kpi-1" onClose={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Close')).toBeInTheDocument();
+      expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Deviation case' }));
+    await waitFor(() => {
+      expect(screen.getByText('Close')).toBeInTheDocument();
+    });
     fireEvent.change(
       screen.getByPlaceholderText('Describe the evidence that confirms the deviation is closed.'),
       { target: { value: 'Verified mitigation in review pack' } },

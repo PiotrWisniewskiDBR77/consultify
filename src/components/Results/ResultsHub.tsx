@@ -17,6 +17,12 @@ import { KPICreateModal } from './KPICreateModal';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 import { KpiOverviewView } from './KpiOverviewView';
 import { KpiQueueView } from './KpiQueueView';
+import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
+import {
+  ResultsKpiConnectorsView,
+  ResultsReportSchedulesView,
+  ResultsWallboardsView,
+} from './ResultsReportingEnterpriseViews';
 import { ResultsInitiativesView } from './ResultsInitiativesView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
@@ -109,11 +115,16 @@ export const ResultsHub: React.FC = () => {
   const [observationPhaseFilter, setObservationPhaseFilter] = useState<
     'all' | 'realization' | 'post-implementation'
   >('all');
-  const [kpiWorkspaceMode, setKpiWorkspaceMode] = useState<'overview' | 'queue' | 'catalog'>(
+  const [kpiWorkspaceMode, setKpiWorkspaceMode] = useState<'overview' | 'queue' | 'catalog' | 'scorecards'>(
     'overview'
   );
+  const [reportWorkspaceMode, setReportWorkspaceMode] = useState<
+    'reports' | 'schedules' | 'wallboards' | 'connectors'
+  >('reports');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
+  const [kpiScorecardCreateNonce, setKpiScorecardCreateNonce] = useState(0);
+  const [reportWorkspaceCreateNonce, setReportWorkspaceCreateNonce] = useState(0);
   const [drawerState, setDrawerState] = useState<{ kpiId: string; section?: KpiDrawerSection } | null>(
     null
   );
@@ -408,10 +419,10 @@ export const ResultsHub: React.FC = () => {
           openKpiDrawer(kpi.id, 'record');
           break;
         case 'edit':
-          openKpiDrawer(kpi.id, 'settings');
+          openKpiDrawer(kpi.id, 'definition');
           break;
         case 'links':
-          openKpiDrawer(kpi.id, 'links');
+          openKpiDrawer(kpi.id, 'lineage');
           break;
         case 'history':
           openKpiDrawer(kpi.id, 'history');
@@ -510,6 +521,17 @@ export const ResultsHub: React.FC = () => {
     }
 
     if (activeTab === 'results_kpi') {
+      if (kpiWorkspaceMode === 'scorecards') {
+        return (
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.lifecycle', 'Lifecycle filter')}
+            value={lifecycleFilter}
+            onChange={(value) => setLifecycleFilter(value as ResultsLifecycleFilter)}
+            options={lifecycleOptions}
+          />
+        );
+      }
+
       return (
         <div className="flex items-center gap-2">
           <ResultsControlSelect
@@ -555,7 +577,7 @@ export const ResultsHub: React.FC = () => {
     }
 
     return null;
-  }, [activeSignalFilter, activeTab, applySignalFilter, lifecycleFilter, observationPhaseFilter, t]);
+  }, [activeSignalFilter, activeTab, applySignalFilter, kpiWorkspaceMode, lifecycleFilter, observationPhaseFilter, t]);
 
   const commandRowContent = useMemo(() => {
     const chipBase =
@@ -620,6 +642,14 @@ export const ResultsHub: React.FC = () => {
             t('results.kpi.workspace.catalog', 'Catalog'),
             () => setKpiWorkspaceMode('catalog'),
             kpiWorkspaceMode === 'catalog'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.scorecards', 'Scorecards'),
+            () => {
+              setActiveFilters([]);
+              setKpiWorkspaceMode('scorecards');
+            },
+            kpiWorkspaceMode === 'scorecards'
           )}
           {actionButton(
             t('results.actions.createReport', 'Create KPI report'),
@@ -702,9 +732,43 @@ export const ResultsHub: React.FC = () => {
     }
 
     if (activeTab === 'results_reports') {
-      return governedRuntimeStrip ? (
-        <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
-      ) : null;
+      return (
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {actionButton(
+            t('results.reporting.workspace.reports', 'Reports'),
+            () => {
+              setActiveFilters([]);
+              setReportWorkspaceMode('reports');
+            },
+            reportWorkspaceMode === 'reports'
+          )}
+          {actionButton(
+            t('results.reporting.workspace.schedules', 'Schedules'),
+            () => {
+              setActiveFilters([]);
+              setReportWorkspaceMode('schedules');
+            },
+            reportWorkspaceMode === 'schedules'
+          )}
+          {actionButton(
+            t('results.reporting.workspace.wallboards', 'Wallboards'),
+            () => {
+              setActiveFilters([]);
+              setReportWorkspaceMode('wallboards');
+            },
+            reportWorkspaceMode === 'wallboards'
+          )}
+          {actionButton(
+            t('results.reporting.workspace.connectors', 'Connectors'),
+            () => {
+              setActiveFilters([]);
+              setReportWorkspaceMode('connectors');
+            },
+            reportWorkspaceMode === 'connectors'
+          )}
+          {governedRuntimeStrip}
+        </div>
+      );
     }
 
     return governedRuntimeStrip ? (
@@ -717,6 +781,7 @@ export const ResultsHub: React.FC = () => {
     lifecycleScopedKpis,
     observationPhaseFilter,
     openRoiPicker,
+    reportWorkspaceMode,
     t,
   ]);
 
@@ -733,6 +798,9 @@ export const ResultsHub: React.FC = () => {
           setActiveDocumentId(null);
           if (tab !== 'results_kpi') {
             setKpiWorkspaceMode('overview');
+          }
+          if (tab !== 'results_reports') {
+            setReportWorkspaceMode('reports');
           }
         }}
         viewMode={viewMode}
@@ -752,8 +820,13 @@ export const ResultsHub: React.FC = () => {
         onNewItem={
           activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
             ? () => setShowCreateModal(true)
+            : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards'
+              ? () => setKpiScorecardCreateNonce(Date.now())
             : activeTab === 'results_reports'
-                ? () => setKpiReportCreateNonce(Date.now())
+                ? () =>
+                    reportWorkspaceMode === 'reports'
+                      ? setKpiReportCreateNonce(Date.now())
+                      : setReportWorkspaceCreateNonce(Date.now())
             : activeTab === 'roi'
                 ? () => setRoiOpenModal(true)
                 : undefined
@@ -761,8 +834,16 @@ export const ResultsHub: React.FC = () => {
         newItemLabel={
           activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
             ? t('results.addKpi', '+ Add KPI')
+            : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards'
+              ? t('results.kpi.scorecards.add', '+ Add scorecard')
             : activeTab === 'results_reports'
-                ? t('results.kpiReports.new', '+ New report')
+                ? reportWorkspaceMode === 'reports'
+                  ? t('results.kpiReports.new', '+ New report')
+                  : reportWorkspaceMode === 'schedules'
+                    ? t('results.reporting.addSchedule', '+ Add schedule')
+                    : reportWorkspaceMode === 'wallboards'
+                      ? t('results.reporting.addWallboard', '+ Add wallboard')
+                      : t('results.reporting.addConnector', '+ Add connector')
             : activeTab === 'roi'
                 ? t('results.roi.add', '+ Record ROI')
                 : undefined
@@ -784,14 +865,37 @@ export const ResultsHub: React.FC = () => {
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
         ) : activeTab === 'results_reports' ? (
-          <ResultsKpiReportsView
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            createNonce={kpiReportCreateNonce}
-            selectedLifecycleFilter={lifecycleFilter}
-            selectedInitiatives={filteredInitiatives}
-            selectedKpis={filteredKpis}
-          />
+          reportWorkspaceMode === 'reports' ? (
+            <ResultsKpiReportsView
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              createNonce={kpiReportCreateNonce}
+              selectedLifecycleFilter={lifecycleFilter}
+              selectedInitiatives={filteredInitiatives}
+              selectedKpis={filteredKpis}
+            />
+          ) : reportWorkspaceMode === 'schedules' ? (
+            <ResultsReportSchedulesView
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              createNonce={reportWorkspaceCreateNonce}
+              selectedKpis={filteredKpis}
+            />
+          ) : reportWorkspaceMode === 'wallboards' ? (
+            <ResultsWallboardsView
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              createNonce={reportWorkspaceCreateNonce}
+              selectedKpis={filteredKpis}
+            />
+          ) : (
+            <ResultsKpiConnectorsView
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              createNonce={reportWorkspaceCreateNonce}
+              selectedKpis={filteredKpis}
+            />
+          )
         ) : activeTab === 'roi' ? (
           <ROITrackingView refreshNonce={roiRefreshNonce} />
         ) : loading ? (
@@ -813,6 +917,11 @@ export const ResultsHub: React.FC = () => {
             onOpenQueue={(filters) => {
               setQueueFilter(filters || []);
             }}
+            onOpenScorecards={() => {
+              setActiveFilters([]);
+              setKpiWorkspaceMode('scorecards');
+              setViewMode('table');
+            }}
             onOpenReports={() => setActiveTab('results_reports')}
             onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
           />
@@ -820,6 +929,13 @@ export const ResultsHub: React.FC = () => {
           <KpiQueueView
             kpis={filteredKpis}
             onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
+          />
+        ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards' ? (
+          <ResultsKpiScorecardsView
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            createNonce={kpiScorecardCreateNonce}
+            initiatives={filteredInitiatives}
           />
         ) : activeTab === 'results_kpi' && viewMode === 'table' ? (
           <ResultsKpisTableV3

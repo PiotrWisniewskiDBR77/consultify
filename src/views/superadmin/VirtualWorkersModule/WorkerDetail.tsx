@@ -8,6 +8,7 @@ import { InsightsPanel } from './InsightsPanel';
 import { KnowledgeAssignmentPanel } from './KnowledgeAssignmentPanel';
 import { ReleasePanel } from './ReleasePanel';
 import { WorkerAnalyticsDashboard } from './WorkerAnalyticsDashboard';
+import { WorkerPreviewPanel } from './WorkerPreviewPanel';
 import { WorkerProfileEditor } from './WorkerProfileEditor';
 
 interface VirtualWorker {
@@ -119,13 +120,22 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({ workerId, activeTab,
         <WorkerProfileEditor worker={worker} profile={profile} onProfileUpdated={fetchWorker} />
       )}
       {activeTab === 'knowledge' && <KnowledgeAssignmentPanel workerId={worker.id} />}
+      {activeTab === 'preview' && (
+        <WorkerPreviewPanel
+          workerId={worker.id}
+          workerSlug={worker.slug}
+          localeDefault={worker.locale_default}
+        />
+      )}
       {activeTab === 'conversations' && <ConversationBrowser workerId={worker.id} />}
       {activeTab === 'analytics' && (
         <WorkerAnalyticsDashboard workerId={worker.id} workerSlug={worker.slug} />
       )}
       {activeTab === 'insights' && <InsightsPanel workerId={worker.id} />}
       {activeTab === 'evaluations' && <EvaluationsPanel workerId={worker.id} />}
-      {activeTab === 'release' && <ReleasePanel workerId={worker.id} profileId={profile?.id} />}
+      {activeTab === 'release' && (
+        <ReleasePanel workerId={worker.id} profileId={profile?.id} profileVersion={profile?.version} />
+      )}
     </div>
   );
 };

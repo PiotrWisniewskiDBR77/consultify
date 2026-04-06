@@ -672,15 +672,21 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
           },
           {
             id: 'edit',
-            label: t('common.edit', 'Edit'),
+            label: t('results.drawer.definitionTitle', 'Definition'),
             icon: Pencil,
-            onClick: () => onOpenKpi(row.id, 'settings'),
+            onClick: () => onOpenKpi(row.id, 'definition'),
           },
           {
             id: 'links',
-            label: t('results.actions.manageLinks', 'Manage links'),
+            label: t('results.drawer.lineageTitle', 'Lineage'),
             icon: Link2,
-            onClick: () => onOpenKpi(row.id, 'links'),
+            onClick: () => onOpenKpi(row.id, 'lineage'),
+          },
+          {
+            id: 'targets',
+            label: t('results.drawer.targetsTitle', 'Targets'),
+            icon: Target,
+            onClick: () => onOpenKpi(row.id, 'targets'),
           },
           {
             id: 'history',

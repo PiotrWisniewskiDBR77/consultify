@@ -21,6 +21,18 @@ export type KnowledgeUsageMode =
 export type WorkerEvalStatus = 'draft' | 'running' | 'passed' | 'failed';
 export type WorkerReleaseStatus = 'draft' | 'ready' | 'active' | 'rolled_back';
 
+export class VirtualWorkerValidationError extends Error {
+  code: string;
+  statusCode: number;
+
+  constructor(message: string, code = 'VW_VALIDATION_ERROR', statusCode = 400) {
+    super(message);
+    this.name = 'VirtualWorkerValidationError';
+    this.code = code;
+    this.statusCode = statusCode;
+  }
+}
+
 export interface VirtualWorker {
   id: string;
   slug: string;
@@ -142,6 +154,18 @@ export interface WorkerRelease {
   created_by: string | null;
   created_at: string;
   activated_at: string | null;
+}
+
+export interface WorkerReleaseReadiness {
+  workerId: string;
+  activeProfileId: string | null;
+  activeProfileVersion: number | null;
+  latestPassedEvaluationId: string | null;
+  latestPassedEvaluationName: string | null;
+  latestPassedEvaluationScore: number | null;
+  passedEvaluationCount: number;
+  releaseable: boolean;
+  blockers: string[];
 }
 
 type Row = Record<string, unknown>;
@@ -334,6 +358,12 @@ function db() {
   return getDatabase();
 }
 
+function ensure(condition: unknown, message: string, code?: string): asserts condition {
+  if (!condition) {
+    throw new VirtualWorkerValidationError(message, code);
+  }
+}
+
 function parseJsonb<T>(raw: unknown, fallback: T): T {
   if (raw == null) return fallback;
   if (typeof raw === 'object') return raw as T;
@@ -342,6 +372,14 @@ function parseJsonb<T>(raw: unknown, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function isNonEmptyArray(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.length > 0;
+}
+
+function isNonEmptyRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0;
 }
 
 function rowToWorker(row: Row): VirtualWorker {
@@ -494,6 +532,21 @@ async function getPillVersion(versionId: string | null): Promise<KnowledgePillVe
     [versionId]
   );
   return rowToVersion(versionRow, (sectionsResult.rows || []).map(rowToSection));
+}
+
+async function getProfileById(profileId: string): Promise<VirtualWorkerProfile | null> {
+  const result = await db().query<Row>('SELECT * FROM virtual_worker_profiles WHERE id = $1 LIMIT 1', [
+    profileId,
+  ]);
+  return result.rows[0] ? rowToProfile(result.rows[0]) : null;
+}
+
+async function getWorkerEvaluationById(evaluationId: string): Promise<WorkerEvaluation | null> {
+  const result = await db().query<Row>(
+    'SELECT * FROM virtual_worker_evaluations WHERE id = $1 LIMIT 1',
+    [evaluationId]
+  );
+  return result.rows[0] ? rowToEvaluation(result.rows[0]) : null;
 }
 
 export async function listWorkers(): Promise<VirtualWorker[]> {
@@ -1030,6 +1083,32 @@ export async function createWorkerEvaluation(data: {
   status?: WorkerEvalStatus;
   created_by?: string | null;
 }): Promise<WorkerEvaluation> {
+  const normalizedStatus = (data.status || 'draft') as WorkerEvalStatus;
+  const dataset = Array.isArray(data.dataset_json) ? data.dataset_json : [];
+  const results = isNonEmptyRecord(data.results_json) ? data.results_json : {};
+  const score =
+    data.score == null ? null : Number.isFinite(Number(data.score)) ? Number(data.score) : null;
+
+  ensure(String(data.name || '').trim().length > 0, 'Evaluation name is required', 'VW_EVAL_NAME_REQUIRED');
+
+  if (normalizedStatus === 'passed' || normalizedStatus === 'failed') {
+    ensure(
+      isNonEmptyArray(dataset),
+      'Passed or failed evaluations require a non-empty dataset',
+      'VW_EVAL_DATASET_REQUIRED'
+    );
+    ensure(
+      isNonEmptyRecord(results),
+      'Passed or failed evaluations require non-empty results',
+      'VW_EVAL_RESULTS_REQUIRED'
+    );
+    ensure(
+      score !== null,
+      'Passed or failed evaluations require a numeric score',
+      'VW_EVAL_SCORE_REQUIRED'
+    );
+  }
+
   const id = uuidv4();
   await db().query(
     `INSERT INTO virtual_worker_evaluations
@@ -1039,12 +1118,12 @@ export async function createWorkerEvaluation(data: {
       id,
       data.worker_id,
       data.name,
-      data.status || 'draft',
-      JSON.stringify(data.dataset_json || []),
-      JSON.stringify(data.results_json || {}),
-      data.score ?? null,
+      normalizedStatus,
+      JSON.stringify(dataset),
+      JSON.stringify(results),
+      score,
       data.created_by || null,
-      data.status && data.status !== 'draft' ? new Date().toISOString() : null,
+      normalizedStatus !== 'draft' ? new Date().toISOString() : null,
     ]
   );
   const result = await db().query<Row>('SELECT * FROM virtual_worker_evaluations WHERE id = $1', [id]);
@@ -1059,6 +1138,39 @@ export async function listWorkerReleases(workerId: string): Promise<WorkerReleas
   return (result.rows || []).map(rowToRelease);
 }
 
+export async function getWorkerReleaseReadiness(workerId: string): Promise<WorkerReleaseReadiness> {
+  const activeProfile = await getActiveProfile(workerId);
+  const evaluations = await listWorkerEvaluations(workerId);
+  const passedEvaluations = evaluations.filter(
+    (evaluation) =>
+      evaluation.status === 'passed' &&
+      isNonEmptyArray(evaluation.dataset_json) &&
+      isNonEmptyRecord(evaluation.results_json) &&
+      evaluation.score != null
+  );
+  const latestPassed = passedEvaluations[0] || null;
+  const blockers: string[] = [];
+
+  if (!activeProfile) {
+    blockers.push('No active worker profile');
+  }
+  if (!latestPassed) {
+    blockers.push('No passed evaluation with dataset, results, and score');
+  }
+
+  return {
+    workerId,
+    activeProfileId: activeProfile?.id || null,
+    activeProfileVersion: activeProfile?.version || null,
+    latestPassedEvaluationId: latestPassed?.id || null,
+    latestPassedEvaluationName: latestPassed?.name || null,
+    latestPassedEvaluationScore: latestPassed?.score || null,
+    passedEvaluationCount: passedEvaluations.length,
+    releaseable: blockers.length === 0,
+    blockers,
+  };
+}
+
 export async function createWorkerRelease(data: {
   worker_id: string;
   profile_id?: string | null;
@@ -1069,6 +1181,57 @@ export async function createWorkerRelease(data: {
   payload_json?: Record<string, unknown>;
   created_by?: string | null;
 }): Promise<WorkerRelease> {
+  const normalizedStatus = (data.status || 'draft') as WorkerReleaseStatus;
+  ensure(normalizedStatus !== 'active', 'Create the release first, then activate it explicitly', 'VW_RELEASE_ACTIVATE_EXPLICIT');
+
+  const worker = await getWorkerById(data.worker_id);
+  ensure(worker, 'Worker not found', 'VW_WORKER_NOT_FOUND');
+
+  const profile = data.profile_id ? await getProfileById(data.profile_id) : null;
+  if (data.profile_id) {
+    ensure(profile, 'Referenced profile was not found', 'VW_RELEASE_PROFILE_NOT_FOUND');
+    ensure(
+      profile?.worker_id === data.worker_id,
+      'Referenced profile does not belong to this worker',
+      'VW_RELEASE_PROFILE_MISMATCH'
+    );
+  }
+
+  const evaluation = data.evaluation_id ? await getWorkerEvaluationById(data.evaluation_id) : null;
+  if (data.evaluation_id) {
+    ensure(evaluation, 'Referenced evaluation was not found', 'VW_RELEASE_EVAL_NOT_FOUND');
+    ensure(
+      evaluation?.worker_id === data.worker_id,
+      'Referenced evaluation does not belong to this worker',
+      'VW_RELEASE_EVAL_MISMATCH'
+    );
+  }
+
+  if (normalizedStatus === 'ready') {
+    ensure(profile, 'A ready release requires a profile', 'VW_RELEASE_PROFILE_REQUIRED');
+    ensure(evaluation, 'A ready release requires a passed evaluation', 'VW_RELEASE_EVAL_REQUIRED');
+    ensure(
+      evaluation?.status === 'passed',
+      'Only passed evaluations can back a ready release',
+      'VW_RELEASE_EVAL_NOT_PASSED'
+    );
+    ensure(
+      isNonEmptyArray(evaluation?.dataset_json),
+      'Passed evaluation must include a non-empty dataset',
+      'VW_RELEASE_EVAL_DATASET_REQUIRED'
+    );
+    ensure(
+      isNonEmptyRecord(evaluation?.results_json),
+      'Passed evaluation must include non-empty results',
+      'VW_RELEASE_EVAL_RESULTS_REQUIRED'
+    );
+    ensure(
+      evaluation?.score != null,
+      'Passed evaluation must include a score',
+      'VW_RELEASE_EVAL_SCORE_REQUIRED'
+    );
+  }
+
   const id = uuidv4();
   await db().query(
     `INSERT INTO virtual_worker_releases
@@ -1080,11 +1243,11 @@ export async function createWorkerRelease(data: {
       data.profile_id || null,
       data.evaluation_id || null,
       data.release_type || 'profile',
-      data.status || 'draft',
+      normalizedStatus,
       data.notes || null,
       JSON.stringify(data.payload_json || {}),
       data.created_by || null,
-      data.status === 'active' ? new Date().toISOString() : null,
+      null,
     ]
   );
   const result = await db().query<Row>('SELECT * FROM virtual_worker_releases WHERE id = $1', [id]);
@@ -1098,9 +1261,58 @@ export async function activateWorkerRelease(releaseId: string): Promise<WorkerRe
   );
   const release = releaseResult.rows[0];
   if (!release) return null;
+  ensure(release.status === 'ready', 'Only ready releases can be activated', 'VW_RELEASE_NOT_READY');
+  ensure(release.profile_id, 'Release must reference a profile before activation', 'VW_RELEASE_PROFILE_REQUIRED');
+  ensure(
+    release.evaluation_id,
+    'Release must reference a passed evaluation before activation',
+    'VW_RELEASE_EVAL_REQUIRED'
+  );
+
+  const profile = await getProfileById(String(release.profile_id));
+  ensure(profile, 'Release profile was not found', 'VW_RELEASE_PROFILE_NOT_FOUND');
+  ensure(
+    profile.worker_id === String(release.worker_id),
+    'Release profile does not belong to this worker',
+    'VW_RELEASE_PROFILE_MISMATCH'
+  );
+
+  const evaluation = await getWorkerEvaluationById(String(release.evaluation_id));
+  ensure(evaluation, 'Release evaluation was not found', 'VW_RELEASE_EVAL_NOT_FOUND');
+  ensure(
+    evaluation.worker_id === String(release.worker_id),
+    'Release evaluation does not belong to this worker',
+    'VW_RELEASE_EVAL_MISMATCH'
+  );
+  ensure(
+    evaluation.status === 'passed',
+    'Only passed evaluations can activate a release',
+    'VW_RELEASE_EVAL_NOT_PASSED'
+  );
+  ensure(
+    isNonEmptyArray(evaluation.dataset_json),
+    'Passed evaluation must include a non-empty dataset',
+    'VW_RELEASE_EVAL_DATASET_REQUIRED'
+  );
+  ensure(
+    isNonEmptyRecord(evaluation.results_json),
+    'Passed evaluation must include non-empty results',
+    'VW_RELEASE_EVAL_RESULTS_REQUIRED'
+  );
+  ensure(
+    evaluation.score != null,
+    'Passed evaluation must include a score',
+    'VW_RELEASE_EVAL_SCORE_REQUIRED'
+  );
+
+  await activateProfile(String(release.profile_id));
   await db().query(
     `UPDATE virtual_worker_releases
-     SET status = CASE WHEN id = $1 THEN 'active' ELSE status END,
+     SET status = CASE
+           WHEN id = $1 THEN 'active'
+           WHEN status = 'active' THEN 'rolled_back'
+           ELSE status
+         END,
          activated_at = CASE WHEN id = $1 THEN NOW() ELSE activated_at END
      WHERE worker_id = $2`,
     [releaseId, release.worker_id]
