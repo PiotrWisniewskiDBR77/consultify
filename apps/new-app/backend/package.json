@@ -16,8 +16,8 @@
     "@consultinity/shared": "*"
   },
   "devDependencies": {
-    "typescript": "^5.8.0",
-    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3",
+    "@types/node": "^22.19.17",
     "tsx": "^4.0.0"
   },
   "engines": {
