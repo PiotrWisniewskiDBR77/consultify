@@ -107,6 +107,8 @@ function classifyError(message: string, httpStatus?: number | null): ErrorCatego
   return 'unknown';
 }
 
+const ACTIVE_SQL = `COALESCE(NULLIF(LOWER(TRIM(CAST(%s AS TEXT))), ''), 'false') IN ('1', 'true', 't', 'yes', 'y', 'on')`;
+
 async function replicateAuthCheck(
   row: ProviderRow
 ): Promise<{ ok: boolean; detail: string; httpStatus?: number }> {
@@ -315,8 +317,8 @@ async function evaluateUseCaseCoverage(): Promise<void> {
            FROM ai_purpose_assignments apa
            INNER JOIN llm_providers lp ON lp.id = apa.provider_id
            WHERE apa.purpose IN (${placeholders})
-             AND apa.is_active = 1
-             AND lp.is_active = 1`,
+             AND ${ACTIVE_SQL.replace('%s', 'apa.is_active')}
+             AND ${ACTIVE_SQL.replace('%s', 'lp.is_active')}`,
           routingKeys,
           { fallback: true } as any
         )) as Array<{ health_status?: string | null }>;
@@ -391,7 +393,7 @@ class ProviderSentinel {
       const providers = (await dbAll<ProviderRow>(
         `SELECT id, name, provider, model_id, endpoint, api_key, kind, is_active
          FROM llm_providers
-         WHERE is_active = 1`,
+         WHERE ${ACTIVE_SQL.replace('%s', 'is_active')}`,
         [],
         { fallback: true } as any
       )) as any as ProviderRow[];
