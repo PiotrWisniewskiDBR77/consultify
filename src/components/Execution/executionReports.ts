@@ -11,14 +11,24 @@ export interface ReportHighlight {
 }
 
 export interface ReportAiRecommendation {
+  id?: string;
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
+  severity?: 'critical' | 'warn' | 'info';
+  action?: string;
+  owner?: string;
+  dueLabel?: string;
+  expectedEffect?: string;
 }
 
 export interface ReportDataQuality {
   confidence: string;
   completeness?: number;
+  freshnessLabel?: string;
+  knownLimitations?: string[];
+  missingBaselineCount?: number;
+  missingEstimateCount?: number;
 }
 
 export interface ReportDef {
@@ -99,13 +109,13 @@ export interface ReportDataContext {
     dueDate?: string;
     assigneeName?: string;
   }>;
-  overspendSignals: Array<Record<string, unknown>>;
-  nextMilestones: Array<Record<string, unknown>>;
-  priorityAlerts: Array<Record<string, unknown>>;
-  timelineWarnings: Array<Record<string, unknown>>;
-  capacityAlerts: Array<Record<string, unknown>>;
-  capacityTimeline: Array<Record<string, unknown>>;
-  phaseLabel?: string;
+  overspendSignals: Array<Record<string, any>>;
+  nextMilestones: Array<Record<string, any>>;
+  priorityAlerts: Array<Record<string, any>>;
+  timelineWarnings: Array<Record<string, any>>;
+  capacityAlerts: Array<Record<string, any>>;
+  capacityTimeline: Array<Record<string, any>>;
+  phaseLabel?: string | null;
   progressPercent: number | null;
   totalInitiatives: number;
   lastRefreshAt?: string;
@@ -222,10 +232,19 @@ function buildDataQuality(ctx: ReportDataContext): ReportDataQuality {
   const total = ctx.totalInitiatives || 1;
   const withProgress = ctx.initiatives.filter((i) => i.progress != null && Number(i.progress) > 0).length;
   const completeness = Math.round((withProgress / total) * 100);
+  const missingBaselineCount = ctx.initiatives.filter((i) => i.progress == null).length;
+  const missingEstimateCount = ctx.tasks.filter((t) => !t.dueDate).length;
   let confidence = 'high';
   if (completeness < 50) confidence = 'low';
   else if (completeness < 80) confidence = 'medium';
-  return { confidence, completeness };
+  return {
+    confidence,
+    completeness,
+    freshnessLabel: ctx.lastRefreshAt ? 'Live' : 'Snapshot',
+    knownLimitations: buildDegradedFlags(ctx),
+    missingBaselineCount,
+    missingEstimateCount,
+  };
 }
 
 export function enrichExecutionReport(

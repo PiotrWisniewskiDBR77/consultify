@@ -962,13 +962,14 @@ export interface InitiativeKPI {
   isPrimary: boolean;
   sortOrder: number;
   currentValue?: number | null;
-  latestValue?: number;
-  latestMeasurementDate?: string;
+  latestValue?: number | null;
+  latestMeasurementDate?: string | null;
   // Optional helper fields for trend calculation (R1).
   prevValue?: number;
-  prevMeasurementDate?: string;
+  prevMeasurementDate?: string | null;
   isOnTarget: boolean;
   createdAt: string;
+  updatedAt?: string;
   // Optional enrichment used by Results (R0/R1).
   baselineValue?: number | null;
   ownerUserId?: string | null;
@@ -986,6 +987,10 @@ export interface InitiativeKPI {
   observationStatus?: InitiativeKpiObservationStatus;
   realizationExpectation?: InitiativeKpiExpectation;
   postImplementationExpectation?: InitiativeKpiExpectation;
+  target?: number;
+  current?: number;
+  status?: 'on-target' | 'below' | 'no-data';
+  needsEntry?: boolean;
 }
 
 /** KPI Measurement - historical value record */
@@ -2699,6 +2704,7 @@ export interface FullInitiative {
 
   // Economics (financial fields for analytics)
   capex?: number;
+  budget?: number;
   firstYearOpex?: number;
   annualBenefit?: number;
   roi?: number;

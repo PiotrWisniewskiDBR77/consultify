@@ -11619,6 +11619,8 @@ export const Api = {
       preferences: {
         temperature: userSettings?.model_temperature ?? 0.7,
         maxTokens: userSettings?.max_tokens ?? 4096,
+        contextWindowSize: userSettings?.max_context_length ?? 4000,
+        responseSpeed: userSettings?.response_speed ?? 'balanced',
         topP: userSettings?.top_p ?? 1,
       },
     };
@@ -11628,6 +11630,8 @@ export const Api = {
     return Api.updateAIUserSettings({
       model_temperature: params.temperature ?? 0.7,
       max_tokens: params.maxTokens ?? 4096,
+      max_context_length: params.contextWindowSize ?? 4000,
+      response_speed: params.responseSpeed ?? 'balanced',
       top_p: params.topP ?? 1,
     });
   },
@@ -11636,9 +11640,20 @@ export const Api = {
     const userSettings = await Api.getAIUserSettings();
     return {
       preferences: {
-        tone: userSettings?.writing_tone || 'professional',
-        formality: 'balanced',
-        verbosity: 'concise',
+        tone: (userSettings?.writing_tone || 'professional') as
+          | 'professional'
+          | 'friendly'
+          | 'casual'
+          | 'academic',
+        formality: (userSettings?.formality || 'balanced') as
+          | 'formal'
+          | 'balanced'
+          | 'informal',
+        verbosity: (userSettings?.verbosity || 'concise') as
+          | 'minimal'
+          | 'concise'
+          | 'detailed'
+          | 'comprehensive',
       },
     };
   },
@@ -11646,6 +11661,8 @@ export const Api = {
   saveAIPersonality: async (personality: any) => {
     return Api.updateAIUserSettings({
       writing_tone: personality.tone || 'professional',
+      formality: personality.formality || 'balanced',
+      verbosity: personality.verbosity || 'concise',
     });
   },
 
@@ -11973,6 +11990,7 @@ export const Api = {
       preferences: {
         theme: 'system',
         accentColor: 'blue',
+        density: 'comfortable',
         fontSize: 'medium',
         compactMode: false,
       },

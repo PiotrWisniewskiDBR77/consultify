@@ -36,7 +36,9 @@ export interface ExtraCopyFormat {
 }
 
 export interface PreviewDetailsSectionProps {
-  text: string;
+  text?: string;
+  detailsText?: string[];
+  title?: string;
   loading?: boolean;
   /** Replace default Expand/Summarize/Copy with custom actions */
   customActions?: DetailsAction[];
@@ -59,6 +61,8 @@ export interface PreviewDetailsSectionProps {
 
 export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   text,
+  detailsText,
+  title,
   loading,
   customActions,
   onExpand,
@@ -74,6 +78,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [menuOpen, setMenuOpen] = useState(false);
+  const resolvedText = text ?? detailsText?.join('\n') ?? '';
 
   const defaultActions: DetailsAction[] = [
     ...(onExpand
@@ -121,7 +126,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          {label ?? (isPolish ? 'Szczegóły' : 'Details')}
+          {title ?? label ?? (isPolish ? 'Szczegóły' : 'Details')}
         </div>
 
         {hasMenu ? (
@@ -188,7 +193,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
         </div>
       ) : (
         <>
-          {text ? (
+          {resolvedText ? (
             <div
               className={[
                 compact
@@ -198,7 +203,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
               ].join(' ')}
               onClick={onToggleExpanded}
             >
-              {text}
+              {resolvedText}
             </div>
           ) : !children ? (
             <div

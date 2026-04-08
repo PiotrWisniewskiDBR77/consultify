@@ -217,6 +217,20 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
     }
   }, [onDeleteDependency, selectedEdge]);
 
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      onOpenInitiative(node.id);
+    },
+    [onOpenInitiative]
+  );
+
+  const handleEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      setSelectedEdgeId(edge.id);
+    },
+    []
+  );
+
   return (
     <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between gap-3">
@@ -254,8 +268,8 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={handleConnect}
-          onNodeClick={(_, node) => onOpenInitiative(node.id)}
-          onEdgeClick={(_, edge) => setSelectedEdgeId(edge.id)}
+          onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
           onPaneClick={() => setSelectedEdgeId(null)}
           fitView
           fitViewOptions={{ padding: 0.2 }}

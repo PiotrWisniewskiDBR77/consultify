@@ -27,7 +27,9 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
-import { InitiativeKPI, InitiativeStatus } from '../../types';
+import type { InitiativeKPI } from '@/types/core';
+
+import { InitiativeStatus } from '../../types';
 import { extractInitiativeKpiRows } from '../Initiatives/initiativeKpiContract';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import {

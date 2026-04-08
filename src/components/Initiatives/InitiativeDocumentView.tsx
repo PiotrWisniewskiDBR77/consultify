@@ -183,7 +183,7 @@ const toEnglishKpiName = (name: string, isPolish: boolean): string => {
   return KPI_NAME_EN_MAP[name] || name;
 };
 
-const toKpiNumber = (value: string): number => {
+const toKpiNumber = (value?: string | null): number => {
   const normalized = String(value || '')
     .replace(',', '.')
     .trim();
@@ -1335,7 +1335,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           : {
               id: `kpi-${Date.now()}`,
               mappingId: null,
-              definitionSource: payload.definitionSource,
+              definitionSource: payload.definitionSource as 'library' | 'initiative-custom',
               name:
                 createKpiMode === 'linked'
                   ? createKpiLibraryOptions.find((option) => option.id === createKpiLibraryId)?.name ||

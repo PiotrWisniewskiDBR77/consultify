@@ -308,9 +308,9 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                         </span>
                       ))}
                     </div>
-                    {(report.dataQuality?.knownLimitations?.length ?? 0) > 0 && (
+                    {((report.dataQuality?.knownLimitations ?? []).length ?? 0) > 0 && (
                       <div className="mt-2 space-y-1">
-                        {report.dataQuality!.knownLimitations.map((lim) => (
+                        {(report.dataQuality?.knownLimitations ?? []).map((lim) => (
                           <div
                             key={lim}
                             className="text-[10px] text-slate-400 dark:text-slate-500"

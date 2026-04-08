@@ -3528,7 +3528,7 @@ Scope: ${report.scope}
 Top metrics: ${report.highlights.map((item) => `${item.label}=${item.value}`).join(', ')}
 Top exceptions: blockers=${actionCenter.blocked.length}, overdue decisions=${actionCenter.overdueDecisions.length}, missing dates=${actionCenter.missingDates.length}, due soon tasks=${actionCenter.dueSoonTasks.length}
 Degraded flags: ${report.degradedFlags.length > 0 ? report.degradedFlags.join(', ') : 'none'}
-Known limitations: ${report.dataQuality.knownLimitations.length > 0 ? report.dataQuality.knownLimitations.join(' | ') : 'none'}
+Known limitations: ${(report.dataQuality.knownLimitations ?? []).length > 0 ? (report.dataQuality.knownLimitations ?? []).join(' | ') : 'none'}
 Mandatory sections: ${report.sections.join(', ')}
 Existing AI readout: ${report.aiExecutiveReadout.join(' ')}
 Expected follow-up actions: ${report.followUpActions.join(', ')}

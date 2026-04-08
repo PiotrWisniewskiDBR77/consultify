@@ -11,8 +11,10 @@ export interface RelationPreview {
 }
 
 export interface RelationItem {
+  id?: string;
   label: string;
-  icon?: LucideIcon;
+  value?: React.ReactNode;
+  icon?: LucideIcon | React.ReactNode;
   tone?: string;
   onClick?: () => void;
   /** Mini-preview shown on hover (300ms delay) */
@@ -23,6 +25,7 @@ export interface RelationItem {
 
 export interface PreviewRelationsProps {
   items: RelationItem[];
+  title?: string;
   emptyLabel?: string;
   /** When true and items > 5, groups by RelationItem.type */
   groupByType?: boolean;
@@ -31,7 +34,7 @@ export interface PreviewRelationsProps {
 const HOVER_DELAY = 300;
 
 const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx }) => {
-  const Icon = item.icon;
+  const Icon = typeof item.icon === 'function' ? item.icon : null;
   const tone = item.tone ?? 'text-slate-600 dark:text-slate-300';
   const Tag = item.onClick ? 'button' : 'span';
 
@@ -57,8 +60,15 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
         onClick={item.onClick}
         title={item.label}
       >
-        {Icon ? <Icon size={13} /> : null}
-        {item.label}
+        {Icon ? <Icon size={13} /> : (item.icon as React.ReactNode)}
+        {item.value !== undefined ? (
+          <>
+            <span className="font-medium">{item.label}</span>
+            <span className="opacity-70">{String(item.value)}</span>
+          </>
+        ) : (
+          item.label
+        )}
       </Tag>
 
       <AnimatePresence>
