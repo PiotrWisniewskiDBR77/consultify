@@ -16,7 +16,12 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import {
+  all as dbAll,
+  columnExists as dbColumnExists,
+  run as dbRun,
+  tableExists as dbTableExists,
+} from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { getAlertAggregator } from '../AlertAggregator.js';
 import { EXECUTIVE_USE_CASES, getRoutingPurposeKeys } from './aiTaskCatalog.js';
@@ -261,7 +266,41 @@ async function emitAggregatedAlert(
   }
 }
 
+let hasLoggedCoverageSchemaSkip = false;
+
+async function routingCoverageSchemaReady(): Promise<boolean> {
+  try {
+    const [hasAssignments, hasProviders, hasPurpose, hasProviderId, hasProviderHealthStatus] =
+      await Promise.all([
+        dbTableExists('ai_purpose_assignments'),
+        dbTableExists('llm_providers'),
+        dbColumnExists('ai_purpose_assignments', 'purpose'),
+        dbColumnExists('ai_purpose_assignments', 'provider_id'),
+        dbColumnExists('llm_providers', 'health_status'),
+      ]);
+
+    return (
+      hasAssignments && hasProviders && hasPurpose && hasProviderId && hasProviderHealthStatus
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function evaluateUseCaseCoverage(): Promise<void> {
+  const schemaReady = await routingCoverageSchemaReady();
+  if (!schemaReady) {
+    if (!hasLoggedCoverageSchemaSkip) {
+      logger.info(
+        '[ProviderSentinel] Skipping purpose coverage check until AI routing schema is ready'
+      );
+      hasLoggedCoverageSchemaSkip = true;
+    }
+    return;
+  }
+
+  hasLoggedCoverageSchemaSkip = false;
+
   for (const useCase of EXECUTIVE_USE_CASES) {
     const purposeHealth = await Promise.all(
       useCase.purposes.map(async (purpose) => {

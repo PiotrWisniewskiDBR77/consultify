@@ -454,6 +454,21 @@ export async function tableExists(tableName: string): Promise<boolean> {
 }
 
 /**
+ * Check if a column exists in a table (PostgreSQL).
+ * Tables prefixed with `v8_` are looked up in the `v8` schema first,
+ * then fall back to `public`. All other tables check `public` only.
+ */
+export async function columnExists(tableName: string, columnName: string): Promise<boolean> {
+  const schemas = tableName.startsWith('v8_') ? ['v8', 'public'] : ['public'];
+  const result = await get<{ column_name: string }>(
+    `SELECT column_name FROM information_schema.columns
+     WHERE table_schema = ANY($1) AND table_name = $2 AND column_name = $3`,
+    [schemas, tableName, columnName]
+  );
+  return result !== null;
+}
+
+/**
  * Execute raw SQL and return result (for migrations, etc.)
  */
 export async function exec(sql: string): Promise<ExecResult> {
@@ -498,6 +513,7 @@ export const DbPromise = {
   run,
   transaction,
   tableExists,
+  columnExists,
   exec,
   safeAll,
   count,
