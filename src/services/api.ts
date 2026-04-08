@@ -1321,6 +1321,51 @@ export const Api = {
     return data;
   },
 
+  getTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}`,
+      {
+        method: 'GET',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to load Teresa proposal');
+  },
+
+  approveTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/approve`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to approve Teresa proposal');
+  },
+
+  rejectTeresaProposal: async (proposalId: string, reason?: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/reject`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(reason ? { reason } : {}),
+      }
+    );
+    return handleResponse(res, 'Failed to reject Teresa proposal');
+  },
+
+  executeTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/execute`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to execute Teresa proposal');
+  },
+
   chatWithAIStream: async (
     message: string,
     history: any[],
@@ -4871,7 +4916,13 @@ export const Api = {
       wizard_state?: Record<string, unknown>;
       wizardState?: Record<string, unknown>;
       status?: string;
-      missingItems?: Array<{ id: string; label: string; severity?: string; stepId?: string; resolved?: boolean }>;
+      missingItems?: Array<{
+        id: string;
+        label: string;
+        severity?: string;
+        stepId?: string;
+        resolved?: boolean;
+      }>;
       failureReason?: string;
     }
   ): Promise<any> => {
@@ -11536,7 +11587,8 @@ export const Api = {
 
   saveAIMemory: async (settings: any) => {
     return Api.updateAIUserSettings({
-      context_retention: settings.contextRetention || settings.retentionDays ? 'extended' : 'session',
+      context_retention:
+        settings.contextRetention || settings.retentionDays ? 'extended' : 'session',
     });
   },
 
@@ -11606,7 +11658,15 @@ export const Api = {
       return handleResponse(res, 'Failed to fetch AI usage stats');
     } catch {
       return {
-        stats: { totalTokens: 0, totalCost: 0, totalRequests: 0, avgResponseTime: 0, successRate: 100, limit: 10000, used: 0 },
+        stats: {
+          totalTokens: 0,
+          totalCost: 0,
+          totalRequests: 0,
+          avgResponseTime: 0,
+          successRate: 100,
+          limit: 10000,
+          used: 0,
+        },
         usageByFeature: [],
         dailyUsage: [],
       };
@@ -11928,8 +11988,18 @@ export const Api = {
     try {
       const stored = localStorage.getItem('ai-voice-preferences');
       if (stored) return { preferences: JSON.parse(stored) };
-    } catch { /* ignore */ }
-    return { preferences: { ttsEnabled: false, sttEnabled: false, voice: 'alloy', speed: 1.0, autoPlay: false } };
+    } catch {
+      /* ignore */
+    }
+    return {
+      preferences: {
+        ttsEnabled: false,
+        sttEnabled: false,
+        voice: 'alloy',
+        speed: 1.0,
+        autoPlay: false,
+      },
+    };
   },
 
   saveAIVoice: async (settings: any) => {
@@ -12505,12 +12575,16 @@ export const Api = {
     };
 
     try {
-      return await downloadFrom(`${API_URL}/v8/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`);
+      return await downloadFrom(
+        `${API_URL}/v8/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`
+      );
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkNotebook(error)) {
         throw error;
       }
-      return downloadFrom(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`);
+      return downloadFrom(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/source-file`
+      );
     }
   },
 
@@ -12558,11 +12632,14 @@ export const Api = {
       }
       const formData = new FormData();
       Array.from(files).forEach((file) => formData.append('files', file));
-      const res = await fetch(`${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`, {
-        method: 'POST',
-        headers: getHeaders(true),
-        body: formData,
-      });
+      const res = await fetch(
+        `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`,
+        {
+          method: 'POST',
+          headers: getHeaders(true),
+          body: formData,
+        }
+      );
       return handleResponse(res, 'Failed to upload notebook attachments');
     }
   },
@@ -14328,9 +14405,12 @@ export const Api = {
     return handleResponse(res, 'Failed to get report schedules');
   },
   resultsGetReportScheduleDeliveryLog: async (scheduleId: string) => {
-    const res = await fetch(`${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/delivery-log`, {
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/results-v4/kpi-report-schedules/${scheduleId}/delivery-log`,
+      {
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to get report schedule delivery log');
   },
   resultsApproveReportSchedule: async (scheduleId: string) => {

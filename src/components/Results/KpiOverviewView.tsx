@@ -111,11 +111,20 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => onOpenQueue([{ id: 'queue:review', column: 'queue', value: 'requires-review', label: 'Requires review' }])}
+              onClick={() =>
+                onOpenQueue([
+                  {
+                    id: 'queue:review',
+                    column: 'queue',
+                    value: 'requires-review',
+                    label: 'Requires review',
+                  },
+                ])
+              }
               className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-400 transition-colors"
             >
               <AlertTriangle size={16} />
-              {t('results.kpi.overview.cta.review', 'Open queue')}
+              {t('results.kpi.overview.cta.review', 'Open data / signals')}
             </button>
             <button
               type="button"
@@ -133,35 +142,65 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
         <CockpitCard
           title={t('results.kpi.overview.cards.total', 'Governed KPIs')}
           value={governedSnapshot?.kpiScorecard.totalKpis ?? metrics.total}
-          hint={t('results.kpi.overview.cards.totalHint', 'All KPI definitions currently in runtime')}
+          hint={t(
+            'results.kpi.overview.cards.totalHint',
+            'All KPI definitions currently in runtime'
+          )}
           accentClassName="text-slate-900 dark:text-white"
           onClick={() => onOpenCatalog()}
         />
         <CockpitCard
           title={t('results.kpi.overview.cards.deviation', 'Needs operator attention')}
           value={metrics.below + metrics.needsEntry}
-          hint={t('results.kpi.overview.cards.deviationHint', 'Below target or missing fresh signal')}
+          hint={t(
+            'results.kpi.overview.cards.deviationHint',
+            'Below target or missing fresh signal'
+          )}
           accentClassName="text-amber-500"
           onClick={() =>
-            onOpenQueue([{ id: 'queue:review', column: 'queue', value: 'requires-review', label: 'Requires review' }])
+            onOpenQueue([
+              {
+                id: 'queue:review',
+                column: 'queue',
+                value: 'requires-review',
+                label: 'Requires review',
+              },
+            ])
           }
         />
         <CockpitCard
           title={t('results.kpi.overview.cards.reconciliation', 'Unresolved reconciliation')}
-          value={governedSnapshot?.reconciliationHealth.unresolvedCount ?? metrics.openDeviationCases}
-          hint={t('results.kpi.overview.cards.reconciliationHint', 'Cases that still need evidence or closure')}
+          value={
+            governedSnapshot?.reconciliationHealth.unresolvedCount ?? metrics.openDeviationCases
+          }
+          hint={t(
+            'results.kpi.overview.cards.reconciliationHint',
+            'Cases that still need evidence or closure'
+          )}
           accentClassName="text-cyan-500"
           onClick={() =>
-            onOpenQueue([{ id: 'queue:discrepancy', column: 'queue', value: 'discrepancy', label: 'Discrepancy' }])
+            onOpenQueue([
+              {
+                id: 'queue:discrepancy',
+                column: 'queue',
+                value: 'discrepancy',
+                label: 'Discrepancy',
+              },
+            ])
           }
         />
         <CockpitCard
           title={t('results.kpi.overview.cards.onTarget', 'On target')}
           value={metrics.onTarget}
-          hint={t('results.kpi.overview.cards.onTargetHint', 'Signals that currently meet their target')}
+          hint={t(
+            'results.kpi.overview.cards.onTargetHint',
+            'Signals that currently meet their target'
+          )}
           accentClassName="text-emerald-500"
           onClick={() =>
-            onOpenCatalog([{ id: 'status:on-target', column: 'status', value: 'on-target', label: 'On target' }])
+            onOpenCatalog([
+              { id: 'status:on-target', column: 'status', value: 'on-target', label: 'On target' },
+            ])
           }
         />
       </div>
@@ -176,7 +215,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 {t(
                   'results.kpi.overview.spotlightHint',
-                  'Priority queue ordered by deviation severity, stale data, and review need.'
+                  'Priority signal list ordered by deviation severity, stale data, and reporting readiness.'
                 )}
               </p>
             </div>
@@ -248,7 +287,9 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
               <button
                 type="button"
                 onClick={() =>
-                  onOpenCatalog([{ id: 'status:below', column: 'status', value: 'below', label: 'Below target' }])
+                  onOpenCatalog([
+                    { id: 'status:below', column: 'status', value: 'below', label: 'Below target' },
+                  ])
                 }
                 className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
               >
@@ -258,17 +299,28 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
               <button
                 type="button"
                 onClick={() =>
-                  onOpenCatalog([{ id: 'status:no-data', column: 'status', value: 'no-data', label: 'No data' }])
+                  onOpenCatalog([
+                    { id: 'status:no-data', column: 'status', value: 'no-data', label: 'No data' },
+                  ])
                 }
                 className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
               >
                 <span>{t('results.kpi.overview.healthNoData', 'No fresh signal')}</span>
-                <span className="font-semibold text-slate-600 dark:text-slate-300">{metrics.noData}</span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                  {metrics.noData}
+                </span>
               </button>
               <button
                 type="button"
                 onClick={() =>
-                  onOpenQueue([{ id: 'queue:needs-entry', column: 'queue', value: 'needs-entry', label: 'Needs entry' }])
+                  onOpenQueue([
+                    {
+                      id: 'queue:needs-entry',
+                      column: 'queue',
+                      value: 'needs-entry',
+                      label: 'Needs entry',
+                    },
+                  ])
                 }
                 className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
               >

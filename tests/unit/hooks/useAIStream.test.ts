@@ -154,6 +154,57 @@ describe('useAIStream', () => {
     );
   });
 
+  it('should persist Teresa proposal metadata from streaming events', async () => {
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onChunk('Draft ready.');
+        onThinking?.({
+          type: 'teresa_proposal',
+          proposal: {
+            proposalId: 'proposal-1',
+            contractId: 'teresa_copilot_v1',
+            title: 'Prepare initiative draft',
+            summary: 'Proposal prepared for Initiatives.',
+            state: 'proposal',
+            approvalState: 'awaiting_review',
+            allowedActions: ['approve', 'reject', 'navigate'],
+            targetModule: 'initiatives',
+            targetLabel: 'Initiatives',
+            handoffIntent: 'create',
+            previewLines: ['Problem statement', 'Expected outcome'],
+            auditCount: 1,
+            resultRef: null,
+            degraded: null,
+          },
+        });
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    await act(async () => {
+      await result.current.startStream('Prepare initiative', []);
+    });
+
+    expect(result.current.teresaProposal).toEqual(
+      expect.objectContaining({
+        proposalId: 'proposal-1',
+        targetModule: 'initiatives',
+      })
+    );
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Draft ready.',
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        proposal: expect.objectContaining({ proposalId: 'proposal-1' }),
+      })
+    );
+  });
+
   it('should handle streaming errors gracefully', async () => {
     const mockOnStreamError = vi.fn();
 

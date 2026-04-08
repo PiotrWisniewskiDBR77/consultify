@@ -246,7 +246,7 @@ describe('AIChatWelcomeView governed V8 controls', () => {
     );
   });
 
-  it('renders the AI OS product map on the Teresa welcome state', async () => {
+  it('renders Teresa welcome capability cards on the empty chat state', async () => {
     conversationStoreState.activeConversationId = null;
     conversationStoreState.activeMessages = [];
 
@@ -254,10 +254,10 @@ describe('AIChatWelcomeView governed V8 controls', () => {
 
     render(<AIChatWelcomeView />);
 
-    expect(screen.getByText('Wiarygodna obietnica wsparcia mobile')).toBeInTheDocument();
-    expect(screen.getByText('AI operating system')).toBeInTheDocument();
-    expect(screen.getByText('Prompt OS')).toBeInTheDocument();
-    expect(screen.getByText('Outputs')).toBeInTheDocument();
+    expect(screen.getByText('Teresa')).toBeInTheDocument();
+    expect(screen.getByText('Analiza rynku')).toBeInTheDocument();
+    expect(screen.getByText('Transformacja cyfrowa')).toBeInTheDocument();
+    expect(screen.getByTestId('enhanced-chat-input')).toBeInTheDocument();
   });
 
   it('persists a product-safe empty-response fallback on the legacy Teresa surface', async () => {
@@ -273,6 +273,48 @@ describe('AIChatWelcomeView governed V8 controls', () => {
         conversationId: 'conv-legacy-1',
         role: 'ai',
         content: '⚠️ Teresa nie zwrocila pelnej odpowiedzi. Sprobuj ponownie za chwile.',
+      })
+    );
+  });
+
+  it('persists Teresa proposal metadata when the stream completes', async () => {
+    const { AIChatWelcomeView } = await import('../../../src/views/AIChatWelcomeView');
+
+    render(<AIChatWelcomeView />);
+    expect(aiStreamOptionsCaptured?.onStreamDone).toBeTypeOf('function');
+
+    await aiStreamOptionsCaptured.onStreamDone('Teresa response', [], [], {
+      sessionId: 'stream-123',
+      proposal: {
+        proposalId: 'proposal-123',
+        contractId: 'teresa_copilot_v1',
+        title: 'Prepare initiative draft',
+        summary: 'Proposal prepared for Initiatives.',
+        state: 'proposal',
+        approvalState: 'awaiting_review',
+        allowedActions: ['approve', 'reject', 'navigate'],
+        targetModule: 'initiatives',
+        targetLabel: 'Initiatives',
+        handoffIntent: 'create',
+        previewLines: ['Problem statement'],
+        auditCount: 1,
+        resultRef: null,
+        degraded: null,
+      },
+    });
+
+    expect(addMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conv-legacy-1',
+        role: 'ai',
+        content: 'Teresa response',
+        metadata: expect.objectContaining({
+          streamSessionId: 'stream-123',
+          proposal: expect.objectContaining({
+            proposalId: 'proposal-123',
+            targetModule: 'initiatives',
+          }),
+        }),
       })
     );
   });

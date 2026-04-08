@@ -1657,7 +1657,9 @@ router.post(
       const virtualWorkerSlug =
         typeof (context as any)?.virtualWorkerSlug === 'string' &&
         (context as any).virtualWorkerSlug.trim().length > 0
-          ? String((context as any).virtualWorkerSlug).trim().toLowerCase()
+          ? String((context as any).virtualWorkerSlug)
+              .trim()
+              .toLowerCase()
           : null;
 
       const screenContext = aiModes?.deepResearch
@@ -1794,6 +1796,46 @@ router.post(
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
 
+      const maybeEmitTeresaProposal = async (assistantText: string) => {
+        if (
+          virtualWorkerSlug !== 'teresa' ||
+          !req.organizationId ||
+          !req.userId ||
+          !assistantText ||
+          assistantText.trim().length === 0
+        ) {
+          return null;
+        }
+
+        try {
+          const teresaModule = await import('../services/v8/teresaCopilotService.js');
+          const proposal = await teresaModule.createChatProposal({
+            organizationId: req.organizationId,
+            userId: req.userId,
+            sessionId: conversationId || streamSessionId,
+            userMessage: message,
+            assistantMessage: assistantText,
+            context: (context || {}) as Record<string, unknown>,
+            citations: collectedCitations,
+          });
+
+          if (proposal) {
+            emitSSE({
+              type: 'teresa_proposal',
+              proposal,
+            });
+          }
+
+          return proposal;
+        } catch (proposalErr: any) {
+          logger.warn(
+            '[AI Stream] Teresa proposal synthesis skipped:',
+            proposalErr?.message || proposalErr
+          );
+          return null;
+        }
+      };
+
       // --------------------------------------------------------
       // Policy gateway (P34-B): allow/deny + rationale + citations/uncertainty posture
       // --------------------------------------------------------
@@ -1839,7 +1881,9 @@ router.post(
         emitSSE({ type: 'policy_decision', decision: policyDecision });
         if (chatRunId) {
           import('../services/ai/chatTraceService.js')
-            .then((m: any) => (m.default || m).addEvent(chatRunId, 'policy_decision', policyDecision))
+            .then((m: any) =>
+              (m.default || m).addEvent(chatRunId, 'policy_decision', policyDecision)
+            )
             .catch(() => {
               /* ignore */
             });
@@ -1852,10 +1896,16 @@ router.post(
         const msg = String(refusal?.userMessage || '').trim();
         const steps = Array.isArray(refusal?.nextSteps) ? refusal.nextSteps : [];
         const refusalText = [
-          msg || (language?.startsWith('pl') ? 'Nie mogę spełnić tej prośby.' : "I can't comply with that request."),
+          msg ||
+            (language?.startsWith('pl')
+              ? 'Nie mogę spełnić tej prośby.'
+              : "I can't comply with that request."),
           steps.length
             ? (language?.startsWith('pl') ? '\n\n**Co dalej:**\n' : '\n\n**What to do next:**\n') +
-              steps.slice(0, 6).map((s: any) => `- ${String(s || '').trim()}`).join('\n')
+              steps
+                .slice(0, 6)
+                .map((s: any) => `- ${String(s || '').trim()}`)
+                .join('\n')
             : '',
         ]
           .filter(Boolean)
@@ -2038,10 +2088,10 @@ router.post(
         });
         try {
           const workerService = await import('../services/ai/virtualWorkerService.js');
-          const workerKnowledgeService = await import('../services/ai/virtualWorkerKnowledgeService.js');
-          const workerWebAccessService = await import(
-            '../services/ai/virtualWorkerWebAccessService.js'
-          );
+          const workerKnowledgeService =
+            await import('../services/ai/virtualWorkerKnowledgeService.js');
+          const workerWebAccessService =
+            await import('../services/ai/virtualWorkerWebAccessService.js');
           const workerConfig = await workerService.getWorkerWithProfile(virtualWorkerSlug);
 
           if (workerConfig?.worker) {
@@ -2107,7 +2157,10 @@ router.post(
             }
           }
         } catch (workerErr: any) {
-          logger.warn('[AI Stream] Virtual worker overlay failed:', workerErr?.message || String(workerErr));
+          logger.warn(
+            '[AI Stream] Virtual worker overlay failed:',
+            workerErr?.message || String(workerErr)
+          );
         }
       }
 
@@ -2248,8 +2301,9 @@ router.post(
             );
           }
           if (workerWebPolicyOverride) {
-            const mergeWorkerWebAccessPolicy =
-              (await import('../services/ai/virtualWorkerWebAccessService.js')).mergeWorkerWebAccessPolicy;
+            const mergeWorkerWebAccessPolicy = (
+              await import('../services/ai/virtualWorkerWebAccessService.js')
+            ).mergeWorkerWebAccessPolicy;
             webPolicy = mergeWorkerWebAccessPolicy({
               workerPolicy: workerWebPolicyOverride as any,
               orgPolicy: webPolicy,
@@ -2287,11 +2341,13 @@ router.post(
         }
 
         const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
-        if ((searchIntent?.shouldSearch || workerAutoSearchRequested) && webPolicy?.internetEnabled) {
+        if (
+          (searchIntent?.shouldSearch || workerAutoSearchRequested) &&
+          webPolicy?.internetEnabled
+        ) {
           try {
-            const { RuntimeWebSearchService } = await import(
-              '../services/ai/runtimeWebSearchService.js'
-            );
+            const { RuntimeWebSearchService } =
+              await import('../services/ai/runtimeWebSearchService.js');
             const svc = new (RuntimeWebSearchService as any)();
             const sanitizeQuery = webGov?.sanitizeQuery || webGov?.default?.sanitizeQuery;
             const filterResults = webGov?.filterResults || webGov?.default?.filterResults;
@@ -3383,8 +3439,10 @@ router.post(
                 }
 
                 if (knowledgeSources && typeof knowledgeSources === 'object') {
-                  if ((knowledgeSources as any).pmoDocuments === false) add('pmo_documents', 'disabled_by_user');
-                  if ((knowledgeSources as any).projectData === false) add('project_data', 'disabled_by_user');
+                  if ((knowledgeSources as any).pmoDocuments === false)
+                    add('pmo_documents', 'disabled_by_user');
+                  if ((knowledgeSources as any).projectData === false)
+                    add('project_data', 'disabled_by_user');
                   if ((knowledgeSources as any).organizationData === false)
                     add('organization_data', 'disabled_by_user');
                 }
@@ -3472,9 +3530,8 @@ router.post(
                   typeof matchClaimsToCitations === 'function' &&
                   typeof validateClaimCitations === 'function'
                 ) {
-                  const citationsForValidator = (Array.isArray(collectedCitations)
-                    ? collectedCitations
-                    : []
+                  const citationsForValidator = (
+                    Array.isArray(collectedCitations) ? collectedCitations : []
                   )
                     .slice(0, 24)
                     .map((c: any, idx: number) => ({
@@ -3603,6 +3660,8 @@ router.post(
             }
           }
 
+          await maybeEmitTeresaProposal(accumulatedContent);
+
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
 
@@ -3710,9 +3769,8 @@ router.post(
                   typeof matchClaimsToCitations === 'function' &&
                   typeof validateClaimCitations === 'function'
                 ) {
-                  const citationsForValidator = (Array.isArray(collectedCitations)
-                    ? collectedCitations
-                    : []
+                  const citationsForValidator = (
+                    Array.isArray(collectedCitations) ? collectedCitations : []
                   )
                     .slice(0, 24)
                     .map((c: any, idx: number) => ({
@@ -3787,6 +3845,8 @@ router.post(
             } catch {
               /* ignore */
             }
+
+            await maybeEmitTeresaProposal(nonStreamContent);
           }
 
           streamCompleted = true;

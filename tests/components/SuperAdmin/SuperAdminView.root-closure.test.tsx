@@ -94,7 +94,7 @@ describe('SuperAdminView root closure', () => {
     vi.clearAllMocks();
   });
 
-  it('shows the visible platform control plane canon in the shell', async () => {
+  it('renders the superadmin shell without the root closure panel', async () => {
     render(
       <SuperAdminView
         currentUser={{ id: 'user-1', email: 'root@example.com' } as any}
@@ -102,8 +102,8 @@ describe('SuperAdminView root closure', () => {
       />
     );
 
-    expect(await screen.findByText('One visible platform control plane')).toBeInTheDocument();
+    expect(screen.queryByText('One visible platform control plane')).not.toBeInTheDocument();
     expect(screen.getByText('Super Admin Console')).toBeInTheDocument();
-    expect(screen.getByText('OverviewModule')).toBeInTheDocument();
+    expect(await screen.findByText('OverviewModule')).toBeInTheDocument();
   });
 });

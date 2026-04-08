@@ -36,7 +36,6 @@ import {
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
 import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
-import { SuperadminRootClosurePanel } from '../../components/SuperAdmin/SuperadminRootClosurePanel';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
 import { useAppStore } from '../../store/useAppStore';
@@ -314,12 +313,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">
-          <div className="px-4 pt-4">
-            <SuperadminRootClosurePanel compact />
-          </div>
-          {renderContent()}
-        </main>
+        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">{renderContent()}</main>
       </div>
 
       {/* Floating Action Buttons - Order: Help, Feedback, Docs */}

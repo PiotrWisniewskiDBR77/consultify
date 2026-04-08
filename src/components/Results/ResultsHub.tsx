@@ -1,5 +1,6 @@
 import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
@@ -8,29 +9,14 @@ import {
   V8ResultsApi,
   type V8ResultsDashboardSnapshot,
 } from '@/services/api/v8/results';
+import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTruth';
+import { useAppStore } from '@/store/useAppStore';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
-import { ModuleTab, TabConfig, ViewMode } from '../shared/ModuleHub/types';
+import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { KPICreateModal } from './KPICreateModal';
-import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
-import { KpiOverviewView } from './KpiOverviewView';
-import { KpiQueueView } from './KpiQueueView';
-import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
-import {
-  ResultsKpiConnectorsView,
-  ResultsReportSchedulesView,
-  ResultsWallboardsView,
-} from './ResultsReportingEnterpriseViews';
-import { ResultsInitiativesView } from './ResultsInitiativesView';
-import { ResultsKpiReportsView } from './ResultsKpiReportsView';
-import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
-import { ResultsGridView } from './ResultsKPITable';
-import { ROIAnalysisView } from './ROIAnalysisView';
-import { ROIDetailDrawer } from './ROIDetailDrawer';
-import { ROIOpenModal } from './ROIOpenModal';
-import { ROITrackingView } from './ROITrackingView';
 import {
   filterKpisByLifecycle,
   filterKpisByObservationPhase,
@@ -40,8 +26,34 @@ import {
   type ResultsLifecycleFilter,
   type ResultsTrackedInitiative,
 } from './kpiDomain';
+import { KpiOverviewView } from './KpiOverviewView';
+import { KpiQueueView } from './KpiQueueView';
 import { loadResultsKpis } from './kpiRuntime';
+import type { SignalSheetRecord } from './kpiSignalSheetTypes';
+import { KpiSignalSheetView } from './KpiSignalSheetView';
+import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
+import { ResultsInitiativesView } from './ResultsInitiativesView';
+import { ResultsKpiReportsView } from './ResultsKpiReportsView';
+import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
+import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
+import { ResultsGridView } from './ResultsKPITable';
+import {
+  ResultsKpiConnectorsView,
+  ResultsReportSchedulesView,
+  ResultsWallboardsView,
+} from './ResultsReportingEnterpriseViews';
 import { createResultsShowcaseSnapshot } from './resultsShowcaseData';
+import { ROIAnalysisView } from './ROIAnalysisView';
+import { ROIDetailDrawer } from './ROIDetailDrawer';
+import { ROIOpenModal } from './ROIOpenModal';
+import { ROITrackingView } from './ROITrackingView';
+
+const ResultsInitiativeDocumentView = React.lazy(async () => {
+  const module = await import('../Initiatives/InitiativeDocumentView');
+  return { default: module.InitiativeDocumentView };
+});
+
+const WATCHED_RESULTS_KPI_STORAGE_KEY = 'results.kpi.watched';
 
 interface ResultsRuntimeChipProps {
   label: string;
@@ -65,7 +77,11 @@ interface ResultsInfoChipProps {
   dotClassName?: string;
 }
 
-const ResultsInfoChip: React.FC<ResultsInfoChipProps> = ({ label, value, dotClassName = 'bg-slate-400' }) => (
+const ResultsInfoChip: React.FC<ResultsInfoChipProps> = ({
+  label,
+  value,
+  dotClassName = 'bg-slate-400',
+}) => (
   <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60">
     <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotClassName}`} />
     <span>{label}</span>
@@ -106,6 +122,7 @@ const ResultsControlSelect: React.FC<ResultsControlSelectProps> = ({
 
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
+  const currentUser = useAppStore((state) => state.currentUser);
 
   const [activeTab, setActiveTab] = useState<ModuleTab>('results_initiatives');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -115,19 +132,30 @@ export const ResultsHub: React.FC = () => {
   const [observationPhaseFilter, setObservationPhaseFilter] = useState<
     'all' | 'realization' | 'post-implementation'
   >('all');
-  const [kpiWorkspaceMode, setKpiWorkspaceMode] = useState<'overview' | 'queue' | 'catalog' | 'scorecards'>(
-    'overview'
-  );
+  const [initiativeStageFilter, setInitiativeStageFilter] = useState<string>('all');
+  const [initiativeHealthFilter, setInitiativeHealthFilter] = useState<
+    'all' | 'on-track' | 'at-risk'
+  >('all');
+  const [initiativeKpiLinkFilter, setInitiativeKpiLinkFilter] = useState<
+    'all' | 'attached' | 'unattached'
+  >('all');
+  const [kpiWorkspaceMode, setKpiWorkspaceMode] = useState<
+    'overview' | 'queue' | 'catalog' | 'scorecards'
+  >('catalog');
   const [reportWorkspaceMode, setReportWorkspaceMode] = useState<
-    'reports' | 'schedules' | 'wallboards' | 'connectors'
-  >('reports');
+    'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors'
+  >('tracked');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
   const [kpiScorecardCreateNonce, setKpiScorecardCreateNonce] = useState(0);
   const [reportWorkspaceCreateNonce, setReportWorkspaceCreateNonce] = useState(0);
-  const [drawerState, setDrawerState] = useState<{ kpiId: string; section?: KpiDrawerSection } | null>(
-    null
-  );
+  const [signalSheetCreateNonce, setSignalSheetCreateNonce] = useState(0);
+  const [drawerState, setDrawerState] = useState<{
+    kpiId: string;
+    section?: KpiDrawerSection;
+  } | null>(null);
+  const [activeSignalSheet, setActiveSignalSheet] = useState<SignalSheetRecord | null>(null);
+  const [manualSignalSheets, setManualSignalSheets] = useState<SignalSheetRecord[]>([]);
   const [roiOpenModal, setRoiOpenModal] = useState(false);
   const [roiDrawer, setRoiDrawer] = useState<{ id: string; name: string } | null>(null);
   const [roiRefreshNonce, setRoiRefreshNonce] = useState(0);
@@ -136,10 +164,23 @@ export const ResultsHub: React.FC = () => {
   const [trackedInitiatives, setTrackedInitiatives] = useState<ResultsTrackedInitiative[]>([]);
   const [loading, setLoading] = useState(true);
   const [v8Snapshot, setV8Snapshot] = useState<V8ResultsDashboardSnapshot | null>(null);
-  const [resultsSource, setResultsSource] = useState<'v8' | 'legacy' | 'empty' | 'showcase'>('empty');
+  const [resultsSource, setResultsSource] = useState<'v8' | 'legacy' | 'empty' | 'showcase'>(
+    'empty'
+  );
+  const [watchedKpiIds, setWatchedKpiIds] = useState<Set<string>>(new Set());
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('results');
+  const currentUserDisplayName = useMemo(
+    () =>
+      [(currentUser as any)?.firstName, (currentUser as any)?.lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
+      (currentUser as any)?.name ||
+      '',
+    [currentUser]
+  );
 
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
@@ -173,6 +214,30 @@ export const ResultsHub: React.FC = () => {
   useEffect(() => {
     void loadV8Snapshot();
   }, [loadV8Snapshot]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(WATCHED_RESULTS_KPI_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setWatchedKpiIds(new Set(parsed.filter((id) => typeof id === 'string')));
+      }
+    } catch {
+      // ignore storage read failures
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        WATCHED_RESULTS_KPI_STORAGE_KEY,
+        JSON.stringify(Array.from(watchedKpiIds))
+      );
+    } catch {
+      // ignore storage write failures
+    }
+  }, [watchedKpiIds]);
 
   const refreshResultsTruth = useCallback(
     async (options?: { refreshRoi?: boolean }) => {
@@ -256,6 +321,23 @@ export const ResultsHub: React.FC = () => {
               return false;
             });
           }
+          if (col === 'watched') {
+            return vals.some((value) => value === 'true' && watchedKpiIds.has(k.id));
+          }
+          if (col === 'ownerScope') {
+            return vals.some((value) => {
+              if (value === 'me') {
+                return (
+                  Boolean(currentUserDisplayName) &&
+                  String(k.ownerName || '').trim() === currentUserDisplayName
+                );
+              }
+              if (value === 'unassigned') {
+                return !String(k.ownerName || '').trim();
+              }
+              return false;
+            });
+          }
           const v = (k as any)[col];
           return vals.includes(String(v));
         });
@@ -263,10 +345,17 @@ export const ResultsHub: React.FC = () => {
     }
 
     return items;
-  }, [lifecycleScopedKpis, observationPhaseFilter, searchQuery, activeFilters]);
+  }, [
+    lifecycleScopedKpis,
+    observationPhaseFilter,
+    searchQuery,
+    activeFilters,
+    currentUserDisplayName,
+    watchedKpiIds,
+  ]);
 
   const filteredInitiatives = useMemo(() => {
-    let items = filterTrackedInitiatives(trackedInitiatives, lifecycleFilter);
+    let items = [...trackedInitiatives];
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -277,8 +366,39 @@ export const ResultsHub: React.FC = () => {
       );
     }
 
+    if (initiativeStageFilter !== 'all') {
+      items = items.filter(
+        (initiative) =>
+          String(initiative.initiativeStatus || '').toUpperCase() === initiativeStageFilter
+      );
+    }
+
+    if (initiativeHealthFilter !== 'all') {
+      items = items.filter((initiative) => {
+        const atRisk =
+          Number(initiative.belowTargetCount || 0) > 0 ||
+          Number(initiative.openDeviationCount || 0) > 0 ||
+          Number(initiative.needsEntryCount || 0) > 0;
+        return initiativeHealthFilter === 'at-risk' ? atRisk : !atRisk;
+      });
+    }
+
+    if (initiativeKpiLinkFilter !== 'all') {
+      items = items.filter((initiative) =>
+        initiativeKpiLinkFilter === 'attached'
+          ? Number(initiative.trackedKpiCount || 0) > 0
+          : Number(initiative.trackedKpiCount || 0) === 0
+      );
+    }
+
     return items;
-  }, [trackedInitiatives, lifecycleFilter, searchQuery]);
+  }, [
+    trackedInitiatives,
+    searchQuery,
+    initiativeStageFilter,
+    initiativeHealthFilter,
+    initiativeKpiLinkFilter,
+  ]);
 
   const activeSignalFilter = useMemo(() => {
     const needsEntryFilter = activeFilters.find((filter) => filter.column === 'needsEntry');
@@ -292,6 +412,21 @@ export const ResultsHub: React.FC = () => {
 
     return 'all';
   }, [activeFilters]);
+
+  const activeOwnerFilter = useMemo(() => {
+    const ownerScope = activeFilters.find((filter) => filter.column === 'ownerScope');
+    if (ownerScope?.value) return ownerScope.value;
+    const ownerName = activeFilters.find((filter) => filter.column === 'ownerName');
+    if (ownerName?.value) return ownerName.value;
+    return 'all';
+  }, [activeFilters]);
+
+  const watchedOnly = useMemo(
+    () => activeFilters.some((filter) => filter.column === 'watched' && filter.value === 'true'),
+    [activeFilters]
+  );
+  const myKpiOnly = activeOwnerFilter === 'me';
+  const unassignedOwnerOnly = activeOwnerFilter === 'unassigned';
 
   const replaceResultsFilters = useCallback((nextFilter: FilterChip | null, columns: string[]) => {
     setActiveFilters((previous) => {
@@ -354,6 +489,80 @@ export const ResultsHub: React.FC = () => {
     [replaceResultsFilters, t]
   );
 
+  const applyOwnerFilter = useCallback(
+    (value: string) => {
+      if (value === 'all') {
+        replaceResultsFilters(null, ['ownerName', 'ownerScope']);
+        return;
+      }
+      if (value === '__me__') {
+        replaceResultsFilters(
+          {
+            id: 'ownerScope:me',
+            column: 'ownerScope',
+            value: 'me',
+            label: t('results.filters.ownerMine', 'Owner: My KPI'),
+          },
+          ['ownerName', 'ownerScope']
+        );
+        return;
+      }
+      if (value === '__unassigned__') {
+        replaceResultsFilters(
+          {
+            id: 'ownerScope:unassigned',
+            column: 'ownerScope',
+            value: 'unassigned',
+            label: t('results.filters.ownerUnassigned', 'Owner: Unassigned'),
+          },
+          ['ownerName', 'ownerScope']
+        );
+        return;
+      }
+      replaceResultsFilters(
+        {
+          id: `ownerName:${value}`,
+          column: 'ownerName',
+          value,
+          label: `${t('common.owner', 'Owner')}: ${value}`,
+        },
+        ['ownerName', 'ownerScope']
+      );
+    },
+    [replaceResultsFilters, t]
+  );
+
+  const toggleWatchedFilter = useCallback(() => {
+    replaceResultsFilters(
+      watchedOnly
+        ? null
+        : {
+            id: 'watched:true',
+            column: 'watched',
+            value: 'true',
+            label: t('results.filters.watched', 'Watched KPI'),
+          },
+      ['watched']
+    );
+  }, [replaceResultsFilters, t, watchedOnly]);
+
+  const toggleMyKpiView = useCallback(() => {
+    applyOwnerFilter(myKpiOnly ? 'all' : '__me__');
+  }, [applyOwnerFilter, myKpiOnly]);
+
+  const toggleUnassignedOwnerView = useCallback(() => {
+    applyOwnerFilter(unassignedOwnerOnly ? 'all' : '__unassigned__');
+  }, [applyOwnerFilter, unassignedOwnerOnly]);
+
+  const toggleWatchKpi = useCallback((kpiId: string) => {
+    setWatchedKpiIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(kpiId)) next.delete(kpiId);
+      else next.add(kpiId);
+      return next;
+    });
+  }, []);
+
   const openInitiativeKpiLane = useCallback(
     (initiative: ResultsTrackedInitiative) => {
       setActiveTab('results_kpi');
@@ -374,7 +583,66 @@ export const ResultsHub: React.FC = () => {
 
   const openInitiativeReportsLane = useCallback(() => {
     setActiveTab('results_reports');
+    setReportWorkspaceMode('tracked');
   }, []);
+
+  const openInitiativeDocument = useCallback(
+    (initiative: ResultsTrackedInitiative) => {
+      const existing = openDocuments.find(
+        (document) => document.id === initiative.initiativeId && document.type === 'initiative'
+      );
+      if (!existing) {
+        const newDoc: OpenDocument = {
+          id: initiative.initiativeId,
+          name: initiative.initiativeName,
+          type: 'initiative',
+          subType: 'results',
+          status: String(initiative.initiativeStatus || 'DRAFT').toUpperCase() as any,
+        };
+        setOpenDocuments((prev) => [...prev, newDoc]);
+      }
+      setActiveDocumentId(initiative.initiativeId);
+    },
+    [openDocuments, setActiveDocumentId, setOpenDocuments]
+  );
+
+  const handleInitiativeStatusChange = useCallback(
+    async (initiative: ResultsTrackedInitiative, newStatus: string) => {
+      const currentStatus = String(initiative.initiativeStatus || '').toUpperCase();
+      const targetStatus = String(newStatus || '').toUpperCase();
+      if (!initiative.initiativeId || !targetStatus || currentStatus === targetStatus) return;
+
+      try {
+        await updateInitiativeStatusWriteTruth(initiative.initiativeId, targetStatus);
+        setTrackedInitiatives((prev) =>
+          prev.map((item) =>
+            item.initiativeId === initiative.initiativeId
+              ? { ...item, initiativeStatus: targetStatus }
+              : item
+          )
+        );
+        setOpenDocuments((prev) =>
+          prev.map((document) =>
+            document.id === initiative.initiativeId
+              ? { ...document, status: targetStatus as any }
+              : document
+          )
+        );
+        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        await refreshResultsTruth({ refreshRoi: false });
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.error ||
+            t('initiatives.toast.statusUpdateFailed', 'Nie udało się zaktualizować statusu')
+        );
+      }
+    },
+    [refreshResultsTruth, t]
+  );
+
+  const handleShowList = useCallback(() => {
+    setActiveDocumentId(null);
+  }, [setActiveDocumentId]);
 
   const handleDeleteKpi = useCallback(
     async (kpiId: string) => {
@@ -442,7 +710,22 @@ export const ResultsHub: React.FC = () => {
     void refreshResultsTruth();
   }, [refreshResultsTruth]);
 
+  const handleCreateSignalSheet = useCallback((sheet: SignalSheetRecord) => {
+    setManualSignalSheets((prev) => [sheet, ...prev]);
+  }, []);
+
   const openRoiPicker = useCallback(() => setRoiOpenModal(true), []);
+  const openReportingWorkspace = useCallback(() => {
+    setActiveTab('results_reports');
+    setReportWorkspaceMode('tracked');
+  }, []);
+  const openFirstFilteredKpiRecord = useCallback(() => {
+    const target = filteredKpis[0] ?? lifecycleScopedKpis[0];
+    if (!target?.id) return;
+    setKpiWorkspaceMode('catalog');
+    setViewMode('table');
+    openKpiDrawer(target.id, 'record');
+  }, [filteredKpis, lifecycleScopedKpis, openKpiDrawer]);
 
   const runtimeSnapshot = useMemo(() => {
     if (
@@ -509,18 +792,73 @@ export const ResultsHub: React.FC = () => {
       { value: 'realized', label: t('results.filters.lifecycleRealized', 'Lifecycle: Realized') },
     ];
 
-    if (activeTab === 'results_initiatives' || activeTab === 'results_reports') {
+    if (activeTab === 'results_initiatives') {
+      const stageOptions = [
+        { value: 'all', label: t('results.filters.stageAll', 'Stage: All') },
+        ...Array.from(
+          new Set(
+            trackedInitiatives
+              .map((initiative) => String(initiative.initiativeStatus || '').toUpperCase())
+              .filter(Boolean)
+          )
+        ).map((status) => ({ value: status, label: status })),
+      ];
+
       return (
-        <ResultsControlSelect
-          ariaLabel={t('results.filters.lifecycle', 'Lifecycle filter')}
-          value={lifecycleFilter}
-          onChange={(value) => setLifecycleFilter(value as ResultsLifecycleFilter)}
-          options={lifecycleOptions}
-        />
+        <div className="flex items-center gap-2">
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.stage', 'Initiative stage filter')}
+            value={initiativeStageFilter}
+            onChange={setInitiativeStageFilter}
+            options={stageOptions}
+          />
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.health', 'Health filter')}
+            value={initiativeHealthFilter}
+            onChange={(value) => setInitiativeHealthFilter(value as 'all' | 'on-track' | 'at-risk')}
+            options={[
+              { value: 'all', label: t('results.filters.healthAll', 'Health: All') },
+              { value: 'on-track', label: t('results.filters.healthOnTrack', 'Health: On track') },
+              { value: 'at-risk', label: t('results.filters.healthAtRisk', 'Health: At risk') },
+            ]}
+          />
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.kpiLink', 'KPI link filter')}
+            value={initiativeKpiLinkFilter}
+            onChange={(value) =>
+              setInitiativeKpiLinkFilter(value as 'all' | 'attached' | 'unattached')
+            }
+            options={[
+              { value: 'all', label: t('results.filters.kpiLinkAll', 'KPI link: All') },
+              { value: 'attached', label: t('results.filters.kpiAttached', 'KPI attached') },
+              { value: 'unattached', label: t('results.filters.kpiUnattached', 'No KPI attached') },
+            ]}
+          />
+        </div>
       );
     }
 
-    if (activeTab === 'results_kpi') {
+    if (
+      activeTab === 'results_kpi' ||
+      (activeTab === 'results_reports' && reportWorkspaceMode === 'tracked')
+    ) {
+      const ownerOptions = [
+        { value: 'all', label: t('results.filters.ownerAll', 'Owner: All') },
+        { value: '__me__', label: t('results.filters.ownerMine', 'Owner: My KPI') },
+        {
+          value: '__unassigned__',
+          label: t('results.filters.ownerUnassigned', 'Owner: Unassigned'),
+        },
+        ...Array.from(
+          new Set(
+            lifecycleScopedKpis
+              .map((kpi) => String(kpi.ownerName || '').trim())
+              .filter(Boolean)
+              .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+          )
+        ).map((owner) => ({ value: owner, label: owner })),
+      ];
+
       if (kpiWorkspaceMode === 'scorecards') {
         return (
           <ResultsControlSelect
@@ -541,43 +879,66 @@ export const ResultsHub: React.FC = () => {
             options={lifecycleOptions}
           />
           <ResultsControlSelect
-            ariaLabel={t('results.filters.phase', 'Observation phase filter')}
-            value={observationPhaseFilter}
-            onChange={(value) =>
-              setObservationPhaseFilter(value as 'all' | 'realization' | 'post-implementation')
-            }
-            options={[
-              { value: 'all', label: t('results.filters.phaseAll', 'Phase: All') },
-              { value: 'realization', label: t('results.filters.phaseRealization', 'Phase: Realization') },
-              {
-                value: 'post-implementation',
-                label: t('results.filters.phasePostImplementation', 'Phase: Post-implementation'),
-              },
-            ]}
-          />
-          <ResultsControlSelect
             ariaLabel={t('results.filters.signal', 'Signal filter')}
             value={activeSignalFilter}
             onChange={applySignalFilter}
             options={[
               { value: 'all', label: t('results.filters.signalAll', 'Signal: All') },
-              { value: 'needs-entry', label: t('results.filters.signalNeedsEntry', 'Signal: Needs entry') },
+              {
+                value: 'needs-entry',
+                label: t('results.filters.signalNeedsEntry', 'Signal: Needs entry'),
+              },
               { value: 'below', label: t('results.filters.signalBelow', 'Signal: Below target') },
-              { value: 'on-target', label: t('results.filters.signalOnTarget', 'Signal: On target') },
+              {
+                value: 'on-target',
+                label: t('results.filters.signalOnTarget', 'Signal: On target'),
+              },
               { value: 'no-data', label: t('results.filters.signalNoData', 'Signal: No data') },
-              { value: 'discrepancy', label: t('results.filters.signalDiscrepancy', 'Signal: Discrepancy') },
+              {
+                value: 'discrepancy',
+                label: t('results.filters.signalDiscrepancy', 'Signal: Discrepancy'),
+              },
               {
                 value: 'requires-review',
                 label: t('results.filters.signalRequiresReview', 'Signal: Requires review'),
               },
             ]}
           />
+          <ResultsControlSelect
+            ariaLabel={t('results.filters.owner', 'Owner filter')}
+            value={activeOwnerFilter}
+            onChange={applyOwnerFilter}
+            options={ownerOptions}
+          />
         </div>
       );
     }
 
+    if (activeTab === 'results_reports') {
+      return (
+        <ResultsControlSelect
+          ariaLabel={t('results.filters.lifecycle', 'Lifecycle filter')}
+          value={lifecycleFilter}
+          onChange={(value) => setLifecycleFilter(value as ResultsLifecycleFilter)}
+          options={lifecycleOptions}
+        />
+      );
+    }
+
     return null;
-  }, [activeSignalFilter, activeTab, applySignalFilter, kpiWorkspaceMode, lifecycleFilter, observationPhaseFilter, t]);
+  }, [
+    activeSignalFilter,
+    activeTab,
+    applySignalFilter,
+    initiativeHealthFilter,
+    initiativeKpiLinkFilter,
+    initiativeStageFilter,
+    kpiWorkspaceMode,
+    lifecycleFilter,
+    observationPhaseFilter,
+    t,
+    trackedInitiatives,
+  ]);
 
   const commandRowContent = useMemo(() => {
     const chipBase =
@@ -603,87 +964,39 @@ export const ResultsHub: React.FC = () => {
     }
 
     if (activeTab === 'results_kpi') {
-      const scopeKpis = filterKpisByObservationPhase(lifecycleScopedKpis, observationPhaseFilter);
-      const queueCounts = scopeKpis.reduce(
-        (acc, k) => {
-          acc.total += 1;
-          if (k.needsEntry) acc.needsEntry += 1;
-          if (k.status === 'below') acc.below += 1;
-          if (k.status === 'on-target') acc.onTarget += 1;
-          if (k.status === 'no-data') acc.noData += 1;
-          if (k.openDeviationCase) acc.discrepancy += 1;
-          if (k.needsEntry || k.status === 'below' || k.openDeviationCase) acc.requiresReview += 1;
-          return acc;
-        },
-        {
-          total: 0,
-          needsEntry: 0,
-          below: 0,
-          onTarget: 0,
-          noData: 0,
-          discrepancy: 0,
-          requiresReview: 0,
-        }
-      );
-
       return (
-        <div className="flex items-center gap-2 overflow-x-auto">
-          {actionButton(
-            t('results.kpi.workspace.overview', 'Overview'),
-            () => setKpiWorkspaceMode('overview'),
-            kpiWorkspaceMode === 'overview'
-          )}
-          {actionButton(
-            t('results.kpi.workspace.queue', 'Queue'),
-            () => setKpiWorkspaceMode('queue'),
-            kpiWorkspaceMode === 'queue'
-          )}
-          {actionButton(
-            t('results.kpi.workspace.catalog', 'Catalog'),
-            () => setKpiWorkspaceMode('catalog'),
-            kpiWorkspaceMode === 'catalog'
-          )}
-          {actionButton(
-            t('results.kpi.workspace.scorecards', 'Scorecards'),
-            () => {
-              setActiveFilters([]);
-              setKpiWorkspaceMode('scorecards');
-            },
-            kpiWorkspaceMode === 'scorecards'
-          )}
-          {actionButton(
-            t('results.actions.createReport', 'Create KPI report'),
-            () => {
-              setActiveTab('results_reports');
-              setKpiReportCreateNonce(Date.now());
-            }
-          )}
-          <ResultsInfoChip
-            label={t('results.runtime.kpiSet', 'KPI set')}
-            value={queueCounts.total}
-            dotClassName="bg-sky-400"
-          />
-          <ResultsInfoChip
-            label={t('results.filters.needsEntry', 'Needs entry')}
-            value={queueCounts.needsEntry}
-            dotClassName="bg-amber-400"
-          />
-          <ResultsInfoChip
-            label={t('results.filters.below', 'Below')}
-            value={queueCounts.below}
-            dotClassName="bg-red-400"
-          />
-          <ResultsInfoChip
-            label={t('results.kpi.queue.discrepancy', 'Discrepancy')}
-            value={queueCounts.discrepancy}
-            dotClassName="bg-rose-400"
-          />
-          <ResultsInfoChip
-            label={t('results.kpi.queue.requiresReview', 'Requires review')}
-            value={queueCounts.requiresReview}
-            dotClassName="bg-violet-400"
-          />
-          {governedRuntimeStrip}
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {actionButton(
+              t('results.kpi.workspace.catalog', 'KPI List'),
+              () => setKpiWorkspaceMode('catalog'),
+              kpiWorkspaceMode === 'catalog'
+            )}
+            {actionButton(
+              t('results.kpi.workspace.queue', 'Data / Signals'),
+              () => setKpiWorkspaceMode('queue'),
+              kpiWorkspaceMode === 'queue'
+            )}
+            {actionButton(
+              t('results.kpi.workspace.overview', 'Overview'),
+              () => setKpiWorkspaceMode('overview'),
+              kpiWorkspaceMode === 'overview'
+            )}
+            {actionButton(
+              t('results.actions.recordValue', 'Record value'),
+              openFirstFilteredKpiRecord
+            )}
+          </div>
+          {kpiWorkspaceMode === 'queue' ? (
+            <button
+              type="button"
+              onClick={() => setSignalSheetCreateNonce(Date.now())}
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-400 transition-colors"
+            >
+              <Plus size={14} />
+              <span>{t('results.kpi.signals.addSheet', '+ Add sheet')}</span>
+            </button>
+          ) : null}
         </div>
       );
     }
@@ -735,6 +1048,14 @@ export const ResultsHub: React.FC = () => {
       return (
         <div className="flex items-center gap-2 overflow-x-auto">
           {actionButton(
+            t('results.reporting.workspace.trackedKpis', 'Tracked KPI'),
+            () => {
+              setActiveFilters([]);
+              setReportWorkspaceMode('tracked');
+            },
+            reportWorkspaceMode === 'tracked'
+          )}
+          {actionButton(
             t('results.reporting.workspace.reports', 'Reports'),
             () => {
               setActiveFilters([]);
@@ -778,10 +1099,11 @@ export const ResultsHub: React.FC = () => {
     activeTab,
     governedRuntimeStrip,
     kpiWorkspaceMode,
-    lifecycleScopedKpis,
+    openFirstFilteredKpiRecord,
     observationPhaseFilter,
     openRoiPicker,
     reportWorkspaceMode,
+    setQueueFilter,
     t,
   ]);
 
@@ -796,11 +1118,12 @@ export const ResultsHub: React.FC = () => {
           setSearchQuery('');
           setActiveFilters([]);
           setActiveDocumentId(null);
+          setActiveSignalSheet(null);
           if (tab !== 'results_kpi') {
-            setKpiWorkspaceMode('overview');
+            setKpiWorkspaceMode('catalog');
           }
           if (tab !== 'results_reports') {
-            setReportWorkspaceMode('reports');
+            setReportWorkspaceMode('tracked');
           }
         }}
         viewMode={viewMode}
@@ -818,33 +1141,40 @@ export const ResultsHub: React.FC = () => {
         onRemoveFilter={(id) => setActiveFilters((prev) => prev.filter((f) => f.id !== id))}
         onClearFilters={() => setActiveFilters([])}
         onNewItem={
-          activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
-            ? () => setShowCreateModal(true)
-            : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards'
-              ? () => setKpiScorecardCreateNonce(Date.now())
-            : activeTab === 'results_reports'
+          activeTab === 'results_initiatives'
+            ? () => {
+                setActiveTab('results_kpi');
+                setKpiWorkspaceMode('catalog');
+                setViewMode('table');
+                setShowCreateModal(true);
+              }
+            : activeTab === 'results_kpi'
+              ? () => setShowCreateModal(true)
+              : activeTab === 'results_reports'
                 ? () =>
-                    reportWorkspaceMode === 'reports'
-                      ? setKpiReportCreateNonce(Date.now())
-                      : setReportWorkspaceCreateNonce(Date.now())
-            : activeTab === 'roi'
-                ? () => setRoiOpenModal(true)
-                : undefined
+                    reportWorkspaceMode === 'tracked'
+                      ? setShowCreateModal(true)
+                      : reportWorkspaceMode === 'reports'
+                        ? setKpiReportCreateNonce(Date.now())
+                        : setReportWorkspaceCreateNonce(Date.now())
+                : activeTab === 'roi'
+                  ? () => setRoiOpenModal(true)
+                  : undefined
         }
         newItemLabel={
-          activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog'
+          activeTab === 'results_initiatives' || activeTab === 'results_kpi'
             ? t('results.addKpi', '+ Add KPI')
-            : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards'
-              ? t('results.kpi.scorecards.add', '+ Add scorecard')
             : activeTab === 'results_reports'
-                ? reportWorkspaceMode === 'reports'
+              ? reportWorkspaceMode === 'tracked'
+                ? t('results.addKpi', '+ Add KPI')
+                : reportWorkspaceMode === 'reports'
                   ? t('results.kpiReports.new', '+ New report')
                   : reportWorkspaceMode === 'schedules'
                     ? t('results.reporting.addSchedule', '+ Add schedule')
                     : reportWorkspaceMode === 'wallboards'
                       ? t('results.reporting.addWallboard', '+ Add wallboard')
                       : t('results.reporting.addConnector', '+ Add connector')
-            : activeTab === 'roi'
+              : activeTab === 'roi'
                 ? t('results.roi.add', '+ Record ROI')
                 : undefined
         }
@@ -856,16 +1186,53 @@ export const ResultsHub: React.FC = () => {
         rightControls={rightControls}
         commandRowContent={commandRowContent}
       >
-        {activeTab === 'results_initiatives' ? (
+        {activeDocumentId ? (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-24">
+                <div className="flex items-center gap-3 text-slate-400">
+                  <BarChart3 size={20} className="animate-pulse" />
+                  <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+                </div>
+              </div>
+            }
+          >
+            <ResultsInitiativeDocumentView
+              initiativeId={activeDocumentId}
+              onBack={handleShowList}
+              onStatusChange={() => void refreshResultsTruth({ refreshRoi: false })}
+              sourceModule="execution"
+            />
+          </Suspense>
+        ) : activeSignalSheet ? (
+          <KpiSignalSheetView
+            sheet={activeSignalSheet}
+            onBack={() => setActiveSignalSheet(null)}
+            onRecorded={() => void refreshResultsTruth()}
+            onOpenKpi={openKpiDrawer}
+          />
+        ) : activeTab === 'results_initiatives' ? (
           <ResultsInitiativesView
             initiatives={filteredInitiatives}
             onOpenInitiativeKpis={openInitiativeKpiLane}
             onOpenInitiativeReports={openInitiativeReportsLane}
+            onOpenInitiativeDocument={openInitiativeDocument}
+            onChangeInitiativeStatus={handleInitiativeStatusChange}
           />
         ) : activeTab === 'roi_analysis' ? (
           <ROIAnalysisView />
         ) : activeTab === 'results_reports' ? (
-          reportWorkspaceMode === 'reports' ? (
+          reportWorkspaceMode === 'tracked' ? (
+            <ResultsKpisTableV3
+              kpis={filteredKpis}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              onOpenKpi={openKpiDrawer}
+              onDeleteKpi={handleDeleteKpi}
+              watchedKpiIds={watchedKpiIds}
+              onToggleWatch={toggleWatchKpi}
+            />
+          ) : reportWorkspaceMode === 'reports' ? (
             <ResultsKpiReportsView
               activeFilters={activeFilters}
               onFilterChange={setActiveFilters}
@@ -922,13 +1289,22 @@ export const ResultsHub: React.FC = () => {
               setKpiWorkspaceMode('scorecards');
               setViewMode('table');
             }}
-            onOpenReports={() => setActiveTab('results_reports')}
+            onOpenReports={() => {
+              setActiveTab('results_reports');
+              setReportWorkspaceMode('tracked');
+            }}
             onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
           />
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue' ? (
           <KpiQueueView
             kpis={filteredKpis}
-            onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            onOpenKpi={openKpiDrawer}
+            onOpenSheet={setActiveSignalSheet}
+            createNonce={signalSheetCreateNonce}
+            manualSheets={manualSignalSheets}
+            onCreateSheet={handleCreateSignalSheet}
           />
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards' ? (
           <ResultsKpiScorecardsView
@@ -944,6 +1320,8 @@ export const ResultsHub: React.FC = () => {
             onFilterChange={setActiveFilters}
             onOpenKpi={openKpiDrawer}
             onDeleteKpi={handleDeleteKpi}
+            watchedKpiIds={watchedKpiIds}
+            onToggleWatch={toggleWatchKpi}
           />
         ) : activeTab === 'results_kpi' ? (
           <ResultsGridView

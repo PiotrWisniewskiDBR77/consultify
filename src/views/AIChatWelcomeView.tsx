@@ -43,21 +43,22 @@ import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
-import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
-import { TTSIndicator } from '../components/AIChat/TTSIndicator';
-import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
-import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
+import { TeresaProposalCard } from '../components/AIChat/TeresaProposalCard';
 import {
   getTeresaEmptyResponseMessage,
   getTeresaStartFailureMessage,
 } from '../components/AIChat/teresaRuntimeCopy';
+import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
+import { TTSIndicator } from '../components/AIChat/TTSIndicator';
+import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
+import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
-import { ChatCitation, ChatMessage, ChatResponseAction } from '../types';
+import { ChatCitation, ChatMessage, ChatResponseAction, TeresaChatProposal } from '../types';
 import { MessageFeedback } from '../types';
 import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { exportConversationToPDF } from '../utils/pdfExport';
@@ -99,6 +100,13 @@ const prefersReducedMotion = (): boolean => {
 const isUuidLike = (value: unknown): value is string =>
   typeof value === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+
+const TERESA_TARGET_ROUTE_MAP: Record<string, string> = {
+  initiatives: '/initiatives',
+  notebook: '/my-work?tab=notebook',
+  calendar: '/meeting',
+  radar: '/my-work',
+};
 
 /** Download a string as a file */
 function downloadFile(filename: string, content: string, mimeType: string): void {
@@ -193,7 +201,7 @@ export const AIChatWelcomeView: React.FC = () => {
       fullText: string,
       thinking: any[] = [],
       artifacts: any[] = [],
-      meta?: { citations?: any[]; sessionId?: string }
+      meta?: { citations?: any[]; sessionId?: string; proposal?: TeresaChatProposal | null }
     ) => {
       const safeText =
         typeof fullText === 'string' && fullText.trim().length > 0
@@ -219,6 +227,7 @@ export const AIChatWelcomeView: React.FC = () => {
             artifacts: artifacts as any,
             citations: meta?.citations,
             streamSessionId: meta?.sessionId,
+            extra: meta?.proposal ? { proposal: meta.proposal } : {},
           }) as any,
         });
 
@@ -665,46 +674,100 @@ export const AIChatWelcomeView: React.FC = () => {
     [confirmAction, addMessage]
   );
 
+  const handleTeresaProposalUpdated = useCallback(
+    async (proposal: TeresaChatProposal) => {
+      const convId = activeConversationIdRef.current;
+      if (!convId) return;
+
+      const stateMessages: Record<TeresaChatProposal['state'], string> = {
+        proposal: `Teresa prepared a proposal for ${proposal.targetLabel}.`,
+        pending_approval: `Teresa proposal for ${proposal.targetLabel} is waiting for approval.`,
+        approved: `Teresa proposal for ${proposal.targetLabel} is approved and ready to execute.`,
+        executing: `Teresa is executing the handoff to ${proposal.targetLabel}.`,
+        completed: `Teresa completed the handoff to ${proposal.targetLabel}.`,
+        rejected: `Teresa proposal for ${proposal.targetLabel} was rejected.`,
+      };
+
+      await addMessage({
+        conversationId: convId,
+        role: 'ai',
+        content:
+          stateMessages[proposal.state] ||
+          `Teresa updated the proposal for ${proposal.targetLabel}.`,
+        messageType: 'text',
+        metadata: { proposal } as any,
+      });
+    },
+    [addMessage]
+  );
+
+  const handleTeresaProposalNavigate = useCallback(
+    async (proposal: TeresaChatProposal) => {
+      const targetRoute =
+        TERESA_TARGET_ROUTE_MAP[String(proposal.targetModule || '').toLowerCase()];
+      await executeAction({
+        type: ACTION_TYPES.NAVIGATE,
+        payload: {
+          view: targetRoute || '/chat',
+          targetModule: proposal.targetModule,
+        },
+      });
+    },
+    [executeAction]
+  );
+
+  const handleTeresaLifecycleMessage = useCallback(
+    async (message: string) => {
+      const convId = activeConversationIdRef.current;
+      if (!convId || !message.trim()) return;
+      await addMessage({
+        conversationId: convId,
+        role: 'ai',
+        content: message,
+        messageType: 'text',
+      });
+    },
+    [addMessage]
+  );
+
   // Build system prompt for AI
   const buildSystemPrompt = useCallback(
     (extraContext?: string) => {
-      let systemPrompt = `You are an elite Digital Transformation Consultant with a Harvard MBA and PhD, 20+ years of experience with McKinsey, BCG, and Fortune 500 companies.
+      let systemPrompt = `You are Teresa, the in-product copilot for Consultify.
 
-YOUR PERSONA:
-- Name: Senior Partner at DBR77 Industrial Intelligence
-- Background: Harvard Business School MBA, MIT PhD in Digital Transformation
-- Experience: Led 100+ transformation programs globally, €500M+ in value delivered
-- Style: Socratic questioning, hypothesis-driven, executive-level communication
+ROLE:
+- Talk naturally, clearly, and with strong product awareness.
+- Help ${currentUser?.firstName || 'the user'} move work forward inside the application.
+- Use the current workspace and screen context before asking the user to repeat themselves.
 
-YOUR ROLE WITH ${currentUser?.firstName || 'the user'}:
-You are their personal strategic co-thinker, not just an assistant. You:
-1. ASK before assuming - use Socratic questions to understand deeply
-2. GUIDE through methodology - Discovery → Assessment → Initiatives → Roadmap → Execution
-3. CHALLENGE assumptions - respectfully probe weak arguments
-4. EXECUTE on their behalf - create entities, fill forms, navigate when authorized
-5. REMEMBER everything - maintain context across all conversations
+PROPOSAL-FIRST RULES:
+- Never imply that a write already happened unless the system confirms it.
+- When work in the application is appropriate, frame it as a proposal for user approval.
+- Keep proposals safe, bounded, and specific to the current context.
+- Prefer: navigate, prepare a draft, prepare a handoff, suggest the next safe step.
+- Avoid silent writes and avoid claiming execution before approval.
+
+WORK STYLE:
+- Be conversational, direct, and helpful.
+- Use concise structure when useful, but do not sound robotic.
+- Ask short clarification questions only when missing information blocks a safe proposal.
+- Respond in the same language as the user.
 
 CURRENT TRANSFORMATION PHASE: ${coThinkerPhase.toUpperCase()}
-${coThinkerPhase === 'discovery' ? '→ Focus: Understanding goals, constraints, stakeholders' : ''}
-${coThinkerPhase === 'assessment' ? '→ Focus: Evaluating digital maturity across axes' : ''}
-${coThinkerPhase === 'initiatives' ? '→ Focus: Generating and prioritizing transformation initiatives' : ''}
-${coThinkerPhase === 'roadmap' ? '→ Focus: Building timeline, dependencies, resource allocation' : ''}
-${coThinkerPhase === 'execution' ? '→ Focus: Tracking progress, course correction, benefits realization' : ''}
-
-COMMUNICATION RULES:
-- Speak at executive level - concise, impactful, no fluff
-- Use McKinsey SCQA structure for complex answers: Situation → Complication → Question → Answer
-- Always provide: (1) Your perspective, (2) Supporting data, (3) Clear next action
-- Respond in the same language the user writes to you. If they write in English, respond in English. If in Polish, respond in Polish. Always match the user's language naturally.
+${coThinkerPhase === 'discovery' ? '→ Focus: understanding goals, constraints, and stakeholders.' : ''}
+${coThinkerPhase === 'assessment' ? '→ Focus: evaluating digital maturity and evidence.' : ''}
+${coThinkerPhase === 'initiatives' ? '→ Focus: shaping and prioritizing initiatives.' : ''}
+${coThinkerPhase === 'roadmap' ? '→ Focus: sequencing work, dependencies, and ownership.' : ''}
+${coThinkerPhase === 'execution' ? '→ Focus: tracking progress, blockers, and next actions.' : ''}
 
 CONTEXT:
 - User: ${currentUser?.firstName || 'User'} (${currentUser?.role || 'Stakeholder'})
 - Organization: ${currentUser?.organizationName || 'Unknown'}
 - Project: ${selectedProject?.name || 'General'}
 
-ACTION CAPABILITIES:
-You can execute actions on the user's behalf. When appropriate, respond with:
-ACTION: {"type": "navigate|create_initiative|create_task|update_assessment", "payload": {...}}
+OUTPUT EXPECTATION:
+- Give a natural assistant response first.
+- If there is a strong next action, make the response compatible with a proposal-first UI.
 `;
 
       // Append AI memory context if available
@@ -717,7 +780,7 @@ ACTION: {"type": "navigate|create_initiative|create_task|update_assessment", "pa
       }
 
       systemPrompt += `
-Focus on practical recommendations for transformation initiatives, roadmaps, and organizational change.
+Focus on practical movement inside the app: decisions, drafts, navigation, next steps, and safe handoffs.
 
 MEMORY INSTRUCTIONS:
 If the user explicitly asks you to remember something, include a line in your response:
@@ -898,12 +961,17 @@ For example: REMEMBER: preferred_language: Polish`;
         ...screenContext,
         pmo: pmoContext,
         global: globalContext,
+        workspaceContext,
+        screenContext,
+        pmoContext,
+        currentSurface: 'chat/full',
         isWelcomeScreen: activeMessages.length === 0,
         conversationId,
         conversationLanguage: chatLanguage,
         attachmentDocIds,
         attachments: uploadedAttachments,
         virtualWorkerSlug: 'teresa',
+        proposalMode: 'proposal_first',
       };
 
       const systemPrompt = buildSystemPrompt();
@@ -1030,6 +1098,7 @@ For example: REMEMBER: preferred_language: Polish`;
       aiConfig,
       dtConfirmBusy,
       buildSystemPrompt,
+      workspaceContext,
       t,
     ]
   );
@@ -1343,10 +1412,16 @@ For example: REMEMBER: preferred_language: Polish`;
         ...screenContext,
         pmo: pmoContext,
         global: globalContext,
+        workspaceContext,
+        screenContext,
+        pmoContext,
+        currentSurface: 'chat/full',
         isWelcomeScreen: false,
         conversationId: activeConversationId,
         conversationLanguage: chatLanguage,
         attachmentDocIds,
+        virtualWorkerSlug: 'teresa',
+        proposalMode: 'proposal_first',
       };
       const systemPrompt = buildSystemPrompt();
 
@@ -1459,6 +1534,7 @@ For example: REMEMBER: preferred_language: Polish`;
     isStreaming,
     pmoContext,
     screenContext,
+    workspaceContext,
     startStream,
     truncateFromMessage,
   ]);
@@ -1701,6 +1777,15 @@ For example: REMEMBER: preferred_language: Polish`;
                             console.log('[Chat] Action completed:', action.id);
                             handleAIAction(action);
                           }}
+                        />
+                      )}
+
+                      {isAiMessage && (msg.metadata as any)?.proposal && !isStreamingThis && (
+                        <TeresaProposalCard
+                          proposal={(msg.metadata as any).proposal as TeresaChatProposal}
+                          onNavigate={handleTeresaProposalNavigate}
+                          onProposalUpdated={handleTeresaProposalUpdated}
+                          onLifecycleMessage={handleTeresaLifecycleMessage}
                         />
                       )}
 

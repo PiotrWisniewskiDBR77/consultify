@@ -1,4 +1,14 @@
-import { Copy, ExternalLink, Link2, Pencil, Sparkles, Target, Trash2 } from 'lucide-react';
+import {
+  Bell,
+  BellOff,
+  Copy,
+  ExternalLink,
+  Link2,
+  Pencil,
+  Sparkles,
+  Target,
+  Trash2,
+} from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +35,7 @@ import {
   type TableRow,
 } from '../shared/ModuleHub/FilterableTable';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import type { KPIStatus, KPITrend, KpiDrawerSection, ResultsKPI } from './kpiDomain';
+import type { KpiDrawerSection, KPIStatus, KPITrend, ResultsKPI } from './kpiDomain';
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
@@ -43,7 +53,8 @@ const formatObservationPhase = (
   phase?: ResultsKPI['observationPhase'],
   t?: (key: string, defaultValue: string) => string
 ) => {
-  if (phase === 'realization') return t?.('results.phase.realization', 'Realization') || 'Realization';
+  if (phase === 'realization')
+    return t?.('results.phase.realization', 'Realization') || 'Realization';
   if (phase === 'both') return t?.('results.phase.both', 'Both phases') || 'Both phases';
   return t?.('results.phase.postImplementation', 'Post-implementation') || 'Post-implementation';
 };
@@ -110,6 +121,8 @@ export interface ResultsKpisTableV3Props {
   onFilterChange: (filters: FilterChip[]) => void;
   onOpenKpi: (kpiId: string, section?: KpiDrawerSection) => void;
   onDeleteKpi?: (kpiId: string) => void | Promise<void>;
+  watchedKpiIds?: Set<string>;
+  onToggleWatch?: (kpiId: string) => void;
 }
 
 type PreviewKpi = ResultsKPI & { title: string };
@@ -120,6 +133,8 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
   onFilterChange,
   onOpenKpi,
   onDeleteKpi,
+  watchedKpiIds,
+  onToggleWatch,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -158,6 +173,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
           : '—'),
       current: k.latestValue,
       target: k.targetValue,
+      ownerName: k.ownerName || '—',
       status: k.status,
       trend: k.trend,
       needsEntry: k.needsEntry ? 'yes' : 'no',
@@ -233,7 +249,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
       {
         id: 'current',
         label: t('results.columns.current', 'Current'),
-        width: '12%',
+        width: '11%',
         render: (row: TableRow) => {
           const k = row._raw as ResultsKPI;
           return <ValueCell value={k.latestValue} unit={k.unit} status={k.status} />;
@@ -249,9 +265,23 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         },
       },
       {
+        id: 'ownerName',
+        label: t('results.columns.owner', 'Owner'),
+        width: '14%',
+        filterable: true,
+        filterOptions: Array.from(
+          new Set(list.map((k) => String(k.ownerName || '').trim()).filter(Boolean))
+        ).map((owner) => ({ value: owner, label: owner })),
+        render: (row: TableRow) => (
+          <span className="text-sm text-slate-500 dark:text-slate-400 truncate block max-w-[220px]">
+            {String(row.ownerName || '—')}
+          </span>
+        ),
+      },
+      {
         id: 'status',
         label: t('results.columns.status', 'Status'),
-        width: '12%',
+        width: '11%',
         filterable: true,
         filterOptions: statusFilterOptions,
         render: (row: TableRow) => {
@@ -268,7 +298,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
       {
         id: 'trend',
         label: t('results.columns.trend', 'Trend'),
-        width: '10%',
+        width: '9%',
         filterable: true,
         filterOptions: [
           { value: 'up', label: t('results.trend.up', 'Up') },
@@ -287,7 +317,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
       {
         id: 'needsEntry',
         label: t('results.columns.needsEntry', 'Needs entry'),
-        width: '12%',
+        width: '11%',
         filterable: true,
         filterOptions: [
           { value: 'yes', label: t('common.yes', 'Yes') },
@@ -308,7 +338,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
       {
         id: 'measurementFrequency',
         label: t('results.columns.frequency', 'Frequency'),
-        width: '12%',
+        width: '10%',
         filterable: true,
         filterOptions: freqFilterOptions,
         render: (row: TableRow) => (
@@ -322,7 +352,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
       {
         id: 'updatedAt',
         label: t('common.updated', 'Updated'),
-        width: '12%',
+        width: '10%',
       },
     ],
     [t, list, statusFilterOptions, freqFilterOptions]
@@ -411,6 +441,15 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                   label: t('results.needsEntry.badge', 'Needs entry'),
                   dot: 'bg-amber-500',
                   className: 'bg-amber-500/10 text-amber-400 dark:text-amber-300',
+                } as MetaPill,
+              ]
+            : []),
+          ...(watchedKpiIds?.has(kpi.id)
+            ? [
+                {
+                  label: t('results.filters.watched', 'Watched KPI'),
+                  dot: 'bg-fuchsia-500',
+                  className: 'bg-fuchsia-500/10 text-fuchsia-400 dark:text-fuchsia-300',
                 } as MetaPill,
               ]
             : []),
@@ -582,6 +621,14 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                 tone: 'text-slate-600 dark:text-slate-300',
               },
               {
+                label: watchedKpiIds?.has(kpi.id)
+                  ? t('results.watch.following', 'Following')
+                  : t('results.watch.notFollowing', 'Not followed'),
+                tone: watchedKpiIds?.has(kpi.id)
+                  ? 'text-fuchsia-500 dark:text-fuchsia-300'
+                  : 'text-slate-600 dark:text-slate-300',
+              },
+              {
                 label: `${t('results.kpi.realizationTarget', 'Realization target')}: ${
                   kpi.realizationExpectation?.targetValue ?? '—'
                 }${kpi.unit ? ` ${kpi.unit}` : ''}`,
@@ -621,6 +668,18 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                 colorScheme: 'neutral',
                 shortcut: 'V',
               },
+              ...(onToggleWatch
+                ? [
+                    {
+                      label: watchedKpiIds?.has(kpi.id)
+                        ? t('results.watch.unfollow', 'Unfollow KPI')
+                        : t('results.watch.follow', 'Follow KPI'),
+                      icon: watchedKpiIds?.has(kpi.id) ? BellOff : Bell,
+                      onClick: () => onToggleWatch(kpi.id),
+                      colorScheme: 'neutral' as const,
+                    },
+                  ]
+                : []),
             ],
           },
         ];
@@ -670,6 +729,18 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
             icon: Target,
             onClick: () => onOpenKpi(row.id, 'record'),
           },
+          ...(onToggleWatch
+            ? ([
+                {
+                  id: 'watch',
+                  label: watchedKpiIds?.has(row.id)
+                    ? t('results.watch.unfollow', 'Unfollow KPI')
+                    : t('results.watch.follow', 'Follow KPI'),
+                  icon: watchedKpiIds?.has(row.id) ? BellOff : Bell,
+                  onClick: () => onToggleWatch(row.id),
+                },
+              ] as RowAction[])
+            : []),
           {
             id: 'edit',
             label: t('results.drawer.definitionTitle', 'Definition'),

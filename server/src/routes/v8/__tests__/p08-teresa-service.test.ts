@@ -10,8 +10,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProposalRecord, HandoffResult } from '../../../services/v8/teresaCopilotService.js';
-import type { TeresaHandoffContext, HandoffTargetModule } from '../../../services/v8/teresaCopilotCanon.js';
+import type {
+  HandoffTargetModule,
+  TeresaHandoffContext,
+} from '../../../services/v8/teresaCopilotCanon.js';
+import type { HandoffResult, ProposalRecord } from '../../../services/v8/teresaCopilotService.js';
 
 // Mock DB layer
 const mockDbRun = vi.fn().mockResolvedValue({ changes: 1 });
@@ -40,6 +43,8 @@ const {
   getDegradedScenario,
   getAllDegradedScenarios,
   getContractMetadata,
+  createChatProposal,
+  toChatProposalEnvelope,
   TeresaCopilotError,
 } = await import('../../../services/v8/teresaCopilotService.js');
 
@@ -113,7 +118,11 @@ function buildInitiativesPayload() {
 
 function buildCalendarPayload() {
   return {
-    calendar_intent: { what: 'Q3 planning meeting', when: '2026-07-01T10:00:00Z', timezone: 'Europe/Warsaw' },
+    calendar_intent: {
+      what: 'Q3 planning meeting',
+      when: '2026-07-01T10:00:00Z',
+      timezone: 'Europe/Warsaw',
+    },
     permission_gradient_expectation: 'write' as const,
     conflict_safe_write_posture: 'if_match_etag' as const,
     recovery_steps: ['Check for conflicts', 'Retry with updated etag'],
@@ -169,7 +178,13 @@ beforeEach(() => {
 
 describe('P08-B §1 — Proposal creation', () => {
   it('creates a proposal with valid handoff context and target payload', async () => {
-    const context = buildHandoffContext({ proposed_next_action: { target_module: 'radar', handoff_intent: 'open', requires_approval: true } });
+    const context = buildHandoffContext({
+      proposed_next_action: {
+        target_module: 'radar',
+        handoff_intent: 'open',
+        requires_approval: true,
+      },
+    });
     const proposal = await createProposal({
       organizationId: ORG,
       userId: USER,
@@ -197,7 +212,7 @@ describe('P08-B §1 — Proposal creation', () => {
         handoffContext: badContext,
         targetModule: 'radar',
         targetPayload: buildRadarPayload(),
-      }),
+      })
     ).rejects.toThrow('Missing handoff context fields');
   });
 
@@ -210,12 +225,18 @@ describe('P08-B §1 — Proposal creation', () => {
         handoffContext: buildHandoffContext(),
         targetModule: 'invalid_module' as HandoffTargetModule,
         targetPayload: {},
-      }),
+      })
     ).rejects.toThrow('Invalid target module');
   });
 
   it('rejects proposal with missing target payload fields', async () => {
-    const context = buildHandoffContext({ proposed_next_action: { target_module: 'radar', handoff_intent: 'open', requires_approval: true } });
+    const context = buildHandoffContext({
+      proposed_next_action: {
+        target_module: 'radar',
+        handoff_intent: 'open',
+        requires_approval: true,
+      },
+    });
     await expect(
       createProposal({
         organizationId: ORG,
@@ -224,7 +245,7 @@ describe('P08-B §1 — Proposal creation', () => {
         handoffContext: context,
         targetModule: 'radar',
         targetPayload: { why_now: 'test' },
-      }),
+      })
     ).rejects.toThrow('Missing target payload fields');
   });
 
@@ -245,9 +266,45 @@ describe('P08-B §1 — Proposal creation', () => {
     expect(proposal.state).toBe('proposal');
     // DB should have been called to reject the old proposal
     const updateCalls = mockDbRun.mock.calls.filter(
-      (c) => typeof c[0] === 'string' && c[0].includes('UPDATE teresa_proposals SET state'),
+      (c) => typeof c[0] === 'string' && c[0].includes('UPDATE teresa_proposals SET state')
     );
     expect(updateCalls.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('P08-B §1A — Chat proposal synthesis', () => {
+  it('creates a Teresa chat proposal envelope for initiative intents', async () => {
+    const proposal = await createChatProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      userMessage: 'Przygotuj inicjatywę dla planu Q3',
+      assistantMessage: 'Mogę przygotować draft inicjatywy i przekazać go do modułu Initiatives.',
+      context: {
+        workspaceContext: { projectId: 'proj-1', type: 'project' },
+        screenContext: { currentScreen: 'initiatives' },
+      },
+      citations: [{ id: 'cit-1' }],
+    });
+
+    expect(proposal).not.toBeNull();
+    expect(proposal!.targetModule).toBe('initiatives');
+    expect(proposal!.allowedActions).toContain('approve');
+    expect(proposal!.previewLines.length).toBeGreaterThan(0);
+  });
+
+  it('returns null when the chat turn does not imply a safe Teresa handoff', async () => {
+    const proposal = await createChatProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      userMessage: 'Czym różni się roadmapa od backlogu?',
+      assistantMessage: 'Roadmapa pokazuje kierunek, a backlog listę prac.',
+      context: {},
+      citations: [],
+    });
+
+    expect(proposal).toBeNull();
   });
 });
 
@@ -274,9 +331,7 @@ describe('P08-B §2 — Proposal lifecycle', () => {
 
   it('rejects a proposal from proposal state', async () => {
     const row = mockProposalRow({ id: 'prop-reject-1', state: 'proposal' });
-    mockDbGet
-      .mockResolvedValueOnce(row)
-      .mockResolvedValueOnce({ ...row, state: 'rejected' });
+    mockDbGet.mockResolvedValueOnce(row).mockResolvedValueOnce({ ...row, state: 'rejected' });
     mockDbAll.mockResolvedValue([]);
 
     const result = await rejectProposal({
@@ -314,7 +369,7 @@ describe('P08-B §2 — Proposal lifecycle', () => {
         proposalId: 'prop-exec-bad',
         organizationId: ORG,
         userId: USER,
-      }),
+      })
     ).rejects.toThrow('Must be approved first');
   });
 
@@ -325,7 +380,7 @@ describe('P08-B §2 — Proposal lifecycle', () => {
         proposalId: 'nonexistent',
         organizationId: ORG,
         userId: USER,
-      }),
+      })
     ).rejects.toThrow('Proposal not found');
   });
 });
@@ -341,8 +396,16 @@ describe('P08-B §3 — Cross-surface handoff (4 P0 targets)', () => {
     expectedHandoffKey: string;
   }> = [
     { module: 'radar', payloadBuilder: buildRadarPayload, expectedHandoffKey: 'signal_id' },
-    { module: 'initiatives', payloadBuilder: buildInitiativesPayload, expectedHandoffKey: 'initiative_ref' },
-    { module: 'calendar', payloadBuilder: buildCalendarPayload, expectedHandoffKey: 'calendar_ref' },
+    {
+      module: 'initiatives',
+      payloadBuilder: buildInitiativesPayload,
+      expectedHandoffKey: 'initiative_ref',
+    },
+    {
+      module: 'calendar',
+      payloadBuilder: buildCalendarPayload,
+      expectedHandoffKey: 'calendar_ref',
+    },
     { module: 'notebook', payloadBuilder: buildNotebookPayload, expectedHandoffKey: 'note_ref' },
   ];
 
@@ -350,7 +413,11 @@ describe('P08-B §3 — Cross-surface handoff (4 P0 targets)', () => {
     it(`full lifecycle: create → approve → execute for ${module}`, async () => {
       // Step 1: Create proposal
       const context = buildHandoffContext({
-        proposed_next_action: { target_module: module, handoff_intent: 'create', requires_approval: true },
+        proposed_next_action: {
+          target_module: module,
+          handoff_intent: 'create',
+          requires_approval: true,
+        },
       });
       const proposal = await createProposal({
         organizationId: ORG,
@@ -459,28 +526,44 @@ describe('P08-B §4 — Audit trail', () => {
 
 describe('P08-B §5 — Voice posture', () => {
   it('returns available when all conditions met', () => {
-    const posture = resolveVoicePosture({ micPermission: true, networkStable: true, runtimeReady: true });
+    const posture = resolveVoicePosture({
+      micPermission: true,
+      networkStable: true,
+      runtimeReady: true,
+    });
     expect(posture.availability).toBe('available');
     expect(posture.fallback_active).toBe(false);
     expect(posture.recovery_phrase).toBeNull();
   });
 
   it('returns unavailable with fallback when mic denied', () => {
-    const posture = resolveVoicePosture({ micPermission: false, networkStable: true, runtimeReady: true });
+    const posture = resolveVoicePosture({
+      micPermission: false,
+      networkStable: true,
+      runtimeReady: true,
+    });
     expect(posture.availability).toBe('unavailable');
     expect(posture.fallback_active).toBe(true);
     expect(posture.recovery_phrase).toContain('tekst');
   });
 
   it('returns degraded with recovery phrase when network unstable', () => {
-    const posture = resolveVoicePosture({ micPermission: true, networkStable: false, runtimeReady: true });
+    const posture = resolveVoicePosture({
+      micPermission: true,
+      networkStable: false,
+      runtimeReady: true,
+    });
     expect(posture.availability).toBe('degraded');
     expect(posture.fallback_active).toBe(true);
     expect(posture.recovery_phrase).toBeTruthy();
   });
 
   it('returns degraded when runtime not ready', () => {
-    const posture = resolveVoicePosture({ micPermission: true, networkStable: true, runtimeReady: false });
+    const posture = resolveVoicePosture({
+      micPermission: true,
+      networkStable: true,
+      runtimeReady: false,
+    });
     expect(posture.availability).toBe('degraded');
     expect(posture.fallback_active).toBe(true);
   });
@@ -609,6 +692,26 @@ describe('P08-B §9 — Contract metadata', () => {
     expect(meta.handoff_targets).toEqual(P08_HANDOFF_TARGET_MODULES);
     expect(meta.envelope_states).toHaveLength(P08_ACTION_ENVELOPE_STATES.length);
     expect(meta.degraded_scenarios_count).toBe(P08_DEGRADED_SCENARIOS.length);
+  });
+
+  it('maps proposal records to chat envelopes', () => {
+    const envelope = toChatProposalEnvelope({
+      id: 'prop-envelope-1',
+      organization_id: ORG,
+      user_id: USER,
+      session_id: SESSION,
+      state: 'approved',
+      handoff_context: buildHandoffContext(),
+      target_module: 'initiatives',
+      target_payload: buildInitiativesPayload(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      audit_trail: [],
+    });
+
+    expect(envelope.approvalState).toBe('approved');
+    expect(envelope.allowedActions).toContain('execute');
+    expect(envelope.targetLabel).toBe('Initiatives');
   });
 });
 
@@ -754,7 +857,7 @@ describe('P08-B §13 — Idempotency posture', () => {
     expect(proposal.id).toBe('idem-key-1');
     // Should NOT have called INSERT (no new proposal created)
     const insertCalls = mockDbRun.mock.calls.filter(
-      (c) => typeof c[0] === 'string' && c[0].includes('INSERT INTO teresa_proposals'),
+      (c) => typeof c[0] === 'string' && c[0].includes('INSERT INTO teresa_proposals')
     );
     expect(insertCalls).toHaveLength(0);
   });

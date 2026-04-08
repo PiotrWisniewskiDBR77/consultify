@@ -195,7 +195,7 @@ describe('ResultsHub V8 runtime strip', () => {
     } as any);
   });
 
-  it('shows governed runtime pills in summary and keeps them after switching tabs', async () => {
+  it('shows governed runtime pills in summary and does not duplicate them in the KPI command row', async () => {
     render(
       <MemoryRouter>
         <ResultsHub />
@@ -219,8 +219,9 @@ describe('ResultsHub V8 runtime strip', () => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
     });
 
-    expect(screen.getByText('Governed KPIs')).toBeInTheDocument();
-    expect(screen.getByText('480,000')).toBeInTheDocument();
+    expect(screen.queryByText('Governed KPIs')).not.toBeInTheDocument();
+    expect(screen.queryByText('480,000')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'ROI' })[0]);
 
@@ -245,7 +246,7 @@ describe('ResultsHub V8 runtime strip', () => {
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
-    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
+    fireEvent.click(screen.getByRole('button', { name: 'KPI List' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
@@ -256,7 +257,7 @@ describe('ResultsHub V8 runtime strip', () => {
     expect(Api.get).not.toHaveBeenCalledWith('/benefits/kpi-mappings');
   });
 
-  it('opens KPI as overview-first cockpit and switches to queue/catalog surfaces', async () => {
+  it('opens KPI on catalog first and switches to data-signals and overview surfaces', async () => {
     render(
       <MemoryRouter>
         <ResultsHub />
@@ -272,17 +273,17 @@ describe('ResultsHub V8 runtime strip', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
-      expect(screen.getByText('kpi-overview-view')).toBeInTheDocument();
+      expect(screen.getByText('results-kpis-table')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Queue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Data / Signals' }));
     expect(screen.getByText('kpi-queue-view')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
-    expect(screen.getByText('results-kpis-table')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
+    expect(screen.getByText('kpi-overview-view')).toBeInTheDocument();
   });
 
-  it('switches KPI workspace to scorecards surface', async () => {
+  it('keeps KPI command row focused on catalog-first, data-signals, overview and record flow', async () => {
     render(
       <MemoryRouter>
         <ResultsHub />
@@ -297,14 +298,21 @@ describe('ResultsHub V8 runtime strip', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('kpi-overview-view')).toBeInTheDocument();
+      expect(screen.getByText('results-kpis-table')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Scorecards' }));
-    expect(screen.getByText('results-kpi-scorecards-view')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'KPI List' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Data / Signals' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Record value' })).toBeInTheDocument();
+
+    expect(screen.queryByRole('button', { name: 'Scorecards' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'My KPI' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Watched only' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Missing entries' })).not.toBeInTheDocument();
   });
 
-  it('switches reporting workspace between reports, schedules, wallboards and connectors', async () => {
+  it('opens reports on tracked KPI list and switches reporting workspace surfaces', async () => {
     render(
       <MemoryRouter>
         <ResultsHub />
@@ -320,6 +328,13 @@ describe('ResultsHub V8 runtime strip', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('results_reports');
+      expect(screen.getByRole('button', { name: 'Tracked KPI' })).toBeInTheDocument();
+      expect(screen.getByText('results-kpis-table')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Reports' })[1]);
+
+    await waitFor(() => {
       expect(screen.getByText('results-kpi-reports-view')).toBeInTheDocument();
     });
 
@@ -365,7 +380,7 @@ describe('ResultsHub V8 runtime strip', () => {
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
-    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
+    fireEvent.click(screen.getByRole('button', { name: 'KPI List' }));
 
     await waitFor(() => {
       expect(screen.getByText('delete-first-kpi')).toBeInTheDocument();
@@ -414,7 +429,7 @@ describe('ResultsHub V8 runtime strip', () => {
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'KPI' })[0]);
-    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
+    fireEvent.click(screen.getByRole('button', { name: 'KPI List' }));
 
     await waitFor(() => {
       expect(screen.getByText('delete-first-kpi')).toBeInTheDocument();
@@ -466,7 +481,7 @@ describe('ResultsHub V8 runtime strip', () => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('results_kpi');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Catalog' }));
+    fireEvent.click(screen.getByRole('button', { name: 'KPI List' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'add-action' }));
     fireEvent.click(screen.getByRole('button', { name: 'create-kpi-success' }));

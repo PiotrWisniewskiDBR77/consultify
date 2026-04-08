@@ -302,6 +302,31 @@ export interface ChatResponseAction {
   };
 }
 
+export type TeresaProposalState =
+  | 'proposal'
+  | 'pending_approval'
+  | 'approved'
+  | 'executing'
+  | 'completed'
+  | 'rejected';
+
+export interface TeresaChatProposal {
+  proposalId: string;
+  contractId: string;
+  title: string;
+  summary: string;
+  state: TeresaProposalState;
+  approvalState: 'awaiting_review' | 'approved' | 'completed' | 'rejected';
+  allowedActions: Array<'approve' | 'reject' | 'execute' | 'navigate'>;
+  targetModule: string;
+  targetLabel: string;
+  handoffIntent: string;
+  previewLines: string[];
+  auditCount: number;
+  resultRef: string | null;
+  degraded: string | null;
+}
+
 /**
  * Focus Mode for AI context filtering
  */

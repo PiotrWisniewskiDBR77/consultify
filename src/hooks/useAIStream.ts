@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { parseArtifactsFromResponse, useArtifactsStore } from '@/store/useArtifactsStore';
-import type { Artifact, ThinkingStep } from '@/types';
+import type { Artifact, TeresaChatProposal, ThinkingStep } from '@/types';
 
 function mergeCitations(prev: any[], next: any[]): any[] {
   const out: any[] = [];
@@ -240,6 +240,7 @@ type StreamOptions = {
       policyDecision?: any;
       policyNotices?: any[];
       sourceLedger?: any;
+      proposal?: TeresaChatProposal | null;
     }
   ) => void;
   onStreamError?: (error: Error) => void;
@@ -282,6 +283,7 @@ export type UseAIStreamReturn = {
   policyDecision: any | null;
   policyNotices: any[];
   sourceLedger: any | null;
+  teresaProposal: TeresaChatProposal | null;
   deepThinkingState: any | null;
   researchProgress: any | null;
   researchVisibility: any | null;
@@ -393,6 +395,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [policyDecision, setPolicyDecision] = useState<any | null>(null);
   const [policyNotices, setPolicyNotices] = useState<any[]>([]);
   const [sourceLedger, setSourceLedger] = useState<any | null>(null);
+  const [teresaProposal, setTeresaProposal] = useState<TeresaChatProposal | null>(null);
   const [retryInfo, setRetryInfo] = useState<{
     attempt: number;
     maxRetries: number;
@@ -424,6 +427,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [progress, setProgress] = useState(0);
   const abortRef = useRef({ aborted: false });
   const abortControllerRef = useRef<AbortController | null>(null);
+  const teresaProposalRef = useRef<TeresaChatProposal | null>(null);
   const lastRequestRef = useRef<{
     message: string;
     history: any[];
@@ -447,6 +451,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     setPolicyDecision(null);
     setPolicyNotices([]);
     setSourceLedger(null);
+    setTeresaProposal(null);
+    teresaProposalRef.current = null;
     setResearchProgress(null);
     setResearchVisibility(null);
     setAgentAuditState(null);
@@ -588,21 +594,16 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         // Long-wait escalation labels (3-second rule: always update something)
         if (elapsed > 30000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
-          if (
-            escalationStep &&
-            !escalationStep.label.includes('almost')
-          ) {
+          if (escalationStep && !escalationStep.label.includes('almost')) {
             escalationStep.label = 'Almost done — polishing the final details of the response…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
         } else if (elapsed > 10000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
-          if (
-            escalationStep &&
-            !escalationStep.label.includes('moment')
-          ) {
-            escalationStep.label = 'This is taking a moment — analyzing more complex aspects of your question…';
+          if (escalationStep && !escalationStep.label.includes('moment')) {
+            escalationStep.label =
+              'This is taking a moment — analyzing more complex aspects of your question…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
@@ -719,6 +720,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           policyDecision,
           policyNotices,
           sourceLedger,
+          proposal: teresaProposalRef.current,
         });
       };
 
@@ -738,6 +740,13 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         }
         if (evt.type === 'source_ledger') {
           setSourceLedger(evt);
+          return;
+        }
+
+        if (evt.type === 'teresa_proposal') {
+          const proposal = (evt as { proposal?: TeresaChatProposal | null }).proposal || null;
+          setTeresaProposal(proposal);
+          teresaProposalRef.current = proposal;
           return;
         }
 
@@ -1255,6 +1264,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     policyDecision,
     policyNotices,
     sourceLedger,
+    teresaProposal,
     deepThinkingState,
     researchProgress,
     researchVisibility,

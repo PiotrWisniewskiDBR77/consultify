@@ -249,5 +249,9 @@ knowledge/**/*.xlsx
 knowledge/**/*.pptx
 knowledge/**/*.docx
 
+# Local blog research artifacts
+/Blogs.zip
+/Blogs/_WORK/source_materials/
+
 # Duplicate lib artifacts
 /lib/
