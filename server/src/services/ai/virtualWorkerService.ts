@@ -629,7 +629,7 @@ export async function deleteWorker(id: string): Promise<boolean> {
 
 export async function getActiveProfile(workerId: string): Promise<VirtualWorkerProfile | null> {
   const result = await db().query<Row>(
-    'SELECT * FROM virtual_worker_profiles WHERE worker_id = $1 AND is_active = TRUE ORDER BY version DESC LIMIT 1',
+    'SELECT * FROM virtual_worker_profiles WHERE worker_id = $1 AND is_active = 1 ORDER BY version DESC LIMIT 1',
     [workerId]
   );
   return result.rows[0] ? rowToProfile(result.rows[0]) : null;
@@ -666,7 +666,7 @@ export async function createProfile(data: {
   const shouldActivate = data.activate !== false;
 
   if (shouldActivate) {
-    await db().query('UPDATE virtual_worker_profiles SET is_active = FALSE WHERE worker_id = $1', [
+    await db().query('UPDATE virtual_worker_profiles SET is_active = 0 WHERE worker_id = $1', [
       data.worker_id,
     ]);
   }
@@ -707,11 +707,11 @@ export async function activateProfile(profileId: string): Promise<void> {
   ]);
   const workerId = result.rows[0]?.worker_id;
   if (!workerId) return;
-  await db().query('UPDATE virtual_worker_profiles SET is_active = FALSE WHERE worker_id = $1', [
+  await db().query('UPDATE virtual_worker_profiles SET is_active = 0 WHERE worker_id = $1', [
     workerId,
   ]);
   await db().query(
-    'UPDATE virtual_worker_profiles SET is_active = TRUE, activated_at = NOW() WHERE id = $1',
+    'UPDATE virtual_worker_profiles SET is_active = 1, activated_at = NOW() WHERE id = $1',
     [profileId]
   );
 }

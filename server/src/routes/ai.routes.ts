@@ -983,7 +983,7 @@ router.post(
     const hasDbProvider = !!(await dbGet(
       `SELECT 1 AS ok
        FROM llm_providers
-       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
        LIMIT 1`
     ));
 
@@ -1549,7 +1549,7 @@ router.post(
       const hasDbProvider = !!(await dbGet(
         `SELECT 1 AS ok
          FROM llm_providers
-         WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+         WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
          LIMIT 1`
       ));
 
@@ -4048,7 +4048,7 @@ router.post(
     const hasDbProvider = !!(await dbGet(
       `SELECT 1 AS ok
        FROM llm_providers
-       WHERE is_active = 1 AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
        LIMIT 1`
     ));
 
