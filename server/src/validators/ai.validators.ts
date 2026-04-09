@@ -37,7 +37,7 @@ export const ChatConfirmRequestSchema = z.object({
   roleName: z.string().optional(),
   // Keep parity with stream schema for ToolsMenu & routing
   projectId: z.string().uuid().optional(),
-  screenContext: z.record(z.string(), z.unknown()).optional(),
+  screenContext: z.record(z.string(), z.unknown()).nullable().optional(),
   focusMode: z.string().optional(),
   selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
   selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
@@ -53,6 +53,7 @@ export const ChatConfirmRequestSchema = z.object({
       coThinkerMode: z.union([z.string().min(1), z.null()]).optional(),
       privateMode: z.boolean().optional(),
     })
+    .nullable()
     .optional(),
   knowledgeSources: z
     .object({
@@ -110,7 +111,7 @@ export const ChatStreamRequestSchema = z.object({
   // replaces req.body with parsed data, stripping unknown keys by default.
   // They are required for end-to-end chat feature toggles (ToolsMenu), routing, and context.
   projectId: z.string().uuid().optional(),
-  screenContext: z.record(z.string(), z.unknown()).optional(),
+  screenContext: z.record(z.string(), z.unknown()).nullable().optional(),
   focusMode: z.string().optional(),
   selectedTier: z.enum(['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING']).optional(),
   selectedModelId: z.union([z.string().min(1), z.null()]).optional(),
