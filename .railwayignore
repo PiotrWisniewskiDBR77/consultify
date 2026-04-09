@@ -12,6 +12,9 @@
 /.codex-worktrees/
 /_analysis/
 
+# Blog content (heavy assets, not needed for API)
+/Blogs/
+
 # Large knowledge/doc corpora (keep uploads small)
 # NOTE: We DO deploy the markdown knowledge packs needed for AI re-indexing:
 # - knowledge/tool-kb/**
