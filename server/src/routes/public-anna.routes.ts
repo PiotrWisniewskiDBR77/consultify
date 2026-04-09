@@ -737,11 +737,6 @@ async function callAnnaModel(
   systemInstruction: string,
   contents: GeminiContent[]
 ): Promise<string> {
-  const geminiKey = llmConfigService.getApiKeyFromEnv('google');
-  if (geminiKey) {
-    return callGemini(systemInstruction, contents);
-  }
-
   const messages: ChatMessage[] = [
     { role: 'system', content: systemInstruction },
     ...contents.map((item) => ({
@@ -750,18 +745,35 @@ async function callAnnaModel(
     })),
   ];
 
+  const geminiKey = llmConfigService.getApiKeyFromEnv('google');
+  if (geminiKey) {
+    try {
+      return await callGemini(systemInstruction, contents);
+    } catch (err: any) {
+      logger.warn('[PublicAnna] Gemini failed, falling back to next provider', {
+        error: err?.message?.substring(0, 200),
+      });
+    }
+  }
+
   const openRouterKey = process.env.OPENROUTER_API_KEY;
   if (openRouterKey) {
-    return callOpenAICompatible(
-      'https://openrouter.ai/api/v1/chat/completions',
-      openRouterKey,
-      process.env.OPENROUTER_DEFAULT_MODEL || 'openai/gpt-4o-mini',
-      messages,
-      {
-        'HTTP-Referer': 'https://consultify.ai',
-        'X-Title': 'Consultify Anna',
-      }
-    );
+    try {
+      return await callOpenAICompatible(
+        'https://openrouter.ai/api/v1/chat/completions',
+        openRouterKey,
+        process.env.OPENROUTER_DEFAULT_MODEL || 'openai/gpt-4o-mini',
+        messages,
+        {
+          'HTTP-Referer': 'https://consultify.ai',
+          'X-Title': 'Consultify Anna',
+        }
+      );
+    } catch (err: any) {
+      logger.warn('[PublicAnna] OpenRouter failed, falling back to next provider', {
+        error: err?.message?.substring(0, 200),
+      });
+    }
   }
 
   const openAIKey = process.env.OPENAI_API_KEY;
