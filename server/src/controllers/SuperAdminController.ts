@@ -18,11 +18,62 @@ import {
 // Domain controllers extracted from this monolith. Namespace imports provide
 // local bindings that the default export object can reference via spread.
 import * as securityCtrl from './superadmin/securityController.js';
+import {
+  getSecurityIncidents, getSecurityIncidentStats, getSecurityIncidentById,
+  createSecurityIncident, updateSecurityIncident, resolveSecurityIncident,
+  deleteSecurityIncident, getSecurityEventStats, getIPAccessRules,
+  updateIPRule, getSecurityPolicies, updateSecurityPolicy,
+} from './superadmin/securityController.js';
 import * as threatDlpCtrl from './superadmin/threatDlpController.js';
+import {
+  getThreats, getThreatStats, getThreatById, addThreat, updateThreat,
+  blockThreat, unblockThreat, deleteThreat, checkIPReputation,
+  checkDomainReputation, getBlockedIPs, getBlockedDomains, bulkImportThreats,
+  getDLPPolicies, getDLPPolicyById, createDLPPolicy, updateDLPPolicy,
+  toggleDLPPolicy, deleteDLPPolicy, getDLPViolations, getDLPViolationById,
+  resolveDLPViolation, getDLPStats, scanResourceDLP,
+} from './superadmin/threatDlpController.js';
 import * as integrationsCtrl from './superadmin/integrationsController.js';
 import * as dashboardCtrl from './superadmin/dashboardController.js';
+import {
+  getDashboards,
+  getDashboardBuilderStats,
+  getDashboardById,
+  createDashboard,
+  updateDashboard,
+  cloneDashboard,
+  toggleDashboardShare,
+  deleteDashboard,
+  addDashboardWidget,
+  updateDashboardWidget,
+  removeDashboardWidget,
+  reorderDashboardWidgets,
+  getDashboardWidgetData,
+} from './superadmin/dashboardController.js';
 import * as revenueCtrl from './superadmin/revenueController.js';
+import {
+  getPricingPlans, createPricingPlan, updatePricingPlan, deletePricingPlan,
+  getPlanFeatures, addPlanFeature, removePlanFeature, comparePricingPlans,
+  getSubscriptionChanges, createSubscriptionChange, approveSubscriptionChange,
+  rejectSubscriptionChange, calculateProration, getSubscriptionChangeStats,
+  getRevenueRecognitions, createRevenueRecognition, updateRevenueRecognition,
+  recognizeRevenue, getRecognitionSchedule, getRevenueRecognitionStats,
+  getRevenueForecasts, createRevenueForecast, updateRevenueForecast,
+  deleteRevenueForecast, generateRevenueForecast, getRevenueForecastStats,
+  getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod,
+  getPaymentFailures, retryPayment, getPaymentFailureStats,
+} from './superadmin/revenueController.js';
 import * as customerCtrl from './superadmin/customerController.js';
+import {
+  getLifecycleStages, createLifecycleStage, updateLifecycleStage,
+  deleteLifecycleStage, transitionOrganization, getLifecycleTransitions,
+  getLifecycleStats, getSuccessPlaybooks, createSuccessPlaybook,
+  updateSuccessPlaybook, deleteSuccessPlaybook, executeSuccessPlaybook,
+  getSuccessActions, getPlaybookStats, getCustomerContracts,
+  createCustomerContract, updateCustomerContract, deleteCustomerContract,
+  createContractAmendment, getContractAmendments, getUpcomingRenewals,
+  getContractStats,
+} from './superadmin/customerController.js';
 
 
 /**
