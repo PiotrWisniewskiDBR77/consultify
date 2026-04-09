@@ -1,0 +1,341 @@
+import type { Response } from 'express';
+import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { getById as getInsightById } from '../../services/InterviewInsightService.js';
+import type { InsightStatus } from '../../services/InterviewInsightService.js';
+import { canPublishFinding } from '../../services/v8/interviewInsightCanon.js';
+import {
+  validateLifecycleTransition,
+  listFindings,
+  getFinding,
+  addFinding,
+  updateFinding,
+  addEvidencePointer,
+  removeEvidencePointer,
+  buildHandoffPayload,
+  recordHandoff,
+  type InsightLifecycleAction,
+} from '../../services/v8/interviewInsightFindingsService.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
+
+const router = Router();
+
+export const V8_INTERVIEW_INSIGHTS_CONTRACT = 'interview_insights_p10_v1';
+
+function insightsMeta() {
+  return { version: 'v8' as const, contract: V8_INTERVIEW_INSIGHTS_CONTRACT };
+}
+
+const LIFECYCLE_ACTIONS: InsightLifecycleAction[] = [
+  'submit_for_review',
+  'approve',
+  'publish',
+  'reject',
+  'revert_to_draft',
+];
+
+router.post(
+  '/insights/:insightId/lifecycle',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+    const { action } = req.body as { action?: string };
+
+    if (!action || !LIFECYCLE_ACTIONS.includes(action as InsightLifecycleAction)) {
+      return res.status(400).json({
+        error: `Invalid action. Must be one of: ${LIFECYCLE_ACTIONS.join(', ')}`,
+        code: 'P10_INVALID_LIFECYCLE_ACTION',
+      });
+    }
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const typedAction = action as InsightLifecycleAction;
+
+    if (typedAction === 'publish' || typedAction === 'approve') {
+      const findings = listFindings(insightId);
+      if (findings.length > 0) {
+        for (const f of findings) {
+          const check = canPublishFinding({
+            confidenceLevel: f.confidence_level,
+            evidencePointers: f.evidence_pointers,
+            limits: f.limits,
+          });
+          if (!check.allowed) {
+            return res.status(422).json({
+              error: `Finding "${f.id}" blocks publish: ${check.reason}`,
+              code: 'P10_FINDING_NOT_PUBLISHABLE',
+              findingId: f.id,
+            });
+          }
+        }
+      }
+    }
+
+    const transition = validateLifecycleTransition(insight.status, typedAction);
+    if (!transition.allowed) {
+      return res.status(409).json({
+        error: transition.reason,
+        code: 'P10_INVALID_STATE_TRANSITION',
+        currentStatus: insight.status,
+      });
+    }
+
+    const now = new Date().toISOString();
+    const updates: Record<string, unknown> = {
+      status: transition.targetStatus,
+      updated_at: now,
+    };
+
+    if (transition.targetStatus === 'published') {
+      updates.published_at = now;
+    }
+    if (typedAction === 'approve' || typedAction === 'submit_for_review') {
+      updates.reviewed_by = userId;
+    }
+
+    const setClauses = Object.keys(updates)
+      .map((k) => `${k} = ?`)
+      .join(', ');
+    const values = [...Object.values(updates), insightId, organizationId];
+
+    await queryHelpers.run(
+      `UPDATE interview_insights SET ${setClauses} WHERE id = ? AND organization_id = ?`,
+      values
+    );
+
+    return res.json({
+      data: {
+        insightId,
+        previousStatus: insight.status,
+        newStatus: transition.targetStatus,
+        action: typedAction,
+        updatedAt: now,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.get(
+  '/insights/:insightId/findings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const findings = listFindings(insightId);
+
+    return res.json({
+      data: { findings, insightId },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.post(
+  '/insights/:insightId/findings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const { finding_statement, confidence_level, limits, next_action, evidence_pointers } =
+      req.body as {
+        finding_statement?: string;
+        confidence_level?: string;
+        limits?: string;
+        next_action?: string;
+        evidence_pointers?: Array<{
+          type: string;
+          sourceRef: string;
+          sourceFingerprint: string;
+          capturedExcerpt?: string | null;
+        }>;
+      };
+
+    if (!finding_statement || !confidence_level || !limits || !next_action) {
+      return res.status(400).json({
+        error: 'finding_statement, confidence_level, limits, and next_action are required',
+        code: 'P10_MISSING_FIELDS',
+      });
+    }
+
+    const result = addFinding(insightId, {
+      finding_statement,
+      confidence_level,
+      limits,
+      next_action,
+      evidence_pointers,
+    });
+
+    if (result.error) {
+      return res.status(400).json({ error: result.error, code: 'P10_FINDING_VALIDATION_ERROR' });
+    }
+
+    return res.status(201).json({
+      data: { finding: result.finding },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.patch(
+  '/insights/:insightId/findings/:findingId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId, findingId } = req.params as { insightId: string; findingId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const body = req.body as {
+      finding_statement?: string;
+      confidence_level?: string;
+      limits?: string;
+      next_action?: string;
+      add_evidence_pointers?: Array<{
+        type: string;
+        sourceRef: string;
+        sourceFingerprint: string;
+        capturedExcerpt?: string | null;
+      }>;
+      remove_evidence_pointers?: Array<{
+        pointerId: string;
+        removal_reason: string;
+      }>;
+    };
+
+    const finding = getFinding(insightId, findingId);
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found', code: 'P10_FINDING_NOT_FOUND' });
+    }
+
+    if (body.finding_statement !== undefined || body.confidence_level !== undefined || body.limits !== undefined || body.next_action !== undefined) {
+      const updateResult = updateFinding(insightId, findingId, {
+        finding_statement: body.finding_statement,
+        confidence_level: body.confidence_level,
+        limits: body.limits,
+        next_action: body.next_action,
+      });
+      if (updateResult.error) {
+        return res.status(400).json({ error: updateResult.error, code: 'P10_FINDING_VALIDATION_ERROR' });
+      }
+    }
+
+    const pointerErrors: string[] = [];
+
+    if (body.add_evidence_pointers) {
+      for (const ptr of body.add_evidence_pointers) {
+        const result = addEvidencePointer(insightId, findingId, ptr);
+        if (result.error) pointerErrors.push(result.error);
+      }
+    }
+
+    if (body.remove_evidence_pointers) {
+      for (const ptr of body.remove_evidence_pointers) {
+        const result = removeEvidencePointer(insightId, findingId, ptr);
+        if (result.error) pointerErrors.push(result.error);
+      }
+    }
+
+    const updated = getFinding(insightId, findingId);
+
+    return res.json({
+      data: {
+        finding: updated,
+        ...(pointerErrors.length > 0 ? { pointer_warnings: pointerErrors } : {}),
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.post(
+  '/insights/:insightId/findings/:findingId/handoff',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId, findingId } = req.params as { insightId: string; findingId: string };
+    const { target_initiative_id } = req.body as { target_initiative_id?: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const finding = getFinding(insightId, findingId);
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found', code: 'P10_FINDING_NOT_FOUND' });
+    }
+
+    const publishCheck = canPublishFinding({
+      confidenceLevel: finding.confidence_level,
+      evidencePointers: finding.evidence_pointers,
+      limits: finding.limits,
+    });
+    if (!publishCheck.allowed) {
+      return res.status(422).json({
+        error: `Cannot handoff: ${publishCheck.reason}`,
+        code: 'P10_HANDOFF_BLOCKED',
+      });
+    }
+
+    const handoffResult = buildHandoffPayload(insightId, findingId);
+    if (handoffResult.error || !handoffResult.payload) {
+      return res.status(422).json({
+        error: handoffResult.error ?? 'Failed to build handoff payload',
+        code: 'P10_HANDOFF_BUILD_FAILED',
+      });
+    }
+
+    const payload = handoffResult.payload;
+    let initiativeRef: { id: string; type: 'linked' | 'handoff_request' };
+
+    if (target_initiative_id) {
+      const existing = await queryHelpers.queryOne(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [target_initiative_id, organizationId]
+      );
+      if (!existing) {
+        return res.status(404).json({
+          error: 'Target initiative not found',
+          code: 'P10_TARGET_INITIATIVE_NOT_FOUND',
+        });
+      }
+      initiativeRef = { id: target_initiative_id, type: 'linked' };
+    } else {
+      initiativeRef = { id: `handoff_req_${uuidv4()}`, type: 'handoff_request' };
+    }
+
+    recordHandoff(insightId, findingId, payload, target_initiative_id);
+
+    return res.json({
+      data: {
+        handoff_payload: payload,
+        initiative: initiativeRef,
+        findingId,
+        insightId,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+export default router;
