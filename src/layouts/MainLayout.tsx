@@ -98,6 +98,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     if (!workspaceContext) return;
     if (currentView === AppView.AI_CHAT) return;
 
+    // F1.2: Preserve Help entityData if the current store has help metadata
+    // (set by HelpSidePanel.openAiNow) and the kickoff hasn't been consumed yet.
+    const storeCtx = useConversationStore.getState().workspaceContext;
+    const hasHelpOrigin = storeCtx?.entityData?.helpDocumentId && chatKickoffMessage;
+    if (hasHelpOrigin) return;
+
     setWorkspaceContext(workspaceContext);
 
     // Only push the UI into split mode when the split panel is actually visible.
@@ -109,6 +115,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     shouldShowChatPanel,
     isChatCollapsed,
     currentView,
+    chatKickoffMessage,
     setWorkspaceContext,
     setDisplayMode,
   ]);

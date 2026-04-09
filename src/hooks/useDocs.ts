@@ -43,6 +43,13 @@ export interface KbArticle extends KbArticleListItem {
   content: string;
   video_url?: string;
   video_teaser_url?: string;
+  hero_asset_refs?: Array<{
+    type: 'image' | 'video' | 'embed';
+    url: string;
+    alt?: string;
+    caption?: string;
+    poster?: string;
+  }>;
   related_modules: string[];
   target_audience: string[];
   video_script?: string;

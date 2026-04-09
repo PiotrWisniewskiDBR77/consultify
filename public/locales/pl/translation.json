@@ -86,105 +86,28 @@
     "periodEnd": "Okres do"
   },
   "superadmin": {
-    "customers": {
-      "playbooks": {
-        "title": "Playbooki Customer Success",
-        "subtitle": "Automatyzuj procesy customer success",
-        "newPlaybook": "Nowy playbook",
-        "execute": "Uruchom",
-        "confirmDelete": "Na pewno chcesz usunąć ten playbook?",
-        "stats": {
-          "totalPlaybooks": "Wszystkie playbooki",
-          "active": "Aktywne",
-          "totalActions": "Wszystkie akcje",
-          "completedActions": "Akcje zakończone"
-        },
-        "playbooks": "Playbooki",
-        "status": {
-          "active": "Aktywny",
-          "inactive": "Nieaktywny"
-        },
-        "actionsCount": "{{count}} akcje",
-        "empty": {
-          "noPlaybooks": "Brak playbooków",
-          "createFirst": "Utwórz pierwszy playbook",
-          "selectTitle": "Wybierz playbook",
-          "selectSubtitle": "Wybierz playbook z listy lub utwórz nowy"
-        },
-        "fields": {
-          "name": "Nazwa playbooka",
-          "description": "Opis",
-          "trigger": "Wyzwalacz",
-          "actions": "Akcje",
-          "organizationId": "ID organizacji"
-        },
-        "placeholders": {
-          "name": "np. Onboarding nowego klienta",
-          "organizationId": "Wpisz ID organizacji"
-        },
-        "modals": {
-          "createTitle": "Utwórz playbook Customer Success",
-          "createCta": "Utwórz playbook",
-          "executeTitle": "Uruchom playbook",
-          "executeSubtitle": "Uruchom „{{name}}” dla wskazanej organizacji.",
-          "executeCta": "Uruchom"
-        },
-        "actionTypes": {
-          "sendEmail": "Wyślij e-mail",
-          "createTask": "Utwórz zadanie",
-          "notifyCsm": "Powiadom CSM",
-          "scheduleCall": "Umów rozmowę",
-          "updateHealth": "Zaktualizuj Health Score",
-          "custom": "Akcja niestandardowa"
-        },
-        "triggerTypes": {
-          "onboardingComplete": "Zakończony onboarding",
-          "trialEnding": "Kończący się trial",
-          "lowEngagement": "Niskie zaangażowanie",
-          "healthScoreDrop": "Spadek Health Score",
-          "subscriptionChange": "Zmiana subskrypcji",
-          "milestoneReached": "Osiągnięty kamień milowy"
-        }
-      },
-      "compliance": {
-        "title": "Zgodność (Compliance)",
-        "subtitle": "Śledź status zgodności klientów i wymagania",
-        "unknownOrganization": "Nieznana organizacja",
-        "errorLoad": "Nie udało się wczytać podsumowania compliance. Spróbuj ponownie.",
-        "stats": {
-          "fullyCompliant": "W pełni zgodne",
-          "requiresAttention": "Wymaga uwagi",
-          "auditPassed": "Audyt zaliczony"
-        },
-        "table": {
-          "title": "Status zgodności organizacji",
-          "empty": "Brak danych compliance.",
-          "never": "Nigdy",
-          "columns": {
-            "organization": "Organizacja",
-            "gdpr": "RODO",
-            "dpa": "Podpisane DPA",
-            "dataRetention": "Retencja danych",
-            "securityAudit": "Audyt bezpieczeństwa",
-            "lastAudit": "Ostatni audyt"
-          }
-        }
-      }
+    "confirm": {
+      "title": "Potwierdź akcję",
+      "description": "Ta akcja zostanie zarejestrowana w dzienniku audytu.",
+      "reasonLabel": "Powód wykonania tej akcji",
+      "reasonPlaceholder": "np. Zgłoszenie klienta, incydent bezpieczeństwa, zgodność...",
+      "reasonRequired": "Podaj powód (min. 3 znaki).",
+      "cancel": "Anuluj",
+      "proceed": "Potwierdź i wykonaj",
+      "auditNotice": "Ta akcja zostanie zapisana w dzienniku audytu wraz z Twoją tożsamością i znacznikiem czasu."
     },
-    "promptOsRuntime": {
-      "title": "Prompt OS — runtime (V8)",
-      "subtitle": "Podgląd tylko do odczytu z GET /api/v8/prompt-os/runtime/summary",
-      "refresh": "Odśwież",
-      "loading": "Wczytywanie podsumowania…",
-      "loadError": "Nie udało się wczytać podsumowania: {{message}}",
-      "none": "—",
-      "fields": {
-        "contract": "Kontrakt",
-        "presetCount": "Presety",
-        "bundleCount": "Pakiety",
-        "activeBundleCount": "Aktywne pakiety",
-        "purposeFamilies": "Obsługiwane rodziny celów"
-      }
+    "impersonation": {
+      "banner": "Tryb podszywania",
+      "exit": "Zakończ podszywanie",
+      "title": "Podszyj się pod użytkownika",
+      "description": "Zostaniesz zalogowany jako ten użytkownik. Wszystkie Twoje działania będą rejestrowane w dzienniku audytu.",
+      "started": "Podszywanie rozpoczęte",
+      "ended": "Podszywanie zakończone"
+    },
+    "testSupport": {
+      "bootstrapLabel": "Utwórz tenant testowy",
+      "cleanupLabel": "Wyczyść dane testowe",
+      "gatingNotice": "Dostępne tylko w środowisku testowym z odpowiednimi poświadczeniami."
     },
     "playbookTemplates": {
       "title": "Szablony Playbooków",
@@ -244,9 +167,7 @@
         "duplicated": "Szablon zduplikowany jako szkic",
         "imported": "Szablon zaimportowany",
         "importInvalid": "Nieprawidłowy JSON szablonu",
-        "fieldsRequired": "Tytuł, Klucz i Sygnał wyzwalacza są wymagane",
-        "editViaApi": "Edytuj ten szablon przez API.",
-        "previewAfterReport": "Podgląd dostępny po wygenerowaniu raportu."
+        "fieldsRequired": "Tytuł, Klucz i Sygnał wyzwalacza są wymagane"
       }
     },
     "emailTemplates": {
@@ -335,36 +256,400 @@
     "recommendationsCount": "Rekomendacje"
   },
   "presentations": {
-    "tabs": {
-      "allDecks": "Wszystkie prezentacje",
-      "recent": "Ostatnie"
+    "wizard": {
+      "title": "Generator prezentacji",
+      "titleRequired": "Podaj tytuł",
+      "outlineFailed": "Nie udało się wygenerować konspektu",
+      "generationFailed": "Generowanie nie powiodło się",
+      "downloadFailed": "Pobieranie nie powiodło się",
+      "presentationMode": "Tryb prezentacji",
+      "communicationRegister": "Rejestr komunikacji",
+      "contentDepth": {
+        "minimal": "Minimalna",
+        "minimalDesc": "Tylko nagłówki i kluczowe liczby",
+        "concise": "Zwięzła",
+        "conciseDesc": "Krótkie akapity z kluczowymi punktami",
+        "detailed": "Szczegółowa",
+        "detailedDesc": "Pełna analiza z danymi wspierającymi",
+        "extensive": "Rozbudowana",
+        "extensiveDesc": "Kompleksowe głębokie zagłębienie"
+      },
+      "imageStylePreset": "Styl obrazów",
+      "imageSource": "Źródło obrazów",
+      "cardSize": "Rozmiar karty",
+      "colorSet": "Paleta kolorów",
+      "brandKit": "Kit marki",
+      "visualsSection": "Wizualizacje i branding",
+      "visualsSectionDesc": "Kontroluj styl obrazów, paletę kolorów i wymiary kart.",
+      "wordsPerSlide": "Słów/slajd",
+      "typicalSlides": "Slajdy",
+      "animations": "Animacje",
+      "showAdvanced": "Opcje zaawansowane",
+      "additionalInstructions": "Dodatkowe instrukcje dla AI",
+      "additionalInstructionsPlaceholder": "np. Skup się na metrykach finansowych, użyj ciemnych teł...",
+      "modes": {
+        "show": "Pokaz",
+        "showDesc": "Narracyjna prezentacja na żywo. Duże wizualizacje, minimum tekstu.",
+        "document": "Dokument",
+        "documentDesc": "Samodzielny materiał konsultingowy. Gęsta treść, minimalne obrazy.",
+        "briefing": "Briefing",
+        "briefingDesc": "Szybki update zarządczy. Kluczowe metryki i zmiany statusów.",
+        "workshop": "Warsztat",
+        "workshopDesc": "Materiał warsztatowy z frameworkami i elementami interaktywnymi."
+      },
+      "registers": {
+        "executive": "Zarządczy",
+        "executiveDesc": "Decyzyjny, zwięzły, framing 'so what'",
+        "professional": "Profesjonalny",
+        "professionalDesc": "Biznesowo-neutralny, kanoniczny domyślny",
+        "technical": "Techniczny",
+        "technicalDesc": "Analityczny, precyzyjny, więcej detali",
+        "narrative": "Narracyjny",
+        "narrativeDesc": "Styl storytelling, najlepszy dla trybu Pokaz"
+      },
+      "imageStyles": {
+        "corporatePhotography": "Foto korporacyjne",
+        "corporatePhotographyDesc": "Profesjonalne zdjęcia ludzi, biur, produktów",
+        "abstractGeometric": "Abstrakcyjne",
+        "abstractGeometricDesc": "Gradienty, kształty, wzory",
+        "flatIllustration": "Ilustracje",
+        "flatIllustrationDesc": "Nowoczesne ilustracje wektorowe",
+        "dataFocused": "Dane",
+        "dataFocusedDesc": "Tylko wykresy i diagramy, bez obrazów dekoracyjnych",
+        "industryRealistic": "Branżowe",
+        "industryRealisticDesc": "Realistyczne obrazy branżowe",
+        "minimalNoImages": "Minimalne",
+        "minimalNoImagesDesc": "Tylko typografia i kolor"
+      },
+      "imageSources": {
+        "smart": "Inteligentne (auto)",
+        "orgLibrary": "Biblioteka organizacji",
+        "aiOnly": "Generowane AI",
+        "none": "Bez obrazów",
+        "manual": "Tylko ręcznie"
+      }
     },
-    "columns": {
-      "title": "Tytuł",
-      "sourceType": "Źródło",
-      "owner": "Właściciel",
-      "date": "Data"
+    "steps": {
+      "sources": "Źródła",
+      "setup": "Konfiguracja",
+      "outline": "Konspekt",
+      "result": "Wynik"
     },
-    "sourceType": {
-      "tool": "Narzędzie",
-      "assessment": "Ocena",
-      "finance": "Finanse",
-      "upload": "Przesłane",
-      "unknown": "Nieznane"
+    "sources": {
+      "title": "Wybierz źródła danych",
+      "subtitle": "Wybierz artefakty z platformy do uwzględnienia w decku.",
+      "initiative": "Inicjatywy",
+      "note": "Notatki",
+      "report": "Raporty",
+      "financial_analysis": "Analiza finansowa",
+      "tool_session": "Sesje narzędzi",
+      "workspace": "Przestrzenie robocze",
+      "insight": "Spostrzeżenia",
+      "initiative_portfolio": "Portfel inicjatyw",
+      "execution_status": "Status realizacji",
+      "kpi_roi": "KPI i ROI",
+      "raid": "Ryzyka i problemy",
+      "assessment": "Wyniki oceny",
+      "valuation": "Wycena przedsiębiorstwa"
     },
-    "actions": {
-      "rename": "Zmień nazwę",
-      "export": "Eksportuj",
-      "openSource": "Otwórz źródło"
+    "setup": {
+      "title": "Skonfiguruj swój deck",
+      "subtitle": "Ustaw tryb, odbiorców, wizualizacje i styl.",
+      "deckTitle": "Tytuł decka",
+      "titlePlaceholder": "np. Steering Committee Update — Q1 2026",
+      "creationPath": "Ścieżka tworzenia",
+      "aiGenerates": "AI generuje",
+      "aiGeneratesDesc": "AI zaproponuje strukturę z Twoich źródeł",
+      "template": "Szablon (opcjonalnie)",
+      "customDeck": "Własny deck",
+      "customDeckDesc": "AI generuje konspekt ze źródeł",
+      "audience": "Odbiorcy",
+      "goal": "Cel",
+      "language": "Język",
+      "theme": "Motyw",
+      "confidentiality": "Poufność",
+      "generateOutline": "Generuj konspekt",
+      "visuals": {
+        "title": "Wizualizacje (obrazy AI)",
+        "desc": "Wizualizacje Gamma-like: okładka + subtelne tekstury. Najlepiej w trybie Jakość.",
+        "priority": "Priorytet wizualny",
+        "quality": "Jakość",
+        "cost": "Koszt",
+        "density": "Gęstość obrazów",
+        "densityLow": "Niska",
+        "densityMedium": "Średnia",
+        "densityHigh": "Wysoka"
+      }
     },
-    "loading": "Ładowanie prezentacji...",
-    "empty": "Brak prezentacji.",
-    "minimalPreview": "Podgląd — pełny edytor wkrótce",
-    "previewPlaceholder": "Podgląd prezentacji zostanie tutaj wyświetlony.",
-    "exportSuccess": "Eksport rozpoczęty",
-    "renameSuccess": "Zmieniono nazwę",
-    "renamePlaceholder": "Tytuł prezentacji",
-    "comingSoon": "Wkrótce"
+    "audiences": {
+      "sponsor": "Sponsor",
+      "executive": "Zarząd",
+      "board": "Rada nadzorcza",
+      "project_team": "Zespół projektowy",
+      "client": "Klient",
+      "investor": "Inwestor / VC",
+      "internal": "Zespół wewnętrzny",
+      "educate": "Edukuj"
+    },
+    "goals": {
+      "inform": "Informuj",
+      "decide": "Decyduj",
+      "sell": "Sprzedaj",
+      "align": "Alignuj",
+      "educate": "Edukuj"
+    },
+    "themes": {
+      "corporate": "Korporacyjny",
+      "minimal": "Minimalistyczny",
+      "modern": "Nowoczesny"
+    },
+    "confidentialities": {
+      "confidential": "Poufny",
+      "internal": "Wewnętrzny",
+      "public": "Publiczny"
+    },
+    "outline": {
+      "title": "Konspekt decka",
+      "slides": "slajdów",
+      "header": "AI zaproponowało {{count}} slajdów. Przeciągnij by zmienić kolejność. Kliknij by edytować.",
+      "reorder": "Przeciągnij by zmienić kolejność, przełącz by włączyć/wyłączyć",
+      "addSlide": "Dodaj slajd",
+      "generate": "Generuj deck",
+      "contentHintPlaceholder": "Wskazówka: opisz co ten slajd powinien zawierać...",
+      "aiRecommends": "AI rekomenduje dodanie:",
+      "validation": {
+        "minSlides": "Minimum 2 slajdy wymagane",
+        "maxSlides": "Przekroczono maksimum 30 slajdów",
+        "tooMany": "Rozważ podzielenie na dwie prezentacje (>20 slajdów)",
+        "noCover": "Brak slajdu okładkowego"
+      },
+      "suggestions": {
+        "addRisk": "Przegląd ryzyk",
+        "addKpi": "Dashboard KPI",
+        "addNextSteps": "Następne kroki",
+        "addThankYou": "Dziękuję"
+      }
+    },
+    "generating": {
+      "title": "Generowanie decka",
+      "subtitle": "Tworzenie slajdów klasy konsultingowej z walidacją jakości. To może chwilę potrwać..."
+    },
+    "result": {
+      "ready": "Twój deck jest gotowy!",
+      "slidesGenerated": "slajdów wygenerowanych pomyślnie",
+      "warnings": "Ostrzeżenia jakości",
+      "downloadPptx": "Pobierz PPTX",
+      "editOutline": "Edytuj i regeneruj",
+      "openBuilder": "Otwórz Deck Builder"
+    },
+    "templates": {
+      "systemTemplates": "Szablony systemowe",
+      "orgTemplates": "Szablony organizacji",
+      "viewOutline": "Zobacz konspekt",
+      "use": "Użyj",
+      "clone": "Sklonuj",
+      "cloned": "Szablon sklonowany do Twojej organizacji",
+      "cloneFailed": "Nie udało się sklonować"
+    },
+    "brandKit": {
+      "title": "Kit marki",
+      "subtitle": "Skonfiguruj branding organizacji dla prezentacji i raportów.",
+      "colors": "Kolory",
+      "primary": "Główny",
+      "secondary": "Drugorzędny",
+      "accent": "Akcent",
+      "fonts": "Czcionki",
+      "titleFont": "Czcionka tytułu",
+      "bodyFont": "Czcionka tekstu",
+      "headerFooter": "Nagłówek i stopka",
+      "headerText": "Tekst nagłówka",
+      "footerText": "Tekst stopki",
+      "pageNumbers": "Numeracja stron",
+      "confidentialityBanner": "Baner poufności",
+      "defaultConfidentiality": "Domyślna poufność",
+      "disclaimer": "Tekst zastrzeżeń",
+      "disclaimerPlaceholder": "Opcjonalne zastrzeżenie prawne dla decków finansowych/wycenowych",
+      "saved": "Kit marki zapisany",
+      "saveFailed": "Nie udało się zapisać"
+    },
+    "builder": {
+      "title": "Kreator decka",
+      "exit": "Wróć do Prezentacji",
+      "untitled": "Deck bez tytułu",
+      "slideSorter": "Sortowanie slajdów",
+      "cardView": "Karty",
+      "listView": "Lista",
+      "addBlank": "Pusty slajd",
+      "addAi": "AI generuje",
+      "addFromTemplate": "Z szablonu",
+      "topBar": {
+        "theme": "Motyw",
+        "share": "Udostępnij",
+        "agent": "Agent",
+        "present": "Prezentuj",
+        "undo": "Cofnij",
+        "redo": "Ponów"
+      },
+      "bottomBar": {
+        "card": "Karta",
+        "of": "z",
+        "quickEdits": "Szybkie edycje",
+        "notes": "Notatki"
+      },
+      "toolbar": {
+        "search": "Szukaj",
+        "basicBlocks": "Bloki podstawowe",
+        "images": "Obrazy",
+        "smartLayouts": "Inteligentne układy",
+        "diagrams": "Diagramy",
+        "chartsData": "Wykresy i dane",
+        "media": "Media",
+        "artifacts": "Artefakty",
+        "aiEdit": "Edycja AI"
+      },
+      "blocks": {
+        "heading": "Nagłówek",
+        "paragraph": "Akapit",
+        "bulletList": "Lista punktowana",
+        "numberedList": "Lista numerowana",
+        "table": "Tabela",
+        "chart": "Wykres",
+        "image": "Obraz",
+        "kpiWidget": "Widget KPI",
+        "metricStrip": "Pasek metryk",
+        "smartLayout": "Inteligentny układ",
+        "smartDiagram": "Inteligentny diagram",
+        "callout": "Wyróżnienie",
+        "timeline": "Oś czasu",
+        "artifactEmbed": "Artefakt",
+        "divider": "Separator"
+      },
+      "editCard": {
+        "title": "Edytuj tę kartę",
+        "prompt": "Jak chcesz edytować tę kartę?",
+        "improveWriting": "Popraw styl",
+        "fixSpelling": "Popraw pisownię i gramatykę",
+        "translate": "Przetłumacz",
+        "makeLonger": "Wydłuż",
+        "makeShorter": "Skróć",
+        "simplify": "Uprość język",
+        "moreSpecific": "Bardziej konkretnie",
+        "moreVisual": "Dodaj wizualizacje",
+        "addImage": "Dodaj obraz",
+        "addChart": "Dodaj wykres",
+        "swapOrgPhoto": "Użyj zdjęcia organizacji",
+        "regenerateImages": "Regeneruj wszystkie obrazy",
+        "updateData": "Zaktualizuj dane ze źródła",
+        "changeChartType": "Zmień typ wykresu",
+        "addKpi": "Dodaj widget KPI",
+        "tryNewLayout": "Spróbuj nowego układu"
+      },
+      "present": {
+        "inTab": "W tej zakładce",
+        "fullScreen": "Pełny ekran",
+        "presenterView": "Widok prezentera",
+        "shareFollow": "Udostępnij link do śledzenia"
+      },
+      "share": {
+        "collaborate": "Współpracuj",
+        "shareLink": "Udostępnij link",
+        "export": "Eksportuj",
+        "embed": "Osadź",
+        "analytics": "Analityka",
+        "inviteByEmail": "Zaproś emailem",
+        "publicLink": "Link publiczny",
+        "copyLink": "Kopiuj link",
+        "anyoneCanView": "Każdy z linkiem może oglądać",
+        "anyoneCanComment": "Każdy z linkiem może komentować"
+      },
+      "export": {
+        "pdf": "PDF",
+        "pptx": "PowerPoint (PPTX)",
+        "png": "PNG (per slajd)",
+        "html": "Interaktywny HTML5",
+        "allCards": "Wszystkie karty",
+        "selectedRange": "Wybrany zakres",
+        "fontGuidance": "Aby zapewnić poprawne wyświetlanie, zainstaluj te czcionki:",
+        "staticNote": "Animowane elementy będą statyczne w PDF i PowerPoint",
+        "htmlNote": "Samodzielna interaktywna strona z animacjami i nawigacją"
+      },
+      "commandPalette": {
+        "placeholder": "Wpisz komendę lub zapytaj AI...",
+        "categories": {
+          "insert": "Wstaw",
+          "edit": "Edytuj",
+          "theme": "Motyw",
+          "export": "Eksport i prezentacja",
+          "navigate": "Nawigacja",
+          "ai": "Akcje AI"
+        }
+      },
+      "mediaLibrary": {
+        "title": "Biblioteka mediów",
+        "search": "Szukaj po tagu lub nazwie...",
+        "empty": "Nie znaleziono obrazów",
+        "upload": "Prześlij obrazy",
+        "uploadFirst": "Prześlij swój pierwszy obraz",
+        "categories": {
+          "all": "Wszystkie",
+          "photo": "Zdjęcia",
+          "illustration": "Ilustracje",
+          "logo": "Logo",
+          "icon": "Ikony"
+        }
+      },
+      "versionHistory": {
+        "title": "Historia wersji",
+        "unsavedChanges": "Niezapisane zmiany",
+        "allSaved": "Wszystkie zmiany zapisane",
+        "saveCheckpoint": "Zapisz nazwaną wersję",
+        "restore": "Przywróć",
+        "confirmRestore": "Kliknij ponownie aby potwierdzić przywrócenie",
+        "auto": "Auto-zapis",
+        "manual": "Ręczny",
+        "checkpoint": "Punkt kontrolny"
+      },
+      "animations": {
+        "enabled": "Animacje włączone",
+        "disabled": "Animacje wyłączone",
+        "toggle": "Przełącz animacje"
+      },
+      "dataRefresh": {
+        "refresh": "Odśwież dane",
+        "refreshAll": "Odśwież wszystkie dane",
+        "outdated": "Dane mogą być nieaktualne",
+        "refreshing": "Odświeżanie...",
+        "upToDate": "Aktualne"
+      },
+      "collaboration": {
+        "onlyYou": "Tylko Ty",
+        "connected": "Połączono",
+        "disconnected": "Rozłączono",
+        "connecting": "Łączenie..."
+      },
+      "sourceTraceability": {
+        "dataFrom": "Dane z",
+        "clickToOpen": "Kliknij aby otworzyć źródło"
+      }
+    },
+    "agent": {
+      "title": "Agent AI",
+      "greeting": "Cześć! Wiem, że ten deck powstał z {{sources}}. Jak mogę pomóc?",
+      "placeholder": "Poproś mnie o edycję, tworzenie lub stylizację",
+      "suggestions": {
+        "addSummary": "Dodaj streszczenie zarządcze",
+        "makeConcise": "Skróć wszystkie slajdy",
+        "addNotes": "Dodaj notatki prelegenta",
+        "updateData": "Zaktualizuj dane ze źródeł",
+        "improveVisuals": "Popraw spójność wizualną"
+      },
+      "proactive": {
+        "sourceUpdated": "Źródło '{{name}}' zostało zaktualizowane. Odświeżyć dane?",
+        "densSlide": "Slajd {{number}} ma bardzo gęstą treść. Podzielić go?",
+        "noNotes": "Nie masz notatek prelegenta. Wygenerować je?",
+        "betterChart": "Wykres na slajdzie {{number}} lepiej wyglądałby jako {{type}}. Zmienić?"
+      }
+    }
   },
   "sidebar": {
     "dashboard": "Panel",
@@ -508,6 +793,142 @@
           "high": "Wysoki",
           "critical": "Krytyczny"
         }
+      }
+    },
+    "radar": {
+      "pulseLabel": "Radar · kontekst, pomysły i spokojny kierunek",
+      "unavailable": "Radar jest chwilowo niedostępny.",
+      "unavailableHint": "To nie oznacza pustego dnia. Spróbuj ponownie wczytać ekran główny.",
+      "retry": "Ponów",
+      "roofTruthChecking": "Roof truth: sprawdzanie…",
+      "roofExpandHint": "Rozwiń lub zwiń listę modułów roof i audyt spójności danych.",
+      "roofModules": "Roof · {{count}} modułów",
+      "pulse": "Puls",
+      "gentleExplanation": "Spokojne wyjaśnienie",
+      "explainBriefing": "Wyjaśnij ten skrót prosto i bez presji — daj mi 3 punkty: co to znaczy, dlaczego teraz, co mogę zrobić małym krokiem.",
+      "explain": "Wyjaśnij",
+      "calmPlan": "Pomóż mi poukładać ten materiał na spokojny plan — bez pogoni, krok po kroku.",
+      "blocks": {
+        "aiPulseCore": "Puls AI",
+        "industryLens": "Kontekst branżowy",
+        "executionCurrent": "Strumień realizacji",
+        "sparkField": "Pomysły i notatki",
+        "decisionTemperature": "Temperatura decyzji",
+        "teamSignal": "Sygnały zespołu",
+        "momentum": "Momentum"
+      },
+      "blockHints": {
+        "aiPulseCore": "Skrót pulsu: headline dnia, fokus i pulse score.",
+        "momentum": "Tempo programu: statystyki i sygnały postępu.",
+        "sparkField": "Pomysły i notatki: runtime notes oraz outputy.",
+        "decisionTemperature": "Decyzje: kolejka, blokery, najgorętszy temat.",
+        "industryLens": "Kontekst branżowy: rynek, tech, benchmark, peer case.",
+        "executionCurrent": "Wykonanie: strumienie pracy i artefakty.",
+        "teamSignal": "Zespół: alignment i sygnały organizacyjne."
+      },
+      "worthNoticing": "Co warto zauważyć",
+      "talkToAI": "Porozmawiaj z AI",
+      "openExecution": "Przejdź do wykonania",
+      "topMove": "Najważniejszy ruch",
+      "pulseActionPrompt": "Przełóż ten pulse na konkretny plan działania na dziś i ten tydzień.",
+      "decisionQueue": "Kolejka decyzyjna",
+      "decisionQueueClear": "Brak decyzji w kolejce i brak twardych blokerów — stan OK na teraz.",
+      "pending": "Czeka",
+      "blocking": "Blokuje",
+      "hottestDecision": "Najgorętsza decyzja",
+      "unblockPrompt": "Pomóż odblokować tę decyzję: {{title}}",
+      "live": "Na żywo",
+      "rel": "Rel",
+      "benchmark": "Benchmark",
+      "peerCase": "Przykład rynkowy",
+      "peerCasePrompt": "Porównaj ten case do naszego programu transformacji i wskaż 3 wnioski: {{title}}",
+      "signalPrompt": "Wyjaśnij dlaczego ten sygnał ma znaczenie dla naszej transformacji: {{title}}",
+      "teamReadout": "Sygnał zespołu",
+      "teamUpdatePrompt": "Przygotuj mi krótką wiadomość lub update dla zespołu w oparciu o ten sygnał: {{title}}",
+      "momentumPrompt": "Wyjaśnij co oznacza ten sygnał momentum dla transformacji: {{title}}",
+      "outputFlow": "Strumień outputów",
+      "visibility": {
+        "private": "Prywatne",
+        "project": "Projekt",
+        "organization": "Organizacja",
+        "reviewShared": "Do przeglądu",
+        "demo": "Demo"
+      },
+      "reviewState": {
+        "privateDraft": "Szkic prywatny",
+        "reviewReady": "Gotowe do przeglądu",
+        "inReview": "W przeglądzie",
+        "approved": "Zatwierdzone",
+        "published": "Opublikowane"
+      },
+      "artifactType": {
+        "presentation": "Prezentacja",
+        "sheet": "Arkusz",
+        "report": "Raport"
+      },
+      "outputsLibraryNote": "Przegląd i widoczność są spójne z Biblioteką Outputów.",
+      "askAISequencing": "Poproś AI o sequencing",
+      "sequencingPrompt": "Ułóż mi najlepszą kolejność działań wykonawczych na podstawie bieżących strumieni.",
+      "ideasWithTasks": "Idee z taskami {{count}}",
+      "recentNotes": "Ostatnie notatki {{count}}",
+      "recentOutputs": "Ostatnie outputy {{count}}",
+      "orgSignals": "Sygnały z organizacji {{count}}",
+      "expandIdea": "Rozwiń najmocniejszy pomysł",
+      "expandIdeaPrompt": "Rozwiń ten pomysł do formy initiative i wskaż pierwsze 3 kroki: {{text}}",
+      "newIdea": "Nowy pomysł",
+      "newIdeaSubtitle": "Uruchom nową ścieżkę transformacji",
+      "noteLabel": "Notatka",
+      "nodes": "węzłów",
+      "tasks": "zadań",
+      "stages": {
+        "spark": "iskra",
+        "shaping": "kształtowanie",
+        "growing": "wzrost"
+      },
+      "loadError": "Nie udało się załadować Radaru",
+      "triage": {
+        "title": "Kokpit triażu",
+        "subtitle": "Sygnały operacyjne uszeregowane wg priorytetu decyzyjnego",
+        "empty": "Brak sygnałów triażu. Radar operacyjny jest czysty.",
+        "category": {
+          "execution_delivery": "Realizacja",
+          "decision_alignment": "Decyzja",
+          "finance_kpi": "Finanse / KPI",
+          "governance_compliance": "Governance",
+          "external_change": "Zmiana zewnętrzna"
+        },
+        "timeWindow": {
+          "next_24h": "Najbliższe 24h",
+          "this_week": "Ten tydzień",
+          "this_month": "Ten miesiąc"
+        },
+        "driver": {
+          "deadline": "Termin",
+          "blocker": "Bloker",
+          "variance": "Odchylenie",
+          "escalation": "Eskalacja",
+          "opportunity": "Szansa"
+        },
+        "whyNow": "Dlaczego teraz",
+        "evidence": "Dowody",
+        "evidencePartial": "Częściowe pokrycie",
+        "evidenceComplete": "Pełne pokrycie",
+        "uncertainty": "Granica pewności",
+        "missingInputs": "Brakujące dane",
+        "conflicts": "Konflikty",
+        "wouldChange": "Co zmieniłoby ranking",
+        "owner": "Właściciel",
+        "nextAction": "Następna akcja",
+        "goTo": "Przejdź do {{module}}",
+        "fallback": "Alternatywa: {{fallback}}",
+        "degraded": {
+          "missing_data": "Brakuje części danych. Wyniki mogą być niekompletne.",
+          "conflict": "Wykryto sprzeczne dane. Sprawdź z ostrożnością.",
+          "stale": "Dane mogą być nieaktualne. Rozważ odświeżenie źródeł.",
+          "permission": "Dostęp ograniczony. Część informacji jest ukryta."
+        },
+        "hardGate": "Hard gate",
+        "score": "Wynik"
       }
     },
     "calendar": "Kalendarz",
@@ -1759,6 +2180,98 @@
       "header": "Szybki samouczek",
       "moreToExplore": "Więcej do odkrycia",
       "videoPlaceholder": "Zastępnik wideo"
+    },
+    "knowledge": {
+      "contentMoved": "Ta treść została przeniesiona lub usunięta.",
+      "contentMovedHint": "Przeglądaj nasze kolekcje, aby znaleźć to, czego szukasz.",
+      "browseCollections": "Przeglądaj kolekcje",
+      "deprecated": "Ten artykuł został wycofany",
+      "viewReplacement": "Zobacz artykuł zastępczy",
+      "missingTranslationBanner": "Brak wersji PL — wyświetlamy EN",
+      "staleTranslation": "To tłumaczenie może być nieaktualne — oryginalny artykuł został zaktualizowany.",
+      "minRead": "min czytania",
+      "views": "wyświetleń",
+      "nextAction": "Następny krok",
+      "backToSurface": "Wróć do pracy",
+      "relatedModules": "Powiązane moduły",
+      "relatedArticles": "Powiązane artykuły",
+      "shareArticle": "Udostępnij artykuł",
+      "noArticle": "Artykuł nie znaleziony",
+      "loading": "Ładowanie...",
+      "error": "Błąd ładowania artykułu"
+    },
+    "search": {
+      "placeholder": "Szukaj pomocy... (Cmd+K)",
+      "noResults": "Brak wyników dla",
+      "tryDifferentKeywords": "Spróbuj innych słów kluczowych lub przeglądaj kategorie poniżej",
+      "types": {
+        "module": "Moduł",
+        "card": "Karta",
+        "faq": "FAQ",
+        "video": "Wideo"
+      },
+      "filters": {
+        "all": "Wszystko",
+        "module": "Moduł",
+        "card": "Karta",
+        "faq": "FAQ",
+        "video": "Wideo"
+      },
+      "suggestionsTitle": "Spróbuj szukać:",
+      "browseTitle": "Lub przeglądaj:",
+      "helpOverviewLink": "Otwórz przegląd pomocy"
+    },
+    "widget": {
+      "label": "Pomoc",
+      "header": "Centrum Pomocy",
+      "searchPlaceholder": "Szukaj pomocy...",
+      "noResults": "Brak wyników dla \"{{query}}\"",
+      "docs": "Dokumentacja",
+      "contact": "Kontakt"
+    },
+    "sidePanel": {
+      "tabs": {
+        "overview": "Przegląd",
+        "thisStep": "Ten krok",
+        "guides": "Przewodniki",
+        "faq": "FAQ",
+        "knowledge": "Baza wiedzy",
+        "updates": "Nowości"
+      },
+      "whatThisIs": "Co to jest",
+      "whyItMatters": "Dlaczego to ważne",
+      "whatYouDoHere": "Co tu robisz",
+      "howAiHelpsHere": "Jak AI tu pomaga",
+      "whatComesNext": "Co dalej",
+      "askAi": "Zapytaj AI",
+      "quickGuides": "Szybkie przewodniki",
+      "watchVideo": "Obejrzyj wideo",
+      "modules": {
+        "welcome": "Witaj",
+        "dashboard": "Dashboard",
+        "assessment": "Hub narzędzi",
+        "initiatives": "Inicjatywy",
+        "roadmap": "Roadmapa",
+        "reports": "Raporty",
+        "settings": "Ustawienia",
+        "admin": "Administracja",
+        "superadmin": "Super Admin",
+        "superadmin_ai_infrastructure": "Infrastruktura AI",
+        "superadmin_ai_development": "Rozwój AI",
+        "superadmin_ai_operations": "Operacje AI",
+        "billing": "Płatności i subskrypcja"
+      }
+    },
+    "chatbot": {
+      "title": "Teresa — Pomoc",
+      "placeholder": "Zapytaj Teresę...",
+      "send": "Wyślij",
+      "typing": "Pisze...",
+      "clear": "Wyczyść czat",
+      "sources": "Źródła",
+      "helpful": "Czy to było pomocne?",
+      "suggestions": "Sugerowane pytania",
+      "poweredBy": "AI oparte na bazie wiedzy"
     }
   },
   "settings": {
@@ -2681,25 +3194,41 @@
           "tag": "Założyciele i właściciele",
           "headline": "Działaj szybko bez palenia gotówki.",
           "description": "Zbudowałeś coś realnego. Teraz potrzebujesz strategii, która to skaluje — bez wynajmowania McKinsey. Consultify to Twój stały partner strategiczny: od analizy rynku po modelowanie finansowe i śledzenie egzekucji.",
-          "points": ["Stress-testing modelu biznesowego", "Modele finansowe gotowe dla inwestorów", "Mapa wzrostu w dni, nie miesiące"]
+          "points": [
+            "Stress-testing modelu biznesowego",
+            "Modele finansowe gotowe dla inwestorów",
+            "Mapa wzrostu w dni, nie miesiące"
+          ]
         },
         "executives": {
           "tag": "Kadra zarządzająca i liderzy zmian",
           "headline": "Prowadź transformację. Dostarczaj wyniki.",
           "description": "Odpowiadasz za zmianę. Consultify daje ustrukturyzowane, oparte na danych podejście do transformacji — z wbudowanym governance. Każda decyzja śledzona, każdy wynik mierzony.",
-          "points": ["Diagnostyka organizacyjna", "Zarządzanie portfolio inicjatyw", "Raportowanie dla zarządu jednym kliknięciem"]
+          "points": [
+            "Diagnostyka organizacyjna",
+            "Zarządzanie portfolio inicjatyw",
+            "Raportowanie dla zarządu jednym kliknięciem"
+          ]
         },
         "consultingFirms": {
           "tag": "Firmy konsultingowe",
           "headline": "Dostarczaj 10× więcej wartości w połowie czasu.",
           "description": "Przestań pisać te same slajdy w PowerPoincie. Consultify automatyzuje analizę i deliverables, żeby Twój zespół skupił się na insightach i relacjach.",
-          "points": ["White-label workspace'y dla klientów", "Zautomatyzowana analiza i decki", "Program partnerski z podziałem przychodów"]
+          "points": [
+            "White-label workspace'y dla klientów",
+            "Zautomatyzowana analiza i decki",
+            "Program partnerski z podziałem przychodów"
+          ]
         },
         "aiLeaders": {
           "tag": "Liderzy AI-First",
           "headline": "Myślisz systemowo. Mówimy Twoim językiem.",
           "description": "Wiesz, że AI to dźwignia. Consultify to miejsce, gdzie ten zakład się opłaca — pełna platforma z integracją MCP, multi-LLM i autorską warstwą konsultingowej inteligencji.",
-          "points": ["Pełny dostęp API i MCP", "Custom routing LLM", "Buduj własny stack konsultingowy AI"]
+          "points": [
+            "Pełny dostęp API i MCP",
+            "Custom routing LLM",
+            "Buduj własny stack konsultingowy AI"
+          ]
         }
       }
     },
@@ -2736,37 +3265,61 @@
           "badge": "AI Core",
           "title": "Strategiczny doradca AI",
           "description": "AI analizuje organizację, identyfikuje luki i generuje priorytetyzowaną mapę strategiczną — w minuty, nie miesiące.",
-          "highlights": ["Ocena diagnostyczna", "Analiza luk", "Benchmark vs. branża"]
+          "highlights": [
+            "Ocena diagnostyczna",
+            "Analiza luk",
+            "Benchmark vs. branża"
+          ]
         },
         "economics": {
           "badge": "Ekonomia",
           "title": "Modelowanie finansowe i ROI",
           "description": "Buduj business case'y, modeluj scenariusze NPV / IRR i śledź rzeczywiste vs. zakładane zwroty dla każdej inicjatywy.",
-          "highlights": ["Modelowanie NPV / IRR", "Analiza wrażliwości", "Śledzenie ROI na żywo"]
+          "highlights": [
+            "Modelowanie NPV / IRR",
+            "Analiza wrażliwości",
+            "Śledzenie ROI na żywo"
+          ]
         },
         "execution": {
           "badge": "Egzekucja",
           "title": "Zarządzanie inicjatywami",
           "description": "Zamień strategię w egzekucję. Zarządzaj workstreamami, kamieniami milowymi i governance — z AI popychającym Cię ku wpływowi.",
-          "highlights": ["Roadmapa inicjatyw", "Ludzkie bramki zatwierdzenia", "Flagowanie ryzyk"]
+          "highlights": [
+            "Roadmapa inicjatyw",
+            "Ludzkie bramki zatwierdzenia",
+            "Flagowanie ryzyk"
+          ]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Generator raportów i prezentacji",
           "description": "Generuj raporty gotowe dla zarządu i decki dla inwestorów z żywych danych. Jedno kliknięcie od analizy do polerowanego outputu.",
-          "highlights": ["Auto-generowane decki", "Silnik narracji", "Śledzenie źródeł"]
+          "highlights": [
+            "Auto-generowane decki",
+            "Silnik narracji",
+            "Śledzenie źródeł"
+          ]
         },
         "chat": {
           "badge": "Czat",
           "title": "Wywiad z ekspertem AI",
           "description": "Zapytaj o cokolwiek w kontekście Twojego biznesu. AI korzysta z 10 000+ frameworków i Twoich danych wewnętrznych.",
-          "highlights": ["Czat kontekstowy", "Biblioteka frameworków", "Odpowiedzi ze źródłami"]
+          "highlights": [
+            "Czat kontekstowy",
+            "Biblioteka frameworków",
+            "Odpowiedzi ze źródłami"
+          ]
         },
         "results": {
           "badge": "Wyniki",
           "title": "Śledzenie wpływu",
           "description": "Połącz inicjatywy z realnymi KPI. Mierz faktycznie dostarczoną wartość i automatycznie flaguj odchylenia.",
-          "highlights": ["Dashboard KPI", "Alerty odchyleń", "Atrybucja wartości"]
+          "highlights": [
+            "Dashboard KPI",
+            "Alerty odchyleń",
+            "Atrybucja wartości"
+          ]
         }
       }
     },
@@ -2805,8 +3358,36 @@
       "fullTitleFallback": "Pełny film"
     },
     "faq": {
-      "ctaPrimary": "Uruchom darmowy trial",
-      "ctaSecondary": "Przeglądaj zasoby"
+      "badge": "FAQ",
+      "heading": "Pytania? Odpowiedzi.",
+      "more": "Masz więcej pytań?",
+      "contact": "Skontaktuj się z nami",
+      "items": [
+        {
+          "q": "Czym jest Consultify?",
+          "a": "Consultify to platforma strategicznego konsultingu wspierana przez AI, która pomaga organizacjom przemysłowym przejść przez transformację cyfrową. Łączy sztuczną inteligencję z ładem prowadzonym przez ludzi, aby dostarczać wykonalne mapy drogowe — nie tylko raporty."
+        },
+        {
+          "q": "Czym to się różni od tradycyjnego konsultingu?",
+          "a": "Tradycyjny consulting kończy się slajdami. Consultify dostarcza żywy system. Nasze AI stale analizuje kontekst, generuje inicjatywy i śledzi realizację. Dostajesz strategiczne wskazówki w czasie rzeczywistym, a nie jednorazowy raport, który ląduje na półce."
+        },
+        {
+          "q": "Czy moje dane są bezpieczne?",
+          "a": "Tak. Jesteśmy zgodni z GDPR i oferujemy rezydencję danych w UE. Dane są szyfrowane w spoczynku (AES-256) i w tranzycie (TLS 1.3). Nigdy nie trenujemy modeli AI na Twoich danych. Klienci enterprise mogą korzystać z własnych kluczy API (BYOK)."
+        },
+        {
+          "q": "Czy potrzebuję wiedzy technicznej, aby z tego korzystać?",
+          "a": "Nie. Consultify jest zaprojektowane dla liderów biznesu, nie tylko dla specjalistów IT. Interfejs jest intuicyjny, a AI prowadzi przez każdy krok. Oferujemy też onboarding i szkolenia dla zespołu."
+        },
+        {
+          "q": "Czy mogę przetestować przed zakupem?",
+          "a": "Tak. Oferujemy 14-dniowy darmowy okres próbny z pełnym dostępem do wszystkich funkcji. Bez karty płatniczej. Możesz też poprosić o spersonalizowane demo, aby zobaczyć platformę na własnym przykładzie."
+        },
+        {
+          "q": "Dla jakich branż pracujecie?",
+          "a": "Specjalizujemy się w przemyśle i produkcji — m.in. automotive, aerospace, elektronice, spożywce oraz przemyśle ciężkim. Nasze frameworki oceny są dopasowane do wyzwań transformacji Industry 4.0."
+        }
+      ]
     },
     "methodology": {
       "badge": "Nasza metodologia",
@@ -2982,42 +3563,12 @@
       ],
       "cta": "Zobacz przegląd bezpieczeństwa"
     },
-    "faq": {
-      "badge": "FAQ",
-      "heading": "Pytania? Odpowiedzi.",
-      "more": "Masz więcej pytań?",
-      "contact": "Skontaktuj się z nami",
-      "items": [
-        {
-          "q": "Czym jest Consultify?",
-          "a": "Consultify to platforma strategicznego konsultingu wspierana przez AI, która pomaga organizacjom przemysłowym przejść przez transformację cyfrową. Łączy sztuczną inteligencję z ładem prowadzonym przez ludzi, aby dostarczać wykonalne mapy drogowe — nie tylko raporty."
-        },
-        {
-          "q": "Czym to się różni od tradycyjnego konsultingu?",
-          "a": "Tradycyjny consulting kończy się slajdami. Consultify dostarcza żywy system. Nasze AI stale analizuje kontekst, generuje inicjatywy i śledzi realizację. Dostajesz strategiczne wskazówki w czasie rzeczywistym, a nie jednorazowy raport, który ląduje na półce."
-        },
-        {
-          "q": "Czy moje dane są bezpieczne?",
-          "a": "Tak. Jesteśmy zgodni z GDPR i oferujemy rezydencję danych w UE. Dane są szyfrowane w spoczynku (AES-256) i w tranzycie (TLS 1.3). Nigdy nie trenujemy modeli AI na Twoich danych. Klienci enterprise mogą korzystać z własnych kluczy API (BYOK)."
-        },
-        {
-          "q": "Czy potrzebuję wiedzy technicznej, aby z tego korzystać?",
-          "a": "Nie. Consultify jest zaprojektowane dla liderów biznesu, nie tylko dla specjalistów IT. Interfejs jest intuicyjny, a AI prowadzi przez każdy krok. Oferujemy też onboarding i szkolenia dla zespołu."
-        },
-        {
-          "q": "Czy mogę przetestować przed zakupem?",
-          "a": "Tak. Oferujemy 14-dniowy darmowy okres próbny z pełnym dostępem do wszystkich funkcji. Bez karty płatniczej. Możesz też poprosić o spersonalizowane demo, aby zobaczyć platformę na własnym przykładzie."
-        },
-        {
-          "q": "Dla jakich branż pracujecie?",
-          "a": "Specjalizujemy się w przemyśle i produkcji — m.in. automotive, aerospace, elektronice, spożywce oraz przemyśle ciężkim. Nasze frameworki oceny są dopasowane do wyzwań transformacji Industry 4.0."
-        }
-      ]
-    },
     "footer": {
       "tagline": "Wspieramy organizacje w transformacji cyfrowej dzięki strategii wspieranej przez AI i ładowi prowadzonemu przez ludzi.",
       "copyright": "Wszelkie prawa zastrzeżone.",
-      "trust": { "euData": "Dane w UE" },
+      "trust": {
+        "euData": "Dane w UE"
+      },
       "products": {
         "title": "Produkty"
       },
@@ -3529,7 +4080,9 @@
       "mutedHint": "Wyciszone typy:"
     },
     "quickClicks": {
-      "brief": { "label": "Dzienny brief" },
+      "brief": {
+        "label": "Dzienny brief"
+      },
       "savings": {
         "label": "Szybkie oszczędności",
         "prompt": "Poszukajmy oszczędności — gdzie najszybciej możemy obniżyć koszty bez utraty jakości?"
@@ -4091,6 +4644,11 @@
     "tomorrow": "Jutro"
   },
   "executive": {
+    "greeting": {
+      "morning": "Dzień dobry",
+      "afternoon": "Dzień dobry",
+      "evening": "Dobry wieczór"
+    },
     "health": {
       "title": "Kondycja portfela",
       "subtitle": "Ogólna wydajność realizacji",
@@ -4109,6 +4667,161 @@
       "noBreakdown": "Dane szczegółowe jeszcze niedostępne",
       "noBreakdownHint": "Dane pojawią się w miarę śledzenia zadań i decyzji",
       "vsLastWeek": "vs ostatni tydzień"
+    },
+    "kpi": {
+      "tasks": "Realizacja zadań",
+      "tasksValue": "{{completed}}/{{total}}",
+      "onTime": "Terminowo",
+      "overdue": "Przeterminowane",
+      "decisions": "Decyzje oczekujące",
+      "awaiting": "oczekujące",
+      "critical": "Krytyczne",
+      "avgWait": "Śr. czas oczekiwania",
+      "team": "Pojemność zespołu",
+      "teamCapacity": "Pojemność zespołu",
+      "utilized": "wykorzystana",
+      "overloaded": "Przeciążeni",
+      "available": "Dostępni",
+      "risk": "Poziom ryzyka",
+      "riskLevel": "Poziom ryzyka",
+      "blockers": "Blokery",
+      "escalations": "Eskalacje",
+      "noData": "Brak danych",
+      "riskLow": "Niski",
+      "riskMedium": "Średni",
+      "riskHigh": "Wysoki",
+      "riskCritical": "Krytyczny"
+    },
+    "action": {
+      "decision": "Decyzja",
+      "task": "Zadanie",
+      "escalation": "Eskalacja",
+      "blocker": "Bloker",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "view": "Szczegóły",
+      "title": "Wymagana akcja",
+      "allClear": "Wszystko w porządku!",
+      "noUrgent": "Brak pilnych elementów wymagających uwagi.",
+      "viewAll": "Zobacz wszystkie"
+    },
+    "actions": {
+      "title": "Wymagana akcja",
+      "critical": "krytyczne",
+      "highPriority": "wysoki priorytet",
+      "viewAll": "Zobacz wszystkie",
+      "viewDetails": "Szczegóły",
+      "allClear": "Wszystko w porządku",
+      "overdue": "przeterminowane",
+      "days": "d"
+    },
+    "urgency": {
+      "critical": "Krytyczny",
+      "high": "Wysoki"
+    },
+    "decisions": {
+      "title": "Kolejka decyzji",
+      "queue": "Kolejka decyzji",
+      "noPending": "Brak oczekujących decyzji",
+      "allClear": "Brak oczekujących decyzji",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "delegate": "Deleguj",
+      "viewAll": "Zobacz wszystkie decyzje",
+      "approved": "Decyzja zatwierdzona",
+      "rejected": "Decyzja odrzucona",
+      "error": "Nie udało się przetworzyć decyzji",
+      "waiting": "oczekiwanie"
+    },
+    "team": {
+      "title": "Wydajność zespołu",
+      "members": "członków",
+      "avgCapacity": "Śr. pojemność",
+      "overloaded": "Przeciążeni",
+      "available": "Dostępni",
+      "noMembers": "Nie znaleziono członków zespołu",
+      "viewAll": "Zobacz pełny raport zespołu",
+      "tasks": "zadań",
+      "unknown": "Nieznany"
+    },
+    "teamPerf": {
+      "title": "Wydajność zespołu",
+      "noMembers": "Nie znaleziono członków zespołu"
+    },
+    "initiatives": {
+      "title": "Inicjatywy",
+      "active": "aktywnych inicjatyw",
+      "viewAll": "Zobacz wszystkie",
+      "empty": "Brak aktywnych inicjatyw",
+      "tasks": "zadań",
+      "overdue": "przeterminowane",
+      "untitled": "Bez tytułu"
+    },
+    "signals": {
+      "title": "Sygnały AI",
+      "subtitle": "Inteligentne alerty z Twojego portfela",
+      "viewAll": "Zobacz wszystkie",
+      "empty": "Brak sygnałów"
+    },
+    "refresh": "Odśwież",
+    "lastUpdated": "Aktualizacja",
+    "loadError": "Nie udało się załadować danych",
+    "patterns": {
+      "title": "Wzorce pracy",
+      "tasksPerWeek": "tasków/tydzień",
+      "avgTaskTime": "śr. czas zadania",
+      "avgDecisionTime": "śr. czas decyzji",
+      "overdueRate": "spóźnień",
+      "insight": {
+        "overloaded": "Masz {{openTasks}} otwartych zadań, ale średnio realizujesz {{velocity}}/tydzień. Rozważ delegowanie lub odroczenie.",
+        "highOverdue": "{{rate}}% Twoich zadań z terminem jest realizowanych po czasie. Spróbuj dodać zapas czasowy.",
+        "slowDecisions": "Średni czas decyzji to {{days}} dni. Szybsze decyzje mogą odblokować zespoły."
+      }
+    },
+    "aiOperator": {
+      "title": "AI Operator",
+      "subtitle": "Relacja, nawigacja, wykonanie i wartość w jednym cockpitcie",
+      "readiness": "gotowość operatora",
+      "stage": "Etap",
+      "relationship": "Relacja",
+      "daysSinceTouch": "dni od kontaktu",
+      "noTouchpoint": "Brak kontaktu",
+      "value": "Wartość",
+      "autonomy": "Autonomia",
+      "nextActions": "Następne najlepsze działania",
+      "open": "Otwórz",
+      "noActions": "Brak pilnych akcji operatora.",
+      "cadence": "Kadencja i workstreamy",
+      "executiveBrief": "Executive brief",
+      "noBrief": "Brak briefu.",
+      "sequence": "Sekwencja operatora",
+      "noPlan": "Brak planu operatora.",
+      "intervene": "Interweniuj",
+      "noSequence": "Plan sekwencji jeszcze nie został zbudowany.",
+      "nextMilestone": "Następny kamień milowy",
+      "none": "Brak",
+      "planBlockers": "Blokery planu",
+      "noBlockers": "Brak aktywnych blockerów planu.",
+      "programSummary": "Podsumowanie programu",
+      "suggestedInterventions": "Sugerowane interwencje",
+      "working": "Trwa...",
+      "propose": "Zaproponuj",
+      "noInterventions": "Brak nowych interwencji do zaproponowania.",
+      "approvalQueue": "Kolejka zatwierdzania",
+      "accept": "Akceptuj",
+      "reject": "Odrzuć",
+      "execute": "Wykonaj",
+      "noQueue": "Brak pozycji w kolejce zatwierdzania."
+    },
+    "operator": {
+      "proposed": "Interwencja operatora została zaproponowana.",
+      "proposeFailed": "Nie udało się zaproponować interwencji.",
+      "accepted": "Interwencja została zaakceptowana.",
+      "acceptFailed": "Nie udało się zaakceptować interwencji.",
+      "executed": "Interwencja została wykonana.",
+      "executeFailed": "Nie udało się wykonać interwencji.",
+      "rejected": "Interwencja została odrzucona.",
+      "rejectFailed": "Nie udało się odrzucić interwencji."
     }
   },
   "research": {
@@ -4693,24 +5406,10 @@
       "generateProjections": "Generuj prognozy"
     },
     "toast": {
-      "modelCreated": "Model utworzony",
-      "analysisCreated": "Analiza utworzona",
-      "budgetCreated": "Budżet utworzony",
-      "valuationCreated": "Wycena utworzona",
-      "createFailed": "Nie udało się utworzyć",
-      "analysisApproved": "Analiza zatwierdzona",
-      "budgetApproved": "Budżet zatwierdzony",
-      "valuationApproved": "Wycena zatwierdzona",
-      "approveFailed": "Nie udało się zatwierdzić",
-      "reanalyzed": "Analiza przeliczona",
-      "reanalyzeFailed": "Nie udało się przeliczyć",
-      "projected": "Prognozy wygenerowane",
-      "projectionFailed": "Nie udało się wygenerować",
-      "computed": "Prognoza przeliczona",
-      "computeFailed": "Nie udało się obliczyć",
-      "valuationComputed": "Wycena obliczona",
-      "pptxExported": "PPTX wygenerowany",
-      "exportFailed": "Nie udało się wyeksportować"
+      "deleted": "Usunięto",
+      "deleteFailed": "Nie udało się usunąć",
+      "duplicated": "Zduplikowano",
+      "duplicateFailed": "Nie udało się zduplikować"
     },
     "prediction": {
       "budget": "Budżet",
@@ -4751,12 +5450,6 @@
       "sensitivity": "Analiza wrażliwości",
       "advisory": "Doradztwo"
     },
-    "toast": {
-      "deleted": "Usunięto",
-      "deleteFailed": "Nie udało się usunąć",
-      "duplicated": "Zduplikowano",
-      "duplicateFailed": "Nie udało się zduplikować"
-    },
     "budget": {
       "valuate": "Wycen budżet",
       "linkedInitiatives": "Powiązane inicjatywy",
@@ -4785,403 +5478,6 @@
       "importLines": "Importuj pozycje",
       "docImported": "Zaimportowano pozycje budżetowe",
       "confirmWithAI": "Potwierdź z AI"
-    }
-  },
-  "presentations": {
-    "wizard": {
-      "title": "Generator prezentacji",
-      "titleRequired": "Podaj tytuł",
-      "outlineFailed": "Nie udało się wygenerować konspektu",
-      "generationFailed": "Generowanie nie powiodło się",
-      "downloadFailed": "Pobieranie nie powiodło się",
-      "presentationMode": "Tryb prezentacji",
-      "communicationRegister": "Rejestr komunikacji",
-      "contentDepth": "Głębokość treści",
-      "imageStylePreset": "Styl obrazów",
-      "imageSource": "Źródło obrazów",
-      "cardSize": "Rozmiar karty",
-      "colorSet": "Paleta kolorów",
-      "brandKit": "Kit marki",
-      "visualsSection": "Wizualizacje i branding",
-      "visualsSectionDesc": "Kontroluj styl obrazów, paletę kolorów i wymiary kart.",
-      "wordsPerSlide": "Słów/slajd",
-      "typicalSlides": "Slajdy",
-      "animations": "Animacje",
-      "showAdvanced": "Opcje zaawansowane",
-      "additionalInstructions": "Dodatkowe instrukcje dla AI",
-      "additionalInstructionsPlaceholder": "np. Skup się na metrykach finansowych, użyj ciemnych teł...",
-      "modes": {
-        "show": "Pokaz",
-        "showDesc": "Narracyjna prezentacja na żywo. Duże wizualizacje, minimum tekstu.",
-        "document": "Dokument",
-        "documentDesc": "Samodzielny materiał konsultingowy. Gęsta treść, minimalne obrazy.",
-        "briefing": "Briefing",
-        "briefingDesc": "Szybki update zarządczy. Kluczowe metryki i zmiany statusów.",
-        "workshop": "Warsztat",
-        "workshopDesc": "Materiał warsztatowy z frameworkami i elementami interaktywnymi."
-      },
-      "registers": {
-        "executive": "Zarządczy",
-        "executiveDesc": "Decyzyjny, zwięzły, framing 'so what'",
-        "professional": "Profesjonalny",
-        "professionalDesc": "Biznesowo-neutralny, kanoniczny domyślny",
-        "technical": "Techniczny",
-        "technicalDesc": "Analityczny, precyzyjny, więcej detali",
-        "narrative": "Narracyjny",
-        "narrativeDesc": "Styl storytelling, najlepszy dla trybu Pokaz"
-      },
-      "imageStyles": {
-        "corporatePhotography": "Foto korporacyjne",
-        "corporatePhotographyDesc": "Profesjonalne zdjęcia ludzi, biur, produktów",
-        "abstractGeometric": "Abstrakcyjne",
-        "abstractGeometricDesc": "Gradienty, kształty, wzory",
-        "flatIllustration": "Ilustracje",
-        "flatIllustrationDesc": "Nowoczesne ilustracje wektorowe",
-        "dataFocused": "Dane",
-        "dataFocusedDesc": "Tylko wykresy i diagramy, bez obrazów dekoracyjnych",
-        "industryRealistic": "Branżowe",
-        "industryRealisticDesc": "Realistyczne obrazy branżowe",
-        "minimalNoImages": "Minimalne",
-        "minimalNoImagesDesc": "Tylko typografia i kolor"
-      },
-      "imageSources": {
-        "smart": "Inteligentne (auto)",
-        "orgLibrary": "Biblioteka organizacji",
-        "aiOnly": "Generowane AI",
-        "none": "Bez obrazów",
-        "manual": "Tylko ręcznie"
-      },
-      "contentDepth": {
-        "minimal": "Minimalna",
-        "minimalDesc": "Tylko nagłówki i kluczowe liczby",
-        "concise": "Zwięzła",
-        "conciseDesc": "Krótkie akapity z kluczowymi punktami",
-        "detailed": "Szczegółowa",
-        "detailedDesc": "Pełna analiza z danymi wspierającymi",
-        "extensive": "Rozbudowana",
-        "extensiveDesc": "Kompleksowe głębokie zagłębienie"
-      }
-    },
-    "steps": {
-      "sources": "Źródła",
-      "setup": "Konfiguracja",
-      "outline": "Konspekt",
-      "result": "Wynik"
-    },
-    "sources": {
-      "title": "Wybierz źródła danych",
-      "subtitle": "Wybierz artefakty z platformy do uwzględnienia w decku.",
-      "initiative": "Inicjatywy",
-      "note": "Notatki",
-      "report": "Raporty",
-      "financial_analysis": "Analiza finansowa",
-      "tool_session": "Sesje narzędzi",
-      "workspace": "Przestrzenie robocze",
-      "insight": "Spostrzeżenia",
-      "initiative_portfolio": "Portfel inicjatyw",
-      "execution_status": "Status realizacji",
-      "kpi_roi": "KPI i ROI",
-      "raid": "Ryzyka i problemy",
-      "assessment": "Wyniki oceny",
-      "valuation": "Wycena przedsiębiorstwa"
-    },
-    "setup": {
-      "title": "Skonfiguruj swój deck",
-      "subtitle": "Ustaw tryb, odbiorców, wizualizacje i styl.",
-      "deckTitle": "Tytuł decka",
-      "titlePlaceholder": "np. Steering Committee Update — Q1 2026",
-      "creationPath": "Ścieżka tworzenia",
-      "aiGenerates": "AI generuje",
-      "aiGeneratesDesc": "AI zaproponuje strukturę z Twoich źródeł",
-      "template": "Szablon (opcjonalnie)",
-      "customDeck": "Własny deck",
-      "customDeckDesc": "AI generuje konspekt ze źródeł",
-      "audience": "Odbiorcy",
-      "goal": "Cel",
-      "language": "Język",
-      "theme": "Motyw",
-      "confidentiality": "Poufność",
-      "generateOutline": "Generuj konspekt",
-      "visuals": {
-        "title": "Wizualizacje (obrazy AI)",
-        "desc": "Wizualizacje Gamma-like: okładka + subtelne tekstury. Najlepiej w trybie Jakość.",
-        "priority": "Priorytet wizualny",
-        "quality": "Jakość",
-        "cost": "Koszt",
-        "density": "Gęstość obrazów",
-        "densityLow": "Niska",
-        "densityMedium": "Średnia",
-        "densityHigh": "Wysoka"
-      }
-    },
-    "audiences": {
-      "sponsor": "Sponsor",
-      "executive": "Zarząd",
-      "board": "Rada nadzorcza",
-      "project_team": "Zespół projektowy",
-      "client": "Klient",
-      "investor": "Inwestor / VC",
-      "internal": "Zespół wewnętrzny",
-      "educate": "Edukuj"
-    },
-    "goals": {
-      "inform": "Informuj",
-      "decide": "Decyduj",
-      "sell": "Sprzedaj",
-      "align": "Alignuj",
-      "educate": "Edukuj"
-    },
-    "themes": {
-      "corporate": "Korporacyjny",
-      "minimal": "Minimalistyczny",
-      "modern": "Nowoczesny"
-    },
-    "confidentialities": {
-      "confidential": "Poufny",
-      "internal": "Wewnętrzny",
-      "public": "Publiczny"
-    },
-    "outline": {
-      "title": "Konspekt decka",
-      "slides": "slajdów",
-      "header": "AI zaproponowało {{count}} slajdów. Przeciągnij by zmienić kolejność. Kliknij by edytować.",
-      "reorder": "Przeciągnij by zmienić kolejność, przełącz by włączyć/wyłączyć",
-      "addSlide": "Dodaj slajd",
-      "generate": "Generuj deck",
-      "contentHintPlaceholder": "Wskazówka: opisz co ten slajd powinien zawierać...",
-      "aiRecommends": "AI rekomenduje dodanie:",
-      "validation": {
-        "minSlides": "Minimum 2 slajdy wymagane",
-        "maxSlides": "Przekroczono maksimum 30 slajdów",
-        "tooMany": "Rozważ podzielenie na dwie prezentacje (>20 slajdów)",
-        "noCover": "Brak slajdu okładkowego"
-      },
-      "suggestions": {
-        "addRisk": "Przegląd ryzyk",
-        "addKpi": "Dashboard KPI",
-        "addNextSteps": "Następne kroki",
-        "addThankYou": "Dziękuję"
-      }
-    },
-    "generating": {
-      "title": "Generowanie decka",
-      "subtitle": "Tworzenie slajdów klasy konsultingowej z walidacją jakości. To może chwilę potrwać..."
-    },
-    "result": {
-      "ready": "Twój deck jest gotowy!",
-      "slidesGenerated": "slajdów wygenerowanych pomyślnie",
-      "warnings": "Ostrzeżenia jakości",
-      "downloadPptx": "Pobierz PPTX",
-      "editOutline": "Edytuj i regeneruj",
-      "openBuilder": "Otwórz Deck Builder"
-    },
-    "templates": {
-      "systemTemplates": "Szablony systemowe",
-      "orgTemplates": "Szablony organizacji",
-      "viewOutline": "Zobacz konspekt",
-      "use": "Użyj",
-      "clone": "Sklonuj",
-      "cloned": "Szablon sklonowany do Twojej organizacji",
-      "cloneFailed": "Nie udało się sklonować"
-    },
-    "brandKit": {
-      "title": "Kit marki",
-      "subtitle": "Skonfiguruj branding organizacji dla prezentacji i raportów.",
-      "colors": "Kolory",
-      "primary": "Główny",
-      "secondary": "Drugorzędny",
-      "accent": "Akcent",
-      "fonts": "Czcionki",
-      "titleFont": "Czcionka tytułu",
-      "bodyFont": "Czcionka tekstu",
-      "headerFooter": "Nagłówek i stopka",
-      "headerText": "Tekst nagłówka",
-      "footerText": "Tekst stopki",
-      "pageNumbers": "Numeracja stron",
-      "confidentialityBanner": "Baner poufności",
-      "defaultConfidentiality": "Domyślna poufność",
-      "disclaimer": "Tekst zastrzeżeń",
-      "disclaimerPlaceholder": "Opcjonalne zastrzeżenie prawne dla decków finansowych/wycenowych",
-      "saved": "Kit marki zapisany",
-      "saveFailed": "Nie udało się zapisać"
-    },
-    "builder": {
-      "title": "Kreator decka",
-      "exit": "Wróć do Prezentacji",
-      "untitled": "Deck bez tytułu",
-      "slideSorter": "Sortowanie slajdów",
-      "cardView": "Karty",
-      "listView": "Lista",
-      "addBlank": "Pusty slajd",
-      "addAi": "AI generuje",
-      "addFromTemplate": "Z szablonu",
-      "topBar": {
-        "theme": "Motyw",
-        "share": "Udostępnij",
-        "agent": "Agent",
-        "present": "Prezentuj",
-        "undo": "Cofnij",
-        "redo": "Ponów"
-      },
-      "bottomBar": {
-        "card": "Karta",
-        "of": "z",
-        "quickEdits": "Szybkie edycje",
-        "notes": "Notatki"
-      },
-      "toolbar": {
-        "search": "Szukaj",
-        "basicBlocks": "Bloki podstawowe",
-        "images": "Obrazy",
-        "smartLayouts": "Inteligentne układy",
-        "diagrams": "Diagramy",
-        "chartsData": "Wykresy i dane",
-        "media": "Media",
-        "artifacts": "Artefakty",
-        "aiEdit": "Edycja AI"
-      },
-      "blocks": {
-        "heading": "Nagłówek",
-        "paragraph": "Akapit",
-        "bulletList": "Lista punktowana",
-        "numberedList": "Lista numerowana",
-        "table": "Tabela",
-        "chart": "Wykres",
-        "image": "Obraz",
-        "kpiWidget": "Widget KPI",
-        "metricStrip": "Pasek metryk",
-        "smartLayout": "Inteligentny układ",
-        "smartDiagram": "Inteligentny diagram",
-        "callout": "Wyróżnienie",
-        "timeline": "Oś czasu",
-        "artifactEmbed": "Artefakt",
-        "divider": "Separator"
-      },
-      "editCard": {
-        "title": "Edytuj tę kartę",
-        "prompt": "Jak chcesz edytować tę kartę?",
-        "improveWriting": "Popraw styl",
-        "fixSpelling": "Popraw pisownię i gramatykę",
-        "translate": "Przetłumacz",
-        "makeLonger": "Wydłuż",
-        "makeShorter": "Skróć",
-        "simplify": "Uprość język",
-        "moreSpecific": "Bardziej konkretnie",
-        "moreVisual": "Dodaj wizualizacje",
-        "addImage": "Dodaj obraz",
-        "addChart": "Dodaj wykres",
-        "swapOrgPhoto": "Użyj zdjęcia organizacji",
-        "regenerateImages": "Regeneruj wszystkie obrazy",
-        "updateData": "Zaktualizuj dane ze źródła",
-        "changeChartType": "Zmień typ wykresu",
-        "addKpi": "Dodaj widget KPI",
-        "tryNewLayout": "Spróbuj nowego układu"
-      },
-      "present": {
-        "inTab": "W tej zakładce",
-        "fullScreen": "Pełny ekran",
-        "presenterView": "Widok prezentera",
-        "shareFollow": "Udostępnij link do śledzenia"
-      },
-      "share": {
-        "collaborate": "Współpracuj",
-        "shareLink": "Udostępnij link",
-        "export": "Eksportuj",
-        "embed": "Osadź",
-        "analytics": "Analityka",
-        "inviteByEmail": "Zaproś emailem",
-        "publicLink": "Link publiczny",
-        "copyLink": "Kopiuj link",
-        "anyoneCanView": "Każdy z linkiem może oglądać",
-        "anyoneCanComment": "Każdy z linkiem może komentować"
-      },
-      "export": {
-        "pdf": "PDF",
-        "pptx": "PowerPoint (PPTX)",
-        "png": "PNG (per slajd)",
-        "html": "Interaktywny HTML5",
-        "allCards": "Wszystkie karty",
-        "selectedRange": "Wybrany zakres",
-        "fontGuidance": "Aby zapewnić poprawne wyświetlanie, zainstaluj te czcionki:",
-        "staticNote": "Animowane elementy będą statyczne w PDF i PowerPoint",
-        "htmlNote": "Samodzielna interaktywna strona z animacjami i nawigacją"
-      },
-      "commandPalette": {
-        "placeholder": "Wpisz komendę lub zapytaj AI...",
-        "categories": {
-          "insert": "Wstaw",
-          "edit": "Edytuj",
-          "theme": "Motyw",
-          "export": "Eksport i prezentacja",
-          "navigate": "Nawigacja",
-          "ai": "Akcje AI"
-        }
-      },
-      "mediaLibrary": {
-        "title": "Biblioteka mediów",
-        "search": "Szukaj po tagu lub nazwie...",
-        "empty": "Nie znaleziono obrazów",
-        "upload": "Prześlij obrazy",
-        "uploadFirst": "Prześlij swój pierwszy obraz",
-        "categories": {
-          "all": "Wszystkie",
-          "photo": "Zdjęcia",
-          "illustration": "Ilustracje",
-          "logo": "Logo",
-          "icon": "Ikony"
-        }
-      },
-      "versionHistory": {
-        "title": "Historia wersji",
-        "unsavedChanges": "Niezapisane zmiany",
-        "allSaved": "Wszystkie zmiany zapisane",
-        "saveCheckpoint": "Zapisz nazwaną wersję",
-        "restore": "Przywróć",
-        "confirmRestore": "Kliknij ponownie aby potwierdzić przywrócenie",
-        "auto": "Auto-zapis",
-        "manual": "Ręczny",
-        "checkpoint": "Punkt kontrolny"
-      },
-      "animations": {
-        "enabled": "Animacje włączone",
-        "disabled": "Animacje wyłączone",
-        "toggle": "Przełącz animacje"
-      },
-      "dataRefresh": {
-        "refresh": "Odśwież dane",
-        "refreshAll": "Odśwież wszystkie dane",
-        "outdated": "Dane mogą być nieaktualne",
-        "refreshing": "Odświeżanie...",
-        "upToDate": "Aktualne"
-      },
-      "collaboration": {
-        "onlyYou": "Tylko Ty",
-        "connected": "Połączono",
-        "disconnected": "Rozłączono",
-        "connecting": "Łączenie..."
-      },
-      "sourceTraceability": {
-        "dataFrom": "Dane z",
-        "clickToOpen": "Kliknij aby otworzyć źródło"
-      }
-    },
-    "agent": {
-      "title": "Agent AI",
-      "greeting": "Cześć! Wiem, że ten deck powstał z {{sources}}. Jak mogę pomóc?",
-      "placeholder": "Poproś mnie o edycję, tworzenie lub stylizację",
-      "suggestions": {
-        "addSummary": "Dodaj streszczenie zarządcze",
-        "makeConcise": "Skróć wszystkie slajdy",
-        "addNotes": "Dodaj notatki prelegenta",
-        "updateData": "Zaktualizuj dane ze źródeł",
-        "improveVisuals": "Popraw spójność wizualną"
-      },
-      "proactive": {
-        "sourceUpdated": "Źródło '{{name}}' zostało zaktualizowane. Odświeżyć dane?",
-        "densSlide": "Slajd {{number}} ma bardzo gęstą treść. Podzielić go?",
-        "noNotes": "Nie masz notatek prelegenta. Wygenerować je?",
-        "betterChart": "Wykres na slajdzie {{number}} lepiej wyglądałby jako {{type}}. Zmienić?"
-      }
     }
   },
   "portfolio": {
@@ -5633,141 +5929,6 @@
       "expand": "Rozwiń sidebar",
       "groupModules": "MODUŁY",
       "groupAdmin": "ADMINISTRACJA"
-    }
-  },
-  "superadmin": {
-    "confirm": {
-      "title": "Potwierdź akcję",
-      "description": "Ta akcja zostanie zarejestrowana w dzienniku audytu.",
-      "reasonLabel": "Powód wykonania tej akcji",
-      "reasonPlaceholder": "np. Zgłoszenie klienta, incydent bezpieczeństwa, zgodność...",
-      "reasonRequired": "Podaj powód (min. 3 znaki).",
-      "cancel": "Anuluj",
-      "proceed": "Potwierdź i wykonaj",
-      "auditNotice": "Ta akcja zostanie zapisana w dzienniku audytu wraz z Twoją tożsamością i znacznikiem czasu."
-    },
-    "impersonation": {
-      "banner": "Tryb podszywania",
-      "exit": "Zakończ podszywanie",
-      "title": "Podszyj się pod użytkownika",
-      "description": "Zostaniesz zalogowany jako ten użytkownik. Wszystkie Twoje działania będą rejestrowane w dzienniku audytu.",
-      "started": "Podszywanie rozpoczęte",
-      "ended": "Podszywanie zakończone"
-    },
-    "testSupport": {
-      "bootstrapLabel": "Utwórz tenant testowy",
-      "cleanupLabel": "Wyczyść dane testowe",
-      "gatingNotice": "Dostępne tylko w środowisku testowym z odpowiednimi poświadczeniami."
-    },
-    "playbookTemplates": {
-      "title": "Szablony Playbooków",
-      "subtitle": "Twórz i zarządzaj szablonami playbooków AI",
-      "newTemplate": "Nowy szablon",
-      "importJson": "Importuj JSON",
-      "searchPlaceholder": "Szukaj szablonów...",
-      "filters": {
-        "all": "Wszystkie",
-        "drafts": "Szkice",
-        "published": "Opublikowane",
-        "deprecated": "Wycofane"
-      },
-      "empty": {
-        "title": "Nie znaleziono szablonów",
-        "description": "Zacznij od stworzenia pierwszego szablonu playbooka.",
-        "cta": "Utwórz szablon"
-      },
-      "table": {
-        "template": "Szablon",
-        "trigger": "Wyzwalacz",
-        "version": "Wersja",
-        "status": "Status",
-        "actions": "Akcje"
-      },
-      "modal": {
-        "title": "Nowy szablon playbooka",
-        "titleField": "Tytuł",
-        "keyField": "Klucz",
-        "triggerField": "Sygnał wyzwalacza",
-        "descriptionField": "Opis",
-        "cancel": "Anuluj",
-        "create": "Utwórz szablon",
-        "creating": "Tworzenie..."
-      },
-      "actions": {
-        "edit": "Edytuj",
-        "view": "Podgląd",
-        "validate": "Waliduj",
-        "publish": "Opublikuj",
-        "duplicate": "Duplikuj",
-        "export": "Eksportuj JSON",
-        "deprecate": "Wycofaj"
-      },
-      "toast": {
-        "loadFailed": "Nie udało się załadować szablonów",
-        "valid": "Szablon jest poprawny ✓",
-        "validationFailed": "Walidacja nie powiodła się",
-        "published": "Szablon opublikowany pomyślnie",
-        "publishFailed": "Nie udało się opublikować szablonu",
-        "deprecated": "Szablon wycofany",
-        "deprecateFailed": "Nie udało się wycofać szablonu",
-        "exported": "Szablon wyeksportowany",
-        "exportFailed": "Eksport nie powiódł się",
-        "created": "Szablon utworzony",
-        "createFailed": "Nie udało się utworzyć szablonu",
-        "duplicated": "Szablon zduplikowany jako szkic",
-        "imported": "Szablon zaimportowany",
-        "importInvalid": "Nieprawidłowy JSON szablonu",
-        "fieldsRequired": "Tytuł, Klucz i Sygnał wyzwalacza są wymagane"
-      }
-    },
-    "emailTemplates": {
-      "title": "Szablony e-mail",
-      "subtitle": "Zarządzaj szablonami e-mail do powiadomień i komunikacji",
-      "newTemplate": "Nowy szablon",
-      "searchPlaceholder": "Szukaj szablonów...",
-      "filters": {
-        "allStatuses": "Wszystkie statusy",
-        "allCategories": "Wszystkie kategorie",
-        "filtersLabel": "Filtry"
-      },
-      "status": {
-        "published": "Opublikowany",
-        "draft": "Szkic",
-        "deprecated": "Wycofany"
-      },
-      "empty": {
-        "title": "Nie znaleziono szablonów",
-        "withFilters": "Spróbuj zmienić filtry",
-        "noFilters": "Zacznij od stworzenia pierwszego szablonu e-mail",
-        "cta": "Utwórz szablon"
-      },
-      "loading": "Ładowanie szablonów...",
-      "table": {
-        "template": "Szablon",
-        "category": "Kategoria",
-        "status": "Status",
-        "version": "Wersja",
-        "usage": "Użycie",
-        "actions": "Akcje"
-      },
-      "stats": {
-        "total": "Wszystkie szablony",
-        "published": "Opublikowane",
-        "drafts": "Szkice",
-        "totalSends": "Wysłane łącznie"
-      },
-      "actions": {
-        "edit": "Edytuj",
-        "clone": "Klonuj",
-        "preview": "Podgląd",
-        "publish": "Opublikuj",
-        "deprecate": "Wycofaj",
-        "delete": "Usuń"
-      },
-      "toast": {
-        "loadFailed": "Nie udało się załadować szablonów",
-        "confirmDelete": "Na pewno chcesz usunąć ten szablon?"
-      }
     }
   },
   "modelRegistry": {
@@ -6610,41 +6771,97 @@
       "trial": {
         "name": "Trial",
         "description": "14 dni na sprawdzenie workflow przed decyzją.",
-        "features": ["1 sandbox workspace", "2 aktywne projekty", "30 kredytów AI łącznie", "Podstawowy eksport raportów", "Wsparcie email"],
+        "features": [
+          "1 sandbox workspace",
+          "2 aktywne projekty",
+          "30 kredytów AI łącznie",
+          "Podstawowy eksport raportów",
+          "Wsparcie email"
+        ],
         "cta": "Rozpocznij trial"
       },
       "user": {
         "name": "User",
         "description": "Dla samodzielnych konsultantów i operatorów potrzebujących stałego miesięcznego użycia.",
-        "features": ["1 stanowisko", "5 aktywnych projektów", "150 kredytów AI / miesiąc", "Kreator scenariuszy i szkice raportów", "10 eksportów / miesiąc", "Wsparcie email"],
+        "features": [
+          "1 stanowisko",
+          "5 aktywnych projektów",
+          "150 kredytów AI / miesiąc",
+          "Kreator scenariuszy i szkice raportów",
+          "10 eksportów / miesiąc",
+          "Wsparcie email"
+        ],
         "cta": "Wybierz User"
       },
       "manager": {
         "name": "Manager",
         "description": "Dla liderów zespołów prowadzących wiele inicjatyw ze wspólną widocznością.",
-        "features": ["3 stanowiska w zestawie", "15 aktywnych projektów", "500 kredytów AI / miesiąc", "Wspólny workspace i zatwierdzenia", "Eksporty gotowe do prezentacji", "Priorytetowe wsparcie"],
+        "features": [
+          "3 stanowiska w zestawie",
+          "15 aktywnych projektów",
+          "500 kredytów AI / miesiąc",
+          "Wspólny workspace i zatwierdzenia",
+          "Eksporty gotowe do prezentacji",
+          "Priorytetowe wsparcie"
+        ],
         "cta": "Wybierz Manager"
       },
       "enterprise": {
         "name": "Enterprise",
         "description": "Dla firm konsultingowych i zespołów enterprise z wymaganiami bezpieczeństwa i wdrożeniowymi.",
-        "features": ["Własne stanowiska i pakiety użycia", "SSO / SAML i zaawansowane uprawnienia", "Dostęp API i MCP", "Prywatny routing modeli lub BYOK", "Przegląd bezpieczeństwa i SLA", "Dedykowany onboarding"],
+        "features": [
+          "Własne stanowiska i pakiety użycia",
+          "SSO / SAML i zaawansowane uprawnienia",
+          "Dostęp API i MCP",
+          "Prywatny routing modeli lub BYOK",
+          "Przegląd bezpieczeństwa i SLA",
+          "Dedykowany onboarding"
+        ],
         "cta": "Skontaktuj się"
       }
     }
   },
   "pages": {
     "public": {
-      "nav": { "docs": "Dokumentacja", "signIn": "Zaloguj się" },
-      "hero": { "title": "Decyzje strategiczne są zbyt złożone na intuicję i zbyt ważne na przypadek." },
-      "cards": {
-        "demo": { "meta": "Natychmiastowy dostęp", "title": "Odkryj demo", "description": "Doświadcz żywego środowiska z fikcyjnymi, realistycznymi danymi." },
-        "trial": { "meta": "Główna ścieżka", "title": "Rozpocznij bezpłatny trial", "description": "Użyj Consultify na danych Twojej organizacji i zbuduj mapę transformacji." },
-        "tour": { "meta": "Tura produktowa", "title": "Jak to działa", "description": "Prowadzi dr Piotr Wiśniewski" },
-        "tools": { "meta": "Hub edukacyjny", "title": "Poznaj nasze narzędzia", "description": "Oglądaj dema i masterclassy." },
-        "partner": { "meta": "Powracający użytkownicy", "title": "Zostań partnerem", "description": "Dołącz do ekosystemu." }
+      "nav": {
+        "docs": "Dokumentacja",
+        "signIn": "Zaloguj się"
       },
-      "tagline": { "line1": "Konsulting AI.", "line2": "Bez slajdów.", "line3": "Tylko decyzje." },
+      "hero": {
+        "title": "Decyzje strategiczne są zbyt złożone na intuicję i zbyt ważne na przypadek."
+      },
+      "cards": {
+        "demo": {
+          "meta": "Natychmiastowy dostęp",
+          "title": "Odkryj demo",
+          "description": "Doświadcz żywego środowiska z fikcyjnymi, realistycznymi danymi."
+        },
+        "trial": {
+          "meta": "Główna ścieżka",
+          "title": "Rozpocznij bezpłatny trial",
+          "description": "Użyj Consultify na danych Twojej organizacji i zbuduj mapę transformacji."
+        },
+        "tour": {
+          "meta": "Tura produktowa",
+          "title": "Jak to działa",
+          "description": "Prowadzi dr Piotr Wiśniewski"
+        },
+        "tools": {
+          "meta": "Hub edukacyjny",
+          "title": "Poznaj nasze narzędzia",
+          "description": "Oglądaj dema i masterclassy."
+        },
+        "partner": {
+          "meta": "Powracający użytkownicy",
+          "title": "Zostań partnerem",
+          "description": "Dołącz do ekosystemu."
+        }
+      },
+      "tagline": {
+        "line1": "Konsulting AI.",
+        "line2": "Bez slajdów.",
+        "line3": "Tylko decyzje."
+      },
       "cta": {
         "noPressure": "Brak pośpiechu. Brak presji sprzedaży.",
         "justSubstance": "Tylko merytoryka.",
@@ -6674,10 +6891,22 @@
         "heading": "Co zyskujesz jako partner",
         "sub": "Współpraca z Consultify otwiera nowe możliwości rozwoju Twojej praktyki doradczej.",
         "items": {
-          "platform": { "title": "Platforma PMO + AI", "description": "Dostęp do zaawansowanej platformy łączącej standardy PMO z możliwościami sztucznej inteligencji." },
-          "certifications": { "title": "Certyfikacje PMO", "description": "Szkolenia ISO 21500, PMBOK 7, PRINCE2 oraz specjalistyczne assessmenty (DRD, SIRI, ADMA)." },
-          "billing": { "title": "Portal rozliczeń", "description": "Transparentny system zarządzania licencjami, fakturami i rabatami partnerskimi." },
-          "materials": { "title": "Materiały i szablony", "description": "Dostęp do materiałów marketingowych, szablonów PMO, case studies i dokumentacji." }
+          "platform": {
+            "title": "Platforma PMO + AI",
+            "description": "Dostęp do zaawansowanej platformy łączącej standardy PMO z możliwościami sztucznej inteligencji."
+          },
+          "certifications": {
+            "title": "Certyfikacje PMO",
+            "description": "Szkolenia ISO 21500, PMBOK 7, PRINCE2 oraz specjalistyczne assessmenty (DRD, SIRI, ADMA)."
+          },
+          "billing": {
+            "title": "Portal rozliczeń",
+            "description": "Transparentny system zarządzania licencjami, fakturami i rabatami partnerskimi."
+          },
+          "materials": {
+            "title": "Materiały i szablony",
+            "description": "Dostęp do materiałów marketingowych, szablonów PMO, case studies i dokumentacji."
+          }
         }
       },
       "tiers": {
@@ -6689,20 +6918,44 @@
           "registered": {
             "title": "Registered",
             "description": "Dla rozpoczynających współpracę",
-            "requirements": ["Rejestracja", "Podstawowe szkolenie"],
-            "benefits": ["10% rabat", "Dostęp do materiałów", "Wsparcie email"]
+            "requirements": [
+              "Rejestracja",
+              "Podstawowe szkolenie"
+            ],
+            "benefits": [
+              "10% rabat",
+              "Dostęp do materiałów",
+              "Wsparcie email"
+            ]
           },
           "certified": {
             "title": "Certified",
             "description": "Dla doświadczonych konsultantów",
-            "requirements": ["Egzamin certyfikacyjny", "Min. 3 projekty"],
-            "benefits": ["12% rabat", "Logo partnera", "Dedykowane wsparcie", "Listing w katalogu"]
+            "requirements": [
+              "Egzamin certyfikacyjny",
+              "Min. 3 projekty"
+            ],
+            "benefits": [
+              "12% rabat",
+              "Logo partnera",
+              "Dedykowane wsparcie",
+              "Listing w katalogu"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "Dla partnerów strategicznych",
-            "requirements": ["10+ projektów", "Case study", "Referencje"],
-            "benefits": ["14% rabat", "Dedykowany opiekun", "Co-marketing", "Wczesny dostęp do nowości"]
+            "requirements": [
+              "10+ projektów",
+              "Case study",
+              "Referencje"
+            ],
+            "benefits": [
+              "14% rabat",
+              "Dedykowany opiekun",
+              "Co-marketing",
+              "Wczesny dostęp do nowości"
+            ]
           }
         }
       },
@@ -6710,10 +6963,22 @@
         "heading": "Jak dołączyć?",
         "sub": "Prosty proces w 4 krokach do rozpoczęcia współpracy.",
         "steps": {
-          "apply": { "title": "Aplikuj", "description": "Wypełnij formularz partnerski" },
-          "meet": { "title": "Poznajmy się", "description": "Rozmowa o potrzebach i celach" },
-          "onboarding": { "title": "Onboarding", "description": "Szkolenie i dostęp do platformy" },
-          "grow": { "title": "Rozwijaj się", "description": "Wspólne projekty i rozwój" }
+          "apply": {
+            "title": "Aplikuj",
+            "description": "Wypełnij formularz partnerski"
+          },
+          "meet": {
+            "title": "Poznajmy się",
+            "description": "Rozmowa o potrzebach i celach"
+          },
+          "onboarding": {
+            "title": "Onboarding",
+            "description": "Szkolenie i dostęp do platformy"
+          },
+          "grow": {
+            "title": "Rozwijaj się",
+            "description": "Wspólne projekty i rozwój"
+          }
         }
       },
       "cta": {

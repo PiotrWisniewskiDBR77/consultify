@@ -363,7 +363,7 @@ router.post(
             if (!perm.allowed) {
               return res
                 .status(403)
-                .json({ error: 'No permission to create thread in this team project' });
+                .json({ error: 'No permission to create thread in this team project', reason: perm.reason, role: perm.role });
             }
           }
         } catch {
@@ -463,9 +463,31 @@ router.get(
         [id]
       );
 
+      // Include attachment pointers per message (L4 bridge)
+      let attachments: any[] = [];
+      try {
+        attachments = (await dbAll(
+          `SELECT id, message_id, kind, target_id, target_url, display_name, mime, size_bytes, created_at
+           FROM conversation_message_attachments WHERE conversation_id = ? ORDER BY created_at ASC`,
+          [id]
+        )) || [];
+      } catch { /* table may not exist */ }
+
+      const attachmentsByMessage: Record<string, any[]> = {};
+      for (const att of attachments) {
+        const mid = (att as any).message_id;
+        if (!attachmentsByMessage[mid]) attachmentsByMessage[mid] = [];
+        attachmentsByMessage[mid].push(att);
+      }
+
+      const messagesWithAttachments = (messages as any[]).map((m: any) => ({
+        ...m,
+        attachments: attachmentsByMessage[m.id] || [],
+      }));
+
       return res.json({
         ...conversation,
-        messages,
+        messages: messagesWithAttachments,
         _state: conversationState,
       });
     } catch (err: any) {
@@ -509,7 +531,7 @@ router.patch(
           { isCreator }
         );
         if (!perm.allowed) {
-          return res.status(403).json({ error: 'No permission to update this team conversation' });
+          return res.status(403).json({ error: 'No permission to update this team conversation', reason: perm.reason, role: perm.role });
         }
       }
 
@@ -618,7 +640,7 @@ router.delete(
           { isCreator }
         );
         if (!perm.allowed) {
-          return res.status(403).json({ error: 'No permission to delete this team conversation' });
+          return res.status(403).json({ error: 'No permission to delete this team conversation', reason: perm.reason, role: perm.role });
         }
       }
 
@@ -709,21 +731,30 @@ router.post(
         if (!perm.allowed) {
           return res
             .status(403)
-            .json({ error: 'No permission to add messages to this team conversation' });
+            .json({ error: 'No permission to add messages to this team conversation', reason: perm.reason, role: perm.role });
         }
       }
 
       const messageId = uuidv4();
       const now = new Date().toISOString();
-      // Set author_user_id for user messages (null for AI messages)
       const authorUserId = role === 'user' ? req.userId! : null;
+
+      // Resolve active session for this conversation (§2.3.1 session linkage)
+      let activeSessionId: string | null = null;
+      try {
+        const session = await dbGet(
+          `SELECT id FROM conversation_sessions WHERE conversation_id = ? AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1`,
+          [conversationId]
+        );
+        activeSessionId = (session as any)?.id || null;
+      } catch { /* session table may not exist */ }
 
       await dbRun(
         `
                 INSERT INTO conversation_messages (
                     id, conversation_id, role, content, message_type, 
-                    metadata, token_count, model_used, author_user_id, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    metadata, token_count, model_used, author_user_id, session_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           messageId,
@@ -735,9 +766,37 @@ router.post(
           tokenCount || null,
           modelUsed || null,
           authorUserId,
+          activeSessionId,
           now,
         ]
       );
+
+      // Auto-persist metadata.attachments to conversation_message_attachments (L4 bridge)
+      if (metadata && Array.isArray((metadata as any).attachments)) {
+        for (const att of (metadata as any).attachments) {
+          try {
+            const kind = att.kind || (att.sourceUrl ? 'link' : 'file');
+            await dbRun(
+              `INSERT INTO conversation_message_attachments
+               (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                uuidv4(),
+                messageId,
+                conversationId,
+                kind,
+                att.docId || att.targetId || null,
+                att.sourceUrl || att.targetUrl || null,
+                att.filename || att.displayName || 'attachment',
+                att.mimeType || att.mime || null,
+                att.size || att.sizeBytes || null,
+                att.provenancePointer || null,
+                now,
+              ]
+            );
+          } catch { /* attachment table may not exist; non-blocking */ }
+        }
+      }
 
       // Update conversation metadata (message_count, last_message_preview, last_message_at)
       await dbRun(
@@ -901,7 +960,7 @@ router.post(
           'add_message'
         );
         if (!perm.allowed) {
-          return res.status(403).json({ error: 'No permission to edit this team conversation' });
+          return res.status(403).json({ error: 'No permission to edit this team conversation', reason: perm.reason, role: perm.role });
         }
       }
 
@@ -1437,9 +1496,13 @@ router.get(
       // Exclude soft-deleted by default
       whereClause += ` AND c.deleted_at IS NULL`;
 
-      // Search in title, preview, and message content
-      whereClause += ` AND (c.title ILIKE ? OR c.last_message_preview ILIKE ? OR EXISTS (SELECT 1 FROM conversation_messages cm2 WHERE cm2.conversation_id = c.id AND cm2.content ILIKE ?))`;
-      params.push(searchPattern, searchPattern, searchPattern);
+      // FTS with ILIKE fallback: use tsvector search on conversations + message content
+      whereClause += ` AND (
+        (c.search_vector IS NOT NULL AND c.search_vector @@ plainto_tsquery('simple', ?))
+        OR EXISTS (SELECT 1 FROM conversation_messages cm2 WHERE cm2.conversation_id = c.id AND to_tsvector('simple', coalesce(cm2.content, '')) @@ plainto_tsquery('simple', ?))
+        OR c.title ILIKE ? OR c.last_message_preview ILIKE ?
+      )`;
+      params.push(query, query, searchPattern, searchPattern);
 
       // Filters
       if (folderId) {
@@ -1482,8 +1545,10 @@ router.get(
 
       const fromClause = `FROM conversations c LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id`;
 
-      // Boost: pinned first, then recency
-      const orderClause = `ORDER BY CASE WHEN c.starred = true THEN 0 ELSE 1 END, COALESCE(c.last_message_at, c.updated_at) DESC, c.id DESC`;
+      // Rank: FTS relevance (when available) > pinned > recency
+      // ts_rank is parameterized via the WHERE clause match; we add it as a tiebreaker
+      params.push(query); // param for ts_rank in ORDER BY
+      const orderClause = `ORDER BY CASE WHEN c.starred = true THEN 0 ELSE 1 END, CASE WHEN c.search_vector IS NOT NULL THEN ts_rank(c.search_vector, plainto_tsquery('simple', ?)) ELSE 0 END DESC, COALESCE(c.last_message_at, c.updated_at) DESC, c.id DESC`;
 
       const results = (await dbAll(
         `SELECT DISTINCT c.id, c.title, c.title_source, c.project_id, c.chat_project_id,

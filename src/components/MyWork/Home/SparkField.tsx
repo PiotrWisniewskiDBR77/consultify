@@ -17,8 +17,7 @@ const STAGE_STYLE: Record<string, string> = {
 };
 
 export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const payload = block.payload;
   const nudge = payload.nudge;
   const runtimeSummary = payload.runtimeSummary;
@@ -29,24 +28,16 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
         {runtimeSummary ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <div className="rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-amber-100">
-              {isPolish
-                ? `Idee z taskami ${runtimeSummary.ideasWithTasks}`
-                : `Ideas with tasks ${runtimeSummary.ideasWithTasks}`}
+              {t('myWork.radar.ideasWithTasks', { count: runtimeSummary.ideasWithTasks })}
             </div>
             <div className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-cyan-100">
-              {isPolish
-                ? `Ostatnie notatki ${runtimeSummary.recentNotes}`
-                : `Recent notes ${runtimeSummary.recentNotes}`}
+              {t('myWork.radar.recentNotes', { count: runtimeSummary.recentNotes })}
             </div>
             <div className="rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-violet-100">
-              {isPolish
-                ? `Ostatnie outputy ${runtimeSummary.recentOutputs}`
-                : `Recent outputs ${runtimeSummary.recentOutputs}`}
+              {t('myWork.radar.recentOutputs', { count: runtimeSummary.recentOutputs })}
             </div>
             <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-emerald-100">
-              {isPolish
-                ? `Sygnały z organizacji ${runtimeSummary.orgSignals}`
-                : `Org signals ${runtimeSummary.orgSignals}`}
+              {t('myWork.radar.orgSignals', { count: runtimeSummary.orgSignals })}
             </div>
           </div>
         ) : null}
@@ -58,10 +49,8 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
                 packet: {
                   sourceBlock: 'sparkField',
                   intent: 'expand_idea',
-                  title: isPolish ? 'Rozwiń najmocniejszy pomysł' : 'Expand strongest idea',
-                  starterPrompt: isPolish
-                    ? `Rozwiń ten pomysł do formy initiative i wskaż pierwsze 3 kroki: ${nudge.text}`
-                    : `Expand this idea into an initiative and suggest the first 3 moves: ${nudge.text}`,
+                  title: t('myWork.radar.expandIdea'),
+                  starterPrompt: t('myWork.radar.expandIdeaPrompt', { text: nudge.text }),
                   entityType: 'idea',
                   entityId: nudge.ideaId,
                   contextData: {
@@ -83,7 +72,7 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
 
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
           {payload.ideas.map((idea) => (
-            <IdeaCard key={idea.id} item={idea} onAction={onAction} isPolish={isPolish} />
+            <IdeaCard key={idea.id} item={idea} onAction={onAction} />
           ))}
           <button
             onClick={() => onAction({ type: 'create', target: 'idea' })}
@@ -92,12 +81,8 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
             <div className="mb-2 rounded-lg bg-amber-500/10 p-3 text-amber-200">
               <Plus size={18} />
             </div>
-            <div className="text-sm font-semibold text-amber-50">
-              {isPolish ? 'Nowy pomysł' : 'New idea'}
-            </div>
-            <div className="mt-1 text-xs text-slate-300/65">
-              {isPolish ? 'Uruchom nową ścieżkę transformacji' : 'Start a new transformation track'}
-            </div>
+            <div className="text-sm font-semibold text-amber-50">{t('myWork.radar.newIdea')}</div>
+            <div className="mt-1 text-xs text-slate-300/65">{t('myWork.radar.newIdeaSubtitle')}</div>
           </button>
         </div>
 
@@ -110,7 +95,7 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
             >
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/40">
                 <FileText size={12} />
-                {isPolish ? 'Notatka' : 'Note'}
+                {t('myWork.radar.noteLabel')}
               </div>
               <div className="mt-2 text-base font-semibold text-white">{note.title}</div>
               <div className="mt-1 text-sm leading-7 text-slate-300/72">{note.snippet}</div>
@@ -126,30 +111,33 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
 const IdeaCard: React.FC<{
   item: SparkItem;
   onAction: (action: HomeScreenAction) => void;
-  isPolish: boolean;
-}> = ({ item, onAction, isPolish }) => (
-  <button
-    onClick={() => onAction({ type: 'open', target: 'idea', id: item.id })}
-    className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
-  >
-    <div className="flex items-center justify-between gap-3">
-      <span
-        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
-          STAGE_STYLE[item.stage || 'spark']
-        }`}
-      >
-        {item.stage || 'spark'}
-      </span>
-      <Lightbulb size={15} className="text-amber-200/70" />
-    </div>
-    <div className="mt-2 text-base font-semibold leading-snug text-white">{item.title}</div>
-    <div className="mt-1 text-xs leading-relaxed text-slate-300/80">{item.snippet}</div>
-    <div className="mt-3 flex items-center justify-between text-xs text-slate-400/70">
-      <span>{item.updatedAt}</span>
-      <span>
-        {item.nodeCount ?? 0} {isPolish ? 'węzłów' : 'nodes'}
-        {item.taskCount ? ` · ${item.taskCount} ${isPolish ? 'zadań' : 'tasks'}` : ''}
-      </span>
-    </div>
-  </button>
-);
+}> = ({ item, onAction }) => {
+  const { t } = useTranslation();
+  const stage = item.stage || 'spark';
+  return (
+    <button
+      onClick={() => onAction({ type: 'open', target: 'idea', id: item.id })}
+      className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-left transition hover:bg-white/[0.08]"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span
+          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
+            STAGE_STYLE[stage]
+          }`}
+        >
+          {t('myWork.radar.stages.' + stage, { defaultValue: stage })}
+        </span>
+        <Lightbulb size={15} className="text-amber-200/70" />
+      </div>
+      <div className="mt-2 text-base font-semibold leading-snug text-white">{item.title}</div>
+      <div className="mt-1 text-xs leading-relaxed text-slate-300/80">{item.snippet}</div>
+      <div className="mt-3 flex items-center justify-between text-xs text-slate-400/70">
+        <span>{item.updatedAt}</span>
+        <span>
+          {item.nodeCount ?? 0} {t('myWork.radar.nodes')}
+          {item.taskCount ? ` · ${item.taskCount} ${t('myWork.radar.tasks')}` : ''}
+        </span>
+      </div>
+    </button>
+  );
+};

@@ -2,7 +2,7 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { V8_INTERVIEW_READ_CONTRACT } from '../interview.routes.js';
+import { V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT, V8_INTERVIEW_INSIGHT_READ_CONTRACT, V8_INTERVIEW_READ_CONTRACT } from '../interview.routes.js';
 
 const mockListSessions = vi.fn();
 const mockListAcceptedSessions = vi.fn();
@@ -15,6 +15,12 @@ const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
 const mockSendBackAssignment = vi.fn();
 const mockApproveAssignment = vi.fn();
+
+const mockInsightList = vi.fn();
+const mockInsightGetById = vi.fn();
+const mockInsightCreate = vi.fn();
+const mockInsightRegenerate = vi.fn();
+const mockInsightDelete = vi.fn();
 
 vi.mock('../../../controllers/InterviewController.js', () => ({
   InterviewController: {
@@ -34,6 +40,50 @@ vi.mock('../../../services/InterviewAssignmentService.js', () => ({
   getMyAssignments: (...args: unknown[]) => mockGetMyAssignments(...args),
   getManagedAssignments: (...args: unknown[]) => mockGetManagedAssignments(...args),
   getOverdueAssignments: (...args: unknown[]) => mockGetOverdueAssignments(...args),
+}));
+
+vi.mock('../../../services/InterviewInsightService.js', () => ({
+  list: (...args: unknown[]) => mockInsightList(...args),
+  getById: (...args: unknown[]) => mockInsightGetById(...args),
+  create: (...args: unknown[]) => mockInsightCreate(...args),
+  regenerate: (...args: unknown[]) => mockInsightRegenerate(...args),
+  deleteInsight: (...args: unknown[]) => mockInsightDelete(...args),
+}));
+
+const mockQueryOne = vi.fn();
+const mockQueryAll = vi.fn();
+const mockQueryRun = vi.fn();
+
+vi.mock('../../../utils/queryHelpers.js', () => ({
+  queryOne: (...args: unknown[]) => mockQueryOne(...args),
+  queryAll: (...args: unknown[]) => mockQueryAll(...args),
+  queryRun: (...args: unknown[]) => mockQueryRun(...args),
+}));
+
+vi.mock('../../../utils/dbSchema.js', () => ({
+  getTableColumns: vi.fn().mockResolvedValue(new Set(['id'])),
+}));
+
+vi.mock('../../../services/organizationContext/OrganizationContextService.js', () => ({
+  default: { buildResolvedContext: vi.fn().mockResolvedValue({}) },
+}));
+
+vi.mock('../../../utils/Logger.js', () => ({
+  default: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
+const mockCommentGetContent = vi.fn();
+const mockCommentCreate = vi.fn();
+const mockCommentGetById = vi.fn();
+const mockCommentDelete = vi.fn();
+
+vi.mock('../../../services/content/CommentService.js', () => ({
+  CommentService: vi.fn().mockImplementation(() => ({
+    getContentComments: (...args: unknown[]) => mockCommentGetContent(...args),
+    createComment: (...args: unknown[]) => mockCommentCreate(...args),
+    getCommentById: (...args: unknown[]) => mockCommentGetById(...args),
+    deleteComment: (...args: unknown[]) => mockCommentDelete(...args),
+  })),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -244,7 +294,7 @@ describe('V8 Interview read-only routes', () => {
     expect(mockGetSession).toHaveBeenCalledWith(ORG, 's1');
   });
 
-  it('POST /api/v8/interview/assignments/:id/start delegates to the legacy workflow handler', async () => {
+  it('POST /api/v8/interview/assignments/:id/start wraps response in V8 envelope', async () => {
     mockStartAssignment.mockImplementation(async (req: any, res: any) => {
       res.json({ assignmentId: req.params.id, session: { id: 'sess-1' } });
     });
@@ -255,12 +305,14 @@ describe('V8 Interview read-only routes', () => {
       .send({ projectId: 'proj-1' });
 
     expect(res.status).toBe(200);
-    expect(res.body.assignmentId).toBe('asg-1');
-    expect(res.body.session.id).toBe('sess-1');
+    expect(res.body.data?.assignmentId).toBe('asg-1');
+    expect(res.body.data?.session?.id).toBe('sess-1');
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
+    expect(res.body.meta?.version).toBe('v8');
     expect(mockStartAssignment).toHaveBeenCalled();
   });
 
-  it('POST /api/v8/interview/assignments/:id/submit delegates to the legacy workflow handler', async () => {
+  it('POST /api/v8/interview/assignments/:id/submit wraps response in V8 envelope', async () => {
     mockSubmitAssignment.mockImplementation(async (req: any, res: any) => {
       res.json({
         assignment: { id: req.params.id, status: 'submitted' },
@@ -275,13 +327,14 @@ describe('V8 Interview read-only routes', () => {
       .send({});
 
     expect(res.status).toBe(200);
-    expect(res.body.assignment.id).toBe('asg-submit');
-    expect(res.body.assignment.status).toBe('submitted');
-    expect(res.body.completenessPercent).toBe(50);
+    expect(res.body.data?.assignment?.id).toBe('asg-submit');
+    expect(res.body.data?.assignment?.status).toBe('submitted');
+    expect(res.body.data?.completenessPercent).toBe(50);
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockSubmitAssignment).toHaveBeenCalled();
   });
 
-  it('POST /api/v8/interview/assignments/:id/remind delegates to the legacy workflow handler', async () => {
+  it('POST /api/v8/interview/assignments/:id/remind wraps response in V8 envelope', async () => {
     mockSendAssignmentReminder.mockImplementation(async (_req: any, res: any) => {
       res.json({ success: true });
     });
@@ -292,11 +345,12 @@ describe('V8 Interview read-only routes', () => {
       .send({});
 
     expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
+    expect(res.body.data?.success).toBe(true);
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockSendAssignmentReminder).toHaveBeenCalled();
   });
 
-  it('POST /api/v8/interview/assignments/:id/send-back delegates to the legacy workflow handler', async () => {
+  it('POST /api/v8/interview/assignments/:id/send-back wraps response in V8 envelope', async () => {
     mockSendBackAssignment.mockImplementation(async (req: any, res: any) => {
       res.json({ id: req.params.id, status: 'sent_back' });
     });
@@ -307,12 +361,13 @@ describe('V8 Interview read-only routes', () => {
       .send({ reason: 'Missing answers' });
 
     expect(res.status).toBe(200);
-    expect(res.body.id).toBe('asg-3');
-    expect(res.body.status).toBe('sent_back');
+    expect(res.body.data?.id).toBe('asg-3');
+    expect(res.body.data?.status).toBe('sent_back');
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockSendBackAssignment).toHaveBeenCalled();
   });
 
-  it('POST /api/v8/interview/assignments/:id/approve delegates to the legacy workflow handler', async () => {
+  it('POST /api/v8/interview/assignments/:id/approve wraps response in V8 envelope', async () => {
     mockApproveAssignment.mockImplementation(async (req: any, res: any) => {
       res.json({ assignment: { id: req.params.id, status: 'approved' }, entersContext: true });
     });
@@ -323,8 +378,222 @@ describe('V8 Interview read-only routes', () => {
       .send({});
 
     expect(res.status).toBe(200);
-    expect(res.body.assignment.id).toBe('asg-4');
-    expect(res.body.assignment.status).toBe('approved');
+    expect(res.body.data?.assignment?.id).toBe('asg-4');
+    expect(res.body.data?.assignment?.status).toBe('approved');
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockApproveAssignment).toHaveBeenCalled();
+  });
+});
+
+describe('V8 Interview insight routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
+    mockQueryRun.mockResolvedValue(undefined);
+  });
+
+  it('GET /api/v8/interview/insights returns list in V8 envelope', async () => {
+    mockInsightList.mockResolvedValue([{ id: 'ins-1', title: 'Test Insight', status: 'completed' }]);
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.insights).toHaveLength(1);
+    expect(res.body.data?.insights?.[0]?.id).toBe('ins-1');
+    expect(mockInsightList).toHaveBeenCalledWith(ORG, { limit: 50, offset: 0 });
+  });
+
+  it('GET /api/v8/interview/insights/:id returns insight in V8 envelope', async () => {
+    mockInsightGetById.mockResolvedValue({ id: 'ins-1', organizationId: ORG, title: 'Test', status: 'completed' });
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.insight?.id).toBe('ins-1');
+  });
+
+  it('GET /api/v8/interview/insights/:id returns 404 when not found', async () => {
+    mockInsightGetById.mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/missing')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_NOT_FOUND');
+  });
+
+  it('POST /api/v8/interview/insights creates insight and returns 201', async () => {
+    mockInsightCreate.mockResolvedValue({ id: 'ins-new', organizationId: ORG, title: 'New', status: 'generating' });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights')
+      .set('Authorization', 'Bearer x')
+      .send({ sessionIds: ['sess-1'], promptType: 'summary' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(res.body.data?.insight?.id).toBe('ins-new');
+    expect(mockInsightCreate).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/interview/insights returns 400 without sessionIds', async () => {
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_SESSION_REQUIRED');
+  });
+
+  it('POST /api/v8/interview/insights/:id/regenerate regenerates insight', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+    mockInsightRegenerate.mockResolvedValue({ id: 'ins-1', status: 'generating' });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/regenerate')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(mockInsightRegenerate).toHaveBeenCalledWith('ins-1');
+  });
+
+  it('PATCH /api/v8/interview/insights/:id updates fields', async () => {
+    mockQueryRun.mockResolvedValue(undefined);
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x')
+      .send({ title: 'Updated Title' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+  });
+
+  it('PATCH /api/v8/interview/insights/:id returns 400 with no fields', async () => {
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_NO_FIELDS');
+  });
+
+  it('GET /api/v8/interview/insights/:id/activity returns activity in V8 envelope', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+    mockQueryAll.mockResolvedValue([{ id: 'act-1', type: 'created', description: 'Created', created_at: '2026-01-01', first_name: 'Jan', last_name: 'Kowalski' }]);
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/activity')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.activity).toHaveLength(1);
+    expect(res.body.data?.activity?.[0]?.userName).toBe('Jan Kowalski');
+  });
+
+  it('GET /api/v8/interview/insights/:id/comments returns comments in V8 envelope', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+    mockCommentGetContent.mockResolvedValue([{ id: 'c-1', commentText: 'Great', user: { firstName: 'Anna', lastName: 'N' }, createdAt: '2026-01-01', positionRef: '{"priority":"high"}' }]);
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/insights/ins-1/comments')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
+    expect(res.body.data?.comments).toHaveLength(1);
+    expect(res.body.data?.comments?.[0]?.priority).toBe('high');
+  });
+
+  it('POST /api/v8/interview/insights/:id/comments creates comment and returns 201', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+    mockCommentCreate.mockResolvedValue({ id: 'c-new', commentText: 'Nice', user: { firstName: 'Jan', lastName: 'K' }, createdAt: '2026-01-01' });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/comments')
+      .set('Authorization', 'Bearer x')
+      .send({ content: 'Nice', priority: 'high' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(res.body.data?.content).toBe('Nice');
+  });
+
+  it('DELETE /api/v8/interview/insights/:id/comments/:commentId deletes comment', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+    mockCommentGetById.mockResolvedValue({ id: 'c-1', contentId: 'ins-1', contentType: 'interview_insight', userId: UID });
+    mockCommentDelete.mockResolvedValue(true);
+
+    const res = await request(createApp())
+      .delete('/api/v8/interview/insights/ins-1/comments/c-1')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.success).toBe(true);
+  });
+
+  it('POST /api/v8/interview/insights/:id/export returns success for tools target', async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({ id: 'ins-1', organization_id: ORG, title: 'Test', session_id: 'sess-1' })
+      .mockResolvedValueOnce({ id: 'sess-1', status: 'completed', assignment_id: null, project_id: null })
+      .mockResolvedValueOnce(null);
+    mockQueryRun.mockResolvedValue(undefined);
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/export')
+      .set('Authorization', 'Bearer x')
+      .send({ target: 'tools' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
+    expect(res.body.data?.success).toBe(true);
+    expect(res.body.data?.target).toBe('tools');
+  });
+
+  it('POST /api/v8/interview/insights/:id/export returns 400 for invalid target', async () => {
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights/ins-1/export')
+      .set('Authorization', 'Bearer x')
+      .send({ target: 'invalid' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_EXPORT_INVALID_TARGET');
+  });
+
+  it('DELETE /api/v8/interview/insights/:id deletes insight', async () => {
+    mockQueryOne.mockResolvedValue({ organization_id: ORG });
+    mockInsightDelete.mockResolvedValue(true);
+
+    const res = await request(createApp())
+      .delete('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.success).toBe(true);
+    expect(mockInsightDelete).toHaveBeenCalledWith('ins-1');
+  });
+
+  it('DELETE /api/v8/interview/insights/:id returns 404 when not found', async () => {
+    mockQueryOne.mockResolvedValue(null);
+
+    const res = await request(createApp())
+      .delete('/api/v8/interview/insights/missing')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_NOT_FOUND');
   });
 });

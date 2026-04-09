@@ -681,7 +681,7 @@ export const InterviewHub: React.FC = () => {
           // Sessions tab is "accepted sources" in the manager workflow.
           // Non-managers won't see the tab, so empty here is fine.
           loadAcceptedSessions(),
-          Api.get('/interview/insights').catch(() => []),
+          V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => [])),
           Api.get('/interview/templates').catch(() => []),
         ]);
 
@@ -713,7 +713,7 @@ export const InterviewHub: React.FC = () => {
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      const insightsRes = await V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => []));
       const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
       setInsights(apiInsights);
     } catch (error) {
@@ -1530,12 +1530,12 @@ export const InterviewHub: React.FC = () => {
     async (session: InterviewSession, promptType: InsightPromptType = 'summary') => {
       try {
         toast.loading(isPolish ? 'Generowanie wniosków AI...' : 'Generating AI insights...');
-        await Api.post('/interview/insights', { sessionId: session.id, promptType });
+        await V8InterviewApi.createInsight({ sessionId: session.id, promptType }).catch(() => Api.post('/interview/insights', { sessionId: session.id, promptType }));
         toast.dismiss();
         toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
 
         // Refresh insights
-        const insightsRes = await Api.get('/interview/insights').catch(() => []);
+        const insightsRes = await V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => []));
         setInsights(Array.isArray(insightsRes) ? insightsRes : []);
 
         // Switch to insights tab
@@ -2356,10 +2356,10 @@ export const InterviewHub: React.FC = () => {
   const handleExportInsightToTools = async (insightId: string) => {
     try {
       // Backend contract: POST /interview/insights/:id/export { target: 'tools' | 'assessment' }
-      await Api.post(`/interview/insights/${insightId}/export`, { target: 'tools' });
+      await V8InterviewApi.exportInsight(insightId, { target: 'tools' }).catch(() => Api.post(`/interview/insights/${insightId}/export`, { target: 'tools' }));
       toast.success(isPolish ? 'Wyeksportowano do narzędzi' : 'Exported to tools');
       // Refresh insights
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      const insightsRes = await V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => []));
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
@@ -2369,9 +2369,9 @@ export const InterviewHub: React.FC = () => {
 
   const handleExportInsightToAssessment = async (insightId: string) => {
     try {
-      await Api.post(`/interview/insights/${insightId}/export`, { target: 'assessment' });
+      await V8InterviewApi.exportInsight(insightId, { target: 'assessment' }).catch(() => Api.post(`/interview/insights/${insightId}/export`, { target: 'assessment' }));
       toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
-      const insightsRes = await Api.get('/interview/insights').catch(() => []);
+      const insightsRes = await V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => []));
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
       toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
@@ -2391,7 +2391,7 @@ export const InterviewHub: React.FC = () => {
       return;
     }
     try {
-      await Api.delete(`/interview/insights/${insightId}`);
+      await V8InterviewApi.deleteInsight(insightId).catch(() => Api.delete(`/interview/insights/${insightId}`));
       toast.success(isPolish ? 'Wniosek usunięty' : 'Insight deleted');
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
     } catch (error) {
@@ -3282,7 +3282,7 @@ export const InterviewHub: React.FC = () => {
           insightId={insight.id}
           onClose={() => handleCloseDocument(insight.id)}
           onRegenerate={async () => {
-            const insightsRes = await Api.get('/interview/insights').catch(() => []);
+            const insightsRes = await V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => []));
             const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
             setInsights(
               apiInsights.length > 0
@@ -6355,7 +6355,7 @@ Return ONLY the answer text (no markdown fences).`;
         }}
         onSuccess={async () => {
           // Refresh insights after generation
-          const insightsRes = await Api.get('/interview/insights').catch(() => []);
+          const insightsRes = await V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => []));
           setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         }}
       />

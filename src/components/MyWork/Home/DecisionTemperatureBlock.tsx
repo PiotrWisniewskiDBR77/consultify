@@ -14,8 +14,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
   block,
   onAction,
 }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const payload = block.payload;
   const queueClear = payload.pendingCount === 0 && payload.blockedCount === 0;
 
@@ -25,19 +24,17 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
         {queueClear ? (
           <div className="rounded-lg border border-emerald-400/25 bg-emerald-500/[0.06] px-3 py-2.5">
             <div className="text-[10px] font-medium uppercase tracking-wide text-emerald-200/90">
-              {isPolish ? 'Kolejka decyzyjna' : 'Decision queue'}
+              {t('myWork.radar.decisionQueue')}
             </div>
             <p className="mt-1 text-xs leading-relaxed text-emerald-50/90">
-              {isPolish
-                ? 'Brak decyzji w kolejce i brak twardych blokerów — stan OK na teraz.'
-                : 'No queued decisions and no hard blockers — you are clear for now.'}
+              {t('myWork.radar.decisionQueueClear')}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-lg border border-rose-400/15 bg-rose-500/[0.08] p-3">
               <div className="font-mono text-[9px] uppercase tracking-wider text-white/50">
-                {isPolish ? 'Czeka' : 'Pending'}
+                {t('myWork.radar.pending')}
               </div>
               <div className="mt-1 text-2xl font-semibold tabular-nums text-white">
                 {payload.pendingCount}
@@ -45,7 +42,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
             </div>
             <div className="rounded-lg border border-amber-400/15 bg-amber-500/[0.08] p-3">
               <div className="font-mono text-[9px] uppercase tracking-wider text-white/50">
-                {isPolish ? 'Blokuje' : 'Blocking'}
+                {t('myWork.radar.blocking')}
               </div>
               <div className="mt-1 text-2xl font-semibold tabular-nums text-white">
                 {payload.blockedCount}
@@ -63,7 +60,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
           >
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/45">
               <ShieldAlert size={12} className="text-amber-200" />
-              {isPolish ? 'Najgorętsza decyzja' : 'Hottest decision'}
+              {t('myWork.radar.hottestDecision')}
             </div>
             <div className="mt-1.5 text-sm font-semibold leading-snug text-white">
               {payload.hottestDecision.title}
@@ -88,9 +85,7 @@ export const DecisionTemperatureBlock: React.FC<DecisionTemperatureBlockProps> =
                     sourceBlock: 'decisionTemperature',
                     intent: 'unblock_decision',
                     title: signal.title,
-                    starterPrompt: isPolish
-                      ? `Pomóż odblokować tę decyzję: ${signal.title}`
-                      : `Help me unblock this decision: ${signal.title}`,
+                    starterPrompt: t('myWork.radar.unblockPrompt', { title: signal.title }),
                     entityType: 'decision',
                     entityId: payload.hottestDecision?.id,
                     entityName: payload.hottestDecision?.title,

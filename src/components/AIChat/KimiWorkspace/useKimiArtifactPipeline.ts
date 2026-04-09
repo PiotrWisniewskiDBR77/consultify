@@ -42,6 +42,7 @@ function deriveEffectiveStatus(
   if (
     runStatus === 'completed' ||
     runStatus === 'failed' ||
+    runStatus === 'cancelled' ||
     runStatus === 'retry_requested'
   ) {
     return runStatus;
@@ -64,6 +65,8 @@ function deriveEffectiveStatus(
       return 'rejected';
     case 'failed':
       return 'failed';
+    case 'cancelled':
+      return 'cancelled';
     default:
       return runStatus;
   }
@@ -178,7 +181,7 @@ function mapRunToSteps(
     return steps;
   }
 
-  if (effectiveStatus === 'failed') {
+  if (effectiveStatus === 'failed' || effectiveStatus === 'cancelled') {
     const failIdx = steps.length;
     steps.push(
       ...PIPELINE_STEPS.slice(failIdx).map((s) => ({
@@ -344,10 +347,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
   const completedSteps = taskSteps.filter((s) => s.status === 'completed').length;
   const isGenerating =
-    (!!currentRun && effectiveStatus !== 'completed' && effectiveStatus !== 'failed') ||
+    (!!currentRun && effectiveStatus !== 'completed' && effectiveStatus !== 'failed' && effectiveStatus !== 'cancelled') ||
     (effectiveStatus === 'completed' && !contentGenerated);
   const isCompleted = effectiveStatus === 'completed' && contentGenerated;
-  const isFailed = effectiveStatus === 'failed';
+  const isFailed = effectiveStatus === 'failed' || effectiveStatus === 'cancelled';
 
   useEffect(() => {
     if (effectiveStatus !== 'completed' || !currentRun || contentGenerationTriggered.current) {

@@ -35,6 +35,13 @@ function kbMeta() {
   return { version: 'v8' as const, contract: V8_KB_READ_CONTRACT };
 }
 
+const VALID_SITE_KEYS = new Set(['consultify', 'iot', 'iris', 'dt', 'marketplace', 'vector']);
+
+function sitePrefix(raw: unknown): string | undefined {
+  const key = typeof raw === 'string' ? raw.toLowerCase().trim() : '';
+  return VALID_SITE_KEYS.has(key) ? key + '-' : undefined;
+}
+
 /**
  * GET /api/v8/kb/categories?lang=&all=
  * Anonymous-safe category listing for public docs and landing surfaces.
@@ -43,7 +50,8 @@ publicKnowledgeBaseRoutes.get(
   '/categories',
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
-    const categories = await KnowledgeBaseService.getCategories(language, false);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const categories = await KnowledgeBaseService.getCategories(language, false, categoryPrefix);
     return res.json({ data: { categories }, meta: kbMeta() });
   })
 );
@@ -57,7 +65,8 @@ publicKnowledgeBaseRoutes.get(
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
     const limit = parseBoundedLimit(firstParam(req.query.limit), 3, 20);
-    const articles = await KnowledgeBaseService.getPublicPreview(language, limit);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.getPublicPreview(language, limit, categoryPrefix);
     return res.json({ data: { articles }, meta: kbMeta() });
   })
 );
@@ -71,7 +80,8 @@ publicKnowledgeBaseRoutes.get(
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
     const limit = parseBoundedLimit(firstParam(req.query.limit), 4, 20);
-    const articles = await KnowledgeBaseService.getFeaturedArticles(language, limit);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.getFeaturedArticles(language, limit, categoryPrefix);
     return res.json({ data: { articles }, meta: kbMeta() });
   })
 );
@@ -92,6 +102,7 @@ publicKnowledgeBaseRoutes.get(
       Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0
     );
 
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
     const result = await KnowledgeBaseService.getArticles({
       language,
       categorySlug,
@@ -99,6 +110,7 @@ publicKnowledgeBaseRoutes.get(
       limit,
       offset,
       publicOnly: true,
+      categoryPrefix,
     });
 
     return res.json({ data: result, meta: kbMeta() });
@@ -120,7 +132,8 @@ publicKnowledgeBaseRoutes.get(
       return res.json({ data: { articles: [] }, meta: kbMeta() });
     }
 
-    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit, categoryPrefix);
     const publicArticles = articles.filter((article) => (article as any)?.is_public !== false);
     return res.json({ data: { articles: publicArticles }, meta: kbMeta() });
   })
@@ -387,8 +400,9 @@ router.get(
     getV8Context(req);
     const language = firstParam(req.query.lang) || 'en';
     const includePrivate = firstParam(req.query.all) === 'true';
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
 
-    const categories = await KnowledgeBaseService.getCategories(language, includePrivate);
+    const categories = await KnowledgeBaseService.getCategories(language, includePrivate, categoryPrefix);
     return res.json({ data: { categories }, meta: kbMeta() });
   })
 );
@@ -412,6 +426,7 @@ router.get(
     const publicOnly = firstParam(req.query.public) === 'true';
     const moduleId = firstParam(req.query.module);
 
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
     const result = await KnowledgeBaseService.getArticles({
       language,
       categorySlug,
@@ -420,6 +435,7 @@ router.get(
       offset,
       publicOnly,
       moduleId,
+      categoryPrefix,
     });
 
     return res.json({ data: result, meta: kbMeta() });
@@ -442,7 +458,8 @@ router.get(
       return res.json({ data: { articles: [] }, meta: kbMeta() });
     }
 
-    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit);
+    const categoryPrefix = sitePrefix(firstParam(req.query.site));
+    const articles = await KnowledgeBaseService.searchArticles(qStr, lang, limit, categoryPrefix);
     return res.json({ data: { articles }, meta: kbMeta() });
   })
 );

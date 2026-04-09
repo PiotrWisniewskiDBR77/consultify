@@ -19,6 +19,7 @@
 
 import { motion } from 'framer-motion';
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   BookOpen,
@@ -48,7 +49,7 @@ import remarkGfm from 'remark-gfm';
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
 import { KbArticleListItem, useDocsArticle, useDocsArticles, useDocsTrackView } from '@/hooks/useDocs';
-import { useKnowledgeRelated } from '@/hooks/useKnowledge';
+import { useKnowledgeRedirect, useKnowledgeRelated } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
@@ -219,6 +220,15 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
   const { data: article, isLoading, error } = useDocsArticle(articleSlug || '', docsLanguage);
   const trackView = useDocsTrackView();
   const { data: relatedArticles } = useKnowledgeRelated(articleSlug || '', docsLanguage);
+  const { data: redirectInfo } = useKnowledgeRedirect(articleSlug || '');
+
+  const isPolish = i18n.language?.startsWith('pl');
+  const isFallback = Boolean((article as any)?.is_fallback) ||
+    (article as any)?.translation_status === 'missing' ||
+    (String((article as any)?.requested_language || '') === 'pl' &&
+     String((article as any)?.resolved_language || '') === 'en');
+
+  const isStale = (article as any)?.translation_status === 'stale';
 
   const { data: categoryArticlesData } = useDocsArticles({
     language: docsLanguage,
@@ -394,12 +404,28 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           <div className="relative z-10 flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <BookOpen size={48} className="mx-auto text-slate-300 mb-4 dark:text-white/20" />
-              <h2 className="text-xl font-bold text-slate-900 mb-2 dark:text-white">
-                {t('kb.article.notFound', 'Article not found')}
-              </h2>
-              <Link to="/knowledge-base" className="text-primary-400 hover:text-primary-300 font-semibold">
-                {t('kb.article.backToKb', 'Back to Knowledge Base')}
-              </Link>
+              {redirectInfo?.redirectSlug ? (
+                <>
+                  <h2 className="text-xl font-bold text-slate-900 mb-2 dark:text-white">
+                    {t('kb.article.moved', 'This article has moved')}
+                  </h2>
+                  <Link
+                    to={`/knowledge-base/${categorySlug}/${redirectInfo.redirectSlug}`}
+                    className="text-primary-400 hover:text-primary-300 font-semibold"
+                  >
+                    {t('kb.article.viewReplacement', 'View replacement article')} →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold text-slate-900 mb-2 dark:text-white">
+                    {t('kb.article.movedOrRemoved', 'This content has been moved or removed')}
+                  </h2>
+                  <Link to="/knowledge-base" className="text-primary-400 hover:text-primary-300 font-semibold">
+                    {t('kb.article.browseKb', 'Browse Knowledge Base')} →
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -446,6 +472,46 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          {/* Deprecation banner */}
+          {redirectInfo?.deprecationReason && (
+            <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3 text-sm text-red-900 dark:text-red-200 flex items-start gap-3">
+              <AlertTriangle size={18} className="flex-shrink-0 mt-0.5 text-red-500 dark:text-red-400" />
+              <div>
+                <p className="font-bold">{t('kb.article.deprecated', 'This article has been deprecated')}</p>
+                <p className="mt-1">{redirectInfo.deprecationReason}</p>
+                {redirectInfo.redirectSlug ? (
+                  <Link
+                    to={`/knowledge-base/${categorySlug}/${redirectInfo.redirectSlug}`}
+                    className="mt-2 inline-block text-red-700 dark:text-red-300 font-semibold underline hover:no-underline"
+                  >
+                    {t('kb.article.viewReplacement', 'View replacement article')} →
+                  </Link>
+                ) : (
+                  <Link
+                    to="/knowledge-base"
+                    className="mt-2 inline-block text-red-700 dark:text-red-300 font-semibold underline hover:no-underline"
+                  >
+                    {t('kb.article.browseKb', 'Browse Knowledge Base')} →
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* PL/EN fallback banner */}
+          {isPolish && isFallback && (
+            <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+              {t('kb.article.missingTranslation', 'This article is not yet available in Polish. Showing the English version.')}
+            </div>
+          )}
+
+          {/* Stale translation banner */}
+          {isStale && (
+            <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+              {t('help.knowledge.staleTranslation', 'This translation may be outdated — the original article has been updated since.')}
+            </div>
+          )}
+
           {/* Mobile TOC */}
           {toc.length > 2 && (
             <div className="xl:hidden mb-8">

@@ -8,6 +8,7 @@
  */
 
 import logger from '../../utils/Logger.js';
+import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
 
 // ==========================================
 // TOOL DEFINITIONS (OpenAI Function Calling format)
@@ -394,6 +395,34 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
 }
 
 async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<string> {
+  try {
+    const policyResult = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'agent',
+      query: args.query,
+      organizationId: ctx.organizationId || 'system',
+      userId: ctx.userId || 'tool:kb_search',
+    });
+    logger.info(
+      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}`
+    );
+    if (!policyResult.decision.allowed) {
+      return JSON.stringify({
+        source: 'knowledge_base',
+        results: [],
+        note: 'Blocked by policy gateway',
+      });
+    }
+  } catch (policyErr: any) {
+    logger.warn(
+      `[executeKBSearch] Policy gateway error (fail-closed): ${policyErr?.message || String(policyErr)}`
+    );
+    return JSON.stringify({
+      source: 'knowledge_base',
+      results: [],
+      note: 'Blocked by policy gateway',
+    });
+  }
+
   try {
     const ragMod = await import('../ragService.js');
     const ragService = (ragMod.default || ragMod) as {

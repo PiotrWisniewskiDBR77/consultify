@@ -26,7 +26,7 @@
     "no": "لا",
     "goals": "Goals",
     "challenges": "Challenges",
-    "megatrends": "Megatrends",
+    "megatrends": "الاتجاهات الكبرى",
     "strategy": "Strategy",
     "rollout": "Rollout",
     "users": "Users",
@@ -404,10 +404,148 @@
   },
   "myWork": {
     "title": "عملي",
+    "home": "الرئيسية",
+    "manager": "المدير",
     "inbox": "البريد الوارد",
     "focus": "التركيز",
     "calendar": "التقويم",
-    "tasks": "المهام"
+    "tasks": "المهام",
+    "radar": {
+      "pulseLabel": "الرادار · السياق والأفكار والتوجيه الهادئ",
+      "unavailable": "الرادار غير متاح مؤقتًا.",
+      "unavailableHint": "هذا لا يعني أن اليوم فارغ. حاول إعادة تحميل الشاشة الرئيسية.",
+      "retry": "إعادة المحاولة",
+      "roofTruthChecking": "حقيقة السقف: جارٍ التحقق…",
+      "roofExpandHint": "توسيع أو طي قائمة الوحدات وتدقيق تماسك البيانات.",
+      "roofModules": "السقف · {{count}} وحدات",
+      "pulse": "النبض",
+      "gentleExplanation": "شرح هادئ",
+      "explainBriefing": "اشرح هذا الملخص بلغة بسيطة، بدون ضغط — 3 نقاط: ماذا يعني، لماذا الآن، وخطوة صغيرة يمكنني اتخاذها.",
+      "explain": "اشرح",
+      "calmPlan": "ساعدني في تحويل هذا إلى خطة هادئة خطوة بخطوة — بدون استعجال.",
+      "blocks": {
+        "aiPulseCore": "نبض الذكاء الاصطناعي",
+        "industryLens": "السياق القطاعي",
+        "executionCurrent": "تيار التنفيذ",
+        "sparkField": "الأفكار والملاحظات",
+        "decisionTemperature": "حرارة القرارات",
+        "teamSignal": "إشارة الفريق",
+        "momentum": "الزخم"
+      },
+      "blockHints": {
+        "aiPulseCore": "ملخص النبض: العنوان الرئيسي والتركيز ودرجة النبض.",
+        "momentum": "زخم البرنامج: الإحصائيات وإشارات التقدم.",
+        "sparkField": "الأفكار والملاحظات: ملاحظات وقت التشغيل والمخرجات الأخيرة.",
+        "decisionTemperature": "القرارات: قائمة الانتظار والعوائق والموضوع الأكثر سخونة.",
+        "industryLens": "السياق القطاعي: السوق والتكنولوجيا والمعيار المرجعي وحالة الأقران.",
+        "executionCurrent": "التنفيذ: تدفقات العمل والمخرجات.",
+        "teamSignal": "الفريق: التوافق والإشارات التنظيمية."
+      },
+      "worthNoticing": "جدير بالملاحظة",
+      "talkToAI": "تحدث مع الذكاء الاصطناعي",
+      "openExecution": "انتقل إلى التنفيذ",
+      "topMove": "الخطوة الأهم",
+      "pulseActionPrompt": "حوّل هذا النبض إلى خطة عمل ملموسة لليوم وهذا الأسبوع.",
+      "decisionQueue": "قائمة انتظار القرارات",
+      "decisionQueueClear": "لا توجد قرارات معلقة ولا عوائق صعبة — الوضع جيد حاليًا.",
+      "pending": "معلق",
+      "blocking": "يعوق",
+      "hottestDecision": "القرار الأكثر إلحاحًا",
+      "unblockPrompt": "ساعدني في إلغاء حظر هذا القرار: {{title}}",
+      "outputFlow": "تدفق المخرجات",
+      "visibility": {
+        "private": "خاص",
+        "project": "مشروع",
+        "organization": "مؤسسة",
+        "reviewShared": "يحتاج مراجعة",
+        "demo": "تجريبي"
+      },
+      "reviewState": {
+        "privateDraft": "مسودة خاصة",
+        "reviewReady": "جاهز للمراجعة",
+        "inReview": "قيد المراجعة",
+        "approved": "موافق عليه",
+        "published": "منشور"
+      },
+      "artifactType": {
+        "presentation": "عرض تقديمي",
+        "sheet": "جدول بيانات",
+        "report": "تقرير"
+      },
+      "outputsLibraryNote": "المراجعة والرؤية تبقى متوافقة مع مكتبة المخرجات.",
+      "askAISequencing": "اطلب ترتيب التنفيذ من الذكاء الاصطناعي",
+      "sequencingPrompt": "رتب أفضل تسلسل للتنفيذ بناءً على التدفقات الحالية.",
+      "ideasWithTasks": "أفكار بمهام {{count}}",
+      "recentNotes": "ملاحظات حديثة {{count}}",
+      "recentOutputs": "مخرجات حديثة {{count}}",
+      "orgSignals": "إشارات المؤسسة {{count}}",
+      "expandIdea": "توسيع أقوى فكرة",
+      "expandIdeaPrompt": "وسّع هذه الفكرة إلى مبادرة واقترح أول 3 خطوات: {{text}}",
+      "newIdea": "فكرة جديدة",
+      "newIdeaSubtitle": "ابدأ مسار تحول جديد",
+      "noteLabel": "ملاحظة",
+      "nodes": "عُقد",
+      "tasks": "مهام",
+      "stages": {
+        "spark": "شرارة",
+        "shaping": "تشكيل",
+        "growing": "نمو"
+      },
+      "benchmark": "معيار مرجعي",
+      "peerCase": "حالة مقارنة",
+      "peerCasePrompt": "قارن هذه الحالة ببرنامج التحول لدينا وأعطني 3 استنتاجات: {{title}}",
+      "signalPrompt": "اشرح لماذا هذه الإشارة مهمة لتحولنا: {{title}}",
+      "teamReadout": "إشارة الفريق",
+      "teamUpdatePrompt": "أعد تحديثًا موجزًا للفريق بناءً على هذه الإشارة: {{title}}",
+      "momentumPrompt": "اشرح ماذا تعني إشارة الزخم هذه للتحول: {{title}}",
+      "live": "مباشر",
+      "rel": "صلة",
+      "loadError": "فشل تحميل الرادار",
+      "triage": {
+        "title": "لوحة الفرز",
+        "subtitle": "إشارات تشغيلية مصنفة حسب أولوية القرار",
+        "empty": "لا توجد إشارات فرز حاليًا. الرادار التشغيلي واضح.",
+        "category": {
+          "execution_delivery": "التنفيذ",
+          "decision_alignment": "القرار",
+          "finance_kpi": "المالية / مؤشرات الأداء",
+          "governance_compliance": "الحوكمة",
+          "external_change": "تغيير خارجي"
+        },
+        "timeWindow": {
+          "next_24h": "الـ24 ساعة القادمة",
+          "this_week": "هذا الأسبوع",
+          "this_month": "هذا الشهر"
+        },
+        "driver": {
+          "deadline": "موعد نهائي",
+          "blocker": "عائق",
+          "variance": "انحراف",
+          "escalation": "تصعيد",
+          "opportunity": "فرصة"
+        },
+        "whyNow": "لماذا الآن",
+        "evidence": "الأدلة",
+        "evidencePartial": "تغطية جزئية",
+        "evidenceComplete": "تغطية كاملة",
+        "uncertainty": "حدود عدم اليقين",
+        "missingInputs": "بيانات مفقودة",
+        "conflicts": "تعارضات",
+        "wouldChange": "ما سيغير الترتيب",
+        "owner": "المسؤول",
+        "nextAction": "الإجراء التالي",
+        "goTo": "انتقل إلى {{module}}",
+        "fallback": "البديل: {{fallback}}",
+        "degraded": {
+          "missing_data": "بعض البيانات مفقودة. قد تكون النتائج غير مكتملة.",
+          "conflict": "تم اكتشاف بيانات متعارضة. راجع بحذر.",
+          "stale": "قد تكون البيانات قديمة. فكر في تحديث المصادر.",
+          "permission": "الوصول مقيد. بعض المعلومات مخفية."
+        },
+        "hardGate": "بوابة صارمة",
+        "score": "النتيجة"
+      }
+    }
   },
   "step1": {
     "title": "الخطوة 1"
@@ -935,8 +1073,8 @@
       "articleNotFound": "المقال غير موجود.",
       "minRead": "دقيقة قراءة",
       "views": "مشاهدات",
-      "relatedModules": "الوحدات ذات الصلة",
-      "shareArticle": "مشاركة المقال",
+      "relatedModules": "وحدات ذات صلة",
+      "shareArticle": "مشاركة المقالة",
       "featured": "مميز",
       "popular": "شائع",
       "recent": "حديث",
@@ -955,14 +1093,26 @@
       "tutorials": "الدروس",
       "bestPractices": "أفضل الممارسات",
       "faq": "الأسئلة الشائعة",
-      "troubleshooting": "استكشاف الأخطاء"
+      "troubleshooting": "استكشاف الأخطاء",
+      "contentMoved": "تم نقل هذا المحتوى أو إزالته.",
+      "contentMovedHint": "تصفح مجموعاتنا للعثور على ما تحتاجه.",
+      "browseCollections": "تصفح المجموعات",
+      "deprecated": "تم إيقاف هذه المقالة",
+      "viewReplacement": "عرض المقالة البديلة",
+      "missingTranslationBanner": "لا توجد نسخة عربية — يتم عرض EN",
+      "staleTranslation": "قد تكون هذه الترجمة قديمة.",
+      "nextAction": "الخطوة التالية",
+      "backToSurface": "العودة إلى العمل"
     },
     "sidePanel": {
       "title": "Help Center",
       "tabs": {
-        "overview": "Overview",
-        "faq": "FAQ",
-        "knowledge": "Knowledge Base"
+        "overview": "نظرة عامة",
+        "thisStep": "هذه الخطوة",
+        "guides": "أدلة",
+        "faq": "أسئلة شائعة",
+        "knowledge": "قاعدة المعرفة",
+        "updates": "تحديثات"
       },
       "fullDocs": "Full documentation",
       "overview": {
@@ -1005,15 +1155,23 @@
         "notify": {
           "success": "You'll be notified when it's ready!"
         }
-      }
+      },
+      "whatThisIs": "ما هذا",
+      "whyItMatters": "لماذا هو مهم",
+      "whatYouDoHere": "ماذا تفعل هنا",
+      "howAiHelpsHere": "كيف يساعد الذكاء الاصطناعي",
+      "whatComesNext": "ما التالي",
+      "askAi": "اسأل الذكاء الاصطناعي",
+      "quickGuides": "أدلة سريعة",
+      "watchVideo": "شاهد الفيديو"
     },
     "search": {
-      "placeholder": "Search help articles, tutorials...",
+      "placeholder": "...البحث في المساعدة (Cmd+K)",
       "searching": "Searching...",
       "results": "Results",
       "found": "found",
       "viewAll": "View all results",
-      "noResults": "No results found for \"{{query}}\"",
+      "noResults": "لا توجد نتائج لـ",
       "tryDifferent": "Try different keywords or browse categories",
       "recent": "Recent searches",
       "clearRecent": "Clear",
@@ -1022,7 +1180,21 @@
       "navigate": "Navigate",
       "select": "Select",
       "close": "Close",
-      "buttonText": "Search help..."
+      "buttonText": "Search help...",
+      "tryDifferentKeywords": "جرب كلمات مفتاحية مختلفة أو تصفح الفئات",
+      "types": {
+        "module": "وحدة",
+        "card": "بطاقة",
+        "faq": "أسئلة شائعة",
+        "video": "فيديو"
+      },
+      "filters": {
+        "all": "الكل",
+        "module": "وحدة",
+        "card": "بطاقة",
+        "faq": "أسئلة شائعة",
+        "video": "فيديو"
+      }
     },
     "article": {
       "tableOfContents": "Table of Contents",
@@ -1089,6 +1261,24 @@
       "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
       "support": "Support",
       "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
+    },
+    "widget": {
+      "label": "مساعدة",
+      "header": "مركز المساعدة",
+      "searchPlaceholder": "...البحث في المساعدة",
+      "docs": "التوثيق",
+      "contact": "اتصل بنا"
+    },
+    "chatbot": {
+      "title": "تيريزا — مساعدة",
+      "placeholder": "...اسأل تيريزا",
+      "send": "إرسال",
+      "typing": "...يكتب",
+      "clear": "مسح المحادثة",
+      "sources": "المصادر",
+      "helpful": "هل كان هذا مفيداً؟",
+      "suggestions": "أسئلة مقترحة",
+      "poweredBy": "ذكاء اصطناعي مبني على المعرفة"
     }
   },
   "settings": {
@@ -1389,12 +1579,12 @@
           }
         },
         "digital-maturity": {
-          "name": "Digital Maturity Assessment",
-          "description": "Evaluate digital readiness across technology, processes, and people dimensions using industry-standard frameworks.",
+          "name": "تقييم النضج الرقمي",
+          "description": "تقييم الجاهزية الرقمية عبر أبعاد التكنولوجيا والعمليات والأشخاص باستخدام أطر عمل معيارية.",
           "outputs": {
-            "0": "Maturity Radar",
-            "1": "Benchmark Comparison",
-            "2": "Transformation Roadmap"
+            "0": "رادار النضج",
+            "1": "مقارنة المعايير المرجعية",
+            "2": "خارطة طريق التحول"
           }
         },
         "automation-roadmap": {
@@ -1407,12 +1597,12 @@
           }
         },
         "technology-scanner": {
-          "name": "Technology Landscape Scanner",
-          "description": "Scan emerging technologies relevant to your industry and assess adoption readiness.",
+          "name": "ماسح المشهد التكنولوجي",
+          "description": "مسح التقنيات الناشئة ذات الصلة بقطاعك وتقييم الجاهزية للاعتماد.",
           "outputs": {
-            "0": "Technology Radar",
-            "1": "Adoption Assessment",
-            "2": "Pilot Recommendations"
+            "0": "رادار التكنولوجيا",
+            "1": "تقييم الاعتماد",
+            "2": "توصيات تجريبية"
           }
         },
         "data-strategy": {
@@ -1557,5 +1747,199 @@
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub"
+  },
+  "megatrends": {
+    "title": "تحليل الاتجاهات الكبرى",
+    "subtitle": "استكشف الاتجاهات الكبرى في القطاع، وابنِ رادارًا، واكتشف رؤى استراتيجية",
+    "tabs": {
+      "baseline": "خط الأساس القطاعي",
+      "radar": "خريطة رادار الاتجاهات",
+      "detail": "تفاصيل الاتجاه",
+      "custom": "اتجاهات مخصصة",
+      "insights": "رؤى الذكاء الاصطناعي"
+    },
+    "selectTrend": "حدد اتجاهًا من خط الأساس أو خريطة الرادار لعرض التفاصيل.",
+    "goToBaseline": "انتقل إلى خط الأساس"
+  },
+  "executive": {
+    "greeting": {
+      "morning": "صباح الخير",
+      "afternoon": "مساء الخير",
+      "evening": "مساء الخير"
+    },
+    "health": {
+      "title": "صحة المحفظة",
+      "subtitle": "أداء التنفيذ الإجمالي",
+      "portfolio": "صحة المحفظة",
+      "excellent": "ممتاز",
+      "good": "جيد",
+      "attention": "يحتاج اهتمام",
+      "critical": "حرج",
+      "noData": "لا توجد بيانات",
+      "lastUpdated": "آخر تحديث",
+      "live": "مباشر",
+      "execution": "التنفيذ",
+      "decisions": "سرعة القرارات",
+      "capacity": "سعة الفريق",
+      "risk": "تخفيف المخاطر",
+      "noBreakdown": "البيانات التفصيلية غير متوفرة بعد",
+      "noBreakdownHint": "ستظهر البيانات عند تتبع المهام والقرارات",
+      "vsLastWeek": "مقابل الأسبوع الماضي"
+    },
+    "kpi": {
+      "tasks": "تنفيذ المهام",
+      "tasksValue": "{{completed}}/{{total}}",
+      "onTime": "في الوقت",
+      "overdue": "متأخرة",
+      "decisions": "قرارات معلقة",
+      "awaiting": "بانتظار",
+      "critical": "حرج",
+      "avgWait": "متوسط الانتظار",
+      "team": "سعة الفريق",
+      "teamCapacity": "سعة الفريق",
+      "utilized": "مستخدمة",
+      "overloaded": "محمّلون بزيادة",
+      "available": "متاحون",
+      "risk": "مستوى المخاطر",
+      "riskLevel": "مستوى المخاطر",
+      "blockers": "عوائق",
+      "escalations": "تصعيدات",
+      "noData": "لا توجد بيانات",
+      "riskLow": "منخفض",
+      "riskMedium": "متوسط",
+      "riskHigh": "مرتفع",
+      "riskCritical": "حرج"
+    },
+    "action": {
+      "decision": "قرار",
+      "task": "مهمة",
+      "escalation": "تصعيد",
+      "blocker": "عائق",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "view": "عرض التفاصيل",
+      "title": "إجراء مطلوب",
+      "allClear": "كل شيء على ما يرام!",
+      "noUrgent": "لا توجد عناصر عاجلة تتطلب انتباهكم.",
+      "viewAll": "عرض الكل"
+    },
+    "actions": {
+      "title": "إجراء مطلوب",
+      "critical": "حرجة",
+      "highPriority": "أولوية عالية",
+      "viewAll": "عرض الكل",
+      "viewDetails": "عرض التفاصيل",
+      "allClear": "كل شيء على ما يرام",
+      "overdue": "متأخرة",
+      "days": "ي"
+    },
+    "urgency": {
+      "critical": "حرج",
+      "high": "عالي"
+    },
+    "decisions": {
+      "title": "طابور القرارات",
+      "queue": "طابور القرارات",
+      "noPending": "لا توجد قرارات معلقة",
+      "allClear": "لا توجد قرارات معلقة",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "delegate": "تفويض",
+      "viewAll": "عرض جميع القرارات",
+      "approved": "تمت الموافقة على القرار",
+      "rejected": "تم رفض القرار",
+      "error": "فشل في معالجة القرار",
+      "waiting": "بانتظار"
+    },
+    "team": {
+      "title": "أداء الفريق",
+      "members": "أعضاء",
+      "avgCapacity": "متوسط السعة",
+      "overloaded": "محمّلون بزيادة",
+      "available": "متاحون",
+      "noMembers": "لم يتم العثور على أعضاء في الفريق",
+      "viewAll": "عرض تقرير الفريق الكامل",
+      "tasks": "مهام",
+      "unknown": "غير معروف"
+    },
+    "teamPerf": {
+      "title": "أداء الفريق",
+      "noMembers": "لم يتم العثور على أعضاء في الفريق"
+    },
+    "initiatives": {
+      "title": "المبادرات",
+      "active": "مبادرات نشطة",
+      "viewAll": "عرض الكل",
+      "empty": "لا توجد مبادرات نشطة",
+      "tasks": "مهام",
+      "overdue": "متأخرة",
+      "untitled": "بدون عنوان"
+    },
+    "signals": {
+      "title": "إشارات الذكاء الاصطناعي",
+      "subtitle": "تنبيهات ذكية من محفظتكم",
+      "viewAll": "عرض الكل",
+      "empty": "لا توجد إشارات"
+    },
+    "refresh": "تحديث",
+    "lastUpdated": "تم التحديث",
+    "loadError": "فشل في تحميل بيانات لوحة المعلومات",
+    "patterns": {
+      "title": "أنماط العمل",
+      "tasksPerWeek": "مهام/أسبوع",
+      "avgTaskTime": "متوسط وقت المهمة",
+      "avgDecisionTime": "متوسط وقت القرار",
+      "overdueRate": "معدل التأخير",
+      "insight": {
+        "overloaded": "لديك {{openTasks}} مهام مفتوحة ولكن معدلك {{velocity}} مهمة/أسبوع. فكّر في التفويض أو التأجيل.",
+        "highOverdue": "{{rate}}% من مهامك ذات المواعيد النهائية تُنجز متأخرة. حاول إضافة وقت احتياطي.",
+        "slowDecisions": "متوسط وقت اتخاذ القرار هو {{days}} أيام. القرارات الأسرع يمكن أن تُحرّر الفرق."
+      }
+    },
+    "aiOperator": {
+      "title": "مشغّل الذكاء الاصطناعي",
+      "subtitle": "العلاقة والملاحة والتنفيذ والقيمة في لوحة واحدة",
+      "readiness": "جاهزية المشغّل",
+      "stage": "المرحلة",
+      "relationship": "العلاقة",
+      "daysSinceTouch": "أيام منذ آخر تواصل",
+      "noTouchpoint": "لا يوجد تواصل",
+      "value": "القيمة",
+      "autonomy": "الاستقلالية",
+      "nextActions": "أفضل الإجراءات التالية",
+      "open": "فتح",
+      "noActions": "لا توجد إجراءات عاجلة للمشغّل.",
+      "cadence": "الإيقاع ومسارات العمل",
+      "executiveBrief": "ملخص تنفيذي",
+      "noBrief": "لا يوجد ملخص بعد.",
+      "sequence": "تسلسل المشغّل",
+      "noPlan": "لا توجد خطة مشغّل بعد.",
+      "intervene": "تدخّل",
+      "noSequence": "لم يتم إنشاء خطة التسلسل بعد.",
+      "nextMilestone": "المعلم التالي",
+      "none": "لا يوجد",
+      "planBlockers": "عوائق الخطة",
+      "noBlockers": "لا توجد عوائق نشطة للخطة.",
+      "programSummary": "ملخص البرنامج",
+      "suggestedInterventions": "تدخلات مقترحة",
+      "working": "جارٍ المعالجة...",
+      "propose": "اقتراح",
+      "noInterventions": "لا توجد تدخلات جديدة لاقتراحها.",
+      "approvalQueue": "طابور الموافقات",
+      "accept": "قبول",
+      "reject": "رفض",
+      "execute": "تنفيذ",
+      "noQueue": "لا توجد تدخلات في طابور الموافقات."
+    },
+    "operator": {
+      "proposed": "تم اقتراح تدخل المشغّل.",
+      "proposeFailed": "فشل في اقتراح التدخل.",
+      "accepted": "تم قبول التدخل.",
+      "acceptFailed": "فشل في قبول التدخل.",
+      "executed": "تم تنفيذ التدخل.",
+      "executeFailed": "فشل في تنفيذ التدخل.",
+      "rejected": "تم رفض التدخل.",
+      "rejectFailed": "فشل في رفض التدخل."
+    }
   }
 }

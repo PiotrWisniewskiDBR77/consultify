@@ -17,8 +17,7 @@ const TONE_STYLE = {
 };
 
 export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onAction }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const payload = block.payload;
 
   return (
@@ -27,7 +26,7 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
         <div className="rounded-lg border border-white/10 bg-white/[0.04] p-2.5">
           <div className="flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-wider text-white/40">
             <Users size={10} className="text-slate-300" />
-            {isPolish ? 'Sygna\u0142 zespo\u0142u' : 'Team readout'}
+            {t('myWork.radar.teamReadout')}
           </div>
           <div className="mt-1 text-sm font-semibold text-white">{payload.headline}</div>
           <div className="mt-0.5 text-[11px] leading-relaxed text-slate-300/75">{payload.summary}</div>
@@ -44,9 +43,7 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
                     sourceBlock: 'teamSignal',
                     intent: 'prepare_alignment_message',
                     title: signal.title,
-                    starterPrompt: isPolish
-                      ? `Przygotuj mi krótką wiadomość lub update dla zespołu w oparciu o ten sygnał: ${signal.title}`
-                      : `Prepare a short team update or alignment note based on this signal: ${signal.title}`,
+                    starterPrompt: t('myWork.radar.teamUpdatePrompt', { title: signal.title }),
                     entityType: 'transformation_signal',
                     entityId: signal.id,
                     contextData: signal,

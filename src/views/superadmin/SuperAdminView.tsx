@@ -42,21 +42,6 @@ import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
 
 // Lazy load heavy modules
-// Legacy AI modules - kept for backward compatibility redirects
-const AIDevelopmentModule = React.lazy(() =>
-  import('./AIDevelopmentModule').then((m) => ({ default: m.AIDevelopmentModule }))
-);
-const AIInfrastructureModule = React.lazy(() =>
-  import('./AIInfrastructureModule').then((m) => ({ default: m.AIInfrastructureModule }))
-);
-const AIOperationsModule = React.lazy(() =>
-  import('./AIOperationsModule').then((m) => ({ default: m.AIOperationsModule }))
-);
-// NEW: Unified AI Platform Module with 6 main tabs
-const AIPlatformModule = React.lazy(() =>
-  import('./AIPlatformModule').then((m) => ({ default: m.AIPlatformModule }))
-);
-// NEW: AI Platform Module from new folder structure
 const NewAIPlatformModule = React.lazy(() =>
   import('./AIPlatformModule/AIPlatformModule').then((m) => ({ default: m.AIPlatformModule }))
 );
@@ -236,9 +221,11 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 />
               );
 
+            case AppView.SUPERADMIN_API_MANAGEMENT:
+              return <SystemModule initialTab="api-keys" />;
+
             case AppView.SUPERADMIN_SSO:
             case AppView.SUPERADMIN_SECURITY_POLICIES:
-            case AppView.SUPERADMIN_API_MANAGEMENT:
             case AppView.SUPERADMIN_COMPLIANCE:
               return (
                 <SecurityModule
@@ -247,9 +234,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                       ? 'sso'
                       : currentView === AppView.SUPERADMIN_SECURITY_POLICIES
                         ? 'policies'
-                        : currentView === AppView.SUPERADMIN_API_MANAGEMENT
-                          ? 'api-keys'
-                          : 'compliance'
+                        : 'compliance'
                   }
                 />
               );
@@ -265,6 +250,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               );
 
             case AppView.SUPERADMIN_PLAYBOOK_TEMPLATES:
+            case AppView.SUPERADMIN_PLAYBOOK_EDITOR:
               return <ContentModule initialTab="playbooks" />;
 
             default:

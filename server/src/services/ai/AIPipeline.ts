@@ -181,6 +181,12 @@ const CAPABILITY_REGISTRY: CapabilityRegistry = {
     description: 'Generate weekly/monthly engagement summary report',
     outputFormat: 'text',
   },
+  help: {
+    role: 'COACH',
+    maxTokens: 4000,
+    description: 'Contextual help assistant grounded in knowledge base articles',
+    outputFormat: 'text',
+  },
 };
 
 // ==========================================

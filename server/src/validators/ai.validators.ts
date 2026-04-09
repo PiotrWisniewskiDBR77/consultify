@@ -78,7 +78,7 @@ export const ChatConfirmRequestSchema = z.object({
     .transform((lang) => {
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
       return validLangs.includes(base) ? base : 'en';
     })
     .optional(),
@@ -155,7 +155,7 @@ export const ChatStreamRequestSchema = z.object({
       // Accept locale variants like 'en-GB', 'en-US', etc. and convert to base code
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
       return validLangs.includes(base) ? base : 'en';
     })
     .optional(),
@@ -186,7 +186,7 @@ export const AgentAuditSuggestRequestSchema = z.object({
     .transform((lang) => {
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
       return validLangs.includes(base) ? base : 'en';
     })
     .optional(),
@@ -209,7 +209,7 @@ export const AgentAuditReviewRequestSchema = z.object({
     .transform((lang) => {
       if (!lang) return 'en';
       const base = lang.split('-')[0].toLowerCase();
-      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
       return validLangs.includes(base) ? base : 'en';
     })
     .optional(),

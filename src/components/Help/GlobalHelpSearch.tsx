@@ -48,7 +48,9 @@ const TYPE_ICONS: Record<
 
 export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang = HELP_LANGS.includes(baseLang) ? baseLang : 'en';
 
   // Derived values from translations
   const typeLabels: Record<SearchResultType, string> = {
@@ -88,16 +90,18 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
   } = useGlobalHelpSearch({
     language: lang,
     onSelect: (result) => {
-      // Navigate based on result type
       if (result.url) {
         window.open(result.url, '_blank');
-      } else if (onNavigate) {
-        // Navigate to appropriate view based on module
-        const module = MODULE_HELP_CONTENT[result.moduleId as HelpModuleId];
-        if (module) {
-          // This would navigate to the module view
-          console.log('Navigate to:', result.moduleId, result.id);
-        }
+        return;
+      }
+      if (result.type === 'faq' || result.type === 'module') {
+        const helpLink = `${window.location.pathname}?help_module=${encodeURIComponent(result.moduleId)}&help_tab=${result.type === 'faq' ? 'faq' : 'this_step'}`;
+        window.history.pushState({}, '', helpLink);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        return;
+      }
+      if (onNavigate) {
+        onNavigate(result.moduleId, { type: result.type, id: result.id });
       }
     },
   });
@@ -254,6 +258,11 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                           <span className="text-xs px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded">
                             {typeLabels[result.type]}
                           </span>
+                          {result.isLanguageFallback && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded font-medium">
+                              {t('help.search.enOnly', 'EN-only')}
+                            </span>
+                          )}
                         </div>
                         <p
                           className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5"
@@ -275,16 +284,69 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
               </div>
             )}
 
-            {/* No Results */}
+            {/* No Results — show alternatives + categories + overview link */}
             {!isLoading && query.length >= 2 && results.length === 0 && (
-              <div className="py-12 text-center">
-                <Search size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-                <p className="text-slate-500 dark:text-slate-400">
-                  {t('help.search.noResults')} <strong>"{query}"</strong>
-                </p>
-                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                  {t('help.search.tryDifferentKeywords')}
-                </p>
+              <div className="py-8 px-6">
+                <div className="text-center mb-6">
+                  <Search size={36} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('help.search.noResults', 'No results for')} <strong>"{query}"</strong>
+                  </p>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                    {t('help.search.tryDifferentKeywords', 'Try different keywords or browse categories below')}
+                  </p>
+                </div>
+
+                {/* Suggested alternative queries */}
+                {suggestions.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase mb-2">
+                      {t('help.search.didYouMean', 'Did you mean?')}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleQuickSearch(s)}
+                          className="px-3 py-1.5 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Browse categories */}
+                <div className="mb-4">
+                  <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase mb-2">
+                    {t('help.search.browseCategories', 'Browse categories')}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {popularSearches.slice(0, 6).map((term, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleQuickSearch(term)}
+                        className="px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Link to overview */}
+                <button
+                  onClick={() => {
+                    close();
+                    const overviewLink = `${window.location.pathname}?help_tab=overview`;
+                    window.history.pushState({}, '', overviewLink);
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                >
+                  {t('help.search.openOverview', 'Open Help overview')} →
+                </button>
               </div>
             )}
 

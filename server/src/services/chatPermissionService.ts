@@ -79,47 +79,83 @@ export function mapOrgRoleToChatRole(orgRole: string | undefined | null): ChatRo
 // ==========================================
 
 /**
+ * Build a human-readable denial reason for a role/action combination.
+ */
+function buildDenialReason(action: ChatAction, role: ChatRole, ctx: ChatPermissionContext = {}): string {
+  if (role === 'none') {
+    return 'You are not a member of this organization.';
+  }
+  if (role === 'viewer') {
+    const actionLabels: Record<ChatAction, string> = {
+      read: '',
+      create_project: 'create folders',
+      edit_project: 'edit folders',
+      delete_project: 'delete folders',
+      create_thread: 'create conversations',
+      add_message: 'send messages',
+      manage_thread: 'manage conversations',
+      create_share_link: 'create share links',
+    };
+    return `Viewers can only read conversations. Contact an admin to ${actionLabels[action] || 'perform this action'}.`;
+  }
+  if (role === 'contributor') {
+    if ((action === 'edit_project' || action === 'delete_project') && !ctx.isCreator) {
+      return 'Only the folder creator or an admin can modify team folders.';
+    }
+    if (action === 'manage_thread' && !ctx.isCreator) {
+      return 'Only the conversation creator or an admin can manage this team conversation.';
+    }
+    if (action === 'create_share_link') {
+      return 'Only admins can create share links. Contact your organization admin.';
+    }
+  }
+  return 'You do not have permission to perform this action.';
+}
+
+/**
  * Check whether a chat role can perform a given action.
  *
  * @param action   – the action to perform
  * @param role     – resolved ChatRole for the user
  * @param ctx      – additional context (isCreator)
+ * @returns allowed boolean + denial reason (empty string if allowed)
  */
 export function canChat(
   action: ChatAction,
   role: ChatRole,
   ctx: ChatPermissionContext = {}
-): boolean {
-  if (role === 'none') return false;
+): { allowed: boolean; reason: string } {
+  if (role === 'none') return { allowed: false, reason: buildDenialReason(action, role, ctx) };
 
-  // Owner can do everything
-  if (role === 'owner') return true;
+  if (role === 'owner') return { allowed: true, reason: '' };
 
-  // Contributor
   if (role === 'contributor') {
     switch (action) {
       case 'read':
       case 'create_project':
       case 'create_thread':
       case 'add_message':
-        return true;
+        return { allowed: true, reason: '' };
       case 'edit_project':
       case 'delete_project':
       case 'manage_thread':
-        return !!ctx.isCreator; // only own content
+        return ctx.isCreator
+          ? { allowed: true, reason: '' }
+          : { allowed: false, reason: buildDenialReason(action, role, ctx) };
       case 'create_share_link':
-        return false;
+        return { allowed: false, reason: buildDenialReason(action, role, ctx) };
       default:
-        return false;
+        return { allowed: false, reason: buildDenialReason(action, role, ctx) };
     }
   }
 
-  // Viewer
   if (role === 'viewer') {
-    return action === 'read';
+    return action === 'read'
+      ? { allowed: true, reason: '' }
+      : { allowed: false, reason: buildDenialReason(action, role, ctx) };
   }
 
-  return false;
+  return { allowed: false, reason: buildDenialReason(action, role, ctx) };
 }
 
 // ==========================================
@@ -170,10 +206,10 @@ export async function checkChatPermission(
   organizationId: string,
   action: ChatAction,
   ctx: ChatPermissionContext = {}
-): Promise<{ allowed: boolean; role: ChatRole }> {
+): Promise<{ allowed: boolean; role: ChatRole; reason: string }> {
   const role = await resolveUserChatRole(userId, organizationId);
-  const allowed = canChat(action, role, ctx);
-  return { allowed, role };
+  const { allowed, reason } = canChat(action, role, ctx);
+  return { allowed, role, reason };
 }
 
 export default {

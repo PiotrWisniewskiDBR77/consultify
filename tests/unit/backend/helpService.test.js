@@ -2,278 +2,200 @@
  * Help Service Unit Tests
  *
  * Tests for help/knowledge base article retrieval and search.
+ * Tests the real HelpService via mocked database calls.
  *
  * @module tests/unit/backend/helpService.test.js
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Create help service implementation
-const createHelpService = () => {
-  const articles = new Map();
-  const categories = new Map();
-
-  return {
-    // Article CRUD
-    createArticle: async (data) => {
-      if (!data.title || !data.content) {
-        throw new Error('Title and content are required');
-      }
-      const id = `help-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      const article = {
-        id,
-        title: data.title,
-        content: data.content,
-        category: data.category || 'general',
-        tags: data.tags || [],
-        views: 0,
-        helpful: 0,
-        notHelpful: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      articles.set(id, article);
-      return article;
-    },
-
-    getArticle: async (id) => {
-      const article = articles.get(id);
-      if (article) {
-        article.views++;
-      }
-      return article || null;
-    },
-
-    updateArticle: async (id, updates) => {
-      const article = articles.get(id);
-      if (!article) throw new Error('Article not found');
-      const updated = { ...article, ...updates, updatedAt: new Date().toISOString() };
-      articles.set(id, updated);
-      return updated;
-    },
-
-    deleteArticle: async (id) => {
-      return articles.delete(id);
-    },
-
-    // Search
-    search: async (query, options = {}) => {
-      const { category, limit = 10 } = options;
-      const results = [];
-      const queryLower = query.toLowerCase();
-
-      for (const article of articles.values()) {
-        if (category && article.category !== category) continue;
-
-        const titleMatch = article.title.toLowerCase().includes(queryLower);
-        const contentMatch = article.content.toLowerCase().includes(queryLower);
-        const tagMatch = article.tags.some((t) => t.toLowerCase().includes(queryLower));
-
-        if (titleMatch || contentMatch || tagMatch) {
-          let relevance = 0;
-          if (titleMatch) relevance += 0.5;
-          if (contentMatch) relevance += 0.3;
-          if (tagMatch) relevance += 0.2;
-
-          results.push({ ...article, relevance });
-        }
-      }
-
-      return results.sort((a, b) => b.relevance - a.relevance).slice(0, limit);
-    },
-
-    // Categories
-    getCategories: async () => {
-      const cats = new Map();
-      for (const article of articles.values()) {
-        const count = cats.get(article.category) || 0;
-        cats.set(article.category, count + 1);
-      }
-      return Array.from(cats.entries()).map(([name, count]) => ({ name, count }));
-    },
-
-    // Feedback
-    markHelpful: async (id, helpful) => {
-      const article = articles.get(id);
-      if (!article) throw new Error('Article not found');
-      if (helpful) article.helpful++;
-      else article.notHelpful++;
-      return article;
-    },
-
-    // Popular articles
-    getPopular: async (limit = 5) => {
-      return Array.from(articles.values())
-        .sort((a, b) => b.views - a.views)
-        .slice(0, limit);
-    },
-
-    // Helpers
-    clear: () => articles.clear(),
-  };
+const mockDb = {
+  all: vi.fn(),
+  get: vi.fn(),
+  run: vi.fn(),
 };
 
-describe('HelpService', () => {
-  let helpService;
+vi.mock('../../../server/src/database/Database.js', () => ({
+  getDatabase: vi.fn().mockResolvedValue(mockDb),
+}));
 
+const { default: helpService } = await import(
+  '../../../server/src/services/helpService.js'
+);
+
+describe('HelpService (production)', () => {
   beforeEach(() => {
-    helpService = createHelpService();
+    vi.clearAllMocks();
   });
 
-  describe('Article CRUD', () => {
-    it('should create a help article', async () => {
-      const article = await helpService.createArticle({
-        title: 'Getting Started',
-        content: 'Welcome to our platform!',
-        category: 'onboarding',
-        tags: ['beginner', 'tutorial'],
+  describe('getArticles', () => {
+    it('returns mapped articles from DB', async () => {
+      mockDb.all.mockResolvedValue([
+        {
+          id: 'a1',
+          category: 'getting-started',
+          subcategory: null,
+          title: 'Getting Started',
+          slug: 'getting-started',
+          content: 'Welcome!',
+          excerpt: 'Intro',
+          video_url: null,
+          video_duration_seconds: null,
+          related_module: 'dashboard',
+          tags: '["intro","onboarding"]',
+          is_published: 1,
+          view_count: 10,
+          helpful_count: 5,
+          not_helpful_count: 1,
+        },
+      ]);
+
+      const articles = await helpService.getArticles();
+
+      expect(articles).toHaveLength(1);
+      expect(articles[0].title).toBe('Getting Started');
+      expect(articles[0].tags).toEqual(['intro', 'onboarding']);
+      expect(articles[0].isPublished).toBe(true);
+    });
+
+    it('applies category filter', async () => {
+      mockDb.all.mockResolvedValue([]);
+
+      await helpService.getArticles({ category: 'tools' });
+
+      const query = mockDb.all.mock.calls[0][0];
+      expect(query).toContain('category = ?');
+      expect(mockDb.all.mock.calls[0][1]).toContain('tools');
+    });
+
+    it('applies search filter to title, content and tags', async () => {
+      mockDb.all.mockResolvedValue([]);
+
+      await helpService.getArticles({ search: 'maturity' });
+
+      const query = mockDb.all.mock.calls[0][0];
+      expect(query).toContain('title LIKE ?');
+      expect(query).toContain('content LIKE ?');
+      expect(query).toContain('tags LIKE ?');
+    });
+
+    it('returns empty array when DB returns null', async () => {
+      mockDb.all.mockResolvedValue(null);
+
+      const articles = await helpService.getArticles();
+
+      expect(articles).toEqual([]);
+    });
+  });
+
+  describe('getArticleBySlug', () => {
+    it('returns article and increments view count', async () => {
+      mockDb.get.mockResolvedValue({
+        id: 'a2',
+        category: 'guides',
+        subcategory: null,
+        title: 'Guide',
+        slug: 'test-guide',
+        content: 'Content here',
+        excerpt: '',
+        video_url: null,
+        video_duration_seconds: null,
+        related_module: null,
+        tags: '[]',
+        is_published: 1,
+        view_count: 5,
+        helpful_count: 0,
+        not_helpful_count: 0,
       });
+      mockDb.run.mockResolvedValue(undefined);
 
-      expect(article.id).toBeDefined();
-      expect(article.title).toBe('Getting Started');
-      expect(article.category).toBe('onboarding');
-      expect(article.tags).toContain('beginner');
+      const article = await helpService.getArticleBySlug('test-guide');
+
+      expect(article).not.toBeNull();
+      expect(article.slug).toBe('test-guide');
+      expect(article.viewCount).toBe(6);
+      expect(mockDb.run).toHaveBeenCalledWith(
+        expect.stringContaining('view_count = view_count + 1'),
+        ['a2']
+      );
     });
 
-    it('should require title and content', async () => {
-      await expect(helpService.createArticle({})).rejects.toThrow('Title and content are required');
-    });
+    it('returns null for non-existent slug', async () => {
+      mockDb.get.mockResolvedValue(null);
 
-    it('should get article by ID and increment views', async () => {
-      const created = await helpService.createArticle({
-        title: 'Test Article',
-        content: 'Test content',
-      });
+      const article = await helpService.getArticleBySlug('non-existent');
 
-      const article = await helpService.getArticle(created.id);
-      expect(article.views).toBe(1);
-
-      await helpService.getArticle(created.id);
-      const updated = await helpService.getArticle(created.id);
-      expect(updated.views).toBe(3);
-    });
-
-    it('should return null for non-existent article', async () => {
-      const article = await helpService.getArticle('non-existent');
       expect(article).toBeNull();
     });
+  });
 
-    it('should update article', async () => {
-      const created = await helpService.createArticle({
-        title: 'Original Title',
-        content: 'Original content',
+  describe('getModuleHelp', () => {
+    it('returns module help when found', async () => {
+      mockDb.get.mockResolvedValue({
+        id: 'm1',
+        module_key: 'dashboard',
+        title: 'Dashboard Help',
+        short_description: 'Overview of dashboard',
+        video_url: '/vid/dash.mp4',
+        video_duration_seconds: 120,
+        article_id: 'a1',
+        tips: '["tip1","tip2"]',
       });
 
-      const updated = await helpService.updateArticle(created.id, {
-        title: 'Updated Title',
-      });
+      const help = await helpService.getModuleHelp('dashboard');
 
-      expect(updated.title).toBe('Updated Title');
-      expect(updated.content).toBe('Original content');
+      expect(help).not.toBeNull();
+      expect(help.moduleKey).toBe('dashboard');
+      expect(help.tips).toEqual(['tip1', 'tip2']);
     });
 
-    it('should delete article', async () => {
-      const created = await helpService.createArticle({
-        title: 'Delete Me',
-        content: 'To be deleted',
-      });
+    it('returns null when module not found', async () => {
+      mockDb.get.mockResolvedValue(null);
 
-      const result = await helpService.deleteArticle(created.id);
+      const help = await helpService.getModuleHelp('nonexistent');
+
+      expect(help).toBeNull();
+    });
+  });
+
+  describe('submitArticleFeedback', () => {
+    it('increments helpful_count when isHelpful=true', async () => {
+      mockDb.run.mockResolvedValue(undefined);
+
+      await helpService.submitArticleFeedback('a1', 'u1', true);
+
+      expect(mockDb.run).toHaveBeenCalledWith(
+        expect.stringContaining('helpful_count = helpful_count + 1'),
+        ['a1']
+      );
+    });
+
+    it('increments not_helpful_count when isHelpful=false', async () => {
+      mockDb.run.mockResolvedValue(undefined);
+
+      await helpService.submitArticleFeedback('a1', 'u1', false);
+
+      expect(mockDb.run).toHaveBeenCalledWith(
+        expect.stringContaining('not_helpful_count = not_helpful_count + 1'),
+        ['a1']
+      );
+    });
+  });
+
+  describe('isTooltipDismissed', () => {
+    it('returns false when no dismissal exists', async () => {
+      mockDb.get.mockResolvedValue(null);
+
+      const result = await helpService.isTooltipDismissed('u1', 'tip-1');
+
+      expect(result).toBe(false);
+    });
+
+    it('returns true for forever dismissal', async () => {
+      mockDb.get.mockResolvedValue({ show_again_at: null });
+
+      const result = await helpService.isTooltipDismissed('u1', 'tip-1');
+
       expect(result).toBe(true);
-
-      const article = await helpService.getArticle(created.id);
-      expect(article).toBeNull();
-    });
-  });
-
-  describe('Search', () => {
-    beforeEach(async () => {
-      await helpService.createArticle({
-        title: 'Getting Started Guide',
-        content: 'Learn how to use the platform',
-        category: 'onboarding',
-        tags: ['beginner'],
-      });
-      await helpService.createArticle({
-        title: 'Advanced Features',
-        content: 'Power user tips and tricks',
-        category: 'advanced',
-        tags: ['power-user'],
-      });
-      await helpService.createArticle({
-        title: 'API Documentation',
-        content: 'How to integrate with our API',
-        category: 'developer',
-        tags: ['api', 'integration'],
-      });
-    });
-
-    it('should search by title', async () => {
-      const results = await helpService.search('Getting Started');
-      expect(results.length).toBeGreaterThan(0);
-      expect(results[0].title).toContain('Getting Started');
-    });
-
-    it('should search by content', async () => {
-      const results = await helpService.search('API');
-      expect(results.length).toBeGreaterThan(0);
-    });
-
-    it('should search by tags', async () => {
-      const results = await helpService.search('beginner');
-      expect(results.length).toBeGreaterThan(0);
-    });
-
-    it('should filter by category', async () => {
-      const results = await helpService.search('', { category: 'developer' });
-      expect(results.every((r) => r.category === 'developer')).toBe(true);
-    });
-
-    it('should rank results by relevance', async () => {
-      const results = await helpService.search('guide');
-      for (let i = 1; i < results.length; i++) {
-        expect(results[i - 1].relevance).toBeGreaterThanOrEqual(results[i].relevance);
-      }
-    });
-  });
-
-  describe('Feedback', () => {
-    it('should track helpful feedback', async () => {
-      const created = await helpService.createArticle({
-        title: 'Helpful Article',
-        content: 'Very useful content',
-      });
-
-      await helpService.markHelpful(created.id, true);
-      await helpService.markHelpful(created.id, true);
-      await helpService.markHelpful(created.id, false);
-
-      const article = await helpService.getArticle(created.id);
-      expect(article.helpful).toBe(2);
-      expect(article.notHelpful).toBe(1);
-    });
-  });
-
-  describe('Popular Articles', () => {
-    it('should return most viewed articles', async () => {
-      const a1 = await helpService.createArticle({
-        title: 'Popular Article',
-        content: 'Very popular',
-      });
-      const a2 = await helpService.createArticle({
-        title: 'Less Popular',
-        content: 'Not as popular',
-      });
-
-      // Simulate views
-      for (let i = 0; i < 10; i++) {
-        await helpService.getArticle(a1.id);
-      }
-      for (let i = 0; i < 3; i++) {
-        await helpService.getArticle(a2.id);
-      }
-
-      const popular = await helpService.getPopular(5);
-      expect(popular[0].title).toBe('Popular Article');
     });
   });
 });

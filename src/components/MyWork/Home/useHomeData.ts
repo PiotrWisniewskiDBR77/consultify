@@ -655,7 +655,7 @@ function buildLegacyNudge(screen: HomeScreenData): NudgeData | null {
 }
 
 export function useHomeData(refreshTrigger?: number): HomeData {
-  const [screen, setScreen] = useState<HomeScreenData>(cloneMockScreen);
+  const [screen, setScreen] = useState<HomeScreenData>(createEmptyScreen);
   const [layout, setLayout] = useState<HomeLayoutConfig>(getDefaultLayout);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

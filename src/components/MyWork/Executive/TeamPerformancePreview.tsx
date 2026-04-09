@@ -73,6 +73,7 @@ const TeamMemberRow: React.FC<{
   member: TeamMember;
   onClick?: () => void;
 }> = ({ member, onClick }) => {
+  const { t } = useTranslation();
   const isOverloaded = member.capacity > 100;
   const TrendIcon =
     member.trend === 'up' ? TrendingUp : member.trend === 'down' ? TrendingDown : null;
@@ -99,7 +100,7 @@ const TeamMemberRow: React.FC<{
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            {member.tasksCompleted}/{member.tasksTotal} tasks
+            {member.tasksCompleted}/{member.tasksTotal} {t('executive.team.tasks', 'tasks')}
           </span>
           {TrendIcon && (
             <TrendIcon

@@ -1463,10 +1463,12 @@ router.get(
           d.deadline as dueDate,
           d.created_at as createdAt,
           p.name as projectName,
+          requester.first_name || ' ' || requester.last_name as requestedByName,
           ${dSourceTypeSelect} as "sourceType",
           ${dSourceIdSelect} as "sourceId"
         FROM decisions d
         LEFT JOIN projects p ON d.project_id = p.id
+        LEFT JOIN users requester ON d.created_by = requester.id
         WHERE d.organization_id = ?
           AND d.decision_maker_id = ?
           ${onlyPending ? "AND lower(coalesce(d.status,'')) IN ('pending','escalated')" : ''}
@@ -9611,21 +9613,24 @@ router.get(
       );
       patterns.currentOpenTasks = openCount?.total || 0;
 
-      const insights: string[] = [];
+      const insights: { key: string; params?: Record<string, unknown> }[] = [];
       if (patterns.avgVelocity && patterns.currentOpenTasks > patterns.avgVelocity * 2) {
-        insights.push(
-          `You have ${patterns.currentOpenTasks} open tasks but average ${patterns.avgVelocity}/week. Consider delegating or deferring.`
-        );
+        insights.push({
+          key: 'overloaded',
+          params: { openTasks: patterns.currentOpenTasks, velocity: patterns.avgVelocity },
+        });
       }
       if (patterns.overdueRate && patterns.overdueRate > 30) {
-        insights.push(
-          `${patterns.overdueRate}% of your tasks with deadlines are completed late. Try adding buffer time.`
-        );
+        insights.push({
+          key: 'highOverdue',
+          params: { rate: patterns.overdueRate },
+        });
       }
       if (patterns.avgDecisionDays && patterns.avgDecisionDays > 5) {
-        insights.push(
-          `Average decision time is ${patterns.avgDecisionDays} days. Faster decisions could unblock teams.`
-        );
+        insights.push({
+          key: 'slowDecisions',
+          params: { days: patterns.avgDecisionDays },
+        });
       }
       patterns.insights = insights;
     } catch (err) {

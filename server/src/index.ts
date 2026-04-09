@@ -1260,6 +1260,11 @@ if (startServer && shouldStartHttpServer) {
       logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
       logger.info(`[Server] ✅ Server started on port ${PORT}`);
       logger.info(`[Server] Frontend will be served from: ${frontendDistPath}`);
+
+      // Start conversation purge scheduler (P35 — auto-purge soft-deleted conversations)
+      import('./services/conversationPurgeScheduler.js')
+        .then((m) => m.startPurgeScheduler())
+        .catch((err) => logger.warn('[Server] Purge scheduler init failed (non-fatal):', err));
     });
   })();
 }

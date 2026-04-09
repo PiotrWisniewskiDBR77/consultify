@@ -18,6 +18,7 @@ import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { embeddingService } from './ai/embeddingService.js';
 import { persistNotebookSourceFile } from './notebookSourceFileService.js';
+import { P07_PROVENANCE_LANGUAGE, type P07Provenance } from './v8/notebookCanon.js';
 
 // ============================================================
 // Types
@@ -70,6 +71,14 @@ export interface AIBlockProposal {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+}
+
+export interface BlockProvenance {
+  type: P07Provenance;
+  actor: string;
+  timestamp: string;
+  proposalId?: string;
+  inputPointers?: string[];
 }
 
 export interface EmbedChipInfo {
@@ -458,6 +467,44 @@ class NotebookService {
   }
 
   // ──────────────────────────────────────────────
+  // P07 §2.3.3: Export with provenance side-channel
+  // ──────────────────────────────────────────────
+
+  async exportWithProvenance(
+    orgId: string,
+    pageId: string
+  ): Promise<{ markdown: string; provenanceMap: Array<{ blockIndex: number; provenance: BlockProvenance }> }> {
+    const page = await queryHelpers.queryOne<{ content_json?: string | null }>(
+      `SELECT content_json FROM notebook_pages WHERE id = ? AND organization_id = ?`,
+      [pageId, orgId]
+    );
+    if (!page) {
+      return { markdown: '', provenanceMap: [] };
+    }
+
+    const doc = safeParseDocument(page.content_json);
+    const blocks = Array.isArray(doc.content) ? doc.content : [];
+
+    const markdownParts: string[] = [];
+    const provenanceMap: Array<{ blockIndex: number; provenance: BlockProvenance }> = [];
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      markdownParts.push(blockToMarkdown(block));
+
+      const raw = (block as any).provenance;
+      const provenance: BlockProvenance =
+        raw && typeof raw === 'object' && P07_PROVENANCE_LANGUAGE.includes(raw.type)
+          ? { type: raw.type, actor: raw.actor || 'unknown', timestamp: raw.timestamp || '', proposalId: raw.proposalId, inputPointers: raw.inputPointers }
+          : { type: 'user_edit', actor: 'unknown', timestamp: '' };
+
+      provenanceMap.push({ blockIndex: i, provenance });
+    }
+
+    return { markdown: markdownParts.join('\n\n'), provenanceMap };
+  }
+
+  // ──────────────────────────────────────────────
   // V4-NOTE-07: Embed chips — resolve artifact info
   // ──────────────────────────────────────────────
 
@@ -641,10 +688,15 @@ class NotebookService {
     return buffer.toString('utf-8');
   }
 
-  private textToBlocks(text: string): Array<Record<string, unknown>> {
+  private textToBlocks(
+    text: string,
+    provenanceType: P07Provenance = 'source'
+  ): Array<Record<string, unknown>> {
+    const now = new Date().toISOString();
     const paragraphs = text.split(/\n{2,}/).filter(Boolean);
     return paragraphs.slice(0, 200).map((p) => ({
       type: 'paragraph',
+      provenance: { type: provenanceType, actor: 'system', timestamp: now } satisfies BlockProvenance,
       content: [{ type: 'text', text: p.trim().slice(0, 10000) }],
     }));
   }
@@ -886,13 +938,24 @@ class NotebookService {
     const nextBlock = normalizeNotebookBlock(safeParseJson(proposalRow.block_content));
     const existingBlocks = Array.isArray(currentDoc.content) ? currentDoc.content : [];
 
+    const taggedBlock: Record<string, unknown> = {
+      ...nextBlock,
+      provenance: {
+        type: 'ai_transform' as P07Provenance,
+        actor: proposalRow.actor_id,
+        proposalId: proposalRow.id,
+        inputPointers: [proposalRow.page_id],
+        timestamp: new Date().toISOString(),
+      } satisfies BlockProvenance,
+    };
+
     let updatedBlocks = existingBlocks;
     if (proposalType === 'replace') {
-      updatedBlocks = [nextBlock];
+      updatedBlocks = [taggedBlock];
     } else if (proposalType === 'append') {
-      updatedBlocks = [...existingBlocks, nextBlock];
+      updatedBlocks = [...existingBlocks, taggedBlock];
     } else {
-      updatedBlocks = [nextBlock, ...existingBlocks];
+      updatedBlocks = [taggedBlock, ...existingBlocks];
     }
 
     const nextDoc = { ...currentDoc, type: 'doc', content: updatedBlocks };
@@ -964,6 +1027,20 @@ function normalizeNotebookBlock(block: Record<string, unknown>): Record<string, 
   };
 }
 
+function blockToMarkdown(block: Record<string, unknown>): string {
+  const content = Array.isArray((block as any).content) ? (block as any).content : [];
+  const text = content
+    .map((node: any) => (typeof node?.text === 'string' ? node.text : ''))
+    .filter(Boolean)
+    .join('');
+  const blockType = String(block.type || 'paragraph');
+  if (blockType.startsWith('heading')) {
+    const level = parseInt(blockType.replace(/\D/g, ''), 10) || 1;
+    return '#'.repeat(Math.min(level, 6)) + ' ' + text;
+  }
+  return text;
+}
+
 function blocksToPlainText(blocks: Array<Record<string, unknown>>): string {
   return blocks
     .map((block) => {
@@ -1022,4 +1099,4 @@ function tokenize(input: string): string[] {
 
 const notebookService = new NotebookService();
 export default notebookService;
-export { NotebookService, notebookService };
+export { NotebookService, notebookService, type BlockProvenance };

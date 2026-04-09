@@ -11718,62 +11718,43 @@ export const Api = {
   },
 
   getGdprConsents: async () => {
-    return { consents: [] };
+    return Api.get('/api/gdpr/consents');
   },
 
   updateGdprConsents: async (consents: any) => {
-    return { success: true, consents };
+    return Api.put('/api/gdpr/consents', { consents });
   },
 
   getGdprRetention: async () => {
-    return {
-      retention: {
-        period: '365' as const,
-        autoDelete: false,
-      },
-    };
+    return Api.get('/api/gdpr/retention');
   },
 
   updateGdprRetention: async (settings: any) => {
-    return { success: true, ...settings };
+    return Api.put('/api/gdpr/retention', { retention: settings });
   },
 
   saveGdprConsents: async (consents: any) => {
-    return { success: true, consents };
+    return Api.put('/api/gdpr/consents', { consents });
   },
 
   saveGdprRetention: async (settings: any) => {
-    return { success: true, settings };
+    return Api.put('/api/gdpr/retention', { retention: settings });
   },
 
   getGdprExportStatus: async () => {
-    return { status: 'none', lastExport: null, request: null };
+    return Api.get('/api/gdpr/export-status');
   },
 
   requestGdprExport: async () => {
-    return {
-      success: true,
-      request: {
-        id: `export-${Date.now()}`,
-        status: 'pending' as const,
-        requestedAt: new Date().toISOString(),
-      },
-    };
+    return Api.post('/api/gdpr/export-request', {});
   },
 
   requestGdprDeletion: async () => {
-    return {
-      success: true,
-      request: {
-        id: `delete-${Date.now()}`,
-        status: 'pending' as const,
-        requestedAt: new Date().toISOString(),
-      },
-    };
+    return Api.post('/api/gdpr/deletion-request', {});
   },
 
   cancelGdprDeletion: async (_requestId?: string) => {
-    return { success: true };
+    return Api.post('/api/gdpr/cancel-deletion', { requestId: _requestId });
   },
 
   getDeveloperSettings: async () => {

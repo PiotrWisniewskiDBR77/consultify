@@ -131,7 +131,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   className = '',
 }) => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang = HELP_LANGS.includes(baseLang) ? baseLang : 'en';
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

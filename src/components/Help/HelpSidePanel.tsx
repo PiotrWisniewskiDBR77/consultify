@@ -236,7 +236,11 @@ type RenderGuide = {
 
 export const HelpSidePanel: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language?.startsWith('pl') ? 'pl' : 'en';
+  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang = (HELP_LANGS as readonly string[]).includes(baseLang)
+    ? (baseLang as (typeof HELP_LANGS)[number])
+    : 'en';
   const navigate = useNavigate();
   const { isDesktop, isMobile, isTablet } = useDeviceType();
 
@@ -249,6 +253,7 @@ export const HelpSidePanel: React.FC = () => {
     knowledgeModuleIdOverride,
     knowledgeArticleSlugOverride,
     setKnowledgeArticleSlugOverride,
+    setHelpDocumentIdOverride,
   } = useHelpSidePanel();
   const currentView = useAppStore((s) => s.currentView);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
@@ -356,8 +361,8 @@ export const HelpSidePanel: React.FC = () => {
 
   const filteredFAQs = searchQuery
     ? faqs.filter((faq) => {
-        const question = lang === 'pl' ? faq.questionPl : faq.question;
-        const answer = lang === 'pl' ? faq.answerPl : faq.answer;
+        const question = lang === 'pl' && faq.questionPl ? faq.questionPl : faq.question;
+        const answer = lang === 'pl' && faq.answerPl ? faq.answerPl : faq.answer;
         const q = searchQuery.toLowerCase();
         return (
           (question || '').toLowerCase().includes(q) || (answer || '').toLowerCase().includes(q)
@@ -608,7 +613,10 @@ export const HelpSidePanel: React.FC = () => {
                 </p>
                 {nextDocument && (
                   <button
-                    onClick={() => setActiveTab('guides')}
+                    onClick={() => {
+                      setHelpDocumentIdOverride(nextDocument.id);
+                      setActiveTab('this_step');
+                    }}
                     className="mt-3 w-full flex items-center justify-between px-3 py-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 text-left transition-colors"
                   >
                     <div>

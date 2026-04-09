@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Activity } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 
@@ -59,6 +60,7 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
   headerRight,
   density = 'compact',
 }) => {
+  const { t } = useTranslation();
   const isLive = block.freshnessScore >= 75 || block.priorityWeight >= 92;
   const isCompact = density === 'compact';
   const sizeClasses = isCompact ? COMPACT_SIZE : COMFORTABLE_SIZE;
@@ -96,11 +98,11 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
               {isLive && (
                 <span className="inline-flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider text-cyan-300/70">
                   <Activity size={8} className="text-cyan-300/80" />
-                  Live
+                  {t('myWork.radar.live')}
                 </span>
               )}
               <span className="font-mono text-[8px] font-medium uppercase tracking-wider text-white/30">
-                Rel {Math.round(block.relevanceScore)}
+                {t('myWork.radar.rel')} {Math.round(block.relevanceScore)}
               </span>
             </div>
             <h3

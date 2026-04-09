@@ -46,6 +46,7 @@ export const ArtifactRunStatusValues = [
   'retry_requested',
   'completed',
   'failed',
+  'cancelled',
 ] as const;
 export type ArtifactRunStatus = (typeof ArtifactRunStatusValues)[number];
 

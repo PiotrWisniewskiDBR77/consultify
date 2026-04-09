@@ -217,6 +217,7 @@ AI-generated insights and recommendations for improving operations.
     content:
       'Configure LLM providers, assign models to tiers, set global limits and fallback chains, and monitor provider health/capabilities.',
     icon: 'Cpu',
+    translationKey: 'help.sidePanel.modules.superadmin_ai_infrastructure',
     relatedModules: ['superadmin_ai_development', 'superadmin_ai_operations'],
     targetAudience: ['superadmin'],
   },
@@ -227,6 +228,7 @@ AI-generated insights and recommendations for improving operations.
     content:
       'Manage and version system prompts, run A/B tests, and curate knowledge sources used by AI systems.',
     icon: 'Sparkles',
+    translationKey: 'help.sidePanel.modules.superadmin_ai_development',
     relatedModules: ['superadmin_ai_infrastructure', 'superadmin_ai_operations'],
     targetAudience: ['superadmin'],
   },
@@ -237,6 +239,7 @@ AI-generated insights and recommendations for improving operations.
     content:
       'Monitor AI uptime/latency/errors, observe token spend and costs, validate SLAs, and analyze usage patterns across providers/models.',
     icon: 'Activity',
+    translationKey: 'help.sidePanel.modules.superadmin_ai_operations',
     relatedModules: ['superadmin_ai_infrastructure', 'superadmin_ai_development'],
     targetAudience: ['superadmin'],
   },
@@ -1480,6 +1483,7 @@ Where you provide services:
 • Premium support options
 • SLA commitments
 • Escalation paths`,
+    translationKey: 'help.sidePanel.modules.billing',
     targetAudience: ['admin', 'owner', 'finance'],
   },
   economics: {

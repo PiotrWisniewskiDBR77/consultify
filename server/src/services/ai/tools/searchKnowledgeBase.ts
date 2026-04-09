@@ -8,6 +8,7 @@
 
 import { all as dbAll } from '../../../utils/DbPromise.js';
 import logger from '../../../utils/Logger.js';
+import { evaluateRetrievalPolicyDecision } from '../chatPolicyGateway.js';
 
 type SearchParams = {
   query: string;
@@ -38,6 +39,26 @@ export async function searchKnowledgeBase(
   totalFound: number;
 }> {
   const { query, maxResults = 5, toolSlug, packType, language } = params;
+
+  try {
+    const policyResult = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'agent',
+      query,
+      organizationId: context.organizationId || 'system',
+      userId: 'tool:search_knowledge_base',
+    });
+    logger.info(
+      `[searchKnowledgeBase] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}`
+    );
+    if (!policyResult.decision.allowed) {
+      return { results: [], totalFound: 0 };
+    }
+  } catch (policyErr: any) {
+    logger.warn(
+      `[searchKnowledgeBase] Policy gateway error (fail-closed): ${policyErr?.message || String(policyErr)}`
+    );
+    return { results: [], totalFound: 0 };
+  }
 
   try {
     const ragModule = await import('../../ragService.js');

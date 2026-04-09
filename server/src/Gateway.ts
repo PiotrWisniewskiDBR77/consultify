@@ -689,7 +689,7 @@ export class ApiGateway {
       mountStub('/api/settlements', settlementRoutes, 'settlementRoutes');
       app.use('/api/access-codes', accessCodeRoutes);
       app.use('/api/help', helpRoutes);
-      mountStub('/api/help', helpFeedbackRoutes, 'helpFeedbackRoutes');
+      app.use('/api/help', helpFeedbackRoutes);
       app.use('/api/help', helpChatRoutes);
       app.use('/api/updates', featureUpdatesRoutes);
       mountStub('/api/help-analytics', helpAnalyticsRoutes, 'helpAnalyticsRoutes');

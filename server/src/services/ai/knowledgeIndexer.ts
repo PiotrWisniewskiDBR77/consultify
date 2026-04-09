@@ -400,6 +400,7 @@ export class KnowledgeIndexer {
     if (slug.includes('consultinity') || slug.includes('consultify')) return 'consultify';
     if (slug.includes('vector')) return 'vector';
     if (slug.includes('marketplace')) return 'marketplace';
+    if (slug.includes('dbr77') || slug.includes('dbr-77')) return 'dbr77';
     if (slug.includes('iiot') || slug.includes('iot')) return 'iiot';
     if (slug === 'dt-info-pils' || slug.startsWith('dt-')) return 'digital-twin';
     if (slug.includes('digital-twin')) return 'digital-twin';

@@ -11,8 +11,7 @@ interface MomentumBlockProps {
 }
 
 export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const payload = block.payload;
 
   return (
@@ -49,9 +48,7 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
                     sourceBlock: 'momentum',
                     intent: 'summarize_momentum',
                     title: signal.title,
-                    starterPrompt: isPolish
-                      ? `Wyjaśnij co oznacza ten sygnał momentum dla transformacji: ${signal.title}`
-                      : `Explain what this momentum signal means for the transformation: ${signal.title}`,
+                    starterPrompt: t('myWork.radar.momentumPrompt', { title: signal.title }),
                     entityType: 'transformation_signal',
                     entityId: signal.id,
                     entityName: signal.title,

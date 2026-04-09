@@ -8,27 +8,18 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Activity,
-  AlertTriangle,
   ArrowRight,
-  Brain,
   BookOpen,
   ChevronRight,
   Clock,
-  Cpu,
   Eye,
   Filter,
+  FolderOpen,
   GraduationCap,
-  Landmark,
-  LayoutGrid,
   Search,
-  Shield,
-  ShoppingCart,
   Sparkles,
   Tag,
-  TrendingUp,
   X,
-  Zap,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,13 +29,16 @@ import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { KNOWLEDGE_BASE_SITE, isKbCategoryForCurrentSite } from '@/config/knowledgeBaseSite';
 import {
   KbArticleListItem,
-  KbCategory,
   useDocsArticles,
-  useDocsCategories,
   useDocsFeatured,
   useDocsSearch,
 } from '@/hooks/useDocs';
-import { useKnowledgeTags } from '@/hooks/useKnowledge';
+import {
+  KbCollection,
+  useKnowledgeCollections,
+  useKnowledgeCollectionArticles,
+  useKnowledgeTags,
+} from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
@@ -76,21 +70,6 @@ const ACCENT_THEMES: AccentTheme[] = [
 
 const DEFAULT_ACCENT = ACCENT_THEMES[2];
 
-const ICON_BY_NAME = {
-  Activity,
-  AlertTriangle,
-  BookOpen,
-  Brain,
-  Cpu,
-  Landmark,
-  LayoutGrid,
-  Shield,
-  ShoppingCart,
-  Sparkles,
-  TrendingUp,
-  Zap,
-} as const;
-
 function hashString(value: string): number {
   let hash = 0;
   for (let i = 0; i < value.length; i++) {
@@ -103,11 +82,6 @@ function hashString(value: string): number {
 function accentForSlug(slug: string | null | undefined): AccentTheme {
   if (!slug) return DEFAULT_ACCENT;
   return ACCENT_THEMES[hashString(slug) % ACCENT_THEMES.length] || DEFAULT_ACCENT;
-}
-
-function iconForCategory(category: Pick<KbCategory, 'icon'>, size = 22): React.ReactNode {
-  const Icon = ICON_BY_NAME[category.icon as keyof typeof ICON_BY_NAME] || BookOpen;
-  return <Icon size={size} />;
 }
 
 function kbImg(url: string | null | undefined): string | undefined {
@@ -141,22 +115,22 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [activeSearch, setActiveSearch] = useState(searchParams.get('q') || '');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [browseLimit, setBrowseLimit] = useState(ARTICLES_PER_PAGE);
 
   const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
-  const { data: categories } = useDocsCategories(docsLanguage);
+  const { data: collections = [] } = useKnowledgeCollections(undefined, docsLanguage);
   const { data: allFeatured } = useDocsFeatured(docsLanguage, 20);
   const { data: searchResults } = useDocsSearch(activeSearch, docsLanguage);
   const { data: tags } = useKnowledgeTags(undefined, docsLanguage);
   const { data: allArticlesData } = useDocsArticles({ language: docsLanguage, limit: 100 });
   const allArticles = allArticlesData?.articles;
 
-  const siteCategories = useMemo(() =>
-    categories?.filter((c: KbCategory) => isKbCategoryForCurrentSite(c.slug)) || [],
-    [categories]
+  const siteCollections = useMemo(() =>
+    collections?.filter((c: KbCollection) => isKbCategoryForCurrentSite(c.slug)) || [],
+    [collections]
   );
 
   const featured = useMemo(
@@ -176,12 +150,13 @@ export const KnowledgeBaseHomePage: React.FC = () => {
     [allArticles, selectedTag]
   );
 
-  const { data: categoryArticlesData } = useDocsArticles({
-    language: docsLanguage,
-    categorySlug: selectedCategory || undefined,
-    limit: 50,
-  });
-  const categoryArticles = categoryArticlesData?.articles;
+  const { data: collectionArticlesData } = useKnowledgeCollectionArticles(
+    selectedCollection || undefined,
+    50,
+    0,
+    docsLanguage
+  );
+  const collectionArticles = collectionArticlesData?.articles;
 
   const displayArticles = useMemo(() => {
     if (activeSearch) {
@@ -189,23 +164,23 @@ export const KnowledgeBaseHomePage: React.FC = () => {
         .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
-    if (selectedCategory && categoryArticles?.length) {
-      return categoryArticles.filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
+    if (selectedCollection && collectionArticles?.length) {
+      return collectionArticles.filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
     return null;
-  }, [activeSearch, searchResults, selectedCategory, categoryArticles, selectedTag]);
+  }, [activeSearch, searchResults, selectedCollection, collectionArticles, selectedTag]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setActiveSearch(searchQuery.trim());
-    setSelectedCategory(null);
+    setSelectedCollection(null);
   };
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
     const timeoutId = window.setTimeout(() => {
       setActiveSearch(trimmed);
-      if (trimmed) setSelectedCategory(null);
+      if (trimmed) setSelectedCollection(null);
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
@@ -214,11 +189,11 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const clearFilters = () => {
     setSearchQuery('');
     setActiveSearch('');
-    setSelectedCategory(null);
+    setSelectedCollection(null);
     setSelectedTag(null);
   };
 
-  const isFiltering = !!activeSearch || !!selectedCategory || !!selectedTag;
+  const isFiltering = !!activeSearch || !!selectedCollection || !!selectedTag;
   const isResultView = displayArticles !== null;
 
   return (
@@ -307,15 +282,14 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-              {siteCategories.map((category: KbCategory) => {
-                const accent = accentForSlug(category.slug);
-                const eyebrow = t('kb.sections.defaultEyebrow', 'Category');
-                const chips: string[] = [];
+              {siteCollections.map((coll: KbCollection) => {
+                const accent = accentForSlug(coll.slug);
+                const eyebrow = t('kb.sections.defaultEyebrow', 'Collection');
                 const statLabel = t('kb.sections.defaultStatLabel', 'articles');
                 return (
                   <Link
-                    key={category.id}
-                    to={`/knowledge-base/${category.slug}`}
+                    key={coll.id}
+                    to={`/knowledge-base/${coll.slug}`}
                     className={cn(
                       'group relative overflow-hidden rounded-2xl sm:rounded-[28px] border p-5 sm:p-6 text-left transition-all duration-300',
                       'min-h-[220px] sm:min-h-[260px] md:min-h-[290px]',
@@ -334,39 +308,39 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                             {eyebrow}
                           </p>
                           <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
-                            {category.name}
+                            {coll.title}
                           </h3>
                         </div>
                         <div className={cn(
                           'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg shadow-black/10',
                           accent.gradient
                         )}>
-                          {iconForCategory(category, 22)}
+                          <FolderOpen size={22} />
                         </div>
                       </div>
 
-                      <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
-                        {category.description}
-                      </p>
+                      {coll.description && (
+                        <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
+                          {coll.description}
+                        </p>
+                      )}
 
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {chips.map((chip) => (
-                          <span
-                            key={chip}
-                            className={cn(
-                              'rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
-                              'border-slate-200 bg-slate-50 text-slate-700 dark:border-white/[0.09] dark:bg-white/[0.06] dark:text-white/78'
-                            )}
-                          >
-                            {chip}
+                      {coll.featured && (
+                        <div className="mt-5">
+                          <span className={cn(
+                            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
+                            'border-amber-400/30 bg-amber-500/10 text-amber-600 dark:border-amber-500/20 dark:text-amber-400'
+                          )}>
+                            <Sparkles size={10} />
+                            {t('kb.sections.featured', 'Featured')}
                           </span>
-                        ))}
-                      </div>
+                        </div>
+                      )}
 
                       <div className="mt-auto flex items-end justify-between gap-4 pt-8">
                         <div>
                           <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                            {category.article_count}
+                            {coll.article_count}
                           </div>
                           <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
                             {statLabel}
@@ -424,9 +398,9 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-white/50">
                   <Filter size={14} />
                   {activeSearch && <span>Search: &ldquo;{activeSearch}&rdquo;</span>}
-                  {selectedCategory && (
+                  {selectedCollection && (
                     <span className="px-2.5 py-0.5 rounded-full bg-primary-600/15 border border-primary-500/25 text-primary-300 text-xs font-semibold">
-                      {siteCategories.find((c: KbCategory) => c.slug === selectedCategory)?.name}
+                      {siteCollections.find((c: KbCollection) => c.slug === selectedCollection)?.title}
                     </span>
                   )}
                   {selectedTag && (
@@ -505,10 +479,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               )}
 
               {/* Section Previews */}
-              {siteCategories.map((category: KbCategory) => (
+              {siteCollections.map((coll: KbCollection) => (
                 <SectionPreview
-                  key={category.id}
-                  category={category}
+                  key={coll.id}
+                  collection={coll}
                   language={docsLanguage}
                   selectedTag={selectedTag}
                 />
@@ -706,17 +680,13 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
 
 /* ─────────────────────────── Section Preview ─────────────────────────── */
 
-const SectionPreview: React.FC<{ category: KbCategory; language: string; selectedTag: string | null }> = ({
-  category,
+const SectionPreview: React.FC<{ collection: KbCollection; language: string; selectedTag: string | null }> = ({
+  collection,
   language,
   selectedTag,
 }) => {
   const { t } = useTranslation();
-  const { data: articlesData } = useDocsArticles({
-    language,
-    categorySlug: category.slug,
-    limit: 4,
-  });
+  const { data: articlesData } = useKnowledgeCollectionArticles(collection.slug, 4, 0, language);
   const articles = useMemo(
     () => (articlesData?.articles || []).filter((article) => matchesSelectedTag(article, selectedTag)),
     [articlesData?.articles, selectedTag]
@@ -724,7 +694,7 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
 
   if (!articles?.length) return null;
 
-  const accent = accentForSlug(category.slug);
+  const accent = accentForSlug(collection.slug);
 
   return (
     <div>
@@ -734,17 +704,17 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
             'w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br text-white flex-shrink-0',
             accent.gradient
           )}>
-            {iconForCategory(category, 20)}
+            <FolderOpen size={20} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">{category.name}</h2>
-            {category.description && (
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">{category.description}</p>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">{collection.title}</h2>
+            {collection.description && (
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">{collection.description}</p>
             )}
           </div>
         </div>
         <Link
-          to={`/knowledge-base/${category.slug}`}
+          to={`/knowledge-base/${collection.slug}`}
           className={cn('flex items-center gap-1 text-sm font-bold transition-colors flex-shrink-0', accent.text)}
         >
           {t('kb.section.viewAll', 'View all')}
@@ -756,7 +726,7 @@ const SectionPreview: React.FC<{ category: KbCategory; language: string; selecte
         {articles.slice(0, 4).map((article: KbArticleListItem) => (
           <Link
             key={article.id}
-            to={`/knowledge-base/${category.slug}/${article.slug}`}
+            to={`/knowledge-base/${collection.slug}/${article.slug}`}
             className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
           >
             {article.thumbnail_url && (

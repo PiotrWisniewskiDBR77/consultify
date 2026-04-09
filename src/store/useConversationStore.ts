@@ -605,13 +605,13 @@ export const useConversationStore = create<ConversationState>()(
             console.error('[ConversationStore] Fetch conversation error:', err);
             const status = err?.response?.status || err?.status;
             if (status === 403) {
-              // Permission denied (§2.3.5 E4) — explicit state for UI
+              const reason = err?.response?.data?.reason || err?.data?.reason || '';
               set({
                 activeConversationId: id,
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'permission_denied',
-                _activeConversationStateMessage: 'You do not have access to this conversation.',
+                _activeConversationStateMessage: reason || 'You do not have access to this conversation.',
               });
               return;
             }

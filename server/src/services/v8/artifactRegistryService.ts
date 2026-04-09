@@ -338,6 +338,7 @@ export function deriveArtifactRunStatusFromExecutionState(params: {
   if (
     persistedStatus === 'completed' ||
     persistedStatus === 'failed' ||
+    persistedStatus === 'cancelled' ||
     persistedStatus === 'retry_requested'
   ) {
     return persistedStatus;
@@ -363,6 +364,8 @@ export function deriveArtifactRunStatusFromExecutionState(params: {
       return 'rejected';
     case 'failed':
       return 'failed';
+    case 'cancelled':
+      return 'cancelled';
     default:
       return persistedStatus;
   }
@@ -2283,7 +2286,8 @@ export async function materializeArtifactRun(
     current.runStatus === 'retry_requested' ||
     current.runStatus === 'rejected' ||
     current.runStatus === 'failed' ||
-    current.runStatus === 'completed'
+    current.runStatus === 'completed' ||
+    current.runStatus === 'cancelled'
   ) {
     throw new Error(
       `ArtifactRun ${validated.runId} must have an accepted lifecycle before materialization`

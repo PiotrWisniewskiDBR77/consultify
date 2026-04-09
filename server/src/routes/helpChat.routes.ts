@@ -157,133 +157,25 @@ router.post(
 
 // ==================== MODULE KNOWLEDGE BASE ====================
 
-const MODULE_KNOWLEDGE: Record<
-  string,
-  { description: string; features: string[]; tips: string[] }
-> = {
-  dashboard: {
-    description:
-      'The central command center showing transformation progress, KPIs, and quick actions.',
-    features: [
-      'Real-time transformation maturity score',
-      'Initiative progress tracking with status indicators',
-      'Active assessment status overview',
-      'Recent activity timeline',
-      'Quick access to pending tasks',
-      'AI-powered insights and recommendations',
-    ],
-    tips: [
-      'Click on any card to see detailed information',
-      'Use the AI Command tab to ask questions about your data',
-      'Generate PDF reports directly from the Report tab',
-      'Customize visible widgets in Settings > Preferences',
-    ],
-  },
-  assessment: {
-    description:
-      'AI-powered digital maturity assessment using industry frameworks (CMMI, LEAN, Industry 4.0).',
-    features: [
-      'Multi-framework assessment (CMMI, LEAN 4.0, ISO standards)',
-      'Automated maturity scoring with AI analysis',
-      'Gap analysis and improvement recommendations',
-      'Benchmark comparison with industry standards',
-      'Historical trend tracking',
-    ],
-    tips: [
-      'Complete all sections for accurate maturity scoring',
-      'Use the AI Assistant to explain technical terms',
-      'Export assessments as PDF for stakeholder presentations',
-      'Schedule regular re-assessments to track progress',
-    ],
-  },
-  initiatives: {
-    description:
-      'Create and manage digital transformation initiatives with full lifecycle tracking.',
-    features: [
-      'Initiative creation with AI-suggested templates',
-      'Stage-gate workflow management',
-      'Resource allocation and budget tracking',
-      'Risk and dependency management (RAID log)',
-      'KPI tracking and milestone management',
-      'Team assignment and collaboration',
-    ],
-    tips: [
-      'Start with Quick Assessment results to prioritize initiatives',
-      'Link related initiatives to track dependencies',
-      'Use templates for common transformation patterns',
-      'Set clear success criteria before starting execution',
-    ],
-  },
-  roadmap: {
-    description:
-      'Strategic planning timeline showing all initiatives, milestones, and dependencies.',
-    features: [
-      'Visual timeline with drag-and-drop scheduling',
-      'Dependency visualization',
-      'Resource conflict detection',
-      'Milestone tracking across initiatives',
-      'AI-powered schedule optimization',
-    ],
-    tips: [
-      'Zoom in/out to see different time horizons',
-      'Click on initiatives to see details',
-      'Use AI optimization to resolve scheduling conflicts',
-      'Export roadmap for executive presentations',
-    ],
-  },
-  reports: {
-    description: 'Generate comprehensive management reports and status updates.',
-    features: [
-      'Automated report generation',
-      'Executive summary dashboards',
-      'Custom report templates',
-      'Scheduled report delivery',
-      'Multi-format export (PDF, PowerPoint, Excel)',
-    ],
-    tips: [
-      'Schedule weekly reports for stakeholders',
-      'Use templates for consistent formatting',
-      'Include AI insights for recommendations',
-    ],
-  },
-  settings: {
-    description: 'Configure your profile, organization settings, and preferences.',
-    features: [
-      'Profile management',
-      'Organization settings',
-      'Billing and subscription',
-      'Security settings (MFA, sessions)',
-      'Notification preferences',
-      'Integration configuration',
-    ],
-    tips: [
-      'Enable two-factor authentication for security',
-      'Configure notifications to stay informed',
-      'Review billing usage regularly',
-    ],
-  },
-  ai_chat: {
-    description: 'Interactive AI assistant for data analysis, recommendations, and automation.',
-    features: [
-      'Natural language queries about your data',
-      'Context-aware recommendations',
-      'Document analysis and summarization',
-      'Code and report generation',
-      'Integration with all platform modules',
-    ],
-    tips: [
-      'Be specific in your questions for better results',
-      'Reference specific initiatives or assessments',
-      'Use follow-up questions to drill down',
-      'Ask for explanations if AI responses are unclear',
-    ],
-  },
+/**
+ * Module context hints — used ONLY as lightweight orientation when no KB articles match.
+ * These are NOT authoritative product documentation; the system prompt must treat them
+ * as "[Platform context — not a KB source]" so the model never cites them as documentation.
+ */
+const MODULE_CONTEXT_HINTS: Record<string, string> = {
+  dashboard: 'Central command center: transformation progress, KPIs, quick actions.',
+  assessment: 'AI-powered digital maturity assessment (CMMI, LEAN, Industry 4.0 frameworks).',
+  initiatives: 'Create and manage transformation initiatives with lifecycle tracking.',
+  roadmap: 'Strategic timeline with milestones, dependencies, and scheduling.',
+  reports: 'Generate management reports and status updates.',
+  settings: 'Profile, organization settings, billing, security.',
+  ai_chat: 'Interactive AI assistant for data analysis, recommendations.',
 };
 
 // ==================== HELPER FUNCTIONS ====================
 
 function buildHelpSystemPrompt(context?: string, isProductQuestion?: boolean): string {
-  const basePrompt = `You are the Consultify Help Assistant, an AI-powered guide for the Consultify enterprise PMO platform.
+  const basePrompt = `You are Teresa, the Consultify Help Assistant — an AI-powered guide for the Consultify enterprise PMO platform.
 
 ROLE: Help users understand features, troubleshoot issues, and maximize platform value.
 
@@ -318,22 +210,12 @@ CITATION POLICY:
 - NEVER fabricate documentation URLs, article titles, or menu paths.
 - If documentation does not cover the question, clearly state: "Our documentation does not cover this topic yet."`;
 
-  if (context && MODULE_KNOWLEDGE[context.toLowerCase()]) {
-    const module = MODULE_KNOWLEDGE[context.toLowerCase()];
+  if (context && MODULE_CONTEXT_HINTS[context.toLowerCase()]) {
     return `${basePrompt}
 
 CURRENT CONTEXT: User is in the ${context.toUpperCase()} module.
-
-MODULE DETAILS:
-${module.description}
-
-Key Features:
-${module.features.map((f) => `• ${f}`).join('\n')}
-
-Pro Tips:
-${module.tips.map((t) => `- ${t}`).join('\n')}
-
-Focus your answers on this module's functionality. Reference related modules when helpful.`;
+[Platform context — not a KB source]: ${MODULE_CONTEXT_HINTS[context.toLowerCase()]}
+Focus your answers on this module. Only cite KB articles ([KB1], [KB2], …) that appear in the knowledge base section below.`;
   }
 
   return basePrompt;

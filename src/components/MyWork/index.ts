@@ -229,8 +229,6 @@ export { DecisionsPanel } from './DecisionsPanel';
 export { FocusBoard } from './Focus/FocusBoard';
 export type { FocusColumn, FocusItem, FocusItemType } from './Focus/FocusView';
 export { FocusView } from './Focus/FocusView';
-export type { FocusCockpitProps, FocusLane, FocusTask } from './FocusCockpit';
-export { FocusCockpit } from './FocusCockpit';
 export { InboxTriage } from './Inbox/InboxTriage';
 export { NotificationSettings } from './NotificationSettings';
 export { PersonalExecutionBar } from './PersonalExecutionBar';

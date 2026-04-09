@@ -3,13 +3,39 @@ export interface VideoTutorial {
   moduleId: string;
   title: string;
   titlePl?: string;
+  titleDe?: string;
+  titleAr?: string;
+  titleJp?: string;
+  titleEs?: string;
   description: string;
   descriptionPl?: string;
+  descriptionDe?: string;
+  descriptionAr?: string;
+  descriptionJp?: string;
+  descriptionEs?: string;
   thumbnailUrl?: string;
   videoUrl: string;
   duration?: string;
   durationSeconds?: number;
   tags?: string[];
+}
+
+export function getLocalizedVideoTitle(video: VideoTutorial, lang: string): string {
+  if (lang === 'pl' && video.titlePl) return video.titlePl;
+  if (lang === 'de' && video.titleDe) return video.titleDe;
+  if (lang === 'ar' && video.titleAr) return video.titleAr;
+  if (lang === 'jp' && video.titleJp) return video.titleJp;
+  if (lang === 'es' && video.titleEs) return video.titleEs;
+  return video.title;
+}
+
+export function getLocalizedVideoDescription(video: VideoTutorial, lang: string): string {
+  if (lang === 'pl' && video.descriptionPl) return video.descriptionPl;
+  if (lang === 'de' && video.descriptionDe) return video.descriptionDe;
+  if (lang === 'ar' && video.descriptionAr) return video.descriptionAr;
+  if (lang === 'jp' && video.descriptionJp) return video.descriptionJp;
+  if (lang === 'es' && video.descriptionEs) return video.descriptionEs;
+  return video.description;
 }
 
 /**

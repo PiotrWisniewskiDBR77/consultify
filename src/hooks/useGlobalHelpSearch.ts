@@ -34,10 +34,31 @@ export const useGlobalHelpSearch = ({ language = 'en', onSelect }: UseGlobalHelp
       if (event.key === 'Escape') {
         setIsOpen(false);
       }
+      if (!isOpen) return;
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : Math.max(results.length - 1, 0)));
+      }
+      if (event.key === 'Enter' && results.length > 0) {
+        event.preventDefault();
+        const selected = results[selectedIndex];
+        if (selected) {
+          onSelect?.(selected);
+          setRecentSearches((prev) => {
+            const next = [selected.title, ...prev.filter((term) => term !== selected.title)];
+            return next.slice(0, 6);
+          });
+          setIsOpen(false);
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isOpen, results, selectedIndex, onSelect]);
 
   useEffect(() => {
     if (!isOpen) return;

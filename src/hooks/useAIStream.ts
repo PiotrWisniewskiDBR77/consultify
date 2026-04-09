@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { parseArtifactsFromResponse, useArtifactsStore } from '@/store/useArtifactsStore';
@@ -1038,10 +1039,11 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       };
 
       const mergedContext = focusMode ? { ...(context || {}), focusMode } : context;
+      const uiLang = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
       const resolvedLanguage =
-        (language || localStorage.getItem('consultify-preferred-chat-lang') || 'pl').split(
+        (language || localStorage.getItem('consultify-preferred-chat-lang') || uiLang).split(
           '-'
-        )[0] || 'pl';
+        )[0] || uiLang;
 
       try {
         await Api.chatWithAIStream(

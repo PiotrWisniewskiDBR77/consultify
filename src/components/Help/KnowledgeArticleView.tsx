@@ -13,7 +13,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import {
   useKnowledgeArticle,
-  useKnowledgeCollections,
   useKnowledgeRedirect,
   useKnowledgeRelated,
   useTrackArticleView,
@@ -120,7 +119,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   const { mutate: trackView } = useTrackArticleView();
   const { data: relatedArticles = [] } = useKnowledgeRelated(article?.slug);
   const { data: redirectInfo } = useKnowledgeRedirect(slug);
-  const { data: collections = [] } = useKnowledgeCollections();
+  const isNonEnglish = !i18n.language?.startsWith('en');
   const isPolish = i18n.language?.startsWith('pl');
   const articleTags: Array<{ id: string; slug: string; kind: string; label: string }> =
     (article as any)?.tags || [];
@@ -184,10 +183,14 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   })();
   const contextualFallbackRoute = fallbackRouteForModule(moduleId);
   const effectiveNextRoute = nextActionRoute || contextualFallbackRoute;
+  const requested = String((article as any)?.requested_language || '');
+  const resolved = String((article as any)?.resolved_language || '');
   const isFallback =
     Boolean((article as any)?.is_fallback) ||
-    (String((article as any)?.requested_language || '') === 'pl' &&
-      String((article as any)?.resolved_language || '') === 'en');
+    (article as any)?.translation_status === 'missing' ||
+    (requested !== '' && resolved !== '' && requested !== resolved);
+
+  const isStale = (article as any)?.translation_status === 'stale';
 
   return (
     <div className="flex flex-col h-full">
@@ -245,9 +248,16 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
         )}
 
         {/* Explicit PL degraded + EN fallback */}
-        {isPolish && isFallback && (
+        {isNonEnglish && isFallback && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-            {t('help.knowledge.missingTranslationBanner', 'Brak wersji PL — wyświetlamy EN')}
+            {t('help.knowledge.missingTranslationBanner', 'Translation not available — showing EN')}
+          </div>
+        )}
+
+        {/* Stale translation banner */}
+        {isStale && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            {t('help.knowledge.staleTranslation', 'This translation may be outdated — the original article has been updated since.')}
           </div>
         )}
 
@@ -426,7 +436,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
               {relatedArticles.map((rel) => (
                 <button
                   key={rel.id}
-                  onClick={() => onBack()}
+                  onClick={() => onArticleClick?.(rel.slug) ?? onBack()}
                   className="w-full text-left p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-sm transition-all group flex items-center gap-3"
                 >
                   <div className="flex-1 min-w-0">
@@ -447,7 +457,13 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
 
       {/* Footer CTA */}
       <div className="pt-4 mt-4 border-t border-slate-200 dark:border-navy-700">
-        <button className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg">
+        <button
+          onClick={() => {
+            const deepLink = `${window.location.origin}${window.location.pathname}?help_article=${encodeURIComponent(slug)}${moduleId ? `&help_module=${encodeURIComponent(moduleId)}` : ''}`;
+            navigator.clipboard.writeText(deepLink).catch(() => {});
+          }}
+          className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg"
+        >
           <Share2 size={16} />
           {t('help.knowledge.shareArticle', 'Share Article')}
         </button>

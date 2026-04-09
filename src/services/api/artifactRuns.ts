@@ -17,7 +17,8 @@ export type ArtifactRunStatus =
   | 'rejected'
   | 'retry_requested'
   | 'completed'
-  | 'failed';
+  | 'failed'
+  | 'cancelled';
 
 export type ArtifactRunPreflightState = 'passed' | 'pending' | 'attention_required';
 

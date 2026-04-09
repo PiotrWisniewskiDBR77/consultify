@@ -7,8 +7,9 @@
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getPublicAnnaFunnelSummary } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -16,6 +17,8 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 router.use(defaultRateLimiter);
+router.use(verifyToken);
+router.use(verifySuperAdmin);
 
 // ==========================================
 // DEMO & TRIAL CONVERSION ANALYTICS
@@ -27,8 +30,6 @@ router.use(defaultRateLimiter);
  */
 router.get(
   '/anna-funnel',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const analytics = await getPublicAnnaFunnelSummary(30);
@@ -44,8 +45,6 @@ router.get(
 
 router.get(
   '/demo-trial',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const days = 30;
@@ -137,8 +136,6 @@ router.get(
  */
 router.get(
   '/dashboards',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const dashboards = await dbAll(`
@@ -168,8 +165,6 @@ router.get(
  */
 router.get(
   '/dashboards/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -200,8 +195,6 @@ router.get(
  */
 router.get(
   '/dashboards/:id/data',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -240,8 +233,6 @@ router.get(
  */
 router.post(
   '/dashboards',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, description, layout, widgets } = req.body;
@@ -275,8 +266,6 @@ router.post(
  */
 router.put(
   '/dashboards/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -314,8 +303,6 @@ router.put(
  */
 router.delete(
   '/dashboards/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -333,8 +320,6 @@ router.delete(
  */
 router.post(
   '/dashboards/:id/share',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -366,8 +351,6 @@ router.post(
  */
 router.get(
   '/reports',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const reports = await dbAll(`
@@ -397,8 +380,6 @@ router.get(
  */
 router.get(
   '/reports/:id/executions',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -425,8 +406,6 @@ router.get(
  */
 router.post(
   '/reports',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, description, report_type, query_sql, parameters, visualization_type } =
@@ -463,8 +442,6 @@ router.post(
  */
 router.post(
   '/reports/:id/execute',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -513,8 +490,6 @@ router.post(
  */
 router.post(
   '/reports/:id/schedule',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -542,8 +517,6 @@ router.post(
  */
 router.delete(
   '/reports/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -566,8 +539,6 @@ router.delete(
  */
 router.get(
   '/metrics',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const metrics = await dbAll(`
@@ -591,8 +562,6 @@ router.get(
  */
 router.get(
   '/metrics/stats',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const stats = (await dbGet(
@@ -656,8 +625,6 @@ router.get(
  */
 router.get(
   '/metrics/:id/history',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -685,8 +652,6 @@ router.get(
  */
 router.post(
   '/metrics',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const {
@@ -733,8 +698,6 @@ router.post(
  */
 router.post(
   '/metrics/:id/calculate',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -786,8 +749,6 @@ router.post(
  */
 router.delete(
   '/metrics/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -810,8 +771,6 @@ router.delete(
  */
 router.get(
   '/models',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const models = await dbAll(`
@@ -841,8 +800,6 @@ router.get(
  */
 router.get(
   '/models/:id/predictions',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -869,8 +826,6 @@ router.get(
  */
 router.post(
   '/models',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { name, description, model_type, target_metric, features, model_parameters } = req.body;
@@ -906,8 +861,6 @@ router.post(
  */
 router.post(
   '/models/:id/train',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -1002,8 +955,6 @@ router.post(
  */
 router.post(
   '/models/:id/predict',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -1092,8 +1043,6 @@ router.post(
  */
 router.delete(
   '/models/:id',
-  verifyToken,
-  requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;

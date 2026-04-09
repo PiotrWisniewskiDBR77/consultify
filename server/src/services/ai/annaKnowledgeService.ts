@@ -3,6 +3,7 @@ import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import ragService from '../ragService.js';
 import { resolveAnnaPreferredProducts, resolveAnnaSiteConfig } from './annaSiteConfig.js';
+import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
 
 type AnnaDocRow = {
   id?: string;
@@ -364,6 +365,40 @@ export async function buildAnnaKnowledgeContext(opts: {
   preferredProducts?: string[];
   siteKey?: string;
 }): Promise<AnnaKnowledgeContextResult> {
+  const EMPTY_RESULT: AnnaKnowledgeContextResult = {
+    contextText: '',
+    matchedProducts: [],
+    primaryProducts: [],
+    sources: [],
+  };
+
+  try {
+    const { decision } = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'anna',
+      query: opts.query,
+      organizationId: 'public',
+      userId: 'anonymous',
+    });
+    logger.info(
+      `[AnnaKnowledgeService] Policy decision: outcome=${decision.outcome}, allowed=${decision.allowed}`
+    );
+    if (!decision.allowed) {
+      return {
+        ...EMPTY_RESULT,
+        contextText: decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+      };
+    }
+  } catch (gatewayError: unknown) {
+    logger.warn(
+      '[AnnaKnowledgeService] Policy gateway failed, blocking retrieval (fail-closed):',
+      gatewayError instanceof Error ? gatewayError.message : String(gatewayError)
+    );
+    return {
+      ...EMPTY_RESULT,
+      contextText: 'Knowledge retrieval is temporarily unavailable.',
+    };
+  }
+
   const originalQuery = String(opts.query || '').trim();
   const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
   const siteConfig = resolveAnnaSiteConfig(opts.siteKey);
@@ -399,6 +434,7 @@ export async function buildAnnaKnowledgeContext(opts: {
     const productQueryHints: Record<string, string> = {
       consultify: 'consultify consultinity',
       vector: 'vector',
+      dbr77: 'dbr77 dbr ecosystem',
       iris: 'iris',
       'digital-twin': 'digital twin',
       iiot: 'iiot industrial iot',
@@ -516,12 +552,46 @@ export async function buildAnnaVoiceBootstrap(
   locale?: string,
   siteKey?: string
 ): Promise<AnnaKnowledgeContextResult> {
+  const EMPTY_RESULT: AnnaKnowledgeContextResult = {
+    contextText: '',
+    matchedProducts: [],
+    primaryProducts: [],
+    sources: [],
+  };
+
   const siteConfig = resolveAnnaSiteConfig(siteKey);
   const bootstrapQuery = String(locale || '')
     .toLowerCase()
     .startsWith('pl')
     ? `${siteConfig.primaryProductName} czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem`
     : `${siteConfig.primaryProductName} overview business value demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ecosystem`;
+
+  try {
+    const { decision } = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'anna',
+      query: bootstrapQuery,
+      organizationId: 'public',
+      userId: 'anonymous',
+    });
+    logger.info(
+      `[AnnaKnowledgeService] Voice bootstrap policy decision: outcome=${decision.outcome}, allowed=${decision.allowed}`
+    );
+    if (!decision.allowed) {
+      return {
+        ...EMPTY_RESULT,
+        contextText: decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+      };
+    }
+  } catch (gatewayError: unknown) {
+    logger.warn(
+      '[AnnaKnowledgeService] Voice bootstrap policy gateway failed (fail-closed):',
+      gatewayError instanceof Error ? gatewayError.message : String(gatewayError)
+    );
+    return {
+      ...EMPTY_RESULT,
+      contextText: 'Knowledge retrieval is temporarily unavailable.',
+    };
+  }
 
   return buildAnnaKnowledgeContext({
     query: bootstrapQuery,

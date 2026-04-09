@@ -1,5 +1,7 @@
 import RagService from '../../ragService.js';
 import { organizationMemoryStore } from '../organizationMemoryStore.js';
+import { evaluateRetrievalPolicyDecision } from '../chatPolicyGateway.js';
+import logger from '../../../utils/Logger.js';
 import { searchKB } from './agentKnowledgeBase.js';
 import type { SourceUsed } from './types.js';
 
@@ -149,64 +151,45 @@ export async function retrieveAgentAuditKnowledge(args: {
   const out: SourceUsed[] = [];
 
   // 1) Global / org-scoped knowledge_chunks via RagService hybrid search
+  let policyAllowed = false;
   try {
-    const agentCategory = `agent:${args.agentId}`;
-    const chunks = await RagService.hybridSearch(args.query, {
-      limit,
-      organizationId: orgId,
-      enableReranking: true,
-      alpha: 0.6,
+    const policyResult = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'agent',
+      query: args.query,
+      organizationId: orgId || 'system',
+      userId: `agent_audit:${args.agentId}`,
     });
+    policyAllowed = policyResult.decision.allowed;
+    logger.info(
+      `[agentAuditKnowledge] Policy decision: id=${policyResult.decision.id}, allowed=${policyAllowed}, outcome=${policyResult.decision.outcome}`
+    );
+  } catch (policyErr: any) {
+    logger.warn(
+      `[agentAuditKnowledge] Policy gateway error (fail-closed): ${policyErr?.message || String(policyErr)}`
+    );
+    policyAllowed = false;
+  }
 
-    const raw = Array.isArray(chunks) ? chunks : [];
-    const agentSpecific = raw.filter((c: any) => {
-      const cat = String(c?.doc_category || c?.category || '').trim();
-      return cat.toLowerCase() === agentCategory.toLowerCase();
-    });
-    const preferred = agentSpecific.length > 0 ? agentSpecific : raw;
-    const validationMode: KbValidationMode =
-      agentSpecific.length > 0 ? 'strict_agent_kb' : 'lenient';
-
-    for (const c of preferred || []) {
-      const docId = String((c as any).doc_id || (c as any).docId || '').trim();
-      const docCategory = String((c as any).doc_category || (c as any).category || '').trim();
-      const docVersionRaw = (c as any).doc_version ?? (c as any).version;
-      const title = String((c as any).filename || (c as any).source || 'Knowledge Base').trim();
-      const snippet = String((c as any).content || '')
-        .trim()
-        .slice(0, 900);
-      const score =
-        typeof (c as any).hybridScore === 'number'
-          ? (c as any).hybridScore
-          : typeof (c as any).vectorScore === 'number'
-            ? (c as any).vectorScore
-            : typeof (c as any).bm25Score === 'number'
-              ? (c as any).bm25Score
-              : undefined;
-
-      if (!snippet) continue;
-      if (!docId) continue;
-
-      const kbValidation = validateKbSnippetForAudit({ snippet, mode: validationMode });
-      if (!kbValidation.ok) continue;
-
-      out.push({
-        type: 'kb_snippet',
-        kbId: docCategory || 'knowledge_chunks',
-        docId,
-        title,
-        version:
-          docVersionRaw !== undefined && docVersionRaw !== null && String(docVersionRaw).trim()
-            ? String(docVersionRaw).trim()
-            : undefined,
-        snippet,
-        score,
+  if (policyAllowed) {
+    try {
+      const agentCategory = `agent:${args.agentId}`;
+      const chunks = await RagService.hybridSearch(args.query, {
+        limit,
+        organizationId: orgId,
+        enableReranking: true,
+        alpha: 0.6,
       });
-    }
 
-    // If we had agent-specific KB but filtered everything out, fall back to general KB results (lenient)
-    if (agentSpecific.length > 0 && out.length === 0) {
-      for (const c of raw || []) {
+      const raw = Array.isArray(chunks) ? chunks : [];
+      const agentSpecific = raw.filter((c: any) => {
+        const cat = String(c?.doc_category || c?.category || '').trim();
+        return cat.toLowerCase() === agentCategory.toLowerCase();
+      });
+      const preferred = agentSpecific.length > 0 ? agentSpecific : raw;
+      const validationMode: KbValidationMode =
+        agentSpecific.length > 0 ? 'strict_agent_kb' : 'lenient';
+
+      for (const c of preferred || []) {
         const docId = String((c as any).doc_id || (c as any).docId || '').trim();
         const docCategory = String((c as any).doc_category || (c as any).category || '').trim();
         const docVersionRaw = (c as any).doc_version ?? (c as any).version;
@@ -223,8 +206,10 @@ export async function retrieveAgentAuditKnowledge(args: {
                 ? (c as any).bm25Score
                 : undefined;
 
-        if (!snippet || !docId) continue;
-        const kbValidation = validateKbSnippetForAudit({ snippet, mode: 'lenient' });
+        if (!snippet) continue;
+        if (!docId) continue;
+
+        const kbValidation = validateKbSnippetForAudit({ snippet, mode: validationMode });
         if (!kbValidation.ok) continue;
 
         out.push({
@@ -239,11 +224,48 @@ export async function retrieveAgentAuditKnowledge(args: {
           snippet,
           score,
         });
-        if (out.length >= limit) break;
       }
+
+      if (agentSpecific.length > 0 && out.length === 0) {
+        for (const c of raw || []) {
+          const docId = String((c as any).doc_id || (c as any).docId || '').trim();
+          const docCategory = String((c as any).doc_category || (c as any).category || '').trim();
+          const docVersionRaw = (c as any).doc_version ?? (c as any).version;
+          const title = String((c as any).filename || (c as any).source || 'Knowledge Base').trim();
+          const snippet = String((c as any).content || '')
+            .trim()
+            .slice(0, 900);
+          const score =
+            typeof (c as any).hybridScore === 'number'
+              ? (c as any).hybridScore
+              : typeof (c as any).vectorScore === 'number'
+                ? (c as any).vectorScore
+                : typeof (c as any).bm25Score === 'number'
+                  ? (c as any).bm25Score
+                  : undefined;
+
+          if (!snippet || !docId) continue;
+          const kbValidation = validateKbSnippetForAudit({ snippet, mode: 'lenient' });
+          if (!kbValidation.ok) continue;
+
+          out.push({
+            type: 'kb_snippet',
+            kbId: docCategory || 'knowledge_chunks',
+            docId,
+            title,
+            version:
+              docVersionRaw !== undefined && docVersionRaw !== null && String(docVersionRaw).trim()
+                ? String(docVersionRaw).trim()
+                : undefined,
+            snippet,
+            score,
+          });
+          if (out.length >= limit) break;
+        }
+      }
+    } catch {
+      // best-effort
     }
-  } catch {
-    // best-effort
   }
 
   // 2) Static agent KB entries (domain-specific checklists, failure patterns, etc.)

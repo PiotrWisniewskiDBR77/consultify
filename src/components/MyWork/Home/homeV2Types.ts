@@ -66,7 +66,8 @@ export type HomeScreenAction =
       target: 'idea' | 'note' | 'task' | 'decision' | 'report' | 'presentation' | 'sheet';
       id: string;
     }
-  | { type: 'create'; target: 'idea' | 'note' | 'task' | 'decision' };
+  | { type: 'create'; target: 'idea' | 'note' | 'task' | 'decision' }
+  | { type: 'handoff'; signalId: string; targetModule: TriageTargetModule; handoffIntent: TriageHandoffIntent };
 
 export interface HomePrimaryAction {
   title: string;
@@ -397,4 +398,70 @@ export interface RadarViewPayload {
     requestedLanguage: string;
     pendingCount: number;
   };
+}
+
+// ==========================================
+// V8 Radar Triage types (P06 contract)
+// ==========================================
+
+export const TRIAGE_CATEGORIES = [
+  'execution_delivery',
+  'decision_alignment',
+  'finance_kpi',
+  'governance_compliance',
+  'external_change',
+] as const;
+export type TriageCategory = (typeof TRIAGE_CATEGORIES)[number];
+
+export type TriagePriorityLevel = 'P0' | 'P1' | 'P2';
+export type TriagePrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' | 'opportunity';
+export type TriageTimeWindow = 'next_24h' | 'this_week' | 'this_month';
+export type TriageHandoffIntent = 'open' | 'create' | 'append';
+export type TriageTargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
+export type TriageState = 'ready' | 'degraded_missing_data' | 'degraded_conflict' | 'degraded_stale' | 'blocked_permission';
+
+export interface TriageBands {
+  impact: 1 | 2 | 3;
+  urgency: 1 | 2 | 3;
+  scope: 1 | 2 | 3;
+  confidence: 0 | 1 | 2 | 3;
+  freshness: 0 | 1 | 2 | 3;
+  actionability: 0 | 1 | 2;
+}
+
+export interface TriageSignal {
+  signalId: string;
+  category: TriageCategory;
+  priorityLevel: TriagePriorityLevel;
+  score: number;
+  bands: TriageBands;
+  triggeredRules: string[];
+  whyNow: {
+    rationaleText: string;
+    timeWindow: TriageTimeWindow;
+    primaryDriver: TriagePrimaryDriver;
+  };
+  evidence: {
+    evidencePointers: Array<{ type: string; ref: string }>;
+    lastObservedAt: string;
+    sourceCoverage: 'complete' | 'partial';
+  };
+  uncertaintyBoundary: {
+    missingInputs: string[];
+    conflicts: string[];
+    whatWouldChangeRanking: string[];
+  };
+  ownership: {
+    ownerRole: string;
+    queueHint: 'execution' | 'decision' | 'governance';
+  };
+  nextAction: {
+    targetModule: TriageTargetModule;
+    handoffIntent: TriageHandoffIntent;
+    handoffPayload: Record<string, unknown>;
+    safeFallback: string;
+  };
+  triageState: TriageState;
+  createdAt: string;
+  updatedAt: string;
 }

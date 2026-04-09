@@ -9,6 +9,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { isKbCategoryForCurrentSite } from '../../config/knowledgeBaseSite';
 import { KbArticleListItem, useKnowledgeFeatured, useKnowledgePublicPreview } from '../../hooks/useKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 
@@ -157,7 +158,11 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
   const { data: previewArticles = [], isLoading: previewLoading } = useKnowledgePublicPreview(previewLimit * 2);
 
   const articles = useMemo(
-    () => buildLandingArticles(featuredArticles, previewArticles, previewLimit),
+    () => buildLandingArticles(
+      featuredArticles.filter(a => isKbCategoryForCurrentSite(a.category_slug)),
+      previewArticles.filter(a => isKbCategoryForCurrentSite(a.category_slug)),
+      previewLimit
+    ),
     [featuredArticles, previewArticles]
   );
   const isLoading = featuredLoading || previewLoading;

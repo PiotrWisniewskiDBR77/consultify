@@ -1,5 +1,16 @@
 -- 741: KB Collections, Tags, Surface Bindings, Versions, Sources
--- DDL-only extract from 20260331_p26b (skips backfill that assumes UUID categories)
+-- DDL-only extract from 20260331_p26b (SQLite-compatible: TEXT PKs, no CHECK constraints)
+--
+-- Canonical source: 20260331_p26b_kb_collections_tags_surfaces.sql (PostgreSQL)
+-- This file must stay in sync. Known enum contracts (enforced by application logic):
+--   kb_collections.visibility: public | in-app | internal
+--   kb_collections.status: active | deprecated | archived
+--   kb_tags.kind: domain | tool | concept | stage | audience
+--   kb_tags.status: active | deprecated
+--   kb_surface_bindings.surface: lp | help | right_panel | ai_recommendations | public_docs
+--   kb_article_versions.change_type: typo | clarify | update | breaking
+--   kb_sources.kind: internal | benchmark | customer_input | release_note | external
+--   kb_sources.visibility: internal | public
 
 CREATE TABLE IF NOT EXISTS kb_collections (
   id TEXT PRIMARY KEY,
@@ -124,5 +135,6 @@ ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS redirect_to_article_id TEXT;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS owner_user_id TEXT;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS review_cadence_days INT;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS review_due_at TIMESTAMPTZ;
-ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS version INT DEFAULT 1;
+ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS callouts JSONB DEFAULT '[]';
+ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS related_article_ids TEXT DEFAULT '[]';

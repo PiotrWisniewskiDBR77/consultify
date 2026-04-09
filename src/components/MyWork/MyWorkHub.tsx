@@ -1870,6 +1870,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           setChatKickoffMessage(packet.starterPrompt);
           return;
         }
+        case 'handoff': {
+          const { executeTriageHandoff } = await import('./Home/useRadarTriageData');
+          const result = await executeTriageHandoff(action.signalId);
+          if (result) {
+            const mod = action.targetModule;
+            if (mod === 'Inicjatywy') {
+              setActiveTab('ideas');
+            } else if (mod === 'Wdrożenia') {
+              setActiveTab('tasks');
+            } else if (mod === 'Notatki') {
+              setActiveTab('notebook');
+              setNotebookCreateReqId((value) => value + 1);
+            }
+          }
+          return;
+        }
         default:
           return;
       }

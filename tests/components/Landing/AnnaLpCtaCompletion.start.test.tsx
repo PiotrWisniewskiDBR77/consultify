@@ -46,9 +46,11 @@ describe('Anna LP CTA completion — start events', () => {
     });
 
     render(
-      <I18nextProvider i18n={i18n}>
-        <TrialEntryView onStartTrial={vi.fn()} />
-      </I18nextProvider>
+      <MemoryRouter>
+        <I18nextProvider i18n={i18n}>
+          <TrialEntryView onStartTrial={vi.fn()} />
+        </I18nextProvider>
+      </MemoryRouter>
     );
 
     await waitFor(() => {

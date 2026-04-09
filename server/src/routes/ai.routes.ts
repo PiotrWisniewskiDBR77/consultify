@@ -1017,11 +1017,12 @@ router.post(
       de: 'German (Deutsch)',
       es: 'Spanish (Español)',
       ja: 'Japanese (日本語)',
+      jp: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
     const langCode = (language || 'en').split('-')[0];
     const langName = languageMap[langCode] || 'English';
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. Match the user's language naturally. The UI locale is ${langName}.]\n`;
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
 
     // Confirm schema (structured output)
     // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
@@ -1360,11 +1361,12 @@ router.post(
       de: 'German (Deutsch)',
       es: 'Spanish (Español)',
       ja: 'Japanese (日本語)',
+      jp: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
     const langCode = (language || 'en').split('-')[0];
     const langName = languageMap[langCode] || 'English';
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. If the user writes in English, respond in English. If the user writes in Polish, respond in Polish. Match the user's language naturally. The UI locale is ${langName} but always prioritize the language of the user's message.]\n`;
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
 
     let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 
@@ -1848,33 +1850,75 @@ router.post(
       try {
         const polMod = await import('../services/ai/chatPolicyGateway.js');
         const { evaluateChatPolicyDecision } = (polMod as any) || {};
-        if (typeof evaluateChatPolicyDecision === 'function') {
-          const polRes = await evaluateChatPolicyDecision({
-            message: String(message || ''),
-            language,
-            organizationId: req.organizationId || null,
-            userId: req.userId || null,
-            projectId,
-            privateMode: Boolean(privateMode),
-            aiModes: aiModes || null,
-            knowledgeSources: knowledgeSources || null,
-          });
+        if (typeof evaluateChatPolicyDecision !== 'function') {
+          throw new Error('evaluateChatPolicyDecision is not a function');
+        }
 
-          policyDecision = polRes?.decision || null;
-          const sanitizedMessage =
-            typeof polRes?.sanitizedMessage === 'string' ? String(polRes.sanitizedMessage) : '';
-          if (sanitizedMessage && sanitizedMessage !== String(message || '').trim()) {
-            try {
-              // Keep user-visible message unchanged; only sanitize what goes to the LLM/pipeline.
-              (pipelineRequest as any).prompt = sanitizedMessage;
-            } catch {
-              // ignore
-            }
+        const polRes = await evaluateChatPolicyDecision({
+          message: String(message || ''),
+          language,
+          organizationId: req.organizationId || null,
+          userId: req.userId || null,
+          projectId,
+          privateMode: Boolean(privateMode),
+          aiModes: aiModes || null,
+          knowledgeSources: knowledgeSources || null,
+        });
+
+        policyDecision = polRes?.decision || null;
+        const sanitizedMessage =
+          typeof polRes?.sanitizedMessage === 'string' ? String(polRes.sanitizedMessage) : '';
+        if (sanitizedMessage && sanitizedMessage !== String(message || '').trim()) {
+          try {
+            (pipelineRequest as any).prompt = sanitizedMessage;
+          } catch {
+            // ignore
           }
         }
       } catch (polErr: any) {
-        logger.warn('[AI Stream] Policy gateway unavailable:', polErr?.message || String(polErr));
-        policyDecision = null;
+        logger.error('[AI Stream] Policy gateway unavailable (fail-closed):', polErr?.message || String(polErr));
+
+        const degradedMsg = 'Policy gateway unavailable — request blocked for safety. Please try again.';
+
+        emitSSE({
+          type: 'policy_refusal',
+          decisionId: null,
+          category: 'gateway_unavailable',
+          rationale: degradedMsg,
+          message: degradedMsg,
+          nextSteps: [],
+        });
+
+        if (isClientConnected && !res.destroyed) {
+          try {
+            res.write(`data: ${JSON.stringify({ text: degradedMsg })}\n\n`);
+            res.write('data: [DONE]\n\n');
+          } catch {
+            /* ignore */
+          }
+        }
+
+        streamCompleted = true;
+        clearInterval(heartbeatInterval);
+
+        if (chatRunId) {
+          try {
+            const svcMod = await import('../services/ai/chatTraceService.js');
+            await (svcMod.default || svcMod).completeRun({
+              runId: chatRunId,
+              status: 'blocked',
+              pipelineTraceId: pipelineMeta?.traceId || null,
+              modelProvider: pipelineMeta?.provider || null,
+              modelId: pipelineMeta?.model || null,
+              tier: selectedTier || null,
+              outputText: degradedMsg,
+              dtStates: dtStatesEmitted,
+            });
+          } catch {
+            /* ignore */
+          }
+        }
+        return res.end();
       }
 
       if (policyDecision) {
@@ -2185,7 +2229,8 @@ router.post(
       try {
         const kbModuleId =
           String(
-            (screenContext as any)?.moduleId ||
+            (screenContext as any)?.page?.helpModuleId ||
+              (screenContext as any)?.moduleId ||
               (screenContext as any)?.module ||
               (screenContext as any)?.currentModule ||
               (screenContext as any)?.screenId ||

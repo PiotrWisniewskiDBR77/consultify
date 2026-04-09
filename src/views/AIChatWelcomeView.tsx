@@ -29,7 +29,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { useAIContext } from '@/contexts/AIContext';
-import { isValidLanguage, type SupportedLanguage } from '@/i18n';
+import { isValidLanguage, LANGUAGE_NAMES, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api.ts';
 import { AppView } from '@/types';
 
@@ -136,6 +136,8 @@ export const AIChatWelcomeView: React.FC = () => {
     toggleChatCollapse,
     setAIConfig,
     setChatKickoffMessage,
+    chatKickoffMessage,
+    clearChatKickoffMessage,
   } = useAppStore();
   const { projectName } = usePMOStore();
 
@@ -180,19 +182,19 @@ export const AIChatWelcomeView: React.FC = () => {
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref = localStorage.getItem('consultify-preferred-chat-lang');
+    const explicitPref =
+      localStorage.getItem('consultinity-preferred-chat-lang') ||
+      localStorage.getItem('consultify-preferred-chat-lang');
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    // Priority: explicit preference > conversation-specific > draft > 'pl' default
-    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
-    // from browser), not the user's chat language preference. For this Polish product,
-    // the default chat language is 'pl'.
-    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
+    // 3. Fall back to current UI language (i18n), then 'en'
+    const uiLang = i18n.language?.split('-')[0] || 'en';
+    const candidate = explicitPref || activeLang || draftChatLanguage || uiLang;
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? base : 'pl') as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
+    return (isValidLanguage(base) ? (base as SupportedLanguage) : 'en') as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
   // AI stream with persistence callback
@@ -751,7 +753,7 @@ WORK STYLE:
 - Be conversational, direct, and helpful.
 - Use concise structure when useful, but do not sound robotic.
 - Ask short clarification questions only when missing information blocks a safe proposal.
-- Respond in the same language as the user.
+- ALWAYS respond in ${LANGUAGE_NAMES[chatLanguage] || 'English'}, regardless of the language the user writes in. This is their chosen application language.
 
 CURRENT TRANSFORMATION PHASE: ${coThinkerPhase.toUpperCase()}
 ${coThinkerPhase === 'discovery' ? '→ Focus: understanding goals, constraints, and stakeholders.' : ''}
@@ -974,7 +976,14 @@ For example: REMEMBER: preferred_language: Polish`;
         proposalMode: 'proposal_first',
       };
 
-      const systemPrompt = buildSystemPrompt();
+      let systemPrompt = buildSystemPrompt();
+
+      // F1.4: When user comes from Help panel, inject help context into Teresa's prompt
+      const helpData = workspaceContext?.entityData;
+      if (helpData?.helpDocumentId) {
+        systemPrompt += `\n\nHELP CONTEXT: The user came from the Help panel (document: "${workspaceContext?.entityName || helpData.helpDocumentId}", module: "${helpData.helpModuleId || 'general'}").
+When citing knowledge base articles, always reference them by article_id (slug). Do not invent article titles or links not provided in the KB context below.\n`;
+      }
 
       // Deep Thinking: blocking Confirm step (no streaming until user confirms)
       if (aiConfig?.deepResearch) {
@@ -1102,6 +1111,19 @@ For example: REMEMBER: preferred_language: Polish`;
       t,
     ]
   );
+
+  // F1.1: Consume chatKickoffMessage on full-screen chat (mobile/tablet from Help → Ask AI)
+  const kickoffSentRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!chatKickoffMessage) return;
+    if (isStreaming) return;
+    if ((activeMessages || []).length > 0) return;
+    if (kickoffSentRef.current === chatKickoffMessage) return;
+
+    kickoffSentRef.current = chatKickoffMessage;
+    void handleSend(chatKickoffMessage);
+    clearChatKickoffMessage();
+  }, [chatKickoffMessage, isStreaming, activeMessages, handleSend, clearChatKickoffMessage]);
 
   // Handle suggestion click
   const handleSuggestionClick = useCallback(

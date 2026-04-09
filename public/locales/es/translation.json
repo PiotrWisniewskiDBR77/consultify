@@ -26,7 +26,7 @@
     "no": "No",
     "goals": "Goals",
     "challenges": "Challenges",
-    "megatrends": "Megatrends",
+    "megatrends": "Megatendencias",
     "strategy": "Strategy",
     "rollout": "Rollout",
     "users": "Users",
@@ -404,10 +404,148 @@
   },
   "myWork": {
     "title": "Mi Trabajo",
+    "home": "Inicio",
+    "manager": "Gestor",
     "inbox": "Bandeja de Entrada",
     "focus": "Enfoque",
     "calendar": "Calendario",
-    "tasks": "Tareas"
+    "tasks": "Tareas",
+    "radar": {
+      "pulseLabel": "Radar · contexto, ideas y orientación suave",
+      "unavailable": "Radar no está disponible temporalmente.",
+      "unavailableHint": "Esto no significa que el día esté vacío. Intente recargar la pantalla de inicio.",
+      "retry": "Reintentar",
+      "roofTruthChecking": "Roof truth: verificando…",
+      "roofExpandHint": "Expandir o contraer la lista de módulos y auditoría de coherencia de datos.",
+      "roofModules": "Roof · {{count}} módulos",
+      "pulse": "Pulso",
+      "gentleExplanation": "Explicación amable",
+      "explainBriefing": "Explica este resumen en lenguaje sencillo, sin presión — 3 puntos: qué significa, por qué ahora, y un pequeño paso que puedo dar.",
+      "explain": "Explicar",
+      "calmPlan": "Ayúdame a convertir esto en un plan tranquilo, paso a paso — sin prisa.",
+      "blocks": {
+        "aiPulseCore": "Pulso IA",
+        "industryLens": "Contexto sectorial",
+        "executionCurrent": "Flujo de ejecución",
+        "sparkField": "Ideas y notas",
+        "decisionTemperature": "Temperatura de decisiones",
+        "teamSignal": "Señal del equipo",
+        "momentum": "Momentum"
+      },
+      "blockHints": {
+        "aiPulseCore": "Resumen del pulso: titular, enfoque y puntuación del pulso.",
+        "momentum": "Momentum del programa: estadísticas y señales de progreso.",
+        "sparkField": "Ideas y notas: notas en ejecución y resultados recientes.",
+        "decisionTemperature": "Decisiones: cola, bloqueadores, tema más candente.",
+        "industryLens": "Contexto sectorial: mercado, tecnología, benchmark, caso de referencia.",
+        "executionCurrent": "Ejecución: flujos de trabajo y artefactos.",
+        "teamSignal": "Equipo: alineación y señales organizacionales."
+      },
+      "worthNoticing": "Vale la pena notar",
+      "talkToAI": "Hablar con IA",
+      "openExecution": "Ir a ejecución",
+      "topMove": "Movimiento principal",
+      "pulseActionPrompt": "Convierte este pulso en un plan concreto para hoy y esta semana.",
+      "decisionQueue": "Cola de decisiones",
+      "decisionQueueClear": "Sin decisiones en cola ni bloqueadores graves — todo en orden por ahora.",
+      "pending": "Pendiente",
+      "blocking": "Bloqueando",
+      "hottestDecision": "Decisión más urgente",
+      "unblockPrompt": "Ayúdame a desbloquear esta decisión: {{title}}",
+      "outputFlow": "Flujo de outputs",
+      "visibility": {
+        "private": "Privado",
+        "project": "Proyecto",
+        "organization": "Organización",
+        "reviewShared": "Necesita revisión",
+        "demo": "Demo"
+      },
+      "reviewState": {
+        "privateDraft": "Borrador privado",
+        "reviewReady": "Listo para revisión",
+        "inReview": "En revisión",
+        "approved": "Aprobado",
+        "published": "Publicado"
+      },
+      "artifactType": {
+        "presentation": "Presentación",
+        "sheet": "Hoja de cálculo",
+        "report": "Informe"
+      },
+      "outputsLibraryNote": "La revisión y visibilidad se mantienen alineadas con la Biblioteca de Outputs.",
+      "askAISequencing": "Pedir secuenciación a IA",
+      "sequencingPrompt": "Ordena la mejor secuencia de ejecución basándote en los flujos actuales.",
+      "ideasWithTasks": "Ideas con tareas {{count}}",
+      "recentNotes": "Notas recientes {{count}}",
+      "recentOutputs": "Outputs recientes {{count}}",
+      "orgSignals": "Señales de la organización {{count}}",
+      "expandIdea": "Expandir la idea más fuerte",
+      "expandIdeaPrompt": "Expande esta idea en una iniciativa y sugiere los primeros 3 pasos: {{text}}",
+      "newIdea": "Nueva idea",
+      "newIdeaSubtitle": "Iniciar una nueva vía de transformación",
+      "noteLabel": "Nota",
+      "nodes": "nodos",
+      "tasks": "tareas",
+      "stages": {
+        "spark": "chispa",
+        "shaping": "modelado",
+        "growing": "crecimiento"
+      },
+      "benchmark": "Benchmark",
+      "peerCase": "Caso de referencia",
+      "peerCasePrompt": "Compara este caso con nuestro programa de transformación y dame 3 conclusiones: {{title}}",
+      "signalPrompt": "Explica por qué esta señal importa para nuestra transformación: {{title}}",
+      "teamReadout": "Señal del equipo",
+      "teamUpdatePrompt": "Prepara una breve actualización para el equipo basada en esta señal: {{title}}",
+      "momentumPrompt": "Explica qué significa esta señal de momentum para la transformación: {{title}}",
+      "live": "En vivo",
+      "rel": "Rel",
+      "loadError": "No se pudo cargar el Radar",
+      "triage": {
+        "title": "Panel de Triaje",
+        "subtitle": "Señales operativas clasificadas por prioridad de decisión",
+        "empty": "No hay señales de triaje. El radar operativo está despejado.",
+        "category": {
+          "execution_delivery": "Ejecución",
+          "decision_alignment": "Decisión",
+          "finance_kpi": "Finanzas / KPI",
+          "governance_compliance": "Gobernanza",
+          "external_change": "Cambio externo"
+        },
+        "timeWindow": {
+          "next_24h": "Próximas 24h",
+          "this_week": "Esta semana",
+          "this_month": "Este mes"
+        },
+        "driver": {
+          "deadline": "Plazo",
+          "blocker": "Bloqueador",
+          "variance": "Variación",
+          "escalation": "Escalación",
+          "opportunity": "Oportunidad"
+        },
+        "whyNow": "Por qué ahora",
+        "evidence": "Evidencia",
+        "evidencePartial": "Cobertura parcial",
+        "evidenceComplete": "Cobertura completa",
+        "uncertainty": "Límite de incertidumbre",
+        "missingInputs": "Datos faltantes",
+        "conflicts": "Conflictos",
+        "wouldChange": "Cambiaría el ranking",
+        "owner": "Responsable",
+        "nextAction": "Siguiente acción",
+        "goTo": "Ir a {{module}}",
+        "fallback": "Alternativa: {{fallback}}",
+        "degraded": {
+          "missing_data": "Faltan algunos datos. Los resultados pueden estar incompletos.",
+          "conflict": "Datos contradictorios detectados. Revisar con precaución.",
+          "stale": "Los datos pueden estar desactualizados. Considere actualizar las fuentes.",
+          "permission": "Acceso restringido. Parte de la información está oculta."
+        },
+        "hardGate": "Hard gate",
+        "score": "Puntuación"
+      }
+    }
   },
   "step1": {
     "title": "Paso 1"
@@ -935,8 +1073,8 @@
       "articleNotFound": "Artículo no encontrado.",
       "minRead": "min de lectura",
       "views": "vistas",
-      "relatedModules": "Módulos Relacionados",
-      "shareArticle": "Compartir Artículo",
+      "relatedModules": "Módulos relacionados",
+      "shareArticle": "Compartir artículo",
       "featured": "Destacados",
       "popular": "Popular",
       "recent": "Reciente",
@@ -950,19 +1088,31 @@
       "yes": "Sí",
       "no": "No",
       "feedbackThanks": "¡Gracias por tu comentario!",
-      "relatedArticles": "Artículos Relacionados",
+      "relatedArticles": "Artículos relacionados",
       "gettingStarted": "Primeros Pasos",
       "tutorials": "Tutoriales",
       "bestPractices": "Mejores Prácticas",
       "faq": "Preguntas Frecuentes",
-      "troubleshooting": "Solución de Problemas"
+      "troubleshooting": "Solución de Problemas",
+      "contentMoved": "Este contenido ha sido movido o eliminado.",
+      "contentMovedHint": "Explore nuestras colecciones para encontrar lo que necesita.",
+      "browseCollections": "Explorar colecciones",
+      "deprecated": "Este artículo ha sido descontinuado",
+      "viewReplacement": "Ver artículo de reemplazo",
+      "missingTranslationBanner": "Sin versión ES — mostrando EN",
+      "staleTranslation": "Esta traducción puede estar desactualizada.",
+      "nextAction": "Siguiente paso",
+      "backToSurface": "Volver al trabajo"
     },
     "sidePanel": {
       "title": "Help Center",
       "tabs": {
-        "overview": "Overview",
+        "overview": "Resumen",
+        "thisStep": "Este paso",
+        "guides": "Guías",
         "faq": "FAQ",
-        "knowledge": "Knowledge Base"
+        "knowledge": "Base de conocimiento",
+        "updates": "Novedades"
       },
       "fullDocs": "Full documentation",
       "overview": {
@@ -1005,15 +1155,23 @@
         "notify": {
           "success": "You'll be notified when it's ready!"
         }
-      }
+      },
+      "whatThisIs": "Qué es esto",
+      "whyItMatters": "Por qué importa",
+      "whatYouDoHere": "Qué haces aquí",
+      "howAiHelpsHere": "Cómo ayuda la IA",
+      "whatComesNext": "Qué viene después",
+      "askAi": "Preguntar a la IA",
+      "quickGuides": "Guías rápidas",
+      "watchVideo": "Ver video"
     },
     "search": {
-      "placeholder": "Search help articles, tutorials...",
+      "placeholder": "Buscar ayuda... (Cmd+K)",
       "searching": "Searching...",
       "results": "Results",
       "found": "found",
       "viewAll": "View all results",
-      "noResults": "No results found for \"{{query}}\"",
+      "noResults": "Sin resultados para",
       "tryDifferent": "Try different keywords or browse categories",
       "recent": "Recent searches",
       "clearRecent": "Clear",
@@ -1022,7 +1180,21 @@
       "navigate": "Navigate",
       "select": "Select",
       "close": "Close",
-      "buttonText": "Search help..."
+      "buttonText": "Search help...",
+      "tryDifferentKeywords": "Intente otras palabras clave o explore las categorías",
+      "types": {
+        "module": "Módulo",
+        "card": "Tarjeta",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "filters": {
+        "all": "Todo",
+        "module": "Módulo",
+        "card": "Tarjeta",
+        "faq": "FAQ",
+        "video": "Video"
+      }
     },
     "article": {
       "tableOfContents": "Table of Contents",
@@ -1089,6 +1261,24 @@
       "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
       "support": "Support",
       "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
+    },
+    "widget": {
+      "label": "Ayuda",
+      "header": "Centro de Ayuda",
+      "searchPlaceholder": "Buscar ayuda...",
+      "docs": "Documentación",
+      "contact": "Contacto"
+    },
+    "chatbot": {
+      "title": "Teresa — Ayuda",
+      "placeholder": "Pregunta a Teresa...",
+      "send": "Enviar",
+      "typing": "Escribiendo...",
+      "clear": "Borrar chat",
+      "sources": "Fuentes",
+      "helpful": "¿Fue útil?",
+      "suggestions": "Preguntas sugeridas",
+      "poweredBy": "IA basada en conocimiento"
     }
   },
   "settings": {
@@ -1389,12 +1579,12 @@
           }
         },
         "digital-maturity": {
-          "name": "Digital Maturity Assessment",
-          "description": "Evaluate digital readiness across technology, processes, and people dimensions using industry-standard frameworks.",
+          "name": "Evaluación de madurez digital",
+          "description": "Evalúe la preparación digital en las dimensiones de tecnología, procesos y personas utilizando marcos estándar del sector.",
           "outputs": {
-            "0": "Maturity Radar",
-            "1": "Benchmark Comparison",
-            "2": "Transformation Roadmap"
+            "0": "Radar de madurez",
+            "1": "Comparación de benchmarks",
+            "2": "Hoja de ruta de transformación"
           }
         },
         "automation-roadmap": {
@@ -1407,12 +1597,12 @@
           }
         },
         "technology-scanner": {
-          "name": "Technology Landscape Scanner",
-          "description": "Scan emerging technologies relevant to your industry and assess adoption readiness.",
+          "name": "Escáner del panorama tecnológico",
+          "description": "Escanee tecnologías emergentes relevantes para su sector y evalúe la preparación para su adopción.",
           "outputs": {
-            "0": "Technology Radar",
-            "1": "Adoption Assessment",
-            "2": "Pilot Recommendations"
+            "0": "Radar tecnológico",
+            "1": "Evaluación de adopción",
+            "2": "Recomendaciones piloto"
           }
         },
         "data-strategy": {
@@ -1557,5 +1747,199 @@
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub"
+  },
+  "megatrends": {
+    "title": "Análisis de megatendencias",
+    "subtitle": "Explore megatendencias del sector, construya un radar y descubra ideas estratégicas",
+    "tabs": {
+      "baseline": "Línea base sectorial",
+      "radar": "Mapa radar de tendencias",
+      "detail": "Detalle de tendencia",
+      "custom": "Tendencias propias",
+      "insights": "Ideas de IA"
+    },
+    "selectTrend": "Seleccione una tendencia de la Línea base o del Mapa radar para ver detalles.",
+    "goToBaseline": "Ir a Línea base"
+  },
+  "executive": {
+    "greeting": {
+      "morning": "Buenos días",
+      "afternoon": "Buenas tardes",
+      "evening": "Buenas noches"
+    },
+    "health": {
+      "title": "Salud del portafolio",
+      "subtitle": "Rendimiento general de ejecución",
+      "portfolio": "Salud del portafolio",
+      "excellent": "Excelente",
+      "good": "Bueno",
+      "attention": "Requiere atención",
+      "critical": "Crítico",
+      "noData": "Sin datos",
+      "lastUpdated": "Última actualización",
+      "live": "En vivo",
+      "execution": "Ejecución",
+      "decisions": "Velocidad de decisiones",
+      "capacity": "Capacidad del equipo",
+      "risk": "Mitigación de riesgos",
+      "noBreakdown": "Datos detallados aún no disponibles",
+      "noBreakdownHint": "Los datos aparecerán a medida que se registren tareas y decisiones",
+      "vsLastWeek": "vs semana pasada"
+    },
+    "kpi": {
+      "tasks": "Ejecución de tareas",
+      "tasksValue": "{{completed}}/{{total}}",
+      "onTime": "A tiempo",
+      "overdue": "Atrasadas",
+      "decisions": "Decisiones pendientes",
+      "awaiting": "en espera",
+      "critical": "Crítico",
+      "avgWait": "Espera prom.",
+      "team": "Capacidad del equipo",
+      "teamCapacity": "Capacidad del equipo",
+      "utilized": "utilizada",
+      "overloaded": "Sobrecargados",
+      "available": "Disponibles",
+      "risk": "Nivel de riesgo",
+      "riskLevel": "Nivel de riesgo",
+      "blockers": "Bloqueos",
+      "escalations": "Escalaciones",
+      "noData": "Sin datos",
+      "riskLow": "Bajo",
+      "riskMedium": "Medio",
+      "riskHigh": "Alto",
+      "riskCritical": "Crítico"
+    },
+    "action": {
+      "decision": "Decisión",
+      "task": "Tarea",
+      "escalation": "Escalación",
+      "blocker": "Bloqueo",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "view": "Ver detalles",
+      "title": "Acción requerida",
+      "allClear": "¡Todo en orden!",
+      "noUrgent": "No hay elementos urgentes que requieran su atención.",
+      "viewAll": "Ver todos"
+    },
+    "actions": {
+      "title": "Acción requerida",
+      "critical": "críticos",
+      "highPriority": "alta prioridad",
+      "viewAll": "Ver todos",
+      "viewDetails": "Ver detalles",
+      "allClear": "Todo en orden",
+      "overdue": "atrasados",
+      "days": "d"
+    },
+    "urgency": {
+      "critical": "Crítico",
+      "high": "Alto"
+    },
+    "decisions": {
+      "title": "Cola de decisiones",
+      "queue": "Cola de decisiones",
+      "noPending": "No hay decisiones pendientes",
+      "allClear": "No hay decisiones pendientes",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "delegate": "Delegar",
+      "viewAll": "Ver todas las decisiones",
+      "approved": "Decisión aprobada",
+      "rejected": "Decisión rechazada",
+      "error": "Error al procesar la decisión",
+      "waiting": "en espera"
+    },
+    "team": {
+      "title": "Rendimiento del equipo",
+      "members": "miembros",
+      "avgCapacity": "Capacidad prom.",
+      "overloaded": "Sobrecargados",
+      "available": "Disponibles",
+      "noMembers": "No se encontraron miembros del equipo",
+      "viewAll": "Ver informe completo del equipo",
+      "tasks": "tareas",
+      "unknown": "Desconocido"
+    },
+    "teamPerf": {
+      "title": "Rendimiento del equipo",
+      "noMembers": "No se encontraron miembros del equipo"
+    },
+    "initiatives": {
+      "title": "Iniciativas",
+      "active": "iniciativas activas",
+      "viewAll": "Ver todas",
+      "empty": "No hay iniciativas activas",
+      "tasks": "tareas",
+      "overdue": "atrasadas",
+      "untitled": "Sin título"
+    },
+    "signals": {
+      "title": "Señales de IA",
+      "subtitle": "Alertas inteligentes de su portafolio",
+      "viewAll": "Ver todas",
+      "empty": "Sin señales"
+    },
+    "refresh": "Actualizar",
+    "lastUpdated": "Actualizado",
+    "loadError": "No se pudieron cargar los datos del panel",
+    "patterns": {
+      "title": "Patrones de trabajo",
+      "tasksPerWeek": "tareas/semana",
+      "avgTaskTime": "tiempo prom. tarea",
+      "avgDecisionTime": "tiempo prom. decisión",
+      "overdueRate": "tasa de atraso",
+      "insight": {
+        "overloaded": "Tiene {{openTasks}} tareas abiertas pero promedia {{velocity}}/semana. Considere delegar o aplazar.",
+        "highOverdue": "{{rate}}% de sus tareas con plazos se completan tarde. Intente añadir tiempo de margen.",
+        "slowDecisions": "El tiempo promedio de decisión es de {{days}} días. Decisiones más rápidas podrían desbloquear equipos."
+      }
+    },
+    "aiOperator": {
+      "title": "Operador IA",
+      "subtitle": "Relación, navegación, ejecución y valor en un solo panel",
+      "readiness": "preparación del operador",
+      "stage": "Etapa",
+      "relationship": "Relación",
+      "daysSinceTouch": "días desde contacto",
+      "noTouchpoint": "Sin contacto",
+      "value": "Valor",
+      "autonomy": "Autonomía",
+      "nextActions": "Próximas mejores acciones",
+      "open": "Abrir",
+      "noActions": "No hay acciones urgentes del operador.",
+      "cadence": "Cadencia y flujos de trabajo",
+      "executiveBrief": "Resumen ejecutivo",
+      "noBrief": "Aún no hay resumen.",
+      "sequence": "Secuencia del operador",
+      "noPlan": "Aún no hay plan del operador.",
+      "intervene": "Intervenir",
+      "noSequence": "El plan de secuencia aún no se ha generado.",
+      "nextMilestone": "Próximo hito",
+      "none": "Ninguno",
+      "planBlockers": "Bloqueos del plan",
+      "noBlockers": "No hay bloqueos activos del plan.",
+      "programSummary": "Resumen del programa",
+      "suggestedInterventions": "Intervenciones sugeridas",
+      "working": "Procesando...",
+      "propose": "Proponer",
+      "noInterventions": "No hay nuevas intervenciones que proponer.",
+      "approvalQueue": "Cola de aprobación",
+      "accept": "Aceptar",
+      "reject": "Rechazar",
+      "execute": "Ejecutar",
+      "noQueue": "No hay intervenciones en la cola de aprobación."
+    },
+    "operator": {
+      "proposed": "Intervención del operador propuesta.",
+      "proposeFailed": "No se pudo proponer la intervención.",
+      "accepted": "Intervención aceptada.",
+      "acceptFailed": "No se pudo aceptar la intervención.",
+      "executed": "Intervención ejecutada.",
+      "executeFailed": "No se pudo ejecutar la intervención.",
+      "rejected": "Intervención rechazada.",
+      "rejectFailed": "No se pudo rechazar la intervención."
+    }
   }
 }

@@ -46,6 +46,7 @@ export type CapabilityName =
   | 'validateRoadmap'
   | 'chat'
   | 'chatStream'
+  | 'help'
   | 'nlToInitiative'
   | 'senseCheck'
   | 'riskScore'

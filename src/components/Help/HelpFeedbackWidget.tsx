@@ -30,7 +30,9 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
   onFeedbackSubmit,
 }) => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang = HELP_LANGS.includes(baseLang) ? baseLang : 'en';
 
   const [submitted, setSubmitted] = useState(false);
   const [isHelpful, setIsHelpful] = useState<boolean | null>(null);
@@ -202,7 +204,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
                 disabled={isSubmitting}
                 className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
               >
-                {lang === 'pl' ? 'Pomiń' : 'Skip'}
+                {t('common.skip', 'Skip')}
               </button>
               <button
                 onClick={handleCommentSubmit}

@@ -77,6 +77,8 @@ function formatRunStatus(status: ArtifactRunRecord['runStatus']): string {
       return 'Completed';
     case 'failed':
       return 'Failed';
+    case 'cancelled':
+      return 'Cancelled';
     default:
       return 'Planned';
   }
@@ -86,7 +88,12 @@ function deriveEffectiveRunStatus(
   runStatus: ArtifactRunRecord['runStatus'],
   executionState: string | null | undefined
 ): ArtifactRunRecord['runStatus'] {
-  if (runStatus === 'completed' || runStatus === 'failed' || runStatus === 'retry_requested') {
+  if (
+    runStatus === 'completed' ||
+    runStatus === 'failed' ||
+    runStatus === 'cancelled' ||
+    runStatus === 'retry_requested'
+  ) {
     return runStatus;
   }
 
@@ -110,6 +117,8 @@ function deriveEffectiveRunStatus(
       return 'rejected';
     case 'failed':
       return 'failed';
+    case 'cancelled':
+      return 'cancelled';
     default:
       return runStatus;
   }

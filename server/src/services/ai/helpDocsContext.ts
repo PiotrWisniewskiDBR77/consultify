@@ -1,5 +1,6 @@
 import logger from '../../utils/Logger.js';
 import KnowledgeBaseService from '../KnowledgeBaseService.js';
+import { all as dbAll } from '../../utils/DbPromise.js';
 
 type SupportedKbLang = 'en' | 'pl';
 
@@ -10,6 +11,21 @@ export type HelpDocsCitation = {
   reference: string;
   link?: string;
   excerpt?: string;
+};
+
+export type GroundingPayload = {
+  context: {
+    surface: string | null;
+    toolContext: string | null;
+    userIntent: string | null;
+    language: string;
+  };
+  candidates: {
+    articleIds: string[];
+    collectionIds: string[];
+  };
+  rationale: Record<string, string[]>;
+  fallbackCollectionSlugs: string[];
 };
 
 export type HelpDocsContextResult = {
@@ -25,6 +41,7 @@ export type HelpDocsContextResult = {
     readingTimeMinutes: number;
   }>;
   isProductQuestion: boolean;
+  groundingPayload: GroundingPayload;
 };
 
 // ---------------------------------------------------------------------------
@@ -40,9 +57,9 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 
-function cacheKey(query: string, lang: string, moduleId: string | null): string {
+function cacheKey(query: string, lang: string, moduleId: string | null, surface: string | null): string {
   const q = query.toLowerCase().trim().slice(0, 120);
-  return `${lang}::${moduleId || ''}::${q}`;
+  return `${lang}::${moduleId || ''}::${surface || ''}::${q}`;
 }
 
 function getCached(key: string): HelpDocsContextResult | null {
@@ -179,11 +196,26 @@ export async function buildHelpDocsContext(opts: {
   maxCharsPerArticle?: number;
 }): Promise<HelpDocsContextResult> {
   const query = String(opts.query || '').trim();
+
+  const mkEmptyGrounding = (
+    srf: string | null = null,
+    mod: string | null = null,
+    intent: string | null = null,
+    language = 'en',
+    fallbacks: string[] = [],
+  ): GroundingPayload => ({
+    context: { surface: srf, toolContext: mod, userIntent: intent, language },
+    candidates: { articleIds: [], collectionIds: [] },
+    rationale: {},
+    fallbackCollectionSlugs: fallbacks,
+  });
+
   const emptyResult: HelpDocsContextResult = {
     systemInstructionAddon: '',
     citations: [],
     articles: [],
     isProductQuestion: false,
+    groundingPayload: mkEmptyGrounding(),
   };
 
   if (!query) return emptyResult;
@@ -197,7 +229,7 @@ export async function buildHelpDocsContext(opts: {
   const isProduct = isProductOrHowToQuery(query, lang);
 
   // Check cache
-  const ck = cacheKey(query, lang, moduleId);
+  const ck = cacheKey(query, lang, moduleId, surface);
   const cached = getCached(ck);
   if (cached) {
     logger.debug('[helpDocsContext] Cache HIT');
@@ -224,15 +256,30 @@ export async function buildHelpDocsContext(opts: {
     ]).slice(0, maxArticles);
 
     if (candidates.length === 0) {
+      let fallbackCollectionSlugs: string[] = [];
+      try {
+        const fallbackRows = await dbAll<{ slug: string }>(
+          `SELECT c.slug FROM kb_collections c WHERE c.featured = 1 AND c.status = 'active' ORDER BY c.sort_order LIMIT 3`,
+          []
+        );
+        fallbackCollectionSlugs = fallbackRows.map((r) => String(r.slug));
+      } catch { /* collections table may not exist */ }
+
+      const collectionHint = fallbackCollectionSlugs.length > 0
+        ? ` Suggest browsing these collections: ${fallbackCollectionSlugs.join(', ')}.`
+        : '';
+
       const noDocsResult: HelpDocsContextResult = {
         systemInstructionAddon: isProduct
           ? '\n## HELP / KNOWLEDGE BASE\nNo matching documentation found for this query. ' +
             'If the user is asking about a product workflow or UI feature, respond: ' +
-            '"Our documentation does not cover this topic yet. I\'ll do my best to help based on general platform knowledge."\n'
+            '"Our documentation does not cover this topic yet. I\'ll do my best to help based on general platform knowledge."' +
+            collectionHint + '\n'
           : '',
         citations: [],
         articles: [],
         isProductQuestion: isProduct,
+        groundingPayload: mkEmptyGrounding(surface, moduleId, isProduct ? 'product_help' : 'general', lang, fallbackCollectionSlugs),
       };
       setCache(ck, noDocsResult);
       return noDocsResult;
@@ -251,8 +298,13 @@ export async function buildHelpDocsContext(opts: {
 
     const resolved = fullArticles.filter(Boolean) as any[];
     if (resolved.length === 0) {
-      setCache(ck, emptyResult);
-      return { ...emptyResult, isProductQuestion: isProduct };
+      const emptyWithContext: HelpDocsContextResult = {
+        ...emptyResult,
+        isProductQuestion: isProduct,
+        groundingPayload: mkEmptyGrounding(surface, moduleId, isProduct ? 'product_help' : 'general', lang),
+      };
+      setCache(ck, emptyWithContext);
+      return emptyWithContext;
     }
 
     const citations: HelpDocsCitation[] = resolved.map((a: any, idx: number) => {
@@ -334,18 +386,74 @@ export async function buildHelpDocsContext(opts: {
       snippets,
     ].join('\n');
 
+    // -----------------------------------------------------------------------
+    // Grounding payload (P26 §2.3.4)
+    // -----------------------------------------------------------------------
+    const groundingContext = {
+      surface: surface,
+      toolContext: moduleId,
+      userIntent: isProduct ? 'product_help' : 'general',
+      language: lang,
+    };
+
+    const surfaceBoundIds = new Set((surfaceBound as any[]).map((a) => String(a.id)));
+    const contextualIds = new Set((contextual as any[]).map((a) => String(a.id)));
+    const searchedIds = new Set((searched as any[]).map((a) => String(a.id)));
+
+    const rationale: Record<string, string[]> = {};
+    for (const a of resolved) {
+      const id = String(a.id);
+      const bullets: string[] = [];
+      if (surfaceBoundIds.has(id)) bullets.push(`Surface-bound to ${surface || 'default'}`);
+      if (contextualIds.has(id)) bullets.push(`Contextual for module ${moduleId || 'general'}`);
+      if (searchedIds.has(id)) bullets.push(`Search match for "${safeSlice(query, 60)}"`);
+      if (String(a.title || '').toLowerCase() === query.toLowerCase()) bullets.push('Exact title match');
+      if (bullets.length === 0) bullets.push('Relevant KB content');
+      rationale[id] = bullets;
+    }
+
+    let collectionIds: string[] = [];
+    if (resolved.length > 0) {
+      try {
+        const artIds = resolved.map((a: any) => String(a.id));
+        const placeholders = artIds.map(() => '?').join(',');
+        const collRows = await dbAll<{ slug: string }>(
+          `SELECT DISTINCT c.slug FROM kb_article_collections ac
+           JOIN kb_collections c ON ac.collection_id = c.id
+           WHERE ac.article_id IN (${placeholders})`,
+          artIds
+        );
+        collectionIds = collRows.map((r) => String(r.slug));
+      } catch { /* collections table may not exist */ }
+    }
+
+    const groundingPayload: GroundingPayload = {
+      context: groundingContext,
+      candidates: {
+        articleIds: resolved.map((a: any) => String(a.id)),
+        collectionIds,
+      },
+      rationale,
+      fallbackCollectionSlugs: [],
+    };
+
     const result: HelpDocsContextResult = {
       systemInstructionAddon,
       citations,
       articles,
       isProductQuestion: isProduct,
+      groundingPayload,
     };
 
     setCache(ck, result);
     return result;
   } catch (err: any) {
     logger.error(`[helpDocsContext] Failed to build context: ${err?.message}`);
-    return { ...emptyResult, isProductQuestion: isProduct };
+    return {
+      ...emptyResult,
+      isProductQuestion: isProduct,
+      groundingPayload: mkEmptyGrounding(surface, moduleId, isProduct ? 'product_help' : 'general', lang),
+    };
   }
 }
 

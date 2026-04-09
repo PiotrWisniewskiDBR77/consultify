@@ -8,6 +8,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
 import { V8KnowledgeBaseApi } from '@/services/api/v8/kb';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
@@ -51,10 +52,18 @@ export interface KbArticle extends KbArticleListItem {
   content: string;
   video_url?: string;
   video_script?: string;
+  hero_asset_refs?: Array<{
+    type: 'image' | 'video' | 'embed';
+    url: string;
+    alt?: string;
+    caption?: string;
+    poster?: string;
+  }>;
   related_modules: string[];
   target_audience: string[];
   category_id: string;
   next_action?: unknown | null;
+  translation_status?: 'native' | 'translated' | 'stale' | 'missing';
 }
 
 // ============================================
@@ -69,7 +78,8 @@ function normalizeKbLang(raw: string | undefined | null): string {
 }
 
 async function fetchPublicBridgeArticles(path: 'public' | 'featured', lang: string, limit: number) {
-  const res = await fetch(`${PUBLIC_V8_KB_BASE}/${path}?lang=${lang}&limit=${limit}`);
+  const site = KNOWLEDGE_BASE_SITE.key;
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}/${path}?lang=${lang}&limit=${limit}&site=${site}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch public KB bridge: ${path}`);
   }
@@ -455,9 +465,9 @@ async function searchWithFacets(
   return data.data || { articles: [], facets: { collections: [], tags: [] }, total: 0 };
 }
 
-export function useKnowledgeCollections(params: { parentId?: string; featured?: boolean } = {}) {
+export function useKnowledgeCollections(params: { parentId?: string; featured?: boolean } = {}, languageOverride?: string) {
   const { i18n } = useTranslation();
-  const lang = normalizeKbLang(i18n.language);
+  const lang = normalizeKbLang(languageOverride ?? i18n.language);
   return useQuery({
     queryKey: ['kb-collections', lang, params],
     queryFn: () => fetchCollections(lang, params),
@@ -465,9 +475,9 @@ export function useKnowledgeCollections(params: { parentId?: string; featured?: 
   });
 }
 
-export function useKnowledgeCollectionArticles(collectionSlug: string | undefined, limit = 20, offset = 0) {
+export function useKnowledgeCollectionArticles(collectionSlug: string | undefined, limit = 20, offset = 0, languageOverride?: string) {
   const { i18n } = useTranslation();
-  const lang = normalizeKbLang(i18n.language);
+  const lang = normalizeKbLang(languageOverride ?? i18n.language);
   return useQuery({
     queryKey: ['kb-collection-articles', collectionSlug, lang, limit, offset],
     queryFn: () => fetchCollectionArticles(collectionSlug!, lang, limit, offset),

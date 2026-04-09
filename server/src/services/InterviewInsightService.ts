@@ -27,7 +27,7 @@ export type InsightPromptType =
   | 'opportunity_scan'
   | 'maturity'
   | 'stakeholder_map';
-export type InsightStatus = 'generating' | 'completed' | 'failed';
+export type InsightStatus = 'generating' | 'completed' | 'failed' | 'draft' | 'in_review' | 'published';
 
 export interface CreateInsightInput {
   organizationId: string;
@@ -102,6 +102,8 @@ export interface Insight {
   evidenceMap?: InsightEvidenceMapEntry[];
   missingData?: string[];
   status: InsightStatus;
+  publishedAt?: string;
+  reviewedBy?: string;
   errorMessage?: string;
   sourceSessionCount: number;
   tokensUsed: number;

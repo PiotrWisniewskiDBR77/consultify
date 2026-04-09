@@ -216,7 +216,7 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       }
       const perm = await checkChatPermission(userId, orgId, 'create_project');
       if (!perm.allowed) {
-        return res.status(403).json({ error: 'No permission to create team projects' });
+        return res.status(403).json({ error: 'No permission to create team projects', reason: perm.reason, role: perm.role });
       }
     }
 
@@ -307,7 +307,7 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
         isCreator,
       });
       if (!perm.allowed) {
-        return res.status(403).json({ error: 'No permission to edit this team project' });
+        return res.status(403).json({ error: 'No permission to edit this team project', reason: perm.reason, role: perm.role });
       }
     }
 
@@ -378,7 +378,7 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
         isCreator,
       });
       if (!perm.allowed) {
-        return res.status(403).json({ error: 'No permission to delete this team project' });
+        return res.status(403).json({ error: 'No permission to delete this team project', reason: perm.reason, role: perm.role });
       }
     }
 

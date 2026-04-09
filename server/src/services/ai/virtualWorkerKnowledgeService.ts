@@ -8,6 +8,7 @@
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import ragService from '../ragService.js';
+import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
 import {
   getWorkerBySlug,
   type KnowledgeAssignment,
@@ -420,6 +421,37 @@ export async function buildWorkerKnowledgeContext(opts: {
   locale?: string;
   limit?: number;
 }): Promise<WorkerKnowledgeResult> {
+  const POLICY_REFUSED_RESULT: WorkerKnowledgeResult = {
+    contextText: 'Policy gateway refused this query.',
+    matchedProducts: [],
+    primaryProducts: [],
+    sources: [],
+    usedPillIds: [],
+    usedPillSections: [],
+    fallbackReason: 'policy_refused',
+  };
+
+  try {
+    const { decision } = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'worker',
+      query: opts.query,
+      organizationId: 'system',
+      userId: 'worker:' + opts.workerSlug,
+    });
+    logger.info(
+      `[VWKnowledge] Policy decision: outcome=${decision.outcome}, allowed=${decision.allowed}`
+    );
+    if (!decision.allowed) {
+      return POLICY_REFUSED_RESULT;
+    }
+  } catch (gatewayError: unknown) {
+    logger.warn(
+      '[VWKnowledge] Policy gateway failed, blocking retrieval (fail-closed):',
+      gatewayError instanceof Error ? gatewayError.message : String(gatewayError)
+    );
+    return POLICY_REFUSED_RESULT;
+  }
+
   const originalQuery = String(opts.query || '').trim();
   const preferredLanguage = resolveKnowledgeLanguage(opts.locale);
   const worker = await getWorkerBySlug(opts.workerSlug);
@@ -490,6 +522,7 @@ export async function buildWorkerKnowledgeContext(opts: {
   const productQueryHints: Record<string, string> = {
     consultify: 'consultify consultinity',
     vector: 'vector',
+    dbr77: 'dbr77 dbr ecosystem',
     iris: 'iris',
     'digital-twin': 'digital twin',
     iiot: 'iiot industrial iot',
@@ -639,11 +672,42 @@ export async function buildWorkerVoiceBootstrap(
   workerSlug: string,
   locale?: string
 ): Promise<WorkerKnowledgeResult> {
+  const POLICY_REFUSED_RESULT: WorkerKnowledgeResult = {
+    contextText: 'Policy gateway refused this query.',
+    matchedProducts: [],
+    primaryProducts: [],
+    sources: [],
+    usedPillIds: [],
+    usedPillSections: [],
+    fallbackReason: 'policy_refused',
+  };
+
   const lang = String(locale || '').toLowerCase().startsWith('pl') ? 'pl' : 'en';
   const bootstrapQuery =
     lang === 'pl'
       ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem'
       : 'Consultify overview business value demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ecosystem';
+
+  try {
+    const { decision } = await evaluateRetrievalPolicyDecision({
+      consumerClass: 'worker',
+      query: bootstrapQuery,
+      organizationId: 'system',
+      userId: 'worker:' + workerSlug,
+    });
+    logger.info(
+      `[VWKnowledge] Voice bootstrap policy decision: outcome=${decision.outcome}, allowed=${decision.allowed}`
+    );
+    if (!decision.allowed) {
+      return POLICY_REFUSED_RESULT;
+    }
+  } catch (gatewayError: unknown) {
+    logger.warn(
+      '[VWKnowledge] Voice bootstrap policy gateway failed (fail-closed):',
+      gatewayError instanceof Error ? gatewayError.message : String(gatewayError)
+    );
+    return POLICY_REFUSED_RESULT;
+  }
 
   return buildWorkerKnowledgeContext({
     workerSlug,

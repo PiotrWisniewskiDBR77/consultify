@@ -3,9 +3,35 @@ export interface FAQItem {
   moduleId: string;
   question: string;
   questionPl?: string;
+  questionDe?: string;
+  questionAr?: string;
+  questionJp?: string;
+  questionEs?: string;
   answer: string;
   answerPl?: string;
+  answerDe?: string;
+  answerAr?: string;
+  answerJp?: string;
+  answerEs?: string;
   tags?: string[];
+}
+
+export function getLocalizedQuestion(faq: FAQItem, lang: string): string {
+  if (lang === 'pl' && faq.questionPl) return faq.questionPl;
+  if (lang === 'de' && faq.questionDe) return faq.questionDe;
+  if (lang === 'ar' && faq.questionAr) return faq.questionAr;
+  if (lang === 'jp' && faq.questionJp) return faq.questionJp;
+  if (lang === 'es' && faq.questionEs) return faq.questionEs;
+  return faq.question;
+}
+
+export function getLocalizedAnswer(faq: FAQItem, lang: string): string {
+  if (lang === 'pl' && faq.answerPl) return faq.answerPl;
+  if (lang === 'de' && faq.answerDe) return faq.answerDe;
+  if (lang === 'ar' && faq.answerAr) return faq.answerAr;
+  if (lang === 'jp' && faq.answerJp) return faq.answerJp;
+  if (lang === 'es' && faq.answerEs) return faq.answerEs;
+  return faq.answer;
 }
 
 // Default FAQs that apply to all modules
@@ -228,11 +254,12 @@ export function getFAQsForModule(id: string): FAQItem[] {
 export function searchFAQs(query: string, lang?: string): FAQItem[] {
   const lowerQuery = query.toLowerCase();
   return FAQ_CONTENT.filter((faq) => {
-    const questionToSearch = lang === 'pl' && faq.questionPl ? faq.questionPl : faq.question;
-    const answerToSearch = lang === 'pl' && faq.answerPl ? faq.answerPl : faq.answer;
+    const questionToSearch = getLocalizedQuestion(faq, lang || 'en');
+    const answerToSearch = getLocalizedAnswer(faq, lang || 'en');
     return (
       questionToSearch.toLowerCase().includes(lowerQuery) ||
       answerToSearch.toLowerCase().includes(lowerQuery) ||
+      faq.question.toLowerCase().includes(lowerQuery) ||
       (faq.tags && faq.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)))
     );
   });

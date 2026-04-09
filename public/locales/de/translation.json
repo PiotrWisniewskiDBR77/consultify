@@ -404,10 +404,148 @@
   },
   "myWork": {
     "title": "Meine Arbeit",
+    "home": "Startseite",
+    "manager": "Manager",
     "inbox": "Posteingang",
     "focus": "Fokus",
     "calendar": "Kalender",
-    "tasks": "Aufgaben"
+    "tasks": "Aufgaben",
+    "radar": {
+      "pulseLabel": "Radar · Kontext, Ideen und sanfte Orientierung",
+      "unavailable": "Radar ist vorübergehend nicht verfügbar.",
+      "unavailableHint": "Das bedeutet nicht, dass der Tag leer ist. Versuchen Sie, den Startbildschirm neu zu laden.",
+      "retry": "Wiederholen",
+      "roofTruthChecking": "Roof truth: wird geprüft…",
+      "roofExpandHint": "Modulliste und Datenkohärenz-Audit ein- oder ausklappen.",
+      "roofModules": "Roof · {{count}} Module",
+      "pulse": "Puls",
+      "gentleExplanation": "Sanfte Erklärung",
+      "explainBriefing": "Erkläre dieses Briefing in einfacher Sprache, ohne Druck — 3 Punkte: was es bedeutet, warum jetzt, und ein kleiner Schritt, den ich tun kann.",
+      "explain": "Erklären",
+      "calmPlan": "Hilf mir, daraus einen ruhigen Schritt-für-Schritt-Plan zu machen — ohne Eile.",
+      "blocks": {
+        "aiPulseCore": "KI-Puls",
+        "industryLens": "Branchenkontext",
+        "executionCurrent": "Umsetzungsstrom",
+        "sparkField": "Ideen & Notizen",
+        "decisionTemperature": "Entscheidungstemperatur",
+        "teamSignal": "Teamsignal",
+        "momentum": "Momentum"
+      },
+      "blockHints": {
+        "aiPulseCore": "Pulszusammenfassung: Schlagzeile, Fokus und Puls-Score.",
+        "momentum": "Programmmomentum: Statistiken und Fortschrittssignale.",
+        "sparkField": "Ideen & Notizen: Laufzeit-Notizen und aktuelle Ergebnisse.",
+        "decisionTemperature": "Entscheidungen: Warteschlange, Blocker, heißestes Thema.",
+        "industryLens": "Branchenkontext: Markt, Technologie, Benchmark, Vergleichsfall.",
+        "executionCurrent": "Umsetzung: Arbeitsströme und Artefakte.",
+        "teamSignal": "Team: Ausrichtung und Organisationssignale."
+      },
+      "worthNoticing": "Bemerkenswert",
+      "talkToAI": "Mit KI sprechen",
+      "openExecution": "Zur Umsetzung",
+      "topMove": "Wichtigster Schritt",
+      "pulseActionPrompt": "Wandle diesen Puls in einen konkreten Plan für heute und diese Woche um.",
+      "decisionQueue": "Entscheidungswarteschlange",
+      "decisionQueueClear": "Keine Entscheidungen in der Warteschlange und keine harten Blocker — alles im grünen Bereich.",
+      "pending": "Ausstehend",
+      "blocking": "Blockierend",
+      "hottestDecision": "Dringendste Entscheidung",
+      "unblockPrompt": "Hilf mir, diese Entscheidung zu entblocken: {{title}}",
+      "outputFlow": "Output-Strom",
+      "visibility": {
+        "private": "Privat",
+        "project": "Projekt",
+        "organization": "Organisation",
+        "reviewShared": "Prüfung nötig",
+        "demo": "Demo"
+      },
+      "reviewState": {
+        "privateDraft": "Privater Entwurf",
+        "reviewReady": "Prüfbereit",
+        "inReview": "In Prüfung",
+        "approved": "Genehmigt",
+        "published": "Veröffentlicht"
+      },
+      "artifactType": {
+        "presentation": "Präsentation",
+        "sheet": "Tabelle",
+        "report": "Bericht"
+      },
+      "outputsLibraryNote": "Prüfung und Sichtbarkeit bleiben mit der Output-Bibliothek abgestimmt.",
+      "askAISequencing": "KI um Reihenfolge bitten",
+      "sequencingPrompt": "Erstelle die beste Ausführungsreihenfolge basierend auf den aktuellen Strömen.",
+      "ideasWithTasks": "Ideen mit Aufgaben {{count}}",
+      "recentNotes": "Aktuelle Notizen {{count}}",
+      "recentOutputs": "Aktuelle Outputs {{count}}",
+      "orgSignals": "Organisationssignale {{count}}",
+      "expandIdea": "Stärkste Idee ausbauen",
+      "expandIdeaPrompt": "Baue diese Idee zu einer Initiative aus und schlage die ersten 3 Schritte vor: {{text}}",
+      "newIdea": "Neue Idee",
+      "newIdeaSubtitle": "Neuen Transformationspfad starten",
+      "noteLabel": "Notiz",
+      "nodes": "Knoten",
+      "tasks": "Aufgaben",
+      "stages": {
+        "spark": "Funke",
+        "shaping": "Gestaltung",
+        "growing": "Wachstum"
+      },
+      "benchmark": "Benchmark",
+      "peerCase": "Vergleichsfall",
+      "peerCasePrompt": "Vergleiche diesen Fall mit unserem Transformationsprogramm und gib mir 3 Schlussfolgerungen: {{title}}",
+      "signalPrompt": "Erkläre, warum dieses Signal für unsere Transformation wichtig ist: {{title}}",
+      "teamReadout": "Team-Signal",
+      "teamUpdatePrompt": "Bereite ein kurzes Team-Update basierend auf diesem Signal vor: {{title}}",
+      "momentumPrompt": "Erkläre, was dieses Momentum-Signal für die Transformation bedeutet: {{title}}",
+      "live": "Live",
+      "rel": "Rel",
+      "loadError": "Radar konnte nicht geladen werden",
+      "triage": {
+        "title": "Triage-Cockpit",
+        "subtitle": "Operationelle Signale nach Entscheidungspriorität geordnet",
+        "empty": "Keine Triage-Signale vorhanden. Der operative Radar ist klar.",
+        "category": {
+          "execution_delivery": "Umsetzung",
+          "decision_alignment": "Entscheidung",
+          "finance_kpi": "Finanzen / KPI",
+          "governance_compliance": "Governance",
+          "external_change": "Externe Veränderung"
+        },
+        "timeWindow": {
+          "next_24h": "Nächste 24h",
+          "this_week": "Diese Woche",
+          "this_month": "Dieser Monat"
+        },
+        "driver": {
+          "deadline": "Frist",
+          "blocker": "Blocker",
+          "variance": "Abweichung",
+          "escalation": "Eskalation",
+          "opportunity": "Chance"
+        },
+        "whyNow": "Warum jetzt",
+        "evidence": "Nachweise",
+        "evidencePartial": "Teilweise Abdeckung",
+        "evidenceComplete": "Vollständige Abdeckung",
+        "uncertainty": "Unsicherheitsgrenze",
+        "missingInputs": "Fehlende Daten",
+        "conflicts": "Konflikte",
+        "wouldChange": "Würde Ranking ändern",
+        "owner": "Verantwortlicher",
+        "nextAction": "Nächste Aktion",
+        "goTo": "Gehe zu {{module}}",
+        "fallback": "Alternativ: {{fallback}}",
+        "degraded": {
+          "missing_data": "Einige Daten fehlen. Ergebnisse können unvollständig sein.",
+          "conflict": "Widersprüchliche Daten erkannt. Mit Vorsicht prüfen.",
+          "stale": "Daten könnten veraltet sein. Quellen ggf. aktualisieren.",
+          "permission": "Zugriff eingeschränkt. Einige Informationen sind verborgen."
+        },
+        "hardGate": "Hard Gate",
+        "score": "Punktzahl"
+      }
+    }
   },
   "step1": {
     "title": "Schritt 1"
@@ -955,14 +1093,26 @@
       "tutorials": "Anleitungen",
       "bestPractices": "Best Practices",
       "faq": "FAQ",
-      "troubleshooting": "Fehlerbehebung"
+      "troubleshooting": "Fehlerbehebung",
+      "contentMoved": "Dieser Inhalt wurde verschoben oder entfernt.",
+      "contentMovedHint": "Durchsuchen Sie unsere Sammlungen, um zu finden, was Sie suchen.",
+      "browseCollections": "Sammlungen durchsuchen",
+      "deprecated": "Dieser Artikel wurde zurückgezogen",
+      "viewReplacement": "Ersatzartikel anzeigen",
+      "missingTranslationBanner": "Keine DE-Version — EN wird angezeigt",
+      "staleTranslation": "Diese Übersetzung ist möglicherweise veraltet.",
+      "nextAction": "Nächster Schritt",
+      "backToSurface": "Zurück zur Arbeit"
     },
     "sidePanel": {
       "title": "Help Center",
       "tabs": {
-        "overview": "Overview",
+        "overview": "Übersicht",
+        "thisStep": "Dieser Schritt",
+        "guides": "Anleitungen",
         "faq": "FAQ",
-        "knowledge": "Knowledge Base"
+        "knowledge": "Wissensdatenbank",
+        "updates": "Neuigkeiten"
       },
       "fullDocs": "Full documentation",
       "overview": {
@@ -1005,15 +1155,23 @@
         "notify": {
           "success": "You'll be notified when it's ready!"
         }
-      }
+      },
+      "whatThisIs": "Was das ist",
+      "whyItMatters": "Warum es wichtig ist",
+      "whatYouDoHere": "Was Sie hier tun",
+      "howAiHelpsHere": "Wie KI hier hilft",
+      "whatComesNext": "Was als Nächstes kommt",
+      "askAi": "KI fragen",
+      "quickGuides": "Schnellanleitungen",
+      "watchVideo": "Video ansehen"
     },
-  "search": {
-      "placeholder": "Search help articles, tutorials...",
+    "search": {
+      "placeholder": "Hilfe suchen... (Cmd+K)",
       "searching": "Searching...",
       "results": "Results",
       "found": "found",
       "viewAll": "View all results",
-      "noResults": "No results found for \"{{query}}\"",
+      "noResults": "Keine Ergebnisse für",
       "tryDifferent": "Try different keywords or browse categories",
       "recent": "Recent searches",
       "clearRecent": "Clear",
@@ -1022,7 +1180,21 @@
       "navigate": "Navigate",
       "select": "Select",
       "close": "Close",
-      "buttonText": "Search help..."
+      "buttonText": "Search help...",
+      "tryDifferentKeywords": "Versuchen Sie andere Suchbegriffe oder durchsuchen Sie die Kategorien",
+      "types": {
+        "module": "Modul",
+        "card": "Karte",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "filters": {
+        "all": "Alle",
+        "module": "Modul",
+        "card": "Karte",
+        "faq": "FAQ",
+        "video": "Video"
+      }
     },
     "article": {
       "tableOfContents": "Table of Contents",
@@ -1089,6 +1261,24 @@
       "gettingStartedContent": "Open the Help Center for quick guides, then run an assessment to generate a first roadmap.",
       "support": "Support",
       "supportContent": "If you get stuck, contact support and attach screenshots/logs. The AI Chat can also explain features and workflows."
+    },
+    "widget": {
+      "label": "Hilfe",
+      "header": "Hilfezentrum",
+      "searchPlaceholder": "Hilfe suchen...",
+      "docs": "Dokumentation",
+      "contact": "Kontakt"
+    },
+    "chatbot": {
+      "title": "Teresa — Hilfe",
+      "placeholder": "Fragen Sie Teresa...",
+      "send": "Senden",
+      "typing": "Schreibt...",
+      "clear": "Chat löschen",
+      "sources": "Quellen",
+      "helpful": "War das hilfreich?",
+      "suggestions": "Vorgeschlagene Fragen",
+      "poweredBy": "Wissensbasierte KI"
     }
   },
   "kb": {
@@ -1501,12 +1691,12 @@
           }
         },
         "digital-maturity": {
-          "name": "Digital Maturity Assessment",
-          "description": "Evaluate digital readiness across technology, processes, and people dimensions using industry-standard frameworks.",
+          "name": "Digitale Reifegradanalyse",
+          "description": "Bewerten Sie die digitale Bereitschaft in den Dimensionen Technologie, Prozesse und Menschen mit branchenüblichen Frameworks.",
           "outputs": {
-            "0": "Maturity Radar",
-            "1": "Benchmark Comparison",
-            "2": "Transformation Roadmap"
+            "0": "Reifegrad-Radar",
+            "1": "Benchmark-Vergleich",
+            "2": "Transformations-Roadmap"
           }
         },
         "automation-roadmap": {
@@ -1519,12 +1709,12 @@
           }
         },
         "technology-scanner": {
-          "name": "Technology Landscape Scanner",
-          "description": "Scan emerging technologies relevant to your industry and assess adoption readiness.",
+          "name": "Technologielandschaft-Scanner",
+          "description": "Scannen Sie aufkommende Technologien für Ihre Branche und bewerten Sie die Adoptionsbereitschaft.",
           "outputs": {
-            "0": "Technology Radar",
-            "1": "Adoption Assessment",
-            "2": "Pilot Recommendations"
+            "0": "Technologie-Radar",
+            "1": "Adoptionsbewertung",
+            "2": "Pilotempfehlungen"
           }
         },
         "data-strategy": {
@@ -1669,5 +1859,199 @@
     "moduleName": "Licensed Tools",
     "hubTitle": "Licensed Tools Hub",
     "backToHub": "Back to Licensed Tools Hub"
+  },
+  "megatrends": {
+    "title": "Megatrend-Analyse",
+    "subtitle": "Branchenmegatrends erkunden, ein Radar erstellen und strategische Erkenntnisse gewinnen",
+    "tabs": {
+      "baseline": "Branchen-Baseline",
+      "radar": "Trend-Radar-Karte",
+      "detail": "Trenddetails",
+      "custom": "Eigene Trends",
+      "insights": "KI-Erkenntnisse"
+    },
+    "selectTrend": "Wählen Sie einen Trend aus der Baseline oder Radar-Karte, um Details zu sehen.",
+    "goToBaseline": "Zur Baseline"
+  },
+  "executive": {
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
+    "health": {
+      "title": "Portfolio-Gesundheit",
+      "subtitle": "Gesamte Ausführungsleistung",
+      "portfolio": "Portfolio-Gesundheit",
+      "excellent": "Ausgezeichnet",
+      "good": "Gut",
+      "attention": "Handlungsbedarf",
+      "critical": "Kritisch",
+      "noData": "Keine Daten",
+      "lastUpdated": "Zuletzt aktualisiert",
+      "live": "Live",
+      "execution": "Ausführung",
+      "decisions": "Entscheidungsgeschwindigkeit",
+      "capacity": "Teamkapazität",
+      "risk": "Risikominderung",
+      "noBreakdown": "Detaildaten noch nicht verfügbar",
+      "noBreakdownHint": "Daten erscheinen, sobald Aufgaben und Entscheidungen verfolgt werden",
+      "vsLastWeek": "vs letzte Woche"
+    },
+    "kpi": {
+      "tasks": "Aufgabenausführung",
+      "tasksValue": "{{completed}}/{{total}}",
+      "onTime": "Pünktlich",
+      "overdue": "Überfällig",
+      "decisions": "Ausstehende Entscheidungen",
+      "awaiting": "ausstehend",
+      "critical": "Kritisch",
+      "avgWait": "Ø Wartezeit",
+      "team": "Teamkapazität",
+      "teamCapacity": "Teamkapazität",
+      "utilized": "ausgelastet",
+      "overloaded": "Überlastet",
+      "available": "Verfügbar",
+      "risk": "Risikoniveau",
+      "riskLevel": "Risikoniveau",
+      "blockers": "Blockaden",
+      "escalations": "Eskalationen",
+      "noData": "Keine Daten",
+      "riskLow": "Niedrig",
+      "riskMedium": "Mittel",
+      "riskHigh": "Hoch",
+      "riskCritical": "Kritisch"
+    },
+    "action": {
+      "decision": "Entscheidung",
+      "task": "Aufgabe",
+      "escalation": "Eskalation",
+      "blocker": "Blockade",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "view": "Details anzeigen",
+      "title": "Handlungsbedarf",
+      "allClear": "Alles erledigt!",
+      "noUrgent": "Keine dringenden Punkte, die Ihre Aufmerksamkeit erfordern.",
+      "viewAll": "Alle anzeigen"
+    },
+    "actions": {
+      "title": "Handlungsbedarf",
+      "critical": "kritisch",
+      "highPriority": "hohe Priorität",
+      "viewAll": "Alle anzeigen",
+      "viewDetails": "Details anzeigen",
+      "allClear": "Alles erledigt",
+      "overdue": "überfällig",
+      "days": "T"
+    },
+    "urgency": {
+      "critical": "Kritisch",
+      "high": "Hoch"
+    },
+    "decisions": {
+      "title": "Entscheidungswarteschlange",
+      "queue": "Entscheidungswarteschlange",
+      "noPending": "Keine ausstehenden Entscheidungen",
+      "allClear": "Keine ausstehenden Entscheidungen",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "delegate": "Delegieren",
+      "viewAll": "Alle Entscheidungen anzeigen",
+      "approved": "Entscheidung genehmigt",
+      "rejected": "Entscheidung abgelehnt",
+      "error": "Entscheidung konnte nicht verarbeitet werden",
+      "waiting": "wartend"
+    },
+    "team": {
+      "title": "Teamleistung",
+      "members": "Mitglieder",
+      "avgCapacity": "Ø Kapazität",
+      "overloaded": "Überlastet",
+      "available": "Verfügbar",
+      "noMembers": "Keine Teammitglieder gefunden",
+      "viewAll": "Vollständigen Teambericht anzeigen",
+      "tasks": "Aufgaben",
+      "unknown": "Unbekannt"
+    },
+    "teamPerf": {
+      "title": "Teamleistung",
+      "noMembers": "Keine Teammitglieder gefunden"
+    },
+    "initiatives": {
+      "title": "Initiativen",
+      "active": "aktive Initiativen",
+      "viewAll": "Alle anzeigen",
+      "empty": "Keine aktiven Initiativen",
+      "tasks": "Aufgaben",
+      "overdue": "überfällig",
+      "untitled": "Ohne Titel"
+    },
+    "signals": {
+      "title": "KI-Signale",
+      "subtitle": "Intelligente Warnungen aus Ihrem Portfolio",
+      "viewAll": "Alle anzeigen",
+      "empty": "Keine Signale"
+    },
+    "refresh": "Aktualisieren",
+    "lastUpdated": "Aktualisiert",
+    "loadError": "Dashboard-Daten konnten nicht geladen werden",
+    "patterns": {
+      "title": "Arbeitsmuster",
+      "tasksPerWeek": "Aufgaben/Woche",
+      "avgTaskTime": "Ø Aufgabenzeit",
+      "avgDecisionTime": "Ø Entscheidungszeit",
+      "overdueRate": "Überfälligkeitsrate",
+      "insight": {
+        "overloaded": "Sie haben {{openTasks}} offene Aufgaben, erledigen aber durchschnittlich {{velocity}}/Woche. Erwägen Sie Delegation oder Verschiebung.",
+        "highOverdue": "{{rate}}% Ihrer Aufgaben mit Fristen werden verspätet abgeschlossen. Versuchen Sie, Pufferzeit einzuplanen.",
+        "slowDecisions": "Durchschnittliche Entscheidungszeit beträgt {{days}} Tage. Schnellere Entscheidungen könnten Teams entlasten."
+      }
+    },
+    "aiOperator": {
+      "title": "KI-Operator",
+      "subtitle": "Beziehung, Navigation, Ausführung und Wert in einem Cockpit",
+      "readiness": "Operator-Bereitschaft",
+      "stage": "Phase",
+      "relationship": "Beziehung",
+      "daysSinceTouch": "Tage seit Kontakt",
+      "noTouchpoint": "Kein Kontakt",
+      "value": "Wert",
+      "autonomy": "Autonomie",
+      "nextActions": "Nächste beste Aktionen",
+      "open": "Öffnen",
+      "noActions": "Keine dringenden Operator-Aktionen.",
+      "cadence": "Kadenz und Workstreams",
+      "executiveBrief": "Executive-Brief",
+      "noBrief": "Noch kein Brief vorhanden.",
+      "sequence": "Operator-Sequenz",
+      "noPlan": "Noch kein Operator-Plan vorhanden.",
+      "intervene": "Eingreifen",
+      "noSequence": "Sequenzplan wurde noch nicht erstellt.",
+      "nextMilestone": "Nächster Meilenstein",
+      "none": "Keine",
+      "planBlockers": "Plan-Blockaden",
+      "noBlockers": "Keine aktiven Plan-Blockaden.",
+      "programSummary": "Programmzusammenfassung",
+      "suggestedInterventions": "Vorgeschlagene Interventionen",
+      "working": "Wird bearbeitet...",
+      "propose": "Vorschlagen",
+      "noInterventions": "Keine neuen Interventionen vorzuschlagen.",
+      "approvalQueue": "Genehmigungswarteschlange",
+      "accept": "Akzeptieren",
+      "reject": "Ablehnen",
+      "execute": "Ausführen",
+      "noQueue": "Keine Interventionen in der Genehmigungswarteschlange."
+    },
+    "operator": {
+      "proposed": "Operator-Intervention vorgeschlagen.",
+      "proposeFailed": "Intervention konnte nicht vorgeschlagen werden.",
+      "accepted": "Intervention akzeptiert.",
+      "acceptFailed": "Intervention konnte nicht akzeptiert werden.",
+      "executed": "Intervention ausgeführt.",
+      "executeFailed": "Intervention konnte nicht ausgeführt werden.",
+      "rejected": "Intervention abgelehnt.",
+      "rejectFailed": "Intervention konnte nicht abgelehnt werden."
+    }
   }
 }

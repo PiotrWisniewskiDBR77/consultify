@@ -20,6 +20,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 
 import { getDatabase } from '../database/Database.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { generatePartnerCertificatePdf } from '../services/partnerCertificatePdf.js';
 import {
   ensureLearningProgressRows,
@@ -1988,6 +1989,9 @@ publicPartnerRouter.post(
 
 export const superAdminPartnerRouter = Router();
 
+superAdminPartnerRouter.use(verifyToken);
+superAdminPartnerRouter.use(verifySuperAdmin);
+
 /**
  * GET /api/superadmin/partner-settlements/summary
  * Get overall partner settlements summary
@@ -2372,6 +2376,9 @@ superAdminPartnerRouter.post(
 import * as PartnerConfigService from '../services/partnerConfigService.js';
 
 export const partnerConfigRouter = Router();
+
+partnerConfigRouter.use(verifyToken);
+partnerConfigRouter.use(verifySuperAdmin);
 
 /**
  * GET /api/superadmin/partner-config/commission-rates

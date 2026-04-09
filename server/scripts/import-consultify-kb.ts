@@ -291,8 +291,7 @@ function main() {
   sql.push(`DELETE FROM kb_surface_bindings WHERE article_id LIKE 'kb-consultify-%';`);
   sql.push(`DELETE FROM kb_article_translations WHERE article_id LIKE 'kb-consultify-%';`);
   sql.push(`DELETE FROM kb_articles WHERE id LIKE 'kb-consultify-%';`);
-  sql.push(`DELETE FROM kb_tag_translations WHERE tag_id LIKE 'kb-tag-%';`);
-  sql.push(`DELETE FROM kb_tags WHERE id LIKE 'kb-tag-%';`);
+  sql.push(`-- Tags are shared across products (idempotent ON CONFLICT DO NOTHING) — do NOT delete global tag dictionary`);
   sql.push(`DELETE FROM kb_collection_translations WHERE collection_id LIKE 'kb-coll-consultify%';`);
   sql.push(`DELETE FROM kb_collections WHERE id LIKE 'kb-coll-consultify%';`);
   sql.push(`DELETE FROM kb_category_translations WHERE category_id LIKE 'kb-cat-consultify-%';`);

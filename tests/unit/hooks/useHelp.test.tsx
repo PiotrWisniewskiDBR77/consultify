@@ -1,104 +1,94 @@
 /**
- * useHelp Hook Integration Tests
+ * useHelp / useHelpSidePanel Hook Integration Tests
  *
- * Tests help article fetching and search functionality.
+ * Tests the real HelpContext hooks for contextual help resolution.
  */
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 
-// Mock API
-vi.mock('@/services/api', () => ({
-  Api: {
-    getHelpArticles: vi.fn(),
-    searchHelp: vi.fn(),
-    getArticle: vi.fn(),
-  },
-}));
+import { HelpProvider, useHelp, useHelpSidePanel, useModuleFAQs } from '@/contexts/HelpContext';
+import { useAppStore } from '@/store/useAppStore';
+import { AppView } from '@/types';
 
-import { Api } from '@/services/api';
+vi.mock('@/store/useAppStore', () => {
+  const store = {
+    currentUser: { id: 'u1', name: 'Test' },
+    currentView: 'DASHBOARD' as AppView,
+    activeSidePanel: null as string | null,
+    toggleSidePanel: vi.fn(),
+  };
+  return {
+    useAppStore: vi.fn((selector?: any) => (selector ? selector(store) : store)),
+  };
+});
+
+global.fetch = vi.fn().mockResolvedValue({
+  ok: true,
+  json: async () => ({ playbooks: [] }),
+});
+
+function wrapper({ children }: { children: React.ReactNode }) {
+  return <HelpProvider>{children}</HelpProvider>;
+}
 
 describe('useHelp', () => {
-  const mockArticles = [
-    { id: '1', title: 'Getting Started', category: 'basics', content: 'Welcome...' },
-    { id: '2', title: 'Advanced Features', category: 'advanced', content: 'Learn...' },
-    { id: '3', title: 'Troubleshooting', category: 'support', content: 'If you...' },
-  ];
-
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(Api.getHelpArticles).mockResolvedValue(mockArticles);
-    vi.mocked(Api.searchHelp).mockResolvedValue([mockArticles[0]]);
-    vi.mocked(Api.getArticle).mockResolvedValue(mockArticles[0]);
   });
 
-  it('should fetch help articles', async () => {
-    const articles = await Api.getHelpArticles();
+  it('provides contextual help for the current view', () => {
+    const { result } = renderHook(() => useHelp(), { wrapper });
 
-    expect(articles).toHaveLength(3);
-    expect(articles[0].title).toBe('Getting Started');
+    const ctx = result.current.contextualHelp;
+    expect(ctx).toBeDefined();
+    expect(ctx.moduleId).toBe('dashboard');
+    expect(ctx.document).toBeDefined();
+    expect(ctx.document.title).toBeDefined();
+    expect(ctx.document.title.en).toBeTruthy();
+    expect(ctx.document.title.pl).toBeTruthy();
   });
 
-  it('should search help articles', async () => {
-    const results = await Api.searchHelp('started');
+  it('returns FAQs for the current module', () => {
+    const { result } = renderHook(() => useModuleFAQs(), { wrapper });
 
-    expect(Api.searchHelp).toHaveBeenCalledWith('started');
-    expect(results).toHaveLength(1);
-    expect(results[0].title).toBe('Getting Started');
+    expect(Array.isArray(result.current)).toBe(true);
+    expect(result.current.length).toBeGreaterThan(0);
   });
 
-  it('should get single article by id', async () => {
-    const article = await Api.getArticle('1');
+  it('getHelpForView resolves different views', () => {
+    const { result } = renderHook(() => useHelp(), { wrapper });
 
-    expect(Api.getArticle).toHaveBeenCalledWith('1');
-    expect(article.id).toBe('1');
+    const assessmentHelp = result.current.getHelpForView(AppView.LICENSED_TOOLS_HUB ?? 'LICENSED_TOOLS_HUB');
+    expect(assessmentHelp.document).toBeDefined();
+    expect(assessmentHelp.document.title.en).toBeTruthy();
   });
 
-  it('should filter articles by category', () => {
-    const filtered = mockArticles.filter((a) => a.category === 'basics');
+  it('setActiveHelpTab normalises onboarding to guides', () => {
+    const { result } = renderHook(() => useHelp(), { wrapper });
 
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].title).toBe('Getting Started');
+    act(() => {
+      result.current.setActiveHelpTab('onboarding');
+    });
+
+    expect(result.current.activeHelpTab).toBe('guides');
+  });
+});
+
+describe('useHelpSidePanel', () => {
+  it('exposes toggle and tab setters', () => {
+    const { result } = renderHook(() => useHelpSidePanel(), { wrapper });
+
+    expect(typeof result.current.toggle).toBe('function');
+    expect(typeof result.current.setActiveTab).toBe('function');
+    expect(typeof result.current.setKnowledgeModuleIdOverride).toBe('function');
+    expect(typeof result.current.setHelpDocumentIdOverride).toBe('function');
   });
 
-  it('should handle empty search results', async () => {
-    vi.mocked(Api.searchHelp).mockResolvedValue([]);
+  it('help object contains document with bilingual title', () => {
+    const { result } = renderHook(() => useHelpSidePanel(), { wrapper });
 
-    const results = await Api.searchHelp('nonexistent');
-
-    expect(results).toHaveLength(0);
-  });
-
-  it('should handle API errors gracefully', async () => {
-    vi.mocked(Api.getHelpArticles).mockRejectedValue(new Error('Network error'));
-
-    await expect(Api.getHelpArticles()).rejects.toThrow('Network error');
-  });
-
-  it('should sort articles by relevance', () => {
-    const articlesWithScore = mockArticles.map((a, i) => ({
-      ...a,
-      relevanceScore: 100 - i * 10,
-    }));
-
-    const sorted = articlesWithScore.sort((a, b) => b.relevanceScore - a.relevanceScore);
-
-    expect(sorted[0].title).toBe('Getting Started');
-  });
-
-  it('should group articles by category', () => {
-    const grouped = mockArticles.reduce(
-      (acc, article) => {
-        if (!acc[article.category]) {
-          acc[article.category] = [];
-        }
-        acc[article.category].push(article);
-        return acc;
-      },
-      {} as Record<string, typeof mockArticles>
-    );
-
-    expect(Object.keys(grouped)).toContain('basics');
-    expect(Object.keys(grouped)).toContain('advanced');
-    expect(Object.keys(grouped)).toContain('support');
+    expect(result.current.help.document.title.en).toBeTruthy();
+    expect(result.current.help.document.title.pl).toBeTruthy();
   });
 });

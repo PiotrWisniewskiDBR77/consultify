@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS v8_artifact_runs (
   requested_by_user_id TEXT NOT NULL,
   plan_json TEXT NOT NULL,
   run_status TEXT NOT NULL DEFAULT 'planned'
-             CHECK (run_status IN ('planned', 'proposal_created', 'retry_requested', 'completed', 'failed')),
+             CHECK (run_status IN ('planned', 'proposal_created', 'retry_requested', 'completed', 'failed', 'cancelled')),
   proposal_id TEXT,
   retry_of_run_id TEXT,
   failure_reason TEXT,

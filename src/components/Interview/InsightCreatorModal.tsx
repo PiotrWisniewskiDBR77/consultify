@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import { V8InterviewApi } from '@/services/api/v8/interview';
 
 // ==========================================
 // TYPES
@@ -444,7 +445,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     );
 
     try {
-      await Api.post('/interview/insights', {
+      await V8InterviewApi.createInsight({
         title: title.trim(),
         sessionIds: selectedSessions,
         promptType: selectedType,
@@ -454,7 +455,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           dateTo: filterDateTo || undefined,
         },
         customPrompt: customPrompt.trim() || undefined,
-      });
+      }).catch(() => Api.post('/interview/insights', {
+        title: title.trim(),
+        sessionIds: selectedSessions,
+        promptType: selectedType,
+        filters: {
+          templateId: filterTemplate || undefined,
+          dateFrom: filterDateFrom || undefined,
+          dateTo: filterDateTo || undefined,
+        },
+        customPrompt: customPrompt.trim() || undefined,
+      }));
 
       toast.dismiss(toastId);
       toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');

@@ -319,8 +319,16 @@ class AIOperatorService {
       5,
       98
     );
-    const relationshipHealth =
-      momentumScore >= 75 ? 'strong' : momentumScore >= 45 ? 'watch' : 'stale';
+    const relationshipHealth = (() => {
+      if (daysSinceLastTouch === null) return 'stale';
+      const recency = clamp(100 - daysSinceLastTouch * 5, 10, 100);
+      const executionPenalty = Math.min(
+        Number(taskStats?.overdue_count || 0) * 2 + Number(decisionStats?.pending_count || 0),
+        25
+      );
+      const score = clamp(recency - executionPenalty, 10, 100);
+      return score >= 65 ? 'strong' : score >= 35 ? 'watch' : 'stale';
+    })();
 
     const derivedStage =
       profile?.current_stage ||
@@ -331,6 +339,7 @@ class AIOperatorService {
         completedTasks: Number(taskStats?.completed_count || 0),
         totalMeetings: Number(meetingStats?.total || 0),
         totalReports: Number(reportStats?.total || 0),
+        totalDecisions: Number(decisionStats?.total || 0),
       });
     const discoveryCoveragePct = clamp(
       Number(meetingStats?.total || 0) * 12 +
@@ -1000,19 +1009,21 @@ class AIOperatorService {
       ),
       this.safeFirst<any>(
         `SELECT
+           COUNT(*) as total,
            SUM(CASE WHEN LOWER(COALESCE(status, '')) IN ('completed','done','validated') AND updated_at >= ${minusDaysTimestampSql(30)} THEN 1 ELSE 0 END) as completed_30d
          FROM tasks
          WHERE organization_id = ?`,
         [organizationId],
-        { completed_30d: 0 }
+        { total: 0, completed_30d: 0 }
       ),
       this.safeFirst<any>(
         `SELECT
+           COUNT(*) as total,
            SUM(CASE WHEN LOWER(COALESCE(status, '')) IN ('approved','done','completed') AND updated_at >= ${minusDaysTimestampSql(30)} THEN 1 ELSE 0 END) as completed_30d
          FROM decisions
          WHERE organization_id = ?`,
         [organizationId],
-        { completed_30d: 0 }
+        { total: 0, completed_30d: 0 }
       ),
       this.safeFirst<any>(
         `SELECT COUNT(*) as total
@@ -1033,13 +1044,26 @@ class AIOperatorService {
     const trackedKpis = Number(kpiStats?.total || 0);
     const activeInitiatives = Number(initiativeStats?.total || 0);
     const atRiskInitiatives = Number(initiativeStats?.at_risk_count || 0);
+    const totalTasks = Number(taskStats?.total || 0);
+    const totalDecisions = Number(decisionStats?.total || 0);
+    const dimensionScore =
+      (activeInitiatives > 0 ? 15 : 0) +
+      (trackedKpis > 0 ? 15 : 0) +
+      (totalTasks > 0 ? 12 : 0) +
+      (totalDecisions > 0 ? 10 : 0) +
+      (Number(reportStats?.total || 0) > 0 ? 10 : 0);
     const valueCoveragePct = clamp(
-      activeInitiatives * 12 + trackedKpis * 18 + Number(reportStats?.total || 0) * 8
+      dimensionScore +
+        activeInitiatives * 5 +
+        trackedKpis * 8 +
+        Number(reportStats?.total || 0) * 4 +
+        Math.min(Number(taskStats?.completed_30d || 0), 10) * 2 +
+        Math.min(Number(decisionStats?.completed_30d || 0), 5) * 3
     );
 
     return {
       status:
-        trackedKpis === 0
+        trackedKpis === 0 && activeInitiatives === 0 && totalTasks === 0
           ? 'needs_instrumentation'
           : atRiskInitiatives > 2
             ? 'at_risk'
@@ -1104,6 +1128,15 @@ class AIOperatorService {
         ? Math.round((Number(releaseStats?.policy_traced || 0) / totalAssignments) * 100)
         : 0;
 
+    const execOpen = Number(execution?.backlog?.openTasks || 0);
+    const execOverdue = Number(execution?.backlog?.overdueTasks || 0);
+    const execTotal = Math.max(execOpen, execOverdue);
+    const execHealthy = execTotal > 0 ? (execTotal - execOverdue) / execTotal : 0;
+    const executionCoveragePct =
+      execTotal > 0
+        ? clamp(Math.round(20 + execHealthy * 70 - Number(execution?.signals?.openRisks || 0) * 3))
+        : 0;
+
     const workstreams = [
       {
         key: 'foundation',
@@ -1123,11 +1156,7 @@ class AIOperatorService {
             : execution?.pulse === 'attention'
               ? 'partial'
               : 'ready',
-        coveragePct: clamp(
-          100 -
-            Number(execution?.backlog?.overdueTasks || 0) * 8 -
-            Number(execution?.signals?.openRisks || 0) * 5
-        ),
+        coveragePct: executionCoveragePct,
       },
       {
         key: 'communication',
@@ -1153,12 +1182,13 @@ class AIOperatorService {
     const readinessScore = Math.round(
       workstreams.reduce((sum, item) => sum + Number(item.coveragePct || 0), 0) / workstreams.length
     );
-    const autonomyScore = clamp(
-      readinessScore -
-        (100 - releaseCoveragePct) * 0.2 -
-        (100 - promptTracePct) * 0.15 -
-        (100 - policyTracePct) * 0.1
-    );
+    const guardrailPenalty =
+      totalAssignments > 0
+        ? (100 - releaseCoveragePct) * 0.2 +
+          (100 - promptTracePct) * 0.15 +
+          (100 - policyTracePct) * 0.1
+        : 0;
+    const autonomyScore = clamp(Math.round(readinessScore - guardrailPenalty));
 
     return {
       readinessScore,
@@ -1181,13 +1211,24 @@ class AIOperatorService {
     completedTasks: number;
     totalMeetings: number;
     totalReports: number;
+    totalDecisions?: number;
   }) {
-    if (input.initiativeCount === 0 && input.totalMeetings <= 1) return 'onboarding';
-    if (input.initiativeCount === 0) return 'discovery';
-    if (input.totalTasks <= 3) return 'planning';
-    if (input.completedTasks < input.totalTasks * 0.6) return 'execution';
-    if (input.totalReports > 0) return 'value_realization';
-    return 'execution';
+    const hasTasks = input.totalTasks > 0;
+    const hasDecisions = (input.totalDecisions || 0) > 0;
+    const hasSignificantWork = input.totalTasks > 3 || (hasTasks && hasDecisions);
+
+    if (!hasTasks && !hasDecisions && input.initiativeCount === 0 && input.totalMeetings <= 1)
+      return 'onboarding';
+    if (
+      hasSignificantWork &&
+      input.completedTasks >= input.totalTasks * 0.6 &&
+      input.totalReports > 0
+    )
+      return 'value_realization';
+    if (hasSignificantWork) return 'execution';
+    if (hasTasks || hasDecisions || input.initiativeCount > 0) return 'planning';
+    if (input.totalMeetings > 1) return 'discovery';
+    return 'onboarding';
   }
 
   private stageProgressPct(stage: string) {

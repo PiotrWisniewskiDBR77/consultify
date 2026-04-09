@@ -3,6 +3,11 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../utils/queryHelpers.js';
+import {
+  P07_ATTACHMENT_ERROR_TAXONOMY,
+  type P07AttachmentState,
+  type P07AttachmentError,
+} from './v8/notebookCanon.js';
 
 const NOTEBOOK_ATTACHMENT_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'notebook-attachments');
 const MAX_NOTEBOOK_ATTACHMENT_SIZE = 25 * 1024 * 1024;
@@ -33,6 +38,7 @@ export interface NotebookAttachmentRecord {
   uploadedAt: string;
   uploadedBy?: string;
   storageKey?: string;
+  status: P07AttachmentState;
 }
 
 export class NotebookAttachmentMutationError extends Error {
@@ -44,6 +50,27 @@ export class NotebookAttachmentMutationError extends Error {
     this.name = 'NotebookAttachmentMutationError';
     this.status = status;
     this.code = code;
+  }
+}
+
+export class AttachmentLifecycleError extends NotebookAttachmentMutationError {
+  errorType: P07AttachmentError;
+  retryable: boolean;
+  userMessage: string;
+
+  constructor(params: {
+    status: number;
+    code: string;
+    message: string;
+    errorType: P07AttachmentError;
+    retryable: boolean;
+    userMessage: string;
+  }) {
+    super(params.status, params.code, params.message);
+    this.name = 'AttachmentLifecycleError';
+    this.errorType = params.errorType;
+    this.retryable = params.retryable;
+    this.userMessage = params.userMessage;
   }
 }
 
@@ -59,7 +86,9 @@ function resolveAttachmentAbsolutePath(storageKey: string): string | null {
 }
 
 function serializeNotebookAttachments(attachments: NotebookAttachmentRecord[]): string {
-  return JSON.stringify(parseNotebookAttachments(attachments));
+  return JSON.stringify(
+    parseNotebookAttachments(attachments).map(({ status: _status, ...rest }) => rest)
+  );
 }
 
 async function cleanupStoredAttachment(attachment: NotebookAttachmentRecord): Promise<void> {
@@ -176,6 +205,7 @@ export function parseNotebookAttachments(
           uploadedAt: String(item.uploadedAt || ''),
           uploadedBy: item.uploadedBy ? String(item.uploadedBy) : undefined,
           storageKey: item.storageKey ? String(item.storageKey) : undefined,
+          status: (item.status as P07AttachmentState) || 'available',
         }))
       : [];
   } catch {
@@ -191,6 +221,42 @@ export function toPublicNotebookAttachments(
   );
 }
 
+export function classifyAttachmentError(
+  error: Error,
+  file: { originalname: string; mimetype: string; size: number }
+): { errorType: P07AttachmentError; retryable: boolean; userMessage: string } {
+  const extension = path.extname(file.originalname).toLowerCase();
+  if (BLOCKED_EXTENSIONS.has(extension)) {
+    return { errorType: 'type_unsupported', ...P07_ATTACHMENT_ERROR_TAXONOMY.type_unsupported };
+  }
+  if (file.size > MAX_NOTEBOOK_ATTACHMENT_SIZE) {
+    return { errorType: 'size_limit', ...P07_ATTACHMENT_ERROR_TAXONOMY.size_limit };
+  }
+
+  const errno = (error as NodeJS.ErrnoException)?.code;
+
+  if (errno === 'ENOSPC') {
+    return { errorType: 'storage_unavailable', ...P07_ATTACHMENT_ERROR_TAXONOMY.storage_unavailable };
+  }
+  if (errno === 'EACCES' || errno === 'EPERM') {
+    return { errorType: 'permission_denied', ...P07_ATTACHMENT_ERROR_TAXONOMY.permission_denied };
+  }
+  if (errno === 'ENOENT' || errno === 'EIO') {
+    return { errorType: 'processing_failed', ...P07_ATTACHMENT_ERROR_TAXONOMY.processing_failed };
+  }
+  if (
+    errno === 'ETIMEDOUT' ||
+    errno === 'ECONNRESET' ||
+    errno === 'ECONNABORTED' ||
+    error.message.toLowerCase().includes('timeout') ||
+    error.message.toLowerCase().includes('network')
+  ) {
+    return { errorType: 'network_timeout', ...P07_ATTACHMENT_ERROR_TAXONOMY.network_timeout };
+  }
+
+  return { errorType: 'unknown', ...P07_ATTACHMENT_ERROR_TAXONOMY.unknown };
+}
+
 function validateNotebookAttachment(file: {
   originalname: string;
   mimetype: string;
@@ -203,11 +269,25 @@ function validateNotebookAttachment(file: {
     throw new Error('Attachment file is empty');
   }
   if (file.size > MAX_NOTEBOOK_ATTACHMENT_SIZE) {
-    throw new Error('Attachment exceeds maximum size of 25MB');
+    throw new AttachmentLifecycleError({
+      status: 400,
+      code: 'NOTEBOOK_ATTACHMENT_SIZE_LIMIT',
+      message: 'Attachment exceeds maximum size of 25MB',
+      errorType: 'size_limit',
+      retryable: false,
+      userMessage: P07_ATTACHMENT_ERROR_TAXONOMY.size_limit.userMessage,
+    });
   }
   const extension = path.extname(file.originalname).toLowerCase();
   if (BLOCKED_EXTENSIONS.has(extension)) {
-    throw new Error(`Attachment type not allowed: ${extension}`);
+    throw new AttachmentLifecycleError({
+      status: 400,
+      code: 'NOTEBOOK_ATTACHMENT_TYPE_BLOCKED',
+      message: `Attachment type not allowed: ${extension}`,
+      errorType: 'type_unsupported',
+      retryable: false,
+      userMessage: P07_ATTACHMENT_ERROR_TAXONOMY.type_unsupported.userMessage,
+    });
   }
 }
 
@@ -219,13 +299,32 @@ export async function persistNotebookAttachment(params: {
   fileMimetype: string;
   userId?: string;
 }): Promise<NotebookAttachmentRecord> {
-  validateNotebookAttachment({
+  const fileDescriptor = {
     originalname: params.fileOriginalname,
     mimetype: params.fileMimetype,
     size: params.fileBuffer.byteLength,
-  });
+  };
 
   const attachmentId = uuidv4();
+  const record: NotebookAttachmentRecord = {
+    id: attachmentId,
+    name: params.fileOriginalname,
+    type: params.fileMimetype || 'application/octet-stream',
+    size: params.fileBuffer.byteLength,
+    uploadedAt: new Date().toISOString(),
+    uploadedBy: params.userId,
+    status: 'queued',
+  };
+
+  try {
+    validateNotebookAttachment(fileDescriptor);
+  } catch (error) {
+    record.status = 'blocked_policy';
+    throw error;
+  }
+
+  record.status = 'uploading';
+
   const orgDir = path.join(NOTEBOOK_ATTACHMENT_UPLOAD_DIR, params.organizationId, params.pageId);
   await fs.mkdir(orgDir, { recursive: true });
 
@@ -235,17 +334,27 @@ export async function persistNotebookAttachment(params: {
     `${attachmentId}-${sanitizeFilename(params.fileOriginalname)}`
   );
   const absolutePath = path.join(NOTEBOOK_ATTACHMENT_UPLOAD_DIR, storageKey);
-  await fs.writeFile(absolutePath, params.fileBuffer);
 
-  return {
-    id: attachmentId,
-    name: params.fileOriginalname,
-    type: params.fileMimetype || 'application/octet-stream',
-    size: params.fileBuffer.byteLength,
-    uploadedAt: new Date().toISOString(),
-    uploadedBy: params.userId,
-    storageKey,
-  };
+  try {
+    await fs.writeFile(absolutePath, params.fileBuffer);
+  } catch (writeError) {
+    record.status = 'failed';
+    const classified = classifyAttachmentError(
+      writeError instanceof Error ? writeError : new Error(String(writeError)),
+      fileDescriptor
+    );
+    throw new AttachmentLifecycleError({
+      status: 500,
+      code: 'NOTEBOOK_ATTACHMENT_WRITE_FAILED',
+      message: classified.userMessage,
+      ...classified,
+    });
+  }
+
+  record.status = 'available';
+  record.storageKey = storageKey;
+
+  return record;
 }
 
 export async function addNotebookAttachmentsToPage(params: {
@@ -262,15 +371,43 @@ export async function addNotebookAttachmentsToPage(params: {
 
   try {
     for (const file of params.files) {
-      const attachment = await persistNotebookAttachment({
-        organizationId: params.organizationId,
-        pageId: params.pageId,
-        fileBuffer: file.buffer,
-        fileOriginalname: file.originalname,
-        fileMimetype: file.mimetype,
-        userId: params.userId,
-      });
-      uploaded.push(attachment);
+      let lastLifecycleError: AttachmentLifecycleError | undefined;
+
+      for (let retryAttempt = 0; retryAttempt < NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES; retryAttempt += 1) {
+        try {
+          const attachment = await persistNotebookAttachment({
+            organizationId: params.organizationId,
+            pageId: params.pageId,
+            fileBuffer: file.buffer,
+            fileOriginalname: file.originalname,
+            fileMimetype: file.mimetype,
+            userId: params.userId,
+          });
+          uploaded.push(attachment);
+          lastLifecycleError = undefined;
+          break;
+        } catch (error) {
+          if (error instanceof AttachmentLifecycleError && error.retryable) {
+            lastLifecycleError = error;
+            continue;
+          }
+          if (error instanceof AttachmentLifecycleError) {
+            throw error;
+          }
+          const classified = classifyAttachmentError(
+            error instanceof Error ? error : new Error(String(error)),
+            file
+          );
+          throw new AttachmentLifecycleError({
+            status: 500,
+            code: 'NOTEBOOK_ATTACHMENT_PERSIST_FAILED',
+            message: classified.userMessage,
+            ...classified,
+          });
+        }
+      }
+
+      if (lastLifecycleError) throw lastLifecycleError;
     }
 
     for (let attempt = 0; attempt < NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES; attempt += 1) {

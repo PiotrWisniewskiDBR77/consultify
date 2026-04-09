@@ -13,6 +13,7 @@ import { randomUUID } from 'crypto';
 import { Response, Router } from 'express';
 
 import SuperAdminController from '../controllers/SuperAdminController.js';
+import { getIntegrationsCatalogSeed } from '../data/integrationsCatalog.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -39,11 +40,19 @@ const router = Router();
 
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
-// Note: SuperAdminController is imported as SuperAdminController above
-// Legacy require removed - using SuperAdminController import instead
 
-// Apply super admin middleware to all routes
+// verifyToken checks JWT signature, token revocation (revoked_tokens table),
+// session tracking, and attaches req.user. Without this, revoked JWTs would
+// still pass verifySuperAdmin's own JWT check.
+router.use(verifyToken);
+
+// Apply super admin middleware to all routes (DB-backed role verification)
 router.use(requireSuperAdmin);
+
+// Attach req.emitAuditEvent globally so every handler can emit audit records.
+// Gated actions that already pass requireAudit per-route get a second (harmless)
+// assignment; ungated mutations now have the function available too.
+router.use(requireAudit);
 
 // ==========================================
 // ORGANIZATIONS
@@ -61,6 +70,7 @@ router.put(
 router.delete(
   '/organizations/:id',
   requireConfirmation('delete_organization', 'critical'),
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     try {
       await requireNoLegalHold(req.params.id, 'Organization deletion');
@@ -505,6 +515,7 @@ router.post(
   '/impersonate',
   validateBody(ImpersonateUserSchema),
   requireConfirmation('impersonate_user', 'critical'),
+  requireAudit,
   SuperAdminController.impersonateUser
 );
 
@@ -544,6 +555,7 @@ router.get(
 router.delete(
   '/storage/files',
   requireConfirmation('delete_storage_files', 'high'),
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     await SuperAdminController.deleteStorageFile(req, res, next);
   })
@@ -865,116 +877,18 @@ router.post(
 router.get(
   '/integrations/catalog',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const catalog = [
-      {
-        id: 'slack',
-        name: 'Slack',
-        description: 'Team communication & notifications',
-        category: 'Communication',
-        icon: '💬',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'microsoft_teams',
-        name: 'Microsoft Teams',
-        description: 'Team collaboration & meetings',
-        category: 'Communication',
-        icon: '👥',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'jira',
-        name: 'Jira',
-        description: 'Project & issue tracking',
-        category: 'Project Management',
-        icon: '📋',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'asana',
-        name: 'Asana',
-        description: 'Work management platform',
-        category: 'Project Management',
-        icon: '✅',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'google_calendar',
-        name: 'Google Calendar',
-        description: 'Calendar integration',
-        category: 'Productivity',
-        icon: '📅',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'salesforce',
-        name: 'Salesforce',
-        description: 'CRM integration',
-        category: 'CRM',
-        icon: '☁️',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'hubspot',
-        name: 'HubSpot',
-        description: 'Marketing & sales platform',
-        category: 'CRM',
-        icon: '🧲',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'zapier',
-        name: 'Zapier',
-        description: 'Automation workflows',
-        category: 'Automation',
-        icon: '⚡',
-        auth_type: 'api_key',
-        status: 'available',
-      },
-      {
-        id: 'power_automate',
-        name: 'Power Automate',
-        description: 'Microsoft automation',
-        category: 'Automation',
-        icon: '🔄',
-        auth_type: 'oauth',
-        status: 'beta',
-      },
-      {
-        id: 'github',
-        name: 'GitHub',
-        description: 'Code repository',
-        category: 'Development',
-        icon: '🐙',
-        auth_type: 'oauth',
-        status: 'available',
-      },
-      {
-        id: 'azure_devops',
-        name: 'Azure DevOps',
-        description: 'Development lifecycle',
-        category: 'Development',
-        icon: '🔷',
-        auth_type: 'oauth',
-        status: 'coming_soon',
-      },
-      {
-        id: 'aws_s3',
-        name: 'AWS S3',
-        description: 'Cloud storage',
-        category: 'Storage',
-        icon: '📦',
-        auth_type: 'api_key',
-        status: 'available',
-      },
-    ];
+    try {
+      const rows = await dbAll<Record<string, unknown>>(
+        'SELECT id, name, description, category, icon, auth_type, status FROM integrations_catalog ORDER BY category, name'
+      );
+      if (rows && rows.length > 0) {
+        return res.json({ connectors: rows });
+      }
+    } catch {
+      // Table may not exist yet -- fall through to seed data
+    }
+
+    const catalog = await getIntegrationsCatalogSeed();
     return res.json({ connectors: catalog });
   })
 );

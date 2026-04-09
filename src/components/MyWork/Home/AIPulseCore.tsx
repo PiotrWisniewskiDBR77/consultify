@@ -19,8 +19,7 @@ const PRIORITY_RING: Record<AIPulseCorePayload['focusItems'][number]['priority']
 };
 
 export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => {
-  const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const { t } = useTranslation();
   const payload = block.payload;
   const [primaryFocus, ...secondaryFocus] = payload.focusItems;
 
@@ -42,7 +41,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
         <div className="rounded-lg border border-amber-400/20 bg-amber-500/[0.05] p-2.5">
           <div className="flex items-center gap-1.5 text-[10px] font-medium text-amber-100/90">
             <Compass size={12} className="text-amber-200/80" />
-            {isPolish ? 'Co warto zauwa\u017cy\u0107' : 'Worth noticing'}
+            {t('myWork.radar.worthNoticing')}
           </div>
           <p className="mt-1 text-xs leading-relaxed text-slate-200/85">{payload.insight}</p>
         </div>
@@ -56,9 +55,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
                   sourceBlock: 'aiPulseCore',
                   intent: 'prioritize_transformation',
                   title: block.title,
-                  starterPrompt: isPolish
-                    ? 'Prze\u0142\u00f3\u017c ten pulse na konkretny plan dzia\u0142ania na dzi\u015b i ten tydzie\u0144.'
-                    : 'Turn this pulse into a concrete plan for today and this week.',
+                  starterPrompt: t('myWork.radar.pulseActionPrompt'),
                   entityType: 'home',
                   entityId: 'pulse-core',
                   contextData: { headline: payload.headline, insight: payload.insight },
@@ -67,14 +64,14 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
             }
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-500 to-violet-500 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:brightness-110"
           >
-            {isPolish ? 'Porozmawiaj z AI' : 'Talk to AI'}
+            {t('myWork.radar.talkToAI')}
             <ArrowRight size={12} />
           </button>
           <button
             onClick={() => onAction({ type: 'navigate', target: 'tasks' })}
             className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-medium text-slate-200 transition hover:bg-white/[0.08]"
           >
-            {isPolish ? 'Przejd\u017a do wykonania' : 'Open execution'}
+            {t('myWork.radar.openExecution')}
           </button>
         </div>
       </div>
@@ -93,7 +90,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
           >
             <div className="flex items-center justify-between gap-3">
               <div className="font-mono text-[9px] uppercase tracking-wider text-primary-100/80">
-                {isPolish ? 'Top move' : 'Top move'}
+                {t('myWork.radar.topMove')}
               </div>
               <span
                 className={cn(

@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
+import { V8InterviewApi } from '@/services/api/v8/interview';
 
 export interface OrganizationContext {
   id?: string;
@@ -82,9 +83,9 @@ export function useInterviewContext(): UseInterviewContextResult {
       // If there's a last interview, get insights related to that session.
       if ((contextResponse as OrganizationContext).lastInterviewId) {
         const lastId = String((contextResponse as OrganizationContext).lastInterviewId);
-        const insightsResponse = await Api.get(`/interview/insights?limit=100&offset=0`).catch(
-          () => []
-        );
+        const insightsResponse = await V8InterviewApi.listInsights({ limit: 100, offset: 0 })
+          .then((r) => r.insights)
+          .catch(() => Api.get(`/interview/insights?limit=100&offset=0`).catch(() => []));
         const list = Array.isArray(insightsResponse)
           ? (insightsResponse as InterviewInsight[])
           : [];

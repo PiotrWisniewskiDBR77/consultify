@@ -47,7 +47,9 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
   contextModule,
 }) => {
   const { i18n } = useTranslation();
-  const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const SUPPORTED = ['en', 'pl', 'de', 'ar', 'jp', 'es'] as const;
+  const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const lang = (SUPPORTED as readonly string[]).includes(baseLang) ? baseLang : 'en';
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState(initialQuestion || '');
@@ -72,35 +74,35 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
     inputRef.current?.focus();
   }, []);
 
-  // Add welcome message
+  const welcomeMessages: Record<string, string> = {
+    en: "Hi! I'm Teresa — your Consultify assistant. How can I help you today? I answer questions based on our knowledge base and always cite my sources.",
+    pl: 'Cześć! Jestem Teresa — Twój asystent w Consultify. Jak mogę Ci dzisiaj pomóc? Odpowiadam na pytania na podstawie bazy wiedzy — zawsze podaję źródło.',
+    de: 'Hallo! Ich bin Teresa — Ihre Consultify-Assistentin. Wie kann ich Ihnen heute helfen? Ich beantworte Fragen auf Basis unserer Wissensdatenbank und nenne immer die Quelle.',
+    ar: 'مرحباً! أنا تيريزا — مساعدتك في Consultify. كيف يمكنني مساعدتك اليوم؟ أجيب على الأسئلة بناءً على قاعدة المعرفة لدينا وأستشهد دائماً بالمصادر.',
+    jp: 'こんにちは！テレサです — Consultifyのアシスタントです。今日はどのようにお手伝いできますか？ナレッジベースに基づいて回答し、常に出典を示します。',
+    es: '¡Hola! Soy Teresa — tu asistente en Consultify. ¿Cómo puedo ayudarte hoy? Respondo preguntas basándome en nuestra base de conocimiento y siempre cito las fuentes.',
+  };
+
+  const suggestionsByLang: Record<string, string[]> = {
+    en: ['How do I create a new initiative?', 'How do I manage project team?', 'How to use AI for analysis?', 'How to generate reports?'],
+    pl: ['Jak stworzyć nową inicjatywę?', 'Jak zarządzać zespołem projektu?', 'Jak używać AI do analizy?', 'Jak generować raporty?'],
+    de: ['Wie erstelle ich eine neue Initiative?', 'Wie verwalte ich das Projektteam?', 'Wie nutze ich KI für Analysen?', 'Wie erstelle ich Berichte?'],
+    ar: ['كيف أنشئ مبادرة جديدة؟', 'كيف أدير فريق المشروع؟', 'كيف أستخدم الذكاء الاصطناعي للتحليل؟', 'كيف أنشئ التقارير؟'],
+    jp: ['新しいイニシアチブの作成方法は？', 'プロジェクトチームの管理方法は？', 'AI分析の使い方は？', 'レポートの生成方法は？'],
+    es: ['¿Cómo creo una nueva iniciativa?', '¿Cómo gestiono el equipo del proyecto?', '¿Cómo uso la IA para análisis?', '¿Cómo genero informes?'],
+  };
+
   useEffect(() => {
     const welcomeMessage: Message = {
       id: 'welcome',
       role: 'assistant',
-      content:
-        lang === 'pl'
-          ? 'Cześć! Jestem Twoim asystentem Consultify. Jak mogę Ci dzisiaj pomóc? Możesz zapytać o dowolną funkcję aplikacji.'
-          : "Hi! I'm your Consultify assistant. How can I help you today? Feel free to ask about any feature of the application.",
+      content: welcomeMessages[lang] || welcomeMessages.en,
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
   }, [lang]);
 
-  // Suggested questions
-  const suggestions =
-    lang === 'pl'
-      ? [
-          'Jak stworzyć nową inicjatywę?',
-          'Jak zarządzać zespołem projektu?',
-          'Jak używać AI do analizy?',
-          'Jak generować raporty?',
-        ]
-      : [
-          'How do I create a new initiative?',
-          'How do I manage project team?',
-          'How to use AI for analysis?',
-          'How to generate reports?',
-        ];
+  const suggestions = suggestionsByLang[lang] || suggestionsByLang.en;
 
   // Send message
   const handleSend = useCallback(
@@ -143,9 +145,14 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
           id: `error-${Date.now()}`,
           role: 'assistant',
           content:
-            lang === 'pl'
-              ? 'Przepraszam, wystąpił błąd. Spróbuj ponownie później.'
-              : 'Sorry, an error occurred. Please try again later.',
+            ({
+              en: 'Sorry, an error occurred. Please try again later.',
+              pl: 'Przepraszam, wystąpił błąd. Spróbuj ponownie później.',
+              de: 'Entschuldigung, ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
+              ar: 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً.',
+              jp: '申し訳ございません。エラーが発生しました。後でもう一度お試しください。',
+              es: 'Lo sentimos, ocurrió un error. Inténtalo de nuevo más tarde.',
+            }[lang] || 'Sorry, an error occurred. Please try again later.'),
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -183,33 +190,39 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
     }
   };
 
-  // Clear chat
+  const clearMessages: Record<string, string> = {
+    en: 'Chat has been cleared. How can I help you?',
+    pl: 'Rozmowa została wyczyszczona. Jak mogę Ci pomóc?',
+    de: 'Chat wurde gelöscht. Wie kann ich Ihnen helfen?',
+    ar: 'تم مسح المحادثة. كيف يمكنني مساعدتك؟',
+    jp: 'チャットがクリアされました。どのようにお手伝いしますか？',
+    es: 'El chat ha sido borrado. ¿Cómo puedo ayudarte?',
+  };
+
   const handleClear = () => {
     setMessages([
       {
         id: 'welcome-new',
         role: 'assistant',
-        content:
-          lang === 'pl'
-            ? 'Rozmowa została wyczyszczona. Jak mogę Ci pomóc?'
-            : 'Chat has been cleared. How can I help you?',
+        content: clearMessages[lang] || clearMessages.en,
         timestamp: new Date(),
       },
     ]);
     setShowSuggestions(true);
   };
 
-  // Text
-  const t = {
-    title: { en: 'Help Assistant', pl: 'Asystent Pomocy' },
-    placeholder: { en: 'Ask a question...', pl: 'Zadaj pytanie...' },
-    send: { en: 'Send', pl: 'Wyślij' },
-    typing: { en: 'Typing...', pl: 'Pisze...' },
-    clear: { en: 'Clear chat', pl: 'Wyczyść czat' },
-    sources: { en: 'Sources', pl: 'Źródła' },
-    helpful: { en: 'Was this helpful?', pl: 'Czy to było pomocne?' },
-    suggestions: { en: 'Suggested questions', pl: 'Sugerowane pytania' },
-    poweredBy: { en: 'Powered by AI', pl: 'Napędzany przez AI' },
+  type L6 = Record<string, string>;
+  const l = (dict: L6) => dict[lang] || dict.en;
+  const t: Record<string, L6> = {
+    title:       { en: 'Teresa — Help', pl: 'Teresa — Pomoc', de: 'Teresa — Hilfe', ar: 'تيريزا — مساعدة', jp: 'テレサ — ヘルプ', es: 'Teresa — Ayuda' },
+    placeholder: { en: 'Ask Teresa a question...', pl: 'Zapytaj Teresę...', de: 'Fragen Sie Teresa...', ar: 'اسأل تيريزا...', jp: 'テレサに質問...', es: 'Pregunta a Teresa...' },
+    send:        { en: 'Send', pl: 'Wyślij', de: 'Senden', ar: 'إرسال', jp: '送信', es: 'Enviar' },
+    typing:      { en: 'Typing...', pl: 'Pisze...', de: 'Schreibt...', ar: 'يكتب...', jp: '入力中...', es: 'Escribiendo...' },
+    clear:       { en: 'Clear chat', pl: 'Wyczyść czat', de: 'Chat löschen', ar: 'مسح المحادثة', jp: 'チャットをクリア', es: 'Borrar chat' },
+    sources:     { en: 'Sources', pl: 'Źródła', de: 'Quellen', ar: 'المصادر', jp: '出典', es: 'Fuentes' },
+    helpful:     { en: 'Was this helpful?', pl: 'Czy to było pomocne?', de: 'War das hilfreich?', ar: 'هل كان هذا مفيداً؟', jp: '役に立ちましたか？', es: '¿Fue útil?' },
+    suggestions: { en: 'Suggested questions', pl: 'Sugerowane pytania', de: 'Vorgeschlagene Fragen', ar: 'أسئلة مقترحة', jp: 'おすすめの質問', es: 'Preguntas sugeridas' },
+    poweredBy:   { en: 'Knowledge-grounded AI', pl: 'AI oparte na bazie wiedzy', de: 'Wissensbasierte KI', ar: 'ذكاء اصطناعي مبني على المعرفة', jp: 'ナレッジベースAI', es: 'IA basada en conocimiento' },
   };
 
   return (
@@ -305,17 +318,30 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                         <span className="font-medium">{t.sources[lang]}:</span>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {message.sources.map((source, i) => (
-                            <a
-                              key={i}
-                              href="#"
-                              className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600"
-                            >
-                              <HelpCircle size={10} />
-                              {source.title}
-                              <ExternalLink size={10} />
-                            </a>
-                          ))}
+                          {message.sources.map((source, i) => {
+                            const articleSlug = source.id?.startsWith('kb_')
+                              ? source.id.replace(/^kb_/, '')
+                              : '';
+                            const deepLink = articleSlug
+                              ? `${window.location.pathname}?help_article=${encodeURIComponent(articleSlug)}&help_tab=knowledge`
+                              : undefined;
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => {
+                                  if (deepLink) {
+                                    window.history.pushState({}, '', deepLink);
+                                    window.dispatchEvent(new PopStateEvent('popstate'));
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 cursor-pointer"
+                              >
+                                <HelpCircle size={10} />
+                                {source.title}
+                                <ExternalLink size={10} />
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -349,12 +375,8 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                         }`}
                       >
                         {message.feedback === 'helpful'
-                          ? lang === 'pl'
-                            ? '✓ Dziękujemy za opinię!'
-                            : '✓ Thanks for your feedback!'
-                          : lang === 'pl'
-                            ? '✓ Przepraszamy, postaramy się poprawić!'
-                            : "✓ Sorry, we'll try to improve!"}
+                          ? (({ en: '✓ Thanks for your feedback!', pl: '✓ Dziękujemy za opinię!', de: '✓ Danke für Ihr Feedback!', ar: '✓ شكراً على ملاحظاتك!', jp: '✓ フィードバックありがとうございます！', es: '✓ ¡Gracias por tu opinión!' })[lang] || '✓ Thanks for your feedback!')
+                          : (({ en: "✓ Sorry, we'll try to improve!", pl: '✓ Przepraszamy, postaramy się poprawić!', de: '✓ Entschuldigung, wir werden versuchen uns zu verbessern!', ar: '✓ عذراً، سنحاول التحسين!', jp: '✓ 申し訳ございません、改善に努めます！', es: '✓ Lo sentimos, intentaremos mejorar!' })[lang] || "✓ Sorry, we'll try to improve!")}
                       </div>
                     )}
 

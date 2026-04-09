@@ -155,7 +155,7 @@ describe('notebookAttachmentService', () => {
       attachmentId: 'att-delete',
     });
 
-    expect(result).toEqual([peerAttachment]);
+    expect(result).toEqual([expect.objectContaining(peerAttachment)]);
     expect(mockRename).toHaveBeenCalledTimes(3);
     expect(mockRename.mock.calls[1]?.[0]).toContain('.staging-delete');
     expect(mockRename.mock.calls[1]?.[1]).toContain('remove.txt');

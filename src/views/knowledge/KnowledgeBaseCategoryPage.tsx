@@ -6,14 +6,15 @@
  */
 
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, ChevronRight, Clock, Eye, Home } from 'lucide-react';
-import React from 'react';
+import { ArrowRight, BookOpen, ChevronRight, Clock, Eye, FolderOpen, Home } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { isKbCategoryForCurrentSite } from '@/config/knowledgeBaseSite';
-import { KbArticleListItem, KbCategory, useDocsArticles, useDocsCategories } from '@/hooks/useDocs';
+import { KbArticleListItem } from '@/hooks/useDocs';
+import { KbCollection, useKnowledgeCollections, useKnowledgeCollectionArticles } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
@@ -27,21 +28,21 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
-  const { data: categories } = useDocsCategories(docsLanguage);
-  const category = categories?.find((c: KbCategory) => c.slug === categorySlug);
-  const otherCategories = categories?.filter(
-    (c: KbCategory) => c.slug !== categorySlug && isKbCategoryForCurrentSite(c.slug)
-  ) || [];
+  const { data: collections = [] } = useKnowledgeCollections(undefined, docsLanguage);
+  const collection = useMemo(() =>
+    collections.find((c: KbCollection) => c.slug === categorySlug),
+    [collections, categorySlug]
+  );
+  const otherCollections = useMemo(() =>
+    collections.filter((c: KbCollection) => c.slug !== categorySlug && isKbCategoryForCurrentSite(c.slug)),
+    [collections, categorySlug]
+  );
 
-  const { data: articlesData, isLoading } = useDocsArticles({
-    language: docsLanguage,
-    categorySlug: categorySlug || undefined,
-    limit: 50,
-  });
-  const articles = articlesData?.articles;
+  const { data: collectionData, isLoading } = useKnowledgeCollectionArticles(categorySlug, 50, 0, docsLanguage);
+  const articles = collectionData?.articles || [];
 
-  const featuredArticles = articles?.filter((a: KbArticleListItem) => a.is_featured) || [];
-  const otherArticles = articles?.filter((a: KbArticleListItem) => !a.is_featured) || [];
+  const featuredArticles = articles.filter((a: KbArticleListItem) => a.is_featured);
+  const otherArticles = articles.filter((a: KbArticleListItem) => !a.is_featured);
 
   return (
     <MarketingLayout footerVariant="knowledge">
@@ -72,7 +73,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
               <ChevronRight size={12} className="flex-shrink-0 sm:hidden" />
               <ChevronRight size={14} className="flex-shrink-0 hidden sm:block" />
               <span className="text-slate-900 font-semibold dark:text-white truncate">
-                {category?.name || categorySlug}
+                {collection?.title || categorySlug}
               </span>
             </nav>
           </div>
@@ -87,15 +88,15 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
         >
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
-              {category?.name || categorySlug}
+              {collection?.title || categorySlug}
             </h1>
-            {category?.description && (
+            {collection?.description && (
               <p className="mt-3 sm:mt-4 text-base sm:text-lg text-slate-600 font-medium leading-relaxed dark:text-white/45">
-                {category.description}
+                {collection.description}
               </p>
             )}
             <div className="mt-3 sm:mt-4 text-sm text-slate-500 font-semibold dark:text-white/30">
-              {articles?.length || 0} {t('kb.articles', 'articles')}
+              {articles.length} {t('kb.articles', 'articles')}
             </div>
           </div>
         </motion.div>
@@ -148,24 +149,27 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
         </div>
 
         {/* Other Categories */}
-        {otherCategories.length > 0 && (
+        {otherCollections.length > 0 && (
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20">
             <div className="border-t border-slate-200 dark:border-white/[0.06] pt-8 sm:pt-12">
               <h3 className="text-lg font-black text-slate-900 mb-6 tracking-tight dark:text-white">
-                {t('kb.category.otherCategories', 'Explore other categories')}
+                {t('kb.category.otherCategories', 'Explore other collections')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {otherCategories.map((cat: KbCategory) => (
+                {otherCollections.map((coll: KbCollection) => (
                   <Link
-                    key={cat.id}
-                    to={`/knowledge-base/${cat.slug}`}
+                    key={coll.id}
+                    to={`/knowledge-base/${coll.slug}`}
                     className="group flex items-center gap-4 p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]"
                   >
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-white/50">
+                      <FolderOpen size={18} />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors">
-                        {cat.name}
+                        {coll.title}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1 dark:text-white/40">{cat.article_count} {t('kb.articles', 'articles')}</p>
+                      <p className="text-xs text-slate-500 mt-1 dark:text-white/40">{coll.article_count} {t('kb.articles', 'articles')}</p>
                     </div>
                     <ChevronRight size={16} className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400" />
                   </Link>
