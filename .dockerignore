@@ -36,6 +36,9 @@ Thumbs.db
 .git
 .gitignore
 
+# Blog content (not needed in container)
+Blogs
+
 # Documentation (not needed in container)
 docs
 evidence
