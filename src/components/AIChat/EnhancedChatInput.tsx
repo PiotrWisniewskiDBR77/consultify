@@ -15,7 +15,7 @@
  * @version 2.0.0
  */
 
-import { ArrowUp, AudioLines, Mic, Pen, Square, StopCircle } from 'lucide-react';
+import { ArrowUp, AudioLines, Loader2, Mic, Pen, Square, StopCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -66,6 +66,11 @@ interface EnhancedChatInputProps {
   startVoiceListening?: () => void;
   stopVoiceListening?: () => void;
   onToolSelect?: (tool: string) => void;
+
+  /** Teresa real-time voice status: 'idle' | 'connecting' | 'live' | 'error' */
+  teresaVoiceStatus?: string;
+  /** Toggle Teresa real-time voice on/off */
+  onTeresaVoiceToggle?: () => void;
 }
 
 // ============================================================================
@@ -89,6 +94,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   startVoiceListening,
   stopVoiceListening,
   onToolSelect,
+  teresaVoiceStatus,
+  onTeresaVoiceToggle,
 }) => {
   const { t, i18n } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
@@ -822,7 +829,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               </button>
             )}
 
-            {/* Dynamic: Voice Conversation / Send / Stop Button */}
+            {/* Dynamic: Stop Stream / Send / Voice Toggle */}
             {isStreaming ? (
               <button
                 onClick={() => onStopGenerating?.()}
@@ -841,9 +848,29 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               >
                 <ArrowUp size={18} />
               </button>
+            ) : teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
+              <button
+                onClick={() => onTeresaVoiceToggle?.()}
+                disabled={isDisabled}
+                className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
+                  teresaVoiceStatus === 'live'
+                    ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
+                    : 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
+                }`}
+                title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
+              >
+                {teresaVoiceStatus === 'connecting' ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <>
+                    <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/20 pointer-events-none" />
+                    <AudioLines size={18} />
+                  </>
+                )}
+              </button>
             ) : (
               <button
-                onClick={() => onVoiceConversationStart?.()}
+                onClick={() => onTeresaVoiceToggle?.()}
                 disabled={isDisabled}
                 className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25 group"
                 title={t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')}

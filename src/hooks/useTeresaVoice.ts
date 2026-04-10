@@ -39,9 +39,9 @@ export interface UseTeresaVoiceReturn {
 }
 
 const FRONTEND_GEMINI_KEY =
-  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GEMINI_API_KEY) ||
-  (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) ||
-  (typeof process !== 'undefined' && process.env?.API_KEY) ||
+  process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+  process.env.GEMINI_API_KEY ||
+  process.env.API_KEY ||
   null;
 
 export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceReturn {
@@ -82,12 +82,11 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   }, []);
 
   useEffect(() => {
-    if (!enabled) return;
     const browserWindow = window as BrowserWindow;
     const hasAudioContext = !!(window.AudioContext || browserWindow.webkitAudioContext);
     const hasGetUserMedia = !!(navigator.mediaDevices?.getUserMedia);
     setVoiceAvailable(hasAudioContext && hasGetUserMedia && !!effectiveKey);
-  }, [enabled, effectiveKey]);
+  }, [effectiveKey]);
 
   const teardownVoice = useCallback(async () => {
     processorRef.current?.disconnect();
