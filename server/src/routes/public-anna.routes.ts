@@ -44,6 +44,7 @@ const AnnaChatSchema = z.object({
       currentSection: z.string().max(200).optional(),
       articleUrl: z.string().max(2000).optional(),
     })
+    .nullable()
     .optional(),
   history: z
     .array(
