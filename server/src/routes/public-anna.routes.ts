@@ -794,6 +794,12 @@ router.post(
   asyncHandler(async (req, res: Response) => {
     const parsed = AnnaChatSchema.safeParse(req.body);
     if (!parsed.success) {
+      logger.warn('[PublicAnna] Validation failed', {
+        errors: JSON.stringify(parsed.error.flatten()),
+        bodyKeys: Object.keys(req.body || {}),
+        messageType: typeof req.body?.message,
+        messageLen: req.body?.message?.length,
+      });
       return res.status(400).json({
         error: 'Invalid request body',
         details: parsed.error.flatten(),
