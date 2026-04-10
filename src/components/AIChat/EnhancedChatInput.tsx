@@ -810,21 +810,43 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
-            {/* Dictation Button (always visible, separate from conversation) */}
-            {speechSupported && !isVoiceConversation && (
+            {/* Mic button: mute/unmute when Teresa voice is live, dictation otherwise */}
+            {(teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting') ? (
+              <button
+                onClick={() => onTeresaVoiceMuteToggle?.()}
+                disabled={teresaVoiceStatus !== 'live'}
+                data-testid="chat-mic-button"
+                className={`
+                  flex items-center gap-1.5 p-2 rounded-lg transition-all
+                  ${
+                    teresaVoiceMuted
+                      ? 'bg-red-500/80 text-white shadow-lg shadow-red-500/30'
+                      : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }
+                  ${teresaVoiceStatus !== 'live' ? 'cursor-not-allowed opacity-50' : ''}
+                `}
+                title={
+                  teresaVoiceMuted
+                    ? t('aiChat.unmuteMic', 'Unmute microphone')
+                    : t('aiChat.muteMic', 'Mute microphone')
+                }
+              >
+                {teresaVoiceMuted ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+            ) : speechSupported && !isVoiceConversation ? (
               <button
                 onClick={handleDictationClick}
                 disabled={isInputDisabled}
                 data-testid="chat-mic-button"
                 className={`
-                                    flex items-center gap-1.5 p-2 rounded-lg transition-all
-                                    ${
-                                      isDictating
-                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                                        : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                                    }
-                                    ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
-                                `}
+                  flex items-center gap-1.5 p-2 rounded-lg transition-all
+                  ${
+                    isDictating
+                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                      : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }
+                  ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
+                `}
                 title={
                   isDictating
                     ? t('aiChat.stopDictation', 'Stop dictation')
@@ -833,7 +855,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               >
                 {isDictating ? <StopCircle size={18} /> : <Mic size={18} />}
               </button>
-            )}
+            ) : null}
 
             {/* Dynamic: Stop Stream / Send / Voice Toggle */}
             {isStreaming ? (
@@ -855,45 +877,25 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 <ArrowUp size={18} />
               </button>
             ) : teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
-              <div className="flex items-center gap-1">
-                {/* Mute/unmute mic */}
-                {teresaVoiceStatus === 'live' && (
-                  <button
-                    onClick={() => onTeresaVoiceMuteToggle?.()}
-                    className={`p-2 rounded-xl transition-all duration-200 min-w-[36px] flex items-center justify-center shadow-lg ${
-                      teresaVoiceMuted
-                        ? 'bg-slate-600 hover:bg-slate-500 text-red-300 shadow-slate-500/25'
-                        : 'bg-slate-700 hover:bg-slate-600 text-white shadow-slate-500/25'
-                    }`}
-                    title={teresaVoiceMuted
-                      ? t('aiChat.unmuteMic', 'Unmute microphone')
-                      : t('aiChat.muteMic', 'Mute microphone')
-                    }
-                  >
-                    {teresaVoiceMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                  </button>
+              <button
+                onClick={() => onTeresaVoiceToggle?.()}
+                disabled={isDisabled}
+                className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
+                  teresaVoiceStatus === 'live'
+                    ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
+                    : 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
+                }`}
+                title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
+              >
+                {teresaVoiceStatus === 'connecting' ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <>
+                    <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/20 pointer-events-none" />
+                    <AudioLines size={18} />
+                  </>
                 )}
-                {/* Stop voice */}
-                <button
-                  onClick={() => onTeresaVoiceToggle?.()}
-                  disabled={isDisabled}
-                  className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
-                    teresaVoiceStatus === 'live'
-                      ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
-                      : 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
-                  }`}
-                  title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
-                >
-                  {teresaVoiceStatus === 'connecting' ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <>
-                      <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/20 pointer-events-none" />
-                      <AudioLines size={18} />
-                    </>
-                  )}
-                </button>
-              </div>
+              </button>
             ) : (
               <button
                 onClick={() => onTeresaVoiceToggle?.()}
