@@ -15,7 +15,7 @@
  * @version 2.0.0
  */
 
-import { ArrowUp, AudioLines, Loader2, Mic, Pen, Square, StopCircle } from 'lucide-react';
+import { ArrowUp, AudioLines, Loader2, Mic, MicOff, Pen, Square, StopCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -71,6 +71,10 @@ interface EnhancedChatInputProps {
   teresaVoiceStatus?: string;
   /** Toggle Teresa real-time voice on/off */
   onTeresaVoiceToggle?: () => void;
+  /** Whether Teresa mic is currently muted */
+  teresaVoiceMuted?: boolean;
+  /** Toggle Teresa mic mute */
+  onTeresaVoiceMuteToggle?: () => void;
 }
 
 // ============================================================================
@@ -96,6 +100,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   onToolSelect,
   teresaVoiceStatus,
   onTeresaVoiceToggle,
+  teresaVoiceMuted,
+  onTeresaVoiceMuteToggle,
 }) => {
   const { t, i18n } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
@@ -849,25 +855,45 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 <ArrowUp size={18} />
               </button>
             ) : teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
-              <button
-                onClick={() => onTeresaVoiceToggle?.()}
-                disabled={isDisabled}
-                className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
-                  teresaVoiceStatus === 'live'
-                    ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
-                    : 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
-                }`}
-                title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
-              >
-                {teresaVoiceStatus === 'connecting' ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <>
-                    <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/20 pointer-events-none" />
-                    <AudioLines size={18} />
-                  </>
+              <div className="flex items-center gap-1">
+                {/* Mute/unmute mic */}
+                {teresaVoiceStatus === 'live' && (
+                  <button
+                    onClick={() => onTeresaVoiceMuteToggle?.()}
+                    className={`p-2 rounded-xl transition-all duration-200 min-w-[36px] flex items-center justify-center shadow-lg ${
+                      teresaVoiceMuted
+                        ? 'bg-slate-600 hover:bg-slate-500 text-red-300 shadow-slate-500/25'
+                        : 'bg-slate-700 hover:bg-slate-600 text-white shadow-slate-500/25'
+                    }`}
+                    title={teresaVoiceMuted
+                      ? t('aiChat.unmuteMic', 'Unmute microphone')
+                      : t('aiChat.muteMic', 'Mute microphone')
+                    }
+                  >
+                    {teresaVoiceMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                  </button>
                 )}
-              </button>
+                {/* Stop voice */}
+                <button
+                  onClick={() => onTeresaVoiceToggle?.()}
+                  disabled={isDisabled}
+                  className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
+                    teresaVoiceStatus === 'live'
+                      ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
+                      : 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/25'
+                  }`}
+                  title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
+                >
+                  {teresaVoiceStatus === 'connecting' ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <>
+                      <span className="absolute inset-0 rounded-xl animate-ping bg-red-500/20 pointer-events-none" />
+                      <AudioLines size={18} />
+                    </>
+                  )}
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => onTeresaVoiceToggle?.()}

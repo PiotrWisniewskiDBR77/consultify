@@ -10,6 +10,7 @@ import { TourProvider } from '../components/Onboarding/TourProvider';
 import { AutoSaveProvider } from '../context/AutoSaveContext';
 import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
 import { AIProvider } from '../contexts/AIContext';
+import { TeresaVoiceProvider } from '../contexts/TeresaVoiceContext';
 import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { TrialProvider } from '../contexts/TrialContext';
@@ -71,7 +72,9 @@ const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ child
   <V8Provider>
     <TrialProvider>
       <AccessPolicyProvider>
-        <AIProvider>{children}</AIProvider>
+        <AIProvider>
+          <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
+        </AIProvider>
       </AccessPolicyProvider>
     </TrialProvider>
   </V8Provider>

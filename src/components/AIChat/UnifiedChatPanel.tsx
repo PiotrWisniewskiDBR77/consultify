@@ -46,9 +46,8 @@ import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
 import { useDemoSession } from '../../hooks/useDemoSession';
 // import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
-import { useTeresaVoice } from '../../hooks/useTeresaVoice';
+import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
-import { buildTeresaVoiceSystemInstruction } from '../../utils/teresaVoiceInstruction';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAIActionsStore } from '../../store/useAIActionsStore';
@@ -357,8 +356,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [signalsOpen, setSignalsOpen] = useState(false);
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
-  const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false);
-
   const lastKickoffSentRef = useRef<string | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
@@ -402,77 +399,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     },
   });
 
-  // Teresa real-time voice (Gemini Live)
-  const teresaVoiceInstruction = useMemo(
-    () =>
-      buildTeresaVoiceSystemInstruction({
-        language: chatLanguage,
-        organizationName: currentOrganization?.name || currentUser?.organizationName,
-        organizationId: currentOrganization?.id || currentUser?.organizationId || undefined,
-        userName: currentUser?.firstName,
-        workspaceType: workspaceContext?.type,
-        entityName: workspaceContext?.entityName,
-        currentScreen: 'SidePanel',
-      }),
-    [chatLanguage, currentOrganization, currentUser, workspaceContext]
-  );
-
-  const teresaVoice = useTeresaVoice({
-    enabled: isVoiceOverlayOpen,
-    language: chatLanguage,
-    systemInstruction: teresaVoiceInstruction,
-    onTranscriptUpdate: useCallback(
-      (text: string) => {
-        const trimmed = text.trim();
-        if (trimmed.length > 2 && activeConversationId) {
-          void addMessageToConversation({
-            conversationId: activeConversationId,
-            role: 'user',
-            content: trimmed,
-            messageType: 'text',
-            metadata: { source: 'voice_realtime' } as any,
-          });
-        }
-      },
-      [addMessageToConversation, activeConversationId]
-    ),
-    onModelAudioText: useCallback(
-      (text: string) => {
-        const trimmed = text.trim();
-        if (trimmed.length > 1 && activeConversationId) {
-          void addMessageToConversation({
-            conversationId: activeConversationId,
-            role: 'ai',
-            content: trimmed,
-            messageType: 'text',
-            metadata: { source: 'voice_realtime' } as any,
-          });
-        }
-      },
-      [addMessageToConversation, activeConversationId]
-    ),
-  });
-
-  const handleTeresaVoiceToggle = useCallback(async () => {
-    if (teresaVoice.voiceStatus === 'live' || teresaVoice.voiceStatus === 'connecting') {
-      await teresaVoice.stopVoiceConversation();
-      setIsVoiceOverlayOpen(false);
-    } else {
-      let convId = activeConversationId;
-      if (!convId) {
-        try {
-          const newConv = await createConversation({});
-          convId = newConv.id;
-          setActiveConversation(newConv.id);
-        } catch (err) {
-          console.error('[TeresaVoice] Failed to create conversation:', err);
-          return;
-        }
-      }
-      setIsVoiceOverlayOpen(true);
-      void teresaVoice.startVoiceConversation();
-    }
-  }, [teresaVoice, activeConversationId, createConversation, setActiveConversation]);
+  // Teresa real-time voice — global context (persists across navigation)
+  const teresaVoice = useTeresaVoiceContext();
 
   const {
     isDemo,
@@ -3188,8 +3116,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
             setTimeout(() => setAbortFeedback(null), 3000);
           }}
-          onTeresaVoiceToggle={handleTeresaVoiceToggle}
+          onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
           teresaVoiceStatus={teresaVoice.voiceStatus}
+          teresaVoiceMuted={teresaVoice.isMuted}
+          onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
           isStreaming={isStreaming}
           disabled={isDisabled}
           placeholder={

@@ -53,10 +53,9 @@ import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
 import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
+import { useTeresaVoiceContext } from '../contexts/TeresaVoiceContext';
 import { useAIStream } from '../hooks/useAIStream';
-import { useTeresaVoice } from '../hooks/useTeresaVoice';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
-import { buildTeresaVoiceSystemInstruction } from '../utils/teresaVoiceInstruction';
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
@@ -417,95 +416,8 @@ export const AIChatWelcomeView: React.FC = () => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
-  const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false);
-
-  // Teresa real-time voice (Gemini Live)
-  const teresaVoiceInstruction = useMemo(
-    () =>
-      buildTeresaVoiceSystemInstruction({
-        language: chatLanguage,
-        organizationName: currentOrganization?.name || currentUser?.organizationName,
-        organizationId: currentOrganization?.id || currentUser?.organizationId || undefined,
-        userName: currentUser?.firstName,
-        activeProject: selectedProject?.name || undefined,
-        workspaceType: workspaceContext?.type,
-        entityName: workspaceContext?.entityName,
-        currentScreen: 'Chat',
-      }),
-    [chatLanguage, currentOrganization, currentUser, selectedProject, workspaceContext]
-  );
-
-  const teresaVoice = useTeresaVoice({
-    enabled: isVoiceOverlayOpen,
-    language: chatLanguage,
-    systemInstruction: teresaVoiceInstruction,
-    onTranscriptUpdate: useCallback(
-      (text: string) => {
-        const trimmed = text.trim();
-        if (trimmed.length > 2) {
-          const convId = activeConversationIdRef.current;
-          if (convId) {
-            void addMessage({
-              conversationId: convId,
-              role: 'user',
-              content: trimmed,
-              messageType: 'text',
-              metadata: { source: 'voice_realtime' } as any,
-            });
-          }
-        }
-      },
-      [addMessage]
-    ),
-    onModelAudioText: useCallback(
-      (text: string) => {
-        const trimmed = text.trim();
-        if (trimmed.length > 1) {
-          const convId = activeConversationIdRef.current;
-          if (convId) {
-            void addMessage({
-              conversationId: convId,
-              role: 'ai',
-              content: trimmed,
-              messageType: 'text',
-              metadata: { source: 'voice_realtime' } as any,
-            });
-          }
-        }
-      },
-      [addMessage]
-    ),
-  });
-
-  const handleTeresaVoiceToggle = useCallback(async () => {
-    if (teresaVoice.voiceStatus === 'live' || teresaVoice.voiceStatus === 'connecting') {
-      await teresaVoice.stopVoiceConversation();
-      setIsVoiceOverlayOpen(false);
-    } else {
-      let convId = activeConversationId;
-      if (!convId) {
-        try {
-          const newConv = await createConversation({ projectId: selectedProject?.id });
-          convId = newConv.id;
-          setActiveConversation(newConv.id);
-          setConversationChatLanguage(newConv.id, chatLanguage);
-        } catch (err) {
-          console.error('[TeresaVoice] Failed to create conversation:', err);
-          return;
-        }
-      }
-      setIsVoiceOverlayOpen(true);
-      void teresaVoice.startVoiceConversation();
-    }
-  }, [
-    teresaVoice,
-    activeConversationId,
-    chatLanguage,
-    createConversation,
-    selectedProject?.id,
-    setActiveConversation,
-    setConversationChatLanguage,
-  ]);
+  // Teresa real-time voice — global context (persists across navigation)
+  const teresaVoice = useTeresaVoiceContext();
 
   const lastSpokenContentRef = useRef<string>('');
   const autoReadEnabled = Boolean(aiConfig?.textToSpeech);
@@ -2120,8 +2032,10 @@ When citing knowledge base articles, always reference them by article_id (slug).
               <EnhancedChatInput
                 onSend={handleSend}
                 onStopGenerating={abortStream}
-                onTeresaVoiceToggle={handleTeresaVoiceToggle}
+                onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
                 teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceMuted={teresaVoice.isMuted}
+                onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
                 isStreaming={isStreaming}
                 disabled={isActionExecuting}
                 variant="compact"
@@ -2250,8 +2164,10 @@ When citing knowledge base articles, always reference them by article_id (slug).
             <EnhancedChatInput
               onSend={handleSend}
               onStopGenerating={abortStream}
-              onTeresaVoiceToggle={handleTeresaVoiceToggle}
+              onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
               teresaVoiceStatus={teresaVoice.voiceStatus}
+              teresaVoiceMuted={teresaVoice.isMuted}
+              onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
               isStreaming={isStreaming}
               disabled={false}
               variant="compact"

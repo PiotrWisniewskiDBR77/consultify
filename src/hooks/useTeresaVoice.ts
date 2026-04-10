@@ -33,6 +33,8 @@ export interface UseTeresaVoiceReturn {
   voiceStatus: TeresaVoiceStatus;
   voiceError: string | null;
   voiceAvailable: boolean;
+  isMuted: boolean;
+  toggleMute: () => void;
   startVoiceConversation: () => Promise<void>;
   stopVoiceConversation: () => Promise<void>;
   sendTextHistory: (turns: Array<{ role: string; content: string }>) => void;
@@ -60,6 +62,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const [voiceStatus, setVoiceStatus] = useState<TeresaVoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceAvailable, setVoiceAvailable] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -130,6 +133,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     }
 
     setVoiceError(null);
+    setIsMuted(false);
     updateStatus('connecting');
     await teardownVoice();
 
@@ -292,9 +296,19 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const stopVoiceConversation = useCallback(async () => {
     attemptRef.current += 1;
     setVoiceError(null);
+    setIsMuted(false);
     updateStatus('idle');
     await teardownVoice();
   }, [teardownVoice, updateStatus]);
+
+  const toggleMute = useCallback(() => {
+    const stream = streamRef.current;
+    if (!stream) return;
+    const tracks = stream.getAudioTracks();
+    const nextMuted = !isMuted;
+    tracks.forEach((track) => { track.enabled = !nextMuted; });
+    setIsMuted(nextMuted);
+  }, [isMuted]);
 
   const sendTextHistory = useCallback(
     (turns: Array<{ role: string; content: string }>) => {
@@ -322,6 +336,8 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     voiceStatus,
     voiceError,
     voiceAvailable,
+    isMuted,
+    toggleMute,
     startVoiceConversation,
     stopVoiceConversation,
     sendTextHistory,
