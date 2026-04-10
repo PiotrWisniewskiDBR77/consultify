@@ -50,6 +50,7 @@ import {
 } from '../components/AIChat/teresaRuntimeCopy';
 import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
+import { VoiceConversationOverlay } from '../components/AIChat/VoiceConversationOverlay';
 import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
 import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
@@ -415,6 +416,7 @@ export const AIChatWelcomeView: React.FC = () => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
+  const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false);
   const lastSpokenContentRef = useRef<string>('');
   const autoReadEnabled = Boolean(aiConfig?.textToSpeech);
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
@@ -1286,6 +1288,49 @@ When citing knowledge base articles, always reference them by article_id (slug).
     [activeChatMessages, activeConversationId]
   );
 
+  // Handle opening the voice conversation overlay
+  const handleVoiceConversationStart = useCallback(async () => {
+    let convId = activeConversationId;
+    if (!convId) {
+      try {
+        const newConv = await createConversation({ projectId: selectedProject?.id });
+        convId = newConv.id;
+        setActiveConversation(newConv.id);
+        setConversationChatLanguage(newConv.id, chatLanguage);
+      } catch (err) {
+        console.error('[VoiceOverlay] Failed to create conversation:', err);
+        return;
+      }
+    }
+    setIsVoiceOverlayOpen(true);
+  }, [
+    activeConversationId,
+    chatLanguage,
+    createConversation,
+    selectedProject?.id,
+    setActiveConversation,
+    setConversationChatLanguage,
+  ]);
+
+  const handleVoiceTranscript = useCallback(
+    async (role: 'user' | 'ai', text: string) => {
+      const convId = activeConversationIdRef.current;
+      if (!convId || !text.trim()) return;
+      try {
+        await addMessage({
+          conversationId: convId,
+          role: role === 'user' ? 'user' : 'ai',
+          content: text.trim(),
+          messageType: 'text',
+          metadata: { source: 'voice_realtime' } as any,
+        });
+      } catch (err) {
+        console.error('[VoiceOverlay] Failed to persist transcript:', err);
+      }
+    },
+    [addMessage]
+  );
+
   // Handle daily brief
   const handleDailyBrief = useCallback(async () => {
     try {
@@ -2028,6 +2073,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
               <EnhancedChatInput
                 onSend={handleSend}
                 onStopGenerating={abortStream}
+                onVoiceConversationStart={handleVoiceConversationStart}
                 isStreaming={isStreaming}
                 disabled={isActionExecuting}
                 variant="compact"
@@ -2048,6 +2094,14 @@ When citing knowledge base articles, always reference them by article_id (slug).
           isOpen={showExportModal}
           onClose={() => setShowExportModal(false)}
           onExport={handleExportFormat}
+        />
+
+        {/* Voice Conversation Overlay */}
+        <VoiceConversationOverlay
+          isOpen={isVoiceOverlayOpen}
+          onClose={() => setIsVoiceOverlayOpen(false)}
+          onTranscriptMessage={handleVoiceTranscript}
+          chatLanguage={chatLanguage}
         />
       </div>
     );
@@ -2155,6 +2209,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
             <EnhancedChatInput
               onSend={handleSend}
               onStopGenerating={abortStream}
+              onVoiceConversationStart={handleVoiceConversationStart}
               isStreaming={isStreaming}
               disabled={false}
               variant="compact"
@@ -2361,6 +2416,14 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
       {/* TTS Indicator - shows when speaking */}
       <TTSIndicator />
+
+      {/* Voice Conversation Overlay */}
+      <VoiceConversationOverlay
+        isOpen={isVoiceOverlayOpen}
+        onClose={() => setIsVoiceOverlayOpen(false)}
+        onTranscriptMessage={handleVoiceTranscript}
+        chatLanguage={chatLanguage}
+      />
     </div>
   );
 };

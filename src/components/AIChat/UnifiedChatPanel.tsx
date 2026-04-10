@@ -73,6 +73,7 @@ import {
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
+import { VoiceConversationOverlay } from './VoiceConversationOverlay';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
@@ -355,6 +356,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [signalsOpen, setSignalsOpen] = useState(false);
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
+  const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false);
   const lastKickoffSentRef = useRef<string | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
@@ -370,13 +372,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    // 3. Fall back to UI language (i18n), then 'en'
+    // 3. UI language (i18n) — always follow the current app language unless overridden above
     const uiLang = i18n.language?.split('-')[0] || 'en';
-    const candidate = explicitPref || activeLang || draftChatLanguage || uiLang;
+    const candidate = explicitPref || activeLang || uiLang;
     const base = String(candidate).split('-')[0];
     return (normalizeLanguageCode(base) ||
       (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
+  }, [activeConversationId, chatLanguageByConversationId, i18n.language]);
 
   // Voice Hook (uses autoReadEnabled state)
   const {
@@ -2307,6 +2309,39 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     ]
   );
 
+  const handleVoiceConversationStart = useCallback(async () => {
+    let convId = activeConversationId;
+    if (!convId) {
+      try {
+        const conv = await createConversation();
+        convId = conv.id;
+        setActiveConversation(conv.id);
+      } catch (err) {
+        console.error('[VoiceOverlay] Failed to create conversation:', err);
+        return;
+      }
+    }
+    setIsVoiceOverlayOpen(true);
+  }, [activeConversationId, createConversation, setActiveConversation]);
+
+  const handleVoiceTranscript = useCallback(
+    async (role: 'user' | 'ai', text: string) => {
+      if (!activeConversationId || !text.trim()) return;
+      try {
+        await addMessageToConversation({
+          conversationId: activeConversationId,
+          role: role === 'user' ? 'user' : 'ai',
+          content: text.trim(),
+          messageType: 'text',
+          metadata: { source: 'voice_realtime' } as any,
+        });
+      } catch (err) {
+        console.error('[VoiceOverlay] Failed to persist transcript:', err);
+      }
+    },
+    [activeConversationId, addMessageToConversation]
+  );
+
   const handleNewChat = useCallback(async () => {
     clearActiveChat();
     try {
@@ -3112,6 +3147,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
             setTimeout(() => setAbortFeedback(null), 3000);
           }}
+          onVoiceConversationStart={handleVoiceConversationStart}
           isStreaming={isStreaming}
           disabled={isDisabled}
           placeholder={
@@ -3153,6 +3189,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           projectId={workspaceContext?.projectId || null}
         />
       )}
+
+      {/* Voice Conversation Overlay */}
+      <VoiceConversationOverlay
+        isOpen={isVoiceOverlayOpen}
+        onClose={() => setIsVoiceOverlayOpen(false)}
+        onTranscriptMessage={handleVoiceTranscript}
+        chatLanguage={chatLanguage}
+      />
 
       {/* AI Table Builder slide-over panel */}
       {tableBuilderOpen && (

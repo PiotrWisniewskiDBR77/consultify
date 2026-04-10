@@ -15,7 +15,7 @@
  * @version 2.0.0
  */
 
-import { ArrowUp, Mic, Pen, Square, StopCircle } from 'lucide-react';
+import { ArrowUp, AudioLines, Mic, Pen, Square, StopCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -822,29 +822,35 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               </button>
             )}
 
-            {/* Send / Stop Button */}
-            <button
-              onClick={handleDynamicButtonClick}
-              disabled={isDisabled || (!canSend && !isStreaming)}
-              className={`
-                                p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center
-                                ${
-                                  isStreaming
-                                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/25'
-                                    : canSend
-                                      ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                                      : 'bg-slate-100 dark:bg-white/10 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                }
-                                ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
-                            `}
-              title={
-                isStreaming
-                  ? t('aiChat.stopGenerating', 'Stop generating')
-                  : t('aiChat.send', 'Send')
-              }
-            >
-              {isStreaming ? <Square size={18} className="fill-current" /> : <ArrowUp size={18} />}
-            </button>
+            {/* Dynamic: Voice Conversation / Send / Stop Button */}
+            {isStreaming ? (
+              <button
+                onClick={() => onStopGenerating?.()}
+                disabled={isDisabled}
+                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/25"
+                title={t('aiChat.stopGenerating', 'Stop generating')}
+              >
+                <Square size={18} className="fill-current" />
+              </button>
+            ) : canSend ? (
+              <button
+                onClick={handleSend}
+                disabled={isDisabled}
+                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25"
+                title={t('aiChat.send', 'Send')}
+              >
+                <ArrowUp size={18} />
+              </button>
+            ) : (
+              <button
+                onClick={() => onVoiceConversationStart?.()}
+                disabled={isDisabled}
+                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25 group"
+                title={t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')}
+              >
+                <AudioLines size={18} className="group-hover:scale-110 transition-transform" />
+              </button>
+            )}
           </div>
         </div>
       </div>
