@@ -20,6 +20,7 @@ import {
   recordHandoff,
   type InsightLifecycleAction,
 } from '../../services/v8/interviewInsightFindingsService.js';
+import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
 import {
   organizationContextService,
   rebuildOrganizationContextSnapshot,
@@ -194,6 +195,13 @@ router.post(
 
     if (transition.targetStatus === 'published') {
       rebuildOrganizationContextSnapshot(organizationId).catch(() => {});
+
+      const freshInsight = await getInsightById(insightId);
+      if (freshInsight) {
+        onInsightPublished(freshInsight, organizationId).catch((err) => {
+          logger.warn('[InsightLifecycle] onInsightPublished hook failed', err);
+        });
+      }
     }
 
     emitInsightLifecycleNotifications(

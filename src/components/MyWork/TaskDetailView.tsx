@@ -3674,7 +3674,7 @@ Return ONLY the final comment text.`;
                   >
                     {sourceType === 'idea'
                       ? (isPolish ? 'Pokaż źródło w mapie →' : 'View source in mindmap →')
-                      : (isPolish ? 'Pokaź źródło →' : 'View source →')}
+                      : (isPolish ? 'Pokaż źródło →' : 'View source →')}
                   </button>
                 </div>
               )}

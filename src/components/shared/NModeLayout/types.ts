@@ -149,6 +149,11 @@ export interface NModeShellProps {
   actionsVisible?: boolean;
   /** AI context actions — shown in action bar based on active section */
   aiContextActions?: NModeAIContextAction[];
+  /**
+   * Custom action bar renderer. When provided, replaces the standard
+   * NModeActionBar with arbitrary content inside the same styled container.
+   */
+  renderActionBar?: () => React.ReactNode;
   /** Currently active section id */
   activeSection: string;
   /** Section change handler */

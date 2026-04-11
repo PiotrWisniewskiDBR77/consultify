@@ -37,6 +37,7 @@ export const useBreadcrumbs = (): string[] | null => {
   const { t } = useTranslation();
   const { currentView } = useAppStore();
   const myWorkBreadcrumbs = useAppStore((s) => s.myWorkBreadcrumbs);
+  const interviewBreadcrumbs = useAppStore((s) => s.interviewBreadcrumbs);
   const location = useLocation();
 
   // Important: prefer route-provided breadcrumbs whenever possible.
@@ -60,9 +61,13 @@ export const useBreadcrumbs = (): string[] | null => {
   // INTERVIEW / DISCOVERY CONSULTANT
   // =====================================================
   else if (
+    currentView === AppView.INTERVIEW ||
     currentView === AppView.DISCOVERY_CONSULTANT ||
     currentView === AppView.PROJECT_INTELLIGENCE
   ) {
+    if (interviewBreadcrumbs && interviewBreadcrumbs.length > 0) {
+      return interviewBreadcrumbs;
+    }
     return null;
   }
   // =====================================================

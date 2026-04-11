@@ -617,6 +617,7 @@ export const FinanceHub: React.FC = () => {
   const { getRowActions } = useFinanceRowActions({
     handleOpenFull,
     handleExport,
+    handleOpenEntityChat,
     handleCreateModelFromStatement,
     handleCreateAnalysisFromStatements,
     loadStatements,

@@ -426,13 +426,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         onSelect={setSelectedId}
         onOpenFull={(id) => {
           const row = filteredData.find((x) => x.id === id);
-          if (row) {
-            if (row.type === 'report') {
-              navigate(`/reports/builder?new=true&templateArtifactId=${row.id}`);
-            } else {
-              navigate(`/presentations/wizard?templateArtifactId=${row.id}`);
-            }
-          }
+          if (row) navigate(resolveTemplateUsePath(row.id, row.type));
         }}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
@@ -446,11 +440,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           onRowClick={(row) => setSelectedId(row.id)}
           onRowDoubleClick={(row) => {
             const item = row as unknown as TemplateItem;
-            if (item.type === 'report') {
-              navigate(`/reports/builder?new=true&templateArtifactId=${item.id}`);
-            } else {
-              navigate(`/presentations/wizard?templateArtifactId=${item.id}`);
-            }
+            navigate(resolveTemplateUsePath(item.id, item.type));
           }}
           getRowActions={(row) => getRowActions(row as unknown as TemplateItem)}
           activeFilters={activeFilters}

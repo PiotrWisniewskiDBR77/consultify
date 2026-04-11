@@ -4567,8 +4567,8 @@ Context: ${JSON.stringify(projectContext)}`;
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
                     {sourceType === 'idea'
-                      ? (isPolish ? 'Pokaź źródło w mapie →' : 'View source in mindmap →')
-                      : (isPolish ? 'Pokaź źródło →' : 'View source →')}
+                      ? (isPolish ? 'Pokaż źródło w mapie →' : 'View source in mindmap →')
+                      : (isPolish ? 'Pokaż źródło →' : 'View source →')}
                   </button>
                 </div>
               )}

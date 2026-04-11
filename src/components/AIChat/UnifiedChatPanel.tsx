@@ -283,6 +283,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   quickPrompts,
 }) => {
   const route = useLocation();
+  const navigateToRoute = useNavigate();
   const { t, i18n } = useTranslation();
   const { isEnabled } = useFeatureFlagsContext();
   const signalsEnabled = isEnabled('myWorkSignalsV2');
@@ -1384,6 +1385,45 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             /* fall through to normal send */
           }
         }
+      }
+
+      // P23 Excele: intercept workbook/excel/financial model intents before Table Builder
+      if (detectExceleIntent(text)) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `excele-redirect-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLang === 'pl'
+              ? 'Otwieram Excele \u2014 zaraz przygotuję Twój skoroszyt.'
+              : "Opening Excele \u2014 I'll prepare your workbook.",
+          timestamp: new Date(),
+        });
+
+        navigateToRoute('/excele');
+        onMessageSent?.(content);
+        return;
       }
 
       // Table Platform: intercept table creation/modification intents

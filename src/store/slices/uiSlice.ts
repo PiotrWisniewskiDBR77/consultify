@@ -96,6 +96,10 @@ export interface UISlice {
   // Dynamic breadcrumbs override set by My Work hub
   myWorkBreadcrumbs: string[] | null;
   setMyWorkBreadcrumbs: (crumbs: string[] | null) => void;
+
+  // Dynamic breadcrumbs override set by Interview hub
+  interviewBreadcrumbs: string[] | null;
+  setInterviewBreadcrumbs: (crumbs: string[] | null) => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
@@ -148,6 +152,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   myWorkBreadcrumbs: null,
   setMyWorkBreadcrumbs: (crumbs) => set({ myWorkBreadcrumbs: crumbs }),
+
+  interviewBreadcrumbs: null,
+  setInterviewBreadcrumbs: (crumbs) => set({ interviewBreadcrumbs: crumbs }),
 
   setChatKickoffMessage: (message) => set({ chatKickoffMessage: message }),
   clearChatKickoffMessage: () => set({ chatKickoffMessage: null }),

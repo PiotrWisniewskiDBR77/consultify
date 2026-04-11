@@ -134,10 +134,16 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
     const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
     const registered = await registerArtifactOrigin({
       organizationId: user.organizationId,
-      actorUserId: user.id,
       outputType: 'sheet',
+      artifactFamily: 'sheet',
       originRuntime: 'sheet',
       originRecordId: result.id,
+      titleSnapshot: result.schema.title || 'Untitled workbook',
+      ownerUserId: user.id,
+      createdBy: user.id,
+      deliveryState: 'ready',
+      visibilityScope: 'organization',
+      projectId: projectId || null,
       sourceInitiativeId: sourceInitiativeId || null,
       originSummary: {
         title: result.schema.title,
@@ -180,57 +186,6 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
     artifactId,
     downloadUrl: `/api/workbook/${result.id}/download`,
     generatedAt: result.generatedAt,
-  });
-}));
-
-/**
- * GET /api/workbook/:id
- * Returns workbook metadata (for reopen/preview without downloading binary)
- */
-router.get('/:id', asyncHandler(async (req: AuthenticatedRequest, res) => {
-  const user = req.user;
-  if (!user) { res.status(401).json({ error: 'Unauthorized' }); return; }
-
-  const { id } = req.params;
-  if (id === 'list') { return; } // skip — handled by /list route
-
-  await ensureWorkbookSchema();
-
-  const row = await queryHelpers.queryOne<{
-    id: string;
-    title: string;
-    description: string | null;
-    schema_json: string;
-    sheet_count: number;
-    file_name: string;
-    file_size: number;
-    quality_score: number | null;
-    created_by: string;
-    created_at: string;
-  }>(
-    `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, created_by, created_at
-     FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
-    [id, user.organizationId]
-  );
-
-  if (!row) {
-    res.status(404).json({ error: 'Workbook not found' });
-    return;
-  }
-
-  const schemaJson = row.schema_json ? JSON.parse(row.schema_json) : null;
-  res.json({
-    id: row.id,
-    title: row.title || schemaJson?.title,
-    description: row.description || schemaJson?.description,
-    schema_json: schemaJson,
-    sheet_count: row.sheet_count,
-    file_name: row.file_name,
-    file_size: row.file_size,
-    quality_score: row.quality_score,
-    created_by: row.created_by,
-    created_at: row.created_at,
-    downloadUrl: `/api/workbook/${row.id}/download`,
   });
 }));
 
@@ -334,6 +289,58 @@ router.get('/list', asyncHandler(async (req: AuthenticatedRequest, res) => {
   );
 
   res.json({ workbooks: rows || [] });
+}));
+
+/**
+ * GET /api/workbook/:id
+ * Returns workbook metadata (for reopen/preview without downloading binary).
+ * Must be registered after all specific GET paths (/list, /:id/download)
+ * to avoid the wildcard param matching them.
+ */
+router.get('/:id', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const user = req.user;
+  if (!user) { res.status(401).json({ error: 'Unauthorized' }); return; }
+
+  const { id } = req.params;
+
+  await ensureWorkbookSchema();
+
+  const row = await queryHelpers.queryOne<{
+    id: string;
+    title: string;
+    description: string | null;
+    schema_json: string;
+    sheet_count: number;
+    file_name: string;
+    file_size: number;
+    quality_score: number | null;
+    created_by: string;
+    created_at: string;
+  }>(
+    `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, created_by, created_at
+     FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+    [id, user.organizationId]
+  );
+
+  if (!row) {
+    res.status(404).json({ error: 'Workbook not found' });
+    return;
+  }
+
+  const schemaJson = row.schema_json ? JSON.parse(row.schema_json) : null;
+  res.json({
+    id: row.id,
+    title: row.title || schemaJson?.title,
+    description: row.description || schemaJson?.description,
+    schema_json: schemaJson,
+    sheet_count: row.sheet_count,
+    file_name: row.file_name,
+    file_size: row.file_size,
+    quality_score: row.quality_score,
+    created_by: row.created_by,
+    created_at: row.created_at,
+    downloadUrl: `/api/workbook/${row.id}/download`,
+  });
 }));
 
 export default router;

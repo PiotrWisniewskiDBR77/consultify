@@ -211,6 +211,14 @@ export interface ResolvedOrganizationContext {
   };
   conflicts: OrganizationContextConflict[];
   timeline: OrganizationContextTimelineItem[];
+  finance: {
+    statementCount: number;
+    modelCount: number;
+    activeLaneRunId: string | null;
+    activeLaneStep: string | null;
+    latestVersionType: string | null;
+    degradedCount: number;
+  };
 }
 
 type ClaimRow = {

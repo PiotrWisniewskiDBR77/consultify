@@ -12,6 +12,64 @@ import {
   buildP10HandoffToInitiativesSkeleton,
 } from './interviewInsightCanon.js';
 
+// ────────────────────────────────────────────────────────────────
+// L7.2 — Notebook linkage for operator_note evidence pointers
+// ────────────────────────────────────────────────────────────────
+
+export const NOTEBOOK_REF_PREFIX = 'notebook://';
+
+export interface NotebookRefResolution {
+  valid: boolean;
+  pageId: string | null;
+  title?: string;
+  error?: string;
+}
+
+/**
+ * Parse a sourceRef that uses the `notebook://<pageId>` convention.
+ * Returns the extracted pageId or null if the format doesn't match.
+ */
+export function parseNotebookSourceRef(sourceRef: string): string | null {
+  if (!sourceRef.startsWith(NOTEBOOK_REF_PREFIX)) return null;
+  const pageId = sourceRef.slice(NOTEBOOK_REF_PREFIX.length).trim();
+  return pageId.length > 0 ? pageId : null;
+}
+
+/**
+ * Check whether a sourceRef points to a notebook entry.
+ */
+export function isNotebookSourceRef(sourceRef: string): boolean {
+  return sourceRef.startsWith(NOTEBOOK_REF_PREFIX);
+}
+
+/**
+ * Resolve a notebook reference by looking up the page in the database.
+ * Falls back gracefully if the notebook_pages table doesn't exist yet.
+ */
+export async function resolveNotebookReference(sourceRef: string): Promise<NotebookRefResolution> {
+  const pageId = parseNotebookSourceRef(sourceRef);
+  if (!pageId) {
+    return { valid: false, pageId: null, error: 'Invalid notebook reference format. Expected notebook://<pageId>' };
+  }
+
+  try {
+    const { get } = await import('../../utils/DbPromise.js');
+    const row: any = await get(
+      `SELECT id, title FROM notebook_pages WHERE id = ? LIMIT 1`,
+      [pageId]
+    );
+
+    if (!row) {
+      return { valid: false, pageId, error: `Notebook page not found: ${pageId}` };
+    }
+
+    return { valid: true, pageId, title: row.title || undefined };
+  } catch {
+    // notebook_pages table may not exist — treat as valid (non-blocking)
+    return { valid: true, pageId, title: undefined };
+  }
+}
+
 export { type P10ConfidenceLevel, type P10EvidencePointer };
 
 export interface P10Finding {
@@ -223,6 +281,19 @@ export function addEvidencePointer(
     return { error: `Invalid evidence pointer type: ${input.type}` };
   }
 
+  // L7.2: Validate notebook reference format for operator_note pointers
+  if (input.type === 'operator_note' && isNotebookSourceRef(input.sourceRef)) {
+    const pageId = parseNotebookSourceRef(input.sourceRef);
+    if (!pageId) {
+      return { error: 'Invalid notebook reference format. Expected notebook://<pageId>' };
+    }
+  }
+
+  // L7.1: Schedule async survey linkage validation for survey_linkage pointers
+  if (input.type === 'survey_linkage') {
+    scheduleSurveyLinkageValidation(insightId, findingId, input.sourceRef);
+  }
+
   const key = dedupeKey(input);
   const existing = finding.evidence_pointers.find(
     (p) => !p.isTombstone && dedupeKey({ sourceRef: p.sourceRef, sourceFingerprint: p.sourceFingerprint }) === key
@@ -246,6 +317,33 @@ export function addEvidencePointer(
   finding.updated_at = now;
 
   return { pointer };
+}
+
+/**
+ * L7.2: Add an operator_note evidence pointer that links to a notebook entry.
+ * Resolves the notebook reference asynchronously and returns the created pointer.
+ */
+export async function addNotebookEvidencePointer(
+  insightId: string,
+  findingId: string,
+  notebookPageId: string,
+  opts?: { sourceFingerprint?: string; capturedExcerpt?: string | null }
+): Promise<{ pointer?: P10EvidencePointer; notebookRef?: NotebookRefResolution; error?: string }> {
+  const sourceRef = `${NOTEBOOK_REF_PREFIX}${notebookPageId}`;
+  const resolution = await resolveNotebookReference(sourceRef);
+
+  if (!resolution.valid) {
+    return { error: resolution.error, notebookRef: resolution };
+  }
+
+  const result = addEvidencePointer(insightId, findingId, {
+    type: 'operator_note',
+    sourceRef,
+    sourceFingerprint: opts?.sourceFingerprint || `notebook_page:${notebookPageId}`,
+    capturedExcerpt: opts?.capturedExcerpt ?? null,
+  });
+
+  return { ...result, notebookRef: resolution };
 }
 
 export function removeEvidencePointer(
@@ -321,4 +419,30 @@ export function recordHandoff(
 
 export function getHandoffLog(insightId: string) {
   return handoffLog.get(insightId) ?? [];
+}
+
+// ==========================================
+// L7.1 — Survey linkage validation (async, non-blocking)
+// ==========================================
+
+function scheduleSurveyLinkageValidation(
+  insightId: string,
+  findingId: string,
+  sourceRef: string
+): void {
+  void (async () => {
+    try {
+      const { validateSurveyLinkage } = await import('./insightSignalBridgeService.js');
+      const result = await validateSurveyLinkage(sourceRef);
+      if (!result.valid) {
+        const { default: loggerMod } = await import('../../utils/Logger.js');
+        loggerMod.warn(
+          `[InsightFindings] survey_linkage validation warning for finding ${findingId} ` +
+            `in insight ${insightId}: ${result.reason}`
+        );
+      }
+    } catch {
+      // Non-blocking — validation failure does not block pointer creation per §2.3.3
+    }
+  })();
 }

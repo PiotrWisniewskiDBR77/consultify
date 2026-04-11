@@ -169,6 +169,7 @@ type IdeaMapWorkspaceProps = {
   onSelectionChange?: (sel: IdeaWorkspaceSelection) => void;
   onQuickAction?: (action: string) => void;
   onLockedChange?: (locked: boolean) => void;
+  onGraphSummaryChange?: (summary: string | null) => void;
   onTableContextChange?: (ctx: Record<string, unknown> | null) => void;
 };
 

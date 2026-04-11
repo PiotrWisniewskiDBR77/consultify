@@ -386,7 +386,7 @@ export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentProjectId, setCurrentProjectId, currentOrganization, currentUser } = useAppStore();
+  const { currentProjectId, setCurrentProjectId, currentOrganization, currentUser, setInterviewBreadcrumbs } = useAppStore();
   const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
     useHelpSidePanel();
 
@@ -640,6 +640,36 @@ export const InterviewHub: React.FC = () => {
       setSelectedTemplateId(null);
     }
   }, [activeTab, activeDocumentId]);
+
+  // L2.3: Dynamic breadcrumbs for Interview module
+  useEffect(() => {
+    const base = isPolish ? 'Wywiad' : 'Interview';
+    const doc = activeDocumentId ? openDocuments.find((d) => d.id === activeDocumentId) : null;
+
+    if (doc) {
+      const typeLabel =
+        doc.type === 'interview_session'
+          ? (isPolish ? 'Sesja' : 'Session')
+          : doc.type === 'interview_insight'
+            ? (isPolish ? 'Wniosek' : 'Insight')
+            : (isPolish ? 'Szablon' : 'Template');
+      const docName = doc.name || typeLabel;
+      setInterviewBreadcrumbs([base, `${typeLabel}: ${docName}`]);
+    } else {
+      const TAB_LABELS: Record<string, string> = {
+        my_assignments: 'Inbox',
+        sessions: isPolish ? 'Sesje' : 'Sessions',
+        templates: isPolish ? 'Szablony' : 'Templates',
+        insights: isPolish ? 'Wnioski' : 'Insights',
+        managed: isPolish ? 'Przydzielone' : 'Assigned',
+        pending_review: isPolish ? 'Do przeglądu' : 'Pending Review',
+      };
+      const tabLabel = TAB_LABELS[activeTab];
+      setInterviewBreadcrumbs(tabLabel ? [base, tabLabel] : [base]);
+    }
+
+    return () => setInterviewBreadcrumbs(null);
+  }, [activeTab, activeDocumentId, openDocuments, isPolish, setInterviewBreadcrumbs]);
 
   useEffect(() => {
     // Reset preview menus/texts on item change

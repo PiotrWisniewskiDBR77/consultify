@@ -555,7 +555,7 @@ export const AIContextBuilder = {
       const tag = `[${String(f.confidenceLevel).toUpperCase()}]`;
       const base = `${tag} ${f.findingStatement}`;
       const limitsNote = f.limits ? ` | Limits: ${f.limits}` : '';
-      const evidenceNote = f.evidenceCount > 0 ? ` (${f.evidenceCount} evidence)` : '';
+      const evidenceNote = f.evidenceCount > 0 ? ` (${f.evidenceCount} evidence pointer${f.evidenceCount === 1 ? '' : 's'})` : '';
       return `${base}${limitsNote}${evidenceNote}`;
     });
 
@@ -1248,38 +1248,39 @@ export const AIContextBuilder = {
    * Provides ROI, NPV, cost data for the project portfolio.
    */
   _buildFinancialContext: async (projectId: string | null, organizationId: string) => {
-    if (!projectId) return null;
-
     try {
-      // Aggregate initiative financials
-      const financials: any = await get(
-        `SELECT 
-           COUNT(*) as initiative_count,
-           SUM(COALESCE(cost_capex, 0)) as total_capex,
-           SUM(COALESCE(cost_opex, 0)) as total_opex,
-           AVG(COALESCE(expected_roi, 0)) as avg_roi
-         FROM initiatives
-         WHERE project_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED')`,
-        [projectId]
-      );
+      // Aggregate initiative financials (project-scoped)
+      let financials: any = null;
+      let analysis: any = null;
+      let scenarios: any[] = [];
+      if (projectId) {
+        financials = await get(
+          `SELECT 
+             COUNT(*) as initiative_count,
+             SUM(COALESCE(cost_capex, 0)) as total_capex,
+             SUM(COALESCE(cost_opex, 0)) as total_opex,
+             AVG(COALESCE(expected_roi, 0)) as avg_roi
+           FROM initiatives
+           WHERE project_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED')`,
+          [projectId]
+        );
 
-      // Get detailed financial analysis if exists
-      const analysis: any = await get(
-        `SELECT npv, irr, roi_percentage, payback_months, total_investment, total_benefit
-         FROM analysis_financials
-         WHERE project_id = ?
-         ORDER BY created_at DESC LIMIT 1`,
-        [projectId]
-      );
+        analysis = await get(
+          `SELECT npv, irr, roi_percentage, payback_months, total_investment, total_benefit
+           FROM analysis_financials
+           WHERE project_id = ?
+           ORDER BY created_at DESC LIMIT 1`,
+          [projectId]
+        );
 
-      // Get scenario data
-      const scenarios = await all(
-        `SELECT scenario_type, npv, irr, roi_percentage, probability
-         FROM analysis_financial_scenarios
-         WHERE project_id = ?
-         ORDER BY created_at DESC LIMIT 3`,
-        [projectId]
-      );
+        scenarios = await all(
+          `SELECT scenario_type, npv, irr, roi_percentage, probability
+           FROM analysis_financial_scenarios
+           WHERE project_id = ?
+           ORDER BY created_at DESC LIMIT 3`,
+          [projectId]
+        );
+      }
 
       // V8 Finance module live data (org-scoped, not project-scoped)
       let v8Finance: Record<string, unknown> | null = null;
