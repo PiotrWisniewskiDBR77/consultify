@@ -390,6 +390,19 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const [sessionAiPanel, setSessionAiPanel] = useState<'triage' | 'interpretation' | null>(null);
   const [sessionWorkbench, setSessionWorkbench] = useState<any | null>(null);
   const [sessionWorkbenchNextSteps, setSessionWorkbenchNextSteps] = useState<string[]>([]);
+  const [sessionPromotionContract, setSessionPromotionContract] = useState<{
+    supportedHandoffs?: Array<{
+      targetKind: 'outputs_artifact' | 'interview_insight';
+      targetRefOwner: string;
+      bounded: boolean;
+      purpose: string;
+    }>;
+    downstreamContract?: {
+      initiatives?: Record<string, unknown>;
+      execution?: Record<string, unknown>;
+      kpi?: Record<string, unknown>;
+    };
+  } | null>(null);
 
   const loadCoreAssessmentSession = useCallback(async (): Promise<AssessmentSession> => {
     if (!assessmentId) throw new Error('Missing assessment id');
@@ -433,12 +446,24 @@ export const AssessmentSessionEditorView: React.FC = () => {
     }
 
     try {
-      const response = await V8AssessmentApi.getWorkbench(assessmentId);
+      const [response, promotionResponse] = await Promise.all([
+        V8AssessmentApi.getWorkbench(assessmentId),
+        V8AssessmentApi.getWorkbenchPromotionPayload(assessmentId).catch(() => null),
+      ]);
       setSessionWorkbench(response.workbench || null);
       setSessionWorkbenchNextSteps(Array.isArray(response.whatNext) ? response.whatNext : []);
+      setSessionPromotionContract(
+        promotionResponse
+          ? {
+              supportedHandoffs: promotionResponse.supportedHandoffs || [],
+              downstreamContract: promotionResponse.downstreamContract || {},
+            }
+          : null
+      );
     } catch {
       setSessionWorkbench(null);
       setSessionWorkbenchNextSteps([]);
+      setSessionPromotionContract(null);
     }
   }, [assessmentId]);
 
@@ -2007,6 +2032,29 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {sessionPromotionContract?.supportedHandoffs?.length ? (
+                <div className="mt-4 border-t border-slate-200/80 dark:border-navy-700 pt-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    Bounded downstream contract
+                  </div>
+                  <div className="mt-2 grid gap-2 md:grid-cols-2">
+                    {sessionPromotionContract.supportedHandoffs.map((handoff) => (
+                      <div
+                        key={handoff.targetKind}
+                        className="rounded-lg bg-slate-50 dark:bg-navy-950/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+                      >
+                        <div className="font-medium">
+                          {handoff.targetKind} {'->'} {handoff.targetRefOwner}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {handoff.purpose}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}

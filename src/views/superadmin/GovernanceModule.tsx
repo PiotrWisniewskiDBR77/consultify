@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   ClipboardCheck,
   FileArchive,
   FileCheck,
@@ -35,13 +36,17 @@ const TAB_HELP_CARDS: Record<string, string> = {
 export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'overview');
   const [overview, setOverview] = useState<{
-    auditStats: any;
-    approvalWorkflows: any[];
-    exportRequests: any[];
+    audit: any;
+    approvals: any;
+    sessions: any;
+    compliance: any;
+    timeline: any[];
   }>({
-    auditStats: null,
-    approvalWorkflows: [],
-    exportRequests: [],
+    audit: null,
+    approvals: null,
+    sessions: null,
+    compliance: null,
+    timeline: [],
   });
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
@@ -68,23 +73,26 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
 
     (async () => {
       try {
-        const [auditStats, approvalWorkflows, exportRequests] = await Promise.all([
-          Api.getAdminAuditStats(),
-          Api.get('/superadmin/admin/approval-workflows'),
-          Api.get('/data-export/requests'),
+        const [operatorOverview, operatorTimeline] = await Promise.all([
+          Api.getSuperAdminOperatorOverview(),
+          Api.getSuperAdminOperatorTimeline(8),
         ]);
         if (cancelled) return;
         setOverview({
-          auditStats: auditStats || null,
-          approvalWorkflows: approvalWorkflows?.workflows || approvalWorkflows || [],
-          exportRequests: exportRequests?.requests || [],
+          audit: operatorOverview?.audit || null,
+          approvals: operatorOverview?.approvals || null,
+          sessions: operatorOverview?.sessions || null,
+          compliance: operatorOverview?.compliance || null,
+          timeline: operatorTimeline?.items || [],
         });
       } catch {
         if (cancelled) return;
         setOverview({
-          auditStats: null,
-          approvalWorkflows: [],
-          exportRequests: [],
+          audit: null,
+          approvals: null,
+          sessions: null,
+          compliance: null,
+          timeline: [],
         });
       }
     })();
@@ -103,43 +111,37 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
     { id: 'legal', label: 'Legal & Policies', icon: <FileText size={16} /> },
   ];
 
-  const exportStats = useMemo(() => {
-    const pending = overview.exportRequests.filter((item) => item.status === 'pending').length;
-    const completed = overview.exportRequests.filter((item) => item.status === 'completed').length;
-    return { pending, completed };
-  }, [overview.exportRequests]);
-
   const renderOverview = () => (
     <div className="p-6 space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="text-xs uppercase tracking-wide text-slate-500">Audit backlog</div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-            {overview.auditStats?.unresolved_count ?? 0}
+            {overview.audit?.unresolved ?? 0}
           </div>
           <div className="mt-2 text-xs text-slate-500">Unresolved audit items across the operator plane.</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <div className="text-xs uppercase tracking-wide text-slate-500">High risk entries</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Approval queue</div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-            {overview.auditStats?.high_risk_count ?? 0}
+            {overview.approvals?.pending ?? 0}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Items that still require explicit operator review.</div>
+          <div className="mt-2 text-xs text-slate-500">Requests waiting for privileged operator decision.</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Approval workflows</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Privileged sessions</div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-            {overview.approvalWorkflows.length}
+            {overview.sessions?.active ?? 0}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Reusable gates for privileged operator decisions.</div>
+          <div className="mt-2 text-xs text-slate-500">Active privileged sessions with visible MFA/JIT posture.</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Export queue</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Compliance posture</div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-            {exportStats.pending}
+            {overview.compliance?.legalHolds ?? 0}
           </div>
           <div className="mt-2 text-xs text-slate-500">
-            {exportStats.completed} completed exports remain available in history.
+            {overview.compliance?.residencyReview ?? 0} tenants still need residency review.
           </div>
         </div>
       </div>
@@ -168,19 +170,34 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Governance control intent
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Latest operator timeline</h3>
           <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-            <p>
-              This branch is the single truth for audit, approvals, exports, retention, and legal
-              evidence. It removes the old split between security-only audit views and compliance-only
-              views.
-            </p>
-            <p>
-              Use this area when you need operator evidence, policy history, approval state, or data
-              governance posture. Other branches should link here instead of duplicating governance UX.
-            </p>
+            {overview.timeline.length === 0 ? (
+              <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
+                No operator events available.
+              </div>
+            ) : (
+              overview.timeline.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-navy-700 dark:bg-navy-950/40"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-medium text-slate-900 dark:text-white">{item.action}</div>
+                    <span className="text-xs uppercase tracking-wide text-slate-500">{item.state}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {item.resourceType} {item.resourceId || ''} {item.timestamp ? `• ${new Date(item.timestamp).toLocaleString()}` : ''}
+                  </div>
+                  {item.summary && (
+                    <div className="mt-2 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                      <span>{item.summary}</span>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

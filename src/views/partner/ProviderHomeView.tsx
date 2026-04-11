@@ -52,7 +52,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-
+import { PARTNER_DOCS } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import {
@@ -108,11 +108,18 @@ const WelcomeHeroBanner: React.FC = () => {
             <ArrowRight className="w-5 h-5" />
           </button>
           <button
-            onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`)}
+            onClick={() => navigate(PARTNER_DOCS.overview.href)}
             className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors border border-white/20"
           >
             <Play className="w-5 h-5" />
             {t('partner.hero.watchOverview', 'Open partner docs')}
+          </button>
+          <button
+            onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-lg hover:bg-white/10 transition-colors border border-white/25"
+          >
+            <MessageCircle className="w-5 h-5" />
+            {t('partner.hero.customTerms', 'Discuss custom terms')}
           </button>
         </div>
       </div>
@@ -452,6 +459,18 @@ const OnboardingChecklistSection: React.FC = () => {
     navigate(ROUTES.PARTNER.ONBOARDING);
   }, [navigate]);
 
+  const openApplicationGuide = useCallback(() => {
+    navigate(PARTNER_DOCS.application.href);
+  }, [navigate]);
+
+  const openCaseStudy = useCallback(() => {
+    navigate(PARTNER_DOCS.caseStudyOperations.href);
+  }, [navigate]);
+
+  const openCustomTerms = useCallback(() => {
+    navigate(ROUTES.LEGAL.CONTACT);
+  }, [navigate]);
+
   const steps = [0, 1, 2, 3].map((i) => ({
     id: i + 1,
     title: [
@@ -551,6 +570,37 @@ const OnboardingChecklistSection: React.FC = () => {
         />
       </div>
 
+      <div className="mb-6 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/80 dark:bg-violet-900/20 p-4">
+        <p className="text-sm text-slate-700 dark:text-slate-300">
+          This is the same shared application flow used from the public landing page and from inside
+          the product. Review the application guide, check a proof case, or go straight to custom
+          commercial discussion when self-serve is not enough.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            onClick={openApplicationGuide}
+            className="inline-flex items-center gap-2 rounded-lg border border-violet-300 dark:border-violet-700 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+          >
+            <FileText className="w-4 h-4" />
+            Open application guide
+          </button>
+          <button
+            onClick={openCaseStudy}
+            className="inline-flex items-center gap-2 rounded-lg border border-violet-300 dark:border-violet-700 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+          >
+            <BookOpen className="w-4 h-4" />
+            Review proof case
+          </button>
+          <button
+            onClick={openCustomTerms}
+            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Discuss custom terms
+          </button>
+        </div>
+      </div>
+
       {/* Steps */}
       <div className="space-y-4">
         {steps.map((step) => (
@@ -642,6 +692,7 @@ const OnboardingChecklistSection: React.FC = () => {
 
 const CommissionCalculatorSection: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [clientsPerMonth, setClientsPerMonth] = useState<number>(5);
   const [avgClientValue, setAvgClientValue] = useState<number>(2000);
 
@@ -747,7 +798,10 @@ const CommissionCalculatorSection: React.FC = () => {
           </p>
         </div>
 
-        <button className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors">
+        <button
+          onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors"
+        >
           <Rocket className="w-5 h-5" />
           Start Earning Now - Generate Your Code
         </button>
@@ -762,6 +816,7 @@ const CommissionCalculatorSection: React.FC = () => {
 
 const AcademyPreviewSection: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const courses = [
     {
@@ -832,6 +887,21 @@ const AcademyPreviewSection: React.FC = () => {
               Certification
             </div>
           </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`)}
+              className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
+            >
+              Open learning path
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate(PARTNER_DOCS.certification.href)}
+              className="inline-flex items-center gap-2 rounded-lg border border-violet-300 dark:border-violet-700 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+            >
+              Open certification guide
+            </button>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -894,7 +964,13 @@ const AcademyPreviewSection: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded transition-colors">
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`);
+                      }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded transition-colors"
+                    >
                       Start Course
                       <ArrowRight className="w-4 h-4" />
                     </button>
@@ -1009,6 +1085,7 @@ const ContactPartnerManagerSection: React.FC = () => {
 
 const FAQSection: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const faqs = [
@@ -1090,6 +1167,16 @@ const FAQSection: React.FC = () => {
           </div>
         ))}
       </div>
+
+      <div className="mt-6 flex justify-center">
+        <button
+          onClick={() => navigate(PARTNER_DOCS.faq.href)}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-navy-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400"
+        >
+          Open full partner FAQ
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 };
@@ -1100,36 +1187,37 @@ const FAQSection: React.FC = () => {
 
 const FooterResourcesSection: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const columns = [
     {
       title: 'Resources',
       icon: BookOpen,
       links: [
-        { label: 'Partner Playbook', href: '#' },
-        { label: 'Marketing Kit', href: '#' },
-        { label: 'API Documentation', href: '#' },
-        { label: 'Brand Guidelines', href: '#' },
+        { label: 'Program overview', href: PARTNER_DOCS.overview.href },
+        { label: 'Application flow', href: PARTNER_DOCS.application.href },
+        { label: 'Certification guide', href: PARTNER_DOCS.certification.href },
+        { label: 'Operations case study', href: PARTNER_DOCS.caseStudyOperations.href },
       ],
     },
     {
       title: 'Community',
       icon: Users,
       links: [
-        { label: 'Partner Slack', href: '#', external: true },
-        { label: 'Monthly Webinars', href: '#' },
-        { label: 'Success Stories', href: '#' },
-        { label: 'Partner Forum', href: '#', external: true },
+        { label: 'Partner resources', href: `${ROUTES.PARTNER.LANDING}?tab=documentation` },
+        { label: 'Learning path', href: `${ROUTES.PARTNER.LANDING}?tab=learning-path` },
+        { label: 'Certificates', href: `${ROUTES.PARTNER.LANDING}?tab=certificates` },
+        { label: 'Partner team contact', href: ROUTES.LEGAL.CONTACT },
       ],
     },
     {
       title: 'Support',
       icon: HelpCircle,
       links: [
-        { label: 'FAQ', href: '#' },
-        { label: 'Help Center', href: '#' },
-        { label: 'Technical Support', href: '#' },
-        { label: 'Feature Requests', href: '#' },
+        { label: 'FAQ', href: PARTNER_DOCS.faq.href },
+        { label: 'Payout and activation', href: PARTNER_DOCS.payouts.href },
+        { label: 'Open onboarding', href: ROUTES.PARTNER.ONBOARDING },
+        { label: 'Contact support', href: ROUTES.LEGAL.CONTACT },
       ],
     },
   ];
@@ -1149,13 +1237,14 @@ const FooterResourcesSection: React.FC = () => {
           <ul className="space-y-2">
             {column.links.map((link, i) => (
               <li key={i}>
-                <a
-                  href={link.href}
+                <button
+                  type="button"
+                  onClick={() => navigate(link.href)}
                   className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                 >
                   {link.label}
                   {link.external && <ExternalLink className="w-3 h-3" />}
-                </a>
+                </button>
               </li>
             ))}
           </ul>

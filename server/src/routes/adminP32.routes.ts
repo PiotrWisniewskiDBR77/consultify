@@ -36,6 +36,15 @@ type AdminIamPolicy = {
   alertOnPrivilegedChange: boolean;
 };
 
+type AdminRoleAssignment = {
+  id: string;
+  userId: string;
+  roleId: string;
+  roleName: string;
+  capabilities: string[];
+  expiresAt: string | null;
+};
+
 const DEFAULT_ADMIN_IAM_POLICY: AdminIamPolicy = {
   delegatedRoles: [
     { id: 'billing_admin', name: 'Billing Admin', capabilities: ['billing:read', 'billing:write'] },
@@ -74,15 +83,104 @@ function adminGuidance(role?: string): string {
   return 'You need admin access. Ask your workspace admin.';
 }
 
+async function ensureAdminGovernanceTables() {
+  await dbRun(`CREATE TABLE IF NOT EXISTS admin_role_assignments (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    role_id TEXT NOT NULL,
+    role_name TEXT NOT NULL,
+    capabilities_json TEXT NOT NULL,
+    expires_at TEXT,
+    created_by TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+  await dbRun(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_admin_role_assignment_unique
+     ON admin_role_assignments(organization_id, user_id, role_id)`
+  );
+}
+
+function hasCapability(owned: string[], required: string[]) {
+  if (owned.includes('*') || owned.includes('admin:*')) return true;
+  return required.some((capability) => owned.includes(capability));
+}
+
+async function readAdminRoleAssignments(orgId: string): Promise<AdminRoleAssignment[]> {
+  await ensureAdminGovernanceTables();
+  const rows = await dbAll<any>(
+    `SELECT id, user_id, role_id, role_name, capabilities_json, expires_at
+     FROM admin_role_assignments
+     WHERE organization_id = ?
+     ORDER BY created_at DESC`,
+    [orgId],
+    { fallback: true }
+  );
+  return (rows || []).map((row: any) => ({
+    id: String(row.id),
+    userId: String(row.user_id),
+    roleId: String(row.role_id),
+    roleName: String(row.role_name),
+    capabilities: parseJson<string[]>(row.capabilities_json, []),
+    expiresAt: row.expires_at ? String(row.expires_at) : null,
+  }));
+}
+
+async function getActorCapabilities(
+  orgId: string,
+  actorId: string,
+  actorRole: string,
+  isSuperAdmin: boolean
+): Promise<string[]> {
+  if (isSuperAdmin) return ['*'];
+  if (actorRole === 'OWNER') return ['*'];
+  if (actorRole === 'ADMIN') {
+    return [
+      'people:read',
+      'people:write',
+      'security:read',
+      'security:write',
+      'billing:read',
+      'billing:write',
+      'ai:read',
+      'ai:governance',
+      'ai:operations',
+      'ai:budget',
+      'integrations:read',
+      'integrations:write',
+      'audit:read',
+      'audit:export',
+      'compliance:read',
+      'compliance:write',
+      'operations:read',
+      'operations:write',
+      'iam:read',
+      'iam:write',
+    ];
+  }
+
+  const assignments = await readAdminRoleAssignments(orgId);
+  const now = Date.now();
+  const activeAssignments = assignments.filter(
+    (assignment) =>
+      assignment.userId === actorId &&
+      (!assignment.expiresAt || Number.isNaN(Date.parse(assignment.expiresAt)) || Date.parse(assignment.expiresAt) > now)
+  );
+  return Array.from(new Set(activeAssignments.flatMap((assignment) => assignment.capabilities)));
+}
+
 async function getAdminActor(
   req: AuthRequest,
-  res: Response
+  res: Response,
+  requiredCapabilities: string[] = []
 ): Promise<
   | {
   orgId: string;
   actorId: string;
   actorRole: string;
   isSuperAdmin: boolean;
+  capabilities: string[];
 }
   | null
 > {
@@ -111,6 +209,7 @@ async function getAdminActor(
     { fallback: true }
   );
   const actorRole = normalizeOrganizationRole(membership?.role || req.user?.role);
+  const capabilities = await getActorCapabilities(orgId, actorId, actorRole, isSuperAdmin);
 
   if (!isSuperAdmin && !membership) {
     res.status(403).json({
@@ -121,7 +220,7 @@ async function getAdminActor(
     return null;
   }
 
-  if (!isSuperAdmin && !['OWNER', 'ADMIN'].includes(actorRole)) {
+  if (!isSuperAdmin && !['OWNER', 'ADMIN'].includes(actorRole) && capabilities.length === 0) {
     res.status(403).json({
       error: 'Admin access required',
       code: 'ADMIN_ACCESS_REQUIRED',
@@ -130,7 +229,17 @@ async function getAdminActor(
     return null;
   }
 
-  return { orgId, actorId, actorRole, isSuperAdmin };
+  if (requiredCapabilities.length > 0 && !hasCapability(capabilities, requiredCapabilities)) {
+    res.status(403).json({
+      error: 'Admin capability required',
+      code: 'ADMIN_CAPABILITY_REQUIRED',
+      requiredCapabilities,
+      guidance: 'Ask an owner to assign the required delegated admin role or capability.',
+    });
+    return null;
+  }
+
+  return { orgId, actorId, actorRole, isSuperAdmin, capabilities };
 }
 
 async function readSecuritySettings(orgId: string) {
@@ -447,6 +556,421 @@ async function readAiSummary(orgId: string) {
   };
 }
 
+async function readBillingPaymentMethods(orgId: string) {
+  const rows = await dbAll<any>(
+    `SELECT * FROM payment_methods WHERE organization_id = ? ORDER BY is_default DESC, created_at DESC`,
+    [orgId],
+    { fallback: true }
+  );
+  return rows || [];
+}
+
+async function createBillingPaymentMethod(orgId: string, body: Record<string, unknown>) {
+  const id = uuidv4();
+  const paymentMethodId = String(body.paymentMethodId || `pm_${id.slice(0, 8)}`);
+  const cardNumber = String(body.cardNumber || '');
+  const last4 = cardNumber.replace(/\s/g, '').slice(-4) || '4242';
+  const expMonth = Number(body.expiryMonth || 12);
+  const expYear = Number(body.expiryYear || new Date().getFullYear() + 1);
+  const holder = String(body.cardholderName || 'Card Holder');
+  const countRow = (await dbGet<{ count?: number | string }>(
+    `SELECT COUNT(*) as count FROM payment_methods WHERE organization_id = ?`,
+    [orgId],
+    { fallback: true }
+  )) || { count: 0 };
+  const isDefault = parseInt(String(countRow.count || 0), 10) === 0 ? 1 : 0;
+  await dbRun(
+    `INSERT INTO payment_methods (id, organization_id, stripe_payment_method_id, type, brand, last4, exp_month, exp_year, holder_name, is_default)
+     VALUES (?, ?, ?, 'card', ?, ?, ?, ?, ?, ?)`,
+    [id, orgId, paymentMethodId, 'Visa', last4, expMonth, expYear, holder, isDefault]
+  );
+  return dbGet(`SELECT * FROM payment_methods WHERE id = ?`, [id], { fallback: true });
+}
+
+async function setDefaultBillingPaymentMethod(orgId: string, paymentMethodId: string) {
+  await dbRun(`UPDATE payment_methods SET is_default = 0 WHERE organization_id = ?`, [orgId]);
+  await dbRun(`UPDATE payment_methods SET is_default = 1 WHERE id = ? AND organization_id = ?`, [
+    paymentMethodId,
+    orgId,
+  ]);
+}
+
+async function deleteBillingPaymentMethod(orgId: string, paymentMethodId: string) {
+  const existing = await dbGet<any>(
+    `SELECT * FROM payment_methods WHERE id = ? AND organization_id = ?`,
+    [paymentMethodId, orgId],
+    { fallback: true }
+  );
+  if (!existing) return { notFound: true, isDefault: false };
+  if (Number(existing.is_default || 0) === 1) return { notFound: false, isDefault: true };
+  await dbRun(`DELETE FROM payment_methods WHERE id = ? AND organization_id = ?`, [paymentMethodId, orgId]);
+  return { notFound: false, isDefault: false };
+}
+
+async function readBillingInvoices(orgId: string) {
+  const rows = await dbAll<any>(
+    `SELECT id, invoice_number, status, amount_due, amount_paid, currency, issue_date, due_date, paid_at
+     FROM invoices
+     WHERE organization_id = ?
+     ORDER BY issue_date DESC, created_at DESC
+     LIMIT 50`,
+    [orgId],
+    { fallback: true }
+  );
+  return rows || [];
+}
+
+async function readBillingUsageDetails(orgId: string) {
+  const [usageRows, overage, alerts] = await Promise.all([
+    dbAll<any>(
+      `SELECT metric_name, SUM(quantity) as total, DATE(recorded_at) as date
+       FROM usage_records
+       WHERE organization_id = ?
+       GROUP BY metric_name, DATE(recorded_at)
+       ORDER BY date DESC
+       LIMIT 100`,
+      [orgId],
+      { fallback: true }
+    ),
+    dbGet<any>(
+      `SELECT sp.token_overage_rate, sp.storage_overage_rate
+       FROM subscriptions s
+       JOIN subscription_plans sp ON s.plan_id = sp.id
+       WHERE s.organization_id = ? AND s.status = 'active'
+       LIMIT 1`,
+      [orgId],
+      { fallback: true }
+    ),
+    dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], { fallback: true }),
+  ]);
+  return {
+    usageRecords: usageRows || [],
+    overageRates: {
+      tokenOverageRate: Number(overage?.token_overage_rate || 0.002),
+      storageOverageRate: Number(overage?.storage_overage_rate || 0.1),
+      userOverageRate: 5,
+    },
+    alerts: {
+      emailThreshold: alerts?.token_threshold_80 ? 0.8 : null,
+      costCapMonthly: alerts?.cost_cap_monthly || null,
+      emailNotifications: !!alerts?.email_notifications,
+    },
+  };
+}
+
+async function readBillingAlerts(orgId: string) {
+  let record = await dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], {
+    fallback: true,
+  });
+  if (!record) {
+    await dbRun(
+      `INSERT INTO billing_alerts (id, organization_id, token_threshold_80, token_threshold_90, token_threshold_100, cost_cap_monthly, email_notifications)
+       VALUES (?, ?, 1, 1, 1, 2000, 1)`,
+      [uuidv4(), orgId]
+    );
+    record = await dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], {
+      fallback: true,
+    });
+  }
+  return {
+    alerts: [
+      {
+        id: record?.id,
+        type: 'tokens',
+        threshold: 80,
+        notifyEmails: ['billing@example.com'],
+        isActive: !!record?.token_threshold_80,
+      },
+      {
+        id: `${record?.id || 'alert'}-spend`,
+        type: 'spend',
+        threshold: record?.cost_cap_monthly ? 75 : 0,
+        notifyEmails: ['finance@example.com'],
+        isActive: true,
+      },
+    ],
+  };
+}
+
+async function writeBillingAlerts(orgId: string, alerts: any[]) {
+  const tokenAlert = alerts?.find((item: any) => item.type === 'tokens');
+  const spendAlert = alerts?.find((item: any) => item.type === 'spend');
+  await dbRun(
+    `INSERT INTO billing_alerts (id, organization_id, token_threshold_80, token_threshold_90, token_threshold_100, cost_cap_monthly, email_notifications)
+     VALUES (?, ?, ?, 1, 1, ?, 1)
+     ON CONFLICT(organization_id) DO UPDATE SET
+       token_threshold_80 = excluded.token_threshold_80,
+       cost_cap_monthly = excluded.cost_cap_monthly,
+       updated_at = CURRENT_TIMESTAMP`,
+    [uuidv4(), orgId, tokenAlert ? 1 : 0, spendAlert?.threshold ? spendAlert.threshold * 1 : null]
+  );
+}
+
+async function readBillingTaxSettings(orgId: string) {
+  const settings = await dbGet<any>(
+    `SELECT * FROM billing_tax_settings WHERE organization_id = ?`,
+    [orgId],
+    { fallback: true }
+  );
+  if (!settings) {
+    return {
+      company: { legalName: null, billingEmail: null },
+      tax: { taxIdType: null, taxId: null, taxExempt: false },
+      address: {
+        line1: null,
+        line2: null,
+        city: null,
+        state: null,
+        postalCode: null,
+        country: null,
+      },
+      invoicePrefix: null,
+      poNumber: null,
+    };
+  }
+
+  return {
+    company: {
+      legalName: settings.billing_name,
+      billingEmail: settings.billing_email,
+    },
+    tax: {
+      taxIdType: settings.tax_id_type,
+      taxId: settings.tax_id,
+      taxExempt: !!settings.tax_exempt,
+    },
+    address: {
+      line1: settings.billing_address_line1,
+      line2: settings.billing_address_line2,
+      city: settings.billing_city,
+      state: settings.billing_state,
+      postalCode: settings.billing_postal_code,
+      country: settings.billing_country,
+    },
+    invoicePrefix: settings.invoice_prefix,
+    poNumber: settings.po_number,
+  };
+}
+
+async function writeBillingTaxSettings(orgId: string, body: any) {
+  const { company, tax, address, invoicePrefix, poNumber } = body || {};
+  await dbRun(
+    `INSERT INTO billing_tax_settings (id, organization_id, tax_id, tax_id_type, tax_exempt, billing_name, billing_email, billing_address_line1, billing_address_line2, billing_city, billing_state, billing_postal_code, billing_country, invoice_prefix, po_number)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(organization_id) DO UPDATE SET
+       tax_id=excluded.tax_id,
+       tax_id_type=excluded.tax_id_type,
+       tax_exempt=excluded.tax_exempt,
+       billing_name=excluded.billing_name,
+       billing_email=excluded.billing_email,
+       billing_address_line1=excluded.billing_address_line1,
+       billing_address_line2=excluded.billing_address_line2,
+       billing_city=excluded.billing_city,
+       billing_state=excluded.billing_state,
+       billing_postal_code=excluded.billing_postal_code,
+       billing_country=excluded.billing_country,
+       invoice_prefix=excluded.invoice_prefix,
+       po_number=excluded.po_number`,
+    [
+      uuidv4(),
+      orgId,
+      tax?.taxId || null,
+      tax?.taxIdType || null,
+      tax?.taxExempt ? 1 : 0,
+      company?.legalName || null,
+      company?.billingEmail || null,
+      address?.line1 || null,
+      address?.line2 || null,
+      address?.city || null,
+      address?.state || null,
+      address?.postalCode || null,
+      address?.country || null,
+      invoicePrefix || null,
+      poNumber || null,
+    ]
+  );
+}
+
+async function readComplianceSummary(orgId: string) {
+  const rows = await dbAll<any>(
+    `SELECT setting_type, settings_data, enabled, updated_at, updated_by
+     FROM compliance_settings
+     WHERE organization_id = ?`,
+    [orgId],
+    { fallback: true }
+  );
+  const byType = new Map((rows || []).map((row: any) => [String(row.setting_type), row]));
+  const gdpr = byType.get('gdpr');
+  const cookies = byType.get('cookies');
+  const retention = byType.get('data_retention');
+  return {
+    gdpr: gdpr
+      ? { enabled: !!gdpr.enabled, ...parseJson(gdpr.settings_data, { features: [] }), lastUpdated: gdpr.updated_at }
+      : { enabled: false, features: [], lastUpdated: null },
+    cookies: cookies
+      ? { enabled: !!cookies.enabled, ...parseJson(cookies.settings_data, {}), lastUpdated: cookies.updated_at }
+      : { enabled: false, lastUpdated: null },
+    dataRetention: retention
+      ? parseJson(retention.settings_data, {
+          userDataRetentionDays: 365,
+          auditLogRetentionDays: 730,
+          backupRetentionDays: 90,
+          anonymizeInactiveUsers: false,
+          inactiveUserDays: 365,
+        })
+      : {
+          userDataRetentionDays: 365,
+          auditLogRetentionDays: 730,
+          backupRetentionDays: 90,
+          anonymizeInactiveUsers: false,
+          inactiveUserDays: 365,
+        },
+  };
+}
+
+async function writeComplianceSetting(orgId: string, actorId: string, type: string, enabled: boolean, data: any) {
+  await dbRun(
+    `INSERT INTO compliance_settings (id, organization_id, setting_type, settings_data, enabled, updated_by, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(organization_id, setting_type) DO UPDATE SET
+       settings_data = excluded.settings_data,
+       enabled = excluded.enabled,
+       updated_by = excluded.updated_by,
+       updated_at = datetime('now')`,
+    [uuidv4(), orgId, type, JSON.stringify(data), enabled ? 1 : 0, actorId]
+  );
+}
+
+async function readScimSummary(orgId: string) {
+  await dbRun(`CREATE TABLE IF NOT EXISTS scim_tokens (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    token_hash TEXT,
+    token_prefix TEXT,
+    organization_id TEXT,
+    scopes TEXT,
+    usage_count INTEGER DEFAULT 0,
+    last_used_at TEXT,
+    expires_at TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  await dbRun(`CREATE TABLE IF NOT EXISTS scim_group_mappings (
+    id TEXT PRIMARY KEY,
+    external_group_id TEXT,
+    external_group_name TEXT,
+    internal_role TEXT,
+    custom_role_id TEXT,
+    is_active INTEGER DEFAULT 1,
+    auto_sync INTEGER DEFAULT 1,
+    member_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  await dbRun(`CREATE TABLE IF NOT EXISTS scim_sync_logs (
+    id TEXT PRIMARY KEY,
+    operation TEXT,
+    resource_type TEXT,
+    resource_id TEXT,
+    external_id TEXT,
+    status TEXT,
+    error_message TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  await dbRun(`CREATE TABLE IF NOT EXISTS scim_conflict_log (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT,
+    conflict_type TEXT,
+    resource_type TEXT,
+    external_id TEXT,
+    internal_id TEXT,
+    details_json TEXT,
+    resolution TEXT,
+    resolved_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  const [tokens, mappings, syncLogs, conflicts] = await Promise.all([
+    dbAll<any>(
+      `SELECT id, name, token_prefix, scopes, last_used_at, usage_count, is_active
+       FROM scim_tokens WHERE organization_id = ? ORDER BY created_at DESC`,
+      [orgId],
+      { fallback: true }
+    ),
+    dbAll<any>(
+      `SELECT id, external_group_name, internal_role, is_active, member_count
+       FROM scim_group_mappings ORDER BY created_at DESC`,
+      [],
+      { fallback: true }
+    ),
+    dbAll<any>(
+      `SELECT id, operation, resource_type, status, error_message, created_at
+       FROM scim_sync_logs ORDER BY created_at DESC LIMIT 20`,
+      [],
+      { fallback: true }
+    ),
+    dbAll<any>(
+      `SELECT id, conflict_type, resource_type, resolution, created_at
+       FROM scim_conflict_log WHERE organization_id = ? ORDER BY created_at DESC LIMIT 20`,
+      [orgId],
+      { fallback: true }
+    ),
+  ]);
+  return {
+    tokens: tokens || [],
+    groupMappings: mappings || [],
+    syncLogs: syncLogs || [],
+    conflicts: conflicts || [],
+  };
+}
+
+async function readRiskSummary(orgId: string) {
+  const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+  const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
+  let llmIncidents: any[] = [];
+  try {
+    const { default: LLMController } = await import('../controllers/LLMController.js');
+    void LLMController;
+  } catch {
+    // best effort only
+  }
+  try {
+    llmIncidents = (await dbAll<any>(
+      `SELECT id, provider, status, started_at, resolved_at, severity
+       FROM llm_incidents
+       ORDER BY started_at DESC
+       LIMIT 20`,
+      [],
+      { fallback: true }
+    )) || [];
+  } catch {
+    llmIncidents = [];
+  }
+  return {
+    audit: {
+      totalLogs: scoped.length,
+      unresolvedCount: scoped.filter((log: any) => log.status !== 'resolved').length,
+      highRiskCount: scoped.filter((log: any) => Number(log.risk_score || 0) >= 60).length,
+    },
+    incidents: llmIncidents,
+  };
+}
+
+async function createAdminRoleAssignment(orgId: string, actorId: string, body: any) {
+  await ensureAdminGovernanceTables();
+  const id = uuidv4();
+  const roleId = String(body.roleId || '');
+  const roleName = String(body.roleName || roleId || 'Delegated Admin');
+  const capabilities = Array.isArray(body.capabilities) ? body.capabilities.map(String) : [];
+  const userId = String(body.userId || '');
+  const expiresAt = body.expiresAt ? String(body.expiresAt) : null;
+  await dbRun(
+    `INSERT OR REPLACE INTO admin_role_assignments (id, organization_id, user_id, role_id, role_name, capabilities_json, expires_at, created_by, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+    [id, orgId, userId, roleId, roleName, JSON.stringify(capabilities), expiresAt, actorId]
+  );
+  return { id, userId, roleId, roleName, capabilities, expiresAt };
+}
+
 function matchesAuditFilter(log: any, orgId: string, filters: Record<string, string>) {
   const metadata = parseJson<Record<string, unknown>>(log.metadata_json, {});
   const logOrgId = String(
@@ -473,7 +997,7 @@ router.use(verifyToken);
 router.get(
   '/overview',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['people:read', 'security:read', 'billing:read']);
     if (!actor) return;
     const { orgId } = actor;
 
@@ -527,7 +1051,7 @@ router.get(
 router.get(
   '/billing/summary',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['billing:read']);
     if (!actor) return;
     const summary = await readBillingSummary(actor.orgId);
     return res.json({ organizationId: actor.orgId, summary });
@@ -537,7 +1061,7 @@ router.get(
 router.get(
   '/ai/summary',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['ai:read', 'ai:governance', 'ai:operations']);
     if (!actor) return;
     const summary = await readAiSummary(actor.orgId);
     return res.json({ organizationId: actor.orgId, summary });
@@ -547,7 +1071,7 @@ router.get(
 router.get(
   '/iam/policy',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['iam:read']);
     if (!actor) return;
     const policy = await readAdminIamPolicy(actor.orgId);
     return res.json({ organizationId: actor.orgId, policy });
@@ -557,7 +1081,7 @@ router.get(
 router.put(
   '/iam/policy',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['iam:write']);
     if (!actor) return;
     const current = await readAdminIamPolicy(actor.orgId);
     const body = req.body || {};
@@ -594,9 +1118,226 @@ router.put(
 );
 
 router.get(
+  '/iam/assignments',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['iam:read']);
+    if (!actor) return;
+    const assignments = await readAdminRoleAssignments(actor.orgId);
+    return res.json({ organizationId: actor.orgId, assignments });
+  })
+);
+
+router.post(
+  '/iam/assignments',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['iam:write']);
+    if (!actor) return;
+    const assignment = await createAdminRoleAssignment(actor.orgId, actor.actorId, req.body || {});
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'assign_delegated_admin_role',
+      details: { orgId: actor.orgId, isSensitive: true, assignment },
+    });
+    return res.status(201).json({ success: true, assignment });
+  })
+);
+
+router.delete(
+  '/iam/assignments/:id',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['iam:write']);
+    if (!actor) return;
+    await ensureAdminGovernanceTables();
+    await dbRun(`DELETE FROM admin_role_assignments WHERE id = ? AND organization_id = ?`, [
+      req.params.id,
+      actor.orgId,
+    ]);
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'revoke_delegated_admin_role',
+      details: { orgId: actor.orgId, isSensitive: true, assignmentId: req.params.id },
+    });
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/billing/payment-methods',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:read']);
+    if (!actor) return;
+    const paymentMethods = await readBillingPaymentMethods(actor.orgId);
+    return res.json({ organizationId: actor.orgId, paymentMethods });
+  })
+);
+
+router.post(
+  '/billing/payment-methods',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:write']);
+    if (!actor) return;
+    const paymentMethod = await createBillingPaymentMethod(actor.orgId, req.body || {});
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'add_billing_payment_method',
+      details: { orgId: actor.orgId, isSensitive: true, paymentMethodId: paymentMethod?.id },
+    });
+    return res.status(201).json({ paymentMethod });
+  })
+);
+
+router.put(
+  '/billing/payment-methods/:id/default',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:write']);
+    if (!actor) return;
+    await setDefaultBillingPaymentMethod(actor.orgId, req.params.id);
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'set_default_payment_method',
+      details: { orgId: actor.orgId, isSensitive: true, paymentMethodId: req.params.id },
+    });
+    return res.json({ success: true });
+  })
+);
+
+router.delete(
+  '/billing/payment-methods/:id',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:write']);
+    if (!actor) return;
+    const outcome = await deleteBillingPaymentMethod(actor.orgId, req.params.id);
+    if (outcome.notFound) return res.status(404).json({ error: 'Payment method not found' });
+    if (outcome.isDefault)
+      return res.status(409).json({ error: 'Cannot remove default payment method' });
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'remove_payment_method',
+      details: { orgId: actor.orgId, isSensitive: true, paymentMethodId: req.params.id },
+    });
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/billing/invoices',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:read']);
+    if (!actor) return;
+    const invoices = await readBillingInvoices(actor.orgId);
+    return res.json({ organizationId: actor.orgId, invoices });
+  })
+);
+
+router.get(
+  '/billing/usage-details',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:read']);
+    if (!actor) return;
+    const summary = await readBillingUsageDetails(actor.orgId);
+    return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.get(
+  '/billing/alerts',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:read']);
+    if (!actor) return;
+    const data = await readBillingAlerts(actor.orgId);
+    return res.json({ organizationId: actor.orgId, ...data });
+  })
+);
+
+router.put(
+  '/billing/alerts',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:write']);
+    if (!actor) return;
+    await writeBillingAlerts(actor.orgId, req.body?.alerts || []);
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'update_billing_alerts',
+      details: { orgId: actor.orgId, isSensitive: true },
+    });
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/billing/tax-settings',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:read']);
+    if (!actor) return;
+    const settings = await readBillingTaxSettings(actor.orgId);
+    return res.json({ organizationId: actor.orgId, settings });
+  })
+);
+
+router.put(
+  '/billing/tax-settings',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['billing:write']);
+    if (!actor) return;
+    await writeBillingTaxSettings(actor.orgId, req.body || {});
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'update_billing_tax_settings',
+      details: { orgId: actor.orgId, isSensitive: true },
+    });
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/compliance/summary',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['compliance:read']);
+    if (!actor) return;
+    const summary = await readComplianceSummary(actor.orgId);
+    return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.put(
+  '/compliance/data-retention',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['compliance:write']);
+    if (!actor) return;
+    await writeComplianceSetting(actor.orgId, actor.actorId, 'data_retention', true, req.body || {});
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'update_data_retention_policy',
+      details: { orgId: actor.orgId, isSensitive: true },
+    });
+    return res.json({ success: true });
+  })
+);
+
+router.get(
+  '/identity/scim',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:read']);
+    if (!actor) return;
+    const summary = await readScimSummary(actor.orgId);
+    return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.get(
+  '/risk/summary',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['audit:read']);
+    if (!actor) return;
+    const summary = await readRiskSummary(actor.orgId);
+    return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.get(
   '/security',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['security:read']);
     if (!actor) return;
     const { orgId } = actor;
     const policy = await readSecuritySettings(orgId);
@@ -607,7 +1348,7 @@ router.get(
 router.put(
   '/security',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['security:write']);
     if (!actor) return;
     const { orgId, actorId } = actor;
     const current = await readSecuritySettings(orgId);
@@ -649,7 +1390,7 @@ router.put(
 router.get(
   '/collaboration',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['security:read']);
     if (!actor) return;
     const { orgId } = actor;
     const controls = await readCollaborationControls(orgId);
@@ -660,7 +1401,7 @@ router.get(
 router.put(
   '/collaboration',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['security:write']);
     if (!actor) return;
     const { orgId, actorId } = actor;
     const current = await readCollaborationControls(orgId);
@@ -688,7 +1429,7 @@ router.put(
 router.get(
   '/audit-logs',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['audit:read']);
     if (!actor) return;
     const { orgId } = actor;
     const filters = {
@@ -715,7 +1456,7 @@ router.get(
 router.get(
   '/audit-logs/stats',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['audit:read']);
     if (!actor) return;
     const { orgId } = actor;
     const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
@@ -734,7 +1475,7 @@ router.get(
 router.get(
   '/audit-logs/export',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res);
+    const actor = await getAdminActor(req, res, ['audit:export', 'audit:read']);
     if (!actor) return;
     const { orgId } = actor;
     const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });

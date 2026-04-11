@@ -217,6 +217,32 @@ async function querySettingAuditVersions(settingKey: string): Promise<any[]> {
   }
 }
 
+async function safeDbGet<T>(query: string, params: any[] = [], fallback: T): Promise<T> {
+  try {
+    const result = await dbGet<T>(query, params);
+    return (result as T) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function safeDbAll<T>(query: string, params: any[] = [], fallback: T[] = []): Promise<T[]> {
+  try {
+    const result = await dbAll<T>(query, params);
+    return result || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function sortByTimestampDesc<T extends { timestamp?: string }>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => {
+    const aTs = new Date(a.timestamp || 0).getTime();
+    const bTs = new Date(b.timestamp || 0).getTime();
+    return bTs - aTs;
+  });
+}
+
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
 
@@ -239,6 +265,291 @@ router.use('/platform', requireSuperAdminCapability('security_ops'));
 router.use('/connectors', requireSuperAdminCapability('platform_ops', 'security_ops'));
 router.use('/virtual-workers', requireSuperAdminCapability('ai_ops'));
 router.use('/impersonate', requireSuperAdminCapability('support_ops'));
+router.use('/ai', requireSuperAdminCapability('ai_ops'));
+router.use('/data', requireSuperAdminCapability('security_ops', 'platform_ops'));
+router.use('/tenants/:id/purge', requireSuperAdminCapability('security_ops'));
+
+router.get(
+  '/operator/overview',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const [auditStats, approvalStats, sessionStats, incidentStats, eventStats, orgPolicyStats] =
+      await Promise.all([
+        safeDbGet(
+          `SELECT
+              COUNT(*) as total,
+              SUM(CASE WHEN status != 'resolved' THEN 1 ELSE 0 END) as unresolved,
+              SUM(CASE WHEN risk_score >= 80 THEN 1 ELSE 0 END) as critical,
+              SUM(CASE WHEN risk_score >= 60 THEN 1 ELSE 0 END) as high
+           FROM admin_audit_logs`,
+          [],
+          { total: 0, unresolved: 0, critical: 0, high: 0 }
+        ),
+        safeDbGet(
+          `SELECT
+              SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+              SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+              SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
+           FROM approval_requests`,
+          [],
+          { pending: 0, approved: 0, rejected: 0 }
+        ),
+        safeDbGet(
+          `SELECT
+              COUNT(*) as total,
+              SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
+              SUM(CASE WHEN is_active = 1 AND mfa_verified = 1 THEN 1 ELSE 0 END) as mfaVerified,
+              SUM(CASE WHEN is_active = 1 AND session_type = 'jit' THEN 1 ELSE 0 END) as jitActive,
+              SUM(CASE WHEN is_active = 1 AND session_type = 'break_glass' THEN 1 ELSE 0 END) as breakGlassActive
+           FROM admin_sessions`,
+          [],
+          { total: 0, active: 0, mfaVerified: 0, jitActive: 0, breakGlassActive: 0 }
+        ),
+        safeDbGet(
+          `SELECT
+              SUM(CASE WHEN status != 'resolved' AND severity = 'critical' THEN 1 ELSE 0 END) as critical,
+              SUM(CASE WHEN status != 'resolved' AND severity = 'high' THEN 1 ELSE 0 END) as high
+           FROM security_incidents`,
+          [],
+          { critical: 0, high: 0 }
+        ),
+        safeDbGet(
+          `SELECT COUNT(*) as today
+           FROM security_events
+           WHERE created_at >= datetime('now', '-1 day')`,
+          [],
+          { today: 0 }
+        ),
+        safeDbGet(
+          `SELECT
+              SUM(CASE WHEN legal_hold_enabled = 1 THEN 1 ELSE 0 END) as legalHolds,
+              SUM(CASE WHEN residency_region IS NULL OR residency_region = '' THEN 1 ELSE 0 END) as residencyReview
+           FROM org_policies`,
+          [],
+          { legalHolds: 0, residencyReview: 0 }
+        ),
+      ]);
+
+    const [mfaOverride, ssoOverride] = await Promise.all([
+      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:mfa_override'], { value: null }),
+      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:sso_override'], { value: null }),
+    ]);
+
+    res.json({
+      audit: {
+        total: Number((auditStats as any).total || 0),
+        unresolved: Number((auditStats as any).unresolved || 0),
+        critical: Number((auditStats as any).critical || 0),
+        high: Number((auditStats as any).high || 0),
+      },
+      approvals: {
+        pending: Number((approvalStats as any).pending || 0),
+        approved: Number((approvalStats as any).approved || 0),
+        rejected: Number((approvalStats as any).rejected || 0),
+      },
+      sessions: {
+        total: Number((sessionStats as any).total || 0),
+        active: Number((sessionStats as any).active || 0),
+        mfaVerified: Number((sessionStats as any).mfaVerified || 0),
+        jitActive: Number((sessionStats as any).jitActive || 0),
+        breakGlassActive: Number((sessionStats as any).breakGlassActive || 0),
+      },
+      incidents: {
+        critical: Number((incidentStats as any).critical || 0),
+        high: Number((incidentStats as any).high || 0),
+      },
+      events: {
+        today: Number((eventStats as any).today || 0),
+      },
+      compliance: {
+        legalHolds: Number((orgPolicyStats as any).legalHolds || 0),
+        residencyReview: Number((orgPolicyStats as any).residencyReview || 0),
+      },
+      overrides: {
+        mfa: (mfaOverride as any)?.value || 'disabled',
+        sso: (ssoOverride as any)?.value || 'disabled',
+      },
+    });
+  })
+);
+
+router.get(
+  '/operator/timeline',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || 50), 10) || 50, 1), 200);
+    const [auditEvents, approvalRequests] = await Promise.all([
+      safeDbAll<any>(
+        `SELECT id, ts, action, resource_type, resource_id, metadata_json
+         FROM audit_events
+         ORDER BY ts DESC
+         LIMIT ?`,
+        [limit],
+        []
+      ),
+      safeDbAll<any>(
+        `SELECT id, status, workflow_id, requester_id, resolved_by, resolution_notes, created_at, resolved_at
+         FROM approval_requests
+         ORDER BY COALESCE(resolved_at, created_at) DESC
+         LIMIT ?`,
+        [limit],
+        []
+      ),
+    ]);
+
+    const auditRows = auditEvents.map((row) => {
+      const metadata = parseAuditJsonField(row.metadata_json);
+      return {
+        id: `audit:${row.id}`,
+        source: 'audit',
+        timestamp: row.ts,
+        state: String(metadata?.propagationState || metadata?.state || 'executed'),
+        action: row.action,
+        resourceType: row.resource_type,
+        resourceId: row.resource_id,
+        summary: metadata?.recoveryPath || metadata?.guidance || row.action,
+        metadata,
+      };
+    });
+
+    const approvalRows = approvalRequests.map((row) => ({
+      id: `approval:${row.id}`,
+      source: 'approval',
+      timestamp: row.resolved_at || row.created_at,
+      state:
+        row.status === 'pending'
+          ? 'requested'
+          : row.status === 'approved'
+            ? 'approved'
+            : row.status === 'rejected'
+              ? 'recovered'
+              : row.status,
+      action: 'approval.request',
+      resourceType: 'approval_request',
+      resourceId: row.id,
+      summary: row.resolution_notes || row.status,
+      metadata: {
+        workflowId: row.workflow_id,
+        requesterId: row.requester_id,
+        resolvedBy: row.resolved_by,
+      },
+    }));
+
+    res.json({
+      items: sortByTimestampDesc([...auditRows, ...approvalRows]).slice(0, limit),
+    });
+  })
+);
+
+router.get(
+  '/operator/policy-enforcement',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const [providers, connectors, workers, overrides] = await Promise.all([
+      safeDbAll<any>(
+        `SELECT id, name, provider, is_active, health_status, updated_at
+         FROM llm_providers
+         ORDER BY updated_at DESC, name ASC`,
+        [],
+        []
+      ),
+      safeDbAll<any>(
+        `SELECT connector_type, status, COUNT(*) as count
+         FROM integrations
+         GROUP BY connector_type, status
+         ORDER BY connector_type ASC`,
+        [],
+        []
+      ),
+      safeDbAll<any>(
+        `SELECT key, value, updated_at
+         FROM settings
+         WHERE key LIKE 'vw:%:status'
+         ORDER BY updated_at DESC`,
+        [],
+        []
+      ),
+      safeDbAll<any>(
+        `SELECT key, value, updated_at
+         FROM settings
+         WHERE key IN ('platform:mfa_override', 'platform:sso_override')
+         ORDER BY key ASC`,
+        [],
+        []
+      ),
+    ]);
+
+    const connectorGroups = new Map<
+      string,
+      { enabledCount: number; disabledCount: number; totalCount: number }
+    >();
+    connectors.forEach((row) => {
+      const key = String(row.connector_type || 'unknown');
+      const current = connectorGroups.get(key) || { enabledCount: 0, disabledCount: 0, totalCount: 0 };
+      const count = Number(row.count || 0);
+      current.totalCount += count;
+      if (String(row.status) === 'disabled') current.disabledCount += count;
+      else current.enabledCount += count;
+      connectorGroups.set(key, current);
+    });
+
+    const rows = [
+      ...providers.map((provider) => ({
+        id: `provider:${provider.id || provider.provider}`,
+        domain: `Model provider: ${provider.name || provider.provider || provider.id}`,
+        desiredState: provider.is_active ? 'enabled' : 'disabled',
+        appliedState: provider.health_status || 'unknown',
+        drift:
+          provider.is_active && !['healthy', 'enabled', 'ok'].includes(String(provider.health_status || '').toLowerCase()),
+        note: 'Provider runtime health should match intended platform availability.',
+        updatedAt: provider.updated_at || null,
+      })),
+      ...Array.from(connectorGroups.entries()).map(([connectorType, counts]) => ({
+        id: `connector:${connectorType}`,
+        domain: `Connector: ${connectorType}`,
+        desiredState: counts.disabledCount === counts.totalCount ? 'disabled' : 'enabled',
+        appliedState:
+          counts.disabledCount > 0 && counts.enabledCount > 0
+            ? 'partial'
+            : counts.disabledCount === counts.totalCount
+              ? 'disabled'
+              : 'enabled',
+        drift: counts.disabledCount > 0 && counts.enabledCount > 0,
+        note: 'Mixed connector states indicate incomplete propagation across tenants.',
+        updatedAt: null,
+      })),
+      ...workers.map((worker) => ({
+        id: `worker:${worker.key}`,
+        domain: `Virtual worker: ${String(worker.key).split(':')[1] || worker.key}`,
+        desiredState: worker.value || 'unknown',
+        appliedState: worker.value || 'unknown',
+        drift: false,
+        note: 'Worker suspensions should remain observable as explicit runtime state.',
+        updatedAt: worker.updated_at || null,
+      })),
+      ...overrides.map((override) => ({
+        id: `override:${override.key}`,
+        domain: override.key === 'platform:mfa_override' ? 'Platform MFA override' : 'Platform SSO override',
+        desiredState: override.value || 'disabled',
+        appliedState: override.value || 'disabled',
+        drift: false,
+        note: 'Global emergency overrides must remain explicitly visible in platform posture.',
+        updatedAt: override.updated_at || null,
+      })),
+    ];
+
+    res.json({
+      health: {
+        status: rows.some((row) => row.drift) ? 'degraded' : 'healthy',
+      },
+      summary: {
+        total: rows.length,
+        drift: rows.filter((row) => row.drift).length,
+        providers: rows.filter((row) => row.id.startsWith('provider:')).length,
+        connectors: rows.filter((row) => row.id.startsWith('connector:')).length,
+        workers: rows.filter((row) => row.id.startsWith('worker:')).length,
+      },
+      rows,
+    });
+  })
+);
 
 // ==========================================
 // ORGANIZATIONS

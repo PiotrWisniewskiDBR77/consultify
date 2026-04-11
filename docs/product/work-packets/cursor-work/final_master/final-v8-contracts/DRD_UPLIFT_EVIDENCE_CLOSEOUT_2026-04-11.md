@@ -12,12 +12,15 @@ Related plan: `FINAL_IMPLEMENTATION_PLAN_28_ASSESSMENT_2026-03-29.md`
 - AI assessment context now prefers canonical `assessments` + P28 workbench state over legacy `maturity_assessments`, with legacy tables retained as fallback.
 - Initiative generation runs now persist provenance from the active workbench, and the initiatives management UI shows readback for the originating `assessmentRunId`.
 - Workbench guidance is more business-readable and highlights current state, review readiness, and downstream status.
+- The session triage lane now exposes the bounded downstream contract directly in context, so operators can see which handoffs are canonical and owned.
 
 ## Implementation Evidence
 - New shared UI component:
   - `src/components/assessment/AssessmentMenu3ActionBar.tsx`
 - Session shell canon + chat relocation:
   - `src/views/AssessmentSessionEditorView.tsx`
+- V8 promotion payload contract typing:
+  - `src/services/api/v8/assessment.ts`
 - Hub-level canon:
   - `src/components/assessment/AssessmentHub.tsx`
 - Business-friendly workbench posture:
@@ -25,6 +28,9 @@ Related plan: `FINAL_IMPLEMENTATION_PLAN_28_ASSESSMENT_2026-03-29.md`
 - Initiative provenance/readback:
   - `src/components/assessment/manage/InitiativesManagementPanel.tsx`
   - `server/src/services/assessmentInitiativeGenerationRunService.ts`
+- Report provenance/readback coverage:
+  - `src/components/assessment/manage/ReportsManagementPanel.tsx`
+  - `tests/components/assessment/ReportsManagementPanel.test.tsx`
 - AI runtime source-of-truth convergence:
   - `server/src/services/aiContextBuilder.ts`
   - `server/services/ai/aiContext.ts`
@@ -33,7 +39,7 @@ Related plan: `FINAL_IMPLEMENTATION_PLAN_28_ASSESSMENT_2026-03-29.md`
 - Blocking lint check passed on changed files:
   - `npx eslint --quiet ...`
 - Targeted regression tests passed:
-  - `npx vitest run "tests/components/assessment/AssessmentWorkbenchPanel.test.tsx" "tests/unit/backend/services/aiContextBuilder.organizationContext.test.ts"`
+  - `npx vitest run "tests/components/assessment/ReportsManagementPanel.test.tsx" "tests/components/assessment/AssessmentHub.rate-limit-resilience.test.tsx" "tests/components/assessment/AssessmentWorkbenchPanel.test.tsx" "tests/unit/backend/services/aiContextBuilder.organizationContext.test.ts"`
 
 ## Staging Proof Checklist
 Status: code-complete, locally verified, ready for live staging walkthrough.
@@ -47,7 +53,7 @@ Status: code-complete, locally verified, ready for live staging walkthrough.
 4. Review score + interpretation in workbench.
    - Workbench remains canonical review gate.
 5. Generate report from the same run.
-   - Run metadata now passed into report-builder config.
+   - Run metadata now passed into report-builder config and read back in the Reports lane.
 6. Generate bounded initiative pack with provenance/readback.
    - Initiative runs now keep workbench provenance and expose it in UI.
 

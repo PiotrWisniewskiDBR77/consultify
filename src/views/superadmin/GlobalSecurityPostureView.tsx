@@ -21,41 +21,25 @@ const postureTone = (value: number, warningThreshold: number, criticalThreshold:
 export const GlobalSecurityPostureView: React.FC = () => {
   const [data, setData] = useState<{
     systemHealth: any;
-    adminAuditStats: any;
-    incidentStats: any;
-    eventStats: any;
-    sessionStats: any;
-    policies: any[];
+    operatorOverview: any;
   }>({
     systemHealth: null,
-    adminAuditStats: null,
-    incidentStats: null,
-    eventStats: null,
-    sessionStats: null,
-    policies: [],
+    operatorOverview: null,
   });
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [systemHealth, adminAuditStats, incidentStats, eventStats, sessionStats, policies] =
+        const [systemHealth, operatorOverview] =
           await Promise.all([
             Api.getSystemHealth(),
-            Api.getAdminAuditStats(),
-            Api.getSecurityIncidentStats(),
-            Api.getSecurityEventStats(),
-            Api.getAdminSessionStats(),
-            Api.getSecurityPolicies(),
+            Api.getSuperAdminOperatorOverview(),
           ]);
         if (cancelled) return;
         setData({
           systemHealth,
-          adminAuditStats,
-          incidentStats,
-          eventStats,
-          sessionStats,
-          policies: Array.isArray(policies) ? policies : policies?.policies || [],
+          operatorOverview,
         });
       } catch {
         if (cancelled) return;
@@ -67,14 +51,24 @@ export const GlobalSecurityPostureView: React.FC = () => {
   }, []);
 
   const posture = useMemo(() => {
-    const unresolvedAudit = Number(data.adminAuditStats?.unresolved_count || 0);
+    const unresolvedAudit = Number(data.operatorOverview?.audit?.unresolved || 0);
     const criticalIncidents =
-      Number(data.incidentStats?.critical || 0) + Number(data.incidentStats?.high || 0);
-    const activePrivilegedSessions =
-      Number(data.sessionStats?.activeSessions || data.sessionStats?.active_sessions || 0);
-    const mfaRequired = data.policies.some((policy: any) => policy?.enforce_mfa);
-    const ssoRequired = data.policies.some((policy: any) => policy?.require_sso);
-    return { unresolvedAudit, criticalIncidents, activePrivilegedSessions, mfaRequired, ssoRequired };
+      Number(data.operatorOverview?.incidents?.critical || 0) +
+      Number(data.operatorOverview?.incidents?.high || 0);
+    const activePrivilegedSessions = Number(data.operatorOverview?.sessions?.active || 0);
+    const jitActive = Number(data.operatorOverview?.sessions?.jitActive || 0);
+    const breakGlassActive = Number(data.operatorOverview?.sessions?.breakGlassActive || 0);
+    const mfaRequired = String(data.operatorOverview?.overrides?.mfa || 'disabled') === 'enforced';
+    const ssoRequired = String(data.operatorOverview?.overrides?.sso || 'disabled') === 'enforced';
+    return {
+      unresolvedAudit,
+      criticalIncidents,
+      activePrivilegedSessions,
+      jitActive,
+      breakGlassActive,
+      mfaRequired,
+      ssoRequired,
+    };
   }, [data]);
 
   return (
@@ -157,12 +151,12 @@ export const GlobalSecurityPostureView: React.FC = () => {
               {
                 icon: <ShieldCheck className="h-4 w-4 text-emerald-500" />,
                 label: 'Security event volume',
-                value: `${Number(data.eventStats?.today || data.eventStats?.events_today || 0)} today`,
+                value: `${Number(data.operatorOverview?.events?.today || 0)} today`,
               },
               {
                 icon: <Clock3 className="h-4 w-4 text-amber-500" />,
                 label: 'Break-glass readiness',
-                value: 'Capability model and audit trail are in place for short-lived sessions.',
+                value: `${posture.breakGlassActive} break-glass / ${posture.jitActive} JIT sessions active.`,
               },
             ].map((item) => (
               <div

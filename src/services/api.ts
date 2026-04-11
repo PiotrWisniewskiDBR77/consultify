@@ -6612,6 +6612,120 @@ export const Api = {
     return handleResponse(res, 'Failed to update admin IAM policy');
   },
 
+  getAdminIAMAssignments: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/assignments`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin IAM assignments');
+  },
+
+  createAdminIAMAssignment: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/assignments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create admin IAM assignment');
+  },
+
+  deleteAdminIAMAssignment: async (assignmentId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/assignments/${encodeURIComponent(assignmentId)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete admin IAM assignment');
+  },
+
+  getAdminBillingPaymentMethods: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/payment-methods`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing payment methods');
+  },
+
+  addAdminBillingPaymentMethod: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/payment-methods`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to add admin billing payment method');
+  },
+
+  setAdminBillingDefaultPaymentMethod: async (paymentMethodId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/admin/billing/payment-methods/${encodeURIComponent(paymentMethodId)}/default`,
+      { method: 'PUT', headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to set default admin billing payment method');
+  },
+
+  removeAdminBillingPaymentMethod: async (paymentMethodId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/payment-methods/${encodeURIComponent(paymentMethodId)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to remove admin billing payment method');
+  },
+
+  getAdminBillingInvoices: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/invoices`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing invoices');
+  },
+
+  getAdminBillingUsageDetails: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/usage-details`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing usage details');
+  },
+
+  getAdminBillingAlerts: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/alerts`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing alerts');
+  },
+
+  updateAdminBillingAlerts: async (alerts: any[]): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/alerts`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ alerts }),
+    });
+    return handleResponse(res, 'Failed to update admin billing alerts');
+  },
+
+  getAdminBillingTaxSettings: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/tax-settings`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing tax settings');
+  },
+
+  updateAdminBillingTaxSettings: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/tax-settings`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update admin billing tax settings');
+  },
+
+  getAdminComplianceSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/compliance/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin compliance summary');
+  },
+
+  updateAdminComplianceDataRetention: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/compliance/data-retention`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update admin data retention');
+  },
+
+  getAdminScimSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/identity/scim`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin SCIM summary');
+  },
+
+  getAdminRiskSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/risk/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin risk summary');
+  },
+
   getTenantAdminAuditStats: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/admin/audit-logs/stats`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch admin audit stats');
@@ -9645,6 +9759,27 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to fetch admin session stats');
+  },
+  getSuperAdminOperatorOverview: async () => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/operator/overview`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch operator overview');
+  },
+  getSuperAdminOperatorTimeline: async (limit = 50) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/superadmin/operator/timeline?limit=${encodeURIComponent(String(limit))}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch operator timeline');
+  },
+  getSuperAdminPolicyEnforcement: async () => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/operator/policy-enforcement`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch policy enforcement state');
   },
   revokeAdminSession: async (sessionId: string): Promise<{ message?: string }> => {
     const res = await fetchWithRetry(`${API_URL}/superadmin/admin/sessions/${sessionId}`, {

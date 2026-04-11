@@ -301,7 +301,7 @@ router.put('/organizations/:id/quotas', async (req, res) => {
 router.post(
   '/organizations/:id/charge-resource-change',
   verifyToken,
-  requireSuperAdmin,
+  verifySuperAdmin,
   async (req, res) => {
     try {
       const { id } = req.params;

@@ -345,6 +345,17 @@ export const V8AssessmentApi = {
       valid: boolean;
       validationErrors: string[];
       payload: Record<string, unknown>;
+      supportedHandoffs?: Array<{
+        targetKind: 'outputs_artifact' | 'interview_insight';
+        targetRefOwner: string;
+        bounded: boolean;
+        purpose: string;
+      }>;
+      downstreamContract?: {
+        initiatives?: Record<string, unknown>;
+        execution?: Record<string, unknown>;
+        kpi?: Record<string, unknown>;
+      };
     }>(`/assessment/${assessmentId}/workbench/promotion-payload`);
   },
 
