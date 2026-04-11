@@ -1,19 +1,21 @@
-import { KeyRound, Link2, Shield, UserCog } from 'lucide-react';
+import { KeyRound, Link2, Shield, UserCog, UsersRound } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { ApiKeysManagementView } from '../../views/admin/ApiKeysManagementView';
 import { cn } from '../../utils/cn';
 import { AdminCollaborationControlsPanel } from './AdminCollaborationControlsPanel';
 import { AdminIamPolicyPanel } from './AdminIamPolicyPanel';
+import { AdminScimLifecyclePanel } from './AdminScimLifecyclePanel';
 import { AdminSecurityPolicyPanel } from './AdminSecurityPolicyPanel';
 
-type TabId = 'policy' | 'collaboration' | 'api-access' | 'iam';
+type TabId = 'policy' | 'collaboration' | 'api-access' | 'iam' | 'scim';
 
 const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: 'policy', label: 'Security policy', icon: Shield },
   { id: 'collaboration', label: 'Collaboration policy', icon: Link2 },
   { id: 'api-access', label: 'API access', icon: KeyRound },
   { id: 'iam', label: 'Delegated IAM', icon: UserCog },
+  { id: 'scim', label: 'SCIM & lifecycle', icon: UsersRound },
 ];
 
 export const AdminSecurityIdentityPanel: React.FC = () => {
@@ -27,7 +29,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
         </h3>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           One tenant-admin surface for authentication policy, collaboration controls, API access,
-          and delegated admin governance.
+          delegated admin governance, and SCIM identity lifecycle.
         </p>
       </div>
 
@@ -58,6 +60,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
       {activeTab === 'collaboration' && <AdminCollaborationControlsPanel />}
       {activeTab === 'api-access' && <ApiKeysManagementView />}
       {activeTab === 'iam' && <AdminIamPolicyPanel />}
+      {activeTab === 'scim' && <AdminScimLifecyclePanel />}
     </div>
   );
 };

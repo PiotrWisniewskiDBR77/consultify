@@ -962,12 +962,6 @@ async function readRiskSummary(orgId: string) {
   const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
   let llmIncidents: any[] = [];
   try {
-    const { default: LLMController } = await import('../controllers/LLMController.js');
-    void LLMController;
-  } catch {
-    // best effort only
-  }
-  try {
     llmIncidents = (await dbAll<any>(
       `SELECT id, provider, status, started_at, resolved_at, severity
        FROM llm_incidents

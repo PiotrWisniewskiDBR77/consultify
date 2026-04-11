@@ -14,13 +14,18 @@ export const AdminAuditLogPanel: React.FC = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [riskSummary, setRiskSummary] = useState<any>(null);
+  const [complianceSummary, setComplianceSummary] = useState<any>(null);
+  const [retentionDays, setRetentionDays] = useState(730);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [logResult, statsResult] = await Promise.all([
+      const [logResult, statsResult, riskResult, complianceResult] = await Promise.all([
         Api.getTenantAdminAuditLogs({ limit: 100, search }),
         Api.getTenantAdminAuditStats(),
+        Api.getAdminRiskSummary(),
+        Api.getAdminComplianceSummary(),
       ]);
       setLogs(Array.isArray(logResult?.logs) ? logResult.logs : []);
       setStats({
@@ -28,6 +33,9 @@ export const AdminAuditLogPanel: React.FC = () => {
         unresolvedCount: Number(statsResult?.unresolvedCount || 0),
         highRiskCount: Number(statsResult?.highRiskCount || 0),
       });
+      setRiskSummary(riskResult?.summary || null);
+      setComplianceSummary(complianceResult?.summary || null);
+      setRetentionDays(Number(complianceResult?.summary?.dataRetention?.auditLogRetentionDays || 730));
     } catch (error: any) {
       toast.error(error?.message || 'Failed to load audit logs');
     } finally {
@@ -59,6 +67,25 @@ export const AdminAuditLogPanel: React.FC = () => {
     }
   };
 
+  const saveRetention = async () => {
+    try {
+      await Api.updateAdminComplianceDataRetention({
+        ...(complianceSummary?.dataRetention || {}),
+        auditLogRetentionDays: retentionDays,
+      });
+      setComplianceSummary((current: any) => ({
+        ...(current || {}),
+        dataRetention: {
+          ...(current?.dataRetention || {}),
+          auditLogRetentionDays: retentionDays,
+        },
+      }));
+      toast.success('Audit retention updated');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update retention');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
@@ -83,6 +110,46 @@ export const AdminAuditLogPanel: React.FC = () => {
           <p className="mt-2 text-2xl font-semibold text-rose-600 dark:text-rose-400">
             {stats.highRiskCount}
           </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Risk & incidents
+          </p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            LLM incidents tracked: {riskSummary?.incidents?.length || 0}
+          </p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            High-risk admin changes: {riskSummary?.audit?.highRiskCount || 0}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Compliance evidence
+          </p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            GDPR enabled: {complianceSummary?.gdpr?.enabled ? 'yes' : 'no'}
+          </p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            Audit retention days: {complianceSummary?.dataRetention?.auditLogRetentionDays || 0}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <input
+              type="number"
+              min={30}
+              value={retentionDays}
+              onChange={(event) => setRetentionDays(Number(event.target.value || 730))}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+            />
+            <button
+              onClick={() => void saveRetention()}
+              className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white"
+            >
+              Save retention
+            </button>
+          </div>
         </div>
       </div>
 

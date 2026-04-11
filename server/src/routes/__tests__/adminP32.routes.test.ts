@@ -296,4 +296,80 @@ describe('adminP32Routes', () => {
     );
     expect(putRes.body.policy.contextAwareAccessEnabled).toBe(true);
   });
+
+  it('allows delegated billing admins to access billing summaries', async () => {
+    mockUserRole = 'member';
+    dbGet
+      .mockResolvedValueOnce({ role: 'MEMBER' })
+      .mockResolvedValueOnce({
+        subscription_plan_id: 'plan-1',
+        status: 'active',
+        current_period_end: '2026-05-01',
+        plan_name: 'Enterprise',
+        price_monthly: 999,
+        token_limit: 10000,
+        storage_limit_gb: 100,
+      })
+      .mockResolvedValueOnce({
+        trial_tokens_used: 140,
+        token_balance: 8000,
+        plan: 'enterprise',
+        trial_expires_at: null,
+      })
+      .mockResolvedValueOnce({
+        token_threshold_80: 1,
+        token_threshold_90: 1,
+        token_threshold_100: 0,
+        cost_cap_monthly: 2500,
+        email_notifications: 1,
+      });
+    dbAll.mockResolvedValueOnce([
+      {
+        id: 'assign-1',
+        user_id: 'user-1',
+        role_id: 'billing_admin',
+        role_name: 'Billing Admin',
+        capabilities_json: JSON.stringify(['billing:read']),
+        expires_at: null,
+      },
+    ]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/admin/billing/summary');
+
+    expect(res.status).toBe(200);
+    expect(res.body.summary.plan.name).toBe('Enterprise');
+  });
+
+  it('creates delegated assignments, payment methods, and SCIM tokens from admin surfaces', async () => {
+    dbGet
+      .mockResolvedValueOnce({ role: 'OWNER' })
+      .mockResolvedValueOnce({ role: 'OWNER' })
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ id: 'pm-1', brand: 'Visa', last4: '4242' })
+      .mockResolvedValueOnce({ role: 'OWNER' });
+
+    const app = createApp();
+
+    const assignmentRes = await request(app).post('/api/admin/iam/assignments').send({
+      userId: 'user-2',
+      roleId: 'billing_admin',
+      roleName: 'Billing Admin',
+      capabilities: ['billing:read', 'billing:write'],
+    });
+    expect(assignmentRes.status).toBe(201);
+    expect(assignmentRes.body.assignment.roleId).toBe('billing_admin');
+
+    const paymentRes = await request(app).post('/api/admin/billing/payment-methods').send({
+      paymentMethodId: 'pm_demo_4242',
+    });
+    expect(paymentRes.status).toBe(201);
+
+    const scimRes = await request(app).post('/api/admin/identity/scim/tokens').send({
+      name: 'Tenant SCIM Token',
+      scopes: ['users:read', 'users:write'],
+    });
+    expect(scimRes.status).toBe(201);
+    expect(String(scimRes.body.token.token)).toContain('scim_');
+  });
 });

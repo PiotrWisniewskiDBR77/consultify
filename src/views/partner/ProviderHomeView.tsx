@@ -1243,7 +1243,6 @@ const FooterResourcesSection: React.FC = () => {
                   className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                 >
                   {link.label}
-                  {link.external && <ExternalLink className="w-3 h-3" />}
                 </button>
               </li>
             ))}
