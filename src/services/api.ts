@@ -6721,6 +6721,43 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch admin SCIM summary');
   },
 
+  createAdminScimToken: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/identity/scim/tokens`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create admin SCIM token');
+  },
+
+  deleteAdminScimToken: async (tokenId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/identity/scim/tokens/${encodeURIComponent(tokenId)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete admin SCIM token');
+  },
+
+  createAdminScimGroupMapping: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/identity/scim/group-mappings`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create admin SCIM group mapping');
+  },
+
+  deleteAdminScimGroupMapping: async (mappingId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/admin/identity/scim/group-mappings/${encodeURIComponent(mappingId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete admin SCIM group mapping');
+  },
+
   getAdminRiskSummary: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/admin/risk/summary`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch admin risk summary');

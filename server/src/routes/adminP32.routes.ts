@@ -924,6 +924,39 @@ async function readScimSummary(orgId: string) {
   };
 }
 
+async function createScimToken(orgId: string, name: string, description: string, scopes: string[]) {
+  await readScimSummary(orgId);
+  const id = uuidv4();
+  const rawToken = `scim_${crypto.randomBytes(24).toString('hex')}`;
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const tokenPrefix = rawToken.substring(0, 12);
+  await dbRun(
+    `INSERT INTO scim_tokens (id, name, description, token_hash, token_prefix, organization_id, scopes)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, name, description || null, tokenHash, tokenPrefix, orgId, JSON.stringify(scopes || [])]
+  );
+  return { id, name, description, tokenPrefix, organizationId: orgId, scopes, token: rawToken };
+}
+
+async function deleteScimToken(orgId: string, id: string) {
+  await readScimSummary(orgId);
+  await dbRun(`DELETE FROM scim_tokens WHERE id = ? AND organization_id = ?`, [id, orgId]);
+}
+
+async function createScimGroupMapping(externalGroupName: string, externalGroupId: string, internalRole: string) {
+  const id = uuidv4();
+  await dbRun(
+    `INSERT INTO scim_group_mappings (id, external_group_id, external_group_name, internal_role)
+     VALUES (?, ?, ?, ?)`,
+    [id, externalGroupId, externalGroupName, internalRole || 'member']
+  );
+  return { id, externalGroupId, externalGroupName, internalRole: internalRole || 'member', isActive: true };
+}
+
+async function deleteScimGroupMapping(id: string) {
+  await dbRun(`DELETE FROM scim_group_mappings WHERE id = ?`, [id]);
+}
+
 async function readRiskSummary(orgId: string) {
   const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
   const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
@@ -1322,6 +1355,75 @@ router.get(
     if (!actor) return;
     const summary = await readScimSummary(actor.orgId);
     return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.post(
+  '/identity/scim/tokens',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:write']);
+    if (!actor) return;
+    const token = await createScimToken(
+      actor.orgId,
+      String(req.body?.name || 'Tenant SCIM Token'),
+      String(req.body?.description || ''),
+      Array.isArray(req.body?.scopes) ? req.body.scopes.map(String) : ['users:read', 'users:write']
+    );
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'create_scim_token',
+      details: { orgId: actor.orgId, isSensitive: true, tokenId: token.id },
+    });
+    return res.status(201).json({ success: true, token });
+  })
+);
+
+router.delete(
+  '/identity/scim/tokens/:id',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:write']);
+    if (!actor) return;
+    await deleteScimToken(actor.orgId, req.params.id);
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'revoke_scim_token',
+      details: { orgId: actor.orgId, isSensitive: true, tokenId: req.params.id },
+    });
+    return res.json({ success: true });
+  })
+);
+
+router.post(
+  '/identity/scim/group-mappings',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:write']);
+    if (!actor) return;
+    const mapping = await createScimGroupMapping(
+      String(req.body?.externalGroupName || ''),
+      String(req.body?.externalGroupId || ''),
+      String(req.body?.internalRole || 'member')
+    );
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'create_scim_group_mapping',
+      details: { orgId: actor.orgId, isSensitive: true, mappingId: mapping.id },
+    });
+    return res.status(201).json({ success: true, mapping });
+  })
+);
+
+router.delete(
+  '/identity/scim/group-mappings/:id',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res, ['security:write']);
+    if (!actor) return;
+    await deleteScimGroupMapping(req.params.id);
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'delete_scim_group_mapping',
+      details: { orgId: actor.orgId, isSensitive: true, mappingId: req.params.id },
+    });
+    return res.json({ success: true });
   })
 );
 
