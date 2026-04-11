@@ -3785,7 +3785,16 @@ const getAdminSessions = catchAsync(async (req, res, next) => {
 });
 
 const createAdminSession = catchAsync(async (req, res, next) => {
-  const { adminId, mfaVerified, expiresInHours } = req.body;
+  const {
+    adminId,
+    mfaVerified,
+    expiresInHours,
+    sessionType,
+    requestedCapability,
+    justification,
+    breakGlassReason,
+    approvedBy,
+  } = req.body;
   const ipAddress = req.ip || req.connection.remoteAddress;
   const userAgent = req.get('user-agent') || 'Unknown';
 
@@ -3794,7 +3803,13 @@ const createAdminSession = catchAsync(async (req, res, next) => {
     ipAddress,
     userAgent,
     mfaVerified: mfaVerified || false,
-    expiresInHours: expiresInHours || 24,
+    expiresInHours: expiresInHours || 8,
+    sessionType,
+    requestedCapability,
+    justification,
+    breakGlassReason,
+    approvedBy,
+    createdBy: req.user.id,
   });
 
   res.json(session);
