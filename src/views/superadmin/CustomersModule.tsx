@@ -8,6 +8,8 @@ import {
   BarChart3,
   BookOpen,
   Building2,
+  Command,
+  CircleDollarSign,
   FileCheck,
   FileText,
   HeadphonesIcon,
@@ -16,6 +18,7 @@ import {
   MessageSquare,
   RefreshCw,
   Shield,
+  SlidersHorizontal,
   Upload,
   Users,
   Zap,
@@ -36,21 +39,34 @@ import {
   CustomerSuccessPlaybooksView,
 } from './customers';
 import { OrganizationsView } from './OrganizationsView';
+import { OrganizationResourceManager } from './OrganizationResourceManager';
+import { RevenueModule } from './RevenueModule';
 import { SecurityModuleView } from './security/SecurityModuleView';
 import { SuperAdminFeedbackBacklogView } from './SuperAdminFeedbackBacklogView';
 import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
 import { SuperAdminUserManagement } from './SuperAdminUserManagement';
+import { TenantCommandCenterView } from './TenantCommandCenterView';
 import { SupportModuleView } from './support/SupportModuleView';
 
 interface CustomersModuleProps {
   initialTab?: string;
+  initialCommercialTab?: string;
 }
 
-export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) => {
-  const [activeTab, setActiveTab] = useState(initialTab || 'organizations');
+export const CustomersModule: React.FC<CustomersModuleProps> = ({
+  initialTab,
+  initialCommercialTab,
+}) => {
+  const [activeTab, setActiveTab] = useState(initialTab || 'command-center');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -81,11 +97,14 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
 
   useEffect(() => {
     const mapping: Record<string, string> = {
+      'command-center': 'superadmin_customers_command_center',
       organizations: 'superadmin_customers_organizations',
       users: 'superadmin_customers_users',
       lifecycle: 'superadmin_customers_lifecycle',
       playbooks: 'superadmin_customers_playbooks',
       contracts: 'superadmin_customers_contracts',
+      commercial: 'superadmin_customers_commercial',
+      limits: 'superadmin_customers_limits',
       security: 'superadmin_customers_security',
       support: 'superadmin_customers_support',
       feedback: 'superadmin_customers_feedback',
@@ -101,11 +120,14 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
   }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
+    { id: 'command-center', label: 'Command Center', icon: <Command size={16} /> },
     { id: 'organizations', label: 'Organizations', icon: <Building2 size={16} /> },
     { id: 'users', label: 'Users', icon: <Users size={16} /> },
     { id: 'lifecycle', label: 'Lifecycle', icon: <RefreshCw size={16} /> },
     { id: 'playbooks', label: 'Playbooks', icon: <BookOpen size={16} /> },
     { id: 'contracts', label: 'Contracts', icon: <FileText size={16} /> },
+    { id: 'commercial', label: 'Commercial', icon: <CircleDollarSign size={16} /> },
+    { id: 'limits', label: 'Limits & Budgets', icon: <SlidersHorizontal size={16} /> },
     { id: 'security', label: 'Security', icon: <Shield size={16} /> },
     { id: 'support', label: 'Support & CS', icon: <HeadphonesIcon size={16} /> },
     {
@@ -124,6 +146,8 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'command-center':
+        return <TenantCommandCenterView />;
       case 'organizations':
         return <OrganizationsView />;
       case 'users':
@@ -146,6 +170,10 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
             <ContractManagementView />
           </div>
         );
+      case 'commercial':
+        return <RevenueModule initialTab={initialCommercialTab || 'billing'} />;
+      case 'limits':
+        return <OrganizationResourceManager />;
       case 'security':
         return <SecurityModuleView />;
       case 'support':
@@ -202,8 +230,8 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      title="Customers"
-      subtitle="Manage organizations, users, and customer feedback"
+      title="Tenant & User Operations"
+      subtitle="Operate tenants through one control plane for lifecycle, users, billing, quotas, and risk"
     >
       {renderContent()}
     </TabLayout>

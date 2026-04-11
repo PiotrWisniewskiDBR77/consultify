@@ -206,6 +206,20 @@ Acceptance checklist (P28-A scope approval; must-pass dla P28-B/P28-C):
 | Governance visibility | AI + scoring honest | “needs stronger final contract” | Ujawnić governance scoring/AI/interpretation w UI i payloadach | P0 |
 | Action loop continuity | results → action | “downstream continuity needs closure” | Dopiąć promotion do work/outputs z traceability | P1
 
+### 4.5 DRD uplift gap ledger vs application canon (post P28 closeout analysis)
+Ta sekcja nie zmienia zamrożonego zakresu `P28-A/B/C`. Jest addendum po closeoucie i stanowi **oficjalny backlog domknięcia DRD do poziomu application canon**.
+
+| Capability cluster | Current truth | Target truth | Closure task | Priority |
+| --- | --- | --- | --- | --- |
+| DRD product canon | Kod i runtime trzymają 7 osi / 34 obszary, ale część materiałów i narracji produktowej nadal używa innych struktur | Jedno SSOT DRD: 7 osi / 34 obszary / jeden słownik pojęć w UI, help, video, prompts i deckach | Zamrozić `DRD canon pack` i usunąć rozjazdy 7 vs 8/10 dimensions | P0 |
+| Runtime truth | DRD ma mocny runtime, ale nadal współistnieją legacy lane i V8/P28 workbench | Jeden kanoniczny entry/run path: definition -> run -> evidence -> review -> promote | Zwinąć split-brain i ustawić V8/P28 jako domyślną ścieżkę DRD | P0 |
+| Menu 3 AI actions canon | W `Wdrożenia / KPI` istnieje kanoniczny standard prawych przycisków Menu 3; Assessment/DRD nie używa go jeszcze konsekwentnie | Assessment/DRD używa tego samego slotu Menu 3, tych samych stylów i tej samej semantyki aktywnego panelu | Wprowadzić kanon przycisków AI Menu 3 do kart / widoków DRD | P0 |
+| Report convergence | Istnieje kilka ścieżek raportowych i nie wszystkie są spięte z nawigacją sesji | Jeden report lane powiązany z runem, navigation, promotion trace i Outputs | Skonsolidować report builder / report templates / audit exports wokół runu DRD | P1 |
+| Workbench usability | Workbench działa, ale jest operator-centric i techniczny | Workbench business-friendly: mniej pól roboczych, jaśniejszy `what next`, prostszy review/promotion | Uprościć UI workbencha dla konsultanta i sponsora biznesowego | P1 |
+| Integration hub posture | DRD przekazuje do Outputs/P10, ale nie jest jeszcze hubem dla KPI, benchmarków, inicjatyw i execution | DRD jako źródło inicjacji kolejnych artefaktów i planów bez tworzenia parallel truth | Dopiąć bounded handoff do KPI/Initiatives/Execution/Reports z provenance | P1 |
+| Chat orchestration | Jest attach do chat context, ale nie jest to w pełni kanoniczna ścieżka pracy z DRD | Chat działa jako naturalny copiloting lane tego samego runu i nie tworzy alternatywnej sesji prawdy | Uporządkować prompts, context package i handoff readback dla DRD chat lane | P1 |
+| Staging proof | P28 ma dowody dla workbencha, ale nie ma pełnego proof dla DRD jako application canon | Jedna demonstracja end-to-end: choose -> run -> AI assist -> review -> report -> initiative/KPI/output | Przygotować staging proof i rollout ledger dla `DRD uplift` | P1 |
+
 ## 5. Evidence plan (DoD)
 ### 5.1 Acceptance criteria
 - Workbench jest spójny; scoring/interpretation ma governance; wyniki stają się akcją.
@@ -275,10 +289,74 @@ Acceptance checklist (P28-A scope approval; must-pass dla P28-B/P28-C):
 ### 8.3 Rollback plan
 - Wyłącz AI interpretacje/promotions; zachowaj workbench read-only; bez destrukcji danych.
 
+### 8.4 DRD uplift backlog to finish after P28-A/B/C
+Poniższa lista jest **kompletną listą zadań do domknięcia** na podstawie bieżącej analizy DRD. To jest plan przejścia z “działającego assessment runtime” do **kanonicznego narzędzia aplikacji**.
+
+1. **Freeze DRD application canon (SSOT)**
+   - Uzgodnić i zamrozić jeden opis DRD: `7 axes / 34 areas / methodology vocabulary / scoring vocabulary / report vocabulary`.
+   - Zsynchronizować runtime, help, video tutorials, marketing copy, prompt packs i template’y raportowe.
+   - Wprowadzić jawny `DRD canon pack` jako referencję dla przyszłych metodologii.
+
+2. **Close split-brain runtime**
+   - Ustawić V8/P28 workbench jako domyślną i preferowaną ścieżkę dla DRD.
+   - Ograniczyć legacy update paths do kompatybilności read/write only tam, gdzie są jeszcze potrzebne.
+   - Ujednolicić deep-linki, create flow, duplicate flow, report start flow i promotion flow wokół jednego `assessment_run_id`.
+
+3. **Apply the canonical Menu 3 AI buttons standard in Assessment / DRD**
+   - Assessment/DRD musi używać tego samego kanonu co `Wdrożenia / KPI`: **prawa strona Menu 3**, przyciski `h-8 rounded-full`, wspólny styl z `docs/ui-standards/03-modules/module-hub-standard.md` §3.4 oraz `src/components/shared/ModuleHub/menu3ActionButtonStyles.ts`.
+   - Ten slot ma zawierać **kontekstowe przyciski funkcyjne**, a nie lokalne przełączniki czasu / widoku / nawigacji.
+   - Aktywny przycisk otwierający panel ma stan `cyan`; klik drugi raz zamyka panel; panel pozostaje w content area i nie przykrywa Menu 2 / Menu 3.
+   - **Domyślny mapping dla DRD:**
+     - `AI Triage` -> pokazuje co domknąć najpierw: missing evidence, luki scoringowe, osie z najwyższą niepewnością.
+     - `Action Plan` -> zamienia zaakceptowane findings w bounded next steps, initiative seeds, KPI follow-up albo execution requests.
+     - `Trzeci przycisk kontekstowy` zależny od aktywnego taba:
+       - `Assessment` -> `Interpretation Draft`
+       - `Reports` -> `Generate Report`
+       - `Initiatives` -> `Initiative Pack`
+   - **MUST NOT:** dodawać przycisku AI do silent scoring; AI może proponować interpretację, triage i action packaging, ale nie obchodzi review gates.
+
+4. **Rebuild DRD session shell around one canonical operator/business layout**
+   - Zachować istniejący mocny edytor DRD, ale osadzić go w spójnym shellu `Assessment / Reports / Initiatives`.
+   - Wyraźnie oddzielić: methodology navigation, run progress, workbench review, downstream handoff.
+   - Zredukować liczbę lokalnych header actions, które dziś są rozproszone poza kanonicznym Menu 3.
+
+5. **Converge reporting into one DRD report lane**
+   - Powiązać generowanie raportu z aktywnym runem i jego review state.
+   - Zmapować canonical outputs: audit report, executive summary, deck input, KPI follow-up pack.
+   - Usunąć lub zdegradować alternatywne flow raportowe, które nie czytają kanonicznego runu.
+
+6. **Turn DRD into a bounded integration hub**
+   - Handoff do `Outputs` i `P10` utrzymać jako bounded truth.
+   - Dodać jawne bounded handoffs do `Initiatives`, `Execution` i `KPI`, bez tworzenia nowego home dla tych artefaktów.
+   - Każdy handoff ma zachować `assessment_run_id`, `assessment_definition_id@version`, `promotion_trace` i `limits`.
+
+7. **Standardize DRD chat/copilot posture**
+   - Chat otwierany z DRD ma pracować na tym samym workspace context i tym samym runie.
+   - Wprowadzić kanoniczne prompty dla: triage, interpretation draft, report shaping, initiative pack.
+   - Zapewnić readback: user widzi co zostało zaproponowane przez AI i gdzie to wróciło do runu / reportu / inicjatywy.
+
+8. **Simplify review and degraded UX**
+   - Workbench ma pokazywać krótkie ścieżki: `what is missing`, `what can be reviewed now`, `what can be promoted now`.
+   - Degraded states muszą mieć wersję business-readable, a nie tylko operatorską.
+   - Missing evidence, permission denied, promotion failed i unavailable pointers muszą być widoczne na poziomie sesji, nie tylko panelu technicznego.
+
+9. **Close application-level proof**
+   - Przygotować staging proof dla DRD jako kanonu aplikacji:
+     1. Start DRD from framework selection.
+     2. Complete several axes with evidence.
+     3. Use Menu 3 AI actions in Assessment.
+     4. Review score + interpretation.
+     5. Generate report from the same run.
+     6. Promote to initiative / output / insight and optionally prepare KPI follow-up.
+   - Udokumentować wynik w osobnym evidence closeout dla `DRD uplift`.
+
 ## 9. Risks / open questions / decisions
 - Ryzyko: scoring jako black box (brak zaufania).
 - Ryzyko: brak jednego workbench → rodzina niespójna.
 - Decyzje: minimalny scoring grammar i format evidence pointers.
+- Open question (post-closeout): czy DRD ma stać się jedynym pilotem `application canon` dla Assessment family przed rozszerzeniem na SIRI/ADMA, czy równolegle prowadzimy drugi pilot metodologii.
+- Decyzja do zamrożenia: który tab / widok jest właścicielem trzeciego przycisku Menu 3, gdy user pracuje jednocześnie na workbenchu i panelu downstream.
+- Ryzyko: pozostawienie obecnego header/action layout w sesji DRD spowolni adopcję kanonu Menu 3 i utrwali lokalne wyjątki UI.
 
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |

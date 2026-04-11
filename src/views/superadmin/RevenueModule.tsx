@@ -51,6 +51,12 @@ export const RevenueModule: React.FC<RevenueModuleProps> = ({ initialTab }) => {
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
   React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  React.useEffect(() => {
     const mapping: Record<string, string> = {
       billing: 'superadmin_billing',
       invoices: 'superadmin_invoices',

@@ -23,6 +23,7 @@ interface JWTPayload {
   role?: string;
   organizationId?: string;
   organization_id?: string;
+  superadminCapabilities?: string[];
 }
 
 // Database interface no longer needed - using DbPromise directly
@@ -36,6 +37,63 @@ interface Dependencies {
   config: { JWT_SECRET: string };
   dbGet: <T>(sql: string, params?: any[]) => Promise<T | undefined>;
 }
+
+export const SUPERADMIN_CAPABILITIES = [
+  'platform_ops',
+  'security_ops',
+  'billing_ops',
+  'support_ops',
+  'ai_ops',
+] as const;
+
+export type SuperAdminCapability = (typeof SUPERADMIN_CAPABILITIES)[number];
+
+const normalizeSuperAdminRole = (role?: string): string => {
+  const normalized = String(role || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+
+  // Supported aliases: SUPERADMIN, SUPER_ADMIN, superadmin, super_admin, owner.
+  if (
+    normalized === 'superadmin' ||
+    normalized === 'super_admin' ||
+    normalized === 'super-admin' ||
+    normalized === 'owner'
+  ) {
+    return 'superadmin';
+  }
+
+  return normalized;
+};
+
+const normalizeCapability = (capability?: string): SuperAdminCapability | null => {
+  const normalized = String(capability || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_') as SuperAdminCapability;
+  return SUPERADMIN_CAPABILITIES.includes(normalized) ? normalized : null;
+};
+
+export const getSuperAdminCapabilities = (
+  role?: string,
+  explicitCapabilities?: string[]
+): SuperAdminCapability[] => {
+  const normalizedRole = normalizeSuperAdminRole(role);
+  const normalizedExplicit = Array.isArray(explicitCapabilities)
+    ? explicitCapabilities.map(normalizeCapability).filter(Boolean)
+    : [];
+
+  if (normalizedExplicit.length > 0) {
+    return Array.from(new Set(normalizedExplicit)) as SuperAdminCapability[];
+  }
+
+  if (normalizedRole === 'superadmin') {
+    return [...SUPERADMIN_CAPABILITIES];
+  }
+
+  return [];
+};
 
 // ==========================================
 // DEPENDENCIES (injectable for testing)
@@ -65,7 +123,11 @@ export const verifySuperAdmin = async (
   const token = headers['authorization'];
 
   if (!token) {
-    res.status(403).json({ error: 'No token provided' });
+    res.status(401).json({
+      error: 'Authorization token required',
+      code: 'UNAUTHORIZED',
+      guidance: 'Sign in with a platform superadmin account and retry.',
+    });
     return;
   }
 
@@ -93,16 +155,24 @@ export const verifySuperAdmin = async (
       dbRole = user?.role;
     } catch (dbError) {
       logger.error('[SuperAdmin Middleware] Database check error:', dbError);
-      res.status(403).json({ error: 'Requires Super Admin privileges' });
+      res.status(403).json({
+        error: 'Requires Super Admin privileges',
+        code: 'INSUFFICIENT_PLATFORM_ROLE',
+        guidance: 'Use a platform superadmin session to access this control plane.',
+      });
       return;
     }
 
     // Prefer DB truth when available; fall back to token role if DB doesn't return a row.
     const effectiveRole = dbRole || userRole;
 
-    if (effectiveRole !== 'SUPERADMIN' && effectiveRole !== 'SUPER_ADMIN') {
+    if (normalizeSuperAdminRole(effectiveRole) !== 'superadmin') {
       logger.info(`[SuperAdmin Middleware] Access Denied. Role: ${effectiveRole}`);
-      res.status(403).json({ error: 'Requires Super Admin privileges' });
+      res.status(403).json({
+        error: 'Requires Super Admin privileges',
+        code: 'INSUFFICIENT_PLATFORM_ROLE',
+        guidance: 'Use a platform superadmin session to access this control plane.',
+      });
       return;
     }
 
@@ -111,17 +181,21 @@ export const verifySuperAdmin = async (
     // Attach super admin status to request
     if (req.user) {
       req.user.isSuperAdmin = true;
-      req.user.role =
-        userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'owner' : (userRole as any);
+      req.user.role = normalizeSuperAdminRole(userRole) === 'superadmin' ? 'owner' : (userRole as any);
       req.user.organizationId = decoded.organizationId || decoded.organization_id || '';
+      req.user.superadminCapabilities = getSuperAdminCapabilities(
+        userRole,
+        decoded.superadminCapabilities
+      );
     } else {
       req.user = {
         id: decoded.id,
         email: '',
         name: '',
-        role: userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'owner' : (userRole as any),
+        role: normalizeSuperAdminRole(userRole) === 'superadmin' ? 'owner' : (userRole as any),
         organizationId: decoded.organizationId || decoded.organization_id || '',
         isSuperAdmin: true,
+        superadminCapabilities: getSuperAdminCapabilities(userRole, decoded.superadminCapabilities),
       };
     }
     req.userId = decoded.id;
@@ -130,9 +204,38 @@ export const verifySuperAdmin = async (
 
     next();
   } catch (err: any) {
-    res.status(401).json({ error: 'Unauthorized' });
+    res.status(401).json({
+      error: 'Unauthorized',
+      code: 'UNAUTHORIZED',
+      guidance: 'Refresh your session and retry.',
+    });
   }
 };
+
+export const requireSuperAdminCapability =
+  (...requiredCapabilities: SuperAdminCapability[]) =>
+  (req: AuthRequest, res: Response, next: NextFunction): void => {
+    const granted = new Set(
+      getSuperAdminCapabilities(
+        req.userRole || req.user?.role,
+        req.user?.superadminCapabilities || []
+      )
+    );
+
+    const hasCapability = requiredCapabilities.some((capability) => granted.has(capability));
+    if (hasCapability) {
+      next();
+      return;
+    }
+
+    res.status(403).json({
+      error: 'Requires additional platform capability',
+      code: 'INSUFFICIENT_PLATFORM_CAPABILITY',
+      guidance: `Use a privileged session with one of: ${requiredCapabilities.join(', ')}.`,
+      requiredCapabilities,
+      grantedCapabilities: Array.from(granted),
+    });
+  };
 
 // ==========================================
 // DEPENDENCY INJECTION (for testing)

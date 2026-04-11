@@ -13,7 +13,15 @@ import { z } from 'zod';
 
 export const OrganizationPlanEnum = z.enum(['free', 'starter', 'professional', 'enterprise']);
 export const OrganizationStatusEnum = z.enum(['active', 'suspended', 'cancelled', 'trial']);
-export const MemberRoleEnum = z.enum(['OWNER', 'ADMIN', 'USER', 'MEMBER', 'VIEWER']);
+export const MemberRoleEnum = z.enum([
+  'OWNER',
+  'ADMIN',
+  'USER',
+  'MEMBER',
+  'VIEWER',
+  'GUEST',
+  'CONSULTANT',
+]);
 
 // ==========================================
 // REQUEST SCHEMAS
@@ -40,10 +48,16 @@ export const UpdateOrganizationSchema = z.object({
   onboardingStatus: z.string().max(50).optional(),
 });
 
-export const AddMemberSchema = z.object({
-  targetUserId: z.string().uuid(),
-  role: MemberRoleEnum,
-});
+export const AddMemberSchema = z
+  .object({
+    targetUserId: z.string().min(1).optional(),
+    targetEmail: z.string().email().optional(),
+    role: MemberRoleEnum,
+  })
+  .refine((value) => Boolean(value.targetUserId || value.targetEmail), {
+    message: 'targetUserId or targetEmail is required',
+    path: ['targetUserId'],
+  });
 
 export const UpdateMemberRoleSchema = z.object({
   role: MemberRoleEnum,

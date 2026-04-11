@@ -463,11 +463,7 @@ const CompetitiveIntelligenceService = {
       const resolved = await orgContextService.buildResolvedContext(organizationId);
       industry = resolved?.profile?.industry || 'Unknown';
     } catch {
-      const org = await DbPromise.get<{ industry?: string }>(
-        'SELECT industry FROM organizations WHERE id = ?',
-        [organizationId]
-      );
-      industry = org?.industry || 'Unknown';
+      industry = 'Unknown';
     }
 
     const benchmarks = await DbPromise.all<BenchmarkRow>(

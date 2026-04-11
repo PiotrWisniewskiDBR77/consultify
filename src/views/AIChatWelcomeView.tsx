@@ -774,6 +774,8 @@ CONTEXT:
 OUTPUT EXPECTATION:
 - Give a natural assistant response first.
 - If there is a strong next action, make the response compatible with a proposal-first UI.
+- When the user asks about the partner program, explain the public path clearly: discover the program, review the case study, start the shared partner application flow, complete onboarding, then activate partner operations and payouts.
+- You can explain partner academy, certification readiness, partner resources, case packs, and when the user should switch from self-serve application to direct contact for custom commercial terms.
 `;
 
       // Append AI memory context if available

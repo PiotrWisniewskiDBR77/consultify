@@ -4,13 +4,13 @@ import {
   Edit3,
   FileText,
   Info,
+  Layers,
   Loader2,
   Lock,
   LogOut,
   MessageSquare,
   Save,
   Settings,
-  Sparkles,
   Unlock,
   X,
 } from 'lucide-react';
@@ -19,7 +19,9 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { ADMAAssessmentEditor } from '@/components/assessment/adma/ADMAAssessmentEditor';
+import { AssessmentMenu3ActionBar } from '@/components/assessment/AssessmentMenu3ActionBar';
 import { AssessmentV8CanonPanel } from '@/components/assessment/AssessmentV8CanonPanel';
+import { AssessmentWorkbenchPanel } from '@/components/assessment/AssessmentWorkbenchPanel';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
@@ -318,6 +320,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const createConversation = useConversationStore((s) => s.createConversation);
+  const activeConversationId = useConversationStore((s) => s.activeConversationId);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -384,6 +387,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
   >('workflow');
   const [isInitiativesWizardOpen, setIsInitiativesWizardOpen] = useState(false);
   const [isReportTemplatePickerOpen, setIsReportTemplatePickerOpen] = useState(false);
+  const [sessionAiPanel, setSessionAiPanel] = useState<'triage' | 'interpretation' | null>(null);
+  const [sessionWorkbench, setSessionWorkbench] = useState<any | null>(null);
+  const [sessionWorkbenchNextSteps, setSessionWorkbenchNextSteps] = useState<string[]>([]);
 
   const loadCoreAssessmentSession = useCallback(async (): Promise<AssessmentSession> => {
     if (!assessmentId) throw new Error('Missing assessment id');
@@ -418,6 +424,23 @@ export const AssessmentSessionEditorView: React.FC = () => {
     },
     [assessmentId]
   );
+
+  const loadSessionWorkbench = useCallback(async () => {
+    if (!assessmentId) {
+      setSessionWorkbench(null);
+      setSessionWorkbenchNextSteps([]);
+      return;
+    }
+
+    try {
+      const response = await V8AssessmentApi.getWorkbench(assessmentId);
+      setSessionWorkbench(response.workbench || null);
+      setSessionWorkbenchNextSteps(Array.isArray(response.whatNext) ? response.whatNext : []);
+    } catch {
+      setSessionWorkbench(null);
+      setSessionWorkbenchNextSteps([]);
+    }
+  }, [assessmentId]);
 
   const loadAssessmentUserState = useCallback(async (): Promise<DRDPosition | null> => {
     if (!assessmentId) return null;
@@ -531,6 +554,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
       setNameDraft(data?.name || '');
       setServerUpdatedAt(data?.updated_at ? new Date(data.updated_at) : null);
       setLastEditorName(null);
+      await loadSessionWorkbench();
 
       // Enterprise: load per-user state + assignments (DRD only)
       if (framework === 'drd') {
@@ -553,6 +577,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     loadAssessmentAssignments,
     loadAssessmentUserState,
     loadCoreAssessmentSession,
+    loadSessionWorkbench,
   ]);
 
   useEffect(() => {
@@ -937,6 +962,18 @@ export const AssessmentSessionEditorView: React.FC = () => {
     if (!assessmentId || !assessment) return;
 
     try {
+      const currentAssessmentChatId = assessmentChatIdRef.current;
+      if (
+        currentAssessmentChatId &&
+        activeConversationId === currentAssessmentChatId &&
+        !isChatCollapsed
+      ) {
+        toggleChatCollapse();
+        return;
+      }
+
+      setSessionAiPanel(null);
+
       // Reuse the conversation already created for this assessment session
       if (assessmentChatIdRef.current) {
         setActiveConversation(assessmentChatIdRef.current);
@@ -1005,6 +1042,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     currentAxisId,
     currentAreaId,
     currentLevel,
+    activeConversationId,
     isChatCollapsed,
     chatWorkspaceContext,
     createConversation,
@@ -1014,6 +1052,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
   ]);
 
   const handleOpenInitiativesWorkflow = useCallback(() => {
+    setSessionAiPanel(null);
     if (canManageEffective) {
       setManageTab('initiatives');
       setLeftWorkspace('manage');
@@ -1034,6 +1073,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
 
   const handleOpenReportWorkflow = useCallback(() => {
     if (!assessmentId || !assessment) return;
+    setSessionAiPanel(null);
     if (canManageEffective) {
       setManageTab('reports');
       setLeftWorkspace('manage');
@@ -1051,11 +1091,37 @@ export const AssessmentSessionEditorView: React.FC = () => {
       const toastId = toast.loading('Creating report…');
       try {
         const reportTitle = `${assessment?.name || 'Assessment'} - Report`;
+        const workbenchResponse = await V8AssessmentApi.getWorkbench(assessmentId).catch(() => null);
+        const activeRun = workbenchResponse?.workbench || null;
+        const runState = String(activeRun?.runState || '').trim();
+        const reviewState =
+          activeRun?.interpretationReview?.status ||
+          activeRun?.scoreReview?.status ||
+          'not_started';
+
+        if (runState && !['score_reviewed', 'interpretation_reviewed', 'completed'].includes(runState)) {
+          toast.loading('Generating from the current run, but review is not complete yet.', {
+            id: toastId,
+          });
+        }
+
         const response = await Api.post('/report-builder', {
           sourceType: 'ASSESSMENT',
           sourceId: assessmentId,
           title: reportTitle,
           templateId,
+          config: activeRun
+            ? {
+                assessmentRunId: activeRun.assessmentRunId,
+                assessmentDefinitionId: activeRun.assessmentDefinitionRef?.definitionId,
+                assessmentDefinitionVersion: activeRun.assessmentDefinitionRef?.version,
+                workbenchRunState: runState || null,
+                workbenchReviewState: reviewState,
+                promotionTraceCount: Array.isArray(activeRun.promotionTraces)
+                  ? activeRun.promotionTraces.length
+                  : 0,
+              }
+            : undefined,
         });
 
         const reportId = response?.report?.id;
@@ -1084,6 +1150,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
         }
 
         setIsReportTemplatePickerOpen(false);
+        await loadSessionWorkbench();
         toast.success('Report generated — opening editor', { id: toastId });
 
         // Navigate to the Report Builder editor.
@@ -1099,7 +1166,126 @@ export const AssessmentSessionEditorView: React.FC = () => {
         throw err;
       }
     },
-    [assessmentId, assessment, navigate, searchParams, framework]
+    [assessmentId, assessment, navigate, searchParams, framework, loadSessionWorkbench]
+  );
+
+  const scrollWorkbenchIntoView = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    document.getElementById('assessment-workbench-panel')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
+
+  const isAssessmentChatActive =
+    Boolean(assessmentChatIdRef.current) &&
+    activeConversationId === assessmentChatIdRef.current &&
+    !isChatCollapsed;
+
+  const menu3Mode = leftWorkspace === 'manage' ? manageTab : 'assessment';
+
+  const thirdAiAction = useMemo(() => {
+    if (menu3Mode === 'reports') {
+      return {
+        id: 'report',
+        label: 'Generate Report',
+        icon: FileText,
+        onClick: handleOpenReportWorkflow,
+        active: false,
+        title: 'Create a report from the current assessment run',
+      };
+    }
+
+    if (menu3Mode === 'initiatives') {
+      return {
+        id: 'initiative',
+        label: 'Initiative Pack',
+        icon: Check,
+        onClick: handleOpenInitiativesWorkflow,
+        active: false,
+        title: 'Create bounded initiative proposals from the assessment',
+      };
+    }
+
+    return {
+      id: 'interpretation',
+      label: 'Interpretation Draft',
+      icon: Edit3,
+      onClick: () => {
+        setSessionAiPanel((prev) => (prev === 'interpretation' ? null : 'interpretation'));
+        window.setTimeout(() => scrollWorkbenchIntoView(), 30);
+      },
+      active: sessionAiPanel === 'interpretation',
+      title: 'Review interpretation guidance and jump to the workbench',
+    };
+  }, [
+    handleOpenInitiativesWorkflow,
+    handleOpenReportWorkflow,
+    menu3Mode,
+    scrollWorkbenchIntoView,
+    sessionAiPanel,
+  ]);
+
+  const drdPositionLabel = useMemo(() => {
+    if (framework !== 'drd') return null;
+    const axis = DRD_STRUCTURE.find((a) => a.id === currentAxisId);
+    const area = axis?.areas?.find((x) => x.id === currentAreaId);
+    if (!axis || !area) return null;
+    return `${axis.id}. ${axis.name} · ${area.id} ${area.name} · Level ${currentLevel}/${axis.levelCount || 5}`;
+  }, [framework, currentAxisId, currentAreaId, currentLevel]);
+
+  const sessionMenu3Chips = useMemo(() => {
+    const chips = [
+      {
+        id: 'run-state',
+        label: sessionWorkbench?.runState
+          ? `Run ${String(sessionWorkbench.runState).replace(/_/g, ' ')}`
+          : 'Run legacy',
+        badge: sessionWorkbenchNextSteps.length || null,
+        active: Boolean(sessionWorkbench),
+      },
+      {
+        id: 'mode',
+        label: isLocked ? 'Read-only' : 'Editing enabled',
+      },
+    ];
+
+    if (framework === 'drd' && drdPositionLabel) {
+      chips.unshift({
+        id: 'focus',
+        label: drdPositionLabel,
+      });
+    }
+
+    return chips;
+  }, [drdPositionLabel, framework, isLocked, sessionWorkbench, sessionWorkbenchNextSteps.length]);
+
+  const sessionAiActions = useMemo(
+    () => [
+      {
+        id: 'triage',
+        label: 'AI Triage',
+        icon: Layers,
+        onClick: () => setSessionAiPanel((prev) => (prev === 'triage' ? null : 'triage')),
+        active: sessionAiPanel === 'triage',
+        disabled: !assessment,
+        title: 'Prioritize missing evidence, review steps, and next actions',
+      },
+      {
+        id: 'chat',
+        label: 'Chat',
+        icon: MessageSquare,
+        onClick: () => void handleOpenChat(),
+        active: isAssessmentChatActive,
+        disabled: !assessment,
+        title: 'Open the assessment-aware AI chat for this run',
+      },
+      {
+        ...thirdAiAction,
+        disabled: !assessment,
+      },
+    ],
+    [assessment, handleOpenChat, isAssessmentChatActive, sessionAiPanel, thirdAiAction]
   );
 
   const assignmentByAreaId = useMemo(() => {
@@ -1206,14 +1392,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
     );
     return { totalAreas, answeredAreas, axisProgress, stepsDone, stepsTotal };
   }, [framework, answers, currentAxisId, overallProgress]);
-
-  const drdPositionLabel = useMemo(() => {
-    if (framework !== 'drd') return null;
-    const axis = DRD_STRUCTURE.find((a) => a.id === currentAxisId);
-    const area = axis?.areas?.find((x) => x.id === currentAreaId);
-    if (!axis || !area) return null;
-    return `${axis.id}. ${axis.name} · ${area.id} ${area.name} · Level ${currentLevel}/${axis.levelCount || 5}`;
-  }, [framework, currentAxisId, currentAreaId, currentLevel]);
 
   const editedMeta = useMemo(() => {
     if (!assessment) return null;
@@ -1642,17 +1820,6 @@ export const AssessmentSessionEditorView: React.FC = () => {
               </button>
             )}
 
-            {/* Chat button - opens new chat with assessment context */}
-            <button
-              onClick={handleOpenChat}
-              className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
-              title="Open chat with assessment context"
-              type="button"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>Chat</span>
-            </button>
-
             {/* Exit button - always visible */}
             <button
               onClick={handleExitClick}
@@ -1718,9 +1885,120 @@ export const AssessmentSessionEditorView: React.FC = () => {
           </div>
         </div>
 
+        <AssessmentMenu3ActionBar
+          className="mx-6 rounded-xl border border-slate-200/60 dark:border-white/5"
+          chips={sessionMenu3Chips}
+          actions={sessionAiActions}
+        />
+
+        {sessionAiPanel ? (
+          <div className="px-6 pt-4">
+            <div className="rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-4">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    {sessionAiPanel === 'triage' ? 'AI Triage' : 'Interpretation Draft'}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">
+                    {sessionAiPanel === 'triage'
+                      ? 'Use this lane to close the most important gaps first and move the assessment toward review-ready state.'
+                      : 'This lane keeps interpretation explicit: review the current run state, then jump to the workbench proposal and approval flow.'}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={scrollWorkbenchIntoView}
+                    className="h-9 rounded-full border border-slate-200 dark:border-navy-700 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    Open Workbench
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSessionAiPanel(null)}
+                    className="h-9 rounded-full border border-slate-200 dark:border-navy-700 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    What to do next
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {(sessionWorkbenchNextSteps.length
+                      ? sessionWorkbenchNextSteps
+                      : [
+                          sessionWorkbench?.degraded?.message ||
+                            'Review evidence coverage and prepare the next explicit proposal.',
+                          sessionWorkbench?.runState
+                            ? `Current run state: ${String(sessionWorkbench.runState).replace(/_/g, ' ')}.`
+                            : 'Workbench snapshot is not available yet.',
+                          'Use Chat only as a co-pilot lane. Review and approval still happen through the assessment workbench.',
+                        ]
+                    ).map((step) => (
+                      <div
+                        key={step}
+                        className="rounded-lg bg-slate-50 dark:bg-navy-950/50 px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+                      >
+                        {step}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    Recommended moves
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleOpenChat()}
+                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      Continue in Chat with the same assessment context
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOpenReportWorkflow}
+                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      Prepare a report from this run
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOpenInitiativesWorkflow}
+                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      Build a bounded initiative pack
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="px-6 pb-4">
           <AssessmentV8CanonPanel mode="session" compact />
         </div>
+
+        {assessmentId ? (
+          <div className="px-6 pb-4">
+            <AssessmentWorkbenchPanel
+              assessmentId={assessmentId}
+              permissions={{
+                canView: Boolean(permissions?.canView || isGlobalAdmin),
+                canEdit: canEditEffective,
+                canApprove: Boolean(permissions?.canApprove || isGlobalAdmin),
+              }}
+            />
+          </div>
+        ) : null}
 
         {isInfoOpen && (
           <div className="px-6 pb-4">

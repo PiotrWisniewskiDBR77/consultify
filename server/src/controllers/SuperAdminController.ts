@@ -14,6 +14,7 @@ import {
   setDependencies,
   tableExists,
 } from './superadmin/shared.js';
+import auditEventsService from '../services/AuditEventsService.js';
 
 // Domain controllers extracted from this monolith. Namespace imports provide
 // local bindings that the default export object can reference via spread.
@@ -606,52 +607,97 @@ const deactivateAccessCode = catchAsync(async (req, res, next) => {
  * IMPERSONATE USER
  */
 const impersonateUser = catchAsync(async (req, res, next) => {
-  const { userId } = req.body;
+  const { userId, reason } = req.body;
   if (!userId) return next(new AppError('User ID is required', 400));
 
-  deps.db.get('SELECT * FROM users WHERE id = ?', [userId], (err, user) => {
+  deps.db.get('SELECT * FROM users WHERE id = ?', [userId], async (err, user) => {
     if (err) return next(new AppError(err.message, 500));
     if (!user) return next(new AppError('User not found', 404));
 
-    deps.db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], (err, org) => {
+    deps.db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], async (err, org) => {
       if (err) return next(new AppError('Server error', 500));
 
+      const sessionId = deps.uuid.v4();
       const jti = deps.uuid.v4();
-      const token = deps.jwt.sign(
-        {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          organizationId: user.organization_id,
-          impersonator_id: req.user.id,
-          jti: jti,
-        },
-        deps.config.JWT_SECRET,
-        { expiresIn: '1h' }
+      const sessionReason = String(reason || 'Superadmin support session').trim();
+
+      deps.db.run(
+        `INSERT INTO superadmin_impersonation_sessions
+           (id, admin_id, target_user_id, reason, started_at, ip_address, is_active)
+         VALUES (?, ?, ?, ?, datetime('now'), ?, 1)`,
+        [sessionId, req.user.id, user.id, sessionReason, req.ip || null],
+        async (sessionErr) => {
+          if (sessionErr) return next(new AppError(sessionErr.message, 500));
+
+          try {
+            await auditEventsService.log({
+              actorId: req.user.id,
+              actorType: 'USER',
+              organizationId: user.organization_id,
+              action: 'user.impersonation_start',
+              resourceType: 'user',
+              resourceId: user.id,
+              metadata: {
+                targetUserId: user.id,
+                targetUserEmail: user.email,
+                tenantId: user.organization_id,
+                durationMinutes: 30,
+                readOnly: true,
+                sessionId,
+                reason: sessionReason,
+              },
+              ip: req.ip,
+              userAgent: req.headers['user-agent'],
+            });
+          } catch (auditErr) {
+            return next(new AppError('Audit system unavailable for impersonation start', 503));
+          }
+
+          const token = deps.jwt.sign(
+            {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+              organizationId: user.organization_id,
+              impersonatorId: req.user.id,
+              impersonationSessionId: sessionId,
+              jti: jti,
+            },
+            deps.config.JWT_SECRET,
+            { expiresIn: '30m' }
+          );
+
+          const safeUser = {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            role: user.role,
+            status: user.status,
+            organizationId: user.organization_id,
+            companyName: org ? org.name : 'Unknown',
+            impersonatorId: req.user.id,
+            impersonationSessionId: sessionId,
+            accessLevel: 'read_only',
+          };
+
+          deps.ActivityService.log({
+            userId: req.user.id,
+            action: 'impersonate_start',
+            entityType: 'user',
+            entityId: user.id,
+            entityName: user.email,
+            details: {
+              target_organization: user.organization_id,
+              read_only: true,
+              duration_minutes: 30,
+              session_id: sessionId,
+            },
+          });
+
+          res.json({ user: safeUser, token });
+        }
       );
-
-      const safeUser = {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        role: user.role,
-        status: user.status,
-        organizationId: user.organization_id,
-        companyName: org ? org.name : 'Unknown',
-        impersonatorId: req.user.id,
-      };
-
-      deps.ActivityService.log({
-        userId: req.user.id,
-        action: 'impersonate_start',
-        entityType: 'user',
-        entityId: user.id,
-        entityName: user.email,
-        details: { target_organization: user.organization_id },
-      });
-
-      res.json({ user: safeUser, token });
     });
   });
 });
@@ -3839,14 +3885,20 @@ const getAdminAuditStats = catchAsync(async (req, res, next) => {
 const resolveAdminAuditLog = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { resolutionNotes } = req.body;
+  await auditEventsService.log({
+    actorId: req.user.id,
+    actorType: 'USER',
+    organizationId: req.user.organizationId,
+    action: 'admin_audit_log.reviewed',
+    resourceType: 'admin_audit_log',
+    resourceId: id,
+    metadata: {
+      reviewNotes: resolutionNotes || '',
+      immutable: true,
+    },
+  });
 
-  await deps.db.run(
-    `UPDATE admin_audit_logs SET status = 'resolved', resolved_at = datetime('now'), 
-         resolved_by = ?, resolution_notes = ? WHERE id = ?`,
-    [req.user.id, resolutionNotes, id]
-  );
-
-  res.json({ message: 'Audit log resolved' });
+  res.json({ message: 'Audit log review note appended', immutable: true });
 });
 
 const exportAuditLogs = catchAsync(async (req, res, next) => {

@@ -69,10 +69,13 @@ export interface JWTPayload {
   role?: string;
   userRole?: string;
   organizationId?: string;
+  organization_id?: string;
   isSuperAdmin?: boolean;
   /** DEMO org users — used when X-Demo-Mode is dropped (e.g. strict CORS preflight). */
   isDemo?: boolean;
   impersonatorId?: string;
+  impersonator_id?: string;
+  impersonationSessionId?: string;
   jti?: string;
   iat?: number;
   exp?: number;
@@ -81,6 +84,7 @@ export interface JWTPayload {
 export interface AuthenticatedUser extends GlobalUser {
   isDemo?: boolean;
   impersonatorId?: string;
+  impersonationSessionId?: string;
 }
 
 export interface AuthRequest extends AuthenticatedRequest {
@@ -223,13 +227,17 @@ const splitDisplayName = (name?: string): { firstName?: string; lastName?: strin
   };
 };
 
+const READ_ONLY_IMPERSONATION_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const READ_ONLY_IMPERSONATION_PATHS = new Set(['/api/auth/revert-impersonation', '/api/auth/logout']);
+
 /**
  * Attach user data to request
  */
 const attachUser = async (
   decoded: JWTPayload,
   req: AuthRequest,
-  next: NextFunction
+  next: NextFunction,
+  res?: Response
 ): Promise<void> => {
   const { PermissionService } = await getDeps();
 
@@ -260,10 +268,25 @@ const attachUser = async (
     organizationId: req.organizationId || '',
     isSuperAdmin: decoded.isSuperAdmin || false,
     isDemo: Boolean(decoded.isDemo),
-    impersonatorId: decoded.impersonatorId,
+    impersonatorId: decoded.impersonatorId || decoded.impersonator_id,
+    impersonationSessionId: decoded.impersonationSessionId,
   };
 
   req.user = user;
+
+  const isImpersonating = Boolean(user.impersonatorId);
+  const isReadOnlyMethod = READ_ONLY_IMPERSONATION_METHODS.has(req.method.toUpperCase());
+  const isAllowedImpersonationWrite = READ_ONLY_IMPERSONATION_PATHS.has(req.path);
+  if (isImpersonating && !isReadOnlyMethod && !isAllowedImpersonationWrite) {
+    if (res) {
+      res.status(403).json({
+        error: 'Impersonation sessions are read-only. End session to perform actions as yourself.',
+        code: 'IMPERSONATION_READ_ONLY',
+        guidance: 'Stop impersonation and retry the action from your own superadmin session.',
+      });
+      return;
+    }
+  }
 
   // Attach permission helper
   const permissionRole = normalizePermissionRole(decoded.role || decoded.userRole || user.role);
@@ -360,7 +383,7 @@ const checkTokenRevocation = async (
   const { dbGet } = await getDeps();
 
   if (!decoded.jti) {
-    await attachUser(decoded, req, next);
+    await attachUser(decoded, req, next, res);
     return;
   }
 
@@ -405,10 +428,10 @@ const checkTokenRevocation = async (
     }
 
     // Token is valid
-    await attachUser(decoded, req, next);
+    await attachUser(decoded, req, next, res);
   } catch (dbErr) {
     logger.error('Error checking revoked tokens:', dbErr);
-    await attachUser(decoded, req, next);
+    await attachUser(decoded, req, next, res);
   }
 };
 
@@ -504,7 +527,7 @@ export const verifyToken = asyncHandler(
           }
 
           // Attach without signature verification / revocation checks
-          await attachUser(decoded, req, next);
+          await attachUser(decoded, req, next, res);
           return;
         }
       } catch (e) {
@@ -581,7 +604,7 @@ export const optionalAuth = asyncHandler(
       }
 
       // Attach user without revocation check for optional auth
-      await attachUser(decoded as JWTPayload, req, next);
+      await attachUser(decoded as JWTPayload, req, next, _res);
     });
   }
 );

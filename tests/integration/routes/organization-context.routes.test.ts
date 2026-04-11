@@ -46,6 +46,7 @@ describe('Organization context routes', () => {
     vi.clearAllMocks();
     buildResolvedContext.mockResolvedValue({
       counts: { items: 2, claims: 3, conflicts: 1 },
+      trust: { mfa: { required: true, gracePeriodDays: 7, managedBy: 'admin' } },
       conflicts: [{ claimPath: 'profile.industry', values: ['A', 'B'], sourceTypes: ['chat'] }],
       snapshotUpdatedAt: '2026-03-12T13:00:00.000Z',
     });
@@ -65,6 +66,7 @@ describe('Organization context routes', () => {
 
     expect(contextRes.status).toBe(200);
     expect(contextRes.body.counts.claims).toBe(3);
+    expect(contextRes.body.trust.mfa.required).toBe(true);
     expect(timelineRes.status).toBe(200);
     expect(timelineRes.body.timeline).toEqual([{ id: 'item-1', summary: 'Saved from chat' }]);
     expect(claimsRes.status).toBe(200);

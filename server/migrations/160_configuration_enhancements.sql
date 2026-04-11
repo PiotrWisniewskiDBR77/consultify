@@ -66,16 +66,22 @@ CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_date ON webhook_deliveries(del
 -- Data export requests table
 CREATE TABLE IF NOT EXISTS data_export_requests (
     id TEXT PRIMARY KEY,
-    organization_id TEXT NOT NULL,
+    organization_id TEXT,
     user_id TEXT NOT NULL,
     export_type TEXT NOT NULL CHECK(export_type IN ('full', 'partial', 'gdpr')),
+    format TEXT DEFAULT 'json',
+    include_data_types TEXT,
     status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'expired')),
     include_data TEXT, -- JSON array of data types to include
     exclude_data TEXT, -- JSON array of data types to exclude
+    download_url TEXT,
     file_url TEXT,
+    file_path TEXT,
     file_size INTEGER,
+    expires_at DATETIME,
     file_expires_at DATETIME,
     error_message TEXT,
+    requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     started_at DATETIME,
     completed_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

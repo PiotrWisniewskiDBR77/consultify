@@ -74,6 +74,7 @@ import { MarketInboxTab } from './Operations/MarketInboxTab';
 // Operations Tab Components
 import { MissionControlTab } from './Operations/MissionControlTab';
 import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
+import { PolicyEnforcementTab } from './Policy/PolicyEnforcementTab';
 import { SLAManagementTab } from './Operations/SLAManagementTab';
 import { AccessControlTab } from './Security/AccessControlTab';
 // Security Tab Components
@@ -156,6 +157,15 @@ const AI_PLATFORM_TABS: MainTab[] = [
     ],
   },
   {
+    id: 'policy',
+    label: 'Policy Plane',
+    icon: <ShieldCheck size={20} />,
+    description: 'Enforcement, drift detection, kill-switches, and propagation state',
+    subTabs: [
+      { id: 'enforcement-state', label: 'Enforcement State', icon: <ShieldCheck size={16} /> },
+    ],
+  },
+  {
     id: 'security',
     label: 'Security',
     icon: <Shield size={20} />,
@@ -209,6 +219,11 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   // Get current main tab configuration
   const currentMainTab = AI_PLATFORM_TABS.find((tab) => tab.id === activeMainTab);
 
+  useEffect(() => {
+    if (initialTab) setActiveMainTab(initialTab);
+    if (initialSubTab) setActiveSubTab(initialSubTab);
+  }, [initialTab, initialSubTab]);
+
   // Set default sub-tab when main tab changes
   useEffect(() => {
     if (currentMainTab && currentMainTab.subTabs.length > 0) {
@@ -244,6 +259,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'analytics/pricing-registry': 'superadmin_ai_analytics_pricing_registry',
       'analytics/performance-metrics': 'superadmin_ai_analytics_performance_metrics',
       'analytics/custom-reports': 'superadmin_ai_analytics_custom_reports',
+      'policy/enforcement-state': 'superadmin_ai_policy_plane',
       'security/api-keys': 'superadmin_ai_security_api_keys',
       'security/access-control': 'superadmin_ai_security_access_control',
       'security/audit-logs': 'superadmin_ai_security_audit_logs',
@@ -258,6 +274,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       development: 'superadmin_ai_development',
       operations: 'superadmin_ai_operations',
       analytics: 'superadmin_ai_analytics',
+      policy: 'superadmin_ai_policy_plane',
       security: 'superadmin_ai_security',
       knowledge: 'superadmin_ai_intelligence',
     };
@@ -337,6 +354,10 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       case 'analytics/custom-reports':
         return <CustomReportsTab />;
 
+      // Policy plane
+      case 'policy/enforcement-state':
+        return <PolicyEnforcementTab />;
+
       // Security
       case 'security/api-keys':
         return <APIKeysTab />;
@@ -385,6 +406,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'development/model-registry': 'superadmin-ai-model-registry',
       'operations/prompt-os-runtime': 'superadmin-ai-operations',
       'analytics/llm-observatory': 'superadmin-ai-operations',
+      'policy/enforcement-state': 'superadmin-ai-governance',
 
       // Security (reuse existing Settings docs where applicable)
       'security/api-keys': 'settings-api-keys',
@@ -400,6 +422,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       development: 'superadmin-ai-development',
       operations: 'superadmin-ai-operations',
       analytics: 'superadmin-ai-operations',
+      policy: 'superadmin-ai-governance',
       security: 'superadmin-security',
       knowledge: 'superadmin-ai-knowledge',
     };

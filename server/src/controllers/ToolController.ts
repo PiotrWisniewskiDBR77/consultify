@@ -60,6 +60,88 @@ const safeJsonParse = (value: string | null | undefined): Record<string, unknown
   }
 };
 
+type ToolMissingItem = {
+  id?: string;
+  label?: string;
+  severity?: string;
+  resolved?: boolean;
+  stepId?: string;
+};
+
+const safeJsonParseAny = <T>(value: string | null | undefined, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeMissingItems = (value: unknown): ToolMissingItem[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => item && typeof item === 'object')
+    .map((item: any) => ({
+      id: typeof item.id === 'string' ? item.id : undefined,
+      label: typeof item.label === 'string' ? item.label : undefined,
+      severity: typeof item.severity === 'string' ? item.severity : undefined,
+      resolved: Boolean(item.resolved),
+      stepId: typeof item.stepId === 'string' ? item.stepId : undefined,
+    }));
+};
+
+const getReadableMissingItemLabel = (item: ToolMissingItem, index: number) =>
+  item.label || item.id || item.stepId || `missing-item-${index + 1}`;
+
+const getMissingItemBlockers = (items: ToolMissingItem[]): string[] =>
+  items
+    .filter((item) => !item.resolved)
+    .map((item, index) => getReadableMissingItemLabel(item, index));
+
+const getRuntimeGateBlockers = (
+  session: Pick<
+    ToolSessionRow,
+    'id' | 'organization_id' | 'runtime_contract_json' | 'answers_json' | 'dod_status' | 'completion_percent' | 'confidence_avg'
+  >
+): string[] => {
+  if (session.runtime_contract_json) {
+    try {
+      const contract = ToolRuntimeContractSchema.parse(JSON.parse(session.runtime_contract_json));
+      const result = evaluateDoDGates(contract, safeJsonParse(session.answers_json));
+      return result.gates
+        .filter((gate) => !gate.passed)
+        .map((gate) => gate.label || gate.id || 'runtime-gate');
+    } catch {
+      return ['invalid runtime contract'];
+    }
+  }
+
+  const blockers: string[] = [];
+  if ((session.completion_percent || 0) < 100) {
+    blockers.push(`completion ${(session.completion_percent || 0)}% < 100%`);
+  }
+  if ((session.confidence_avg || 0) < 3) {
+    blockers.push(`confidence ${(session.confidence_avg || 0)} < 3`);
+  }
+  return blockers;
+};
+
+const getPromotionBlockers = (
+  session: Pick<
+    ToolSessionRow,
+    'id' | 'organization_id' | 'runtime_contract_json' | 'answers_json' | 'dod_status' | 'completion_percent' | 'confidence_avg'
+  >,
+  missingItemsValue: unknown
+): { missingItems: string[]; runtime: string[]; all: string[] } => {
+  const missingItems = getMissingItemBlockers(normalizeMissingItems(missingItemsValue));
+  const runtime = getRuntimeGateBlockers(session);
+  return {
+    missingItems,
+    runtime,
+    all: [...missingItems, ...runtime],
+  };
+};
+
 let decisionColumnsCache: Set<string> | null = null;
 
 const getDecisionColumns = async (): Promise<Set<string>> => {
@@ -867,9 +949,19 @@ export class ToolController {
       } = req.body;
 
       const existing = (await queryHelpers.queryOne(
-        `SELECT status, missing_items_json FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        `SELECT status, missing_items_json, runtime_contract_json, answers_json, dod_status, completion_percent, confidence_avg
+         FROM tool_sessions WHERE id = ? AND organization_id = ?`,
         [toolId, user.organizationId]
-      )) as { status?: string | null; missing_items_json?: string | null } | null;
+      )) as Pick<
+        ToolSessionRow,
+        | 'status'
+        | 'missing_items_json'
+        | 'runtime_contract_json'
+        | 'answers_json'
+        | 'dod_status'
+        | 'completion_percent'
+        | 'confidence_avg'
+      > | null;
       if (!existing) {
         res.status(404).json({ error: 'Tool session not found' });
         return;
@@ -910,14 +1002,33 @@ export class ToolController {
       }
 
       // P27-B: Finalize gating — block FINALIZED if unresolved blockers exist
-      if (newStatus === 'FINALIZED' && missingItems) {
-        const unresolvedBlockers = missingItems.filter(
-          (item: any) => item.severity === 'blocker' && !item.resolved
+      if (newStatus === 'FINALIZED') {
+        const promotionBlockers = getPromotionBlockers(
+          {
+            id: toolId,
+            organization_id: user.organizationId,
+            runtime_contract_json: existing.runtime_contract_json || null,
+            answers_json:
+              answers !== undefined
+                ? JSON.stringify(answers || {})
+                : (existing.answers_json ?? null),
+            dod_status: existing.dod_status || null,
+            completion_percent:
+              completionPercent !== undefined
+                ? completionPercent
+                : Number(existing.completion_percent || 0),
+            confidence_avg:
+              confidenceAvg !== undefined ? confidenceAvg : Number(existing.confidence_avg || 0),
+          },
+          missingItems !== undefined
+            ? missingItems
+            : safeJsonParseAny<ToolMissingItem[]>(existing.missing_items_json, [])
         );
-        if (unresolvedBlockers.length > 0) {
+        if (promotionBlockers.all.length > 0) {
           res.status(409).json({
-            error: 'Cannot finalize: unresolved blocker items',
-            unresolvedBlockers,
+            error: 'Cannot finalize: unresolved missing items or incomplete runtime gates',
+            unresolvedMissingItems: promotionBlockers.missingItems,
+            incompleteRuntimeGates: promotionBlockers.runtime,
           });
           return;
         }
@@ -1009,13 +1120,21 @@ export class ToolController {
         return;
       }
 
-      if (normalizeStatus(session.status) !== 'DRAFT') {
-        res.status(409).json({ error: 'Tool session not in draft' });
+      if (!['DRAFT', 'IN_PROGRESS', 'FINALIZED'].includes(normalizeStatus(session.status))) {
+        res.status(409).json({ error: 'Tool session not ready for review request' });
         return;
       }
 
-      if (!requireDoD(session)) {
-        res.status(409).json({ error: 'DoD not satisfied' });
+      const promotionBlockers = getPromotionBlockers(
+        session,
+        safeJsonParseAny<ToolMissingItem[]>((session as any).missing_items_json, [])
+      );
+      if (!requireDoD(session) || promotionBlockers.all.length > 0) {
+        res.status(409).json({
+          error: 'DoD not satisfied',
+          unresolvedMissingItems: promotionBlockers.missingItems,
+          incompleteRuntimeGates: promotionBlockers.runtime,
+        });
         return;
       }
 
@@ -1084,8 +1203,16 @@ export class ToolController {
         return;
       }
 
-      if (!requireDoD(session)) {
-        res.status(409).json({ error: 'DoD not satisfied' });
+      const promotionBlockers = getPromotionBlockers(
+        session,
+        safeJsonParseAny<ToolMissingItem[]>((session as any).missing_items_json, [])
+      );
+      if (!requireDoD(session) || promotionBlockers.all.length > 0) {
+        res.status(409).json({
+          error: 'DoD not satisfied',
+          unresolvedMissingItems: promotionBlockers.missingItems,
+          incompleteRuntimeGates: promotionBlockers.runtime,
+        });
         return;
       }
 
@@ -1264,8 +1391,16 @@ export class ToolController {
         return;
       }
 
-      if (!requireDoD(session)) {
-        res.status(409).json({ error: 'DoD not satisfied' });
+      const promotionBlockers = getPromotionBlockers(
+        session,
+        safeJsonParseAny<ToolMissingItem[]>((session as any).missing_items_json, [])
+      );
+      if (!requireDoD(session) || promotionBlockers.all.length > 0) {
+        res.status(409).json({
+          error: 'DoD not satisfied',
+          unresolvedMissingItems: promotionBlockers.missingItems,
+          incompleteRuntimeGates: promotionBlockers.runtime,
+        });
         return;
       }
 
@@ -1558,7 +1693,7 @@ export class ToolController {
         return;
       }
 
-      const validOutputTypes = ['report', 'presentation', 'idea'];
+      const validOutputTypes = ['initiative', 'report', 'presentation', 'idea'];
       if (!validOutputTypes.includes(outputType)) {
         res.status(400).json({ error: `Invalid outputType. Must be one of: ${validOutputTypes.join(', ')}` });
         return;
@@ -1580,8 +1715,75 @@ export class ToolController {
         return;
       }
 
+      const promotionBlockers = getPromotionBlockers(
+        session,
+        safeJsonParseAny<ToolMissingItem[]>((session as any).missing_items_json, [])
+      );
+      if (promotionBlockers.all.length > 0) {
+        res.status(409).json({
+          error: 'Tool session is not eligible for promotion',
+          unresolvedMissingItems: promotionBlockers.missingItems,
+          incompleteRuntimeGates: promotionBlockers.runtime,
+        });
+        return;
+      }
+
       const now = new Date().toISOString();
+      const promoteBatchId = `promote-${outputType}`;
+      const existingPromotion = (await queryHelpers.queryOne(
+        `SELECT initiative_id FROM tool_initiative_links
+         WHERE tool_session_id = ? AND batch_id = ?
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [toolId, promoteBatchId]
+      )) as { initiative_id?: string | null } | null;
+
+      if (existingPromotion?.initiative_id) {
+        res.json({
+          id: existingPromotion.initiative_id,
+          outputType,
+          title,
+          sourceSessionId: toolId,
+          sourceToolType: session.tool_type,
+          createdAt: now,
+          deduplicated: true,
+        });
+        return;
+      }
+
       const outputId = uuidv4();
+      const sourceVersion = 1;
+      const toolTrace = {
+        source_type: 'tool',
+        source_id: toolId,
+        source_version: sourceVersion,
+        tool_type: session.tool_type,
+        promoted_at: now,
+        promotion_type: outputType,
+      };
+
+      if (outputType === 'initiative') {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (
+            id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
+            priority_order, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            outputId,
+            session.organization_id,
+            session.project_id || null,
+            title,
+            description || '',
+            'DRAFT',
+            'operations',
+            'tool',
+            toolId,
+            2,
+            now,
+            now,
+          ]
+        );
+      }
 
       if (outputType === 'report') {
         try {
@@ -1594,7 +1796,7 @@ export class ToolController {
             [
               outputId, session.organization_id, session.project_id || null,
               title, 'tool_session_report',
-              JSON.stringify({ source_type: 'tool', source_id: toolId, tool_type: session.tool_type }),
+              JSON.stringify(toolTrace),
               'completed', 'completed',
               user.id, now, now, now,
             ]
@@ -1613,9 +1815,37 @@ export class ToolController {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               outputId, session.organization_id, 'tool_promotion', 'presentation', 'completed',
-              JSON.stringify({ source_type: 'tool', source_id: toolId, tool_type: session.tool_type, title }),
-              JSON.stringify({ title, description: description || '', promoted_from_session: toolId }),
+              JSON.stringify({ ...toolTrace, title }),
+              JSON.stringify({
+                title,
+                description: description || '',
+                promoted_from_session: toolId,
+                tool_trace: toolTrace,
+              }),
               user.id, now, now,
+            ]
+          );
+        } catch {
+          // Table may not exist
+        }
+      }
+
+      if (outputType === 'idea') {
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO my_ideas (
+              id, user_id, organization_id, title, body, tags, source_type, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              outputId,
+              user.id,
+              session.organization_id,
+              title,
+              description || '',
+              JSON.stringify(['tool-output', session.tool_type]),
+              'tool',
+              now,
+              now,
             ]
           );
         } catch {
@@ -1628,7 +1858,7 @@ export class ToolController {
         await queryHelpers.queryRun(
           `INSERT INTO tool_initiative_links (id, tool_session_id, batch_id, initiative_id, created_at)
            VALUES (?, ?, ?, ?, ?)`,
-          [uuidv4(), toolId, `promote-${outputType}`, outputId, now]
+          [uuidv4(), toolId, promoteBatchId, outputId, now]
         );
       } catch {
         // Graceful fallback
@@ -1646,6 +1876,8 @@ export class ToolController {
         title,
         sourceSessionId: toolId,
         sourceToolType: session.tool_type,
+        sourceVersion,
+        toolTrace,
         createdAt: now,
       });
     }

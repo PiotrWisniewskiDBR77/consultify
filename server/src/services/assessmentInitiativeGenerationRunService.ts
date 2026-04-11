@@ -242,6 +242,11 @@ export class AssessmentInitiativeGenerationRunService {
   static async createAndStart(params: CreateRunParams): Promise<{ runId: string }> {
     const runId = uuidv4();
     const createdAt = nowIso();
+    const assessment = await fetchAssessment(params.assessmentId, params.organizationId);
+    const workbench = safeJsonParse<Record<string, any>>(
+      String(assessment?.p28_workbench_v1 || ''),
+      {}
+    );
     const inputs = {
       mode: params.mode,
       methodologyId: params.methodologyId,
@@ -251,6 +256,16 @@ export class AssessmentInitiativeGenerationRunService {
       reportId: params.reportId || null,
       templateId: params.templateId || null,
       consultantBrief: params.consultantBrief || null,
+      provenance: workbench?.assessmentRunId
+        ? {
+            assessmentRunId: workbench.assessmentRunId,
+            assessmentDefinitionId: workbench?.assessmentDefinitionRef?.definitionId || null,
+            assessmentDefinitionVersion: workbench?.assessmentDefinitionRef?.version || null,
+            workbenchRunState: workbench?.runState || null,
+            interpretationReviewState: workbench?.interpretationReview?.status || null,
+            scoreReviewState: workbench?.scoreReview?.status || null,
+          }
+        : null,
     };
     const stats = {
       batchesPlanned: Math.ceil(params.requestedCount / params.batchSize),
@@ -355,14 +370,20 @@ export class AssessmentInitiativeGenerationRunService {
     const rows = await queryHelpers.queryAll<any>(
       `SELECT id, assessment_id as assessmentId, report_id as reportId, mode, methodology_id as methodologyId,
               requested_count as requestedCount, batch_size as batchSize, status, created_by as createdBy,
-              created_at as createdAt, updated_at as updatedAt
+              inputs_json as inputsJson, created_at as createdAt, updated_at as updatedAt
        FROM assessment_initiative_generation_runs
        WHERE assessment_id = ? AND organization_id = ?
        ORDER BY created_at DESC
        LIMIT 50`,
       [assessmentId, organizationId]
     );
-    return rows || [];
+    return (rows || []).map((row: any) => {
+      const inputs = safeJsonParse<any>(row.inputsJson, {});
+      return {
+        ...row,
+        provenance: inputs?.provenance || null,
+      };
+    });
   }
 
   static async listRunInitiatives(

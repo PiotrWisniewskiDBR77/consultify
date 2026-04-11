@@ -277,8 +277,9 @@ router.post('/:assessmentId/duplicate', async (req, res) => {
           id, organization_id, project_id, assessment_type, name, status,
           completion_percent, confidence_avg,
           answers_json, context_snapshot, score_summary, navigation_json,
+          assessment_definition_id, assessment_definition_version,
           created_by, updated_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newId,
           organizationId,
@@ -289,8 +290,10 @@ router.post('/:assessmentId/duplicate', async (req, res) => {
           original.confidence_avg || 0,
           original.answers_json || '{}',
           original.context_snapshot || '{}',
-          original.score_summary || '{}',
+          original.p28_workbench_v1 ? '{}' : original.score_summary || '{}',
           original.navigation_json || '{}',
+          original.assessment_definition_id || null,
+          original.assessment_definition_version || null,
           userId,
           userId,
           now,
@@ -1499,14 +1502,13 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
 
     let resolvedIndustry = 'manufacturing';
     try {
-      const orgContextService = (await import('../services/organizationContext/OrganizationContextService.js')).default;
+      const orgContextService = (
+        await import('../services/organizationContext/OrganizationContextService.js')
+      ).default;
       const resolved = await orgContextService.buildResolvedContext(String(organizationId));
       resolvedIndustry = resolved?.profile?.industry || 'manufacturing';
     } catch {
-      const org = await db.get<any>(`SELECT industry FROM organizations WHERE id = ?`, [
-        String(organizationId),
-      ]);
-      resolvedIndustry = org?.industry || 'manufacturing';
+      resolvedIndustry = 'manufacturing';
     }
 
     const framework = String(assessment.assessment_type || 'SIRI').toUpperCase();

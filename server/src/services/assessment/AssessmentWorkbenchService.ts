@@ -5,9 +5,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import * as artifactRegistryService from '../v8/artifactRegistryService.js';
-import logger from '../../utils/Logger.js';
+import { addFinding } from '../v8/interviewInsightFindingsService.js';
+import AssessmentDefinitionService from './AssessmentDefinitionService.js';
 
 export const P28_WORKBENCH_CONTRACT_VERSION = 'p28_workbench_v1' as const;
 
@@ -66,7 +68,14 @@ export interface PromotionTrace {
 
 export interface P28WorkbenchState {
   contractVersion: typeof P28_WORKBENCH_CONTRACT_VERSION;
-  assessmentDefinitionRef: { methodologyId: string; version: string };
+  assessmentDefinitionRef: {
+    definitionId: string;
+    methodologyId: string;
+    version: string;
+    status: 'published';
+    readOnly: true;
+    publishedAt?: string | null;
+  };
   /** assessment row id acts as assessment_run_id in P28 payloads */
   assessmentRunId: string;
   orgId: string;
@@ -99,6 +108,13 @@ export interface P28WorkbenchState {
     missingEvidenceKinds?: string[];
     acceptedForCompletion?: boolean;
   };
+  pendingPromotion?: {
+    targetKind: PromotionTrace['targetKind'];
+    targetRef: string;
+    payload: Record<string, unknown>;
+    failedAt: string;
+    error: string;
+  } | null;
   completedAt?: string;
 }
 
@@ -126,7 +142,9 @@ export function buildWhatNextGuidance(state: P28WorkbenchState): string[] {
 
   switch (state.runState) {
     case 'draft':
-      push('Call POST .../workbench/transition with { toState: "running" } to start evidence capture.');
+      push(
+        'Call POST .../workbench/transition with { toState: "running" } to start evidence capture.'
+      );
       break;
     case 'running':
       if (state.requiredEvidenceKinds?.length) {
@@ -147,7 +165,9 @@ export function buildWhatNextGuidance(state: P28WorkbenchState): string[] {
       }
       break;
     case 'score_proposed':
-      push('Review the score proposal: POST .../workbench/score-review with action accept, reject, or override.');
+      push(
+        'Review the score proposal: POST .../workbench/score-review with action accept, reject, or override.'
+      );
       break;
     case 'score_reviewed':
       push(
@@ -164,10 +184,14 @@ export function buildWhatNextGuidance(state: P28WorkbenchState): string[] {
       push('Finalize: POST .../workbench/transition with { toState: "completed" }.');
       break;
     case 'completed':
-      push('GET .../workbench/promotion-payload, then POST .../workbench/promotion with targetKind and targetRef for Outputs/Interview handoff.');
+      push(
+        'GET .../workbench/promotion-payload, then POST .../workbench/promotion with targetKind and targetRef for Outputs/Interview handoff.'
+      );
       break;
     case 'failed':
-      push('Resume: POST .../workbench/transition with { toState: "running" } after resolving the failure.');
+      push(
+        'Resume: POST .../workbench/transition with { toState: "running" } after resolving the failure.'
+      );
       break;
     default:
       break;
@@ -180,6 +204,12 @@ export function buildWhatNextGuidance(state: P28WorkbenchState): string[] {
     );
   }
 
+  if (state.pendingPromotion) {
+    push(
+      `Retry denied promotion for ${state.pendingPromotion.targetKind}:${state.pendingPromotion.targetRef} after resolving downstream error.`
+    );
+  }
+
   return lines;
 }
 
@@ -189,13 +219,20 @@ export function createInitialWorkbench(params: {
   methodologyId: string;
   startedBy: string;
   methodologyVersion?: string;
+  definitionId?: string;
+  publishedAt?: string | null;
 }): P28WorkbenchState {
   const t = nowIso();
+  const version = params.methodologyVersion || '1.0';
   return {
     contractVersion: P28_WORKBENCH_CONTRACT_VERSION,
     assessmentDefinitionRef: {
+      definitionId: params.definitionId || `asdef_${params.methodologyId}_${version}`.toLowerCase(),
       methodologyId: params.methodologyId,
-      version: params.methodologyVersion || '1.0',
+      version,
+      status: 'published',
+      readOnly: true,
+      publishedAt: params.publishedAt || null,
     },
     assessmentRunId: params.assessmentId,
     orgId: params.orgId,
@@ -208,6 +245,7 @@ export function createInitialWorkbench(params: {
     interpretationProposal: null,
     interpretationReview: null,
     promotionTraces: [],
+    pendingPromotion: null,
     audit: [{ at: t, actorId: params.startedBy, action: 'workbench_init', detail: 'draft' }],
   };
 }
@@ -244,7 +282,8 @@ export function buildBoundedPromotionPayload(state: P28WorkbenchState): Record<s
         : null;
 
   const interpretationOutcome =
-    state.interpretationReview?.status === 'overridden' && state.interpretationReview.overrideSummary
+    state.interpretationReview?.status === 'overridden' &&
+    state.interpretationReview.overrideSummary
       ? { kind: 'override' as const, summary: state.interpretationReview.overrideSummary }
       : state.interpretationProposal
         ? {
@@ -259,7 +298,8 @@ export function buildBoundedPromotionPayload(state: P28WorkbenchState): Record<s
 
   return {
     assessment_run_id: state.assessmentRunId,
-    assessment_definition_id: state.assessmentDefinitionRef.methodologyId,
+    assessment_definition_id: state.assessmentDefinitionRef.definitionId,
+    methodology_id: state.assessmentDefinitionRef.methodologyId,
     assessment_definition_version: state.assessmentDefinitionRef.version,
     org_id: state.orgId,
     run_state: state.runState,
@@ -283,9 +323,146 @@ function parseState(raw: string | null | undefined): P28WorkbenchState | null {
 
 function persistState(assessmentId: string, organizationId: string, state: P28WorkbenchState) {
   return queryHelpers.queryRun(
-    `UPDATE assessments SET p28_workbench_v1 = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
-    [JSON.stringify(state), nowIso(), assessmentId, organizationId]
+    `UPDATE assessments
+        SET p28_workbench_v1 = ?,
+            assessment_definition_id = ?,
+            assessment_definition_version = ?,
+            updated_at = ?
+      WHERE id = ? AND organization_id = ?`,
+    [
+      JSON.stringify(state),
+      state.assessmentDefinitionRef.definitionId,
+      state.assessmentDefinitionRef.version,
+      nowIso(),
+      assessmentId,
+      organizationId,
+    ]
   );
+}
+
+async function buildInitialWorkbench(
+  assessmentId: string,
+  organizationId: string,
+  assessmentType: string,
+  createdBy: string
+): Promise<P28WorkbenchState> {
+  const definition = await AssessmentDefinitionService.ensurePublishedDefinition({
+    methodologyId: assessmentType,
+    createdBy,
+    organizationId,
+  });
+  return createInitialWorkbench({
+    assessmentId,
+    orgId: organizationId,
+    methodologyId: definition.methodologyId,
+    methodologyVersion: definition.version,
+    definitionId: definition.id,
+    publishedAt: definition.publishedAt,
+    startedBy: createdBy,
+  });
+}
+
+async function createInsightProposalFromAssessment(params: {
+  assessmentId: string;
+  organizationId: string;
+  userId: string;
+  state: P28WorkbenchState;
+  requestedTargetRef?: string;
+}): Promise<string> {
+  const now = nowIso();
+  const insightId = params.requestedTargetRef?.trim() || `ii_${uuidv4()}`;
+  const payload = buildBoundedPromotionPayload(params.state);
+  const activeEvidencePointers = params.state.evidencePointers.filter(
+    (pointer) => pointer.availability !== 'unavailable'
+  );
+  const contentLines = [
+    `Assessment proposal: ${params.state.assessmentDefinitionRef.methodologyId}`,
+    '',
+    `Summary: ${params.state.interpretationProposal?.summary || params.state.interpretationReview?.overrideSummary || 'No summary'}`,
+    '',
+    `Limits: ${String(payload.limits || 'None provided')}`,
+    '',
+    'Key findings:',
+    ...(params.state.interpretationProposal?.keyFindings || []).map((item) => `- ${item}`),
+    '',
+    'Next actions:',
+    ...(params.state.interpretationProposal?.nextActions || []).map((item) => `- ${item}`),
+  ];
+
+  await queryHelpers.queryRun(
+    `INSERT INTO interview_insights
+      (id, session_id, organization_id, category, title, prompt_type, source_session_ids, filters, content,
+       status, source_session_count, created_by, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      insightId,
+      null,
+      params.organizationId,
+      'assessment_proposal',
+      `Assessment proposal — ${params.state.assessmentDefinitionRef.methodologyId}`,
+      'summary',
+      JSON.stringify([]),
+      JSON.stringify({
+        sourceType: 'assessment',
+        assessmentRunId: params.assessmentId,
+        assessmentDefinitionId: params.state.assessmentDefinitionRef.definitionId,
+        assessmentDefinitionVersion: params.state.assessmentDefinitionRef.version,
+        proposalKind: 'assessment_p28_handoff',
+      }),
+      contentLines.join('\n'),
+      'draft',
+      0,
+      params.userId,
+      now,
+      now,
+    ]
+  );
+
+  const findingStatement =
+    params.state.interpretationProposal?.keyFindings?.[0] ||
+    params.state.interpretationProposal?.summary ||
+    params.state.interpretationReview?.overrideSummary ||
+    'Assessment finding proposal';
+  const scoreConfidence = params.state.scoreProposal?.confidence ?? 0;
+  const confidenceLevel =
+    scoreConfidence >= 0.8
+      ? 'high'
+      : scoreConfidence >= 0.55
+        ? 'medium'
+        : scoreConfidence > 0
+          ? 'low'
+          : 'insufficient';
+  const pointerTypeForKind = (kind: string) => {
+    switch (kind) {
+      case 'survey_response':
+        return 'survey_linkage';
+      case 'interview_note':
+        return 'transcript_excerpt';
+      case 'artifact':
+        return 'export_artifact';
+      case 'document':
+      case 'external_url':
+      default:
+        return 'attachment';
+    }
+  };
+
+  addFinding(insightId, {
+    finding_statement: findingStatement,
+    confidence_level: confidenceLevel,
+    limits: String(payload.limits || 'Bounded assessment proposal'),
+    next_action:
+      params.state.interpretationProposal?.nextActions?.[0] ||
+      'Review this assessment proposal before promoting it beyond P10.',
+    evidence_pointers: activeEvidencePointers.map((pointer) => ({
+      type: pointerTypeForKind(pointer.kind),
+      sourceRef: pointer.ref,
+      sourceFingerprint: `${pointer.kind}:${pointer.ref}`,
+      capturedExcerpt: pointer.label || null,
+    })),
+  });
+
+  return insightId;
 }
 
 export class AssessmentWorkbenchService {
@@ -304,12 +481,7 @@ export class AssessmentWorkbenchService {
     }
     let state = parseState(row.p28 ?? undefined);
     if (!state) {
-      state = createInitialWorkbench({
-        assessmentId,
-        orgId: organizationId,
-        methodologyId: assessmentType,
-        startedBy: createdBy,
-      });
+      state = await buildInitialWorkbench(assessmentId, organizationId, assessmentType, createdBy);
       await persistState(assessmentId, organizationId, state);
     }
     return state;
@@ -337,14 +509,14 @@ export class AssessmentWorkbenchService {
     if (!ass) {
       throw Object.assign(new Error('ASSESSMENT_NOT_FOUND'), { code: 'ASSESSMENT_NOT_FOUND' });
     }
-    let state =
+    const state =
       parseState(ass.p28 ?? undefined) ||
-      createInitialWorkbench({
+      (await buildInitialWorkbench(
         assessmentId,
-        orgId: organizationId,
-        methodologyId: String(ass.assessment_type || 'DRD'),
-        startedBy: String(ass.created_by || userId),
-      });
+        organizationId,
+        String(ass.assessment_type || 'DRD'),
+        String(ass.created_by || userId)
+      ));
 
     if (state.runState === 'completed') {
       throw Object.assign(new Error('RUN_READ_ONLY'), { code: 'P28_RUN_READ_ONLY' });
@@ -400,13 +572,16 @@ export class AssessmentWorkbenchService {
         });
       } else {
         throw Object.assign(
-          new Error('Complete requires interpretation_reviewed or score_reviewed + reason (bounded degraded)'),
+          new Error(
+            'Complete requires interpretation_reviewed or score_reviewed + reason (bounded degraded)'
+          ),
           { code: 'P28_COMPLETE_GUARD' }
         );
       }
       state.completedAt = nowIso();
     }
 
+    state.pendingPromotion = null;
     state.runState = to;
     state.audit.push({
       at: nowIso(),
@@ -488,6 +663,25 @@ export class AssessmentWorkbenchService {
       });
     }
 
+    if (!input.evidencePointerIds.length) {
+      throw Object.assign(new Error('Linked evidence pointers required'), {
+        code: 'P28_EVIDENCE_POINTERS_REQUIRED',
+      });
+    }
+
+    const invalidPointers = input.evidencePointerIds.filter(
+      (pointerId) =>
+        !state.evidencePointers.some(
+          (pointer) => pointer.id === pointerId && pointer.availability !== 'unavailable'
+        )
+    );
+    if (invalidPointers.length) {
+      throw Object.assign(new Error('Invalid evidence pointers supplied'), {
+        code: 'P28_EVIDENCE_POINTER_INVALID',
+        invalidEvidencePointerIds: invalidPointers,
+      });
+    }
+
     const proposal: ScoreProposal = {
       id: uuidv4(),
       status: 'proposal',
@@ -532,11 +726,18 @@ export class AssessmentWorkbenchService {
     }
     const t = nowIso();
     if (body.action === 'accept') {
-      state.scoreReview = { status: 'accepted', decidedAt: t, decidedBy: userId, reason: body.reason };
+      state.scoreReview = {
+        status: 'accepted',
+        decidedAt: t,
+        decidedBy: userId,
+        reason: body.reason,
+      };
       state.runState = 'score_reviewed';
     } else if (body.action === 'override') {
       if (!body.overrideScoreValues || !Object.keys(body.overrideScoreValues).length) {
-        throw Object.assign(new Error('override values required'), { code: 'P28_OVERRIDE_REQUIRED' });
+        throw Object.assign(new Error('override values required'), {
+          code: 'P28_OVERRIDE_REQUIRED',
+        });
       }
       state.scoreReview = {
         status: 'overridden',
@@ -553,10 +754,20 @@ export class AssessmentWorkbenchService {
         detail: JSON.stringify(body.overrideScoreValues),
       });
     } else {
-      state.scoreReview = { status: 'rejected', decidedAt: t, decidedBy: userId, reason: body.reason };
+      state.scoreReview = {
+        status: 'rejected',
+        decidedAt: t,
+        decidedBy: userId,
+        reason: body.reason,
+      };
       state.scoreProposal = null;
       state.runState = 'running';
-      state.audit.push({ at: t, actorId: userId, action: 'score_reject', detail: body.reason || '' });
+      state.audit.push({
+        at: t,
+        actorId: userId,
+        action: 'score_reject',
+        detail: body.reason || '',
+      });
     }
     await persistState(assessmentId, organizationId, state);
     return state;
@@ -583,10 +794,14 @@ export class AssessmentWorkbenchService {
       });
     }
     if (!state.scoreProposal?.id) {
-      throw Object.assign(new Error('Score proposal missing'), { code: 'P28_SCORE_PROPOSAL_MISSING' });
+      throw Object.assign(new Error('Score proposal missing'), {
+        code: 'P28_SCORE_PROPOSAL_MISSING',
+      });
     }
     if (!input.limits?.trim()) {
-      throw Object.assign(new Error('limits required (no overclaim)'), { code: 'P28_LIMITS_REQUIRED' });
+      throw Object.assign(new Error('limits required (no overclaim)'), {
+        code: 'P28_LIMITS_REQUIRED',
+      });
     }
     const proposal: InterpretationProposal = {
       id: uuidv4(),
@@ -686,13 +901,34 @@ export class AssessmentWorkbenchService {
   ): Promise<P28WorkbenchState> {
     const { state } = await this.getMutable(assessmentId, organizationId);
     if (state.runState !== 'completed') {
-      throw Object.assign(new Error('Complete run before promotion'), { code: 'P28_PROMOTION_GUARD' });
+      throw Object.assign(new Error('Complete run before promotion'), {
+        code: 'P28_PROMOTION_GUARD',
+      });
+    }
+    const validation = assertPromotionPayloadShape(state);
+    if (!validation.ok) {
+      throw Object.assign(new Error('Promotion payload invalid'), {
+        code: 'P28_PROMOTION_PAYLOAD_INVALID',
+        validationErrors: validation.errors,
+        whatNext: buildWhatNextGuidance(state),
+      });
+    }
+
+    let targetRef = String(input.targetRef || '').trim();
+    if (input.targetKind === 'interview_insight' && !targetRef) {
+      targetRef = await createInsightProposalFromAssessment({
+        assessmentId,
+        organizationId,
+        userId,
+        state,
+        requestedTargetRef: targetRef,
+      });
     }
     const trace: PromotionTrace = {
       id: uuidv4(),
       fromAssessmentRunId: assessmentId,
       targetKind: input.targetKind,
-      targetRef: input.targetRef,
+      targetRef,
       createdAt: nowIso(),
       actorId: userId,
       payloadSummary: input.payloadSummary,
@@ -702,7 +938,7 @@ export class AssessmentWorkbenchService {
       at: nowIso(),
       actorId: userId,
       action: 'promotion',
-      detail: `${input.targetKind}:${input.targetRef}`,
+      detail: `${input.targetKind}:${targetRef}`,
     });
     await persistState(assessmentId, organizationId, state);
 
@@ -735,10 +971,32 @@ export class AssessmentWorkbenchService {
           action: 'promotion_artifact_registered',
           detail: `outputs_library:${assessmentId}`,
         });
+        state.pendingPromotion = null;
         await persistState(assessmentId, organizationId, state);
       } catch (e) {
-        logger.warn('[AssessmentWorkbench] promotion artifact registration failed (non-blocking)', e);
+        const payload = buildBoundedPromotionPayload(state);
+        state.pendingPromotion = {
+          targetKind: input.targetKind,
+          targetRef,
+          payload,
+          failedAt: nowIso(),
+          error: e instanceof Error ? e.message : 'Unknown downstream error',
+        };
+        state.degraded = {
+          code: 'promotion_failed',
+          message: 'Outputs handoff failed; retry after resolving downstream issue',
+        };
+        await persistState(assessmentId, organizationId, state);
+        logger.warn(
+          '[AssessmentWorkbench] promotion artifact registration failed (non-blocking)',
+          e
+        );
       }
+    }
+
+    if (input.targetKind === 'interview_insight') {
+      state.pendingPromotion = null;
+      await persistState(assessmentId, organizationId, state);
     }
 
     return state;
@@ -808,12 +1066,12 @@ export class AssessmentWorkbenchService {
     }
     const state =
       parseState(ass.p28 ?? undefined) ||
-      createInitialWorkbench({
+      (await buildInitialWorkbench(
         assessmentId,
-        orgId: organizationId,
-        methodologyId: String(ass.assessment_type || 'DRD'),
-        startedBy: String(ass.created_by || ''),
-      });
+        organizationId,
+        String(ass.assessment_type || 'DRD'),
+        String(ass.created_by || '')
+      ));
     return { state };
   }
 }

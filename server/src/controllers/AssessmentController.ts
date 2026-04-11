@@ -350,6 +350,12 @@ export const ensureAssessmentSchema = async (): Promise<void> => {
     await tryAddColumn('assessments', 'current_section_id', 'current_section_id TEXT');
     await tryAddColumn('assessments', 'navigation_json', "navigation_json TEXT DEFAULT '{}'");
     await tryAddColumn('assessments', 'p28_workbench_v1', 'p28_workbench_v1 TEXT');
+    await tryAddColumn('assessments', 'assessment_definition_id', 'assessment_definition_id TEXT');
+    await tryAddColumn(
+      'assessments',
+      'assessment_definition_version',
+      'assessment_definition_version TEXT'
+    );
     await tryAddColumn('assessments', 'review_requested_at', 'review_requested_at TIMESTAMP');
     await tryAddColumn('assessments', 'report_approved_at', 'report_approved_at TIMESTAMP');
     await tryAddColumn('assessments', 'approved_at', 'approved_at TIMESTAMP');
@@ -357,6 +363,26 @@ export const ensureAssessmentSchema = async (): Promise<void> => {
     await tryAddColumn('assessments', 'updated_by', 'updated_by TEXT');
     await tryAddColumn('assessments', 'created_at', 'created_at TIMESTAMP');
     await tryAddColumn('assessments', 'updated_at', 'updated_at TIMESTAMP');
+
+    await queryHelpers.queryRun(
+      `CREATE TABLE IF NOT EXISTS assessment_definitions (
+        id TEXT PRIMARY KEY,
+        methodology_id TEXT NOT NULL,
+        version TEXT NOT NULL,
+        title TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        is_read_only INTEGER NOT NULL DEFAULT 0,
+        definition_json TEXT NOT NULL DEFAULT '{}',
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        published_at TEXT
+      )`
+    );
+    await queryHelpers.queryRun(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_assessment_definitions_methodology_version
+       ON assessment_definitions(methodology_id, version)`
+    );
 
     // Assessment reports table
     await queryHelpers.queryRun(
@@ -901,12 +927,13 @@ export class AssessmentController {
         answers_json?: string | null;
         context_snapshot?: string | null;
         score_summary?: string | null;
+        p28_workbench_v1?: string | null;
         completion_percent?: number | null;
         confidence_avg?: number | null;
         current_section_id?: string | null;
         navigation_json?: string | null;
       }>(
-        `SELECT answers_json, context_snapshot, score_summary, completion_percent, confidence_avg, current_section_id, navigation_json
+        `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json
          FROM assessments
          WHERE id = ? AND organization_id = ?`,
         [assessmentId, user.organizationId]
@@ -914,6 +941,18 @@ export class AssessmentController {
 
       if (!existing) {
         res.status(404).json({ error: 'Assessment not found' });
+        return;
+      }
+
+      if (scoreSummary !== undefined && existing.p28_workbench_v1) {
+        res.status(409).json({
+          error:
+            'P28 assessments require explicit score proposals and review before scores can change',
+          code: 'P28_NO_SILENT_SCORING',
+          whatNext: [
+            'Use the P28 workbench score proposal flow instead of writing scoreSummary directly.',
+          ],
+        });
         return;
       }
 

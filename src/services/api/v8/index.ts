@@ -63,6 +63,8 @@ export type {
   V8PartnerOrganizationUpdateResult,
   V8PartnerPayoutAccount,
   V8PartnerPayoutHistoryItem,
+  V8PartnerProgramStatus,
+  V8PartnerPayoutRequestResponse,
   V8PartnerPayoutRequestPayload,
   V8PartnerPayoutRequestResult,
   V8PartnerPayoutSettings,

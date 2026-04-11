@@ -14,6 +14,10 @@ import {
   ToolType,
 } from '@/store/useToolStore';
 
+import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
+
+import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
+import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
 import { ContextStep } from './steps/ContextStep';
 import { ImpactHypothesisStep } from './steps/ImpactHypothesisStep';
 import { InitiativesStep } from './steps/InitiativesStep';
@@ -68,7 +72,13 @@ interface ToolCanvasProps {
   chatSnippets?: { role: string; content: string }[];
   showContextPanel?: boolean;
   onGenerateFullSession?: () => void;
-  onGenerateSuggestions?: () => void;
+  phaseAiActions?: ToolPhaseAiActionDefinition[];
+  activeAiActionId?: ToolPhaseAiActionId | null;
+  onRunPhaseAiAction?: (actionId: ToolPhaseAiActionId) => void;
+  onAbortAi?: () => void;
+  missionSuggestion?: Partial<ConsultingMissionContext> | null;
+  onApplyMissionSuggestion?: () => void;
+  onDismissMissionSuggestion?: () => void;
   isGeneratingAI?: boolean;
   sessionGenerationStatus?: SessionGenerationStatus;
   onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
@@ -94,7 +104,13 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   chatSnippets,
   showContextPanel = true,
   onGenerateFullSession,
-  onGenerateSuggestions,
+  phaseAiActions = [],
+  activeAiActionId = null,
+  onRunPhaseAiAction,
+  onAbortAi,
+  missionSuggestion,
+  onApplyMissionSuggestion,
+  onDismissMissionSuggestion,
   isGeneratingAI,
   sessionGenerationStatus,
   onAcceptCard,
@@ -125,6 +141,9 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
             isPolish={isPolish}
             onGenerateFullSession={onGenerateFullSession}
             sessionGenerationStatus={sessionGenerationStatus}
+            missionSuggestion={missionSuggestion}
+            onApplyMissionSuggestion={onApplyMissionSuggestion}
+            onDismissMissionSuggestion={onDismissMissionSuggestion}
           />
         );
       }
@@ -146,7 +165,6 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
           <SWOTBuildPhase
             session={session}
             isPolish={isPolish}
-            onGenerateSuggestions={onGenerateSuggestions}
             isGeneratingAI={isGeneratingAI || isStreaming}
             onAcceptCard={onAcceptCard}
             onRejectCard={onRejectCard}
@@ -451,7 +469,21 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   return (
     <div className="flex h-full">
       {/* Main content area */}
-      <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
+      <div className="flex-1 overflow-y-auto p-6">
+        {(phaseAiActions.length > 0 || isStreaming) && (
+          <div className="mb-4 flex justify-end">
+            <ToolPhaseAiActions
+              actions={phaseAiActions}
+              activeActionId={activeAiActionId}
+              isStreaming={isStreaming}
+              isPolish={isPolish}
+              onRunAction={(actionId) => onRunPhaseAiAction?.(actionId)}
+              onAbort={onAbortAi}
+            />
+          </div>
+        )}
+        {renderStepContent()}
+      </div>
 
       {shouldShowContextPanel && (
         <ToolContextPanel

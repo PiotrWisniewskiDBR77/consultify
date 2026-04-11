@@ -7,11 +7,40 @@
 import { Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { normalizeOrganizationRole } from '../services/organizationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import rolesRoutes from './security/roles.routes.js';
 
 const router = Router();
+
+function parseSecurityJson(raw: unknown) {
+  if (typeof raw !== 'string' || !raw.trim()) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+async function requireOrgAdmin(req: AuthRequest) {
+  const orgId = req.user!.organizationId;
+  const membership = await dbGet<{ role?: string }>(
+    `SELECT role FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1`,
+    [orgId, req.user!.id],
+    { fallback: true }
+  );
+  const actorRole = normalizeOrganizationRole(membership?.role || req.user?.role);
+  if (!['OWNER', 'ADMIN'].includes(actorRole)) {
+    const guidance =
+      actorRole === 'GUEST'
+        ? 'Guests cannot access admin tools.'
+        : 'You need admin access. Ask your workspace admin.';
+    return { error: 'Admin access required', code: 'ADMIN_ACCESS_REQUIRED', guidance };
+  }
+
+  return null;
+}
 
 // ==========================================
 // SECURITY SETTINGS (ORG)
@@ -22,47 +51,30 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
-    let row = await dbGet<any>(`SELECT * FROM security_settings WHERE organization_id = ?`, [
-      orgId,
-    ]);
-
-    if (!row) {
-      await dbRun(
-        `INSERT INTO security_settings (
-                    organization_id, require_2fa, password_min_length, password_require_uppercase,
-                    password_require_number, password_require_special, password_expiry_days,
-                    session_timeout_minutes, max_sessions_per_user, ip_whitelist, updated_by
-                ) VALUES (?, 0, 8, 1, 1, 0, 0, 30, 5, '["192.168.1.0/24"]', ?)`,
-        [orgId, req.user!.id]
-      );
-      row = await dbGet<any>(`SELECT * FROM security_settings WHERE organization_id = ?`, [orgId]);
-    }
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
+    const organization = await dbGet<any>(
+      `SELECT mfa_required, mfa_grace_period_days FROM organizations WHERE id = ?`,
+      [orgId]
+    );
+    const row = await dbGet<any>(
+      `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = 'security'`,
+      [orgId]
+    );
+    const settings = parseSecurityJson(row?.setting_value);
 
     return res.json({
       organizationId: orgId,
-      require2fa: !!row.require_2fa,
-      passwordMinLength: row.password_min_length,
-      passwordRequireUppercase: !!row.password_require_uppercase,
-      passwordRequireNumber: !!row.password_require_number,
-      passwordRequireSpecial: !!row.password_require_special,
-      passwordExpiryDays: row.password_expiry_days,
-      sessionTimeoutMinutes: row.session_timeout_minutes,
-      maxSessionsPerUser: row.max_sessions_per_user,
-      ipWhitelist: (() => {
-        const v = row.ip_whitelist;
-        if (!v) return [];
-        if (Array.isArray(v)) return v;
-        if (typeof v === 'string') {
-          try {
-            const parsed = JSON.parse(v);
-            return Array.isArray(parsed) ? parsed : [];
-          } catch {
-            return [];
-          }
-        }
-        return [];
-      })(),
-      updatedAt: row.updated_at,
+      require2fa: !!organization?.mfa_required,
+      passwordMinLength: settings.passwordMinLength ?? 12,
+      passwordRequireUppercase: settings.passwordRequireUppercase ?? true,
+      passwordRequireNumber: settings.passwordRequireNumber ?? true,
+      passwordRequireSpecial: settings.passwordRequireSpecial ?? false,
+      passwordExpiryDays: settings.passwordExpiryDays ?? 0,
+      sessionTimeoutMinutes: settings.sessionTimeout ?? 60,
+      maxSessionsPerUser: settings.maxSessionsPerUser ?? 5,
+      ipWhitelist: Array.isArray(settings.ipWhitelist) ? settings.ipWhitelist : [],
+      updatedAt: row?.updated_at || null,
     });
   })
 );
@@ -73,37 +85,29 @@ router.put(
   asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.user!.organizationId;
     const body = req.body || {};
+    const denial = await requireOrgAdmin(req);
+    if (denial) return res.status(403).json(denial);
 
+    await dbRun(`UPDATE organizations SET mfa_required = ? WHERE id = ?`, [
+      body.require2fa ? 1 : 0,
+      orgId,
+    ]);
     await dbRun(
-      `INSERT INTO security_settings (
-                organization_id, require_2fa, password_min_length, password_require_uppercase,
-                password_require_number, password_require_special, password_expiry_days,
-                session_timeout_minutes, max_sessions_per_user, ip_whitelist, updated_at, updated_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
-            ON CONFLICT(organization_id) DO UPDATE SET
-                require_2fa=excluded.require_2fa,
-                password_min_length=excluded.password_min_length,
-                password_require_uppercase=excluded.password_require_uppercase,
-                password_require_number=excluded.password_require_number,
-                password_require_special=excluded.password_require_special,
-                password_expiry_days=excluded.password_expiry_days,
-                session_timeout_minutes=excluded.session_timeout_minutes,
-                max_sessions_per_user=excluded.max_sessions_per_user,
-                ip_whitelist=excluded.ip_whitelist,
-                updated_at=datetime('now'),
-                updated_by=excluded.updated_by`,
+      `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
+       VALUES (?, 'security', ?, datetime('now'))`,
       [
         orgId,
-        body.require2fa ? 1 : 0,
-        body.passwordMinLength ?? 8,
-        body.passwordRequireUppercase ? 1 : 0,
-        body.passwordRequireNumber ? 1 : 0,
-        body.passwordRequireSpecial ? 1 : 0,
-        body.passwordExpiryDays ?? 0,
-        body.sessionTimeoutMinutes ?? 30,
-        body.maxSessionsPerUser ?? 5,
-        JSON.stringify(body.ipWhitelist || []),
-        req.user!.id,
+        JSON.stringify({
+          passwordPolicy: body.passwordPolicy || 'standard',
+          passwordMinLength: body.passwordMinLength ?? 12,
+          passwordRequireUppercase: body.passwordRequireUppercase ?? true,
+          passwordRequireNumber: body.passwordRequireNumber ?? true,
+          passwordRequireSpecial: body.passwordRequireSpecial ?? false,
+          passwordExpiryDays: body.passwordExpiryDays ?? 0,
+          sessionTimeout: body.sessionTimeoutMinutes ?? 60,
+          maxSessionsPerUser: body.maxSessionsPerUser ?? 5,
+          ipWhitelist: body.ipWhitelist || [],
+        }),
       ]
     );
 

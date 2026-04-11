@@ -672,6 +672,16 @@ export const AppRoutes: React.FC = () => {
             </AuthLayout>
           }
         />
+        <Route
+          path={ROUTES.PARTNER.PRICING}
+          element={
+            <AuthLayout>
+              <AnimationWrapper variant="fade">
+                <PartnerPricingView />
+              </AnimationWrapper>
+            </AuthLayout>
+          }
+        />
 
         {/* Documentation Portal - Public Routes */}
         <Route path="/docs" element={<DocsLayout />}>

@@ -214,11 +214,28 @@ export async function applyArtifactSubstrateDdl(db: sqlite3.Database): Promise<v
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS v8_artifact_run_audit_log (
+      audit_id TEXT PRIMARY KEY,
+      run_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      action TEXT NOT NULL
+        CHECK (action IN (
+          'created', 'preflight', 'plan_accepted', 'materialized',
+          'failed', 'cancelled', 'retry_requested', 'status_changed'
+        )),
+      from_status TEXT,
+      to_status TEXT,
+      actor_user_id TEXT NOT NULL,
+      detail_json TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 
 export async function clearArtifactSubstrateTables(db: sqlite3.Database): Promise<void> {
   const run = promisify(db.run.bind(db));
+  await run('DELETE FROM v8_artifact_run_audit_log');
   await run('DELETE FROM v8_artifact_access_grants');
   await run('DELETE FROM v8_artifact_origin_links');
   await run('DELETE FROM v8_review_gates');

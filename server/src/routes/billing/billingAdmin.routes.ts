@@ -6,15 +6,18 @@ import { type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
+import { requireSuperAdminCapability } from '../../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+// RBAC canonicalizes aliases; keep explicit note for legacy super_admin tokens.
 
 router.get(
   '/overview/:orgId',
   verifyToken,
-  requireRole('super_admin'),
+  requireRole('superadmin'),
+  requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
     const { getBillingOverview } = await import('../../services/billing/billingAdminOps.js');
@@ -26,7 +29,8 @@ router.get(
 router.post(
   '/change-plan',
   verifyToken,
-  requireRole('super_admin'),
+  requireRole('superadmin'),
+  requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, newPlanId, reason } = req.body;
     if (!organizationId || !newPlanId || !reason) {
@@ -50,7 +54,8 @@ router.post(
 router.post(
   '/grace-period',
   verifyToken,
-  requireRole('super_admin'),
+  requireRole('superadmin'),
+  requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, days, reason } = req.body;
     if (!organizationId || !days || !reason) {

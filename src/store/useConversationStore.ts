@@ -48,6 +48,16 @@ const _lastTitleAttemptAt: Record<string, number> = {};
 
 function getAppLanguageFallback(): SupportedLanguage {
   try {
+    // Prefer the i18n-selected language stored in localStorage (set when user changes app language)
+    if (typeof localStorage !== 'undefined') {
+      const i18nLng = localStorage.getItem('i18nextLng');
+      if (i18nLng) {
+        const i18nBase = String(i18nLng).split('-')[0].toLowerCase();
+        const i18nMapped = i18nBase === 'ja' ? 'jp' : i18nBase;
+        if (isValidLanguage(i18nMapped)) return i18nMapped as SupportedLanguage;
+      }
+    }
+    // Fall back to browser language
     const nav =
       (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) ||
       'pl';

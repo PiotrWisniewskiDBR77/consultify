@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { requireSuperAdminCapability, verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getPublicAnnaFunnelSummary } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -19,6 +19,43 @@ const router = Router();
 router.use(defaultRateLimiter);
 router.use(verifyToken);
 router.use(verifySuperAdmin);
+router.use(requireSuperAdminCapability('platform_ops'));
+
+function isSqlReportExecutionEnabled(): boolean {
+  return (
+    process.env.ENABLE_SUPERADMIN_SQL_REPORTS === 'true' && process.env.NODE_ENV !== 'production'
+  );
+}
+
+function isReadOnlyAnalyticsQuery(querySql: string): boolean {
+  const normalized = String(querySql || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+
+  if (!normalized.startsWith('select')) return false;
+  if (normalized.includes(';')) return false;
+
+  const blockedPatterns = [
+    ' insert ',
+    ' update ',
+    ' delete ',
+    ' drop ',
+    ' alter ',
+    ' create ',
+    ' truncate ',
+    ' attach ',
+    ' detach ',
+    ' pragma ',
+    ' vacuum ',
+    '--',
+    '/*',
+    ' pg_',
+    ' information_schema.',
+  ];
+
+  return !blockedPatterns.some((pattern) => normalized.includes(pattern));
+}
 
 // ==========================================
 // DEMO & TRIAL CONVERSION ANALYTICS
@@ -452,19 +489,30 @@ router.post(
         return res.status(404).json({ error: 'Report not found' });
       }
 
-      // Execute the report query (with proper sanitization in production)
+      // Enterprise-safe posture: operator-executed SQL is disabled by default and only
+      // allowed in explicitly gated non-production environments for reviewed read-only reports.
       let results: any[] = [];
-      if (
-        report.query_sql &&
-        !report.query_sql.toLowerCase().includes('drop') &&
-        !report.query_sql.toLowerCase().includes('delete')
-      ) {
+      if (report.query_sql && !isSqlReportExecutionEnabled()) {
+        return res.status(422).json({
+          error: 'Operator-executed SQL reports are disabled in enterprise-safe environments.',
+          code: 'ANALYTICS_SQL_DISABLED',
+          guidance:
+            'Use curated report jobs or reviewed backend read models instead of direct SQL execution.',
+        });
+      }
+      if (report.query_sql && isReadOnlyAnalyticsQuery(report.query_sql)) {
         try {
           results = (await dbAll(report.query_sql, [])) || [];
         } catch (queryError) {
           logger.warn('[Analytics] Report query error:', queryError);
           results = [];
         }
+      } else if (report.query_sql) {
+        return res.status(422).json({
+          error: 'Only single-statement read-only SELECT reports can be executed from Superadmin analytics.',
+          code: 'ANALYTICS_QUERY_NOT_ALLOWED',
+          guidance: 'Move complex or mutating SQL to reviewed backend jobs instead of operator-executed reports.',
+        });
       }
 
       // Log execution

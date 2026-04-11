@@ -25,9 +25,15 @@ const LEGACY_AI_SECTION_MAP: Record<string, string> = {
 };
 
 export function normalizeSettingsSectionFromPath(pathname: string): string {
-  const pathSection = pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'profile';
+  const pathSection = pathname.replace('/settings/', '').replace(/^\/+|\/+$/g, '') || 'overview';
   if (pathSection === 'integrations') {
     return 'connected-apps';
+  }
+  if (pathSection === 'organization') {
+    return 'tenant-defaults';
+  }
+  if (pathSection === 'security') {
+    return 'tenant-security';
   }
   if (LEGACY_AI_SECTION_MAP[pathSection]) {
     return LEGACY_AI_SECTION_MAP[pathSection];

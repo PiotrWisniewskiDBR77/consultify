@@ -35,14 +35,26 @@ CREATE TABLE IF NOT EXISTS account_deletion_requests (
 -- Ensure data_export_requests exists with proper structure
 CREATE TABLE IF NOT EXISTS data_export_requests (
     id TEXT PRIMARY KEY,
+    organization_id TEXT,
     user_id TEXT NOT NULL,
     format TEXT DEFAULT 'json',
-    status TEXT DEFAULT 'pending', -- pending, processing, completed, failed
+    export_type TEXT DEFAULT 'gdpr',
+    include_data TEXT,
+    include_data_types TEXT,
+    exclude_data TEXT,
+    status TEXT DEFAULT 'pending', -- pending, processing, completed, failed, expired
     requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
     completed_at DATETIME,
     download_url TEXT,
+    file_url TEXT,
+    file_path TEXT,
     expires_at DATETIME,
+    file_expires_at DATETIME,
+    file_size INTEGER,
     error_message TEXT,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -53,10 +65,13 @@ CREATE TABLE IF NOT EXISTS user_api_keys (
     name TEXT NOT NULL,
     key_hash TEXT NOT NULL,
     key_prefix TEXT NOT NULL,
-    permissions TEXT DEFAULT '["read"]',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_used DATETIME,
+    permissions TEXT DEFAULT '[]',
+    rate_limit INTEGER DEFAULT 1000,
+    last_used_at DATETIME,
+    expires_at DATETIME,
     is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

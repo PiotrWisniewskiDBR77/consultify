@@ -128,6 +128,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
         const response = await Api.post('/help/chat', {
           message: text,
           context: contextModule,
+          language: lang,
           history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
         });
 

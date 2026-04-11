@@ -8,6 +8,7 @@
 import type { Response } from 'express';
 
 import type { AuthenticatedRequest } from '../types/index.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type {
   AddMemberRequest,
@@ -16,6 +17,24 @@ import type {
   UpdateMemberRoleRequest,
   UpdateOrganizationRequest,
 } from '../validators/organization.validators.js';
+
+const ADMIN_MEMBERSHIP_ROLES = new Set(['OWNER', 'ADMIN']);
+
+function getDeniedGuidance(role?: string): string {
+  const normalized = String(role || '').trim().toUpperCase();
+  if (normalized === 'GUEST' || normalized === 'VIEWER') {
+    return 'Guests cannot access admin tools.';
+  }
+  return 'You need admin access. Ask your workspace admin.';
+}
+
+function forbidden(res: Response, error: string, code: string, guidance: string): void {
+  res.status(403).json({ error, code, guidance });
+}
+
+function conflict(res: Response, error: string, code: string, guidance: string): void {
+  res.status(409).json({ error, code, guidance });
+}
 
 // ==========================================
 // CONTROLLER METHODS
@@ -166,31 +185,103 @@ export class OrganizationController {
   static addMember = asyncHandler(
     async (req: AuthenticatedRequest<AddMemberRequest>, res: Response): Promise<void> => {
       const { orgId } = req.params;
-      const { targetUserId, role } = req.body;
+      const { targetUserId, targetEmail, role } = req.body as AddMemberRequest & {
+        targetEmail?: string;
+      };
       const userId = req.user?.id;
       if (!userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      const { getMembers, addMember: addMemberService } =
+      const {
+        getMembers,
+        addMember: addMemberService,
+        normalizeOrganizationRole,
+      } =
         await import('../services/organizationService.js');
 
-      // Security check: Only OWNER or ADMIN can add members
       const members = await getMembers(orgId);
       const currentUserMember = members.find((m) => m.user_id === userId);
+      const actorRole = normalizeOrganizationRole(currentUserMember?.role || req.user?.role);
+      const isSuperAdmin =
+        req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
-      if (!currentUserMember || !['OWNER', 'ADMIN'].includes(currentUserMember.role)) {
-        if (req.user?.role !== 'SUPERADMIN') {
-          res.status(403).json({ error: 'Only Admins can add members' });
+      if (!currentUserMember && !isSuperAdmin) {
+        forbidden(
+          res,
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          getDeniedGuidance(req.user?.role)
+        );
+        return;
+      }
+
+      if (!isSuperAdmin && !ADMIN_MEMBERSHIP_ROLES.has(actorRole)) {
+        forbidden(
+          res,
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          getDeniedGuidance(actorRole)
+        );
+        return;
+      }
+
+      const desiredRole = normalizeOrganizationRole(role);
+      if (desiredRole === 'OWNER' && actorRole !== 'OWNER' && !isSuperAdmin) {
+        forbidden(
+          res,
+          'Only an owner can assign owner role',
+          'OWNER_ACTION_REQUIRED',
+          'Only an owner can do this.'
+        );
+        return;
+      }
+
+      let resolvedTargetUserId = targetUserId;
+      const lookupEmail =
+        targetEmail || (targetUserId && targetUserId.includes('@') ? targetUserId : undefined);
+
+      if (!resolvedTargetUserId && lookupEmail) {
+        const userByEmail = await dbGet<{ id: string }>(
+          `SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1`,
+          [lookupEmail]
+        );
+        if (!userByEmail?.id) {
+          res.status(404).json({
+            error: 'User not found for the provided email',
+            code: 'USER_NOT_FOUND',
+            guidance: 'Invite an existing workspace user or create the account before adding membership.',
+          });
           return;
         }
+        resolvedTargetUserId = userByEmail.id;
+      }
+
+      if (!resolvedTargetUserId) {
+        res.status(400).json({
+          error: 'Target user is required',
+          code: 'TARGET_USER_REQUIRED',
+          guidance: 'Provide a user id or an email address for the member you want to add.',
+        });
+        return;
+      }
+
+      const targetMember = members.find((m) => m.user_id === resolvedTargetUserId);
+      if (targetMember) {
+        conflict(
+          res,
+          'User is already a member of this organization',
+          'MEMBER_ALREADY_EXISTS',
+          'Open Members & Roles to update the existing membership instead of creating a duplicate.'
+        );
+        return;
       }
 
       const result = await addMemberService({
         organizationId: orgId,
-        userId: targetUserId,
-        role: (role || 'MEMBER') as 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+        userId: resolvedTargetUserId,
+        role: desiredRole,
         invitedBy: userId,
       });
 
@@ -212,11 +303,86 @@ export class OrganizationController {
         return;
       }
 
-      const { updateMemberRole } = await import('../services/organizationService.js');
+      const {
+        getMembers,
+        updateMemberRole,
+        normalizeOrganizationRole,
+      } = await import('../services/organizationService.js');
+      const members = await getMembers(orgId);
+      const actor = members.find((m) => m.user_id === userId);
+      const target = members.find((m) => m.user_id === memberId);
+      const actorRole = normalizeOrganizationRole(actor?.role || req.user?.role);
+      const currentTargetRole = normalizeOrganizationRole(target?.role);
+      const nextRole = normalizeOrganizationRole(role);
+      const isSuperAdmin =
+        req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
+
+      if (!target) {
+        res.status(404).json({
+          error: 'Member not found',
+          code: 'MEMBER_NOT_FOUND',
+          guidance: 'Refresh Members & Roles and try again.',
+        });
+        return;
+      }
+
+      if (!actor && !isSuperAdmin) {
+        forbidden(
+          res,
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          getDeniedGuidance(req.user?.role)
+        );
+        return;
+      }
+
+      if (!isSuperAdmin && !ADMIN_MEMBERSHIP_ROLES.has(actorRole)) {
+        forbidden(
+          res,
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          getDeniedGuidance(actorRole)
+        );
+        return;
+      }
+
+      if ((currentTargetRole === 'OWNER' || nextRole === 'OWNER') && actorRole !== 'OWNER' && !isSuperAdmin) {
+        forbidden(
+          res,
+          'Only an owner can change owner roles',
+          'OWNER_ACTION_REQUIRED',
+          'Only an owner can do this.'
+        );
+        return;
+      }
+
+      const ownerCount = members.filter(
+        (member) => normalizeOrganizationRole(member.role) === 'OWNER'
+      ).length;
+      if (currentTargetRole === 'OWNER' && nextRole !== 'OWNER' && ownerCount <= 1) {
+        conflict(
+          res,
+          'At least one owner required',
+          'LAST_OWNER_PROTECTED',
+          'At least one owner is required for the workspace.'
+        );
+        return;
+      }
+
+      if (memberId === userId && !['OWNER', 'ADMIN'].includes(nextRole)) {
+        conflict(
+          res,
+          'Role change would remove your admin access',
+          'SELF_LOCKOUT_REJECTED',
+          'Assign another owner/admin before changing your own role.'
+        );
+        return;
+      }
+
       const result = await updateMemberRole({
         organizationId: orgId,
         userId: memberId,
-        role: role as 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
+        role: nextRole,
       });
 
       res.json(result);
@@ -236,7 +402,81 @@ export class OrganizationController {
         return;
       }
 
-      const { removeMember } = await import('../services/organizationService.js');
+      const {
+        getMembers,
+        removeMember,
+        normalizeOrganizationRole,
+      } = await import('../services/organizationService.js');
+      const members = await getMembers(orgId);
+      const actor = members.find((m) => m.user_id === userId);
+      const target = members.find((m) => m.user_id === memberId);
+      const actorRole = normalizeOrganizationRole(actor?.role || req.user?.role);
+      const targetRole = normalizeOrganizationRole(target?.role);
+      const isSuperAdmin =
+        req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
+
+      if (!target) {
+        res.status(404).json({
+          error: 'Member not found',
+          code: 'MEMBER_NOT_FOUND',
+          guidance: 'Refresh Members & Roles and try again.',
+        });
+        return;
+      }
+
+      if (!actor && !isSuperAdmin) {
+        forbidden(
+          res,
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          getDeniedGuidance(req.user?.role)
+        );
+        return;
+      }
+
+      if (!isSuperAdmin && !ADMIN_MEMBERSHIP_ROLES.has(actorRole)) {
+        forbidden(
+          res,
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          getDeniedGuidance(actorRole)
+        );
+        return;
+      }
+
+      if (targetRole === 'OWNER' && actorRole !== 'OWNER' && !isSuperAdmin) {
+        forbidden(
+          res,
+          'Only an owner can remove an owner',
+          'OWNER_ACTION_REQUIRED',
+          'Only an owner can do this.'
+        );
+        return;
+      }
+
+      const ownerCount = members.filter(
+        (member) => normalizeOrganizationRole(member.role) === 'OWNER'
+      ).length;
+      if (targetRole === 'OWNER' && ownerCount <= 1) {
+        conflict(
+          res,
+          'At least one owner required',
+          'LAST_OWNER_PROTECTED',
+          'At least one owner is required for the workspace.'
+        );
+        return;
+      }
+
+      if (memberId === userId && ['OWNER', 'ADMIN'].includes(actorRole)) {
+        conflict(
+          res,
+          'Removal would revoke your admin access',
+          'SELF_LOCKOUT_REJECTED',
+          'Ask another owner/admin to remove you after access is transferred.'
+        );
+        return;
+      }
+
       await removeMember({
         organizationId: orgId,
         userId: memberId,

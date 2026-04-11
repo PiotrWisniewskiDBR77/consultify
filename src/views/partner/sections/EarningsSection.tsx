@@ -39,6 +39,7 @@ import {
   type V8PartnerPayoutAccount,
   type V8PartnerPayoutHistoryItem,
   type V8PartnerPayoutSettings,
+  type V8PartnerProgramStatus,
 } from '@/services/api/v8';
 import { cn } from '@/utils/cn';
 
@@ -182,10 +183,14 @@ const normalizePayoutSettings = (payload: any): PayoutSettings => {
   };
 };
 
+const normalizeProgramStatus = (payload: V8PartnerProgramStatus | null | undefined) =>
+  payload ?? null;
+
 export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = 'earnings' }) => {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<EarningsSummary | null>(null);
   const [v8Summary, setV8Summary] = useState<V8PartnerEarningsSummary | null>(null);
+  const [programStatus, setProgramStatus] = useState<V8PartnerProgramStatus | null>(null);
   const [transactions, setTransactions] = useState<CommissionTransaction[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -266,24 +271,20 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     try {
       setLoading(true);
       setError(null);
-      const [summaryResponse, txResponse, payoutsResponse] = await Promise.allSettled([
-        Api.get('/api/partners/earnings'),
-        getCommissionTransactionsWithFallback(),
-        getPayoutsWithFallback(),
-      ]);
+      const [summaryResponse, txResponse, payoutsResponse, programResponse] =
+        await Promise.allSettled([
+          V8PartnerApi.getEarningsSummary(),
+          getCommissionTransactionsWithFallback(),
+          getPayoutsWithFallback(),
+          V8PartnerApi.getProgramStatus(),
+        ]);
 
-      if (summaryResponse.status === 'fulfilled' && summaryResponse.value?.success) {
-        const normalizedSummary = normalizeEarningsSummary(summaryResponse.value.data);
+      if (summaryResponse.status === 'fulfilled') {
+        const normalizedSummary = normalizeEarningsSummary(summaryResponse.value?.earnings);
         if (normalizedSummary) {
-          const rawSummary =
-            summaryResponse.value.data?.data &&
-            summaryResponse.value.data?.data !== summaryResponse.value.data
-              ? summaryResponse.value.data.data
-              : summaryResponse.value.data;
-
           setSummary(normalizedSummary);
-          setBankInfoComplete(rawSummary?.bankInfoComplete !== false);
-          setNextPaymentDate(rawSummary?.nextPaymentDate || null);
+          setV8Summary(summaryResponse.value?.earnings ?? null);
+          setNextPaymentDate(null);
         }
       }
 
@@ -299,10 +300,18 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         setPayouts([]);
       }
 
+      if (programResponse.status === 'fulfilled') {
+        const normalizedProgramStatus = normalizeProgramStatus(programResponse.value);
+        setProgramStatus(normalizedProgramStatus);
+        setBankInfoComplete(Boolean(normalizedProgramStatus?.payoutSettingsComplete));
+      } else {
+        setProgramStatus(null);
+        setBankInfoComplete(false);
+      }
+
       if (
         summaryResponse.status !== 'fulfilled' ||
-        !summaryResponse.value?.success ||
-        !normalizeEarningsSummary(summaryResponse.value.data)
+        !normalizeEarningsSummary(summaryResponse.value?.earnings)
       ) {
         throw new Error(t('partner.earnings.loadError', 'Failed to load earnings data'));
       }
@@ -317,19 +326,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     }
   }, [getCommissionTransactionsWithFallback, getPayoutsWithFallback, t]);
 
-  const fetchV8Summary = useCallback(async () => {
-    try {
-      const response = await V8PartnerApi.getEarningsSummary();
-      setV8Summary(response.earnings);
-    } catch {
-      setV8Summary(null);
-    }
-  }, []);
-
   useEffect(() => {
     fetchEarnings();
-    void fetchV8Summary();
-  }, [fetchEarnings, fetchV8Summary]);
+  }, [fetchEarnings]);
 
   useEffect(() => {
     if (subsection === 'statements') {
@@ -381,6 +380,11 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 'Governed partner payout readiness and earnings totals from the V8 namespace.'
               )}
             </p>
+            {programStatus && (
+              <p className="mt-2 text-xs font-medium uppercase tracking-wide text-violet-600 dark:text-violet-300">
+                {`Lifecycle: ${programStatus.lifecyclePhase}`}
+              </p>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -402,8 +406,15 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             },
             {
               label: t('partner.earnings.v8ReadyForPayout', 'Governed ready for payout'),
-              value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.readyForPayout ?? 0).toLocaleString()}`,
-              detail: `${v8Summary.lastMonth ?? 0} last month`,
+              value: `${programStatus?.balances.currency ?? v8Summary.currency ?? 'EUR'} ${(
+                programStatus?.balances.availableToPayout ??
+                v8Summary.readyForPayout ??
+                0
+              ).toLocaleString()}`,
+              detail:
+                programStatus?.hold && programStatus.hold.amount > 0
+                  ? `Hold: ${programStatus.hold.amount}`
+                  : `${v8Summary.lastMonth ?? 0} last month`,
             },
           ].map((card) => (
             <div
@@ -440,23 +451,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
     try {
       setRequestingPayout(true);
-      let response: any;
-      try {
-        response = await V8PartnerApi.requestPayout({
-          amount: summary.readyForPayout,
-        });
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        response = await Api.post('/api/partners/payouts/request', {
-          amount: summary.readyForPayout,
-        });
-      }
+      const response = await V8PartnerApi.requestPayout({
+        amount: summary.readyForPayout,
+      });
 
-      if (response?.success || response?.payout) {
+      if (response?.payout) {
         toast.success(t('partner.earnings.payoutRequested', 'Payout request submitted!'));
-        // Refresh data
         await fetchEarnings();
       } else {
         toast.error(
@@ -551,6 +551,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                     )}
                   </div>
                 </div>
+                {programStatus?.whatNext?.length ? (
+                  <div className="mt-3 text-xs text-amber-200">{programStatus.whatNext[0]}</div>
+                ) : null}
               </div>
             </div>
           </div>

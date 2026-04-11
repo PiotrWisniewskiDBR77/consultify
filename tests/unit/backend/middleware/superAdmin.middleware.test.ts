@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  getSuperAdminCapabilities,
+  requireSuperAdminCapability,
   setDependencies,
   verifySuperAdmin,
 } from '../../../../server/src/middleware/superAdmin.middleware.js';
@@ -101,5 +103,45 @@ describe('verifySuperAdmin', () => {
     await verifySuperAdmin(req, res, next);
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(401);
+  });
+});
+
+describe('superadmin capabilities', () => {
+  it('assigns all capability domains to canonical superadmin role', () => {
+    expect(getSuperAdminCapabilities('SUPERADMIN')).toEqual([
+      'platform_ops',
+      'security_ops',
+      'billing_ops',
+      'support_ops',
+      'ai_ops',
+    ]);
+  });
+
+  it('allows requests that have the required capability', () => {
+    const middleware = requireSuperAdminCapability('billing_ops');
+    const req = mockReq({
+      userRole: 'SUPERADMIN',
+      user: { superadminCapabilities: ['billing_ops', 'security_ops'] },
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    middleware(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('rejects requests missing the required capability', () => {
+    const middleware = requireSuperAdminCapability('support_ops');
+    const req = mockReq({
+      userRole: 'SUPERADMIN',
+      user: { superadminCapabilities: ['billing_ops'] },
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    middleware(req, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('INSUFFICIENT_PLATFORM_CAPABILITY');
   });
 });

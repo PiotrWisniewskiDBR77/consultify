@@ -142,12 +142,29 @@ router.get(
         return res.json({ preferences: JSON.parse(prefs.preferences_data) });
       }
 
+      const orgId = req.user?.organizationId;
+      let tenantDefaults: { timezone?: string | null; currency?: string | null } = {};
+      if (orgId) {
+        try {
+          const { default: organizationContextService } = await import(
+            '../services/organizationContext/OrganizationContextService.js'
+          );
+          const context = await organizationContextService.buildResolvedContext(orgId);
+          tenantDefaults = {
+            timezone: context.profile.defaultTimezone,
+            currency: context.profile.currency,
+          };
+        } catch (contextErr) {
+          logger.warn('[settings] Failed to hydrate tenant regional defaults from organization context:', contextErr);
+        }
+      }
+
       // Return defaults
       return res.json({
         preferences: {
-          timezone: 'UTC',
+          timezone: tenantDefaults.timezone || 'UTC',
           units: 'metric',
-          currency: 'USD',
+          currency: tenantDefaults.currency || 'USD',
           numberFormat: 'en-US',
           dateFormat: 'DD/MM/YYYY',
           timeFormat: '24h',
@@ -4094,6 +4111,25 @@ const ensureUserApiKeysTable = async () => {
     [],
     { fallback: false }
   );
+
+  const cols = await getTableColumns('user_api_keys');
+  const alterations: Array<[string, string]> = [
+    ['name', `ALTER TABLE user_api_keys ADD COLUMN name TEXT`],
+    ['key_hash', `ALTER TABLE user_api_keys ADD COLUMN key_hash TEXT`],
+    ['key_prefix', `ALTER TABLE user_api_keys ADD COLUMN key_prefix TEXT`],
+    ['permissions', `ALTER TABLE user_api_keys ADD COLUMN permissions TEXT DEFAULT '[]'`],
+    ['rate_limit', `ALTER TABLE user_api_keys ADD COLUMN rate_limit INTEGER DEFAULT 1000`],
+    ['last_used_at', `ALTER TABLE user_api_keys ADD COLUMN last_used_at TIMESTAMPTZ`],
+    ['expires_at', `ALTER TABLE user_api_keys ADD COLUMN expires_at TIMESTAMPTZ`],
+    ['is_active', `ALTER TABLE user_api_keys ADD COLUMN is_active INTEGER DEFAULT 1`],
+    ['updated_at', `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`],
+  ];
+
+  for (const [column, sql] of alterations) {
+    if (!cols.has(column)) {
+      await dbRun(sql, [], { fallback: true });
+    }
+  }
 };
 
 const generateApiKey = (): string => {
@@ -4279,6 +4315,24 @@ const ensureUserWebhooksTable = async () => {
     [],
     { fallback: false }
   );
+
+  const cols = await getTableColumns('user_webhooks');
+  const alterations: Array<[string, string]> = [
+    ['name', `ALTER TABLE user_webhooks ADD COLUMN name TEXT`],
+    ['secret', `ALTER TABLE user_webhooks ADD COLUMN secret TEXT`],
+    ['headers', `ALTER TABLE user_webhooks ADD COLUMN headers TEXT DEFAULT '{}'`],
+    ['is_active', `ALTER TABLE user_webhooks ADD COLUMN is_active INTEGER DEFAULT 1`],
+    ['last_triggered_at', `ALTER TABLE user_webhooks ADD COLUMN last_triggered_at TIMESTAMPTZ`],
+    ['last_status', `ALTER TABLE user_webhooks ADD COLUMN last_status INTEGER`],
+    ['failure_count', `ALTER TABLE user_webhooks ADD COLUMN failure_count INTEGER DEFAULT 0`],
+    ['updated_at', `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`],
+  ];
+
+  for (const [column, sql] of alterations) {
+    if (!cols.has(column)) {
+      await dbRun(sql, [], { fallback: true });
+    }
+  }
 };
 
 /**
@@ -4941,15 +4995,25 @@ router.put(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { default: registryService } = await import('../services/settingsRegistryService.js');
+    const meta = registryService.getKeyMetadata(req.params.key);
+    if (!meta) {
+      const denial = registryService.buildDenialResponse(req.params.key, 'not_found');
+      return res.status(denial.status).json(denial);
+    }
+
     const userRole = req.user?.role || 'member';
     const routing = registryService.checkWriteRouting(req.params.key, userRole);
 
     if (!routing.allowed) {
-      const denial = registryService.buildDenialResponse(req.params.key, 'permission_denied');
-      return res.status(denial.status).json({ ...denial, guidance: routing.guidance, routeTo: routing.routeTo });
+      const denial = registryService.buildDenialResponse(
+        req.params.key,
+        meta.readOnlyInSettings || meta.managedIn !== 'settings' ? 'read_only' : 'permission_denied'
+      );
+      return res
+        .status(denial.status)
+        .json({ ...denial, guidance: routing.guidance || denial.guidance, routeTo: denial.routeTo || routing.routeTo });
     }
 
-    const meta = registryService.getKeyMetadata(req.params.key);
     if (meta?.confirmationGate && !req.body.confirmed) {
       return res.status(428).json({
         code: 'CONFIRMATION_REQUIRED',
@@ -4960,16 +5024,29 @@ router.put(
     }
 
     const userId = req.userId || req.user?.id;
+    const organizationId = req.user?.organizationId;
     const { value } = req.body;
+    const writeTarget = registryService.getWriteTarget(req.params.key, userRole, req.body.targetScope);
 
-    if (meta?.scope === 'personal') {
+    if (writeTarget === 'blocked') {
+      const denial = registryService.buildDenialResponse(req.params.key, 'permission_denied');
+      return res.status(denial.status).json(denial);
+    }
+
+    if (writeTarget === 'personal') {
       await dbRun(
         'INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP) ON CONFLICT (user_id, key) DO UPDATE SET value = $3, updated_at = CURRENT_TIMESTAMP',
-        [userId, `settings:${req.params.key}`, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        [userId, `settings:${meta.key}`, typeof value === 'object' ? JSON.stringify(value) : String(value)],
         { fallback: false }
       );
     } else {
-      const storeKey = meta?.scope === 'tenant' ? `tenant:${req.user?.organizationId}:${req.params.key}` : req.params.key;
+      if (!organizationId) {
+        return res.status(400).json({ error: 'Organization context is required for non-personal settings writes.' });
+      }
+
+      const storeKey = writeTarget === 'tenant'
+        ? `tenant:${organizationId}:${meta.key}`
+        : `module:${organizationId}:${meta.moduleId}:${meta.key}`;
       await dbRun(
         'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
         [storeKey, typeof value === 'object' ? JSON.stringify(value) : String(value)],
@@ -4982,12 +5059,18 @@ router.put(
       const crypto = await import('crypto');
       await dbRun(
         'INSERT INTO settings_audit_log (id, user_id, category, setting_key, action, old_value, new_value) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [crypto.randomUUID(), userId, meta?.scope || 'personal', req.params.key, 'updated', null, String(value)],
+        [crypto.randomUUID(), userId, writeTarget, meta.key, 'updated', null, String(value)],
         { fallback: true }
       );
     } catch { /* audit best-effort */ }
 
-    res.json({ success: true, key: req.params.key, scope: meta?.scope, impactLanguage: meta?.impactLanguage });
+    res.json({
+      success: true,
+      key: meta.key,
+      scope: meta.scope,
+      storedAs: writeTarget,
+      impactLanguage: meta.impactLanguage,
+    });
   })
 );
 

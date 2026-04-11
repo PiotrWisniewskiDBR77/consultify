@@ -200,7 +200,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 bg-white dark:bg-navy-900 rounded-full animate-pulse"></span>
-            Impersonating Mode
+            Read-only impersonation mode
           </span>
         </div>
       )}

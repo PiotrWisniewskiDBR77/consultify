@@ -6,21 +6,11 @@ import { AppView } from '../types';
 
 // Admin section titles mapping
 const ADMIN_SECTION_TITLES: Record<string, string> = {
-  organization: 'Strategic Profile',
-  branding: 'Branding',
-  billing: 'Plans',
-  payment: 'Payment',
-  tax: 'Tax',
-  alerts: 'Alerts',
+  members: 'Members & Roles',
   security: 'Security',
-  governance: 'Governance',
+  collaboration: 'Collaboration Controls',
+  integrations: 'Integrations & Sync',
   audit: 'Audit',
-  'report-creator': 'Report Templates',
-  'initiative-templates': 'Initiative Templates',
-  'initiative-sections': 'Section Library',
-  integrations: 'Integrations',
-  api: 'API',
-  feedback: 'Feedback',
 };
 
 /**
@@ -190,10 +180,12 @@ export const useBreadcrumbs = (): string[] | null => {
   else if (viewParts.includes('ADMIN') || location.pathname.startsWith('/admin')) {
     section = t('sidebar.adminPanel', 'Admin Panel');
 
-    // Check URL tab parameter for AdminSettingsModule sections
+    const pathSection = location.pathname.replace(/^\/admin\/?/, '').split('/')[0];
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
-    if (tabParam && ADMIN_SECTION_TITLES[tabParam]) {
+    if (pathSection && ADMIN_SECTION_TITLES[pathSection]) {
+      sub = ADMIN_SECTION_TITLES[pathSection];
+    } else if (tabParam && ADMIN_SECTION_TITLES[tabParam]) {
       sub = ADMIN_SECTION_TITLES[tabParam];
     } else if (currentView === AppView.ADMIN_USERS) sub = t('common.users', 'Users');
     else if (currentView === AppView.ADMIN_PROJECTS) sub = t('common.projects', 'Projects');
@@ -209,7 +201,7 @@ export const useBreadcrumbs = (): string[] | null => {
     else if (currentView === AppView.ADMIN_WORKSPACE) sub = t('common.workspace', 'Workspace');
     else if (currentView === AppView.ADMIN_AI) sub = 'AI';
     else if (currentView === AppView.ADMIN_SECURITY) sub = t('settings.security', 'Security');
-    else sub = 'Strategic Profile'; // Default to first section
+    else sub = 'Members & Roles';
   }
   // =====================================================
   // SETTINGS VIEWS

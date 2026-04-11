@@ -598,7 +598,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   };
 
   const handleImpersonate = async (userId: string) => {
-    if (!confirm('Are you sure you want to impersonate this user? You will be logged in as them.'))
+    if (
+      !confirm(
+        'Start a read-only impersonation session for up to 30 minutes? All session start/end events are audit logged.'
+      )
+    )
       return;
     try {
       const { token } = await Api.impersonateUser(userId);

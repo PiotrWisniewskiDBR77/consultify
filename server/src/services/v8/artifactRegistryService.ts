@@ -38,6 +38,97 @@ import type { RunState } from '../../types/executionSpine.js';
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
 const BACKFILL_TTL_MS = 30_000;
+
+type AuditAction =
+  | 'created'
+  | 'preflight'
+  | 'plan_accepted'
+  | 'materialized'
+  | 'failed'
+  | 'cancelled'
+  | 'retry_requested'
+  | 'status_changed';
+
+async function emitRunAudit(params: {
+  runId: string;
+  organizationId: string;
+  action: AuditAction;
+  actorUserId: string;
+  fromStatus?: string | null;
+  toStatus?: string | null;
+  detail?: Record<string, unknown> | null;
+}): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO v8_artifact_run_audit_log (
+        audit_id, run_id, organization_id, action, from_status, to_status,
+        actor_user_id, detail_json, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.runId,
+        params.organizationId,
+        params.action,
+        params.fromStatus ?? null,
+        params.toStatus ?? null,
+        params.actorUserId,
+        params.detail ? JSON.stringify(params.detail) : null,
+        new Date().toISOString(),
+      ]
+    );
+  } catch (err) {
+    logger.warn(`${LOG_PREFIX} Audit emit failed (non-blocking)`, {
+      runId: params.runId,
+      action: params.action,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+export interface ArtifactRunAuditEntry {
+  auditId: string;
+  runId: string;
+  organizationId: string;
+  action: AuditAction;
+  fromStatus: string | null;
+  toStatus: string | null;
+  actorUserId: string;
+  detail: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export async function getArtifactRunAuditLog(
+  runId: string,
+  organizationId: string
+): Promise<ArtifactRunAuditEntry[]> {
+  const rows = await dbAll<{
+    audit_id: string;
+    run_id: string;
+    organization_id: string;
+    action: string;
+    from_status: string | null;
+    to_status: string | null;
+    actor_user_id: string;
+    detail_json: string | null;
+    created_at: string;
+  }>(
+    `SELECT * FROM v8_artifact_run_audit_log
+     WHERE run_id = ? AND organization_id = ?
+     ORDER BY created_at ASC`,
+    [runId, organizationId]
+  );
+  return rows.map((r) => ({
+    auditId: r.audit_id,
+    runId: r.run_id,
+    organizationId: r.organization_id,
+    action: r.action as AuditAction,
+    fromStatus: r.from_status,
+    toStatus: r.to_status,
+    actorUserId: r.actor_user_id,
+    detail: r.detail_json ? JSON.parse(r.detail_json) : null,
+    createdAt: r.created_at,
+  }));
+}
 const SNAPSHOT_SOURCE_KIND_TO_REPORT_SOURCE_TYPE: Record<string, ArtifactRunReportSourceType> = {
   assessment: 'ASSESSMENT',
   interview: 'INTERVIEW',
@@ -522,6 +613,8 @@ export async function registerGovernedTableSheetArtifact(params: {
   userId: string;
   tableId: string;
   tableName: string;
+  contextSnapshotId?: string;
+  executionRunId?: string;
 }): Promise<ArtifactRecord> {
   const artifact = await registerArtifactOrigin({
     organizationId: params.organizationId,
@@ -534,6 +627,8 @@ export async function registerGovernedTableSheetArtifact(params: {
     createdBy: params.userId,
     deliveryState: 'ready',
     visibilityScope: 'organization',
+    contextSnapshotId: params.contextSnapshotId,
+    executionRunId: params.executionRunId,
     originSummary: {
       sourceTable: 'tp_tables',
       exportFormat: 'xlsx',
@@ -1981,6 +2076,15 @@ export async function createArtifactRunFromChat(
     sourceContextId: validated.conversationId,
   });
 
+  await emitRunAudit({
+    runId: run.runId,
+    organizationId: validated.organizationId,
+    action: 'created',
+    actorUserId: validated.userId,
+    toStatus: 'planned',
+    detail: { goal: validated.goal, outputType: artifactPlan.outputType },
+  });
+
   return {
     artifactRunId: run.runId,
     executionRunId: handoff.executionRunId,
@@ -2125,6 +2229,14 @@ export async function preflightArtifactRun(params: {
     [preflight.state, JSON.stringify(preflight), now, params.runId, params.organizationId]
   );
 
+  await emitRunAudit({
+    runId: params.runId,
+    organizationId: params.organizationId,
+    action: 'preflight',
+    actorUserId: params.actorUserId,
+    detail: { preflightState: preflight.state, checksCount: preflight.checks.length },
+  });
+
   const updated = await getArtifactRun(params.runId, params.organizationId);
   if (!updated) throw new Error(`ArtifactRun ${params.runId} not found after preflight`);
   return updated;
@@ -2200,6 +2312,16 @@ export async function acceptArtifactRunPlan(params: {
     [proposal.proposalId, 'proposal_created', now, params.runId, params.organizationId]
   );
 
+  await emitRunAudit({
+    runId: params.runId,
+    organizationId: params.organizationId,
+    action: 'plan_accepted',
+    actorUserId: params.actorUserId,
+    fromStatus: current.runStatus,
+    toStatus: 'proposal_created',
+    detail: { proposalId: proposal.proposalId },
+  });
+
   const updated = await getArtifactRun(params.runId, params.organizationId);
   if (!updated) throw new Error(`ArtifactRun ${params.runId} not found after accept-plan`);
   return updated;
@@ -2250,6 +2372,16 @@ export async function retryArtifactRun(params: {
     params.actorUserId,
     'ArtifactRun retry requested'
   );
+
+  await emitRunAudit({
+    runId: params.runId,
+    organizationId: params.organizationId,
+    action: 'retry_requested',
+    actorUserId: params.actorUserId,
+    fromStatus: current.runStatus,
+    toStatus: 'retry_requested',
+    detail: { newExecutionRunId: handoff.executionRunId },
+  });
 
   return createArtifactRunRecord({
     organizationId: params.organizationId,
@@ -2466,6 +2598,8 @@ export async function materializeArtifactRun(
         userId: validated.actorUserId,
         tableId,
         tableName: tableName || validated.title || current.plan.titleHint,
+        contextSnapshotId: current.contextSnapshotId,
+        executionRunId: current.executionRunId,
       });
       materializationOrigin = { originRuntime: 'sheet', originRecordId: tableId };
       await persistMaterializationOrigin({
@@ -2511,6 +2645,20 @@ export async function materializeArtifactRun(
         validated.organizationId,
       ]
     );
+
+    await emitRunAudit({
+      runId: validated.runId,
+      organizationId: validated.organizationId,
+      action: 'materialized',
+      actorUserId: validated.actorUserId,
+      fromStatus: current.runStatus,
+      toStatus: 'completed',
+      detail: {
+        artifactId: resolvedArtifactId,
+        outputType: current.plan.outputType,
+        originRuntime: materializationOrigin?.originRuntime,
+      },
+    });
 
     const completed = await getArtifactRun(validated.runId, validated.organizationId);
     if (!completed) {
@@ -2586,6 +2734,16 @@ export async function materializeArtifactRun(
         validated.organizationId,
       ]
     );
+
+    await emitRunAudit({
+      runId: validated.runId,
+      organizationId: validated.organizationId,
+      action: 'failed',
+      actorUserId: validated.actorUserId,
+      fromStatus: current.runStatus,
+      toStatus: 'failed',
+      detail: { failureReason, stage: 'materialize', ghostArtifactsCleanedUp },
+    });
 
     throw error;
   }

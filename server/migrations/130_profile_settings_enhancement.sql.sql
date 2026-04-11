@@ -103,15 +103,11 @@ CREATE TABLE IF NOT EXISTS user_appearance_preferences (
 -- =====================================================
 
 CREATE TABLE IF NOT EXISTS user_keyboard_shortcuts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    action_id VARCHAR(100) NOT NULL, -- e.g., 'navigation.home', 'task.create'
-    key_combo VARCHAR(50) NOT NULL, -- e.g., 'ctrl+shift+h'
-    is_enabled BOOLEAN DEFAULT TRUE,
+    user_id TEXT PRIMARY KEY,
+    shortcuts TEXT DEFAULT '{}', -- JSON object mapping action -> shortcut
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE(user_id, action_id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- =====================================================

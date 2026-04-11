@@ -1374,7 +1374,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <div className="space-y-5">
               {contradictionSignals.length > 0 && (
-                <Callout variant="error" title={isPolish ? 'Sprzeczności wykryte' : 'Contradictions detected'}>
+                <Callout variant="critical" title={isPolish ? 'Sprzeczności wykryte' : 'Contradictions detected'}>
                   <ul className="list-disc list-inside space-y-1">
                     {contradictionSignals.map((s, idx) => (
                       <li key={idx} className="text-sm">
@@ -1997,7 +1997,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </Callout>
               )}
               {v6EvidenceMap.some((e) => e.answer_snippet === '[REDACTED]' || e.answer_snippet?.includes('[redacted]')) && (
-                <Callout variant="error" title={isPolish ? 'Zredagowane dane' : 'Redacted data'} compact>
+                <Callout variant="critical" title={isPolish ? 'Zredagowane dane' : 'Redacted data'} compact>
                   {isPolish
                     ? 'Niektóre odpowiedzi źródłowe zostały zredagowane. Wskaźniki dowodowe zostają w audycie, ale treść jest niedostępna.'
                     : 'Some source answers have been redacted. Evidence pointers remain for audit but content is unavailable.'}

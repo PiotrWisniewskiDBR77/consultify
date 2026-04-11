@@ -19,6 +19,7 @@ import {
   Layers,
   Lightbulb,
   Loader2,
+  MessageSquare,
   Monitor,
   Presentation,
   Upload,
@@ -32,6 +33,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
+import { createWorkspaceContext } from '@/types/workspace';
 
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
@@ -52,6 +57,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
@@ -275,6 +281,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isEnabled } = useFeatureFlags();
+  const currentProjectId = useAppStore((s) => s.currentProjectId);
+  const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
+  const createConversation = useConversationStore((s) => s.createConversation);
+  const activeConversationId = useConversationStore((s) => s.activeConversationId);
+  const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
+  const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -307,6 +320,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [initiatives, setInitiatives] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
+  const [hubAiPanel, setHubAiPanel] = useState<'triage' | 'interpretation' | null>(null);
+  const [hubChatId, setHubChatId] = useState<string | null>(null);
 
   // Deep link support:
   // - /assessment?assessmentId=<id>
@@ -1171,6 +1186,182 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       ? 'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
       : 'No assessments found. Create your first assessment to get started.';
 
+  const hubWorkspaceContext = useMemo(
+    () =>
+      createWorkspaceContext(AppView.ASSESSMENT_OVERVIEW, 'assessment', {
+        entityName: 'Assessment Hub',
+        projectId: currentProjectId || undefined,
+        entityData: {
+          activeTab,
+          openDocumentCount: openDocuments.length,
+          assessmentCount: assessments.length,
+          reportCount: reports.length + importedReports.length,
+          initiativeCount: initiatives.length,
+        },
+      }),
+    [
+      activeTab,
+      assessments.length,
+      currentProjectId,
+      importedReports.length,
+      initiatives.length,
+      openDocuments.length,
+      reports.length,
+    ]
+  );
+
+  const isHubChatActive = Boolean(hubChatId) && activeConversationId === hubChatId && !isChatCollapsed;
+
+  const openInterpretationDraft = useCallback(() => {
+    const targetAssessment = assessments[0];
+    if (!targetAssessment?.id) return;
+    navigate(`/assessment/${String(targetAssessment.type || 'drd').toLowerCase()}/${targetAssessment.id}`);
+  }, [assessments, navigate]);
+
+  const handleOpenHubChat = useCallback(async () => {
+    try {
+      if (hubChatId && activeConversationId === hubChatId && !isChatCollapsed) {
+        toggleChatCollapse();
+        return;
+      }
+
+      setHubAiPanel(null);
+
+      if (hubChatId) {
+        setActiveConversation(hubChatId);
+      } else {
+        const conversation = await createConversation({
+          title: `Assessment Hub: ${tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment'}`,
+          projectId: currentProjectId || undefined,
+          pmoContext: {
+            assessmentId: activeTab === 'list' ? assessments[0]?.id : undefined,
+          },
+        });
+        setHubChatId(conversation.id);
+      }
+
+      setWorkspaceContext(hubWorkspaceContext);
+      if (isChatCollapsed) {
+        toggleChatCollapse();
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to open AI chat');
+    }
+  }, [
+    activeConversationId,
+    activeTab,
+    assessments,
+    createConversation,
+    currentProjectId,
+    hubChatId,
+    hubWorkspaceContext,
+    isChatCollapsed,
+    setActiveConversation,
+    setWorkspaceContext,
+    tabs,
+    toggleChatCollapse,
+  ]);
+
+  const hubMenu3Chips = useMemo(
+    () => [
+      {
+        id: 'active-tab',
+        label:
+          activeTab === 'reports'
+            ? 'Reports lane'
+            : activeTab === 'initiatives'
+              ? 'Initiatives lane'
+              : 'Assessment lane',
+        badge: currentData.length,
+        active: true,
+      },
+      {
+        id: 'status-filter',
+        label: statusFilter === 'all' ? 'All statuses' : `Status ${statusFilter}`,
+      },
+      {
+        id: 'documents',
+        label: openDocuments.length > 0 ? 'Focused documents' : 'List workspace',
+        badge: openDocuments.length || null,
+      },
+    ],
+    [activeTab, currentData.length, openDocuments.length, statusFilter]
+  );
+
+  const thirdHubAction = useMemo(() => {
+    if (activeTab === 'reports') {
+      return {
+        id: 'report',
+        label: 'Generate Report',
+        icon: FileText,
+        onClick: () => {
+          setHubAiPanel(null);
+          setShowNewReportModal(true);
+        },
+        active: false,
+        disabled: assessments.length === 0,
+      };
+    }
+
+    if (activeTab === 'initiatives') {
+      return {
+        id: 'initiative',
+        label: 'Initiative Pack',
+        icon: Lightbulb,
+        onClick: () => {
+          setHubAiPanel(null);
+          setShowInitiativesWizard(true);
+        },
+        active: false,
+        disabled: assessments.length === 0,
+      };
+    }
+
+    return {
+      id: 'interpretation',
+      label: 'Interpretation Draft',
+      icon: Lightbulb,
+      onClick: openInterpretationDraft,
+      active: hubAiPanel === 'interpretation',
+      disabled: assessments.length === 0,
+    };
+  }, [activeTab, assessments.length, hubAiPanel, openInterpretationDraft]);
+
+  const hubCommandRowContent = useMemo(
+    () => (
+      <AssessmentMenu3ActionBar
+        chips={hubMenu3Chips}
+        actions={[
+          {
+            id: 'triage',
+            label: 'AI Triage',
+            icon: Layers,
+            onClick: () => setHubAiPanel((prev) => (prev === 'triage' ? null : 'triage')),
+            active: hubAiPanel === 'triage',
+            disabled: isLoading,
+          },
+          {
+            id: 'chat',
+            label: 'Chat',
+            icon: MessageSquare,
+            onClick: () => void handleOpenHubChat(),
+            active: isHubChatActive,
+            disabled: isLoading,
+          },
+          thirdHubAction,
+        ]}
+      />
+    ),
+    [
+      handleOpenHubChat,
+      hubAiPanel,
+      hubMenu3Chips,
+      isHubChatActive,
+      isLoading,
+      thirdHubAction,
+    ]
+  );
+
   // Render content based on active document or list
   const renderContent = () => {
     if (activeDocumentId) {
@@ -1482,6 +1673,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         onNewItem={handleNewItem}
         newItemLabel={getNewItemLabel()}
         rightControls={statusDropdownControl}
+        commandRowContent={hubCommandRowContent}
       >
         <div className="space-y-3">
           {loadWarning && (
@@ -1496,6 +1688,52 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
                 >
                   Retry
+                </button>
+              </div>
+            </div>
+          )}
+          {hubAiPanel === 'triage' && (
+            <div className="mx-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 px-4 py-4">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    AI Triage
+                  </div>
+                  <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">
+                    The hub is prioritizing the next best move from the current lane without creating a second source of truth.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHubAiPanel(null)}
+                  className="h-9 rounded-full border border-slate-200 dark:border-navy-700 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-lg bg-slate-50 dark:bg-navy-950/50 px-3 py-3 text-sm text-slate-700 dark:text-slate-200">
+                  {activeTab === 'list'
+                    ? `Open an assessment session and move the run from evidence to review. ${statusCounts.all} assessments are currently visible.`
+                    : activeTab === 'reports'
+                      ? `Reports should be generated from the same assessment run. ${statusCounts.all} report entries are visible here.`
+                      : `Initiatives stay bounded to approved assessment findings. ${statusCounts.all} initiative entries are visible here.`}
+                </div>
+                <button
+                  type="button"
+                  onClick={activeTab === 'reports' ? () => setShowNewReportModal(true) : handleNewAssessment}
+                  className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                >
+                  {activeTab === 'reports'
+                    ? 'Create a report from the selected assessment lane'
+                    : 'Open or create the assessment run that needs attention'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleOpenHubChat()}
+                  className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                >
+                  Continue triage in Chat with the same module context
                 </button>
               </div>
             </div>

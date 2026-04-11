@@ -330,7 +330,7 @@ export function searchHelp(
     limit?: number;
     types?: SearchResultType[];
     moduleId?: HelpModuleId;
-    language?: string;
+    language?: 'en' | 'pl';
   } = {}
 ): SearchResult[] {
   const {

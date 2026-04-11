@@ -61,6 +61,7 @@ import { SecurityOverviewSettings } from '../components/settings/SecurityOvervie
 import { SessionsActivitySettings } from '../components/settings/SessionsActivitySettings';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
 import { AvailabilitySettings } from '../components/settings/AvailabilitySettings';
+import SettingsOwnershipPanels from '../components/settings/SettingsOwnershipPanels';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
@@ -87,6 +88,26 @@ interface SettingsViewProps {
 
 // Section metadata for headers
 const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> = {
+  overview: {
+    title: 'Settings Overview',
+    subtitle: 'One root for personal settings, tenant handoff, and module preferences',
+  },
+  'tenant-defaults': {
+    title: 'Tenant Defaults',
+    subtitle: 'Read organization defaults and shared runtime impact without duplicating P30 ownership',
+  },
+  'tenant-branding': {
+    title: 'Branding Handoff',
+    subtitle: 'Branding is consumed read-only from Organization and linked to the owning surface',
+  },
+  'tenant-security': {
+    title: 'Security Handoff',
+    subtitle: 'Security policy stays visible here, but all writes route to Admin',
+  },
+  'module-preferences': {
+    title: 'Module Preferences',
+    subtitle: 'Discover module-level defaults and where they inherit from the root ownership model',
+  },
   // My Settings
   profile: { title: 'Profile', subtitle: 'Manage your personal information and account details' },
   avatar: { title: 'Avatar & Photo', subtitle: 'Upload and manage your profile picture' },
@@ -213,9 +234,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Get section from URL path
   const activeSection = useMemo(() => {
     const pathSection = normalizeSettingsSectionFromPath(location.pathname);
-    return (
-      Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'profile'
-    ) as SettingsSection;
+    return (Object.keys(sectionMeta).includes(pathSection) ? pathSection : 'overview') as SettingsSection;
   }, [location.pathname]);
 
   // Handle section change - update URL
@@ -246,6 +265,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const renderContent = useCallback(() => {
     switch (activeSection) {
       // My Settings
+      case 'overview':
+        return <SettingsOwnershipPanels mode="overview" onOpenSection={handleSectionChange} />;
+      case 'tenant-defaults':
+        return <SettingsOwnershipPanels mode="tenant-defaults" onOpenSection={handleSectionChange} />;
+      case 'tenant-branding':
+        return <SettingsOwnershipPanels mode="tenant-branding" onOpenSection={handleSectionChange} />;
+      case 'tenant-security':
+        return <SettingsOwnershipPanels mode="tenant-security" onOpenSection={handleSectionChange} />;
+      case 'module-preferences':
+        return <SettingsOwnershipPanels mode="module-preferences" onOpenSection={handleSectionChange} />;
       case 'profile':
         return <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
       case 'avatar':

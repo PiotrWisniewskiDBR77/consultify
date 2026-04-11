@@ -1,4 +1,4 @@
-import { Check, Plus, Sparkles, Trash2, X } from 'lucide-react';
+import { Check, Plus, Trash2, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -17,7 +17,6 @@ type QuadrantId = SWOTItem['quadrant'];
 type BuildPhaseProps = {
   session: ToolSession;
   isPolish: boolean;
-  onGenerateSuggestions?: () => void;
   isGeneratingAI?: boolean;
   onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
@@ -254,7 +253,6 @@ function QuadrantCard({
 export function SWOTBuildPhase({
   session,
   isPolish,
-  onGenerateSuggestions,
   isGeneratingAI = false,
 }: BuildPhaseProps) {
   const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
@@ -416,15 +414,12 @@ export function SWOTBuildPhase({
             />
           </div>
 
-          <button
-            type="button"
-            onClick={onGenerateSuggestions}
-            disabled={!onGenerateSuggestions || isGeneratingAI}
-            className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300"
-          >
-            <Sparkles className={`h-4 w-4 ${isGeneratingAI ? 'animate-pulse' : ''}`} />
-            {isPolish ? 'Analiza rynkowa i propozycje AI' : 'Market analysis and AI proposals'}
-          </button>
+          {isGeneratingAI ? (
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              {isPolish ? 'AI przygotowuje propozycje...' : 'AI is preparing proposals...'}
+            </div>
+          ) : null}
         </div>
       </div>
 

@@ -7,8 +7,8 @@
 import express from 'express';
 
 import { getDatabase } from '../database/Database.js';
-import { type AuthRequest, verifyToken, requireSuperAdmin } from '../middleware/auth.middleware.js';
-import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { requireSuperAdminCapability, verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { budgetTrackingService } from '../services/budgetTrackingService.js';
 import logger from '../utils/Logger.js';
 
@@ -17,6 +17,7 @@ const db = getDatabase();
 
 router.use(verifyToken);
 router.use(verifySuperAdmin);
+router.use(requireSuperAdminCapability('billing_ops', 'platform_ops'));
 
 // ==========================================
 // SUBSCRIPTION PLANS MANAGEMENT

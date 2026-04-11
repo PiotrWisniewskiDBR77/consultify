@@ -119,13 +119,17 @@ export const ROUTES = {
   // Admin
   ADMIN: {
     ROOT: '/admin',
+    MEMBERS: '/admin/members',
+    SECURITY: '/admin/security',
+    COLLABORATION: '/admin/collaboration',
+    INTEGRATIONS: '/admin/integrations',
+    AUDIT: '/admin/audit',
     OVERVIEW: '/admin/overview',
     ORGANIZATION: '/admin/organization',
     TEAM: '/admin/team',
     WORKSPACE: '/admin/workspace',
     AI: '/admin/ai',
     BILLING: '/admin/billing',
-    SECURITY: '/admin/security',
     COMPLIANCE: '/admin/compliance',
   },
 
@@ -147,6 +151,9 @@ export const ROUTES = {
     OVERVIEW: '/superadmin/overview',
     CUSTOMERS: '/superadmin/customers',
     CUSTOMERS_COMMUNICATION: '/superadmin/customers/communication',
+    CUSTOMERS_COMMERCIAL: '/superadmin/customers/commercial',
+    CUSTOMERS_BILLING: '/superadmin/customers/commercial/billing',
+    CUSTOMERS_INVOICES: '/superadmin/customers/commercial/invoices',
     AI_PLATFORM: '/superadmin/ai-platform',
     SYSTEM: '/superadmin/system',
     CONTENT: '/superadmin/content',
@@ -382,15 +389,15 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.SUPERADMIN_AI_OPERATIONS]: ROUTES.SUPERADMIN.AI_PLATFORM,
   [AppView.SUPERADMIN_SYSTEM]: ROUTES.SUPERADMIN.SYSTEM,
   [AppView.SUPERADMIN_CONTENT]: ROUTES.SUPERADMIN.CONTENT,
-  [AppView.SUPERADMIN_REVENUE]: ROUTES.SUPERADMIN.REVENUE,
+  [AppView.SUPERADMIN_REVENUE]: ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL,
   [AppView.SUPERADMIN_SECURITY]: ROUTES.SUPERADMIN.SECURITY,
   [AppView.SUPERADMIN_CONFIGURATION]: ROUTES.SUPERADMIN.CONFIGURATION,
   [AppView.SUPERADMIN_ANALYTICS]: ROUTES.SUPERADMIN.ANALYTICS,
   [AppView.SUPERADMIN_VIRTUAL_WORKERS]: ROUTES.SUPERADMIN.VIRTUAL_WORKERS,
-  [AppView.SUPERADMIN_DASHBOARD]: ROUTES.SUPERADMIN.ROOT,
+  [AppView.SUPERADMIN_DASHBOARD]: ROUTES.SUPERADMIN.CUSTOMERS,
   [AppView.SUPERADMIN_ORGANIZATIONS]: ROUTES.SUPERADMIN.CUSTOMERS,
   [AppView.SUPERADMIN_USERS]: ROUTES.SUPERADMIN.CUSTOMERS,
-  [AppView.SUPERADMIN_BILLING]: ROUTES.SUPERADMIN.REVENUE,
+  [AppView.SUPERADMIN_BILLING]: ROUTES.SUPERADMIN.CUSTOMERS_BILLING,
   [AppView.SUPERADMIN_AI_CONFIG]: ROUTES.SUPERADMIN.AI_PLATFORM,
   [AppView.SUPERADMIN_LLM_MANAGEMENT]: ROUTES.SUPERADMIN.AI_PLATFORM,
   [AppView.SUPERADMIN_AI_INTELLIGENCE]: ROUTES.SUPERADMIN.AI_PLATFORM,
@@ -398,14 +405,14 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.SUPERADMIN_SETTINGS]: ROUTES.SUPERADMIN.SYSTEM,
   [AppView.SUPERADMIN_SSO]: ROUTES.SUPERADMIN.SECURITY,
   [AppView.SUPERADMIN_SECURITY_POLICIES]: ROUTES.SUPERADMIN.SECURITY,
-  [AppView.SUPERADMIN_API_MANAGEMENT]: ROUTES.SUPERADMIN.SECURITY,
+  [AppView.SUPERADMIN_API_MANAGEMENT]: ROUTES.SUPERADMIN.SYSTEM,
   [AppView.SUPERADMIN_WHITELABEL]: ROUTES.SUPERADMIN.SYSTEM,
-  [AppView.SUPERADMIN_COMPLIANCE]: ROUTES.SUPERADMIN.SECURITY,
-  [AppView.SUPERADMIN_INVOICES]: ROUTES.SUPERADMIN.REVENUE,
-  [AppView.SUPERADMIN_FEEDBACK]: ROUTES.SUPERADMIN.ANALYTICS,
-  [AppView.SUPERADMIN_BULK_OPERATIONS]: ROUTES.SUPERADMIN.SYSTEM,
-  [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: ROUTES.SUPERADMIN.SYSTEM,
-  [AppView.SUPERADMIN_PLAYBOOK_EDITOR]: ROUTES.SUPERADMIN.SYSTEM,
+  [AppView.SUPERADMIN_COMPLIANCE]: ROUTES.SUPERADMIN.CONTENT,
+  [AppView.SUPERADMIN_INVOICES]: ROUTES.SUPERADMIN.CUSTOMERS_INVOICES,
+  [AppView.SUPERADMIN_FEEDBACK]: ROUTES.SUPERADMIN.CUSTOMERS,
+  [AppView.SUPERADMIN_BULK_OPERATIONS]: ROUTES.SUPERADMIN.CUSTOMERS,
+  [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: ROUTES.SUPERADMIN.CUSTOMERS,
+  [AppView.SUPERADMIN_PLAYBOOK_EDITOR]: ROUTES.SUPERADMIN.CUSTOMERS,
   [AppView.ADMIN_PLAYBOOK_RUNS]: ROUTES.ADMIN.ROOT,
 
   // Partner
@@ -475,6 +482,25 @@ export function getRouteFromAppView(view: AppView): string {
  * Used for backward compatibility
  */
 export function getAppViewFromRoute(path: string): AppView | null {
+  const canonicalRouteOrder: AppView[] = [
+    AppView.SUPERADMIN_OVERVIEW,
+    AppView.SUPERADMIN_CUSTOMERS,
+    AppView.SUPERADMIN_COMMUNICATION,
+    AppView.SUPERADMIN_REVENUE,
+    AppView.SUPERADMIN_BILLING,
+    AppView.SUPERADMIN_INVOICES,
+    AppView.SUPERADMIN_AI_PLATFORM,
+    AppView.SUPERADMIN_CONFIGURATION,
+    AppView.SUPERADMIN_ANALYTICS,
+    AppView.SUPERADMIN_SYSTEM,
+    AppView.SUPERADMIN_CONTENT,
+    AppView.SUPERADMIN_SECURITY,
+  ];
+
+  for (const view of canonicalRouteOrder) {
+    if (APP_VIEW_TO_ROUTE[view] === path) return view;
+  }
+
   const entry = Object.entries(APP_VIEW_TO_ROUTE).find(([_, route]) => route === path);
   return entry ? (entry[0] as AppView) : null;
 }
@@ -501,6 +527,9 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.PARTNER.LANDING)) return AppView.PARTNER_LANDING;
   // SuperAdmin: map nested routes to the correct section view
   if (normalized.startsWith(ROUTES.SUPERADMIN.OVERVIEW)) return AppView.SUPERADMIN_OVERVIEW;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_INVOICES)) return AppView.SUPERADMIN_INVOICES;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_BILLING)) return AppView.SUPERADMIN_BILLING;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION))
     return AppView.SUPERADMIN_COMMUNICATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS)) return AppView.SUPERADMIN_CUSTOMERS;
@@ -508,13 +537,12 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.SUPERADMIN.CONTENT)) return AppView.SUPERADMIN_CONTENT;
   if (normalized.startsWith(ROUTES.SUPERADMIN.SYSTEM)) return AppView.SUPERADMIN_SYSTEM;
   if (normalized.startsWith(ROUTES.SUPERADMIN.SECURITY)) return AppView.SUPERADMIN_SECURITY;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION))
-    return AppView.SUPERADMIN_CONFIGURATION;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION)) return AppView.SUPERADMIN_CONFIGURATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.REVENUE)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ANALYTICS)) return AppView.SUPERADMIN_ANALYTICS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS))
     return AppView.SUPERADMIN_VIRTUAL_WORKERS;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_OVERVIEW;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_CUSTOMERS;
   if (normalized.startsWith(ROUTES.ASSESSMENT.ROOT)) return AppView.ASSESSMENT_OVERVIEW;
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;
   if (normalized.startsWith(ROUTES.CONTEXT_BUILDER.ROOT)) return AppView.CONTEXT_BUILDER;

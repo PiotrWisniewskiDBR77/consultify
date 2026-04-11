@@ -8,11 +8,7 @@
 -- ==========================================
 CREATE TABLE IF NOT EXISTS user_keyboard_shortcuts (
     user_id TEXT PRIMARY KEY,
-    preset TEXT DEFAULT 'default', -- default, vscode, sublime, vim, custom
-    enabled INTEGER DEFAULT 1,
-    custom_shortcuts TEXT, -- JSON object mapping action -> shortcut
-    disabled_shortcuts TEXT, -- JSON array of disabled default shortcuts
-    show_hints INTEGER DEFAULT 1, -- Show keyboard hints in UI
+    shortcuts TEXT DEFAULT '{}', -- JSON object mapping action -> shortcut
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

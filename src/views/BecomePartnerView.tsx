@@ -37,7 +37,7 @@ export const BecomePartnerView: React.FC = () => {
   };
 
   const handleLearnMoreClick = () => {
-    navigate(ROUTES.WELCOME);
+    navigate(ROUTES.PARTNER.PRICING);
   };
 
   const BENEFIT_KEYS = ['platform', 'certifications', 'billing', 'materials'] as const;
@@ -108,16 +108,16 @@ export const BecomePartnerView: React.FC = () => {
                 onClick={handleLearnMoreClick}
                 className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all duration-300"
               >
-                {t('pages.partner.hero.learnMore', 'Discover Consultify')}
+                {t('pages.partner.hero.learnMore', 'Odkrywaj program')}
                 <ArrowRight size={18} />
               </button>
 
               <button
-                onClick={() => navigate(ROUTES.PARTNER.LANDING)}
+                onClick={() => navigate('/login')}
                 className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all duration-300"
               >
                 <Shield size={18} className="text-violet-400" />
-                {t('pages.partner.hero.existingPartner', 'I already have a partner account')}
+                {t('pages.partner.hero.existingPartner', 'Zaloguj się jako partner')}
               </button>
             </div>
           </section>

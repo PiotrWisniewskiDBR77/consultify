@@ -74,13 +74,26 @@ CREATE TABLE IF NOT EXISTS user_data_retention (
 -- ==========================================
 CREATE TABLE IF NOT EXISTS data_export_requests (
     id TEXT PRIMARY KEY,
+    organization_id TEXT,
     user_id TEXT NOT NULL,
-    status TEXT DEFAULT 'pending', -- pending, processing, ready, expired
+    format TEXT DEFAULT 'json',
+    export_type TEXT DEFAULT 'gdpr',
+    include_data TEXT,
+    include_data_types TEXT,
+    exclude_data TEXT,
+    status TEXT DEFAULT 'pending', -- pending, processing, completed, failed, expired
     requested_at TEXT DEFAULT (datetime('now')),
+    created_at TEXT DEFAULT (datetime('now')),
+    started_at TEXT,
     completed_at TEXT,
+    file_url TEXT,
     expires_at TEXT,
     download_url TEXT,
     file_path TEXT,
+    file_expires_at TEXT,
+    file_size INTEGER,
+    error_message TEXT,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -164,15 +177,15 @@ CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id);
 CREATE TABLE IF NOT EXISTS user_webhooks (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    organization_id TEXT,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
     events TEXT DEFAULT '[]', -- JSON array
-    secret_key TEXT,
+    secret TEXT,
+    headers TEXT DEFAULT '{}',
     is_active INTEGER DEFAULT 1,
-    last_triggered TEXT,
-    last_status TEXT, -- success, failed
-    last_response_code INTEGER,
+    last_triggered_at TEXT,
+    last_status INTEGER,
+    failure_count INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

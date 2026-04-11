@@ -23,6 +23,19 @@ export async function updateAssessmentScore(
   const { userId } = context;
 
   try {
+    const assessment = await DbPromise.get(
+      `SELECT p28_workbench_v1 FROM assessments WHERE id = ? LIMIT 1`,
+      [assessmentId],
+      { fallback: false }
+    );
+    if ((assessment as { p28_workbench_v1?: string | null } | null)?.p28_workbench_v1) {
+      return {
+        success: false,
+        code: 'P28_NO_SILENT_SCORING',
+        message: 'P28 assessment scores must be proposed and reviewed in the workbench',
+      };
+    }
+
     const result = await DbPromise.run(
       `UPDATE assessment_scores 
              SET score = ?, updated_by = ?, updated_at = datetime('now')

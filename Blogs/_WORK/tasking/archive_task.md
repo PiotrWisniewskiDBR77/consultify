@@ -1,8 +1,0 @@
-- `[x]` 43_...: hero_16x9_v1.png (Plant leads in office)
-- `[x]` 43_...: analytical_16x9_v1.png (Baseline vs. Scope trays)
-- `[x]` 43_...: social_1x1_v1.png (Macro governance binder)
-- `[x]` 44_...: hero_16x9_v1.png (Meeting room boundary markers)
-- `[x]` 44_...: analytical_16x9_v1.png (Mobilization decision chips)
-- `[x]` 44_...: social_1x1_v1.png (Macro industrial timer)
-- `[x]` Final Audit: all 6 assets and meta.json files
-- `[x]` Move PNGs to canonical paths

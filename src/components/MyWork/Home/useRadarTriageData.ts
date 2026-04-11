@@ -63,7 +63,7 @@ export async function executeTriageHandoff(signalId: string): Promise<{
   targetPayload: Record<string, unknown>;
 } | null> {
   try {
-    const response = await Api.post(`/v8/radar-triage/signals/${signalId}/handoff`);
+    const response = await Api.post(`/v8/radar-triage/signals/${signalId}/handoff`, {});
     return (response?.data as { data?: any })?.data ?? null;
   } catch {
     return null;

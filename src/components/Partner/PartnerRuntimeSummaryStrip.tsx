@@ -7,12 +7,14 @@ import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerEarningsSummary,
+  type V8PartnerProgramStatus,
   type V8PartnerReferralAnalytics,
 } from '../../services/api/v8';
 
 export interface PartnerRuntimeSummary {
   analytics: V8PartnerReferralAnalytics;
   earnings: V8PartnerEarningsSummary;
+  program: V8PartnerProgramStatus | null;
 }
 
 function unwrapLegacyPayload(payload: any): any {
@@ -87,12 +89,13 @@ async function getEarningsSummaryWithFallback(): Promise<V8PartnerEarningsSummar
 }
 
 export async function loadPartnerRuntimeSummary(): Promise<PartnerRuntimeSummary> {
-  const [analytics, earnings] = await Promise.all([
+  const [analytics, earnings, program] = await Promise.all([
     getReferralAnalyticsWithFallback(),
     getEarningsSummaryWithFallback(),
+    V8PartnerApi.getProgramStatus().catch(() => null),
   ]);
 
-  return { analytics, earnings };
+  return { analytics, earnings, program };
 }
 
 export const PartnerRuntimeSummaryStrip: React.FC<{ summary: PartnerRuntimeSummary }> = ({
@@ -135,8 +138,14 @@ export const PartnerRuntimeSummaryStrip: React.FC<{ summary: PartnerRuntimeSumma
           },
           {
             label: t('partner.metrics.runtimeReadyForPayout', 'Ready for payout'),
-            value: `${summary.earnings.currency ?? 'EUR'} ${(summary.earnings.readyForPayout ?? 0).toLocaleString()}`,
-            detail: `${summary.earnings.totalPending ?? 0} pending`,
+            value: `${summary.program?.balances.currency ?? summary.earnings.currency ?? 'EUR'} ${(
+              summary.program?.balances.availableToPayout ??
+              summary.earnings.readyForPayout ??
+              0
+            ).toLocaleString()}`,
+            detail: summary.program
+              ? `${summary.program.lifecyclePhase} lifecycle`
+              : `${summary.earnings.totalPending ?? 0} pending`,
           },
         ].map((card) => (
           <div

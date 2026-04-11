@@ -76,7 +76,7 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     title: 'Anna',
     subtitle: 'Guided product entry assistant',
     intro:
-      'I can explain Consultify and help you choose the right next step: demo, trial, or contact. I do not have access to client or project data.',
+      'I can explain Consultify, the partner program, and help you choose the right next step: demo, trial, partner application, or contact. I do not have access to client or project data.',
     placeholder: 'Ask Anna about the product...',
     send: 'Send',
     open: 'Ask Anna first',
@@ -85,9 +85,9 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     privacyBadge: 'Public knowledge only',
     suggestions: [
       'What is Consultify?',
-      'How does DBR77 Vector fit into Consultify?',
+      'How does the Consultify partner program work?',
       'Who is Consultify for?',
-      'Why start with a demo or trial?',
+      'What does partner certification include?',
     ],
     error:
       'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.',
@@ -107,7 +107,7 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     title: 'Anna',
     subtitle: 'Asystentka wejścia produktowego',
     intro:
-      'Moge wyjasnic Consultify i pomóc wybrać właściwy kolejny krok: demo, trial albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
+      'Moge wyjasnic Consultify, program partnerski i pomóc wybrać właściwy kolejny krok: demo, trial, aplikacje partnerska albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
     placeholder: 'Zapytaj Anne o produkt...',
     send: 'Wyslij',
     open: 'Zapytaj Anne najpierw',
@@ -116,9 +116,9 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     privacyBadge: 'Tylko wiedza publiczna',
     suggestions: [
       'Czym jest Consultify?',
-      'Jak DBR77 Vector wspiera Consultify?',
+      'Jak działa program partnerski Consultify?',
       'Dla kogo jest Consultify?',
-      'Dlaczego warto zaczac od demo lub triala?',
+      'Co obejmuje certyfikacja partnera?',
     ],
     error:
       'Nasz asystent AI jest tymczasowo niedostepny. Przejrzyj prosze strone lub skontaktuj sie z nami bezposrednio.',
@@ -273,20 +273,20 @@ const ANNA_SITE_OVERRIDES: Record<
 > = {
   consultify: {
     introEn:
-      'I can explain Consultify and help you choose the right next step: demo, trial, or contact. I do not have access to client or project data.',
+      'I can explain Consultify, the partner program, and help you choose the right next step: demo, trial, partner application, or contact. I do not have access to client or project data.',
     introPl:
-      'Moge wyjasnic Consultify i pomóc wybrać właściwy kolejny krok: demo, trial albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
+      'Moge wyjasnic Consultify, program partnerski i pomóc wybrać właściwy kolejny krok: demo, trial, aplikacje partnerska albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
     suggestionsEn: [
       'What is Consultify?',
-      'How does DBR77 Vector fit into Consultify?',
+      'How does the Consultify partner program work?',
       'Who is Consultify for?',
-      'Why start with a demo or trial?',
+      'What does partner certification include?',
     ],
     suggestionsPl: [
       'Czym jest Consultify?',
-      'Jak DBR77 Vector wspiera Consultify?',
+      'Jak działa program partnerski Consultify?',
       'Dla kogo jest Consultify?',
-      'Dlaczego warto zaczac od demo lub triala?',
+      'Co obejmuje certyfikacja partnera?',
     ],
     voiceFocusEn:
       'Consultify is the structured transformation decision layer. Prioritize Consultify first, then use other DBR77 products only when they genuinely clarify value or cross-sell logic.',

@@ -21,6 +21,7 @@ export interface AuthenticatedUser {
   organization_id?: string; // Legacy support
   isSuperAdmin?: boolean;
   isDemo?: boolean;
+  superadminCapabilities?: string[];
 }
 
 export interface AuthenticatedRequest<

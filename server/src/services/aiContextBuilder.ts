@@ -1055,7 +1055,103 @@ export const AIContextBuilder = {
     if (!projectId) return null;
 
     try {
-      // Get the latest assessment for this project
+      const parseJson = (raw: unknown): Record<string, any> => {
+        if (!raw) return {};
+        if (typeof raw === 'object') return raw as Record<string, any>;
+        if (typeof raw !== 'string') return {};
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? (parsed as Record<string, any>) : {};
+        } catch {
+          return {};
+        }
+      };
+
+      const canonicalAssessment: any = await get(
+        `SELECT
+           id,
+           name,
+           assessment_type,
+           status,
+           completion_percent,
+           confidence_avg,
+           score_summary,
+           context_snapshot,
+           p28_workbench_v1,
+           created_at,
+           updated_at
+         FROM assessments
+         WHERE project_id = ? AND organization_id = ?
+         ORDER BY COALESCE(updated_at, created_at) DESC
+         LIMIT 1`,
+        [projectId, organizationId]
+      );
+
+      if (canonicalAssessment) {
+        const scoreSummary = parseJson(canonicalAssessment.score_summary);
+        const contextSnapshot = parseJson(canonicalAssessment.context_snapshot);
+        const workbench = parseJson(canonicalAssessment.p28_workbench_v1);
+        const scoreValues =
+          (workbench?.scoreProposal?.scoreValues as Record<string, unknown> | undefined) ||
+          (scoreSummary?.scores as Record<string, unknown> | undefined) ||
+          (scoreSummary?.scoreValues as Record<string, unknown> | undefined) ||
+          {};
+
+        const normalizedScores = Object.entries(scoreValues)
+          .map(([axis, value]) => ({
+            axis,
+            asIs:
+              typeof value === 'number'
+                ? value
+                : typeof value === 'string' && value.trim() !== ''
+                  ? Number(value)
+                  : null,
+          }))
+          .filter((entry) => Number.isFinite(entry.asIs))
+          .map((entry) => ({ ...entry, asIs: Number(entry.asIs) }));
+
+        const needsWorkTopAxes = Array.isArray(contextSnapshot?.needsWorkTopAxes)
+          ? contextSnapshot.needsWorkTopAxes
+          : [];
+
+        return {
+          assessmentId: canonicalAssessment.id,
+          name: canonicalAssessment.name,
+          framework: canonicalAssessment.assessment_type || 'DRD',
+          status: canonicalAssessment.status,
+          overallScore: scoreSummary?.overallScore ?? scoreSummary?.overall_score ?? null,
+          overallTarget: scoreSummary?.overallTarget ?? scoreSummary?.overall_target ?? null,
+          overallGap: scoreSummary?.overallGap ?? scoreSummary?.overall_gap ?? null,
+          completionPercent: canonicalAssessment.completion_percent,
+          confidenceAvg:
+            canonicalAssessment.confidence_avg ?? workbench?.scoreProposal?.confidence ?? null,
+          runState: workbench?.runState || null,
+          axisScores: normalizedScores.slice(0, 10).map((entry) => ({
+            axis: entry.axis,
+            asIs: entry.asIs,
+            toBe: null,
+            gap: null,
+          })),
+          topGaps: needsWorkTopAxes.length
+            ? needsWorkTopAxes.slice(0, 5).map((axis: any) => ({
+                axis: axis?.axisName || axis?.axisId || 'unknown',
+                gap:
+                  typeof axis?.percent === 'number'
+                    ? Math.max(0, 100 - Number(axis.percent))
+                    : null,
+              }))
+            : normalizedScores
+                .slice()
+                .sort((a, b) => Number(a.asIs) - Number(b.asIs))
+                .slice(0, 5)
+                .map((entry) => ({
+                  axis: entry.axis,
+                  gap: Number((5 - Number(entry.asIs)).toFixed(2)),
+                })),
+        };
+      }
+
+      // Fallback for legacy projects that still store DRD in maturity_assessments.
       const assessment: any = await get(
         `SELECT id, name, framework, status, overall_score, confidence_avg, completion_percent
          FROM maturity_assessments
@@ -1065,7 +1161,6 @@ export const AIContextBuilder = {
       );
       if (!assessment) return null;
 
-      // Get axis scores
       const axisScores = await all(
         `SELECT axis_id, axis_name, as_is_score, to_be_score, gap
          FROM digitization_axis_scores
@@ -1074,7 +1169,6 @@ export const AIContextBuilder = {
         [assessment.id]
       );
 
-      // Get digitization analysis if exists
       const analysis: any = await get(
         `SELECT overall_as_is, overall_to_be, overall_gap
          FROM digitization_analyses

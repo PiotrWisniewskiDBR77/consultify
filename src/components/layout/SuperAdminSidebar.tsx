@@ -1,16 +1,11 @@
 import {
-  BarChart3,
-  Bot,
   Brain,
   ChevronRight,
-  CreditCard,
   Layers,
-  LayoutDashboard,
   LogOut,
   PanelLeftClose,
   Pin,
   Server,
-  Settings,
   Shield,
   Users,
 } from 'lucide-react';
@@ -22,53 +17,36 @@ import { AppView } from '../../types';
 
 // Unified AI Platform structure (6 tabs with sub-tabs)
 export type SuperAdminSection =
-  | 'overview'
   | 'customers'
-  | 'ai-platform' // Unified AI Platform with 6 main tabs
-  | 'ai-infrastructure' // Legacy - redirects to ai-platform
-  | 'ai-development' // Legacy - redirects to ai-platform
-  | 'ai-operations' // Legacy - redirects to ai-platform
+  | 'ai-platform'
   | 'system'
   | 'content'
-  | 'revenue'
-  | 'security'
-  | 'configuration'
-  | 'analytics' // Custom Dashboards, Reports, Metrics, Predictive
-  | 'virtual-workers'; // Virtual Workers (Anna, Teresa, etc.)
+  | 'security';
 
 // Mapping between sections and AppView
 export const sectionToAppView: Record<SuperAdminSection, AppView> = {
-  overview: AppView.SUPERADMIN_OVERVIEW,
   customers: AppView.SUPERADMIN_CUSTOMERS,
-  'ai-platform': AppView.SUPERADMIN_AI_PLATFORM, // Unified AI Platform
-  'ai-infrastructure': AppView.SUPERADMIN_AI_PLATFORM, // Legacy -> AI Platform
-  'ai-development': AppView.SUPERADMIN_AI_PLATFORM, // Legacy -> AI Platform
-  'ai-operations': AppView.SUPERADMIN_AI_PLATFORM, // Legacy -> AI Platform
+  'ai-platform': AppView.SUPERADMIN_AI_PLATFORM,
   system: AppView.SUPERADMIN_SYSTEM,
   content: AppView.SUPERADMIN_CONTENT,
-  revenue: AppView.SUPERADMIN_REVENUE,
   security: AppView.SUPERADMIN_SECURITY,
-  configuration: AppView.SUPERADMIN_CONFIGURATION,
-  analytics: AppView.SUPERADMIN_ANALYTICS,
-  'virtual-workers': AppView.SUPERADMIN_VIRTUAL_WORKERS,
 };
 
 export const appViewToSection: Record<string, SuperAdminSection> = {
-  [AppView.SUPERADMIN_OVERVIEW]: 'overview',
+  [AppView.SUPERADMIN_OVERVIEW]: 'customers',
   [AppView.SUPERADMIN_CUSTOMERS]: 'customers',
-  [AppView.SUPERADMIN_AI_PLATFORM]: 'ai-platform', // Unified AI Platform
-  [AppView.SUPERADMIN_AI_INFRASTRUCTURE]: 'ai-platform', // Legacy -> AI Platform
-  [AppView.SUPERADMIN_AI_DEVELOPMENT]: 'ai-platform', // Legacy -> AI Platform
-  [AppView.SUPERADMIN_AI_OPERATIONS]: 'ai-platform', // Legacy -> AI Platform
+  [AppView.SUPERADMIN_AI_PLATFORM]: 'ai-platform',
+  [AppView.SUPERADMIN_AI_INFRASTRUCTURE]: 'ai-platform',
+  [AppView.SUPERADMIN_AI_DEVELOPMENT]: 'ai-platform',
+  [AppView.SUPERADMIN_AI_OPERATIONS]: 'ai-platform',
   [AppView.SUPERADMIN_SYSTEM]: 'system',
   [AppView.SUPERADMIN_CONTENT]: 'content',
-  [AppView.SUPERADMIN_REVENUE]: 'revenue',
   [AppView.SUPERADMIN_SECURITY]: 'security',
-  [AppView.SUPERADMIN_CONFIGURATION]: 'configuration',
-  [AppView.SUPERADMIN_ANALYTICS]: 'analytics',
-  [AppView.SUPERADMIN_VIRTUAL_WORKERS]: 'virtual-workers',
-  // Legacy view mappings - redirect to appropriate modules
-  [AppView.SUPERADMIN_DASHBOARD]: 'overview',
+  [AppView.SUPERADMIN_REVENUE]: 'customers',
+  [AppView.SUPERADMIN_CONFIGURATION]: 'system',
+  [AppView.SUPERADMIN_ANALYTICS]: 'system',
+  [AppView.SUPERADMIN_VIRTUAL_WORKERS]: 'ai-platform',
+  [AppView.SUPERADMIN_DASHBOARD]: 'customers',
   [AppView.SUPERADMIN_ORGANIZATIONS]: 'customers',
   [AppView.SUPERADMIN_USERS]: 'customers',
   [AppView.SUPERADMIN_COMMUNICATION]: 'customers',
@@ -77,15 +55,15 @@ export const appViewToSection: Record<string, SuperAdminSection> = {
   [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-platform',
   [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-platform',
   [AppView.SUPERADMIN_KNOWLEDGE]: 'ai-platform',
-  [AppView.SUPERADMIN_BILLING]: 'revenue',
-  [AppView.SUPERADMIN_INVOICES]: 'revenue',
+  [AppView.SUPERADMIN_BILLING]: 'customers',
+  [AppView.SUPERADMIN_INVOICES]: 'customers',
   [AppView.SUPERADMIN_SSO]: 'security',
   [AppView.SUPERADMIN_SECURITY_POLICIES]: 'security',
-  [AppView.SUPERADMIN_API_MANAGEMENT]: 'security',
-  [AppView.SUPERADMIN_COMPLIANCE]: 'security',
-  [AppView.SUPERADMIN_SETTINGS]: 'configuration',
-  [AppView.SUPERADMIN_WHITELABEL]: 'configuration',
-  [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: 'content',
+  [AppView.SUPERADMIN_API_MANAGEMENT]: 'system',
+  [AppView.SUPERADMIN_COMPLIANCE]: 'content',
+  [AppView.SUPERADMIN_SETTINGS]: 'system',
+  [AppView.SUPERADMIN_WHITELABEL]: 'system',
+  [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: 'customers',
 };
 
 interface SuperAdminSidebarProps {
@@ -103,16 +81,11 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
   { id: 'customers', label: 'Tenant & User Ops', icon: <Users size={20} />, separator: 'before' },
   { id: 'ai-platform', label: 'AI Operations', icon: <Brain size={20} />, separator: 'before' },
-  { id: 'virtual-workers', label: 'Virtual Workers', icon: <Bot size={20} /> },
   { id: 'system', label: 'Connector Ops', icon: <Server size={20} />, separator: 'before' },
   { id: 'content', label: 'Governance & Compliance', icon: <Layers size={20} />, separator: 'before' },
   { id: 'security', label: 'Platform Security', icon: <Shield size={20} /> },
-  { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={20} />, separator: 'before' },
-  { id: 'revenue', label: 'Revenue', icon: <CreditCard size={20} /> },
-  { id: 'configuration', label: 'Configuration', icon: <Settings size={20} />, separator: 'before' },
 ];
 
 // Reusable menu button component

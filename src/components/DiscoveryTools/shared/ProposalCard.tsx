@@ -1,6 +1,8 @@
 import { Check, Loader2, MessageSquare, Sparkles, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { RowActionsMenu, type RowAction } from '@/components/shared/RowActionsMenu';
 import type { ProposalCardType, ProposalStatus } from '@/store/useToolStore';
 
 interface ProposalCardProps {
@@ -67,8 +69,10 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   className = '',
   compact = false,
 }) => {
+  const { i18n } = useTranslation();
   const [showComment, setShowComment] = useState(false);
   const [comment, setComment] = useState('');
+  const isPolish = i18n.language === 'pl';
 
   const status = proposalStatus || 'ai-proposed';
   const badge = STATUS_BADGE[status];
@@ -85,6 +89,39 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
     }
   };
 
+  const menuActions = useMemo<RowAction[]>(() => {
+    if (isRethinking || status !== 'ai-proposed') return [];
+    return [
+      {
+        id: 'accept',
+        label: isPolish ? 'Akceptuj' : 'Accept',
+        icon: Check,
+        variant: 'primary',
+        onClick: () => onAccept(cardType, cardId),
+      },
+      {
+        id: 'comment',
+        label: isPolish ? 'Komentarz i rethink' : 'Comment & rethink',
+        icon: MessageSquare,
+        onClick: () => setShowComment((current) => !current),
+      },
+      {
+        id: 'rethink',
+        label: isPolish ? 'Przemyśl ponownie' : 'Rethink',
+        icon: Sparkles,
+        onClick: () => onRethink(cardType, cardId),
+      },
+      {
+        id: 'reject',
+        label: isPolish ? 'Odrzuć' : 'Reject',
+        icon: X,
+        variant: 'danger',
+        divider: true,
+        onClick: () => onReject(cardType, cardId),
+      },
+    ];
+  }, [cardId, cardType, isPolish, isRethinking, onAccept, onReject, onRethink, status]);
+
   if (isRejected) return null;
 
   return (
@@ -99,41 +136,10 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${badge.tone}`}
           >
             {badge.icon}
-            <span>{badge.label}</span>
+            <span>{isPolish ? badge.labelPl : badge.label}</span>
           </div>
 
-          {!isRethinking && status === 'ai-proposed' && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => onAccept(cardType, cardId)}
-                className="rounded-lg p-1.5 text-emerald-600 transition-colors hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
-                title="Accept"
-              >
-                <Check className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => setShowComment(!showComment)}
-                className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/30"
-                title="Comment & Rethink"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => onRethink(cardType, cardId)}
-                className="rounded-lg p-1.5 text-violet-600 transition-colors hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30"
-                title="Rethink"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => onReject(cardType, cardId)}
-                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600 dark:text-slate-500 dark:hover:bg-rose-900/30 dark:hover:text-rose-400"
-                title="Reject"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
+          {menuActions.length > 0 ? <RowActionsMenu actions={menuActions} iconVariant="vertical" /> : null}
         </div>
       </div>
 
@@ -144,7 +150,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRethink()}
-            placeholder="Your feedback for AI..."
+            placeholder={isPolish ? 'Dodaj feedback dla AI...' : 'Your feedback for AI...'}
             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
             autoFocus
           />
@@ -152,7 +158,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onClick={handleRethink}
             className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-violet-700"
           >
-            Rethink
+            {isPolish ? 'Przemyśl' : 'Rethink'}
           </button>
         </div>
       )}

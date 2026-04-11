@@ -133,12 +133,16 @@ describe('P32 Admin — cockpit + members/roles + security', () => {
     expect(content).toContain('Admin');
   });
 
-  it('AdminSettingsModule has org/branding/billing/security sections', async () => {
+  it('AdminSettingsModule defines the canonical five-branch P32 cockpit', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/views/admin/AdminSettingsModule.tsx', 'utf-8'
     );
-    expect(content).toContain('organization');
+    expect(content).toContain('Members & Roles');
+    expect(content).toContain('Security Policy');
+    expect(content).toContain('Collaboration Controls');
+    expect(content).toContain('Integrations & Sync');
+    expect(content).toContain('Audit Log');
     expect(content).toContain('security');
   });
 
@@ -321,7 +325,7 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
     expect(service).toBeDefined();
 
     const all = service.getRegistry();
-    expect(all.length).toBeGreaterThanOrEqual(20);
+    expect(all.length).toBe(22);
 
     const scopes = new Set(all.map((k: any) => k.scope));
     expect(scopes.has('personal')).toBe(true);
@@ -338,6 +342,7 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
       expect(key.key).toBeTruthy();
       expect(key.scope).toBeTruthy();
       expect(key.ownerContract).toBeTruthy();
+      expect(key.managedIn).toBeTruthy();
       expect(key.impactLanguage).toBeTruthy();
       expect(key.impactedSurface).toBeTruthy();
       expect(typeof key.requiresRestart).toBe('boolean');
@@ -347,15 +352,33 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
     }
   });
 
-  it('tenant-scoped keys route writes to Admin (P32)', async () => {
+  it('tenant and tenant-enforced keys route writes to Admin (P32)', async () => {
     const mod = await import(
       '../../../server/src/services/settingsRegistryService.js'
     );
     const service = mod.default;
-    const routing = service.checkWriteRouting('mfa_enforcement', 'member');
+    for (const key of [
+      'mfa_required',
+      'sso_enforced',
+      'guest_access_enabled',
+      'external_link_sharing',
+      'tool_approval_required',
+    ]) {
+      const routing = service.checkWriteRouting(key, 'member');
+      expect(routing.allowed).toBe(false);
+      expect(String(routing.routeTo)).toContain('/admin');
+      expect(routing.guidance).toContain('Admin');
+    }
+  });
+
+  it('unknown settings keys are blocked with a refresh hint', async () => {
+    const mod = await import(
+      '../../../server/src/services/settingsRegistryService.js'
+    );
+    const routing = mod.default.checkWriteRouting('unknown_setting_key', 'member');
     expect(routing.allowed).toBe(false);
-    expect(routing.routeTo).toBe('Admin');
-    expect(routing.guidance).toContain('Admin');
+    expect(routing.routeTo).toBe('/settings');
+    expect(routing.guidance).toContain('unknown');
   });
 
   it('personal-scoped keys allow any role to write', async () => {
@@ -372,10 +395,11 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
       '../../../server/src/services/settingsRegistryService.js'
     );
     const service = mod.default;
-    const denial = service.buildDenialResponse('mfa_enforcement', 'permission_denied');
+    const denial = service.buildDenialResponse('mfa_required', 'permission_denied');
     expect(denial.status).toBe(403);
     expect(denial.code).toBe('SETTINGS_PERMISSION_DENIED');
     expect(denial.message).toContain('Admin');
+    expect(denial.routeTo).toBe('/admin/security');
   });
 
   it('buildDenialResponse returns 404 for not_found', async () => {
@@ -395,14 +419,12 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
     expect(denial.status).toBe(503);
   });
 
-  it('settings routes have registry endpoints', async () => {
-    const fs = await import('fs');
-    const content = fs.readFileSync(
-      'server/src/routes/settings.routes.ts', 'utf-8'
-    );
-    expect(content).toContain('/registry');
-    expect(content).toContain('settingsRegistryService');
-    expect(content).toContain('CONFIRMATION_REQUIRED');
+  it('registry includes P30 read-only tenant defaults', async () => {
+    const mod = await import('../../../server/src/services/settingsRegistryService.js');
+    const defaultLanguage = mod.default.getKeyMetadata('default_language');
+    expect(defaultLanguage.ownerContract).toBe('P30');
+    expect(defaultLanguage.managedIn).toBe('organization');
+    expect(defaultLanguage.readOnlyInSettings).toBe(true);
   });
 
   it('module preferences keys exist in registry', async () => {
@@ -410,11 +432,11 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
       '../../../server/src/services/settingsRegistryService.js'
     );
     const moduleKeys = mod.default.getKeysByScope('module');
-    expect(moduleKeys.length).toBeGreaterThanOrEqual(5);
+    expect(moduleKeys.length).toBe(8);
     const keyNames = moduleKeys.map((k: any) => k.key);
-    expect(keyNames).toContain('interview_recording_auto_start');
-    expect(keyNames).toContain('tools_default_export_format');
-    expect(keyNames).toContain('copilot_suggestions_enabled');
+    expect(keyNames).toContain('recording_auto_start');
+    expect(keyNames).toContain('default_export_format');
+    expect(keyNames).toContain('model_preference');
   });
 });
 
@@ -423,34 +445,35 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
 // ===========================================================================
 
 describe('P32 Admin — cockpit IA alignment (§2.3.1)', () => {
-  it('AdminSettingsSidebar has Members & Roles group', async () => {
+  it('AdminSettingsSidebar exposes the canonical Members & Roles branch', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/components/Admin/AdminSettingsSidebar.tsx', 'utf-8'
     );
-    expect(content).toContain('members-roles');
-    expect(content).toContain('MEMBERS & ROLES');
+    expect(content).toContain('Members & Roles');
     expect(content).toContain("'members'");
   });
 
-  it('AdminSettingsSidebar has Collaboration Controls group', async () => {
+  it('AdminSettingsSidebar exposes the canonical Collaboration and Integrations branches', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/components/Admin/AdminSettingsSidebar.tsx', 'utf-8'
     );
     expect(content).toContain('collaboration');
-    expect(content).toContain('COLLABORATION');
-    expect(content).toContain('sync-hub');
+    expect(content).toContain('Collaboration Controls');
+    expect(content).toContain('Integrations & Sync');
   });
 
-  it('AdminSettingsModule has members/collaboration/sync-hub metadata', async () => {
+  it('AdminSettingsModule maps only the canonical five P32 branches', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/views/admin/AdminSettingsModule.tsx', 'utf-8'
     );
     expect(content).toContain("members:");
     expect(content).toContain("collaboration:");
-    expect(content).toContain("'sync-hub':");
+    expect(content).toContain("integrations:");
+    expect(content).toContain("audit:");
+    expect(content).toContain('Sync Hub was merged into Integrations & Sync');
   });
 });
 

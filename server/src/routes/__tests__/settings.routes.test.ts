@@ -14,6 +14,7 @@ const {
   mockListGovernedIntegrations,
   mockBuildGovernedExternalAuthSession,
   mockSetConnectorAuthState,
+  mockBuildResolvedContext,
 } = vi.hoisted(() => ({
   mockDbAll: vi.fn(),
   mockDbGet: vi.fn(),
@@ -24,6 +25,7 @@ const {
   mockListGovernedIntegrations: vi.fn(),
   mockBuildGovernedExternalAuthSession: vi.fn(),
   mockSetConnectorAuthState: vi.fn(),
+  mockBuildResolvedContext: vi.fn(),
 }));
 
 vi.mock('../../utils/DbPromise.js', () => ({
@@ -53,9 +55,19 @@ vi.mock('../../services/v8/pmSyncTruthService.js', () => ({
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
-    req.user = { id: 'user-1', organizationId: 'org-1' };
+    req.user = {
+      id: 'user-1',
+      organizationId: 'org-1',
+      role: req.headers['x-user-role'] || 'member',
+    };
     req.organizationId = 'org-1';
     next();
+  },
+}));
+
+vi.mock('../../services/organizationContext/OrganizationContextService.js', () => ({
+  default: {
+    buildResolvedContext: (...args: unknown[]) => mockBuildResolvedContext(...args),
   },
 }));
 
@@ -84,6 +96,21 @@ describe('settings integrations authority continuity', () => {
     vi.clearAllMocks();
     mockDbRun.mockResolvedValue({ success: true });
     mockDbGet.mockResolvedValue(undefined);
+    mockBuildResolvedContext.mockResolvedValue({
+      profile: {
+        defaultLanguage: 'pl',
+        defaultTimezone: 'Europe/Warsaw',
+        currency: 'PLN',
+        brandColor: '#4338ca',
+        accentColor: '#7c3aed',
+        customDomain: 'workspace.example.com',
+      },
+      trust: {
+        mfa: { required: true },
+        sso: { enforced: true, provider: 'okta', configured: true },
+        security: { sessionTimeout: 45 },
+      },
+    });
     mockGetTableColumns.mockImplementation(async (table: string) => {
       if (table === 'integrations') {
         return new Set(['connector_id', 'config']);
@@ -97,6 +124,39 @@ describe('settings integrations authority continuity', () => {
           'items_failed',
           'error_summary',
           'error_details',
+        ]);
+      }
+      if (table === 'user_api_keys') {
+        return new Set([
+          'id',
+          'user_id',
+          'name',
+          'key_hash',
+          'key_prefix',
+          'permissions',
+          'rate_limit',
+          'last_used_at',
+          'expires_at',
+          'is_active',
+          'created_at',
+          'updated_at',
+        ]);
+      }
+      if (table === 'user_webhooks') {
+        return new Set([
+          'id',
+          'user_id',
+          'name',
+          'url',
+          'events',
+          'secret',
+          'headers',
+          'is_active',
+          'last_triggered_at',
+          'last_status',
+          'failure_count',
+          'created_at',
+          'updated_at',
         ]);
       }
       return new Set();
@@ -236,10 +296,16 @@ describe('settings integrations authority continuity', () => {
         },
       })
     );
-    expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO integrations'),
-      expect.arrayContaining(['org-1', 'jira', 'Jira', 'project_management', 'pending'])
-    );
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('INSERT INTO integrations') &&
+          Array.isArray(call[1]) &&
+          (call[1] as unknown[]).includes('org-1') &&
+          (call[1] as unknown[]).includes('jira') &&
+          (call[1] as unknown[]).includes('pending')
+      )
+    ).toBe(true);
   });
 
   it('DELETE /api/settings/integrations/:provider reuses governed disconnect authority', async () => {
@@ -319,27 +385,29 @@ describe('settings integrations authority continuity', () => {
         status: 'pending',
         config: {
           site_url: 'https://acme.atlassian.net',
-          cloud_id: 'cloud-1',
           client_id: 'jira-client-id',
           client_secret: 'jira-client-secret',
         },
-        configuredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
-        requiredFields: ['site_url', 'cloud_id', 'client_id', 'client_secret'],
+        configuredFields: ['site_url', 'client_id', 'client_secret'],
+        requiredFields: ['site_url', 'client_id', 'client_secret'],
       })
     );
-    expect(mockDbRun).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE integrations'),
-      [
-        JSON.stringify({
-          site_url: 'https://acme.atlassian.net',
-          cloud_id: 'cloud-1',
-          client_id: 'jira-client-id',
-          client_secret: 'jira-client-secret',
-        }),
-        'int-1',
-        'org-1',
-      ]
-    );
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('UPDATE integrations') &&
+          JSON.stringify(call[1]) ===
+            JSON.stringify([
+              JSON.stringify({
+                site_url: 'https://acme.atlassian.net',
+                client_id: 'jira-client-id',
+                client_secret: 'jira-client-secret',
+              }),
+              'int-1',
+              'org-1',
+            ])
+      )
+    ).toBe(true);
     expect(mockSetConnectorAuthState).toHaveBeenCalledWith({
       connectorId: 'jira',
       organizationId: 'org-1',
@@ -356,7 +424,6 @@ describe('settings integrations authority continuity', () => {
         mode: 'connect',
         config: {
           site_url: 'https://acme.atlassian.net',
-          cloud_id: 'cloud-1',
           client_id: 'jira-client-id',
           client_secret: 'jira-client-secret',
         },
@@ -550,5 +617,144 @@ describe('settings integrations authority continuity', () => {
 
     expect(activeRes.status).toBe(200);
     expect(activeRes.body).toEqual({ success: true });
+  });
+});
+
+describe('settings registry contract endpoints', () => {
+  beforeEach(() => {
+    mockDbGet.mockResolvedValue(undefined);
+  });
+
+  it('GET /api/settings/registry returns the canonical 22-key registry', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/registry');
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(22);
+    expect(res.body.keys).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'default_language', managedIn: 'organization' }),
+        expect.objectContaining({ key: 'tool_approval_required', managedIn: 'admin' }),
+        expect.objectContaining({ key: 'model_preference', scope: 'module' }),
+      ])
+    );
+  });
+
+  it('GET /api/settings/registry/:key/metadata exposes P30 read-only metadata', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/registry/default_language/metadata');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        key: 'default_language',
+        ownerContract: 'P30',
+        managedIn: 'organization',
+        readOnlyInSettings: true,
+      })
+    );
+  });
+
+  it('GET /api/settings/registry/:key/resolve returns module source in Personal > Module > Tenant > System cascade', async () => {
+    mockDbGet.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM user_preferences')) {
+        return undefined;
+      }
+      if (sql.includes('FROM settings') && params[0] === 'module:org-1:interview:recording_auto_start') {
+        return { value: 'true' };
+      }
+      return undefined;
+    });
+
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/registry/recording_auto_start/resolve');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        value: true,
+        source: 'module',
+      })
+    );
+  });
+
+  it('PUT /api/settings/registry/:key returns 403 guidance for Admin-owned keys', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).put('/api/settings/registry/mfa_required').send({
+      value: true,
+      confirmed: true,
+    });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('SETTINGS_READ_ONLY');
+    expect(res.body.guidance).toContain('Admin');
+    expect(res.body.routeTo).toBe('/admin/security');
+  });
+
+  it('PUT /api/settings/registry/:key writes tenant-owned P31 keys for admin roles', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .put('/api/settings/registry/default_currency')
+      .set('x-user-role', 'admin')
+      .send({
+        value: 'EUR',
+        confirmed: true,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: true,
+        key: 'default_currency',
+        scope: 'tenant',
+        storedAs: 'tenant',
+      })
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT OR REPLACE INTO settings'),
+      ['tenant:org-1:default_currency', 'EUR'],
+      { fallback: false }
+    );
+  });
+
+  it('PUT /api/settings/registry/:key can persist module defaults when admin targets module scope', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app)
+      .put('/api/settings/registry/recording_auto_start')
+      .set('x-user-role', 'admin')
+      .send({
+        value: true,
+        confirmed: true,
+        targetScope: 'module',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: true,
+        key: 'recording_auto_start',
+        storedAs: 'module',
+      })
+    );
+    expect(mockDbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT OR REPLACE INTO settings'),
+      ['module:org-1:interview:recording_auto_start', 'true'],
+      { fallback: false }
+    );
   });
 });

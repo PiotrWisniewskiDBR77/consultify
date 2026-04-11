@@ -73,13 +73,30 @@ describe('OrganizationContextService', () => {
   it('builds resolved context with claim precedence over legacy rows', async () => {
     mockDbGet.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM organizations')) {
-        return { id: 'org-1', name: 'Legacy Org', default_language: 'en', default_timezone: 'UTC' };
+        return {
+          id: 'org-1',
+          name: 'Legacy Org',
+          default_language: 'en',
+          default_timezone: 'UTC',
+          mfa_required: 1,
+          mfa_grace_period_days: 14,
+        };
       }
       if (sql.includes('FROM organization_profiles')) {
         return { industry: 'Legacy Industry', company_size: 'ENTERPRISE' };
       }
       if (sql.includes("FROM organization_settings")) {
-        return { setting_value: JSON.stringify({ brandColor: '#123456' }) };
+        if (sql.includes(`setting_key = 'branding'`)) {
+          return { setting_value: JSON.stringify({ brandColor: '#123456' }) };
+        }
+        if (sql.includes(`setting_key = 'security'`)) {
+          return {
+            setting_value: JSON.stringify({ passwordPolicy: 'strict', sessionTimeout: 7200 }),
+          };
+        }
+      }
+      if (sql.includes('FROM sso_configurations')) {
+        return { provider_type: 'okta', enforce_sso: 1, allow_password_login: 0, is_active: 1 };
       }
       if (sql.includes('FROM organization_context WHERE organization_id')) {
         return {
@@ -177,6 +194,21 @@ describe('OrganizationContextService', () => {
     expect(context.stakeholders).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: 'New CEO' })])
     );
+    expect(context.trust.mfa).toEqual({
+      required: true,
+      gracePeriodDays: 14,
+      managedBy: 'admin',
+    });
+    expect(context.trust.sso).toEqual({
+      configured: true,
+      provider: 'okta',
+      enforced: true,
+      allowPasswordLogin: false,
+      active: true,
+      managedBy: 'admin',
+    });
+    expect(context.trust.security.passwordPolicy).toBe('strict');
+    expect(context.trust.security.sessionTimeout).toBe(7200);
     expect(context.snapshotUpdatedAt).toBe('2026-03-12T10:00:00.000Z');
     expect(context.counts).toEqual({ items: 2, claims: 3, conflicts: 0 });
   });

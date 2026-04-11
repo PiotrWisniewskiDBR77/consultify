@@ -4993,7 +4993,11 @@ export const Api = {
 
   promoteToolOutput: async (
     toolId: string,
-    payload: { outputType: 'report' | 'presentation' | 'idea'; title: string; description?: string }
+    payload: {
+      outputType: 'initiative' | 'report' | 'presentation' | 'idea';
+      title: string;
+      description?: string;
+    }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/promote`, {
       method: 'POST',
@@ -6505,18 +6509,92 @@ export const Api = {
   },
 
   addOrganizationMember: async (orgId: string, email: string, role: string): Promise<any> => {
-    // NOTE: Backend currently expects targetUserId, but UI workflow implies email invite.
-    // We will pass email as targetUserId/email field and update backend if needed,
-    // OR we just rely on ID if we have a picker.
-    // For MVP skeleton, we assume we might be adding by ID if we don't have invite flow,
-    // BUT to be user friendly, we should probably implement invite.
-    // I'll stick to passing the body as is, and update backend later if needed.
     const res = await fetch(`${API_URL}/organizations/${orgId}/members`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ targetUserId: email, role }),
+      body: JSON.stringify(
+        email.includes('@') ? { targetEmail: email, role } : { targetUserId: email, role }
+      ),
     });
     return handleResponse(res, 'Failed to add member');
+  },
+
+  updateOrganizationMemberRole: async (
+    orgId: string,
+    memberId: string,
+    role: string
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/organizations/${orgId}/members/${memberId}/role`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ role }),
+    });
+    return handleResponse(res, 'Failed to update member role');
+  },
+
+  removeOrganizationMember: async (orgId: string, memberId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/organizations/${orgId}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to remove member');
+  },
+
+  getAdminSecurityPolicy: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/security`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load admin security policy');
+  },
+
+  updateAdminSecurityPolicy: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/security`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to save admin security policy');
+  },
+
+  getAdminCollaborationControls: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/collaboration`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load collaboration controls');
+  },
+
+  updateAdminCollaborationControls: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/collaboration`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to save collaboration controls');
+  },
+
+  getTenantAdminAuditLogs: async (filters?: any): Promise<any> => {
+    const params = new URLSearchParams();
+    if (filters?.actionType) params.set('actionType', String(filters.actionType));
+    if (filters?.status) params.set('status', String(filters.status));
+    if (filters?.riskScoreMin !== undefined && filters?.riskScoreMin !== '')
+      params.set('riskScoreMin', String(filters.riskScoreMin));
+    if (filters?.search) params.set('search', String(filters.search));
+    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
+    if (filters?.offset !== undefined) params.set('offset', String(filters.offset));
+    const res = await fetch(`${API_URL}/admin/audit-logs?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch admin audit logs');
+  },
+
+  getTenantAdminAuditStats: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/audit-logs/stats`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin audit stats');
+  },
+
+  exportTenantAdminAuditLogs: async (): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/admin/audit-logs/export`, { headers: getHeaders() });
+    if (!res.ok) {
+      const out = await res.json().catch(() => ({}));
+      throw new Error((out as any)?.error || 'Failed to export admin audit logs');
+    }
+    return res.blob();
   },
 
   createOrganization: async (name: string): Promise<any> => {

@@ -48,9 +48,8 @@ const TYPE_ICONS: Record<
 
 export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
-  const HELP_LANGS = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
   const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
-  const lang = HELP_LANGS.includes(baseLang) ? baseLang : 'en';
+  const lang: 'en' | 'pl' = baseLang === 'pl' ? 'pl' : 'en';
 
   // Derived values from translations
   const typeLabels: Record<SearchResultType, string> = {

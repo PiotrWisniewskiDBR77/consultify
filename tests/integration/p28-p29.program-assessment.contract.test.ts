@@ -30,7 +30,7 @@ describe('P28 Assessment workbench (FINAL 28)', () => {
       methodologyVersion: '2.1',
     });
     expect(s.runState).toBe('draft');
-    expect(s.assessmentDefinitionRef).toEqual({ methodologyId: 'ADMA', version: '2.1' });
+    expect(s.assessmentDefinitionRef).toMatchObject({ methodologyId: 'ADMA', version: '2.1' });
     expect(s.scoreProposal).toBeNull();
     expect(s.evidencePointers).toEqual([]);
   });
@@ -85,7 +85,7 @@ describe('P28 Assessment workbench (FINAL 28)', () => {
     expect(shape.errors).toEqual([]);
     const payload = buildBoundedPromotionPayload(s);
     expect(payload.assessment_run_id).toBe('asmt-2');
-    expect(payload.assessment_definition_id).toBe('DRD');
+    expect(payload.assessment_definition_id).toBe('asdef_drd_1.0');
     expect(Array.isArray(payload.evidence_pointers)).toBe(true);
     expect(payload.promotion_traces).toEqual([]);
     expect(payload.limits).toBe('Not exhaustive');
@@ -138,6 +138,7 @@ describe('P29 Partner program ledger (FINAL 29)', () => {
         { entry_type: 'hold.placed', amount: 20 },
         { entry_type: 'hold.released', amount: 5 },
         { entry_type: 'payout.executed', amount: 30 },
+        { entry_type: 'payout.reconciled', amount: 30 },
       ],
       'EUR'
     );

@@ -11,6 +11,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   CONSULTING_TOOL_AI_BEHAVIOR_RULES,
+  createConsultingMissionContext,
+  type ConsultingMissionContext,
   CONSULTING_TOOL_CONTEXT_SOURCES,
   CONSULTING_TOOL_CONVERSATION_LAYERS,
   CONSULTING_TOOL_EXPERIENCE_PRINCIPLES,
@@ -19,7 +21,20 @@ import {
   CONSULTING_TOOL_STANDARD_OUTPUTS,
 } from '@/config/consultingToolsStandard';
 import { useAIStream } from '@/hooks/useAIStream';
-import { SWOTCorrelation, SWOTData, SWOTItem, ToolType, useToolStore } from '@/store/useToolStore';
+import {
+  SWOTCorrelation,
+  SWOTData,
+  SWOTItem,
+  SWOTTension,
+  ToolType,
+  useToolStore,
+} from '@/store/useToolStore';
+
+import {
+  getToolPhaseAiActions,
+  type ToolPhaseAiActionDefinition,
+  type ToolPhaseAiActionId,
+} from '@/components/DiscoveryTools/toolAiActions';
 
 import { useOrganizationContext } from './useOrganizationContext';
 
@@ -41,6 +56,7 @@ interface UseToolAIReturn {
   generateCorrelations: () => Promise<void>;
   generateSummary: () => Promise<void>;
   generateFullSession: () => Promise<void>;
+  runPhaseAiAction: (actionId: ToolPhaseAiActionId) => Promise<void>;
   rethinkCard: (
     phaseId: string,
     cardType: string,
@@ -48,6 +64,11 @@ interface UseToolAIReturn {
     userComment?: string
   ) => Promise<void>;
   abortStream: () => void;
+  phaseAiActions: ToolPhaseAiActionDefinition[];
+  activeAiActionId: ToolPhaseAiActionId | null;
+  missionSuggestion: Partial<ConsultingMissionContext> | null;
+  applyMissionSuggestion: () => void;
+  dismissMissionSuggestion: () => void;
 
   // Utilities
   getStepOpeningQuestion: () => string;
@@ -216,6 +237,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const [pendingAction, setPendingAction] = useState<
     'suggestions' | 'correlations' | 'summary' | 'full-session' | 'rethink' | null
   >(null);
+  const [activeAiActionId, setActiveAiActionId] = useState<ToolPhaseAiActionId | null>(null);
+  const [missionSuggestion, setMissionSuggestion] = useState<Partial<ConsultingMissionContext> | null>(
+    null
+  );
   const [rethinkTarget, setRethinkTarget] = useState<{
     phaseId: string;
     cardType: string;
@@ -284,6 +309,10 @@ ${orgContext}
     const stepDefs = getStepDefinitions();
     return stepDefs[currentStep - 1];
   }, [currentStep, getStepDefinitions]);
+  const phaseAiActions = useMemo(
+    () => getToolPhaseAiActions(toolType, currentStepDef),
+    [toolType, currentStepDef]
+  );
 
   // Send a message to the AI
   const sendMessage = useCallback(
@@ -307,6 +336,7 @@ ${orgContext}
         );
       } catch (e) {
         setError('Failed to send message');
+        setActiveAiActionId(null);
         console.error('[useToolAI] Error sending message:', e);
       }
     },
@@ -459,6 +489,7 @@ Return JSON:
 
     if (prompt) {
       setPendingAction('suggestions');
+      setActiveAiActionId('suggest-step');
       await sendMessage(prompt);
     }
   }, [toolType, currentStep, currentSession?.inputData, getStepDefinitions, sendMessage]);
@@ -499,6 +530,7 @@ Return as JSON:
 {"correlations": [{"items": ["id1", "id2"], "type": "SO|WO|ST|WT", "insight": "strategic insight", "initiativeProposal": "proposed action"}]}`;
 
     setPendingAction('correlations');
+    setActiveAiActionId('generate-correlations');
     await sendMessage(prompt);
   }, [toolType, currentSession, sendMessage]);
 
@@ -648,6 +680,7 @@ Return JSON:
 
     if (prompt) {
       setPendingAction('summary');
+      setActiveAiActionId('generate-summary');
       await sendMessage(prompt);
     }
   }, [toolType, currentSession, sendMessage]);
@@ -722,8 +755,49 @@ Guidelines:
 - Propose 2-4 initiative drafts`;
 
     setPendingAction('full-session');
+    setActiveAiActionId('generate-full-session');
     await sendMessage(prompt);
   }, [toolType, currentSession, formatForPrompt, sendMessage, setSessionGenerationStatus]);
+
+  const runPhaseAiAction = useCallback(
+    async (actionId: ToolPhaseAiActionId) => {
+      if (actionId === 'suggest-step') {
+        await requestSuggestions();
+        return;
+      }
+      if (actionId === 'generate-correlations') {
+        await generateCorrelations();
+        return;
+      }
+      if (actionId === 'generate-summary') {
+        await generateSummary();
+        return;
+      }
+      if (actionId === 'generate-full-session') {
+        await generateFullSession();
+      }
+    },
+    [generateCorrelations, generateFullSession, generateSummary, requestSuggestions]
+  );
+
+  const applyMissionSuggestion = useCallback(() => {
+    if (toolType !== 'dynamic-swot' || !currentSession || !missionSuggestion) return;
+    const swotData = (currentSession.inputData as SWOTData | undefined) || {
+      context: createConsultingMissionContext(),
+    };
+    updateInputData({
+      ...swotData,
+      context: {
+        ...swotData.context,
+        ...missionSuggestion,
+      },
+    });
+    setMissionSuggestion(null);
+  }, [toolType, currentSession, missionSuggestion, updateInputData]);
+
+  const dismissMissionSuggestion = useCallback(() => {
+    setMissionSuggestion(null);
+  }, []);
 
   const rethinkCard = useCallback(
     async (phaseId: string, cardType: string, cardId: string, userComment?: string) => {
@@ -752,6 +826,16 @@ Guidelines:
       } else if (cardType === 'output-candidate') {
         const oc = swotData.outputCandidates.find((o) => o.id === cardId);
         cardContent = oc ? `[${oc.outputType}] ${oc.title}: ${oc.description}` : '';
+      } else if (cardType === 'conclusion') {
+        cardContent = JSON.stringify(
+          {
+            executiveSummary: swotData.summary?.executiveSummary || '',
+            keyInsights: swotData.summary?.keyInsights || [],
+            appliedConclusions: swotData.summary?.appliedConclusions || [],
+          },
+          null,
+          2
+        );
       }
 
       const prompt = `The user wants you to RETHINK this specific ${cardType} card.
@@ -767,7 +851,9 @@ Session context:
 
 Provide an improved version of this card. Keep the same type/structure but make it sharper, more grounded, and responsive to the user's feedback.
 
-Return JSON with the updated fields for this ${cardType}. Use the same field names as the original.`;
+Return JSON with the updated fields for this ${cardType}. Use the same field names as the original.
+If the card type is conclusion, return:
+{"executiveSummary":"...","keyInsights":["..."],"appliedConclusions":["..."]}`;
 
       setPendingAction('rethink');
       await sendMessage(prompt);
@@ -781,31 +867,34 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
     const parsed = extractObject(streamedContent);
     if (!parsed) {
       setPendingAction(null);
+      setActiveAiActionId(null);
       return;
     }
 
     if (pendingAction === 'suggestions' && currentStepDef) {
       if (currentStepDef.id === 'mission' && parsed.mission) {
-        updateInputData({
-          context: {
-            ...(currentSession?.inputData as SWOTData | undefined)?.context,
-            goal: typeof parsed.mission.goal === 'string' ? parsed.mission.goal : '',
-            scope: typeof parsed.mission.scope === 'string' ? parsed.mission.scope : '',
-            successSignal:
-              typeof parsed.mission.successSignal === 'string' ? parsed.mission.successSignal : '',
-            constraints:
-              typeof parsed.mission.constraints === 'string' ? parsed.mission.constraints : '',
-            assumptions:
-              typeof parsed.mission.assumptions === 'string' ? parsed.mission.assumptions : '',
-            kpiTarget: typeof parsed.mission.kpiTarget === 'string' ? parsed.mission.kpiTarget : '',
-            timeframe:
-              parsed.mission.timeframe === 'short' ||
-              parsed.mission.timeframe === 'medium' ||
-              parsed.mission.timeframe === 'long'
-                ? parsed.mission.timeframe
-                : 'medium',
-          },
-        } as Partial<SWOTData>);
+        // Keep mission suggestions visible in the stream only. Mission framing is governed and
+        // must not be persisted silently without an explicit user action in the UI.
+        setMissionSuggestion({
+          goal: typeof parsed.mission.goal === 'string' ? parsed.mission.goal : undefined,
+          scope: typeof parsed.mission.scope === 'string' ? parsed.mission.scope : undefined,
+          successSignal:
+            typeof parsed.mission.successSignal === 'string'
+              ? parsed.mission.successSignal
+              : undefined,
+          timeframe:
+            parsed.mission.timeframe === 'short' ||
+            parsed.mission.timeframe === 'medium' ||
+            parsed.mission.timeframe === 'long'
+              ? parsed.mission.timeframe
+              : undefined,
+          constraints:
+            typeof parsed.mission.constraints === 'string' ? parsed.mission.constraints : undefined,
+          assumptions:
+            typeof parsed.mission.assumptions === 'string' ? parsed.mission.assumptions : undefined,
+          kpiTarget:
+            typeof parsed.mission.kpiTarget === 'string' ? parsed.mission.kpiTarget : undefined,
+        });
       }
 
       if (currentStepDef.id === 'input') {
@@ -837,6 +926,7 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
                 ? signal.state
                 : 'proposed',
             provenance: String(signal.provenance || signal.sourceLabel || 'AI mentor'),
+            proposalStatus: 'ai-proposed',
           });
         });
       }
@@ -864,9 +954,9 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
     }
 
     if (pendingAction === 'correlations') {
+      const swotData = (currentSession?.inputData as SWOTData | undefined) || undefined;
       const correlations = Array.isArray(parsed.correlations) ? parsed.correlations : [];
-      const currentCorrelations = ((currentSession?.inputData as SWOTData | undefined)
-        ?.correlations || []) as SWOTCorrelation[];
+      const currentCorrelations = (swotData?.correlations || []) as SWOTCorrelation[];
       const normalizedCorrelations = correlations.filter(
         (corr) =>
           Array.isArray(corr?.items) &&
@@ -887,12 +977,16 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
             type: corr.type,
             insight: corr.insight,
             initiativeProposal: corr.initiativeProposal,
+            proposalStatus: 'ai-proposed',
           });
         }
       });
 
-      setSWOTTensions(
-        normalizedCorrelations.map((corr) => ({
+      const existingTensions = swotData?.tensions || [];
+      const mergedTensions = [...existingTensions];
+      normalizedCorrelations.forEach((corr) => {
+        const derivedTension: SWOTTension = {
+          id: `derived-${corr.type}-${corr.items.join('-')}-${corr.insight}`,
           title:
             corr.type === 'SO'
               ? 'Attack opportunity'
@@ -914,8 +1008,19 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
           insight: corr.insight,
           whyNow: corr.initiativeProposal,
           confidence: 4,
-        }))
-      );
+          proposalStatus: 'ai-proposed' as const,
+        };
+        const duplicateTension = mergedTensions.some(
+          (existing) =>
+            existing.type === derivedTension.type &&
+            existing.insight === derivedTension.insight &&
+            (existing.linkedItemIds || []).join('|') === derivedTension.linkedItemIds.join('|')
+        );
+        if (!duplicateTension) {
+          mergedTensions.push(derivedTension);
+        }
+      });
+      updateInputData({ tensions: mergedTensions });
     }
 
     if (pendingAction === 'summary') {
@@ -926,11 +1031,13 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
         : [];
 
       setSWOTSummary({
+        proposalId: 'swot-summary',
         executiveSummary: typeof parsed.summary === 'string' ? parsed.summary : '',
         keyInsights: Array.isArray(parsed.insights) ? parsed.insights.filter(Boolean) : [],
         appliedConclusions: Array.isArray(parsed.appliedConclusions)
           ? parsed.appliedConclusions.filter(Boolean)
           : [],
+        proposalStatus: 'ai-proposed',
         recommendedInitiatives: initiatives.map((initiative) => ({
           id: '',
           title: initiative.title,
@@ -1097,6 +1204,7 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
         parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
       const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
       setSWOTSummary({
+        proposalId: 'swot-summary',
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary
@@ -1113,6 +1221,7 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
           : Array.isArray(parsed.appliedConclusions)
             ? parsed.appliedConclusions.filter(Boolean)
             : [],
+        proposalStatus: 'ai-proposed',
         recommendedInitiatives: initiatives.map((init) => ({
           id: '',
           title: init.title || '',
@@ -1144,11 +1253,31 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
 
     if (pendingAction === 'rethink' && rethinkTarget) {
       const { cardType, cardId } = rethinkTarget;
-      updateCardAfterRethink(cardType as any, cardId, parsed);
+        if (cardType === 'conclusion') {
+          updateCardAfterRethink(cardType as any, cardId, {
+            executiveSummary:
+              typeof parsed.executiveSummary === 'string'
+                ? parsed.executiveSummary
+                : typeof parsed.summary === 'string'
+                  ? parsed.summary
+                  : undefined,
+            keyInsights: Array.isArray(parsed.keyInsights)
+              ? parsed.keyInsights.filter(Boolean)
+              : Array.isArray(parsed.insights)
+                ? parsed.insights.filter(Boolean)
+                : undefined,
+            appliedConclusions: Array.isArray(parsed.appliedConclusions)
+              ? parsed.appliedConclusions.filter(Boolean)
+              : undefined,
+          });
+        } else {
+          updateCardAfterRethink(cardType as any, cardId, parsed);
+        }
       setRethinkTarget(null);
     }
 
     setPendingAction(null);
+    setActiveAiActionId(null);
   }, [
     addSWOTSignal,
     addCorrelation,
@@ -1166,6 +1295,7 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
     setSWOTSummary,
     setSWOTTensions,
     setSessionGenerationStatus,
+    setMissionSuggestion,
     updateCardAfterRethink,
     streamedContent,
     toolType,
@@ -1264,8 +1394,14 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
     generateCorrelations,
     generateSummary,
     generateFullSession,
+    runPhaseAiAction,
     rethinkCard,
     abortStream,
+    phaseAiActions,
+    activeAiActionId,
+    missionSuggestion,
+    applyMissionSuggestion,
+    dismissMissionSuggestion,
     getStepOpeningQuestion,
   };
 };

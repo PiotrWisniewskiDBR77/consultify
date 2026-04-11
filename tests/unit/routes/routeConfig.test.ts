@@ -10,9 +10,16 @@ import { AppView } from '../../../src/types';
 
 describe('routeConfig helpers', () => {
   it('getAppViewFromRoute: resolves exact route', () => {
+    expect(getAppViewFromRoute('/superadmin/overview')).toBe(AppView.SUPERADMIN_OVERVIEW);
     expect(getAppViewFromRoute('/superadmin/customers')).toBe(AppView.SUPERADMIN_CUSTOMERS);
     expect(getAppViewFromRoute('/superadmin/customers/communication')).toBe(
       AppView.SUPERADMIN_COMMUNICATION,
+    );
+    expect(getAppViewFromRoute('/superadmin/customers/commercial')).toBe(
+      AppView.SUPERADMIN_REVENUE,
+    );
+    expect(getAppViewFromRoute('/superadmin/customers/commercial/invoices')).toBe(
+      AppView.SUPERADMIN_INVOICES,
     );
   });
 
@@ -56,12 +63,17 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/economics')).toBe(AppView.ECONOMICS);
   });
 
-  it('getAppViewFromPath: resolves superadmin prefix to SUPERADMIN_OVERVIEW', () => {
-    // Root superadmin route maps to the legacy dashboard view for backward compatibility.
-    expect(getAppViewFromPath('/superadmin')).toBe(AppView.SUPERADMIN_DASHBOARD);
+  it('getAppViewFromPath: normalizes superadmin aliases to canonical branches', () => {
+    expect(getAppViewFromPath('/superadmin')).toBe(AppView.SUPERADMIN_CUSTOMERS);
     expect(getAppViewFromPath('/superadmin/revenue')).toBe(AppView.SUPERADMIN_REVENUE);
+    expect(getAppViewFromPath('/superadmin/overview')).toBe(AppView.SUPERADMIN_OVERVIEW);
+    expect(getAppViewFromPath('/superadmin/analytics')).toBe(AppView.SUPERADMIN_ANALYTICS);
+    expect(getAppViewFromPath('/superadmin/configuration')).toBe(AppView.SUPERADMIN_CONFIGURATION);
     expect(getAppViewFromPath('/superadmin/customers/communication')).toBe(
       AppView.SUPERADMIN_COMMUNICATION,
+    );
+    expect(getAppViewFromPath('/superadmin/customers/commercial/billing')).toBe(
+      AppView.SUPERADMIN_BILLING,
     );
   });
 

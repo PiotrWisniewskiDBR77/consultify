@@ -249,19 +249,9 @@ knowledge/**/*.xlsx
 knowledge/**/*.pptx
 knowledge/**/*.docx
 
-# Local blog research artifacts
+# Blog content (local only, not part of codebase)
+/Blogs/
 /Blogs.zip
-/Blogs/_WORK/source_materials/
-
-# Blog assets — LP images, upload packages, data (local only)
-/Blogs/*/Blog/*/assets/
-/Blogs/*/Pages/*/assets/
-/Blogs/*/Personas/*/assets/
-/Blogs/*/Campaigns/*/assets/
-/Blogs/_LP_UPLOAD_READY/
-/Blogs/_LP_KB_READY/
-/Blogs/_DATA/
-/Blogs/Pigułki wiedzy /
 
 # Duplicate lib artifacts
 /lib/

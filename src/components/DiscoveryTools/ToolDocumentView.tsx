@@ -261,10 +261,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const {
     isStreaming,
     streamedContent,
-    requestSuggestions,
-    generateCorrelations,
-    generateSummary,
     generateFullSession,
+    runPhaseAiAction,
+    phaseAiActions,
+    activeAiActionId,
+    missionSuggestion,
+    applyMissionSuggestion,
+    dismissMissionSuggestion,
+    abortStream,
   } = useToolAI({ toolType });
 
   const isDynamicSwot = toolType === 'dynamic-swot';
@@ -337,6 +341,35 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     [toolType, currentSession?.inputData, isPolish]
   );
   const completionReady = reviewGaps.length === 0;
+  const missingItemsPayload = useMemo(
+    () =>
+      reviewGaps.map((gap, index) => ({
+        id: `${toolType}-gap-${index + 1}`,
+        label: gap,
+        severity: 'blocker' as const,
+        stepId: currentStepDef?.id || 'review',
+        resolved: false,
+      })),
+    [currentStepDef?.id, reviewGaps, toolType]
+  );
+  const wizardStatePayload = useMemo(
+    () => ({
+      sessionId: toolSessionId || sessionId || '',
+      toolType,
+      status:
+        toolStatus === 'REVIEW'
+          ? 'REVIEW'
+          : ['APPROVED', 'GENERATED', 'COMPLETED', 'FINALIZED'].includes(toolStatus)
+            ? 'FINALIZED'
+            : 'IN_PROGRESS',
+      currentStep: currentStepDef?.id || 'context',
+      locked: ['APPROVED', 'GENERATED', 'COMPLETED', 'FINALIZED'].includes(toolStatus),
+      review: {
+        missingItems: missingItemsPayload,
+      },
+    }),
+    [currentStepDef?.id, missingItemsPayload, sessionId, toolSessionId, toolStatus, toolType]
+  );
 
   const swotData = useMemo(
     () =>
@@ -518,6 +551,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         await Api.updateToolSession(toolSessionId, {
           answers: currentSession.inputData as Record<string, unknown>,
           completionPercent: completionReady ? 100 : progress,
+          missingItems: missingItemsPayload,
+          wizardState: wizardStatePayload,
         });
         setLastModified(new Date().toISOString());
       } catch (error) {
@@ -526,7 +561,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }, 2000);
 
     return () => clearTimeout(timeout);
-  }, [completionReady, currentSession, progress, toolSessionId]);
+  }, [completionReady, currentSession, missingItemsPayload, progress, toolSessionId, wizardStatePayload]);
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
@@ -535,6 +570,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       await Api.updateToolSession(toolSessionId, {
         answers: currentSession.inputData as Record<string, unknown>,
         completionPercent: completionReady ? 100 : progress,
+        missingItems: missingItemsPayload,
+        wizardState: wizardStatePayload,
       });
       await saveSession();
       setLastModified(new Date().toISOString());
@@ -644,18 +681,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   };
 
   const handleGenerateAI = async () => {
+    const primaryAction = phaseAiActions[0];
+    if (!primaryAction) return;
     setIsGeneratingAI(true);
     try {
-      const stepId = currentStepDef?.id || '';
-      if (stepId === 'insights' || stepId === 'correlations') {
-        await generateCorrelations();
-      } else if (
-        ['outputs', 'summary', 'results', 'reasoning', 'prepare', 'initiatives'].includes(stepId)
-      ) {
-        await generateSummary();
-      } else {
-        await requestSuggestions();
-      }
+      await runPhaseAiAction(primaryAction.id);
       toast.success(isPolish ? 'AI zakończyło generowanie' : 'AI generation finished');
     } catch {
       toast.error(isPolish ? 'Błąd generowania AI' : 'AI generation failed');
@@ -960,19 +990,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => void handleGenerateAI()}
-            disabled={isGeneratingAI}
-            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15 disabled:opacity-60"
-          >
-            {isGeneratingAI ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Sparkles size={14} />
-            )}
-            {isPolish ? 'AI mentor' : 'AI mentor'}
-          </button>
         </div>
 
         {toolType === 'dynamic-swot' ? (
@@ -1078,6 +1095,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 content: message.content,
               }))}
               showContextPanel={toolType === 'dynamic-swot'}
+              phaseAiActions={phaseAiActions}
+              activeAiActionId={activeAiActionId}
+              onRunPhaseAiAction={(actionId) => void runPhaseAiAction(actionId)}
+              onAbortAi={abortStream}
+              missionSuggestion={missionSuggestion}
+              onApplyMissionSuggestion={applyMissionSuggestion}
+              onDismissMissionSuggestion={dismissMissionSuggestion}
             />
           ) : (
             <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -1521,19 +1545,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                       {isPolish ? phaseStep.descriptionPl : phaseStep.description}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleGenerateAI()}
-                    disabled={isGeneratingAI}
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary-500/10 px-3 py-2 text-xs font-medium text-primary-600 hover:bg-primary-500/15 disabled:opacity-60 dark:text-primary-300"
-                  >
-                    {isGeneratingAI ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={14} />
-                    )}
-                    {isPolish ? 'AI mentor' : 'AI mentor'}
-                  </button>
                 </div>
               </div>
             )}
@@ -1559,7 +1570,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   }))}
                   showContextPanel
                   onGenerateFullSession={generateFullSession}
-                  onGenerateSuggestions={() => void handleGenerateAI()}
+                  phaseAiActions={phaseAiActions}
+                  activeAiActionId={activeAiActionId}
+                  onRunPhaseAiAction={(actionId) => void runPhaseAiAction(actionId)}
+                  onAbortAi={abortStream}
+                  missionSuggestion={missionSuggestion}
+                  onApplyMissionSuggestion={applyMissionSuggestion}
+                  onDismissMissionSuggestion={dismissMissionSuggestion}
                   isGeneratingAI={isGeneratingAI}
                   sessionGenerationStatus={currentSession.sessionGenerationStatus}
                 />

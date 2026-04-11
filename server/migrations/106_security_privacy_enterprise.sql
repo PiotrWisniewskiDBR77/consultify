@@ -31,12 +31,24 @@ CREATE INDEX IF NOT EXISTS idx_user_data_retention_user_id ON user_data_retentio
 -- Data export requests
 CREATE TABLE IF NOT EXISTS data_export_requests (
     id TEXT PRIMARY KEY,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL REFERENCES users(id),
-    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'ready', 'expired', 'failed')),
+    format TEXT DEFAULT 'json',
+    export_type TEXT NOT NULL DEFAULT 'gdpr',
+    include_data TEXT,
+    include_data_types TEXT,
+    exclude_data TEXT,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'expired')),
+    requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     download_url TEXT,
+    file_url TEXT,
     file_path TEXT,
     expires_at DATETIME,
+    file_expires_at DATETIME,
+    file_size INTEGER,
+    error_message TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
     completed_at DATETIME
 );
 

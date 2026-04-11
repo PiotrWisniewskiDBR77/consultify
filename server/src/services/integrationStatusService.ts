@@ -7,7 +7,7 @@
 
 import crypto from 'crypto';
 
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 export type IntegrationStatus = 'connected' | 'error' | 'needs_reauth' | 'disabled';
@@ -35,27 +35,22 @@ class IntegrationStatusServiceClass {
   }
 
   async getHealthForOrg(orgId: string): Promise<IntegrationHealth[]> {
-    try {
-      const rows = await dbAll(
-        `SELECT id, connector_type, status, last_sync_at, error_class, error_detail, updated_at
-         FROM integrations WHERE organization_id = $1 ORDER BY connector_type`,
-        [orgId],
-        { fallback: true }
-      );
-      return (rows || []).map((r: any) => ({
-        integrationId: r.id,
-        connectorType: r.connector_type || r.name || 'unknown',
-        status: this.normalizeStatus(r.status),
-        lastSyncAt: r.last_sync_at || null,
-        errorClass: r.error_class || null,
-        errorDetail: r.error_detail || null,
-        remediationPath: this.getRemediationPath(this.normalizeStatus(r.status)),
-        updatedAt: r.updated_at || new Date().toISOString(),
-      }));
-    } catch (err) {
-      logger.warn('[IntegrationStatus] Failed to fetch health', { orgId, err });
-      return [];
-    }
+    const rows = await dbAll(
+      `SELECT id, connector_type, status, last_sync_at, error_class, error_detail, updated_at
+       FROM integrations WHERE organization_id = $1 ORDER BY connector_type`,
+      [orgId],
+      { fallback: false }
+    );
+    return (rows || []).map((r: any) => ({
+      integrationId: r.id,
+      connectorType: r.connector_type || r.name || 'unknown',
+      status: this.normalizeStatus(r.status),
+      lastSyncAt: r.last_sync_at || null,
+      errorClass: r.error_class || null,
+      errorDetail: r.error_detail || null,
+      remediationPath: this.getRemediationPath(this.normalizeStatus(r.status)),
+      updatedAt: r.updated_at || new Date().toISOString(),
+    }));
   }
 
   normalizeStatus(raw: string | null): IntegrationStatus {
@@ -67,11 +62,34 @@ class IntegrationStatusServiceClass {
     return 'disabled';
   }
 
-  async transitionStatus(integrationId: string, newStatus: IntegrationStatus, actorId: string): Promise<boolean> {
+  async transitionStatus(
+    integrationId: string,
+    newStatus: IntegrationStatus,
+    actorId: string,
+    organizationId?: string
+  ): Promise<boolean> {
     try {
+      const target = await dbGet<{ organization_id?: string }>(
+        'SELECT organization_id FROM integrations WHERE id = $1',
+        [integrationId],
+        { fallback: false }
+      );
+      if (!target?.organization_id) {
+        return false;
+      }
+      if (organizationId && target.organization_id !== organizationId) {
+        logger.warn('[IntegrationStatus] Cross-tenant transition blocked', {
+          integrationId,
+          actorId,
+          organizationId,
+          actualOrgId: target.organization_id,
+        });
+        return false;
+      }
+
       await dbRun(
-        'UPDATE integrations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [newStatus, integrationId],
+        'UPDATE integrations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND organization_id = $3',
+        [newStatus, integrationId, target.organization_id],
         { fallback: false }
       );
       try {
@@ -82,7 +100,7 @@ class IntegrationStatusServiceClass {
             crypto.randomUUID(),
             actorId,
             'integration_status_change',
-            JSON.stringify({ integrationId, newStatus }),
+            JSON.stringify({ integrationId, orgId: target.organization_id, newStatus }),
             30,
             'medium',
             'unresolved',

@@ -22,18 +22,11 @@ CREATE TABLE IF NOT EXISTS user_appearance_settings (
 
 -- Keyboard Shortcuts Table
 CREATE TABLE IF NOT EXISTS user_keyboard_shortcuts (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    action TEXT NOT NULL,
-    keys_json TEXT NOT NULL,
-    category TEXT NOT NULL,
-    description TEXT,
-    is_custom BOOLEAN DEFAULT 0,
-    enabled BOOLEAN DEFAULT 1,
+    user_id TEXT PRIMARY KEY,
+    shortcuts TEXT DEFAULT '{}',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE(user_id, action)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Settings Templates Table
@@ -83,7 +76,7 @@ CREATE TRIGGER IF NOT EXISTS update_user_keyboard_shortcuts_updated_at
 AFTER UPDATE ON user_keyboard_shortcuts
 FOR EACH ROW
 BEGIN
-    UPDATE user_keyboard_shortcuts SET updated_at = datetime('now') WHERE id = NEW.id;
+    UPDATE user_keyboard_shortcuts SET updated_at = datetime('now') WHERE user_id = NEW.user_id;
 END;
 
 CREATE TRIGGER IF NOT EXISTS update_user_settings_templates_updated_at

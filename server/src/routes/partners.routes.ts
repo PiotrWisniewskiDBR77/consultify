@@ -32,12 +32,12 @@ import {
   submitSalesExam,
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
-import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
   updatePartnerPayoutSettings,
 } from '../services/partnerPayoutSettingsService.js';
+import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -59,6 +59,28 @@ const featureUnavailable = (res: Response, message: string) =>
     type: 'not_configured',
     message: message || 'Service temporarily unavailable due to missing configuration',
   });
+
+function resolvePayoutId(req: Request): string {
+  return String(req.params.payoutId || req.body?.payoutId || '').trim();
+}
+
+function requireSensitivePayoutConfirmation(
+  req: Request,
+  res: Response,
+  actionCode: 'P29_DUAL_CONTROL_REQUIRED' | 'P29_RECONCILIATION_CONFIRMATION_REQUIRED'
+): { confirmed: boolean; reason: string } | null {
+  const confirmation = Boolean(req.body?.confirmation);
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+  if (!confirmation || reason.length < 3) {
+    res.status(428).json({
+      success: false,
+      error: 'Sensitive payout action requires explicit confirmation and reason',
+      code: actionCode,
+    });
+    return null;
+  }
+  return { confirmed: true, reason };
+}
 
 type CanonicalTier = 'REGISTERED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
 const TIER_ORDER: CanonicalTier[] = ['REGISTERED', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM'];
@@ -2078,16 +2100,28 @@ superAdminPartnerRouter.get(
  * Mark a payout as processing
  */
 superAdminPartnerRouter.post(
-  '/process-payout/:payoutId',
+  ['/process-payout', '/process-payout/:payoutId'],
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { payoutId } = req.params;
+      const payoutId = resolvePayoutId(req);
       const processedBy = (req as any).user?.id;
       const { payoutReference, externalPayoutId } = req.body;
+      const confirmation = requireSensitivePayoutConfirmation(
+        req,
+        res,
+        'P29_DUAL_CONTROL_REQUIRED'
+      );
+      if (!confirmation) return;
+
+      if (!payoutId) {
+        return res.status(400).json({ success: false, error: 'payoutId is required' });
+      }
 
       const success = await PartnerCommissionService.processPayout(payoutId, processedBy, {
         payoutReference,
         externalPayoutId,
+        dualControlConfirmed: confirmation.confirmed,
+        reason: confirmation.reason,
       });
 
       if (!success) {
@@ -2107,13 +2141,29 @@ superAdminPartnerRouter.post(
  * Mark a payout as completed
  */
 superAdminPartnerRouter.post(
-  '/complete-payout/:payoutId',
+  ['/complete-payout', '/complete-payout/:payoutId'],
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { payoutId } = req.params;
+      const payoutId = resolvePayoutId(req);
       const { payoutReference } = req.body;
+      const completedBy = (req as any).user?.id;
+      const confirmation = requireSensitivePayoutConfirmation(
+        req,
+        res,
+        'P29_RECONCILIATION_CONFIRMATION_REQUIRED'
+      );
+      if (!confirmation) return;
 
-      const success = await PartnerCommissionService.completePayout(payoutId, { payoutReference });
+      if (!payoutId) {
+        return res.status(400).json({ success: false, error: 'payoutId is required' });
+      }
+
+      const success = await PartnerCommissionService.completePayout(payoutId, {
+        payoutReference,
+        dualControlConfirmed: confirmation.confirmed,
+        completedBy,
+        reason: confirmation.reason,
+      });
 
       if (!success) {
         return res.status(400).json({ success: false, error: 'Could not complete payout' });
@@ -2132,14 +2182,18 @@ superAdminPartnerRouter.post(
  * Mark a payout as failed
  */
 superAdminPartnerRouter.post(
-  '/fail-payout/:payoutId',
+  ['/fail-payout', '/fail-payout/:payoutId'],
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { payoutId } = req.params;
+      const payoutId = resolvePayoutId(req);
       const { reason } = req.body;
 
       if (!reason) {
         return res.status(400).json({ success: false, error: 'Failure reason is required' });
+      }
+
+      if (!payoutId) {
+        return res.status(400).json({ success: false, error: 'payoutId is required' });
       }
 
       const success = await PartnerCommissionService.failPayout(payoutId, reason);
@@ -2256,7 +2310,10 @@ superAdminPartnerRouter.get(
       if (!partnerOrgId) {
         return res.status(400).json({ success: false, error: 'partnerOrgId required' });
       }
-      const detail = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'operator');
+      const detail = await PartnerProgramLedgerService.getProgramStatusDetail(
+        partnerOrgId,
+        'operator'
+      );
       const entries = await PartnerProgramLedgerService.listEntries(partnerOrgId, { limit: 25 });
       res.json({
         success: true,
@@ -2304,7 +2361,10 @@ superAdminPartnerRouter.post(
       if (code === 'P29_LIFECYCLE_INVALID' || code === 'P29_LIFECYCLE_FORBIDDEN') {
         let whatNext: string[] = [];
         try {
-          const d = await PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'operator');
+          const d = await PartnerProgramLedgerService.getProgramStatusDetail(
+            partnerOrgId,
+            'operator'
+          );
           whatNext = d.whatNext;
         } catch {
           /* ignore */

@@ -1,21 +1,15 @@
 /**
  * SuperAdminView - Main Super Admin Panel
  *
- * Unified AI Platform structure (6 main tabs with sub-tabs):
- * - Overview (Dashboard, Metrics, Signals)
- * - Customers (Organizations, Users, Feedback, Bulk Ops)
- * - AI Platform (unified with 6 tabs):
- *   - Configuration (LLM Providers, Model Tiers, Routing Rules, Global Settings)
- *   - Development (Prompts Library, Prompt Builder, Experiments, Model Registry)
- *   - Operations (Mission Control, Health Monitoring, Performance, SLA)
- *   - Analytics (Usage, Costs, Performance Metrics, Custom Reports)
- *   - Security (API Keys, Access Control, Audit Logs, Compliance)
- *   - Knowledge (Knowledge Base, Documents RAG, Strategic Directions)
- * - System (Health, Audit Log, Feature Flags, Integrations)
- * - Content (Playbooks, Email Templates)
- * - Revenue (Billing, Invoices, Usage)
- * - Security (SSO, Policies, API Keys, Compliance)
- * - Configuration (Settings, White-label, Legal)
+ * Canonical root information architecture:
+ * - Tenant & User Ops
+ * - AI Operations
+ * - Connector Ops
+ * - Governance & Compliance
+ * - Platform Security
+ *
+ * Legacy views are remapped into one of the mounted branches instead of
+ * rendering as additional top-level destinations.
  */
 
 import { RefreshCw, Shield } from 'lucide-react';
@@ -45,23 +39,11 @@ import { AppView, User } from '../../types';
 const NewAIPlatformModule = React.lazy(() =>
   import('./AIPlatformModule/AIPlatformModule').then((m) => ({ default: m.AIPlatformModule }))
 );
-const AnalyticsModuleView = React.lazy(() =>
-  import('./analytics').then((m) => ({ default: m.AnalyticsModuleView }))
-);
-const ConfigurationModule = React.lazy(() =>
-  import('./ConfigurationModule').then((m) => ({ default: m.ConfigurationModule }))
-);
-const ContentModule = React.lazy(() =>
-  import('./ContentModule').then((m) => ({ default: m.ContentModule }))
-);
 const CustomersModule = React.lazy(() =>
   import('./CustomersModule').then((m) => ({ default: m.CustomersModule }))
 );
-const OverviewModule = React.lazy(() =>
-  import('./OverviewModule').then((m) => ({ default: m.OverviewModule }))
-);
-const RevenueModule = React.lazy(() =>
-  import('./RevenueModule').then((m) => ({ default: m.RevenueModule }))
+const GovernanceModule = React.lazy(() =>
+  import('./GovernanceModule').then((m) => ({ default: m.GovernanceModule }))
 );
 const SecurityModule = React.lazy(() =>
   import('./SecurityModule').then((m) => ({ default: m.SecurityModule }))
@@ -82,28 +64,23 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
   const { isSidebarCollapsed, currentView, setCurrentView, logout } = useAppStore();
 
   // Derive activeSection from currentView
-  const activeSection: SuperAdminSection = appViewToSection[currentView] || 'overview';
+  const activeSection: SuperAdminSection = appViewToSection[currentView] || 'customers';
 
   // Helper to set section (updates currentView in store)
   const setActiveSection = (section: SuperAdminSection) => {
     setCurrentView(sectionToAppView[section]);
   };
 
-  // Initialize to overview if not a superadmin view
+  // Normalize all entry points to the mounted root branches.
   useEffect(() => {
     if (!currentView.startsWith('SUPERADMIN_')) {
-      setCurrentView(AppView.SUPERADMIN_OVERVIEW);
+      setCurrentView(AppView.SUPERADMIN_CUSTOMERS);
     }
   }, [currentView, setCurrentView]);
 
   const handleLogout = () => {
     logout();
     onNavigate(AppView.WELCOME);
-  };
-
-  // Navigate to a specific section (for inter-module navigation)
-  const handleNavigateToSection = (section: string) => {
-    setActiveSection(section as SuperAdminSection);
   };
 
   // Render content based on currentView (Modular AI Platform - Variant A)
@@ -119,7 +96,8 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         {(() => {
           switch (currentView) {
             case AppView.SUPERADMIN_OVERVIEW:
-              return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
+            case AppView.SUPERADMIN_DASHBOARD:
+              return <CustomersModule initialTab="command-center" />;
 
             case AppView.SUPERADMIN_CUSTOMERS:
               return <CustomersModule />;
@@ -142,27 +120,32 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               return <SystemModule />;
 
             case AppView.SUPERADMIN_CONTENT:
-              return <ContentModule />;
-
-            case AppView.SUPERADMIN_REVENUE:
-              return <RevenueModule />;
+              return <GovernanceModule />;
 
             case AppView.SUPERADMIN_SECURITY:
               return <SecurityModule />;
 
             case AppView.SUPERADMIN_CONFIGURATION:
-              return <ConfigurationModule />;
-
             case AppView.SUPERADMIN_ANALYTICS:
-              return <AnalyticsModuleView />;
+              return (
+                <SystemModule
+                  initialTab={
+                    currentView === AppView.SUPERADMIN_ANALYTICS ? 'analytics' : 'configuration'
+                  }
+                />
+              );
+
+            case AppView.SUPERADMIN_REVENUE:
+              return <CustomersModule initialTab="commercial" initialCommercialTab="usage" />;
+            case AppView.SUPERADMIN_BILLING:
+              return <CustomersModule initialTab="commercial" initialCommercialTab="billing" />;
+            case AppView.SUPERADMIN_INVOICES:
+              return <CustomersModule initialTab="commercial" initialCommercialTab="invoices" />;
 
             case AppView.SUPERADMIN_VIRTUAL_WORKERS:
               return <VirtualWorkersModule />;
 
             // Legacy view redirects - redirect to appropriate module with initial tab
-            case AppView.SUPERADMIN_DASHBOARD:
-              return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
-
             case AppView.SUPERADMIN_ORGANIZATIONS:
             case AppView.SUPERADMIN_USERS:
             case AppView.SUPERADMIN_COMMUNICATION:
@@ -213,49 +196,34 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 />
               );
 
-            case AppView.SUPERADMIN_BILLING:
-            case AppView.SUPERADMIN_INVOICES:
-              return (
-                <RevenueModule
-                  initialTab={currentView === AppView.SUPERADMIN_INVOICES ? 'invoices' : 'billing'}
-                />
-              );
-
             case AppView.SUPERADMIN_API_MANAGEMENT:
               return <SystemModule initialTab="api-keys" />;
 
             case AppView.SUPERADMIN_SSO:
             case AppView.SUPERADMIN_SECURITY_POLICIES:
-            case AppView.SUPERADMIN_COMPLIANCE:
               return (
                 <SecurityModule
                   initialTab={
                     currentView === AppView.SUPERADMIN_SSO
                       ? 'sso'
-                      : currentView === AppView.SUPERADMIN_SECURITY_POLICIES
-                        ? 'policies'
-                        : 'compliance'
+                      : 'policies'
                   }
                 />
               );
+
+            case AppView.SUPERADMIN_COMPLIANCE:
+              return <GovernanceModule initialTab="compliance" />;
 
             case AppView.SUPERADMIN_SETTINGS:
             case AppView.SUPERADMIN_WHITELABEL:
-              return (
-                <ConfigurationModule
-                  initialTab={
-                    currentView === AppView.SUPERADMIN_WHITELABEL ? 'whitelabel' : 'settings'
-                  }
-                />
-              );
+              return <SystemModule initialTab="configuration" />;
 
             case AppView.SUPERADMIN_PLAYBOOK_TEMPLATES:
             case AppView.SUPERADMIN_PLAYBOOK_EDITOR:
-              return <ContentModule initialTab="playbooks" />;
+              return <CustomersModule initialTab="playbooks" />;
 
             default:
-              // Fallback - show overview
-              return <OverviewModule onNavigateToSection={handleNavigateToSection} />;
+              return <CustomersModule initialTab="command-center" />;
           }
         })()}
       </React.Suspense>

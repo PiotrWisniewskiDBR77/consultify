@@ -5,7 +5,7 @@
  */
 
 import { Check, Globe } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -15,6 +15,7 @@ import {
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '../../i18n';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 
 interface LanguageSettingsProps {
@@ -42,6 +43,30 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
   const { t, i18n } = useTranslation();
   const { currentUser } = useAppStore();
   const currentLang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
+  const [tenantDefaultLanguage, setTenantDefaultLanguage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadTenantDefault = async () => {
+      try {
+        const context = (await Api.get('/organization-context')) as {
+          profile?: { defaultLanguage?: string | null };
+        };
+        if (!cancelled) {
+          setTenantDefaultLanguage(context?.profile?.defaultLanguage || null);
+        }
+      } catch {
+        if (!cancelled) {
+          setTenantDefaultLanguage(null);
+        }
+      }
+    };
+
+    loadTenantDefault();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // SuperAdmin: only Polish and English
   // Regular users: all supported languages
@@ -67,6 +92,17 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
             'Select your preferred language for the interface.'
           )}
         </p>
+        {tenantDefaultLanguage ? (
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100">
+            {t(
+              'settings.appearance.languageTenantHint',
+              'Organization language defaults stay read-only here. You can still override the interface language for your own account.'
+            )}
+            <div className="mt-1 text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">
+              Tenant default language: {tenantDefaultLanguage}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-2">

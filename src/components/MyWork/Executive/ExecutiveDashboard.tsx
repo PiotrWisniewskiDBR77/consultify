@@ -839,9 +839,11 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                   typeof insight === 'string'
                     ? insight
                     : t(`executive.patterns.insight.${insight.key}`, insight.key, insight.params);
+                const renderedText =
+                  typeof text === 'string' || typeof text === 'number' ? text : JSON.stringify(text);
                 return (
                   <p key={i} className="text-xs text-slate-600 dark:text-slate-400">
-                    💡 {text}
+                    💡 {renderedText}
                   </p>
                 );
               })}

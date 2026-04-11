@@ -72,9 +72,9 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
     () => ({
       language: chatLanguage,
       organizationName: currentOrganization?.name || currentUser?.organizationName,
-      organizationId: currentOrganization?.id || currentUser?.organizationId,
+      organizationId: (currentOrganization?.id ?? currentUser?.organizationId) ?? undefined,
       userName: currentUser?.firstName,
-      activeProject: projectName,
+      activeProject: projectName ?? undefined,
       workspaceType: workspaceContext?.type,
       entityName: workspaceContext?.entityName,
       currentScreen: 'Voice Conversation',

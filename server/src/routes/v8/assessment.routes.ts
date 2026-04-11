@@ -11,12 +11,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { ensureAssessmentSchema, normalizeStatus } from '../../controllers/AssessmentController.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
+import AssessmentDefinitionService from '../../services/assessment/AssessmentDefinitionService.js';
 import AssessmentWorkbenchService, {
   assertPromotionPayloadShape,
   buildBoundedPromotionPayload,
   buildWhatNextGuidance,
 } from '../../services/assessment/AssessmentWorkbenchService.js';
+import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -93,9 +94,56 @@ async function ensureAssessmentInOrg(
 ): Promise<Record<string, unknown> | null> {
   await ensureAssessmentSchema();
   return (await queryHelpers.queryOne(
-    `SELECT id, created_by FROM assessments WHERE id = ? AND organization_id = ?`,
+    `SELECT id, created_by, assessment_type FROM assessments WHERE id = ? AND organization_id = ?`,
     [assessmentId, organizationId]
   )) as Record<string, unknown> | null;
+}
+
+function buildWorkbenchPermissionDenied(role: string, missingPermission: string) {
+  return {
+    error: 'Workbench action denied',
+    code: 'P28_PERMISSION_DENIED',
+    role,
+    missingPermission,
+    whatNext: [
+      'Request access from an assessment admin or owner.',
+      'Use read-only workbench view until permission is granted.',
+    ],
+  };
+}
+
+async function ensureWorkbenchPermission(params: {
+  assessmentId: string;
+  organizationId: string;
+  userId: string;
+  userRole?: string;
+  permission: 'canView' | 'canEdit' | 'canApprove';
+}): Promise<
+  | { ok: true; role: string }
+  | {
+      ok: false;
+      status: number;
+      body: ReturnType<typeof buildWorkbenchPermissionDenied>;
+    }
+> {
+  if (params.userRole && isGlobalAdminRole(params.userRole)) {
+    return { ok: true, role: 'admin' };
+  }
+
+  const userRoleInfo = await AssessmentPermissionService.getUserRole(
+    params.assessmentId,
+    params.userId,
+    params.organizationId
+  );
+  if (userRoleInfo.permissions[params.permission]) {
+    return { ok: true, role: userRoleInfo.role };
+  }
+
+  return {
+    ok: false,
+    status: 403,
+    body: buildWorkbenchPermissionDenied(userRoleInfo.role, params.permission),
+  };
 }
 
 router.get(
@@ -134,6 +182,8 @@ router.get(
       backendStatus: row.status,
       answers: parseJsonSafely(row.answers_json as string | null | undefined, {}),
       scoreSummary: parseJsonSafely(row.score_summary as string | null | undefined, {}),
+      assessmentDefinitionId: row.assessment_definition_id || null,
+      assessmentDefinitionVersion: row.assessment_definition_version || null,
     }));
 
     return res.json({
@@ -145,6 +195,26 @@ router.get(
         offset,
       },
       meta: assessmentReadMeta(),
+    });
+  })
+);
+
+router.get(
+  '/definitions/:methodologyId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const methodologyId = String(firstParam(req.params.methodologyId) || '')
+      .trim()
+      .toUpperCase();
+    if (!methodologyId) {
+      return res
+        .status(400)
+        .json({ error: 'Methodology id is required', code: 'P28_DEFINITION_METHOD_REQUIRED' });
+    }
+
+    const versions = await AssessmentDefinitionService.listDefinitionVersions(methodologyId);
+    return res.json({
+      data: { methodologyId, versions },
+      meta: workbenchReadMeta(),
     });
   })
 );
@@ -182,6 +252,8 @@ router.get(
       ),
       scoreSummary: parseJsonSafely(assessment.score_summary as string | null | undefined, {}),
       navigation: parseJsonSafely(assessment.navigation_json as string | null | undefined, null),
+      assessmentDefinitionId: assessment.assessment_definition_id || null,
+      assessmentDefinitionVersion: assessment.assessment_definition_version || null,
     };
 
     return res.json({
@@ -261,11 +333,74 @@ router.post(
           projectId,
           status: 'DRAFT',
           backendStatus: 'DRAFT',
+          assessmentDefinitionId: null,
+          assessmentDefinitionVersion: null,
           createdAt: now,
           updatedAt: now,
         },
       },
       meta: assessmentMutationMeta(),
+    });
+  })
+);
+
+router.post(
+  '/definitions/:methodologyId/draft',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { userId, userRole } = getV8Context(req);
+    if (!isGlobalAdminRole(userRole)) {
+      return res.status(403).json(buildWorkbenchPermissionDenied('viewer', 'canManage'));
+    }
+
+    const methodologyId = String(firstParam(req.params.methodologyId) || '')
+      .trim()
+      .toUpperCase();
+    const version = String(req.body?.version || '').trim();
+    if (!methodologyId || !version) {
+      return res.status(400).json({
+        error: 'Methodology id and version are required',
+        code: 'P28_DEFINITION_DRAFT_INVALID',
+      });
+    }
+
+    const definition = await AssessmentDefinitionService.createDraftDefinitionVersion({
+      methodologyId,
+      version,
+      title: req.body?.title,
+      definition: req.body?.definition,
+      createdBy: userId,
+    });
+
+    return res.status(201).json({
+      data: { definition },
+      meta: workbenchMutationMeta(),
+    });
+  })
+);
+
+router.post(
+  '/definitions/:definitionId/publish',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { userId, userRole } = getV8Context(req);
+    if (!isGlobalAdminRole(userRole)) {
+      return res.status(403).json(buildWorkbenchPermissionDenied('viewer', 'canManage'));
+    }
+
+    const definitionId = String(firstParam(req.params.definitionId) || '').trim();
+    if (!definitionId) {
+      return res
+        .status(400)
+        .json({ error: 'Definition id is required', code: 'P28_DEFINITION_ID_REQUIRED' });
+    }
+
+    const definition = await AssessmentDefinitionService.publishDefinitionVersion({
+      definitionId,
+      publishedBy: userId,
+    });
+
+    return res.json({
+      data: { definition },
+      meta: workbenchMutationMeta(),
     });
   })
 );
@@ -287,12 +422,13 @@ router.put(
       answers_json?: string | null;
       context_snapshot?: string | null;
       score_summary?: string | null;
+      p28_workbench_v1?: string | null;
       completion_percent?: number | null;
       confidence_avg?: number | null;
       current_section_id?: string | null;
       navigation_json?: string | null;
     }>(
-      `SELECT answers_json, context_snapshot, score_summary, completion_percent, confidence_avg, current_section_id, navigation_json
+      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json
        FROM assessments
        WHERE id = ? AND organization_id = ?`,
       [assessmentId, organizationId]
@@ -300,6 +436,7 @@ router.put(
       answers_json?: string | null;
       context_snapshot?: string | null;
       score_summary?: string | null;
+      p28_workbench_v1?: string | null;
       completion_percent?: number | null;
       confidence_avg?: number | null;
       current_section_id?: string | null;
@@ -308,6 +445,17 @@ router.put(
 
     if (!existing) {
       return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    if (req.body?.scoreSummary !== undefined && existing.p28_workbench_v1) {
+      return res.status(409).json({
+        error:
+          'P28 assessments require explicit score proposals and review before scores can change',
+        code: 'P28_NO_SILENT_SCORING',
+        whatNext: [
+          'Use the workbench score proposal flow instead of updating scoreSummary directly.',
+        ],
+      });
     }
 
     const nextAnswers =
@@ -381,7 +529,7 @@ router.put(
 router.get(
   '/:assessmentId/workbench',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
       return res
@@ -392,12 +540,22 @@ router.get(
     const row = (await queryHelpers.queryOne<{
       assessment_type?: string | null;
       created_by?: string | null;
-    }>(
-      `SELECT assessment_type, created_by FROM assessments WHERE id = ? AND organization_id = ?`,
-      [assessmentId, organizationId]
-    )) as { assessment_type?: string | null; created_by?: string | null } | null;
+    }>(`SELECT assessment_type, created_by FROM assessments WHERE id = ? AND organization_id = ?`, [
+      assessmentId,
+      organizationId,
+    ])) as { assessment_type?: string | null; created_by?: string | null } | null;
     if (!row) {
       return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canView',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
     }
     const state = await AssessmentWorkbenchService.load(
       assessmentId,
@@ -413,16 +571,68 @@ router.get(
   })
 );
 
+router.get(
+  '/:assessmentId/workbench/definition',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+    const assessment = await ensureAssessmentInOrg(assessmentId, organizationId);
+    if (!assessment) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canView',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
+    const state = await AssessmentWorkbenchService.load(
+      assessmentId,
+      organizationId,
+      String(assessment.assessment_type || 'DRD'),
+      String(assessment.created_by || userId)
+    );
+    const definition = await AssessmentDefinitionService.getDefinitionById(
+      state.assessmentDefinitionRef.definitionId
+    );
+    return res.json({
+      data: { definitionRef: state.assessmentDefinitionRef, definition },
+      meta: workbenchReadMeta(),
+    });
+  })
+);
+
 router.post(
   '/:assessmentId/workbench/methodology-preset',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     const preset = String(req.body?.preset || '').trim();
     if (!assessmentId || !preset) {
-      return res.status(400).json({ error: 'preset required (e.g. DRD)', code: 'P28_PRESET_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'preset required (e.g. DRD)', code: 'P28_PRESET_REQUIRED' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     try {
       const state = await AssessmentWorkbenchService.applyMethodologyPreset(
         assessmentId,
@@ -450,7 +660,7 @@ router.post(
 router.post(
   '/:assessmentId/workbench/transition',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     const to = String(req.body?.toState || '');
     const valid = new Set(['running', 'awaiting_evidence', 'completed', 'failed']);
@@ -458,6 +668,16 @@ router.post(
       return res.status(400).json({ error: 'Invalid transition', code: 'P28_TRANSITION_INVALID' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: to === 'completed' ? 'canApprove' : 'canEdit',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     try {
       const state = await AssessmentWorkbenchService.transition(
         assessmentId,
@@ -480,15 +700,30 @@ router.post(
 router.post(
   '/:assessmentId/workbench/evidence',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     const pointers = Array.isArray(req.body?.pointers) ? req.body.pointers : [];
     if (!assessmentId || !pointers.length) {
       return res.status(400).json({ error: 'pointers required', code: 'P28_EVIDENCE_INVALID' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     try {
-      const state = await AssessmentWorkbenchService.addEvidence(assessmentId, organizationId, userId, pointers);
+      const state = await AssessmentWorkbenchService.addEvidence(
+        assessmentId,
+        organizationId,
+        userId,
+        pointers
+      );
       return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
     } catch (e: any) {
       return res.status(400).json({ error: e?.message || 'Evidence error', code: e?.code });
@@ -499,13 +734,25 @@ router.post(
 router.post(
   '/:assessmentId/workbench/required-evidence',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     const kinds = Array.isArray(req.body?.kinds) ? req.body.kinds.map(String) : [];
     if (!assessmentId) {
-      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     try {
       const state = await AssessmentWorkbenchService.setRequiredEvidenceKinds(
         assessmentId,
@@ -523,22 +770,39 @@ router.post(
 router.post(
   '/:assessmentId/workbench/score-proposal',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
-      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     try {
-      const state = await AssessmentWorkbenchService.proposeScore(assessmentId, organizationId, userId, {
-        scoreValues: req.body?.scoreValues || {},
-        scoringRationale: String(req.body?.scoringRationale || ''),
-        evidencePointerIds: Array.isArray(req.body?.evidencePointerIds)
-          ? req.body.evidencePointerIds.map(String)
-          : [],
-        assumptions: Array.isArray(req.body?.assumptions) ? req.body.assumptions.map(String) : [],
-        confidence: Number(req.body?.confidence ?? 0.5),
-      });
+      const state = await AssessmentWorkbenchService.proposeScore(
+        assessmentId,
+        organizationId,
+        userId,
+        {
+          scoreValues: req.body?.scoreValues || {},
+          scoringRationale: String(req.body?.scoringRationale || ''),
+          evidencePointerIds: Array.isArray(req.body?.evidencePointerIds)
+            ? req.body.evidencePointerIds.map(String)
+            : [],
+          assumptions: Array.isArray(req.body?.assumptions) ? req.body.assumptions.map(String) : [],
+          confidence: Number(req.body?.confidence ?? 0.5),
+        }
+      );
       return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
     } catch (e: any) {
       if (e?.code === 'P28_AWAITING_EVIDENCE') {
@@ -557,22 +821,41 @@ router.post(
 router.post(
   '/:assessmentId/workbench/score-review',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
-      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canApprove',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     const action = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
     if (!['accept', 'reject', 'override'].includes(action)) {
-      return res.status(400).json({ error: 'action must be accept|reject|override', code: 'P28_REVIEW_INVALID' });
+      return res
+        .status(400)
+        .json({ error: 'action must be accept|reject|override', code: 'P28_REVIEW_INVALID' });
     }
     try {
-      const state = await AssessmentWorkbenchService.reviewScore(assessmentId, organizationId, userId, {
-        action,
-        reason: req.body?.reason,
-        overrideScoreValues: req.body?.overrideScoreValues,
-      });
+      const state = await AssessmentWorkbenchService.reviewScore(
+        assessmentId,
+        organizationId,
+        userId,
+        {
+          action,
+          reason: req.body?.reason,
+          overrideScoreValues: req.body?.overrideScoreValues,
+        }
+      );
       return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
     } catch (e: any) {
       return res.status(400).json({ error: e?.message || 'Score review error', code: e?.code });
@@ -583,12 +866,24 @@ router.post(
 router.post(
   '/:assessmentId/workbench/interpretation-proposal',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
-      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     try {
       const state = await AssessmentWorkbenchService.proposeInterpretation(
         assessmentId,
@@ -611,12 +906,24 @@ router.post(
 router.post(
   '/:assessmentId/workbench/interpretation-review',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
-      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canApprove',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     const intAction = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
     if (!['accept', 'reject', 'override'].includes(intAction)) {
       return res
@@ -636,7 +943,9 @@ router.post(
       );
       return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
     } catch (e: any) {
-      return res.status(400).json({ error: e?.message || 'Interpretation review error', code: e?.code });
+      return res
+        .status(400)
+        .json({ error: e?.message || 'Interpretation review error', code: e?.code });
     }
   })
 );
@@ -644,21 +953,33 @@ router.post(
 router.get(
   '/:assessmentId/workbench/promotion-payload',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
-      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
     }
     await ensureAssessmentSchema();
     const row = (await queryHelpers.queryOne<{
       assessment_type?: string | null;
       created_by?: string | null;
-    }>(
-      `SELECT assessment_type, created_by FROM assessments WHERE id = ? AND organization_id = ?`,
-      [assessmentId, organizationId]
-    )) as { assessment_type?: string | null; created_by?: string | null } | null;
+    }>(`SELECT assessment_type, created_by FROM assessments WHERE id = ? AND organization_id = ?`, [
+      assessmentId,
+      organizationId,
+    ])) as { assessment_type?: string | null; created_by?: string | null } | null;
     if (!row) {
       return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canView',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
     }
     const state = await AssessmentWorkbenchService.load(
       assessmentId,
@@ -678,21 +999,43 @@ router.get(
 router.post(
   '/:assessmentId/workbench/promotion',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
+    const { organizationId, userId, userRole } = getV8Context(req);
     const assessmentId = firstParam(req.params.assessmentId);
     if (!assessmentId) {
-      return res.status(400).json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'Assessment id required', code: 'ASSESSMENT_ID_REQUIRED' });
     }
     await ensureAssessmentSchema();
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canApprove',
+    });
+    if (!permission.ok) {
+      return res.status(permission.status).json(permission.body);
+    }
     try {
-      const state = await AssessmentWorkbenchService.recordPromotion(assessmentId, organizationId, userId, {
-        targetKind: req.body?.targetKind,
-        targetRef: String(req.body?.targetRef || ''),
-        payloadSummary: req.body?.payloadSummary,
-      });
+      const state = await AssessmentWorkbenchService.recordPromotion(
+        assessmentId,
+        organizationId,
+        userId,
+        {
+          targetKind: req.body?.targetKind,
+          targetRef: String(req.body?.targetRef || ''),
+          payloadSummary: req.body?.payloadSummary,
+        }
+      );
       return res.json({ data: { workbench: state }, meta: workbenchMutationMeta() });
     } catch (e: any) {
-      return res.status(400).json({ error: e?.message || 'Promotion error', code: e?.code });
+      return res.status(400).json({
+        error: e?.message || 'Promotion error',
+        code: e?.code,
+        validationErrors: e?.validationErrors,
+        whatNext: e?.whatNext,
+      });
     }
   })
 );

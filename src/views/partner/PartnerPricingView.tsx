@@ -1,21 +1,23 @@
-/**
- * PartnerPricingView
- *
- * Partner pricing landing page presenting partnership tiers (Bronze/Silver/Gold/Platinum),
- * commission structures, co-sell benefits, and advancement requirements.
- * Inspired by HubSpot partner program pages.
- *
- * PMO Standards: Each tier maps to relevant PMO domain (ISO 21500 / PMBOK 7 / PRINCE2)
- */
-
 import { motion } from 'framer-motion';
-import { ArrowRight, Check, ChevronDown, HelpCircle, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import {
+  ArrowRight,
+  Briefcase,
+  Check,
+  ChevronDown,
+  Clock3,
+  FileCheck2,
+  HelpCircle,
+  LogIn,
+  MessageCircle,
+  ShieldCheck,
+  Users,
+  Workflow,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../routes/routeConfig';
-import { useAppStore } from '../../store/useAppStore';
-import { AppView } from '../../types';
 import {
   PARTNER_BENEFITS,
   PARTNER_FAQS,
@@ -24,89 +26,396 @@ import {
   TRUST_INDICATORS,
 } from './partnerPricingData';
 
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
+type JourneyStep = {
+  title: string;
+  description: string;
+  detail: string;
+  icon: React.ElementType;
+};
+
+const PROGRAM_JOURNEY: JourneyStep[] = [
+  {
+    title: 'Pozyskanie szansy',
+    description: 'Partner otwiera rozmowę z klientem i kwalifikuje potrzebę transformacji.',
+    detail: 'Anna, materiały sprzedażowe i playbook pomagają skrócić czas od pierwszego kontaktu do discovery.',
+    icon: Briefcase,
+  },
+  {
+    title: 'Wspólny discovery i oferta',
+    description: 'Partner prowadzi rozmowy wspólnie z Consultify albo samodzielnie z naszym wsparciem.',
+    detail: 'Deal desk, case studies i struktura wdrożenia pomagają domknąć ofertę bez improwizacji.',
+    icon: Users,
+  },
+  {
+    title: 'Aktywacja partnera i klienta',
+    description: 'Po zaakceptowaniu ścieżki partner przechodzi ten sam flow aplikacyjny z LP i z produktu.',
+    detail: 'Onboarding, wybór tracku, payout readiness i aktywacja workspace są spięte jednym procesem.',
+    icon: Workflow,
+  },
+  {
+    title: 'Rozliczenie i wzrost',
+    description: 'Partner zarabia na sprzedaży, co-sellu i aktywacjach zgodnie z poziomem programu.',
+    detail: 'Program jest zaprojektowany pod przewidywalny wzrost: academy, certyfikacja, case pack i payout flow.',
+    icon: ShieldCheck,
+  },
+];
 
 export const PartnerPricingView: React.FC = () => {
-  const { setCurrentView } = useAppStore();
   const navigate = useNavigate();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  const handleNavigate = useCallback(
-    (view: AppView) => () => setCurrentView(view),
-    [setCurrentView]
-  );
+  const startApplication = useCallback(() => {
+    navigate(ROUTES.PARTNER.ONBOARDING);
+  }, [navigate]);
 
-  const handleCtaClick = useCallback(
+  const openPartnerLogin = useCallback(() => {
+    navigate('/login');
+  }, [navigate]);
+
+  const openContact = useCallback(() => {
+    navigate(ROUTES.LEGAL.CONTACT);
+  }, [navigate]);
+
+  const openCaseStudy = useCallback(() => {
+    document.getElementById('partner-case-study')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
+
+  const handleTierCta = useCallback(
     (tier: PartnerTier) => {
       if (tier.id === 'PLATINUM') {
-        navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`);
-      } else {
-        navigate(ROUTES.PARTNER.ONBOARDING);
+        openContact();
+        return;
       }
+      startApplication();
     },
-    [navigate]
+    [openContact, startApplication]
   );
+
+  const priorityBenefits = useMemo(() => PARTNER_BENEFITS.slice(0, 6), []);
 
   return (
     <div className="min-h-full bg-slate-50 dark:bg-navy-950">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-16 pt-12 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
+      <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-20 pt-14 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
 
-        <div className="relative mx-auto max-w-5xl text-center">
+        <div className="relative mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center"
           >
-            <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-              <span className="h-2 w-2 rounded-full bg-purple-500" />
-              Partner Program
-            </span>
-
-            <h1 className="mt-6 text-4xl font-black tracking-tight text-navy-950 dark:text-white md:text-5xl">
-              Rozwijaj biznes{' '}
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                razem z Consultify
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                <span className="h-2 w-2 rounded-full bg-purple-500" />
+                Consultify Partner Program
               </span>
-            </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-              Dołącz do ekosystemu partnerów Consultify i uzyskaj dostęp do co-sell leads, prowizji
-              do 20%, dedykowanego wsparcia i narzędzi zgodnych z PMO standards.
-            </p>
+              <h1 className="mt-6 text-4xl font-black tracking-tight text-navy-950 dark:text-white md:text-5xl">
+                Program partnerski, który daje{' '}
+                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  realny pipeline, wdrożenia i payout
+                </span>
+              </h1>
 
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <button
-                onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
-                className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
-              >
-                Otwórz onboarding partnera
-                <ArrowRight size={18} />
-              </button>
-              <button
-                onClick={handleNavigate(AppView.PARTNER_LANDING)}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:bg-navy-900 dark:border-white/20 dark:text-white dark:hover:bg-white/5"
-              >
-                Poznaj program
-              </button>
+              <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                To nie jest tylko listing partnerów. Otrzymujesz wspólną ścieżkę aplikacji, playbook
+                handlowy, academy, case pack, wsparcie deal-desk i model rozliczeń dopasowany do
+                wzrostu partnera.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  onClick={startApplication}
+                  className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
+                >
+                  Apply
+                  <ArrowRight size={18} />
+                </button>
+                <button
+                  onClick={openCaseStudy}
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-white/5"
+                >
+                  Odkrywaj program
+                </button>
+                <button
+                  onClick={openPartnerLogin}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+                >
+                  <LogIn size={16} />
+                  Zaloguj się jako partner
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-purple-200 bg-white/90 p-6 shadow-sm dark:border-purple-900/40 dark:bg-navy-900/80 md:col-span-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-600 dark:text-purple-300">
+                  Co dostajesz od dnia 1
+                </p>
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <div>
+                    <p className="text-3xl font-black text-navy-950 dark:text-white">1 flow</p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      Taka sama ścieżka wejścia z LP i z aplikacji.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-navy-950 dark:text-white">do 20%</p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      Prowizji oraz progresji wraz z certyfikacją i aktywacją.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-navy-950 dark:text-white">case pack</p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      Materiały, które pomagają domknąć discovery i ofertę.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {PROGRAM_JOURNEY.map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div
+                    key={step.title}
+                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                      <Icon size={20} />
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{step.title}</h3>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
+                    <p className="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">{step.detail}</p>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Pricing Tiers */}
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 text-center">
+            <h2 className="text-3xl font-black text-navy-950 dark:text-white">Jak ten program pracuje w praktyce</h2>
+            <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
+              Budujemy program pod partnera, który chce sprzedawać i wdrażać Consultify profesjonalnie,
+              a nie tylko zbierać leady. Dlatego ścieżka łączy sales enablement, onboarding,
+              certyfikację i payout readiness.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-4">
+            {PROGRAM_JOURNEY.map((step, idx) => {
+              const Icon = step.icon;
+              return (
+                <div
+                  key={step.title}
+                  className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                      <Icon size={18} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                      0{idx + 1}
+                    </span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{step.title}</h3>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="partner-case-study" className="bg-white px-6 py-16 dark:bg-navy-900/50">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 flex flex-col gap-4 text-center lg:text-left">
+            <div className="inline-flex w-fit self-center rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 lg:self-start">
+              Case study partnera
+            </div>
+            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+              Przykład korzyści w pracy partnera, nie tylko na slajdzie
+            </h2>
+            <p className="max-w-3xl text-slate-600 dark:text-slate-400">
+              Partner wprowadził Consultify do rozmowy z firmą produkcyjną, przeprowadził discovery w
+              oparciu o frameworki oceny, a potem zbudował wspólną ofertę z Consultify. Klient szybciej
+              przeszedł z diagnozy do roadmapy, a partner miał gotowy case do dalszej sprzedaży.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-7 dark:border-navy-700 dark:bg-navy-950">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                Partner motion
+              </p>
+              <h3 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
+                Od rozmowy sprzedażowej do aktywnego rolloutu
+              </h3>
+              <div className="mt-6 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                <p>
+                  Partner rozpoczął od warsztatu z zarządem i kierownikami operacyjnymi. Dzięki gotowym
+                  materiałom Consultify nie musiał budować narracji od zera.
+                </p>
+                <p>
+                  W kolejnym kroku wspólnie przygotowano assessment, mapę problemów i plan pilota. To
+                  skróciło czas dopięcia oferty oraz zwiększyło wiarygodność po stronie klienta.
+                </p>
+                <p>
+                  Po aktywacji partner wykorzystał academy i case pack do powtórzenia tego samego modelu
+                  u kolejnych klientów, zamiast każdorazowo wymyślać proces od nowa.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {[
+                'Krótszy czas od pierwszej rozmowy do warsztatu discovery',
+                'Mocniejsza oferta dzięki wspólnemu case pack i frameworkom',
+                'Powtarzalny model wdrożenia dla kolejnych klientów partnera',
+                'Jasna ścieżka aktywacji, academy i payout readiness',
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900"
+                >
+                  <div className="flex items-start gap-3">
+                    <Check className="mt-0.5 text-emerald-500" size={18} />
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{item}</p>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={openContact}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-4 text-sm font-bold text-white transition hover:bg-navy-900 dark:bg-white dark:text-navy-950"
+              >
+                Skontaktuj się, aby omówić pełny case
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+              Korzyści z partnerstwa
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
+              Program jest zbudowany tak, by partner mógł szybciej wejść na rynek, przejść przez
+              aktywację i skalować współpracę bez ręcznego zszywania procesu.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {priorityBenefits.map((benefit, idx) => {
+              const Icon = benefit.icon;
+              return (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
+                    <Icon size={24} className="text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{benefit.title}</h3>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{benefit.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-100 px-6 py-16 dark:bg-navy-900/40">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+              Start application: wspólna ścieżka z LP i z aplikacji
+            </h2>
+            <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
+              Każde wejście do programu prowadzi do tego samego procesu aplikacyjnego. Partner może
+              przejść go samodzielnie, a jeśli potrzebuje niestandardowych warunków, ma od razu ścieżkę
+              kontaktu do ustalenia modelu współpracy.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {[
+              {
+                title: '1. Apply i utworzenie ścieżki',
+                description:
+                  'Kliknięcie Apply przenosi partnera do tego samego flow onboardingowego niezależnie od miejsca wejścia.',
+                icon: FileCheck2,
+              },
+              {
+                title: '2. Automatyczna kwalifikacja',
+                description:
+                  'Partner akceptuje warunki, wybiera track i uzupełnia dane potrzebne do aktywacji oraz dalszych rozliczeń.',
+                icon: Clock3,
+              },
+              {
+                title: '3. Kontakt i warunki specjalne',
+                description:
+                  'Jeśli współpraca wymaga innego modelu, partner może od razu przejść do kontaktu z zespołem partnerskim.',
+                icon: MessageCircle,
+              },
+            ].map((step) => {
+              const Icon = step.icon;
+              return (
+                <div
+                  key={step.title}
+                  className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                    <Icon size={22} />
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{step.title}</h3>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <button
+              onClick={startApplication}
+              className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-8 py-4 font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
+            >
+              Start application
+              <ArrowRight size={18} />
+            </button>
+            <button
+              onClick={openContact}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-8 py-4 font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:text-white dark:hover:bg-white/5"
+            >
+              Ustal warunki współpracy
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
-              Wybierz poziom partnerstwa
-            </h2>
+            <h2 className="text-3xl font-black text-navy-950 dark:text-white">Poziomy programu</h2>
             <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
-              Każdy poziom oferuje progresywne korzyści. Awansuj automatycznie spełniając wymagania
-              programu.
+              Poziomy nadal porządkują rozwój partnera, ale najpierw partner dostaje jeden, spójny
+              flow wejścia i jasną ścieżkę wzrostu.
             </p>
           </div>
 
@@ -118,11 +427,11 @@ export const PartnerPricingView: React.FC = () => {
                   key={tier.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className={`relative flex flex-col rounded-xl p-6 ${
+                  transition={{ duration: 0.5, delay: idx * 0.08 }}
+                  className={`relative flex flex-col rounded-2xl p-6 ${
                     tier.highlight
-                      ? 'bg-gradient-to-b from-purple-600 to-purple-700 text-white ring-4 ring-purple-500/50 shadow-2xl shadow-purple-500/20 scale-[1.02] z-10'
-                      : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700'
+                      ? 'z-10 scale-[1.02] bg-gradient-to-b from-purple-600 to-purple-700 text-white shadow-2xl shadow-purple-500/20 ring-4 ring-purple-500/50'
+                      : 'border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900'
                   }`}
                 >
                   {tier.badge && (
@@ -133,7 +442,6 @@ export const PartnerPricingView: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Header */}
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-12 w-12 items-center justify-center rounded-xl ${
@@ -165,7 +473,6 @@ export const PartnerPricingView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Commission Rate */}
                   <div className="mt-6">
                     <div className="flex items-baseline gap-1">
                       <span
@@ -192,7 +499,6 @@ export const PartnerPricingView: React.FC = () => {
                     </p>
                   </div>
 
-                  {/* Description */}
                   <p
                     className={`mt-4 text-sm ${
                       tier.highlight ? 'text-purple-100' : 'text-slate-600 dark:text-slate-400'
@@ -201,10 +507,9 @@ export const PartnerPricingView: React.FC = () => {
                     {tier.description}
                   </p>
 
-                  {/* Features */}
                   <ul className="mt-6 flex-1 space-y-2">
-                    {tier.features.slice(0, 8).map((feature, fIdx) => (
-                      <li key={fIdx} className="flex items-start gap-2">
+                    {tier.features.slice(0, 7).map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
                         {feature.included ? (
                           <Check
                             size={16}
@@ -239,7 +544,6 @@ export const PartnerPricingView: React.FC = () => {
                     ))}
                   </ul>
 
-                  {/* Requirements */}
                   <div
                     className={`mt-6 rounded-xl p-3 ${
                       tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
@@ -253,8 +557,8 @@ export const PartnerPricingView: React.FC = () => {
                       Wymagania
                     </p>
                     <div className="space-y-1">
-                      {tier.requirements.map((req, rIdx) => (
-                        <div key={rIdx} className="flex items-center justify-between text-xs">
+                      {tier.requirements.map((req, index) => (
+                        <div key={index} className="flex items-center justify-between gap-3 text-xs">
                           <span
                             className={
                               tier.highlight
@@ -265,7 +569,7 @@ export const PartnerPricingView: React.FC = () => {
                             {req.label}
                           </span>
                           <span
-                            className={`font-semibold ${
+                            className={`text-right font-semibold ${
                               tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
                             }`}
                           >
@@ -276,18 +580,17 @@ export const PartnerPricingView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* CTA */}
                   <button
-                    onClick={() => handleCtaClick(tier)}
+                    onClick={() => handleTierCta(tier)}
                     className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
                       tier.ctaVariant === 'primary'
-                        ? 'bg-white text-purple-700 hover:bg-purple-50 shadow-lg'
+                        ? 'bg-white text-purple-700 shadow-lg hover:bg-purple-50'
                         : tier.ctaVariant === 'secondary'
                           ? 'bg-purple-600 text-white hover:bg-purple-500'
-                          : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                          : 'border-2 border-slate-300 text-navy-950 hover:bg-slate-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5'
                     }`}
                   >
-                    {tier.cta}
+                    {tier.id === 'PLATINUM' ? 'Ustal warunki' : 'Start application'}
                     <ArrowRight size={16} />
                   </button>
                 </motion.div>
@@ -295,7 +598,6 @@ export const PartnerPricingView: React.FC = () => {
             })}
           </div>
 
-          {/* Trust Indicators */}
           <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-500 dark:text-slate-400">
             {TRUST_INDICATORS.map((indicator, idx) => {
               const Icon = indicator.icon;
@@ -310,47 +612,6 @@ export const PartnerPricingView: React.FC = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="bg-white px-6 py-16 dark:bg-navy-900/50">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
-              Korzyści z partnerstwa
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
-              Dołącz do ekosystemu i skorzystaj z pełnego wsparcia w rozwijaniu biznesu
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {PARTNER_BENEFITS.map((benefit, idx) => {
-              const Icon = benefit.icon;
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="rounded-xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
-                    <Icon size={24} className="text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
-                    {benefit.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                    {benefit.description}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-3xl">
           <div className="mb-12 text-center">
@@ -358,11 +619,8 @@ export const PartnerPricingView: React.FC = () => {
               Najczęściej zadawane pytania
             </h2>
             <p className="mt-4 text-slate-600 dark:text-slate-400">
-              Masz więcej pytań?{' '}
-              <button
-                onClick={handleNavigate(AppView.PARTNER_RESOURCES)}
-                className="text-purple-600 hover:underline"
-              >
+              Masz scenariusz, który wymaga niestandardowych warunków?{' '}
+              <button onClick={openContact} className="text-purple-600 hover:underline">
                 Skontaktuj się z nami
               </button>
             </p>
@@ -376,7 +634,7 @@ export const PartnerPricingView: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.05 }}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900"
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900"
               >
                 <button
                   onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
@@ -404,27 +662,26 @@ export const PartnerPricingView: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-16">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-black text-white">Gotowy do współpracy?</h2>
-          <p className="mx-auto mt-4 max-w-xl text-purple-100">
-            Dołącz do programu partnerskiego Consultify i rozwijaj swój biznes z dostępem do
-            narzędzi, leadów i prowizji do 20%.
+          <h2 className="text-3xl font-black text-white">Gotowy do wejścia do programu?</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-purple-100">
+            Możesz wystartować aplikację od razu albo porozmawiać z nami o warunkach współpracy,
+            certyfikacji i wspólnym motion sprzedażowym.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
-              onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
-              className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-navy-900 px-8 py-4 font-bold text-purple-700 shadow-lg transition hover:bg-purple-50"
+              onClick={startApplication}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-bold text-purple-700 shadow-lg transition hover:bg-purple-50 dark:bg-navy-900"
             >
-              Otwórz onboarding partnera
+              Start application
               <ArrowRight size={18} />
             </button>
             <button
-              onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=documentation`)}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-slate-100 dark:hover:bg-navy-800/40"
+              onClick={openContact}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-white/10"
             >
-              Otwórz materiały partnera
+              Skontaktuj się z zespołem partnerskim
             </button>
           </div>
         </div>

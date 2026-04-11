@@ -81,12 +81,26 @@ CREATE INDEX IF NOT EXISTS idx_active_sessions_expires ON active_sessions(expire
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS data_export_requests (
     id TEXT PRIMARY KEY,
+    organization_id TEXT,
     user_id TEXT NOT NULL,
-    status TEXT DEFAULT 'pending', -- 'pending', 'processing', 'completed', 'failed'
+    format TEXT DEFAULT 'json',
+    export_type TEXT DEFAULT 'gdpr',
+    include_data TEXT,
+    include_data_types TEXT,
+    exclude_data TEXT,
+    status TEXT DEFAULT 'pending', -- pending, processing, completed, failed, expired
     requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME,
     completed_at DATETIME,
     download_url TEXT,
+    file_url TEXT,
+    file_path TEXT,
     expires_at DATETIME,
+    file_expires_at DATETIME,
+    file_size INTEGER,
+    error_message TEXT,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -102,13 +116,15 @@ CREATE TABLE IF NOT EXISTS user_api_keys (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
-    key_prefix TEXT NOT NULL, -- First 8 chars for display: pk_live_xxxx
-    key_hash TEXT NOT NULL, -- Hashed full key
-    scopes TEXT, -- JSON array of allowed scopes
-    last_used DATETIME,
+    key_hash TEXT NOT NULL,
+    key_prefix TEXT NOT NULL,
+    permissions TEXT DEFAULT '[]',
+    rate_limit INTEGER DEFAULT 1000,
+    last_used_at DATETIME,
     expires_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    revoked_at DATETIME,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_active INTEGER DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -126,13 +142,17 @@ CREATE INDEX IF NOT EXISTS idx_user_api_keys_prefix ON user_api_keys(key_prefix)
 CREATE TABLE IF NOT EXISTS user_webhooks (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
     url TEXT NOT NULL,
-    events TEXT NOT NULL, -- JSON array: ['task.created', 'task.completed']
-    secret TEXT, -- For signature verification
-    status TEXT DEFAULT 'active', -- 'active', 'paused', 'failed'
-    last_triggered DATETIME,
+    events TEXT NOT NULL,
+    secret TEXT,
+    headers TEXT DEFAULT '{}',
+    is_active INTEGER DEFAULT 1,
+    last_triggered_at DATETIME,
+    last_status INTEGER,
     failure_count INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

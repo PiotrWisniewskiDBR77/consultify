@@ -14,6 +14,7 @@ import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
 import adminIntegrationsRoutes from './routes/adminIntegrations.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
+import adminP32Routes from './routes/adminP32.routes.js';
 import agentsRoutes from './routes/agents.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import aiAnalyticsRoutes from './routes/ai/ai-analytics.routes.js';
@@ -154,6 +155,7 @@ import organizationDataRoutes from './routes/organization/organization-data.rout
 import orgLimitsRoutes from './routes/organization/organization-limits.routes.js';
 import organizationProfilesRoutes from './routes/organization/organization-profiles.routes.js';
 import organizationRoutes from './routes/organization/organizations.routes.js';
+import ownershipRoutes from './routes/organization/ownership.routes.js';
 import rbacRoutes from './routes/organization/rbac.routes.js';
 import teamsRoutes from './routes/organization/teams.routes.js';
 import organizationContextRoutes from './routes/organization-context.routes.js';
@@ -332,6 +334,7 @@ export class ApiGateway {
       console.log('[ApiGateway] Mounting /api/admin-data');
       app.use('/api/admin-data', adminDataRoutes);
       app.use('/api/admin', adminBulkRoutes);
+      app.use('/api/admin', adminP32Routes);
 
       // T113: API request logging (no PII)
       app.use(apiLoggingMiddleware);
@@ -532,6 +535,7 @@ export class ApiGateway {
       // Organization routes
       app.use('/api/megatrends', megatrendRoutes);
       app.use('/api/organizations', organizationRoutes);
+      app.use('/api/organizations', ownershipRoutes);
       mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
       app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);

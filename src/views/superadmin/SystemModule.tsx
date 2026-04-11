@@ -58,8 +58,12 @@ const TAB_TO_HELP_MAP: Record<string, string> = {
 };
 
 export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
-  const [activeTab, setActiveTab] = useState(initialTab || 'health');
+  const [activeTab, setActiveTab] = useState(initialTab || 'integrations');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   const helpContentId = TAB_TO_HELP_MAP[activeTab] || 'superadmin-system';
 
@@ -133,8 +137,8 @@ export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      title="System"
-      subtitle="Platform health, audit logs, and system configuration"
+      title="Connector Ops"
+      subtitle="Operate integrations, platform health, observability, and system configuration"
       actions={<InfoButton cardId={helpContentId} />}
     >
       {renderContent()}

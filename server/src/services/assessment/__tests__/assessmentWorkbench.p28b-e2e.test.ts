@@ -20,12 +20,24 @@ describe('AssessmentWorkbenchService — P28-B E2E (mocked persistence)', () => 
   const userId = 'user-p28b';
 
   let p28Column: string | null = null;
+  let definitionRow: Record<string, unknown> | null = null;
 
   beforeEach(() => {
     p28Column = null;
+    definitionRow = null;
     vi.clearAllMocks();
     mockQueryOne.mockImplementation(async (sql: string, params: unknown[]) => {
-      if (String(sql).includes('FROM assessments WHERE id = ?') && String(sql).includes('p28_workbench_v1')) {
+      if (String(sql).includes('FROM assessment_definitions')) {
+        if (!definitionRow) return null;
+        if (String(sql).includes('WHERE id = ?')) {
+          return params[0] === definitionRow.id ? definitionRow : null;
+        }
+        return definitionRow;
+      }
+      if (
+        String(sql).includes('FROM assessments WHERE id = ?') &&
+        String(sql).includes('p28_workbench_v1')
+      ) {
         const [id, oid] = params as string[];
         if (id !== assessmentId || oid !== orgId) return null;
         return {
@@ -42,6 +54,22 @@ describe('AssessmentWorkbenchService — P28-B E2E (mocked persistence)', () => 
       return null;
     });
     mockQueryRun.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (String(sql).includes('INSERT OR IGNORE INTO assessment_definitions')) {
+        definitionRow = {
+          id: params[0],
+          methodology_id: params[1],
+          version: params[2],
+          title: params[3],
+          definition_json: params[4],
+          created_by: params[5],
+          created_at: params[6],
+          updated_at: params[7],
+          published_at: params[8],
+          status: 'published',
+          is_read_only: 1,
+        };
+        return;
+      }
       if (String(sql).includes('p28_workbench_v1')) {
         p28Column = params[0] as string;
       }
@@ -55,6 +83,7 @@ describe('AssessmentWorkbenchService — P28-B E2E (mocked persistence)', () => 
   it('DRD preset: blocked score z whatNext → evidence → happy path → promotion', async () => {
     await AssessmentWorkbenchService.load(assessmentId, orgId, 'DRD', userId);
     expect(p28Column).toBeTruthy();
+    expect(definitionRow?.status).toBe('published');
 
     await AssessmentWorkbenchService.applyMethodologyPreset(assessmentId, orgId, userId, 'DRD');
     await AssessmentWorkbenchService.transition(assessmentId, orgId, userId, 'running');
@@ -82,7 +111,9 @@ describe('AssessmentWorkbenchService — P28-B E2E (mocked persistence)', () => 
 
     const row = JSON.parse(p28Column!);
     const docId = row.evidencePointers.find((e: { kind: string }) => e.kind === 'document').id;
-    const intId = row.evidencePointers.find((e: { kind: string }) => e.kind === 'interview_note').id;
+    const intId = row.evidencePointers.find(
+      (e: { kind: string }) => e.kind === 'interview_note'
+    ).id;
 
     await AssessmentWorkbenchService.proposeScore(assessmentId, orgId, userId, {
       scoreValues: { band: 3 },

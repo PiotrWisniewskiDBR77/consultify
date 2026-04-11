@@ -23,6 +23,15 @@ const router = Router();
 const HelpChatMessageSchema = z.object({
   message: z.string().min(1).max(2000),
   context: z.string().optional(),
+  language: z
+    .string()
+    .transform((lang) => {
+      if (!lang) return 'en';
+      const base = lang.split('-')[0].toLowerCase();
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'jp', 'ar'];
+      return validLangs.includes(base) ? base : 'en';
+    })
+    .optional(),
   history: z
     .array(
       z.object({
@@ -47,7 +56,7 @@ router.post(
   verifyToken,
   validateBody(HelpChatMessageSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { message, context, history } = req.body;
+    const { message, context, history, language } = req.body;
 
     try {
       // Get AI Pipeline
@@ -67,8 +76,8 @@ router.post(
 
       const isProduct = kb.isProductQuestion || isProductOrHowToQuery(message);
 
-      // Build system prompt with citation policy awareness
-      let systemPrompt = buildHelpSystemPrompt(context, isProduct);
+      // Build system prompt with citation policy awareness and language instruction
+      let systemPrompt = buildHelpSystemPrompt(context, isProduct, language);
       if (kb.systemInstructionAddon) {
         systemPrompt += kb.systemInstructionAddon;
       }
@@ -174,7 +183,19 @@ const MODULE_CONTEXT_HINTS: Record<string, string> = {
 
 // ==================== HELPER FUNCTIONS ====================
 
-function buildHelpSystemPrompt(context?: string, isProductQuestion?: boolean): string {
+function buildHelpSystemPrompt(context?: string, isProductQuestion?: boolean, language?: string): string {
+  const languageMap: Record<string, string> = {
+    pl: 'Polish (Polski)',
+    en: 'English',
+    de: 'German (Deutsch)',
+    es: 'Spanish (Español)',
+    ja: 'Japanese (日本語)',
+    jp: 'Japanese (日本語)',
+    ar: 'Arabic (العربية)',
+  };
+  const langCode = (language || 'en').split('-')[0];
+  const langName = languageMap[langCode] || 'English';
+
   const basePrompt = `You are Teresa, the Consultify Help Assistant — an AI-powered guide for the Consultify enterprise PMO platform.
 
 ROLE: Help users understand features, troubleshoot issues, and maximize platform value.
@@ -208,7 +229,9 @@ CITATION POLICY:
 - When KB documentation is provided, cite relevant articles inline as [KB1], [KB2], etc.
 - Only cite articles that actually appear in the KB context below.
 - NEVER fabricate documentation URLs, article titles, or menu paths.
-- If documentation does not cover the question, clearly state: "Our documentation does not cover this topic yet."`;
+- If documentation does not cover the question, clearly state: "Our documentation does not cover this topic yet."
+
+[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]`;
 
   if (context && MODULE_CONTEXT_HINTS[context.toLowerCase()]) {
     return `${basePrompt}

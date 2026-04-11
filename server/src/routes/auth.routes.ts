@@ -12,6 +12,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import {
   ACCESS_TOKEN_COOKIE,
@@ -465,6 +466,7 @@ router.post(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const impersonatorId = req.user!.impersonatorId;
+    const impersonationSessionId = (req.user as any)?.impersonationSessionId;
     if (!impersonatorId) {
       return res.status(400).json({ error: 'Not currently impersonating' });
       return;
@@ -504,6 +506,67 @@ router.post(
       config.JWT_SECRET,
       { expiresIn: config.JWT_EXPIRES_IN }
     );
+
+    const rawToken = req.headers.authorization?.replace(/^Bearer\s+/i, '') || '';
+    const decodedCurrent = rawToken
+      ? (jwt.decode(rawToken) as { jti?: string; exp?: number; id?: string } | null)
+      : null;
+    if (decodedCurrent?.jti && decodedCurrent?.exp) {
+      await dbRun(
+        `INSERT OR IGNORE INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`,
+        [
+          decodedCurrent.jti,
+          decodedCurrent.id || req.user!.id || 'unknown',
+          new Date(decodedCurrent.exp * 1000).toISOString(),
+          'impersonation-end',
+        ],
+        { fallback: false }
+      );
+    }
+
+    let durationMinutes = 30;
+    if (impersonationSessionId) {
+      const session = await dbGet<{
+        id: string;
+        started_at: string;
+        target_user_id: string;
+      }>(
+        'SELECT id, started_at, target_user_id FROM superadmin_impersonation_sessions WHERE id = ?',
+        [impersonationSessionId]
+      );
+
+      if (session?.started_at) {
+        durationMinutes = Math.max(
+          0,
+          Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000)
+        );
+      }
+
+      await dbRun(
+        `UPDATE superadmin_impersonation_sessions
+         SET ended_at = datetime('now'), is_active = 0
+         WHERE id = ?`,
+        [impersonationSessionId],
+        { fallback: false }
+      );
+    }
+
+    await auditEventsService.log({
+      actorId: impersonatorId,
+      actorType: 'USER',
+      organizationId: req.user!.organizationId,
+      action: 'user.impersonation_end',
+      resourceType: 'user',
+      resourceId: req.user!.id,
+      metadata: {
+        targetUserId: req.user!.id,
+        tenantId: req.user!.organizationId,
+        durationMinutes,
+        sessionId: impersonationSessionId || null,
+      },
+      ip: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
 
     // Log the reversion
     ActivityService.log({

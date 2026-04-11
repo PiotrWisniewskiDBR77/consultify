@@ -18,7 +18,10 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { requireConfirmation } from '../middleware/confirmAction.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
-import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import {
+  requireSuperAdminCapability,
+  verifySuperAdmin as requireSuperAdmin,
+} from '../middleware/superAdmin.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import {
   getAllOrgPolicies,
@@ -38,6 +41,182 @@ import {
 
 const router = Router();
 
+interface AtomicAuditEventInput {
+  actorType?: 'USER' | 'SYSTEM' | 'AI' | 'INTEGRATION' | 'CONSULTANT';
+  action: string;
+  resourceType: string;
+  resourceId?: string;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+interface AtomicGatedResult {
+  auditEvent: AtomicAuditEventInput;
+  response: Record<string, unknown>;
+}
+
+async function insertAuditEventAtomic(
+  req: AuthRequest,
+  input: AtomicAuditEventInput
+): Promise<string> {
+  const id = `ae-${randomUUID()}`;
+  const timestamp = new Date().toISOString();
+  const metadata = input.metadata || {};
+
+  try {
+    await dbRun(
+      `INSERT INTO audit_events (
+        id, ts, actor_id, actor_type, org_id, action, resource_type, resource_id,
+        before_json, after_json, metadata_json, ip, user_agent
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        timestamp,
+        req.user?.id || null,
+        input.actorType || 'USER',
+        req.user?.organizationId || null,
+        input.action,
+        input.resourceType,
+        input.resourceId || null,
+        input.before ? JSON.stringify(input.before) : null,
+        input.after ? JSON.stringify(input.after) : null,
+        JSON.stringify(metadata),
+        req.ip || null,
+        req.get('user-agent') || null,
+      ],
+      { fallback: false }
+    );
+    return id;
+  } catch (unifiedErr: any) {
+    try {
+      await dbRun(
+        `INSERT INTO audit_events (
+          id, ts, actor_user_id, actor_type, org_id, action_type, entity_type, entity_id,
+          metadata_json, ip, user_agent
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          timestamp,
+          req.user?.id || null,
+          input.actorType || 'USER',
+          req.user?.organizationId || null,
+          input.action,
+          input.resourceType,
+          input.resourceId || null,
+          JSON.stringify({
+            before: input.before || null,
+            after: input.after || null,
+            ...metadata,
+          }),
+          req.ip || null,
+          req.get('user-agent') || null,
+        ],
+        { fallback: false }
+      );
+      return id;
+    } catch (legacyErr: any) {
+      throw new Error(
+        `AUDIT_WRITE_FAILED: ${legacyErr?.message || unifiedErr?.message || 'unknown audit error'}`
+      );
+    }
+  }
+}
+
+function isAuditWriteFailure(error: unknown): boolean {
+  return String((error as Error | undefined)?.message || '').includes('AUDIT_WRITE_FAILED');
+}
+
+function sendAuditUnavailable(res: Response, actionType: string): void {
+  res.status(503).json({
+    error: 'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
+    code: 'AUDIT_UNAVAILABLE',
+    actionType,
+    guidance: 'Retry the action. If the problem persists, contact platform support.',
+  });
+}
+
+async function executeAtomicGatedAction(
+  req: AuthRequest,
+  res: Response,
+  actionType: string,
+  operation: () => Promise<AtomicGatedResult>
+): Promise<void> {
+  await dbRun('BEGIN TRANSACTION', [], { fallback: false });
+
+  try {
+    const result = await operation();
+    await insertAuditEventAtomic(req, result.auditEvent);
+    await dbRun('COMMIT', [], { fallback: false });
+    res.json(result.response);
+  } catch (error) {
+    try {
+      await dbRun('ROLLBACK', [], { fallback: false });
+    } catch {
+      // Best-effort rollback; preserve original error for response handling.
+    }
+
+    if (isAuditWriteFailure(error)) {
+      sendAuditUnavailable(res, actionType);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+function parseAuditJsonField(raw: unknown): Record<string, unknown> | undefined {
+  if (raw === null || raw === undefined || raw === '') return undefined;
+  if (typeof raw === 'object') return raw as Record<string, unknown>;
+  try {
+    return JSON.parse(String(raw));
+  } catch {
+    return undefined;
+  }
+}
+
+function isDatabaseExplorerEnabled(): boolean {
+  return process.env.ENABLE_SUPERADMIN_DB_EXPLORER === 'true' && process.env.NODE_ENV !== 'production';
+}
+
+async function querySettingAuditVersions(settingKey: string): Promise<any[]> {
+  try {
+    return await dbAll(
+      `SELECT id,
+              resource_id,
+              before_json,
+              after_json,
+              metadata_json,
+              ts,
+              actor_id
+       FROM audit_events
+       WHERE resource_type = 'settings'
+         AND resource_id = ?
+         AND action IN ('settings_create', 'settings_update', 'settings_delete', 'settings_rollback')
+       ORDER BY ts DESC
+       LIMIT 200`,
+      [settingKey],
+      { fallback: false }
+    );
+  } catch {
+    return await dbAll(
+      `SELECT id,
+              entity_id as resource_id,
+              old_value as before_json,
+              new_value as after_json,
+              metadata as metadata_json,
+              created_at as ts,
+              admin_user_id as actor_id
+       FROM superadmin_audit_log
+       WHERE entity_type = 'settings' AND entity_id = ?
+       ORDER BY created_at DESC
+       LIMIT 200`,
+      [settingKey],
+      { fallback: false }
+    );
+  }
+}
+
 // Apply rate limiting
 router.use(apiAuthRateLimiter);
 
@@ -53,6 +232,13 @@ router.use(requireSuperAdmin);
 // Gated actions that already pass requireAudit per-route get a second (harmless)
 // assignment; ungated mutations now have the function available too.
 router.use(requireAudit);
+router.use('/security', requireSuperAdminCapability('security_ops'));
+router.use('/admin/sessions', requireSuperAdminCapability('security_ops'));
+router.use('/admin/approval-workflows', requireSuperAdminCapability('security_ops'));
+router.use('/platform', requireSuperAdminCapability('security_ops'));
+router.use('/connectors', requireSuperAdminCapability('platform_ops', 'security_ops'));
+router.use('/virtual-workers', requireSuperAdminCapability('ai_ops'));
+router.use('/impersonate', requireSuperAdminCapability('support_ops'));
 
 // ==========================================
 // ORGANIZATIONS
@@ -76,7 +262,11 @@ router.delete(
       await requireNoLegalHold(req.params.id, 'Organization deletion');
     } catch (e: any) {
       if (e?.code === 'LEGAL_HOLD') {
-        return res.status(403).json({ error: e.message, code: 'LEGAL_HOLD' });
+        return res.status(403).json({
+          error: e.message,
+          code: 'CROSS_TENANT_DENIED',
+          guidance: 'Tenant is in compliance hold. Contact the compliance team before retrying.',
+        });
       }
       throw e;
     }
@@ -178,28 +368,43 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const tenantId = req.params.id;
     const { reason } = req.body;
-    
+
     const tenant = await dbGet('SELECT id, name, status FROM organizations WHERE id = $1', [tenantId]);
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
-    if (tenant.status === 'suspended') return res.status(409).json({ error: 'Tenant already suspended' });
-    
+    if (tenant.status === 'suspended') {
+      return res.status(409).json({
+        error: 'Tenant already suspended',
+        code: 'CROSS_TENANT_DENIED',
+        guidance: 'Tenant is already in the requested state.',
+      });
+    }
+
     const userCount = await dbGet('SELECT COUNT(*) as count FROM users WHERE organization_id = $1', [tenantId]);
-    
-    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['suspended', tenantId]);
-    
-    await req.emitAuditEvent?.({
-      action: 'tenant.suspended',
-      resourceType: 'organization',
-      resourceId: tenantId,
-      metadata: { reason, affectedUsers: userCount?.count || 0, tenantName: tenant.name },
-    });
-    
-    res.json({ 
-      success: true, 
-      action: 'tenant.suspended',
-      tenantId,
-      reversible: true,
-      recoveryPath: 'POST /api/superadmin/tenants/:id/reactivate',
+
+    await executeAtomicGatedAction(req, res, 'suspend_tenant', async () => {
+      await dbRun(
+        'UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        ['suspended', tenantId],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'tenant.suspended',
+          resourceType: 'organization',
+          resourceId: tenantId,
+          before: { status: tenant.status },
+          after: { status: 'suspended' },
+          metadata: { reason, affectedUsers: userCount?.count || 0, tenantName: tenant.name },
+        },
+        response: {
+          success: true,
+          action: 'tenant.suspended',
+          tenantId,
+          reversible: true,
+          recoveryPath: 'POST /api/superadmin/tenants/:id/reactivate',
+        },
+      };
     });
   })
 );
@@ -211,39 +416,73 @@ router.post(
   requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const tenantId = req.params.id;
-    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['active', tenantId]);
-    
-    await req.emitAuditEvent?.({
-      action: 'tenant.reactivated',
-      resourceType: 'organization',
-      resourceId: tenantId,
-      metadata: { reason: req.body.reason },
+    const tenant = await dbGet('SELECT id, status FROM organizations WHERE id = $1', [tenantId]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+
+    await executeAtomicGatedAction(req, res, 'reactivate_tenant', async () => {
+      await dbRun(
+        'UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        ['active', tenantId],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'tenant.reactivated',
+          resourceType: 'organization',
+          resourceId: tenantId,
+          before: { status: tenant.status },
+          after: { status: 'active' },
+          metadata: { reason: req.body.reason },
+        },
+        response: {
+          success: true,
+          action: 'tenant.reactivated',
+          tenantId,
+          reversible: true,
+          recoveryPath: 'POST /api/superadmin/tenants/:id/suspend',
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'tenant.reactivated', tenantId });
   })
 );
 
 // #2 Force-reset user MFA
 router.post(
   '/users/:id/force-reset-mfa',
+  requireSuperAdminCapability('security_ops'),
   requireConfirmation('force_reset_mfa', 'high'),
   requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.params.id;
     const user = await dbGet('SELECT id, email FROM users WHERE id = $1', [userId]);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    
-    await dbRun('UPDATE users SET mfa_enabled = $1, mfa_secret = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [false, userId]);
-    
-    await req.emitAuditEvent?.({
-      action: 'user.mfa_reset',
-      resourceType: 'user',
-      resourceId: userId,
-      metadata: { userEmail: user.email },
+
+    await executeAtomicGatedAction(req, res, 'force_reset_mfa', async () => {
+      await dbRun(
+        'UPDATE users SET mfa_enabled = $1, mfa_secret = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [false, userId],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'user.mfa_reset',
+          resourceType: 'user',
+          resourceId: userId,
+          metadata: { userEmail: user.email },
+          after: { mfa_enabled: false },
+        },
+        response: {
+          success: true,
+          action: 'user.mfa_reset',
+          userId,
+          reversible: true,
+          note: 'User will re-enroll MFA on next login',
+          recoveryPath: 'User re-enrolls MFA on next login',
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'user.mfa_reset', userId, reversible: true, note: 'User will re-enroll MFA on next login' });
   })
 );
 
@@ -255,20 +494,32 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { enforce } = req.body;
     const tenantCount = await dbGet('SELECT COUNT(*) as count FROM organizations');
-    
-    await dbRun(
-      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
-      ['platform:mfa_override', enforce ? 'enforced' : 'disabled']
-    );
-    
-    await req.emitAuditEvent?.({
-      action: 'platform.mfa_override',
-      resourceType: 'platform',
-      resourceId: 'global',
-      metadata: { enforce, affectedTenants: tenantCount?.count || 0 },
+
+    await executeAtomicGatedAction(req, res, 'platform_mfa_override', async () => {
+      await dbRun(
+        'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+        ['platform:mfa_override', enforce ? 'enforced' : 'disabled'],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'platform.mfa_override',
+          resourceType: 'platform',
+          resourceId: 'global',
+          after: { enforce: Boolean(enforce) },
+          metadata: { enforce, affectedTenants: tenantCount?.count || 0 },
+        },
+        response: {
+          success: true,
+          action: 'platform.mfa_override',
+          enforce,
+          reversible: true,
+          affectedTenants: tenantCount?.count || 0,
+          recoveryPath: 'POST /api/superadmin/platform/mfa-override with enforce=false',
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'platform.mfa_override', enforce, reversible: true, affectedTenants: tenantCount?.count || 0 });
   })
 );
 
@@ -279,20 +530,31 @@ router.post(
   requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { enforce } = req.body;
-    
-    await dbRun(
-      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
-      ['platform:sso_override', enforce ? 'enforced' : 'disabled']
-    );
-    
-    await req.emitAuditEvent?.({
-      action: 'platform.sso_override',
-      resourceType: 'platform',
-      resourceId: 'global',
-      metadata: { enforce },
+
+    await executeAtomicGatedAction(req, res, 'platform_sso_override', async () => {
+      await dbRun(
+        'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+        ['platform:sso_override', enforce ? 'enforced' : 'disabled'],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'platform.sso_override',
+          resourceType: 'platform',
+          resourceId: 'global',
+          after: { enforce: Boolean(enforce) },
+          metadata: { enforce },
+        },
+        response: {
+          success: true,
+          action: 'platform.sso_override',
+          enforce,
+          reversible: true,
+          recoveryPath: 'POST /api/superadmin/platform/sso-override with enforce=false',
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'platform.sso_override', enforce, reversible: true });
   })
 );
 
@@ -304,20 +566,31 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { modelId } = req.params;
     const { reason } = req.body;
-    
-    await dbRun(
-      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
-      [`ai:model:${modelId}:status`, 'suspended']
-    );
-    
-    await req.emitAuditEvent?.({
-      action: 'ai.model_suspended',
-      resourceType: 'ai_model',
-      resourceId: modelId,
-      metadata: { reason },
+
+    await executeAtomicGatedAction(req, res, 'suspend_ai_model', async () => {
+      await dbRun(
+        'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+        [`ai:model:${modelId}:status`, 'suspended'],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'ai.model_suspended',
+          resourceType: 'ai_model',
+          resourceId: modelId,
+          after: { status: 'suspended' },
+          metadata: { reason },
+        },
+        response: {
+          success: true,
+          action: 'ai.model_suspended',
+          modelId,
+          reversible: true,
+          recoveryPath: `Set ai:model:${modelId}:status back to enabled after review`,
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'ai.model_suspended', modelId, reversible: true });
   })
 );
 
@@ -328,25 +601,37 @@ router.post(
   requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { connectorId } = req.params;
-    
+
     const affected = await dbAll(
       'SELECT DISTINCT organization_id FROM integrations WHERE connector_type = $1 AND status != $2',
       [connectorId, 'disabled']
     );
-    
-    await dbRun(
-      'UPDATE integrations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE connector_type = $2',
-      ['disabled', connectorId]
-    );
-    
-    await req.emitAuditEvent?.({
-      action: 'connector.emergency_kill',
-      resourceType: 'connector',
-      resourceId: connectorId,
-      metadata: { affectedTenants: affected?.length || 0 },
+
+    await executeAtomicGatedAction(req, res, 'emergency_connector_kill', async () => {
+      await dbRun(
+        'UPDATE integrations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE connector_type = $2',
+        ['disabled', connectorId],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'connector.emergency_kill',
+          resourceType: 'connector',
+          resourceId: connectorId,
+          after: { status: 'disabled' },
+          metadata: { affectedTenants: affected?.length || 0 },
+        },
+        response: {
+          success: true,
+          action: 'connector.emergency_kill',
+          connectorId,
+          reversible: true,
+          affectedTenants: affected?.length || 0,
+          recoveryPath: 'Re-enable connector after vendor/security review; tenants may need reauth via Admin.',
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'connector.emergency_kill', connectorId, reversible: true, affectedTenants: affected?.length || 0 });
   })
 );
 
@@ -357,20 +642,22 @@ router.post(
   requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { scope, format = 'json' } = req.body;
-    
-    await req.emitAuditEvent?.({
-      action: 'data.bulk_export',
-      resourceType: 'data',
-      resourceId: scope || 'all',
-      metadata: { scope, format },
-    });
-    
-    res.json({ 
-      success: true, 
-      action: 'data.bulk_export', 
-      status: 'queued',
-      message: 'Export has been queued. You will be notified when ready.',
-    });
+
+    await executeAtomicGatedAction(req, res, 'bulk_data_export', async () => ({
+      auditEvent: {
+        action: 'data.bulk_export',
+        resourceType: 'data',
+        resourceId: scope || 'all',
+        metadata: { scope, format },
+      },
+      response: {
+        success: true,
+        action: 'data.bulk_export',
+        status: 'queued',
+        message: 'Export has been queued. You will be notified when ready.',
+        reversible: false,
+      },
+    }));
   })
 );
 
@@ -382,10 +669,10 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const tenantId = req.params.id;
     const { confirmTenantName } = req.body;
-    
+
     const tenant = await dbGet('SELECT id, name FROM organizations WHERE id = $1', [tenantId]);
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
-    
+
     if (confirmTenantName !== tenant.name) {
       return res.status(422).json({
         error: 'Type-to-confirm failed. You must type the exact tenant name to confirm purge.',
@@ -394,22 +681,30 @@ router.post(
         irreversible: true,
       });
     }
-    
-    await req.emitAuditEvent?.({
-      action: 'tenant.data_purge',
-      resourceType: 'organization',
-      resourceId: tenantId,
-      metadata: { tenantName: tenant.name, irreversible: true, preExportRecommended: true },
-    });
-    
-    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['purge_scheduled', tenantId]);
-    
-    res.json({
-      success: true,
-      action: 'tenant.data_purge',
-      tenantId,
-      irreversible: true,
-      warning: 'ALL data for this tenant will be PERMANENTLY DELETED. This action CANNOT be undone.',
+
+    await executeAtomicGatedAction(req, res, 'tenant_data_purge', async () => {
+      await dbRun(
+        'UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        ['purge_scheduled', tenantId],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'tenant.data_purge',
+          resourceType: 'organization',
+          resourceId: tenantId,
+          after: { status: 'purge_scheduled' },
+          metadata: { tenantName: tenant.name, irreversible: true, preExportRecommended: true },
+        },
+        response: {
+          success: true,
+          action: 'tenant.data_purge',
+          tenantId,
+          irreversible: true,
+          warning: 'ALL data for this tenant will be PERMANENTLY DELETED. This action CANNOT be undone.',
+        },
+      };
     });
   })
 );
@@ -422,41 +717,70 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { workerId } = req.params;
     const { reason } = req.body;
-    
-    await dbRun(
-      'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
-      [`vw:${workerId}:status`, 'suspended']
-    );
-    
-    await req.emitAuditEvent?.({
-      action: 'ai.virtual_worker_suspended',
-      resourceType: 'virtual_worker',
-      resourceId: workerId,
-      metadata: { reason },
+
+    await executeAtomicGatedAction(req, res, 'suspend_virtual_worker', async () => {
+      await dbRun(
+        'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+        [`vw:${workerId}:status`, 'suspended'],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'ai.virtual_worker_suspended',
+          resourceType: 'virtual_worker',
+          resourceId: workerId,
+          after: { status: 'suspended' },
+          metadata: { reason },
+        },
+        response: {
+          success: true,
+          action: 'ai.virtual_worker_suspended',
+          workerId,
+          reversible: true,
+          recoveryPath: 'Re-enable worker; queued tasks resume from last checkpoint.',
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'ai.virtual_worker_suspended', workerId, reversible: true });
   })
 );
 
 // Emergency tenant lockdown
 router.post(
   '/tenants/:id/lockdown',
+  requireSuperAdminCapability('security_ops'),
   requireConfirmation('emergency_tenant_lockdown', 'critical'),
   requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const tenantId = req.params.id;
-    
-    await dbRun('UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', ['locked', tenantId]);
-    
-    await req.emitAuditEvent?.({
-      action: 'tenant.emergency_lockdown',
-      resourceType: 'organization',
-      resourceId: tenantId,
-      metadata: { reason: req.body.reason },
+    const tenant = await dbGet('SELECT id, status FROM organizations WHERE id = $1', [tenantId]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+
+    await executeAtomicGatedAction(req, res, 'emergency_tenant_lockdown', async () => {
+      await dbRun(
+        'UPDATE organizations SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        ['locked', tenantId],
+        { fallback: false }
+      );
+
+      return {
+        auditEvent: {
+          action: 'tenant.emergency_lockdown',
+          resourceType: 'organization',
+          resourceId: tenantId,
+          before: { status: tenant.status },
+          after: { status: 'locked' },
+          metadata: { reason: req.body.reason },
+        },
+        response: {
+          success: true,
+          action: 'tenant.emergency_lockdown',
+          tenantId,
+          reversible: true,
+          recoveryPath: 'POST /api/superadmin/tenants/:id/reactivate after investigation',
+        },
+      };
     });
-    
-    res.json({ success: true, action: 'tenant.emergency_lockdown', tenantId, reversible: true });
   })
 );
 
@@ -526,12 +850,26 @@ router.post(
 router.get(
   '/database/tables',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    if (!isDatabaseExplorerEnabled()) {
+      return res.status(404).json({
+        error: 'Database explorer is disabled',
+        code: 'SUPERADMIN_DB_EXPLORER_DISABLED',
+        guidance: 'Use audited exports or enable the dev-only explorer explicitly outside production.',
+      });
+    }
     await SuperAdminController.getDatabaseTables(req, res, next);
   })
 );
 router.get(
   '/database/rows/:tableName',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    if (!isDatabaseExplorerEnabled()) {
+      return res.status(404).json({
+        error: 'Database explorer is disabled',
+        code: 'SUPERADMIN_DB_EXPLORER_DISABLED',
+        guidance: 'Use audited exports or enable the dev-only explorer explicitly outside production.',
+      });
+    }
     await SuperAdminController.getDatabaseRows(req, res, next);
   })
 );
@@ -1183,24 +1521,13 @@ router.post(
       { fallback: false }
     );
 
-    await dbRun(
-      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        randomUUID(),
-        req.user?.id || null,
-        (req.user as any)?.email || null,
-        'settings_create',
-        'settings',
-        k,
-        null,
-        JSON.stringify({ value: v }),
-        (req as any).ip || null,
-        String((req.headers as any)['user-agent'] || ''),
-        JSON.stringify({ source: 'superadmin.system-configs' }),
-      ],
-      { fallback: false }
-    );
+    await insertAuditEventAtomic(req, {
+      action: 'settings_create',
+      resourceType: 'settings',
+      resourceId: k,
+      after: { value: v, description: desc, category: cat, is_sensitive: Boolean(sensitive) },
+      metadata: { source: 'superadmin.system-configs' },
+    });
 
     const created = await dbGet(
       `SELECT id, key, value, description, category, is_sensitive, updated_at, updated_by FROM settings WHERE key = ?`,
@@ -1254,24 +1581,24 @@ router.put(
       { fallback: false }
     );
 
-    await dbRun(
-      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        randomUUID(),
-        req.user?.id || null,
-        (req.user as any)?.email || null,
-        'settings_update',
-        'settings',
-        (existing as any).key,
-        JSON.stringify({ value: (existing as any).value }),
-        JSON.stringify({ value: nextValue }),
-        (req as any).ip || null,
-        String((req.headers as any)['user-agent'] || ''),
-        JSON.stringify({ source: 'superadmin.system-configs' }),
-      ],
-      { fallback: false }
-    );
+    await insertAuditEventAtomic(req, {
+      action: 'settings_update',
+      resourceType: 'settings',
+      resourceId: (existing as any).key,
+      before: {
+        value: (existing as any).value,
+        description: (existing as any).description,
+        category: (existing as any).category,
+        is_sensitive: Boolean((existing as any).is_sensitive),
+      },
+      after: {
+        value: nextValue,
+        description: nextDesc,
+        category: nextCat,
+        is_sensitive: Boolean(nextSensitive),
+      },
+      metadata: { source: 'superadmin.system-configs' },
+    });
 
     return res.json({ success: true });
   })
@@ -1287,28 +1614,19 @@ router.delete(
     });
     if (!existing) return res.status(404).json({ error: 'Config not found' });
 
-    await dbRun(`DELETE FROM settings WHERE id = ?`, [id], { fallback: false });
-
-    await dbRun(
-      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        randomUUID(),
-        req.user?.id || null,
-        (req.user as any)?.email || null,
-        'settings_delete',
-        'settings',
-        (existing as any).key,
-        JSON.stringify({ value: (existing as any).value }),
-        null,
-        (req as any).ip || null,
-        String((req.headers as any)['user-agent'] || ''),
-        JSON.stringify({ source: 'superadmin.system-configs' }),
-      ],
-      { fallback: false }
-    );
-
-    return res.json({ success: true });
+    await executeAtomicGatedAction(req, res, 'delete_system_config', async () => {
+      await dbRun(`DELETE FROM settings WHERE id = ?`, [id], { fallback: false });
+      return {
+        auditEvent: {
+          action: 'settings_delete',
+          resourceType: 'settings',
+          resourceId: (existing as any).key,
+          before: { value: (existing as any).value },
+          metadata: { source: 'superadmin.system-configs' },
+        },
+        response: { success: true },
+      };
+    });
   })
 );
 
@@ -1322,23 +1640,16 @@ router.get(
     if (!existing) return res.status(404).json({ error: 'Config not found' });
     const key = (existing as any).key;
 
-    const rows = await dbAll(
-      `SELECT id, entity_id, old_value, new_value, created_at, admin_user_id
-       FROM superadmin_audit_log
-       WHERE entity_type = 'settings' AND entity_id = ?
-       ORDER BY created_at DESC
-       LIMIT 200`,
-      [key],
-      { fallback: false }
-    );
+    const rows = await querySettingAuditVersions(String(key));
 
     const versions = (rows || []).map((r: any) => ({
       id: r.id,
-      config_key: r.entity_id,
-      old_value: r.old_value,
-      new_value: r.new_value,
-      changed_at: r.created_at,
-      changed_by: r.admin_user_id,
+      config_key: r.resource_id,
+      old_value: parseAuditJsonField(r.before_json),
+      new_value: parseAuditJsonField(r.after_json),
+      changed_at: r.ts,
+      changed_by: r.actor_id,
+      metadata: parseAuditJsonField(r.metadata_json) || {},
     }));
 
     return res.json({ versions });
@@ -1359,60 +1670,42 @@ router.post(
     if (!existing) return res.status(404).json({ error: 'Config not found' });
     const key = (existing as any).key;
 
-    const versionRow = await dbGet(
-      `SELECT id, entity_id, old_value, new_value, created_at
-       FROM superadmin_audit_log
-       WHERE id = ? AND entity_type = 'settings' AND entity_id = ?`,
-      [String(versionId), String(key)],
-      { fallback: false }
-    );
+    const versionRows = await querySettingAuditVersions(String(key));
+    const versionRow = (versionRows || []).find((row: any) => String(row.id) === String(versionId));
     if (!versionRow) return res.status(404).json({ error: 'Version not found' });
 
     const currentValue = (existing as any).value ?? '';
-    const rawOld = (versionRow as any).old_value;
-    let rolledValue = '';
-    try {
-      const parsed = rawOld ? JSON.parse(String(rawOld)) : null;
-      rolledValue =
-        parsed && typeof parsed === 'object' && 'value' in parsed
-          ? String((parsed as any).value ?? '')
-          : String(rawOld ?? '');
-    } catch {
-      rolledValue = String(rawOld ?? '');
-    }
+    const beforePayload = parseAuditJsonField((versionRow as any).before_json);
+    const rolledValue =
+      beforePayload && 'value' in beforePayload
+        ? String((beforePayload as any).value ?? '')
+        : String(currentValue);
 
-    await dbRun(
-      `UPDATE settings
-       SET value = ?, updated_at = datetime('now'), updated_by = ?
-       WHERE id = ?`,
-      [rolledValue, req.user?.id || null, id],
-      { fallback: false }
-    );
+    await executeAtomicGatedAction(req, res, 'rollback_system_config', async () => {
+      await dbRun(
+        `UPDATE settings
+         SET value = ?, updated_at = datetime('now'), updated_by = ?
+         WHERE id = ?`,
+        [rolledValue, req.user?.id || null, id],
+        { fallback: false }
+      );
 
-    await dbRun(
-      `INSERT INTO superadmin_audit_log (id, admin_user_id, admin_email, action, entity_type, entity_id, old_value, new_value, ip_address, user_agent, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        randomUUID(),
-        req.user?.id || null,
-        (req.user as any)?.email || null,
-        'settings_rollback',
-        'settings',
-        key,
-        JSON.stringify({ value: currentValue }),
-        JSON.stringify({ value: rolledValue }),
-        (req as any).ip || null,
-        String((req.headers as any)['user-agent'] || ''),
-        JSON.stringify({
-          source: 'superadmin.system-configs',
-          rollbackFromVersionId: String(versionId),
-          reason: reason ? String(reason) : undefined,
-        }),
-      ],
-      { fallback: false }
-    );
-
-    return res.json({ success: true });
+      return {
+        auditEvent: {
+          action: 'settings_rollback',
+          resourceType: 'settings',
+          resourceId: key,
+          before: { value: currentValue },
+          after: { value: rolledValue },
+          metadata: {
+            source: 'superadmin.system-configs',
+            rollbackFromVersionId: String(versionId),
+            reason: reason ? String(reason) : undefined,
+          },
+        },
+        response: { success: true },
+      };
+    });
   })
 );
 
@@ -2493,15 +2786,21 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { notes } = req.body;
-    await dbRun(
-      `
-            UPDATE admin_audit_logs 
-            SET status = 'resolved', reviewed_at = datetime('now'), reviewed_by = ?, review_notes = ?
-            WHERE id = ?
-        `,
-      [req.user?.id, notes, id]
-    );
-    res.json({ success: true });
+    await insertAuditEventAtomic(req, {
+      action: 'admin_audit_log.reviewed',
+      resourceType: 'admin_audit_log',
+      resourceId: id,
+      metadata: {
+        reviewNotes: notes || '',
+        immutable: true,
+      },
+    });
+    res.json({
+      success: true,
+      immutable: true,
+      action: 'admin_audit_log.reviewed',
+      message: 'Review note appended without modifying the original audit record.',
+    });
   })
 );
 

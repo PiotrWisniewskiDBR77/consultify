@@ -664,20 +664,7 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
       ctx.country = resolved.profile.location || undefined;
     }
   } catch {
-    try {
-      const org = await queryHelpers.queryOne<any>(
-        `SELECT name, industry, size, country FROM organizations WHERE id = ? LIMIT 1`,
-        [orgId]
-      );
-      if (org) {
-        ctx.name = org.name;
-        ctx.industry = org.industry;
-        ctx.size = org.size;
-        ctx.country = org.country;
-      }
-    } catch {
-      /* table may not exist */
-    }
+    /* keep context sparse rather than bypass Organization SSOT */
   }
 
   try {

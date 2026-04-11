@@ -718,18 +718,18 @@ CREATE TABLE IF NOT EXISTS token_transactions(
 CREATE TABLE IF NOT EXISTS user_api_keys(
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    organization_id TEXT,
-    provider TEXT NOT NULL,
-    display_name TEXT,
-    encrypted_key TEXT NOT NULL,
-    model_preference TEXT,
+    name TEXT NOT NULL,
+    key_hash TEXT NOT NULL,
+    key_prefix TEXT NOT NULL,
+    permissions TEXT DEFAULT '[]',
+    rate_limit INTEGER DEFAULT 1000,
     is_active INTEGER DEFAULT 1,
-    is_default INTEGER DEFAULT 0,
-    usage_count INTEGER DEFAULT 0,
     last_used_at TIMESTAMP,
+    expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    UNIQUE(user_id, name)
 );
 
 -- GDPR Requests
