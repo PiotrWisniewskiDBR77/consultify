@@ -307,6 +307,7 @@ export type FunnelEventName =
   | 'valuation_negotiation_pack_exported'
   // T063 — Organization UX
   | 'org_workspace_opened'
+  | 'org_workspace_admin_handoff'
   | 'org_admin_cta_clicked'
   | 'org_member_invite_sent'
   // T064 — Megatrend relocation

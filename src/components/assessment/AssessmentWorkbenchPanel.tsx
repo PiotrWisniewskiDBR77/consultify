@@ -270,7 +270,8 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
             {businessSummary.reviewState}
           </div>
           <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Review remains explicit. AI can help prepare proposals, but approval gates still live here.
+            Review remains explicit. AI can help prepare proposals, but approval gates still live
+            here.
           </div>
         </div>
         <div className="rounded-xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-950/50 p-3">

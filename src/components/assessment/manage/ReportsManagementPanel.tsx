@@ -61,6 +61,13 @@ export interface Report {
   canGenerateInitiatives: boolean;
   initiativesGenerated: boolean;
   initiativesCount: number;
+  provenance?: {
+    assessmentRunId?: string | null;
+    assessmentDefinitionId?: string | null;
+    assessmentDefinitionVersion?: string | null;
+    workbenchRunState?: string | null;
+    workbenchReviewState?: string | null;
+  } | null;
 }
 
 export interface ReportsManagementPanelProps {
@@ -256,6 +263,16 @@ const ReportRow: FC<{
             <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
               {report.assessmentName}
             </div>
+            {report.provenance?.assessmentRunId ? (
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                run {report.provenance.assessmentRunId}
+                {report.provenance.workbenchReviewState
+                  ? ` • review ${String(report.provenance.workbenchReviewState).replace(/_/g, ' ')}`
+                  : report.provenance.workbenchRunState
+                    ? ` • ${String(report.provenance.workbenchRunState).replace(/_/g, ' ')}`
+                    : ''}
+              </div>
+            ) : null}
           </div>
         </div>
       </td>
@@ -503,6 +520,15 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         ),
         initiativesGenerated: Number(r.initiativesCount || 0) > 0,
         initiativesCount: Number(r.initiativesCount || 0),
+        provenance: r?.config
+          ? {
+              assessmentRunId: r.config.assessmentRunId || null,
+              assessmentDefinitionId: r.config.assessmentDefinitionId || null,
+              assessmentDefinitionVersion: r.config.assessmentDefinitionVersion || null,
+              workbenchRunState: r.config.workbenchRunState || null,
+              workbenchReviewState: r.config.workbenchReviewState || null,
+            }
+          : null,
       }));
       setReports(mapped);
     } catch (err) {
@@ -652,6 +678,10 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     [reports]
   );
 
+  const latestRunReadback = useMemo(() => {
+    return reports.find((report) => report.provenance?.assessmentRunId)?.provenance || null;
+  }, [reports]);
+
   return (
     <div className="space-y-4">
       {/* Header Card */}
@@ -668,6 +698,16 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   {stats.total} report{stats.total !== 1 ? 's' : ''} • {stats.draft} in progress •{' '}
                   {stats.inReview} in review • {stats.approved} approved
                 </p>
+                {latestRunReadback?.assessmentRunId ? (
+                  <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                    Current report lane readback: run {latestRunReadback.assessmentRunId}
+                    {latestRunReadback.workbenchReviewState
+                      ? ` • review ${String(latestRunReadback.workbenchReviewState).replace(/_/g, ' ')}`
+                      : latestRunReadback.workbenchRunState
+                        ? ` • ${String(latestRunReadback.workbenchRunState).replace(/_/g, ' ')}`
+                        : ''}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="flex items-center gap-2">

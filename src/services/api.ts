@@ -6583,6 +6583,35 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch admin audit logs');
   },
 
+  getAdminOverview: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/overview`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin overview');
+  },
+
+  getAdminBillingSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing summary');
+  },
+
+  getAdminAISummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/ai/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin AI summary');
+  },
+
+  getAdminIAMPolicy: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/policy`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin IAM policy');
+  },
+
+  updateAdminIAMPolicy: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/iam/policy`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update admin IAM policy');
+  },
+
   getTenantAdminAuditStats: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/admin/audit-logs/stats`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch admin audit stats');

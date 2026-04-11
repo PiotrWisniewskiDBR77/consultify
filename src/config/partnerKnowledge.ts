@@ -58,6 +58,16 @@ export const PARTNER_CERTIFICATION_DOC_BY_TYPE: Record<string, string> = {
   strategic_advanced: PARTNER_DOCS.caseStudyFinance.href,
 };
 
+export const PARTNER_DOC_HREF_BY_SLUG: Record<string, string> = {
+  'partner-program-overview': PARTNER_DOCS.overview.href,
+  'partner-application-flow': PARTNER_DOCS.application.href,
+  'partner-payout-and-activation': PARTNER_DOCS.payouts.href,
+  'partner-certification-explainer': PARTNER_DOCS.certification.href,
+  'partner-faq': PARTNER_DOCS.faq.href,
+  'partner-case-study-operations-rollout': PARTNER_DOCS.caseStudyOperations.href,
+  'partner-case-study-cfo-governance': PARTNER_DOCS.caseStudyFinance.href,
+};
+
 export const PARTNER_KNOWLEDGE_CATEGORY_SLUGS = [
   'consultify-partner-program',
   'consultify-partner-operations',

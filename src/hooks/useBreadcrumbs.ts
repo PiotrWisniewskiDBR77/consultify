@@ -6,11 +6,15 @@ import { AppView } from '../types';
 
 // Admin section titles mapping
 const ADMIN_SECTION_TITLES: Record<string, string> = {
-  members: 'Members & Roles',
-  security: 'Security',
-  collaboration: 'Collaboration Controls',
+  overview: 'Overview',
+  people: 'People & Access',
+  members: 'People & Access',
+  security: 'Security & Identity',
+  billing: 'Billing & FinOps',
+  ai: 'AI Governance & Operations',
   integrations: 'Integrations & Sync',
-  audit: 'Audit',
+  audit: 'Audit, Compliance & Risk',
+  operations: 'Organization Operations',
 };
 
 /**
@@ -187,21 +191,20 @@ export const useBreadcrumbs = (): string[] | null => {
       sub = ADMIN_SECTION_TITLES[pathSection];
     } else if (tabParam && ADMIN_SECTION_TITLES[tabParam]) {
       sub = ADMIN_SECTION_TITLES[tabParam];
-    } else if (currentView === AppView.ADMIN_USERS) sub = t('common.users', 'Users');
-    else if (currentView === AppView.ADMIN_PROJECTS) sub = t('common.projects', 'Projects');
-    else if (currentView === AppView.ADMIN_LLM) sub = 'LLM';
-    else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = t('sidebar.knowledge', 'Knowledge');
-    else if (currentView === AppView.ADMIN_FEEDBACK) sub = t('widgets.feedback.title', 'Feedback');
-    else if (currentView === AppView.ADMIN_BILLING) sub = t('settings.billing', 'Billing');
-    else if (currentView === AppView.ADMIN_ANALYTICS) sub = t('common.analytics', 'Analytics');
+    } else if (currentView === AppView.ADMIN_USERS) sub = 'People & Access';
+    else if (currentView === AppView.ADMIN_PROJECTS) sub = 'Organization Operations';
+    else if (currentView === AppView.ADMIN_LLM) sub = 'AI Governance & Operations';
+    else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = 'AI Governance & Operations';
+    else if (currentView === AppView.ADMIN_FEEDBACK) sub = 'Overview';
+    else if (currentView === AppView.ADMIN_BILLING) sub = 'Billing & FinOps';
+    else if (currentView === AppView.ADMIN_ANALYTICS) sub = 'Overview';
     else if (currentView === AppView.ADMIN_OVERVIEW) sub = t('assessment.overview', 'Overview');
-    else if (currentView === AppView.ADMIN_ORGANIZATION)
-      sub = t('sidebar.organization', 'Organization');
-    else if (currentView === AppView.ADMIN_TEAM) sub = t('common.team', 'Team');
-    else if (currentView === AppView.ADMIN_WORKSPACE) sub = t('common.workspace', 'Workspace');
-    else if (currentView === AppView.ADMIN_AI) sub = 'AI';
-    else if (currentView === AppView.ADMIN_SECURITY) sub = t('settings.security', 'Security');
-    else sub = 'Members & Roles';
+    else if (currentView === AppView.ADMIN_ORGANIZATION) sub = 'Organization Operations';
+    else if (currentView === AppView.ADMIN_TEAM) sub = 'People & Access';
+    else if (currentView === AppView.ADMIN_WORKSPACE) sub = 'Integrations & Sync';
+    else if (currentView === AppView.ADMIN_AI) sub = 'AI Governance & Operations';
+    else if (currentView === AppView.ADMIN_SECURITY) sub = 'Security & Identity';
+    else sub = 'Overview';
   }
   // =====================================================
   // SETTINGS VIEWS

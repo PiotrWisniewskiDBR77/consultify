@@ -1210,12 +1210,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     ]
   );
 
-  const isHubChatActive = Boolean(hubChatId) && activeConversationId === hubChatId && !isChatCollapsed;
+  const isHubChatActive =
+    Boolean(hubChatId) && activeConversationId === hubChatId && !isChatCollapsed;
 
   const openInterpretationDraft = useCallback(() => {
     const targetAssessment = assessments[0];
     if (!targetAssessment?.id) return;
-    navigate(`/assessment/${String(targetAssessment.type || 'drd').toLowerCase()}/${targetAssessment.id}`);
+    navigate(
+      `/assessment/${String(targetAssessment.type || 'drd').toLowerCase()}/${targetAssessment.id}`
+    );
   }, [assessments, navigate]);
 
   const handleOpenHubChat = useCallback(async () => {
@@ -1352,14 +1355,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         ]}
       />
     ),
-    [
-      handleOpenHubChat,
-      hubAiPanel,
-      hubMenu3Chips,
-      isHubChatActive,
-      isLoading,
-      thirdHubAction,
-    ]
+    [handleOpenHubChat, hubAiPanel, hubMenu3Chips, isHubChatActive, isLoading, thirdHubAction]
   );
 
   // Render content based on active document or list
@@ -1700,7 +1696,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     AI Triage
                   </div>
                   <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">
-                    The hub is prioritizing the next best move from the current lane without creating a second source of truth.
+                    The hub is prioritizing the next best move from the current lane without
+                    creating a second source of truth.
                   </div>
                 </div>
                 <button
@@ -1721,7 +1718,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 </div>
                 <button
                   type="button"
-                  onClick={activeTab === 'reports' ? () => setShowNewReportModal(true) : handleNewAssessment}
+                  onClick={
+                    activeTab === 'reports'
+                      ? () => setShowNewReportModal(true)
+                      : handleNewAssessment
+                  }
                   className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                 >
                   {activeTab === 'reports'

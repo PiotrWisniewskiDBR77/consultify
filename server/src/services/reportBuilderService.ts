@@ -1081,6 +1081,7 @@ export async function listReports(
     version: row.version,
     initiativesCount: Number(row.initiatives_count || 0),
     createdByName: row.created_by_name || undefined,
+    config: row.config_json ? JSON.parse(row.config_json) : undefined,
   }));
 }
 

@@ -82,7 +82,7 @@ IRIS 6.0 = 19 modułów operacji przemysłowych.
 My Work = hub zadań. Notebook = notatki. Table Platform = dane strukturyzowane. Context Builder = profil org.
 Program partnerski Consultify ma publiczny LP, stronę programu, case study, wspólny flow aplikacyjny, academy i certyfikację partnera.
 Ścieżka partnera: Discover program → Apply → onboarding → activate → earn → payout.
-Jeśli użytkownik pyta o partnerstwo, wyjaśnij korzyści, case pack, certyfikację i kiedy przejść z self-serve do kontaktu z zespołem partnerskim.
+Jeśli użytkownik pyta o partnerstwo, wyjaśnij korzyści, case pack, certyfikację, tracki sales/delivery/strategic, poziomy foundation/practitioner/advanced, review states i kiedy przejść z self-serve do kontaktu z zespołem partnerskim.
 
 EKOSYSTEM DBR77 (6 produktów):
 1. Consultify — platforma transformacji cyfrowej. Priorytet #1.
@@ -137,7 +137,7 @@ IRIS 6.0 = 19 industrial ops modules.
 My Work = task hub. Notebook = notes. Table Platform = structured data. Context Builder = org profile.
 The Consultify partner program includes a public landing flow, a detailed program page, partner case study, shared application flow, academy, and partner certification.
 Partner path: Discover program → Apply → onboarding → activate → earn → payout.
-When the user asks about partnerships, explain benefits, case packs, certification, and when to switch from self-serve application to direct contact with the partner team.
+When the user asks about partnerships, explain benefits, case packs, certification, the sales/delivery/strategic tracks, foundation/practitioner/advanced levels, review states, and when to switch from self-serve application to direct contact with the partner team.
 
 DBR77 ECOSYSTEM (6 products):
 1. Consultify — digital transformation platform. Priority #1.

@@ -17,6 +17,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { PARTNER_DOCS } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 import {
   PARTNER_BENEFITS,
@@ -76,12 +77,13 @@ export const PartnerPricingView: React.FC = () => {
     navigate(ROUTES.LEGAL.CONTACT);
   }, [navigate]);
 
+  const openPartnerDocs = useCallback(() => {
+    navigate(PARTNER_DOCS.overview.href);
+  }, [navigate]);
+
   const openCaseStudy = useCallback(() => {
-    document.getElementById('partner-case-study')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  }, []);
+    navigate(PARTNER_DOCS.caseStudyOperations.href);
+  }, [navigate]);
 
   const handleTierCta = useCallback(
     (tier: PartnerTier) => {
@@ -136,7 +138,7 @@ export const PartnerPricingView: React.FC = () => {
                   <ArrowRight size={18} />
                 </button>
                 <button
-                  onClick={openCaseStudy}
+                  onClick={openPartnerDocs}
                   className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-white/5"
                 >
                   Odkrywaj program
@@ -196,6 +198,42 @@ export const PartnerPricingView: React.FC = () => {
               })}
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      <section className="px-6 py-10">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-500">
+                Proof + next step
+              </p>
+              <h2 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
+                Kanoniczne partner docs i wspólna ścieżka wejścia
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+                Public docs są source of truth dla programu, activation, certification i case studies.
+                Niezależnie od tego, skąd partner startuje, kończy w tym samym application flow.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                onClick={openPartnerDocs}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-5 py-4 text-sm font-bold text-slate-700 transition hover:border-purple-400 hover:text-purple-600 dark:border-white/15 dark:text-white"
+              >
+                Otwórz partner docs
+                <ArrowRight size={16} />
+              </button>
+              <button
+                onClick={openCaseStudy}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-purple-500"
+              >
+                Zobacz case study
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 

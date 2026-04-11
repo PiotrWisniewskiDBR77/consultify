@@ -30,8 +30,7 @@ interface AssessmentMenu3ActionBarProps {
 const CHIP_BASE =
   'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
 
-const BADGE_BASE =
-  'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+const BADGE_BASE = 'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
 
 export const AssessmentMenu3ActionBar: React.FC<AssessmentMenu3ActionBarProps> = ({
   chips = [],

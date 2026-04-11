@@ -1,9 +1,12 @@
 import {
   ArrowLeft,
+  Brain,
+  Building2,
+  LayoutDashboard,
   FileText,
-  Settings2,
   Shield,
   Users,
+  Wallet,
   Webhook,
 } from 'lucide-react';
 import React from 'react';
@@ -11,11 +14,14 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 
 export type AdminSettingsSection =
-  | 'members'
+  | 'overview'
+  | 'people'
   | 'security'
-  | 'collaboration'
+  | 'billing'
+  | 'ai'
   | 'integrations'
-  | 'audit';
+  | 'audit'
+  | 'operations';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -31,22 +37,34 @@ const NAV_ITEMS: Array<{
   icon: React.ElementType;
 }> = [
   {
-    id: 'members',
-    label: 'Members & Roles',
-    description: 'Membership, role changes, ownership safeguards',
+    id: 'overview',
+    label: 'Overview',
+    description: 'Enterprise tenant posture and command center summary',
+    icon: LayoutDashboard,
+  },
+  {
+    id: 'people',
+    label: 'People & Access',
+    description: 'Membership, roles, ownership, and access operations',
     icon: Users,
   },
   {
     id: 'security',
-    label: 'Security Policy',
-    description: 'MFA, SSO, session timeout, password policy',
+    label: 'Security & Identity',
+    description: 'MFA, SSO, API access, collaboration, delegated IAM',
     icon: Shield,
   },
   {
-    id: 'collaboration',
-    label: 'Collaboration Controls',
-    description: 'Guests, external links, tool approvals',
-    icon: Settings2,
+    id: 'billing',
+    label: 'Billing & FinOps',
+    description: 'Subscriptions, limits, usage, cost posture',
+    icon: Wallet,
+  },
+  {
+    id: 'ai',
+    label: 'AI Governance',
+    description: 'AI policy, model posture, operations, token economy',
+    icon: Brain,
   },
   {
     id: 'integrations',
@@ -57,8 +75,14 @@ const NAV_ITEMS: Array<{
   {
     id: 'audit',
     label: 'Audit Log',
-    description: 'Admin events and export',
+    description: 'Audit, risk visibility, and admin evidence trail',
     icon: FileText,
+  },
+  {
+    id: 'operations',
+    label: 'Organization Ops',
+    description: 'Domains, branding, competencies, tenant operations',
+    icon: Building2,
   },
 ];
 
@@ -85,9 +109,9 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             Back
           </button>
         )}
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Admin cockpit</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Enterprise Admin</h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Canonical five-branch P32 workspace admin surface.
+          Unified tenant-admin shell for people, security, billing, AI, integrations, and risk.
         </p>
       </div>
 

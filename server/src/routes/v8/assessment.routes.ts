@@ -61,6 +61,20 @@ function workbenchMutationMeta() {
 }
 
 const VALID_ASSESSMENT_TYPES = new Set(['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN']);
+const SUPPORTED_P28_HANDOFFS = [
+  {
+    targetKind: 'outputs_artifact',
+    targetRefOwner: 'outputs_library',
+    bounded: true,
+    purpose: 'materialize approved assessment payload into outputs/report artifacts',
+  },
+  {
+    targetKind: 'interview_insight',
+    targetRefOwner: 'insights',
+    bounded: true,
+    purpose: 'promote approved findings into governed insight records',
+  },
+] as const;
 
 const firstParam = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
@@ -990,7 +1004,27 @@ router.get(
     const validation = assertPromotionPayloadShape(state);
     const payload = buildBoundedPromotionPayload(state);
     return res.json({
-      data: { valid: validation.ok, validationErrors: validation.errors, payload },
+      data: {
+        valid: validation.ok,
+        validationErrors: validation.errors,
+        payload,
+        supportedHandoffs: SUPPORTED_P28_HANDOFFS,
+        downstreamContract: {
+          initiatives: {
+            origin: 'assessment_initiative_generation_runs.inputs_json.provenance',
+            bounded: true,
+            requiresApprovedAssessment: true,
+          },
+          execution: {
+            boundedContractReady: true,
+            currentOwner: 'initiative downstream',
+          },
+          kpi: {
+            boundedContractReady: true,
+            currentOwner: 'report/action-plan downstream',
+          },
+        },
+      },
       meta: workbenchReadMeta(),
     });
   })

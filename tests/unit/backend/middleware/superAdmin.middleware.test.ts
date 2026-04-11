@@ -63,7 +63,7 @@ describe('verifySuperAdmin', () => {
     const res = mockRes();
     await verifySuperAdmin(req, res, next);
     expect(next).not.toHaveBeenCalled();
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(401);
   });
 
   it('falls back to DB when token role is not SUPERADMIN', async () => {

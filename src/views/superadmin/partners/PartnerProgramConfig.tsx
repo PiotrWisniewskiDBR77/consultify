@@ -53,6 +53,48 @@ interface PayoutSettings {
   paymentMethods: string[];
 }
 
+interface CertificationReviewItem {
+  id: string;
+  partner_name?: string;
+  certification_name?: string;
+  certification_track?: string;
+  certification_level?: string;
+  review_state?: string;
+  progress_percent?: number;
+  updated_at?: string;
+}
+
+interface PartnerProgramReporting {
+  certificationsByTrack: Array<{
+    track: string;
+    level: string;
+    status: string;
+    count: number;
+  }>;
+  reviewBacklog: Array<{
+    review_state: string;
+    count: number;
+  }>;
+  examPassRates: Array<{
+    track: string;
+    level: string;
+    pass_rate: number;
+    attempts: number;
+  }>;
+  blockedReasons: Array<{
+    reason: string;
+    count: number;
+  }>;
+  resourceDownloads?: Array<{
+    category: string;
+    downloads: number;
+  }>;
+  partnerDocViews?: Array<{
+    slug: string;
+    views: number;
+  }>;
+}
+
 const DEFAULT_TIERS: CommissionRate[] = [
   { tier: 'REGISTERED', tierName: 'Registered', rate: 10, minRevenue: 0, color: 'bg-slate-500' },
   { tier: 'BRONZE', tierName: 'Bronze', rate: 12, minRevenue: 5000, color: 'bg-amber-600' },
@@ -92,6 +134,8 @@ export const PartnerProgramConfig: React.FC = () => {
 
   const [editingTier, setEditingTier] = useState<string | null>(null);
   const [editRate, setEditRate] = useState<number>(0);
+  const [reviewQueue, setReviewQueue] = useState<CertificationReviewItem[]>([]);
+  const [reporting, setReporting] = useState<PartnerProgramReporting | null>(null);
 
   // Fetch configuration
   const fetchConfig = useCallback(async () => {
@@ -115,6 +159,16 @@ export const PartnerProgramConfig: React.FC = () => {
       const payoutRes = await Api.get('/api/superadmin/partner-config/payout-settings');
       if (payoutRes?.success && payoutRes?.data) {
         setPayoutSettings(payoutRes.data);
+      }
+
+      const reviewRes = await Api.get('/api/superadmin/partner-config/review-queue');
+      if (reviewRes?.success && reviewRes?.data) {
+        setReviewQueue(reviewRes.data);
+      }
+
+      const reportingRes = await Api.get('/api/superadmin/partner-config/reporting');
+      if (reportingRes?.success && reportingRes?.data) {
+        setReporting(reportingRes.data);
       }
     } catch (err: any) {
       console.error('Error fetching config:', err);
@@ -201,6 +255,31 @@ export const PartnerProgramConfig: React.FC = () => {
         ? prev.paymentMethods.filter((m) => m !== methodId)
         : [...prev.paymentMethods, methodId],
     }));
+  };
+
+  const handleReviewDecision = async (
+    certificationId: string,
+    reviewState: 'approved' | 'changes_requested'
+  ) => {
+    try {
+      setSaving(true);
+      const response = await Api.post(`/api/superadmin/partner-config/review-queue/${certificationId}`, {
+        reviewState,
+      });
+      if (response?.success) {
+        toast.success(
+          reviewState === 'approved' ? 'Certification approved' : 'Changes requested sent'
+        );
+        await fetchConfig();
+      } else {
+        toast.error(response?.error || 'Failed to update review state');
+      }
+    } catch (err: any) {
+      console.error('Error updating review state:', err);
+      toast.error(err?.message || 'Failed to update review state');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -443,6 +522,124 @@ export const PartnerProgramConfig: React.FC = () => {
             <Save className="w-4 h-4" />
             Save Discount Settings
           </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <Shield className="w-5 h-5 text-amber-300" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                {t('superadmin.partnerConfig.reviewQueue', 'Certification Review Queue')}
+              </h2>
+              <p className="text-sm text-slate-400 dark:text-slate-500">
+                Review advanced partner certifications that require operator approval
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {reviewQueue.length === 0 ? (
+              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-400">
+                No certifications are waiting for operator review.
+              </div>
+            ) : (
+              reviewQueue.slice(0, 6).map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-white/5 bg-navy-900/40 p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-white font-medium">{item.certification_name}</div>
+                      <div className="text-xs text-slate-400">
+                        {item.partner_name || 'Partner'} • {item.certification_track} /{' '}
+                        {item.certification_level}
+                      </div>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-amber-500/15 text-amber-300">
+                      {item.review_state || 'pending'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    Progress: {item.progress_percent || 0}% • Updated:{' '}
+                    {item.updated_at ? new Date(item.updated_at).toLocaleString() : 'n/a'}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleReviewDecision(item.id, 'approved')}
+                      disabled={saving}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm disabled:opacity-50"
+                    >
+                      <Check className="w-4 h-4" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleReviewDecision(item.id, 'changes_requested')}
+                      disabled={saving}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm disabled:opacity-50"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      Request changes
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-violet-500/20">
+              <Users className="w-5 h-5 text-violet-300" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                {t('superadmin.partnerConfig.programSignals', 'Program Signals')}
+              </h2>
+              <p className="text-sm text-slate-400 dark:text-slate-500">
+                Adoption, blockers, and knowledge usage across the partner rollout
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {(reporting?.blockedReasons || []).map((item) => (
+              <div key={item.reason} className="rounded-xl border border-white/5 bg-navy-900/40 p-4">
+                <div className="text-xs uppercase tracking-wide text-slate-500">{item.reason}</div>
+                <div className="mt-1 text-2xl font-semibold text-white">{item.count}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {(reporting?.examPassRates || []).slice(0, 4).map((item) => (
+              <div
+                key={`${item.track}-${item.level}`}
+                className="flex items-center justify-between rounded-xl border border-white/5 bg-navy-900/40 p-3"
+              >
+                <div className="text-sm text-white">
+                  {item.track} / {item.level}
+                </div>
+                <div className="text-sm text-slate-300">
+                  {item.pass_rate || 0}% pass • {item.attempts || 0} attempts
+                </div>
+              </div>
+            ))}
+            {(reporting?.partnerDocViews || []).slice(0, 3).map((item) => (
+              <div
+                key={item.slug}
+                className="flex items-center justify-between rounded-xl border border-white/5 bg-navy-900/40 p-3"
+              >
+                <div className="text-sm text-white">{item.slug}</div>
+                <div className="text-sm text-slate-300">{item.views || 0} views</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

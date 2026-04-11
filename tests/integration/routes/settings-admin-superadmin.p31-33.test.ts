@@ -133,17 +133,19 @@ describe('P32 Admin — cockpit + members/roles + security', () => {
     expect(content).toContain('Admin');
   });
 
-  it('AdminSettingsModule defines the canonical five-branch P32 cockpit', async () => {
+  it('AdminSettingsModule defines the enterprise P32 tenant admin shell', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/views/admin/AdminSettingsModule.tsx', 'utf-8'
     );
-    expect(content).toContain('Members & Roles');
-    expect(content).toContain('Security Policy');
-    expect(content).toContain('Collaboration Controls');
+    expect(content).toContain('Overview');
+    expect(content).toContain('People & Access');
+    expect(content).toContain('Security & Identity');
+    expect(content).toContain('Billing, Limits & FinOps');
+    expect(content).toContain('AI Governance & Operations');
     expect(content).toContain('Integrations & Sync');
-    expect(content).toContain('Audit Log');
-    expect(content).toContain('security');
+    expect(content).toContain('Audit, Compliance & Risk');
+    expect(content).toContain('Organization Operations');
   });
 
   it('organization members route supports invite/role/remove', async () => {
@@ -445,35 +447,41 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
 // ===========================================================================
 
 describe('P32 Admin — cockpit IA alignment (§2.3.1)', () => {
-  it('AdminSettingsSidebar exposes the canonical Members & Roles branch', async () => {
+  it('AdminSettingsSidebar exposes the enterprise Admin sections', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/components/Admin/AdminSettingsSidebar.tsx', 'utf-8'
     );
-    expect(content).toContain('Members & Roles');
-    expect(content).toContain("'members'");
+    expect(content).toContain('Overview');
+    expect(content).toContain('People & Access');
+    expect(content).toContain("'overview'");
+    expect(content).toContain("'people'");
   });
 
-  it('AdminSettingsSidebar exposes the canonical Collaboration and Integrations branches', async () => {
+  it('AdminSettingsSidebar exposes billing, AI, and operations branches', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/components/Admin/AdminSettingsSidebar.tsx', 'utf-8'
     );
-    expect(content).toContain('collaboration');
-    expect(content).toContain('Collaboration Controls');
+    expect(content).toContain('Billing & FinOps');
+    expect(content).toContain('AI Governance');
     expect(content).toContain('Integrations & Sync');
+    expect(content).toContain('Organization Ops');
   });
 
-  it('AdminSettingsModule maps only the canonical five P32 branches', async () => {
+  it('AdminSettingsModule maps enterprise P32 branches and legacy aliases', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'src/views/admin/AdminSettingsModule.tsx', 'utf-8'
     );
-    expect(content).toContain("members:");
-    expect(content).toContain("collaboration:");
+    expect(content).toContain("overview:");
+    expect(content).toContain("people:");
+    expect(content).toContain("billing:");
+    expect(content).toContain("ai:");
     expect(content).toContain("integrations:");
     expect(content).toContain("audit:");
-    expect(content).toContain('Sync Hub was merged into Integrations & Sync');
+    expect(content).toContain("operations:");
+    expect(content).toContain('SECTION_ALIASES');
   });
 });
 

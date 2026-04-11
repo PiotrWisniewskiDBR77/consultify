@@ -21,6 +21,37 @@ type SecuritySettingsShape = {
   ssoProtocol?: 'saml' | 'oidc';
 };
 
+type AdminIamPolicy = {
+  delegatedRoles: Array<{
+    id: string;
+    name: string;
+    capabilities: string[];
+  }>;
+  accessReviewsEnabled: boolean;
+  accessReviewCadenceDays: number;
+  contextAwareAccessEnabled: boolean;
+  privilegedSessionReauthMinutes: number;
+  breakGlassEnabled: boolean;
+  breakGlassApprovers: string[];
+  alertOnPrivilegedChange: boolean;
+};
+
+const DEFAULT_ADMIN_IAM_POLICY: AdminIamPolicy = {
+  delegatedRoles: [
+    { id: 'billing_admin', name: 'Billing Admin', capabilities: ['billing:read', 'billing:write'] },
+    { id: 'security_admin', name: 'Security Admin', capabilities: ['security:write', 'audit:read'] },
+    { id: 'ai_admin', name: 'AI Admin', capabilities: ['ai:governance', 'ai:operations', 'ai:budget'] },
+    { id: 'compliance_admin', name: 'Compliance Admin', capabilities: ['audit:read', 'compliance:read'] },
+  ],
+  accessReviewsEnabled: true,
+  accessReviewCadenceDays: 90,
+  contextAwareAccessEnabled: false,
+  privilegedSessionReauthMinutes: 30,
+  breakGlassEnabled: false,
+  breakGlassApprovers: [],
+  alertOnPrivilegedChange: true,
+};
+
 function parseJson<T>(raw: unknown, fallback: T): T {
   if (typeof raw !== 'string' || !raw.trim()) return fallback;
   try {
@@ -151,6 +182,31 @@ async function readSecuritySettings(orgId: string) {
   };
 }
 
+async function readOrganizationSetting<T>(orgId: string, key: string, fallback: T): Promise<T> {
+  const row = await dbGet<{ setting_value?: string }>(
+    `SELECT setting_value FROM organization_settings WHERE organization_id = ? AND setting_key = ?`,
+    [orgId, key],
+    { fallback: true }
+  );
+  return parseJson<T>(row?.setting_value, fallback);
+}
+
+async function writeOrganizationSetting(orgId: string, key: string, value: unknown) {
+  await dbRun(
+    `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
+     VALUES (?, ?, ?, datetime('now'))`,
+    [orgId, key, JSON.stringify(value)]
+  );
+}
+
+async function readAdminIamPolicy(orgId: string): Promise<AdminIamPolicy> {
+  return readOrganizationSetting<AdminIamPolicy>(orgId, 'admin_iam_policy', DEFAULT_ADMIN_IAM_POLICY);
+}
+
+async function writeAdminIamPolicy(orgId: string, value: AdminIamPolicy) {
+  await writeOrganizationSetting(orgId, 'admin_iam_policy', value);
+}
+
 async function writeSecuritySettings(
   orgId: string,
   actorId: string,
@@ -274,6 +330,123 @@ async function writeCollaborationControls(
   }
 }
 
+async function readBillingSummary(orgId: string) {
+  const [billingRow, orgRow, alertsRow] = await Promise.all([
+    dbGet<Record<string, unknown>>(
+      `SELECT ob.subscription_plan_id, ob.status, ob.current_period_end,
+              sp.name as plan_name, sp.price_monthly, sp.token_limit, sp.storage_limit_gb
+       FROM organization_billing ob
+       LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
+       WHERE ob.organization_id = ?
+       LIMIT 1`,
+      [orgId],
+      { fallback: true }
+    ),
+    dbGet<Record<string, unknown>>(
+      `SELECT trial_tokens_used, token_balance, plan, trial_expires_at FROM organizations WHERE id = ?`,
+      [orgId],
+      { fallback: true }
+    ),
+    dbGet<Record<string, unknown>>(
+      `SELECT token_threshold_80, token_threshold_90, token_threshold_100, cost_cap_monthly, email_notifications
+       FROM billing_alerts WHERE organization_id = ?`,
+      [orgId],
+      { fallback: true }
+    ),
+  ]);
+
+  let policySnapshot: any = null;
+  try {
+    const accessPolicyService = (await import('../services/accessPolicyService.js')).default;
+    policySnapshot = await accessPolicyService.buildPolicySnapshot(orgId);
+  } catch {
+    policySnapshot = null;
+  }
+
+  return {
+    billing: {
+      status: String(billingRow?.status || policySnapshot?.subscriptionStatus || 'inactive'),
+      subscriptionPlanId: billingRow?.subscription_plan_id || null,
+      currentPeriodEnd: billingRow?.current_period_end || null,
+      trialEndsAt: orgRow?.trial_expires_at || policySnapshot?.trialExpiresAt || null,
+    },
+    plan: {
+      name: String(billingRow?.plan_name || orgRow?.plan || 'Trial'),
+      priceMonthly: Number(billingRow?.price_monthly || 0),
+      tokenLimit: Number(billingRow?.token_limit || policySnapshot?.limits?.maxTotalTokens || 0),
+      storageLimitGb: Number(
+        billingRow?.storage_limit_gb || (policySnapshot?.limits?.maxStorageMb || 0) / 1024
+      ),
+    },
+    usage: {
+      tokensUsed: Number(orgRow?.trial_tokens_used || policySnapshot?.usageToday?.tokensUsed || 0),
+      tokenBalance: Number(orgRow?.token_balance || 0),
+      usersUsed: Number(policySnapshot?.usageToday?.users || 0),
+      usersLimit: Number(policySnapshot?.limits?.maxUsers || 0),
+      projectsUsed: Number(policySnapshot?.usageToday?.projects || 0),
+      projectsLimit: Number(policySnapshot?.limits?.maxProjects || 0),
+      aiCallsUsed: Number(policySnapshot?.usageToday?.aiCalls || 0),
+      aiCallsLimit: Number(policySnapshot?.limits?.maxAICallsPerDay || 0),
+    },
+    alerts: {
+      tokenThreshold80: Boolean(alertsRow?.token_threshold_80),
+      tokenThreshold90: Boolean(alertsRow?.token_threshold_90),
+      tokenThreshold100: Boolean(alertsRow?.token_threshold_100),
+      costCapMonthly: Number(alertsRow?.cost_cap_monthly || 0),
+      emailNotifications: Boolean(alertsRow?.email_notifications),
+    },
+    policySnapshot,
+  };
+}
+
+async function readAiSummary(orgId: string) {
+  let governancePolicy: any = null;
+  let governanceSummary: any = null;
+  let contextPolicy: any = null;
+  let llmPolicy: any = null;
+
+  try {
+    const AIPolicyEngine = (await import('../services/aiPolicyEngine.js')).default;
+    const [effective, summary] = await Promise.all([
+      AIPolicyEngine.getEffectivePolicy(orgId, null, null),
+      AIPolicyEngine.getPolicySummary(orgId),
+    ]);
+    governancePolicy = effective;
+    governanceSummary = summary;
+  } catch {
+    governancePolicy = null;
+    governanceSummary = null;
+  }
+
+  try {
+    const { getOrgContextPolicy } = await import('../services/ai/contextGovernance.js');
+    contextPolicy = await getOrgContextPolicy(orgId);
+  } catch {
+    contextPolicy = null;
+  }
+
+  try {
+    llmPolicy = await dbGet<Record<string, unknown>>(
+      `SELECT mode, review_state, internet_enabled, audit_required, updated_at
+       FROM llm_org_policies
+       WHERE organization_id = ?
+       ORDER BY updated_at DESC
+       LIMIT 1`,
+      [orgId],
+      { fallback: true }
+    );
+  } catch {
+    llmPolicy = null;
+  }
+
+  return {
+    governancePolicy,
+    governanceSummary,
+    contextPolicy,
+    llmPolicy,
+  };
+}
+
 function matchesAuditFilter(log: any, orgId: string, filters: Record<string, string>) {
   const metadata = parseJson<Record<string, unknown>>(log.metadata_json, {});
   const logOrgId = String(
@@ -296,6 +469,129 @@ function matchesAuditFilter(log: any, orgId: string, filters: Record<string, str
 }
 
 router.use(verifyToken);
+
+router.get(
+  '/overview',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res);
+    if (!actor) return;
+    const { orgId } = actor;
+
+    const [memberRows, ownershipTransfers, billingSummary, aiSummary, securityPolicy, collaboration, auditStats] =
+      await Promise.all([
+        dbAll<{ role?: string; total?: number }>(
+          `SELECT role, COUNT(*) as total FROM organization_members WHERE organization_id = ? GROUP BY role`,
+          [orgId],
+          { fallback: true }
+        ),
+        dbGet<{ total?: number }>(
+          `SELECT COUNT(*) as total FROM ownership_transfer_requests WHERE organization_id = ? AND status = 'pending'`,
+          [orgId],
+          { fallback: true }
+        ),
+        readBillingSummary(orgId),
+        readAiSummary(orgId),
+        readSecuritySettings(orgId),
+        readCollaborationControls(orgId),
+        (async () => {
+          const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+          const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
+          return {
+            totalLogs: scoped.length,
+            unresolvedCount: scoped.filter((log: any) => log.status !== 'resolved').length,
+            highRiskCount: scoped.filter((log: any) => Number(log.risk_score || 0) >= 60).length,
+          };
+        })(),
+      ]);
+
+    const membersByRole = Object.fromEntries(
+      memberRows.map((row) => [String(row.role || 'unknown').toUpperCase(), Number(row.total || 0)])
+    );
+
+    return res.json({
+      organizationId: orgId,
+      overview: {
+        membersByRole,
+        totalMembers: Object.values(membersByRole).reduce((sum, value) => sum + Number(value), 0),
+        pendingOwnershipTransfers: Number(ownershipTransfers?.total || 0),
+        securityPolicy,
+        collaboration,
+        billing: billingSummary,
+        ai: aiSummary,
+        audit: auditStats,
+      },
+    });
+  })
+);
+
+router.get(
+  '/billing/summary',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res);
+    if (!actor) return;
+    const summary = await readBillingSummary(actor.orgId);
+    return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.get(
+  '/ai/summary',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res);
+    if (!actor) return;
+    const summary = await readAiSummary(actor.orgId);
+    return res.json({ organizationId: actor.orgId, summary });
+  })
+);
+
+router.get(
+  '/iam/policy',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res);
+    if (!actor) return;
+    const policy = await readAdminIamPolicy(actor.orgId);
+    return res.json({ organizationId: actor.orgId, policy });
+  })
+);
+
+router.put(
+  '/iam/policy',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const actor = await getAdminActor(req, res);
+    if (!actor) return;
+    const current = await readAdminIamPolicy(actor.orgId);
+    const body = req.body || {};
+    const next: AdminIamPolicy = {
+      delegatedRoles: Array.isArray(body.delegatedRoles) ? body.delegatedRoles : current.delegatedRoles,
+      accessReviewsEnabled: Boolean(body.accessReviewsEnabled ?? current.accessReviewsEnabled),
+      accessReviewCadenceDays: Number(
+        body.accessReviewCadenceDays ?? current.accessReviewCadenceDays ?? 90
+      ),
+      contextAwareAccessEnabled: Boolean(
+        body.contextAwareAccessEnabled ?? current.contextAwareAccessEnabled
+      ),
+      privilegedSessionReauthMinutes: Number(
+        body.privilegedSessionReauthMinutes ?? current.privilegedSessionReauthMinutes ?? 30
+      ),
+      breakGlassEnabled: Boolean(body.breakGlassEnabled ?? current.breakGlassEnabled),
+      breakGlassApprovers: Array.isArray(body.breakGlassApprovers)
+        ? body.breakGlassApprovers
+        : current.breakGlassApprovers,
+      alertOnPrivilegedChange: Boolean(
+        body.alertOnPrivilegedChange ?? current.alertOnPrivilegedChange
+      ),
+    };
+
+    await writeAdminIamPolicy(actor.orgId, next);
+    await adminAuditService.logAction({
+      adminId: actor.actorId,
+      actionType: 'update_admin_iam_policy',
+      details: { orgId: actor.orgId, isSensitive: true, next },
+    });
+
+    return res.json({ success: true, policy: next });
+  })
+);
 
 router.get(
   '/security',

@@ -23,13 +23,17 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { generatePartnerCertificatePdf } from '../services/partnerCertificatePdf.js';
 import {
+  ensurePartnerCertificationMatrix,
   ensureLearningProgressRows,
-  ensureSalesCertification,
+  getCertificationBlueprints,
+  getCertificationModules,
+  getCertificationReviewQueue,
   getEffectivePartnerTier,
-  getSalesModules,
+  getPartnerCertificationReporting,
   recalcCertificationProgress,
-  startSalesExam,
-  submitSalesExam,
+  startCertificationExam,
+  updateCertificationReviewState,
+  submitCertificationExam,
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
@@ -1350,47 +1354,104 @@ router.get('/certifications', async (req: Request, res: Response, next: NextFunc
     if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const language = looksPolish(req) ? 'pl' : 'en';
-    const certification = await ensureSalesCertification({ partnerOrgId, userId });
-    const modules = await getSalesModules(language);
-    await ensureLearningProgressRows({
-      certificationId: certification.id,
-      moduleIds: modules.map((m) => m.id),
-    });
-    await recalcCertificationProgress(certification.id);
-
+    const blueprints = getCertificationBlueprints();
+    const seeded = await ensurePartnerCertificationMatrix({ partnerOrgId, userId, language });
     const db = getDatabase();
-    const updated = await DbPromise.get<any>(
-      db,
-      `SELECT * FROM partner_certifications WHERE id = ?`,
-      [certification.id]
+
+    await Promise.all(
+      seeded.map(async (row) => {
+        const modules = await getCertificationModules(row.certification_type, language);
+        await ensureLearningProgressRows({
+          certificationId: row.id,
+          moduleIds: modules.map((module) => module.id),
+        });
+        await recalcCertificationProgress(row.id);
+      })
     );
 
-    const totalMinutes = modules.reduce((sum, m) => {
-      const v = Number(m.minutes ?? m.duration_minutes ?? 0);
-      return sum + (Number.isFinite(v) ? v : 0);
-    }, 0);
-    const hours = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    const duration = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    const currentRows = await DbPromise.all<any>(
+      db,
+      `SELECT * FROM partner_certifications
+       WHERE partner_org_id = ? AND user_id = ?`,
+      [partnerOrgId, userId]
+    );
+    const currentByType = new Map(currentRows.map((item: any) => [item.certification_type, item]));
 
-    return res.json({
-      success: true,
-      data: [
-        {
+    const certifications = await Promise.all(
+      currentRows.map(async (updated) => {
+        const modules = await getCertificationModules(updated.certification_type, language);
+        const progressRows = await DbPromise.all<any>(
+          db,
+          `SELECT module_id, status, progress_percent, started_at, completed_at
+           FROM partner_learning_progress
+           WHERE certification_id = ?`,
+          [updated.id]
+        );
+        const completedModules = progressRows.filter((item) => item.status === 'completed').length;
+
+        const blueprint = blueprints.find((item) => item.type === updated.certification_type);
+        const prerequisiteBlocked = (blueprint?.prerequisiteTypes || []).some((type) => {
+          const prerequisite = currentByType.get(type);
+          return String(prerequisite?.status || '') !== 'completed' && !prerequisite?.certificate_id;
+        });
+
+        const totalMinutes = modules.reduce((sum, module) => {
+          const value = Number(module.minutes ?? module.duration_minutes ?? 0);
+          return sum + (Number.isFinite(value) ? value : 0);
+        }, 0);
+        const hours = Math.floor(totalMinutes / 60);
+        const mins = totalMinutes % 60;
+        const duration = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+        const reviewState = updated.review_state || undefined;
+        const examMode = updated.exam_mode || blueprint?.examMode || 'exam';
+        const examEligible =
+          !prerequisiteBlocked &&
+          examMode === 'exam' &&
+          Number(updated.progress_percent || 0) >= 100 &&
+          !updated.certificate_id;
+        const needsReview =
+          !prerequisiteBlocked &&
+          examMode === 'review' &&
+          Number(updated.progress_percent || 0) >= 100 &&
+          !updated.certificate_id;
+        const blockedReason = prerequisiteBlocked
+          ? 'prerequisite_incomplete'
+          : Number(updated.progress_percent || 0) < 100
+            ? 'academy_incomplete'
+            : needsReview && reviewState !== 'approved'
+              ? 'review_pending'
+              : null;
+
+        return {
           id: updated.id,
-          name: updated.certification_name || 'Sales Certification',
-          type: updated.certification_type || 'sales',
+          name: updated.certification_name || blueprint?.titleEn || updated.certification_type,
+          type: updated.certification_type,
+          track: updated.certification_track || blueprint?.track || null,
+          level: updated.certification_level || blueprint?.level || null,
           status: updated.status || 'not_started',
           progress: updated.progress_percent || 0,
           duration,
           modules: modules.length,
+          completedModules,
           startedAt: updated.started_at || undefined,
           completedAt: updated.completed_at || undefined,
           certificateId: updated.certificate_id || undefined,
           certificateUrl: updated.certificate_url || undefined,
-        },
-      ],
-    });
+          examMode,
+          examEligible,
+          reviewState,
+          needsReview,
+          targetTier: updated.tier_target || blueprint?.targetTier || null,
+          validUntil: updated.valid_until || undefined,
+          publicArticleSlug: updated.public_article_slug || blueprint?.publicArticleSlug || undefined,
+          lifecycleStep: updated.partner_lifecycle_step || blueprint?.lifecycleStep || undefined,
+          prerequisiteTypes: blueprint?.prerequisiteTypes || [],
+          blockedReason,
+        };
+      })
+    );
+
+    return res.json({ success: true, data: certifications });
   } catch (error: any) {
     logger.error('Error fetching certifications:', error);
     next(error);
@@ -1420,7 +1481,7 @@ router.get(
       if (!cert) return res.status(404).json({ success: false, error: 'Certification not found' });
 
       const language = looksPolish(req) ? 'pl' : 'en';
-      const modules = await getSalesModules(language);
+      const modules = await getCertificationModules(cert.certification_type, language);
       await ensureLearningProgressRows({
         certificationId: certId,
         moduleIds: modules.map((m) => m.id),
@@ -1445,6 +1506,13 @@ router.get(
             description: m.description || null,
             order: m.module_order,
             minutes: m.minutes ?? m.duration_minutes ?? null,
+            contentType: m.content_type || null,
+            moduleKind: m.module_kind || 'lesson',
+            articleSlug: m.resource_article_slug || null,
+            articleLabel: m.resource_label || null,
+            lifecycleStep: m.partner_lifecycle_step || null,
+            ownerRole: m.owner_role || null,
+            reviewRequired: Boolean(m.review_required),
             status: p?.status || 'not_started',
             progress: p?.progress_percent || 0,
             startedAt: p?.started_at || null,
@@ -1491,6 +1559,17 @@ router.post(
         [certId, partnerOrgId, userId]
       );
       if (!cert) return res.status(404).json({ success: false, error: 'Certification not found' });
+
+      const certification = await DbPromise.get<any>(
+        db,
+        `SELECT certification_type FROM partner_certifications WHERE id = ?`,
+        [certId]
+      );
+      const language = looksPolish(req) ? 'pl' : 'en';
+      const validModules = await getCertificationModules(certification?.certification_type, language);
+      if (!validModules.some((module) => module.id === moduleId)) {
+        return res.status(404).json({ success: false, error: 'Module not found for certification' });
+      }
 
       await DbPromise.run(
         db,
@@ -1542,7 +1621,7 @@ router.post(
       const ip = String((req.headers['x-forwarded-for'] as any) || req.socket.remoteAddress || '');
       const userAgent = String(req.headers['user-agent'] || '');
 
-      const attempt = await startSalesExam({
+      const attempt = await startCertificationExam({
         certificationId: certId,
         partnerOrgId,
         userId,
@@ -1582,7 +1661,7 @@ router.post(
         return res.status(400).json({ success: false, error: 'answers is required' });
       }
 
-      const result = await submitSalesExam({
+      const result = await submitCertificationExam({
         attemptId,
         certificationId: certId,
         partnerOrgId,
@@ -1765,9 +1844,13 @@ router.get('/resources', async (req: Request, res: Response, next: NextFunction)
   try {
     const partnerOrgId = await requirePartnerOrgId(req, res);
     if (!partnerOrgId) return;
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const db = getDatabase();
     const partnerTier = await getEffectivePartnerTier(partnerOrgId);
+    const language = looksPolish(req) ? 'pl' : 'en';
+    const certifications = await ensurePartnerCertificationMatrix({ partnerOrgId, userId, language });
 
     const rows = await DbPromise.all<any>(
       db,
@@ -1784,6 +1867,42 @@ router.get('/resources', async (req: Request, res: Response, next: NextFunction)
       marketing: [] as any[],
       caseStudies: [] as any[],
       templates: [] as any[],
+      docsBridge: [
+        {
+          id: 'partner-doc-overview',
+          title: language === 'pl' ? 'Overview programu' : 'Program overview',
+          href: '/docs/consultify-partner-program/partner-program-overview',
+          kind: 'public_doc',
+        },
+        {
+          id: 'partner-doc-application',
+          title: language === 'pl' ? 'Partner application flow' : 'Application flow',
+          href: '/docs/consultify-partner-program/partner-application-flow',
+          kind: 'public_doc',
+        },
+        {
+          id: 'partner-doc-payouts',
+          title: language === 'pl' ? 'Activation i payout readiness' : 'Activation and payout readiness',
+          href: '/docs/consultify-partner-operations/partner-payout-and-activation',
+          kind: 'public_doc',
+        },
+        {
+          id: 'partner-doc-certification',
+          title: language === 'pl' ? 'Academy i certyfikacja' : 'Academy and certification',
+          href: '/docs/consultify-partner-operations/partner-certification-explainer',
+          kind: 'public_doc',
+        },
+      ],
+      academyHighlights: certifications.map((item) => ({
+        id: item.id,
+        type: item.certification_type,
+        track: item.certification_track,
+        level: item.certification_level,
+        status: item.status,
+        progress: item.progress_percent || 0,
+        reviewState: item.review_state || null,
+        articleSlug: item.public_article_slug || null,
+      })),
     };
 
     for (const r of rows) {
@@ -2543,5 +2662,89 @@ partnerConfigRouter.put(
     }
   }
 );
+
+partnerConfigRouter.get(
+  '/review-queue',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const limit = Math.max(1, Math.min(200, Number(req.query.limit || 50) || 50));
+      const data = await getCertificationReviewQueue(limit);
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logger.error('Error fetching certification review queue:', error);
+      next(error);
+    }
+  }
+);
+
+partnerConfigRouter.post(
+  '/review-queue/:certificationId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const certificationId = String(req.params.certificationId || '').trim();
+      const reviewState = String(req.body?.reviewState || '').trim() as
+        | 'approved'
+        | 'changes_requested'
+        | 'pending';
+      const notes = typeof req.body?.notes === 'string' ? req.body.notes : null;
+      if (!certificationId) {
+        return res.status(400).json({ success: false, error: 'certificationId is required' });
+      }
+      if (!['approved', 'changes_requested', 'pending'].includes(reviewState)) {
+        return res.status(400).json({ success: false, error: 'Invalid reviewState' });
+      }
+      await updateCertificationReviewState({ certificationId, reviewState, notes });
+      res.json({ success: true, message: 'Review state updated' });
+    } catch (error: any) {
+      logger.error('Error updating certification review state:', error);
+      next(error);
+    }
+  }
+);
+
+partnerConfigRouter.get('/reporting', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const certification = await getPartnerCertificationReporting();
+    const db = getDatabase();
+    const [resourceDownloads, partnerDocViews] = await Promise.all([
+      DbPromise.all<any>(
+        db,
+        `SELECT pr.category, COUNT(*) as downloads
+         FROM partner_resource_downloads prd
+         JOIN partner_resources pr ON pr.id = prd.resource_id
+         GROUP BY pr.category
+         ORDER BY downloads DESC`
+      ),
+      DbPromise.all<any>(
+        db,
+        `SELECT a.slug, COUNT(*) as views
+         FROM kb_article_views v
+         JOIN kb_articles a ON a.id = v.article_id
+         WHERE a.slug IN (
+           'partner-program-overview',
+           'partner-application-flow',
+           'partner-payout-and-activation',
+           'partner-certification-explainer',
+           'partner-faq',
+           'partner-case-study-operations-rollout',
+           'partner-case-study-cfo-governance'
+         )
+         GROUP BY a.slug
+         ORDER BY views DESC`
+      ),
+    ]);
+    res.json({
+      success: true,
+      data: {
+        ...certification,
+        resourceDownloads,
+        partnerDocViews,
+      },
+    });
+  } catch (error: any) {
+    logger.error('Error fetching partner reporting:', error);
+    next(error);
+  }
+});
 
 export default router;

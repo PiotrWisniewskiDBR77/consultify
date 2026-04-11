@@ -35,6 +35,15 @@ const ADMIN_SECTIONS: OrganizationSection[] = [
   'branding',
 ];
 
+const ADMIN_REDIRECTS: Partial<Record<OrganizationSection, string>> = {
+  members: ROUTES.ADMIN.PEOPLE,
+  competencies: ROUTES.ADMIN.OPERATIONS,
+  billing: ROUTES.ADMIN.BILLING,
+  limits: ROUTES.ADMIN.BILLING,
+  domains: ROUTES.ADMIN.OPERATIONS,
+  branding: ROUTES.ADMIN.OPERATIONS,
+};
+
 const sectionMeta: Record<
   OrganizationSection,
   { titleKey: string; title: string; subtitleKey: string; subtitle: string }
@@ -140,6 +149,13 @@ export const OrganizationView: React.FC = () => {
 
   const handleSectionChange = useCallback(
     (section: OrganizationSection) => {
+      const adminRedirect = ADMIN_REDIRECTS[section];
+      if (adminRedirect) {
+        navigate(adminRedirect);
+        setSidebarOpen(false);
+        trackFunnelEvent('org_workspace_admin_handoff', { section, target: adminRedirect });
+        return;
+      }
       navigate(`${ROUTES.ORGANIZATION.ROOT}/${section}`);
       setSidebarOpen(false);
       trackFunnelEvent('org_workspace_opened', { section });

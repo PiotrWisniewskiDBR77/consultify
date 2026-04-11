@@ -3,9 +3,12 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
-import { AdminCollaborationControlsPanel } from '../../components/Admin/AdminCollaborationControlsPanel';
+import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
+import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
+import { AdminEnterpriseOverviewPanel } from '../../components/Admin/AdminEnterpriseOverviewPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
-import { AdminSecurityPolicyPanel } from '../../components/Admin/AdminSecurityPolicyPanel';
+import { AdminOrganizationOperationsPanel } from '../../components/Admin/AdminOrganizationOperationsPanel';
+import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
 import {
   AdminSettingsSection,
   AdminSettingsSidebar,
@@ -24,101 +27,88 @@ interface AdminSettingsModuleProps {
 }
 
 const PRIMARY_SECTIONS: AdminSettingsSection[] = [
-  'members',
+  'overview',
+  'people',
   'security',
-  'collaboration',
+  'billing',
+  'ai',
   'integrations',
   'audit',
+  'operations',
 ];
 
-const LEGACY_HANDOFFS: Record<
-  string,
-  { title: string; description: string; targetPath: string; targetLabel: string }
-> = {
+const LEGACY_HANDOFFS: Record<string, { title: string; description: string; targetPath: string; targetLabel: string }> = {
   organization: {
-    title: 'Organization identity moved out of Admin',
+    title: 'Deep organization profile stays available outside Admin',
     description:
-      'Company profile, branding, and strategic identity belong to Organization, not the primary P32 cockpit.',
+      'P32 now owns tenant operations, but the business profile workspace remains available for deeper organizational context editing.',
     targetPath: ROUTES.ORGANIZATION.PROFILE,
     targetLabel: 'Open Organization profile',
   },
-  branding: {
-    title: 'Branding moved out of Admin',
-    description: 'Branding and trust posture are owned by Organization.',
-    targetPath: ROUTES.ORGANIZATION.BRANDING,
-    targetLabel: 'Open Branding',
-  },
-  billing: {
-    title: 'Billing moved out of primary Admin cockpit',
-    description: 'Billing stays outside the canonical five-branch P32 cockpit.',
-    targetPath: ROUTES.ORGANIZATION.BILLING,
-    targetLabel: 'Open Billing',
-  },
-  payment: {
-    title: 'Payment moved out of primary Admin cockpit',
-    description: 'Billing and payment settings live outside the canonical P32 cockpit.',
-    targetPath: ROUTES.ORGANIZATION.BILLING,
-    targetLabel: 'Open Billing',
-  },
-  tax: {
-    title: 'Tax moved out of primary Admin cockpit',
-    description: 'Billing and tax configuration live outside the canonical P32 cockpit.',
-    targetPath: ROUTES.ORGANIZATION.BILLING,
-    targetLabel: 'Open Billing',
-  },
-  alerts: {
-    title: 'Usage alerts moved out of primary Admin cockpit',
-    description: 'Billing alerts are not part of the canonical five-branch Admin cockpit.',
-    targetPath: ROUTES.ORGANIZATION.BILLING,
-    targetLabel: 'Open Billing',
-  },
-  governance: {
-    title: 'Governance was consolidated into Security Policy',
-    description: 'Security policy is the canonical tenant policy surface for P32.',
-    targetPath: ROUTES.ADMIN.SECURITY,
-    targetLabel: 'Open Security Policy',
-  },
-  api: {
-    title: 'API management moved out of primary Admin cockpit',
-    description: 'The canonical P32 integrations leaf is Integrations & Sync.',
-    targetPath: ROUTES.ADMIN.INTEGRATIONS,
-    targetLabel: 'Open Integrations & Sync',
-  },
   feedback: {
-    title: 'Feedback is outside the primary P32 cockpit',
-    description: 'The canonical admin cockpit is limited to five branches only.',
-    targetPath: ROUTES.ADMIN.ROOT,
-    targetLabel: 'Open Admin cockpit',
-  },
-  'sync-hub': {
-    title: 'Sync Hub was merged into Integrations & Sync',
-    description: 'Integrations health and remediation stay in one canonical leaf.',
-    targetPath: ROUTES.ADMIN.INTEGRATIONS,
-    targetLabel: 'Open Integrations & Sync',
+    title: 'Feedback is outside the tenant admin command center',
+    description: 'Operational tenant administration is handled in P32, while feedback remains a separate product workflow.',
+    targetPath: ROUTES.ADMIN.OVERVIEW,
+    targetLabel: 'Open Admin overview',
   },
 };
 
 const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
-  members: {
-    title: 'Members & Roles',
-    subtitle: 'Membership operations, role changes, ownership transfer, and explicit denial guidance.',
+  overview: {
+    title: 'Overview',
+    subtitle: 'Enterprise command center for tenant posture across people, security, billing, AI, and risk.',
+  },
+  people: {
+    title: 'People & Access',
+    subtitle: 'Membership operations, role changes, ownership transfer, and tenant access governance.',
   },
   security: {
-    title: 'Security Policy',
-    subtitle: 'Tenant-level MFA, SSO, session timeout, and password policy.',
+    title: 'Security & Identity',
+    subtitle: 'Tenant-level MFA, SSO, collaboration controls, API access, and delegated IAM posture.',
   },
-  collaboration: {
-    title: 'Collaboration Controls',
-    subtitle: 'Guest access, external sharing, and tool approval policy.',
+  billing: {
+    title: 'Billing, Limits & FinOps',
+    subtitle: 'Plans, commercial posture, quota usage, and spend controls for the tenant.',
+  },
+  ai: {
+    title: 'AI Governance & Operations',
+    subtitle: 'Model policy, AI settings, health posture, and token economy in one place.',
   },
   integrations: {
     title: 'Integrations & Sync',
     subtitle: 'Connector health, remediation, and ownership-aware sync operations.',
   },
   audit: {
-    title: 'Audit Log',
-    subtitle: 'Admin events emitted by P32 write surfaces.',
+    title: 'Audit, Compliance & Risk',
+    subtitle: 'Admin events, risk visibility, and evidence posture for high-risk actions.',
   },
+  operations: {
+    title: 'Organization Operations',
+    subtitle: 'Domains, branding, competencies, and tenant operational surfaces managed from P32.',
+  },
+};
+
+const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
+  members: 'people',
+  team: 'people',
+  users: 'people',
+  workspace: 'operations',
+  organization: 'operations',
+  branding: 'operations',
+  domains: 'operations',
+  competencies: 'operations',
+  governance: 'security',
+  collaboration: 'security',
+  api: 'security',
+  billing: 'billing',
+  payment: 'billing',
+  tax: 'billing',
+  alerts: 'billing',
+  ai: 'ai',
+  llm: 'ai',
+  'token-management': 'ai',
+  'sync-hub': 'integrations',
+  compliance: 'audit',
 };
 
 function resolveAdminState(
@@ -134,11 +124,15 @@ function resolveAdminState(
     return { section: candidate as AdminSettingsSection };
   }
 
-  if (candidate && LEGACY_HANDOFFS[candidate]) {
-    return { section: 'members', legacyKey: candidate };
+  if (candidate && SECTION_ALIASES[candidate]) {
+    return { section: SECTION_ALIASES[candidate] };
   }
 
-  return { section: initialTab && PRIMARY_SECTIONS.includes(initialTab) ? initialTab : 'members' };
+  if (candidate && LEGACY_HANDOFFS[candidate]) {
+    return { section: 'overview', legacyKey: candidate };
+  }
+
+  return { section: initialTab && PRIMARY_SECTIONS.includes(initialTab) ? initialTab : 'overview' };
 }
 
 const LegacyAdminHandoffPanel: React.FC<{
@@ -194,16 +188,22 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     }
 
     switch (resolvedState.section) {
-      case 'members':
+      case 'overview':
+        return <AdminEnterpriseOverviewPanel />;
+      case 'people':
         return <AdminMembersRolesPanel />;
       case 'security':
-        return <AdminSecurityPolicyPanel />;
-      case 'collaboration':
-        return <AdminCollaborationControlsPanel />;
+        return <AdminSecurityIdentityPanel />;
+      case 'billing':
+        return <AdminBillingFinOpsPanel />;
+      case 'ai':
+        return <AdminAIControlCenterPanel />;
       case 'integrations':
         return <UnifiedSyncHub />;
       case 'audit':
         return <AdminAuditLogPanel />;
+      case 'operations':
+        return <AdminOrganizationOperationsPanel />;
       default:
         return null;
     }

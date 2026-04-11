@@ -949,9 +949,24 @@ export const AssessmentSessionEditorView: React.FC = () => {
             : null,
         needsWorkTopAxes: axisProgress.slice(0, 3),
         contextSnapshot: assessment?.contextSnapshot || null,
+        assessmentRunId: sessionWorkbench?.assessmentRunId || null,
+        workbenchRunState: sessionWorkbench?.runState || null,
+        workbenchReviewState:
+          sessionWorkbench?.interpretationReview?.status ||
+          sessionWorkbench?.scoreReview?.status ||
+          null,
       },
     });
-  }, [assessmentId, assessment, framework, answers, currentAxisId, currentAreaId, currentLevel]);
+  }, [
+    assessmentId,
+    assessment,
+    framework,
+    answers,
+    currentAxisId,
+    currentAreaId,
+    currentLevel,
+    sessionWorkbench,
+  ]);
 
   // Open chat with assessment context
   // Uses the existing MainLayout chat panel (not a separate overlay).
@@ -1009,6 +1024,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
               : null,
           needsWorkTopAxes: axisProgress.slice(0, 3),
           contextSnapshot: assessment?.contextSnapshot || null,
+          assessmentRunId: sessionWorkbench?.assessmentRunId || null,
+          workbenchRunState: sessionWorkbench?.runState || null,
+          workbenchReviewState:
+            sessionWorkbench?.interpretationReview?.status ||
+            sessionWorkbench?.scoreReview?.status ||
+            null,
+          chatRunId: sessionWorkbench?.assessmentRunId || assessmentId,
         };
 
         // Create new conversation with the full assessment context
@@ -1042,6 +1064,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     currentAxisId,
     currentAreaId,
     currentLevel,
+    sessionWorkbench,
     activeConversationId,
     isChatCollapsed,
     chatWorkspaceContext,
@@ -1091,7 +1114,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
       const toastId = toast.loading('Creating report…');
       try {
         const reportTitle = `${assessment?.name || 'Assessment'} - Report`;
-        const workbenchResponse = await V8AssessmentApi.getWorkbench(assessmentId).catch(() => null);
+        const workbenchResponse = await V8AssessmentApi.getWorkbench(assessmentId).catch(
+          () => null
+        );
         const activeRun = workbenchResponse?.workbench || null;
         const runState = String(activeRun?.runState || '').trim();
         const reviewState =
@@ -1099,7 +1124,10 @@ export const AssessmentSessionEditorView: React.FC = () => {
           activeRun?.scoreReview?.status ||
           'not_started';
 
-        if (runState && !['score_reviewed', 'interpretation_reviewed', 'completed'].includes(runState)) {
+        if (
+          runState &&
+          !['score_reviewed', 'interpretation_reviewed', 'completed'].includes(runState)
+        ) {
           toast.loading('Generating from the current run, but review is not complete yet.', {
             id: toastId,
           });
