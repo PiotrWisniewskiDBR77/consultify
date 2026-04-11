@@ -22,93 +22,11 @@ export const PolicyEnforcementTab: React.FC = () => {
     (async () => {
       setLoading(true);
       try {
-        const [contextPolicy, governancePolicy, governanceHealth, providers, connectors] =
-          await Promise.all([
-            Api.getAIGovernanceContextPolicy(),
-            Api.getAIGovernancePolicy(),
-            Api.getAIGovernanceHealth(),
-            Api.getMissionControlProviders(),
-            Api.get('/superadmin/connectors'),
-          ]);
+        const enforcement = await Api.getSuperAdminPolicyEnforcement();
 
         if (cancelled) return;
-
-        const providerList = Array.isArray(providers?.providers)
-          ? providers.providers
-          : Array.isArray(providers)
-            ? providers
-            : [];
-        const connectorList = Array.isArray(connectors?.connectors)
-          ? connectors.connectors
-          : Array.isArray(connectors)
-            ? connectors
-            : [];
-
-        const providerRows = providerList
-          .map((provider: any) => {
-              const desiredState = provider?.enabled === false ? 'disabled' : 'enabled';
-              const appliedState = provider?.healthStatus || provider?.status || 'unknown';
-              return {
-                id: `provider:${provider.id || provider.provider}`,
-                domain: `Model provider: ${provider.name || provider.provider || provider.id}`,
-                desiredState,
-                appliedState,
-                drift:
-                  desiredState === 'enabled'
-                    ? appliedState !== 'healthy' && appliedState !== 'enabled'
-                    : appliedState !== 'disabled',
-                note: 'Provider health and allow-state should remain aligned with platform policy.',
-              };
-            });
-
-        const connectorRows = connectorList.slice(0, 8).map((connector: any) => {
-              const desiredState = connector?.status === 'disabled' ? 'disabled' : 'enabled';
-              const appliedState = connector?.status || 'unknown';
-              return {
-                id: `connector:${connector.id || connector.connector_type}`,
-                domain: `Connector: ${connector.name || connector.connector_type || connector.id}`,
-                desiredState,
-                appliedState,
-                drift: desiredState !== appliedState,
-                note: 'Connector kill-switches must propagate into tenant runtime state.',
-              };
-            });
-
-        const policyRows: EnforcementRow[] = [
-          {
-            id: 'policy:context',
-            domain: 'Context policy',
-            desiredState: contextPolicy?.retention || 'standard',
-            appliedState: governanceHealth?.contextPolicyStatus || 'unknown',
-            drift:
-              Boolean(governanceHealth?.contextPolicyStatus) &&
-              String(governanceHealth.contextPolicyStatus).toLowerCase() !== 'healthy',
-            note: 'Tracks whether runtime context controls match configured retention and minimization.',
-          },
-          {
-            id: 'policy:governance',
-            domain: 'Approval / override policy',
-            desiredState: governancePolicy?.approvalMode || governancePolicy?.approvalClass || 'managed',
-            appliedState: governanceHealth?.policyStatus || 'unknown',
-            drift:
-              Boolean(governanceHealth?.policyStatus) &&
-              String(governanceHealth.policyStatus).toLowerCase() !== 'healthy',
-            note: 'Desired governance settings should be reflected in actual platform enforcement.',
-          },
-          {
-            id: 'policy:workers',
-            domain: 'Virtual workers',
-            desiredState: governancePolicy?.workersEnabled === false ? 'restricted' : 'managed',
-            appliedState: governanceHealth?.workerStatus || 'unknown',
-            drift:
-              Boolean(governanceHealth?.workerStatus) &&
-              String(governanceHealth.workerStatus).toLowerCase() !== 'healthy',
-            note: 'Worker suspensions should show up as applied runtime state, not just config toggles.',
-          },
-        ];
-
-        setRows([...policyRows, ...providerRows, ...connectorRows]);
-        setHealth(governanceHealth || null);
+        setRows(Array.isArray(enforcement?.rows) ? enforcement.rows : []);
+        setHealth(enforcement?.health || null);
       } catch {
         if (cancelled) return;
         setRows([]);
