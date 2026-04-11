@@ -26,8 +26,29 @@ class AdminSessionServiceClass {
     if (deps.logger) this.logger = deps.logger;
   }
 
-  private computeExpiresAt(expiresInHours?: number): string {
-    const hours = Number.isFinite(Number(expiresInHours)) ? Number(expiresInHours) : 24;
+  private normalizeSessionType(sessionType?: string): 'standard' | 'jit' | 'break_glass' {
+    const normalized = String(sessionType || 'standard').trim().toLowerCase();
+    if (normalized === 'jit') return 'jit';
+    if (normalized === 'break_glass' || normalized === 'break-glass') return 'break_glass';
+    return 'standard';
+  }
+
+  private clampSessionHours(
+    expiresInHours?: number,
+    sessionType?: 'standard' | 'jit' | 'break_glass'
+  ): number {
+    const requested = Number.isFinite(Number(expiresInHours)) ? Number(expiresInHours) : 8;
+    const normalizedType = this.normalizeSessionType(sessionType);
+    const maxHours =
+      normalizedType === 'break_glass' ? 1 : normalizedType === 'jit' ? 2 : 8;
+    return Math.max(1, Math.min(requested, maxHours));
+  }
+
+  private computeExpiresAt(
+    expiresInHours?: number,
+    sessionType?: 'standard' | 'jit' | 'break_glass'
+  ): string {
+    const hours = this.clampSessionHours(expiresInHours, sessionType);
     const dt = new Date(Date.now() + hours * 60 * 60 * 1000);
     return dt.toISOString();
   }
@@ -46,6 +67,12 @@ class AdminSessionServiceClass {
       expiresAt:
         r.expires_at || r.expiresAt || r.created_at || r.createdAt || new Date().toISOString(),
       isActive: !!(r.is_active ?? r.isActive),
+      sessionType: r.session_type || r.sessionType || 'standard',
+      requestedCapability: r.requested_capability || r.requestedCapability || null,
+      justification: r.justification || null,
+      breakGlassReason: r.break_glass_reason || r.breakGlassReason || null,
+      approvedBy: r.approved_by || r.approvedBy || null,
+      createdBy: r.created_by || r.createdBy || null,
       admin: {
         email: r.admin_email || r.email || '',
         firstName: r.admin_first_name || r.first_name || '',
@@ -64,6 +91,12 @@ class AdminSessionServiceClass {
           s.created_at,
           s.expires_at,
           s.is_active,
+          s.session_type,
+          s.requested_capability,
+          s.justification,
+          s.break_glass_reason,
+          s.approved_by,
+          s.created_by,
           u.email as admin_email,
           u.first_name as admin_first_name,
           u.last_name as admin_last_name
@@ -89,6 +122,12 @@ class AdminSessionServiceClass {
           s.created_at,
           s.expires_at,
           CASE WHEN s.expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END as is_active,
+          'standard' as session_type,
+          NULL as requested_capability,
+          NULL as justification,
+          NULL as break_glass_reason,
+          NULL as approved_by,
+          NULL as created_by,
           u.email as admin_email,
           u.first_name as admin_first_name,
           u.last_name as admin_last_name
@@ -110,17 +149,40 @@ class AdminSessionServiceClass {
     const id = this.uuidv4();
     const adminId = data?.userId || data?.adminId;
     const mfaVerified = !!data?.mfaVerified;
+    const sessionType = this.normalizeSessionType(data?.sessionType);
     const ipAddress = data?.ipAddress || null;
     const userAgent = data?.userAgent || null;
     const sessionToken = this.uuidv4();
-    const expiresAt = data?.expiresAt || this.computeExpiresAt(data?.expiresInHours);
+    const requestedCapability = data?.requestedCapability || null;
+    const justification = data?.justification || null;
+    const breakGlassReason = data?.breakGlassReason || null;
+    const approvedBy = data?.approvedBy || null;
+    const createdBy = data?.createdBy || adminId;
+    const expiresAt =
+      data?.expiresAt || this.computeExpiresAt(data?.expiresInHours, sessionType);
 
     try {
       await this.db.run(
         `INSERT INTO admin_sessions
-          (id, user_id, session_token, expires_at, created_at, mfa_verified, is_active, ip_address, user_agent)
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?)`,
-        [id, adminId, sessionToken, expiresAt, mfaVerified ? 1 : 0, 1, ipAddress, userAgent]
+          (id, user_id, session_token, expires_at, created_at, mfa_verified, is_active, ip_address, user_agent,
+           session_type, requested_capability, justification, break_glass_reason, approved_by, created_by)
+         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          adminId,
+          sessionToken,
+          expiresAt,
+          mfaVerified ? 1 : 0,
+          1,
+          ipAddress,
+          userAgent,
+          sessionType,
+          requestedCapability,
+          justification,
+          breakGlassReason,
+          approvedBy,
+          createdBy,
+        ]
       );
     } catch (_err) {
       // Fallback to minimal schema.
@@ -137,6 +199,12 @@ class AdminSessionServiceClass {
         adminId,
         sessionToken,
         expiresAt,
+        sessionType,
+        requestedCapability,
+        justification,
+        breakGlassReason,
+        approvedBy,
+        createdBy,
       }
     );
   }
@@ -197,6 +265,8 @@ class AdminSessionServiceClass {
           COUNT(*) as total,
           SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
           SUM(CASE WHEN is_active = 1 AND mfa_verified = 1 THEN 1 ELSE 0 END) as mfaVerified,
+          SUM(CASE WHEN is_active = 1 AND session_type = 'jit' THEN 1 ELSE 0 END) as jitActive,
+          SUM(CASE WHEN is_active = 1 AND session_type = 'break_glass' THEN 1 ELSE 0 END) as breakGlassActive,
           COUNT(DISTINCT user_id) as uniqueAdmins
         FROM admin_sessions
       `);
@@ -204,6 +274,8 @@ class AdminSessionServiceClass {
         total: row?.total || 0,
         active: row?.active || 0,
         mfaVerified: row?.mfaVerified || 0,
+        jitActive: (row as any)?.jitActive || 0,
+        breakGlassActive: (row as any)?.breakGlassActive || 0,
         uniqueAdmins: row?.uniqueAdmins || 0,
       };
     } catch (_err) {
@@ -218,6 +290,8 @@ class AdminSessionServiceClass {
         total: row?.total || 0,
         active: row?.active || 0,
         mfaVerified: 0,
+        jitActive: 0,
+        breakGlassActive: 0,
         uniqueAdmins: row?.uniqueAdmins || 0,
       };
     }

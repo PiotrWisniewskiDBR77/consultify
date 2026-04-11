@@ -36,13 +36,25 @@ export const AdminIamPolicyPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [policy, setPolicy] = useState<AdminIamPolicy>(emptyPolicy);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [assignmentForm, setAssignmentForm] = useState({
+    userId: '',
+    roleId: 'billing_admin',
+    roleName: 'Billing Admin',
+    capabilities: 'billing:read, billing:write',
+    expiresAt: '',
+  });
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        const result = await Api.getAdminIAMPolicy();
+        const [result, assignmentResult] = await Promise.all([
+          Api.getAdminIAMPolicy(),
+          Api.getAdminIAMAssignments(),
+        ]);
         setPolicy(result?.policy || emptyPolicy);
+        setAssignments(assignmentResult?.assignments || []);
       } catch (error: any) {
         toast.error(error?.message || 'Failed to load IAM policy');
       } finally {
@@ -89,6 +101,36 @@ export const AdminIamPolicyPanel: React.FC = () => {
       toast.error(error?.message || 'Failed to update IAM policy');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const createAssignment = async () => {
+    if (!assignmentForm.userId.trim()) return;
+    try {
+      const result = await Api.createAdminIAMAssignment({
+        userId: assignmentForm.userId.trim(),
+        roleId: assignmentForm.roleId,
+        roleName: assignmentForm.roleName,
+        capabilities: assignmentForm.capabilities
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean),
+        expiresAt: assignmentForm.expiresAt || null,
+      });
+      setAssignments((current) => [result?.assignment, ...current].filter(Boolean));
+      toast.success('Delegated assignment created');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to create delegated assignment');
+    }
+  };
+
+  const deleteAssignment = async (assignmentId: string) => {
+    try {
+      await Api.deleteAdminIAMAssignment(assignmentId);
+      setAssignments((current) => current.filter((assignment) => assignment.id !== assignmentId));
+      toast.success('Delegated assignment removed');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to delete delegated assignment');
     }
   };
 
@@ -278,6 +320,74 @@ export const AdminIamPolicyPanel: React.FC = () => {
             </button>
           </div>
         ))}
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-white/10">
+        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+          Delegated admin assignments
+        </div>
+        <div className="grid gap-3 lg:grid-cols-4">
+          <input
+            type="text"
+            value={assignmentForm.userId}
+            onChange={(event) =>
+              setAssignmentForm((current) => ({ ...current, userId: event.target.value }))
+            }
+            placeholder="user-id"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+          />
+          <input
+            type="text"
+            value={assignmentForm.roleName}
+            onChange={(event) =>
+              setAssignmentForm((current) => ({ ...current, roleName: event.target.value }))
+            }
+            placeholder="Role name"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+          />
+          <input
+            type="text"
+            value={assignmentForm.capabilities}
+            onChange={(event) =>
+              setAssignmentForm((current) => ({ ...current, capabilities: event.target.value }))
+            }
+            placeholder="billing:read, billing:write"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+          />
+          <button
+            onClick={() => void createAssignment()}
+            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+          >
+            Assign delegated role
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {assignments.map((assignment) => (
+            <div
+              key={assignment.id}
+              className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-white/10 lg:grid-cols-[1fr,1fr,auto]"
+            >
+              <div>
+                <div className="font-medium text-slate-900 dark:text-white">
+                  {assignment.roleName || assignment.roleId}
+                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  User: {assignment.userId}
+                </div>
+              </div>
+              <div className="text-sm text-slate-600 dark:text-slate-300">
+                {(assignment.capabilities || []).join(', ') || 'No capabilities'}
+              </div>
+              <button
+                onClick={() => void deleteAssignment(assignment.id)}
+                className="inline-flex items-center justify-center rounded-lg border border-rose-200 px-3 py-2 text-rose-600 dark:border-rose-500/20 dark:text-rose-300"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
