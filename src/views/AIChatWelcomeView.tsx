@@ -107,6 +107,7 @@ const TERESA_TARGET_ROUTE_MAP: Record<string, string> = {
   notebook: '/my-work?tab=notebook',
   calendar: '/meeting',
   radar: '/my-work',
+  interview: '/interview',
 };
 
 /** Download a string as a file */

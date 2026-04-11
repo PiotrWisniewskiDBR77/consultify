@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { getSettingsActorRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
@@ -28,6 +29,8 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 const preferencesKey = (prefType: string) => `settings:${prefType}`;
+const LEGACY_SETTINGS_ROOT_GUIDANCE =
+  'Use /api/settings/registry for scoped settings and /api/superadmin for platform-wide settings.';
 
 /**
  * GET /api/settings
@@ -37,6 +40,14 @@ router.get(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!isRequestSuperAdmin(req)) {
+      return res.status(403).json({
+        error: 'Legacy settings root is restricted to platform superadmins',
+        code: 'LEGACY_SETTINGS_SCOPE_BLOCKED',
+        guidance: LEGACY_SETTINGS_ROOT_GUIDANCE,
+      });
+    }
+
     try {
       const sql = `SELECT * FROM settings`;
       const rows = await dbAll(sql, [], { fallback: true });
@@ -62,6 +73,14 @@ router.post(
   '/',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!isRequestSuperAdmin(req)) {
+      return res.status(403).json({
+        error: 'Legacy settings root is restricted to platform superadmins',
+        code: 'LEGACY_SETTINGS_SCOPE_BLOCKED',
+        guidance: LEGACY_SETTINGS_ROOT_GUIDANCE,
+      });
+    }
+
     const { key, value } = req.body;
 
     if (!key) {
@@ -530,7 +549,8 @@ router.post(
     }
 
     // Only owner or admin/superadmin
-    if (requesterId !== userId && req.user?.role !== 'SUPERADMIN' && req.user?.role !== 'ADMIN') {
+    const actorRole = getSettingsActorRole(req);
+    if (requesterId !== userId && actorRole !== 'owner' && actorRole !== 'admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
@@ -5001,7 +5021,7 @@ router.put(
       return res.status(denial.status).json(denial);
     }
 
-    const userRole = req.user?.role || 'member';
+    const userRole = getSettingsActorRole(req);
     const routing = registryService.checkWriteRouting(req.params.key, userRole);
 
     if (!routing.allowed) {

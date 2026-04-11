@@ -2,6 +2,8 @@ import {
   Bold,
   CheckSquare,
   CircleDot,
+  Edit3,
+  FoldVertical,
   GitBranch,
   GitPullRequest,
   Hash,
@@ -17,6 +19,7 @@ import {
   StickyNote,
   Tags,
   ToggleRight,
+  UnfoldVertical,
   Unlock,
   Waypoints,
 } from 'lucide-react';
@@ -129,10 +132,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   const closeDD = useCallback(() => setOpenDropdown(null), []);
 
   const btnClass = (active: boolean) =>
-    `flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-150 ${
+    `flex h-9 w-9 items-center justify-center rounded-hig-lg transition-all duration-150 ${
       active
         ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
+        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
     }`;
 
   return (
@@ -145,14 +148,14 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         transform: 'translateX(-50%)',
       }}
     >
-      <div className="flex items-center gap-0.5 rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-1 py-0.5">
+      <div className="flex items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-0.5">
         {/* 0a. Add child — primary growth affordance */}
         <button
           onClick={onAddChild}
           disabled={disabled}
           title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
           aria-label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-          className={`flex h-7 items-center gap-1 px-1.5 rounded-lg transition-all duration-150 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+          className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
         >
           <Plus size={14} strokeWidth={2.5} />
           <span className="text-[10px] font-semibold">{isPl ? 'Gałąź' : 'Child'}</span>
@@ -165,10 +168,37 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             disabled={disabled}
             title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
             aria-label={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
-            className={`flex h-7 items-center gap-1 px-1.5 rounded-lg transition-all duration-150 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+            className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
           >
             <GitBranch size={13} />
             <span className="text-[10px] font-medium">{isPl ? 'Sąsiad' : 'Sibling'}</span>
+          </button>
+        )}
+
+        {/* 0c. Rename */}
+        <button
+          onClick={() => onAction('ctx_edit')}
+          disabled={disabled || isProtected}
+          title={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
+          aria-label={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
+          className={btnClass(false)}
+        >
+          <Edit3 size={13} />
+        </button>
+
+        {/* 0d. Collapse/Expand */}
+        {hasChildren && (
+          <button
+            onClick={() => onAction('mm_toggle_collapse')}
+            title={
+              isPl
+                ? (nodeData?._collapsed ? 'Rozwiń (Space)' : 'Zwiń (Space)')
+                : (nodeData?._collapsed ? 'Expand (Space)' : 'Collapse (Space)')
+            }
+            aria-label={isPl ? 'Zwiń/Rozwiń' : 'Collapse/Expand'}
+            className={btnClass(false)}
+          >
+            {nodeData?._collapsed ? <UnfoldVertical size={13} /> : <FoldVertical size={13} />}
           </button>
         )}
 
@@ -264,7 +294,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           >
             <div
               className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-white/20"
-              style={{ backgroundColor: style.color || '#3b82f6' }}
+              style={{ backgroundColor: style.color || 'var(--color-primary-500, #7c3aed)' }}
             />
           </button>
           {openDropdown === 'color' && (
@@ -287,7 +317,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             onClick={() => toggle('fontSize')}
             title={isPl ? 'Rozmiar czcionki' : 'Font size'}
             aria-label={isPl ? 'Rozmiar czcionki' : 'Font size'}
-            className={`${btnClass(openDropdown === 'fontSize')} text-[10px] font-bold`}
+            className={`${btnClass(openDropdown === 'fontSize')} text-[10px] font-semibold`}
           >
             {style.fontSize || 14}
           </button>
@@ -384,8 +414,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               <GitPullRequest size={13} />
             </button>
             {openDropdown === 'convertBranch' && (
-              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
                 </div>
                 {(
@@ -410,6 +440,11 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                       label: isPl ? 'Inicjatywa' : 'Initiative',
                       icon: Rocket,
                     },
+                    {
+                      id: 'ctx_subtree_convert_process_flow',
+                      label: isPl ? 'Przepływ procesu' : 'Process Flow',
+                      icon: Waypoints,
+                    },
                   ] as const
                 ).map((item) => (
                   <button
@@ -419,7 +454,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                       onAction(item.id);
                       closeDD();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-md transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-hig-md transition-colors"
                   >
                     <item.icon size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
                     <span className="flex-1 truncate">{item.label}</span>

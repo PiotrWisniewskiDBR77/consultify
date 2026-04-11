@@ -93,6 +93,25 @@ describe('verifySuperAdmin', () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it('rejects tenant owners from platform superadmin routes', async () => {
+    setDependencies({
+      jwt: {
+        verify: (_t: string, _s: string, cb: any) =>
+          cb(null, { id: 'owner-1', role: 'owner', organizationId: 'org-1' }),
+      } as any,
+      config: { JWT_SECRET: 'test-secret' },
+      dbGet: vi.fn().mockResolvedValue({ role: 'owner' }),
+    });
+    const req = mockReq();
+    const res = mockRes();
+
+    await verifySuperAdmin(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('INSUFFICIENT_PLATFORM_ROLE');
+  });
+
   it('rejects with 401 when token is invalid', async () => {
     setDependencies({
       jwt: { verify: (_t: string, _s: string, cb: any) => cb(new Error('invalid'), null) } as any,

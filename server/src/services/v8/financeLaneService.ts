@@ -14,6 +14,66 @@ import logger from '../../utils/Logger.js';
 
 const LOG_PREFIX = '[V8:FinanceLane]';
 
+async function fireAdvanceHooks(run: FinanceLaneRun, actor: string, outcome: string) {
+  const hooks = await import('./financeIntegrationHooks.js');
+
+  // ART-4: register lane run as artifact on every advance
+  await hooks.registerLaneRunArtifact({
+    runId: run.runId,
+    organizationId: run.organizationId,
+    actor,
+    step: run.currentStep,
+  });
+
+  // WF-2: upsert inbox item
+  await hooks.upsertFinanceInboxItems({
+    runId: run.runId,
+    organizationId: run.organizationId,
+    actor,
+    degradedCount: run.degraded.length,
+    currentStep: run.currentStep,
+  });
+
+  // WF-4: push new degraded states to radar
+  if (run.degraded.length > 0) {
+    await hooks.pushDegradedToRadar({
+      runId: run.runId,
+      organizationId: run.organizationId,
+      degradedReasons: run.degraded.map((d) => d.reason),
+    });
+  }
+
+  // Readback confirmed: CTX-2, WF-1, ART-3
+  if (run.readbackConfirmed && outcome === 'confirmed') {
+    await hooks.captureFinanceContextSnapshot({
+      runId: run.runId,
+      organizationId: run.organizationId,
+      actor,
+    });
+    await hooks.emitFinanceCycleSignal({
+      runId: run.runId,
+      organizationId: run.organizationId,
+      actor,
+    });
+    await hooks.sendFinanceNotification({
+      organizationId: run.organizationId,
+      actor,
+      event: 'lane_completed',
+      detail: `Finance lane run ${run.runId} completed successfully.`,
+    });
+  }
+
+  // Reconciliation mismatch: ART-3
+  if (run.degraded.some((d) => d.reason === 'reconciliation_mismatch')) {
+    await hooks.sendFinanceNotification({
+      organizationId: run.organizationId,
+      actor,
+      event: 'reconciliation_mismatch',
+      detail: `Reconciliation mismatch detected in lane run ${run.runId}.`,
+    });
+  }
+}
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -121,13 +181,19 @@ export async function startLaneRun(params: {
     updatedAt: now,
   };
 
-  await dbRun(
+  // Atomic INSERT … WHERE NOT EXISTS to prevent TOCTOU race on concurrent starts
+  const insertResult = await dbRun(
     `INSERT INTO v8_finance_lane_runs (
       run_id, organization_id, current_step, import_outcome,
       analysis_completed, mutation_outcome, readback_confirmed,
       degraded_json, audit_trail_json, version_type, kpi_linkage_status,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    WHERE NOT EXISTS (
+      SELECT 1 FROM v8_finance_lane_runs
+      WHERE organization_id = ?
+        AND (current_step != 'readback' OR readback_confirmed = 0)
+    )`,
     [
       run.runId,
       run.organizationId,
@@ -142,8 +208,24 @@ export async function startLaneRun(params: {
       run.kpiLinkageStatus,
       run.createdAt,
       run.updatedAt,
+      params.organizationId,
     ]
   );
+
+  if (insertResult?.changes === 0) {
+    const activeRun = await dbGet<Record<string, unknown>>(
+      `SELECT run_id FROM v8_finance_lane_runs
+       WHERE organization_id = ?
+         AND (current_step != 'readback' OR readback_confirmed = 0)
+       ORDER BY created_at DESC LIMIT 1`,
+      [params.organizationId],
+      { fallback: true }
+    );
+    throw Object.assign(
+      new Error(`Active lane run already exists: ${activeRun?.run_id ?? 'unknown'}`),
+      { code: 'P05_CONCURRENT_RUN_EXISTS', activeRunId: String(activeRun?.run_id ?? '') }
+    );
+  }
 
   logger.info(`${LOG_PREFIX} Started lane run ${runId}`);
   return run;
@@ -269,8 +351,7 @@ export async function advanceLaneStep(
       });
     }
     if (outcome === 'failed' || outcome === 'conflict') {
-      // §2.3.4: auto-create audit event on mutation failure
-      await recordMutationAudit({
+      const auditParams = {
         organizationId,
         runId,
         mutationType: 'lane_step_mutation',
@@ -279,7 +360,23 @@ export async function advanceLaneStep(
         newValue: outcome,
         outcome: outcome as MutationOutcome,
         actor,
-      }).catch((e) => logger.warn(`${LOG_PREFIX} Auto-audit on mutation failure failed`, e));
+      };
+      try {
+        await recordMutationAudit(auditParams);
+      } catch (firstErr) {
+        logger.warn(`${LOG_PREFIX} Auto-audit attempt 1 failed, retrying in 200ms`, firstErr);
+        try {
+          await new Promise((r) => setTimeout(r, 200));
+          await recordMutationAudit(auditParams);
+        } catch (retryErr) {
+          logger.warn(`${LOG_PREFIX} Auto-audit retry also failed — recording degraded`, retryErr);
+          run.degraded.push({
+            reason: 'mutation_failed' as FinanceDegradedReason,
+            detail: `Mutation audit persistence failed after retry: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+            nextAction: 'Audit record could not be saved — review mutation logs manually',
+          });
+        }
+      }
     }
   } else if (run.currentStep === 'readback') {
     run.readbackConfirmed = outcome === 'confirmed';
@@ -301,6 +398,18 @@ export async function advanceLaneStep(
   // §2.3.2: enforce KPI coherence before confirming readback
   if (run.currentStep === 'readback' && outcome === 'confirmed') {
     const coherence = await checkKpiLinkageCoherence(organizationId, runId);
+
+    if (coherence.reconciliationMismatches && coherence.reconciliationMismatches.length > 0) {
+      const alreadyHas = run.degraded.some((d) => d.reason === 'reconciliation_mismatch');
+      if (!alreadyHas) {
+        run.degraded.push({
+          reason: 'reconciliation_mismatch',
+          detail: `${coherence.reconciliationMismatches.length} reconciliation mismatch(es) detected — review required`,
+          nextAction: 'Review mismatch categories, add notes, and acknowledge or escalate',
+        });
+      }
+    }
+
     if (coherence.status === 'stale') {
       run.degraded.push({
         reason: 'stale_linkage',
@@ -355,6 +464,12 @@ export async function advanceLaneStep(
   );
 
   logger.info(`${LOG_PREFIX} Advanced run ${runId} to ${run.currentStep} (outcome=${outcome})`);
+
+  // Fire integration hooks (non-blocking)
+  void fireAdvanceHooks(run, actor, outcome).catch((err) =>
+    logger.warn(`${LOG_PREFIX} Integration hooks failed (non-blocking)`, err)
+  );
+
   return run;
 }
 
@@ -508,13 +623,42 @@ export async function finalizeSwitchover(
     { fallback: true }
   );
   if (!pre) throw Object.assign(new Error('Snapshot not found'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
+
+  const pushSwitchoverDegraded = async (detail: string) => {
+    try {
+      const activeRun = await dbGet<Record<string, unknown>>(
+        `SELECT run_id, degraded_json FROM v8_finance_lane_runs
+         WHERE organization_id = ? AND (current_step != 'readback' OR readback_confirmed = 0)
+         ORDER BY created_at DESC LIMIT 1`,
+        [organizationId],
+        { fallback: true }
+      );
+      if (activeRun) {
+        const degraded = safeJsonParse(activeRun.degraded_json as string | null | undefined, []) as Array<Record<string, unknown>>;
+        degraded.push({
+          reason: 'switchover_misconfigured',
+          detail,
+          nextAction: 'Fix switchover configuration before retrying finalization',
+        });
+        await dbRun(
+          `UPDATE v8_finance_lane_runs SET degraded_json = ? WHERE run_id = ? AND organization_id = ?`,
+          [JSON.stringify(degraded), String(activeRun.run_id), organizationId]
+        );
+      }
+    } catch (e) {
+      logger.warn(`${LOG_PREFIX} Failed to record switchover_misconfigured degraded entry`, e);
+    }
+  };
+
   if (pre.is_finalized) {
+    await pushSwitchoverDegraded('Snapshot already finalized');
     throw Object.assign(
       new Error('Switchover misconfigured: snapshot already finalized'),
       { code: 'P05_SWITCHOVER_MISCONFIGURED', degradedReason: 'switchover_misconfigured' as const }
     );
   }
   if (pre.version_type !== 'actual') {
+    await pushSwitchoverDegraded('Only "actual" snapshots can be finalized');
     throw Object.assign(
       new Error('Switchover misconfigured: only "actual" snapshots can be finalized'),
       { code: 'P05_SWITCHOVER_MISCONFIGURED', degradedReason: 'switchover_misconfigured' as const }
@@ -536,7 +680,7 @@ export async function finalizeSwitchover(
   );
   if (!row) throw Object.assign(new Error('Snapshot not found after update'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
 
-  return {
+  const result: FinanceVersionSnapshot = {
     snapshotId: String(row.snapshot_id),
     organizationId: String(row.organization_id),
     versionType: row.version_type as VersionType,
@@ -546,6 +690,35 @@ export async function finalizeSwitchover(
     isFinalized: !!row.is_finalized,
     createdAt: String(row.created_at),
   };
+
+  // WF-3 + ART-3: Fire switchover hooks (non-blocking)
+  void (async () => {
+    try {
+      const hooks = await import('./financeIntegrationHooks.js');
+      await hooks.recordSwitchoverDecision({
+        snapshotId,
+        organizationId,
+        actor,
+        versionType: result.versionType,
+      });
+      await hooks.captureFinanceContextSnapshot({
+        runId: snapshotId,
+        organizationId,
+        actor,
+        snapshotId,
+      });
+      await hooks.sendFinanceNotification({
+        organizationId,
+        actor,
+        event: 'switchover_finalized',
+        detail: `Version snapshot ${snapshotId} finalized as ${result.versionType}.`,
+      });
+    } catch (err) {
+      logger.warn(`${LOG_PREFIX} Switchover hooks failed (non-blocking)`, err);
+    }
+  })();
+
+  return result;
 }
 
 export async function getVersionSnapshots(
@@ -606,23 +779,11 @@ export async function checkKpiLinkageCoherence(
         mismatchCategory: String(l.mismatch_category || l.reconciliation_status || 'unknown'),
       }));
 
-    if (mismatches.length > 0) {
-      const run = await getLaneRun(runId, organizationId);
-      if (run) {
-        const alreadyHas = run.degraded.some((d) => d.reason === 'reconciliation_mismatch');
-        if (!alreadyHas) {
-          run.degraded.push({
-            reason: 'reconciliation_mismatch',
-            detail: `${mismatches.length} reconciliation mismatch(es) detected — review required`,
-            nextAction: 'Review mismatch categories, add notes, and acknowledge or escalate',
-          });
-          await dbRun(
-            `UPDATE v8_finance_lane_runs SET degraded_json = ? WHERE run_id = ? AND organization_id = ?`,
-            [JSON.stringify(run.degraded), runId, organizationId]
-          );
-        }
-      }
-    }
+    // NOTE: reconciliation_mismatch degraded entries are returned via
+    // the result object — the *caller* (advanceLaneStep) is responsible
+    // for pushing to run.degraded and persisting, avoiding the overwrite
+    // race where a separate DB write here gets clobbered by the caller's
+    // final UPDATE.
 
     const staleLinkages = linkages.filter((l) => {
       const updated = Date.parse(String(l.updated_at));
@@ -630,10 +791,8 @@ export async function checkKpiLinkageCoherence(
     });
 
     if (staleLinkages.length > 0) {
-      await dbRun(
-        `UPDATE v8_finance_lane_runs SET kpi_linkage_status = 'stale' WHERE run_id = ? AND organization_id = ?`,
-        [runId, organizationId]
-      );
+      // kpi_linkage_status update is handled by the caller (advanceLaneStep)
+      // to avoid overwrite race with the final UPDATE
       return {
         status: 'stale',
         detail: `${staleLinkages.length} stale reconciliation(s) — refresh required`,

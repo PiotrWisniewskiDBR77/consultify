@@ -91,6 +91,38 @@ export interface EmbedChipInfo {
   permissionOk: boolean;
 }
 
+/**
+ * NotebookContextSnapshot — runtime model linking a notebook page
+ * to its surrounding application context (chat thread, initiative,
+ * project, organization scope, and retrieval parameters).
+ *
+ * Referenced by SSOT: NOTATKA_V8_PLATFORM_CONTEXT_AND_INTEGRATION.md
+ */
+export interface NotebookContextSnapshot {
+  noteId: string;
+  organizationId: string;
+  chatThreadRef?: string;
+  organizationContextRef?: string;
+  linkedInitiativeId?: string;
+  linkedProjectId?: string;
+  retrievalScope: 'org' | 'project' | 'personal';
+  capturedAt: string;
+}
+
+export function buildNotebookContextSnapshot(
+  noteId: string,
+  orgId: string,
+  opts?: Partial<Omit<NotebookContextSnapshot, 'noteId' | 'organizationId' | 'capturedAt'>>
+): NotebookContextSnapshot {
+  return {
+    noteId,
+    organizationId: orgId,
+    retrievalScope: opts?.retrievalScope || 'org',
+    capturedAt: new Date().toISOString(),
+    ...opts,
+  };
+}
+
 // ============================================================
 // Service
 // ============================================================
@@ -1098,5 +1130,41 @@ function tokenize(input: string): string[] {
 }
 
 const notebookService = new NotebookService();
+
+/**
+ * Convenience wrapper for external callers (e.g. Teresa copilot handoff)
+ * that need to create a note without knowing the internal capture/ingest API.
+ */
+export async function createNote(params: {
+  organizationId: string;
+  title?: string;
+  body?: string;
+  source?: string;
+  userId?: string;
+  proposalId?: string;
+  projectId?: string;
+}): Promise<{ id: string; noteId: string; title: string }> {
+  const userId = params.userId || 'system';
+  const title = params.title || 'Untitled';
+  const result = await notebookService.ingest(params.organizationId, userId, {
+    title,
+    contentText: params.body || '',
+    source: 'api_import',
+    projectId: params.projectId,
+    metadata: {
+      externalSource: params.source || 'api',
+      proposalId: params.proposalId,
+    },
+  });
+  return { id: result.pageId, noteId: result.pageId, title: result.title };
+}
+
 export default notebookService;
-export { NotebookService, notebookService, type BlockProvenance };
+export {
+  NotebookService,
+  notebookService,
+  createNote as createNotebookNote,
+  type BlockProvenance,
+  type NotebookContextSnapshot,
+  buildNotebookContextSnapshot,
+};

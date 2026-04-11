@@ -277,6 +277,32 @@ export const AIContextBuilder = {
       logger.warn('[AIContextBuilder] System docs layer failed:', (err as Error).message);
     }
 
+    // P23-F1: Include recent workbooks in AI context
+    let recentWorkbooks: any = null;
+    try {
+      const wbRows = await all(
+        `SELECT id, title, description, sheet_count, quality_score, created_at
+         FROM generated_workbooks WHERE organization_id = ?
+         ORDER BY created_at DESC LIMIT 5`,
+        [organizationId]
+      );
+      if (wbRows?.length) {
+        recentWorkbooks = {
+          count: wbRows.length,
+          items: wbRows.map((wb: any) => ({
+            id: wb.id,
+            title: wb.title,
+            description: wb.description,
+            sheetCount: wb.sheet_count,
+            qualityScore: wb.quality_score,
+            createdAt: wb.created_at,
+          })),
+        };
+      }
+    } catch {
+      // generated_workbooks table may not exist yet
+    }
+
     const fullContext = {
       platform,
       organization,
@@ -292,6 +318,7 @@ export const AIContextBuilder = {
       financialData,
       historicalPatterns,
       systemDocs,
+      recentWorkbooks,
     };
 
     let filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
@@ -524,6 +551,14 @@ export const AIContextBuilder = {
       .buildResolvedContext(organizationId)
       .catch(() => null);
 
+    const formattedFindings = (resolvedContext?.signals?.interviewFindings ?? []).map((f) => {
+      const tag = `[${String(f.confidenceLevel).toUpperCase()}]`;
+      const base = `${tag} ${f.findingStatement}`;
+      const limitsNote = f.limits ? ` | Limits: ${f.limits}` : '';
+      const evidenceNote = f.evidenceCount > 0 ? ` (${f.evidenceCount} evidence)` : '';
+      return `${base}${limitsNote}${evidenceNote}`;
+    });
+
     return {
       organizationId,
       organizationName: resolvedContext?.profile.companyName || org.name || 'Unknown',
@@ -540,7 +575,10 @@ export const AIContextBuilder = {
       notes: resolvedContext?.notes,
       metadata: resolvedContext?.metadata,
       evidence: resolvedContext?.evidence,
-      signals: resolvedContext?.signals,
+      signals: {
+        ...resolvedContext?.signals,
+        interviewFindingsFormatted: formattedFindings,
+      },
       trust: resolvedContext?.trust,
       contextConflicts: resolvedContext?.conflicts,
       contextTimeline: resolvedContext?.timeline?.slice(0, 10),
@@ -1243,7 +1281,53 @@ export const AIContextBuilder = {
         [projectId]
       );
 
-      if (!financials?.initiative_count && !analysis) return null;
+      // V8 Finance module live data (org-scoped, not project-scoped)
+      let v8Finance: Record<string, unknown> | null = null;
+      try {
+        const stmtCount = await get(
+          `SELECT COUNT(*) as cnt FROM financial_statement_packs WHERE organization_id = ?`,
+          [organizationId]
+        );
+        const modelCount = await get(
+          `SELECT COUNT(*) as cnt FROM financial_model_versions WHERE organization_id = ?`,
+          [organizationId]
+        );
+        const activeRun: any = await get(
+          `SELECT run_id, current_step, kpi_linkage_status, degraded_json
+           FROM v8_finance_lane_runs
+           WHERE organization_id = ? AND (current_step != 'readback' OR readback_confirmed = 0)
+           ORDER BY created_at DESC LIMIT 1`,
+          [organizationId]
+        );
+        const latestVersion: any = await get(
+          `SELECT version_type, is_finalized, created_at FROM v8_finance_version_snapshots
+           WHERE organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+          [organizationId]
+        );
+        if ((stmtCount as any)?.cnt || (modelCount as any)?.cnt || activeRun) {
+          v8Finance = {
+            statementCount: (stmtCount as any)?.cnt || 0,
+            modelCount: (modelCount as any)?.cnt || 0,
+            activeLane: activeRun
+              ? {
+                  runId: activeRun.run_id,
+                  step: activeRun.current_step,
+                  kpiLinkage: activeRun.kpi_linkage_status,
+                  degradedCount: (() => {
+                    try { return JSON.parse(activeRun.degraded_json || '[]').length; } catch { return 0; }
+                  })(),
+                }
+              : null,
+            latestVersion: latestVersion
+              ? { type: latestVersion.version_type, finalized: !!latestVersion.is_finalized }
+              : null,
+          };
+        }
+      } catch {
+        // V8 Finance tables may not exist — non-blocking
+      }
+
+      if (!financials?.initiative_count && !analysis && !v8Finance) return null;
 
       return {
         portfolio: {
@@ -1269,6 +1353,7 @@ export const AIContextBuilder = {
           roi: s.roi_percentage,
           probability: s.probability,
         })),
+        v8Finance,
       };
     } catch (err: any) {
       logger.warn('[AIContextBuilder] Financial context failed:', err?.message);

@@ -17,11 +17,13 @@ export type TargetModule =
   | 'initiatives'
   | 'reports'
   | 'presentations'
+  | 'excele'
   | 'results'
   | 'assessment'
   | 'interview'
   | 'mywork'
-  | 'economics';
+  | 'economics'
+  | 'process_flow';
 
 export type TargetSurface = 'list' | 'detail' | 'wizard' | 'builder' | 'dashboard';
 
@@ -65,6 +67,10 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
     list: '/presentations',
     detail: (id) => `/presentations?deck=${encodeURIComponent(id)}`,
   },
+  excele: {
+    list: '/excele',
+    detail: (id) => `/excele?artifactId=${encodeURIComponent(id)}`,
+  },
   results: {
     list: '/benefits',
   },
@@ -81,7 +87,11 @@ const MODULE_ROUTES: Record<TargetModule, { list: string; detail?: (id: string) 
   },
   economics: {
     list: '/finance',
-    detail: (id) => `/finance?tab=valuation&open=${encodeURIComponent(id)}`,
+    detail: (id) => `/finance?open=${encodeURIComponent(id)}`,
+  },
+  process_flow: {
+    list: '/my-work',
+    detail: (id) => `/my-work?ideaId=${encodeURIComponent(id)}&tool=process_flow`,
   },
 };
 
@@ -91,11 +101,13 @@ const MODULE_KEYS: Record<TargetModule, string> = {
   initiatives: 'initiatives',
   reports: 'reports',
   presentations: 'presentations',
+  excele: 'excele',
   results: 'results',
   assessment: 'assessment',
   interview: 'interview',
   mywork: 'mywork',
   economics: 'economics',
+  process_flow: 'process_flow',
 };
 
 // OpenDocument types from openDocumentsStore
@@ -118,8 +130,11 @@ const ENTITY_TO_DOC_TYPE: Record<string, OpenDocType> = {
   interview: 'report', // interview sessions
   valuation: 'report',
   financial_model: 'report',
+  financial_statement: 'report',
+  financial_analysis: 'report',
   budget: 'report',
   analysis: 'report',
+  finance_lane_run: 'report',
 };
 
 // ---------------------------------------------------------------------------
@@ -141,6 +156,19 @@ function resolveRoute(action: NavigateAction): { route: string; fallbackRoute: s
   const surface = action.surface?.toLowerCase();
   const entityId = action.entityId?.trim();
   const entityType = (action.entityType || '').toLowerCase();
+
+  // Finance entity-type-specific deep links
+  if (action.targetModule === 'economics' && entityId && entityType) {
+    const financeRouteMap: Record<string, string> = {
+      financial_statement: `/finance/statements/${encodeURIComponent(entityId)}`,
+      financial_model: `/finance/models/${encodeURIComponent(entityId)}`,
+      financial_analysis: `/finance/analyses/${encodeURIComponent(entityId)}`,
+      valuation: `/finance?tab=valuation&open=${encodeURIComponent(entityId)}`,
+      budget: `/finance?tab=prediction&open=${encodeURIComponent(entityId)}`,
+    };
+    const finRoute = financeRouteMap[entityType];
+    if (finRoute) return { route: finRoute, fallbackRoute };
+  }
 
   // Entity detail: use detail route if we have entityId and module supports it
   if (entityId && config.detail) {

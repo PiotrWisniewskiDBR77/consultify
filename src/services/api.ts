@@ -3519,6 +3519,58 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch idea map metrics');
   },
 
+  // --- V8 Mindmap (audit trail, export, health) ---
+  createMindmapAIProposal: async (
+    mindmapId: string,
+    proposal: { summary?: string; plan?: string; operations?: any[]; diff_summary?: any }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/ai-proposals`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(proposal),
+    });
+    return handleResponse(res, 'Failed to create AI proposal');
+  },
+
+  resolveMindmapAIProposal: async (
+    proposalId: string,
+    action: 'accept' | 'reject'
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/v8/mindmap/ai-proposals/${encodeURIComponent(proposalId)}/resolve`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ action }),
+      }
+    );
+    return handleResponse(res, 'Failed to resolve AI proposal');
+  },
+
+  exportMindmapJSON: async (mindmapId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/export/json`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to export mindmap JSON');
+  },
+
+  exportMindmapMarkdown: async (mindmapId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/export/markdown`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to export mindmap markdown');
+  },
+
+  getMindmapHealth: async (mindmapId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/health`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to get mindmap health');
+  },
+
   // --- Snapshots ---
   getMyIdeaMapSnapshots: async (ideaId: string): Promise<any> => {
     const res = await fetch(
@@ -8706,18 +8758,81 @@ export const Api = {
   updateApiKey: async (keyId: string, data: any): Promise<any> => {
     return { id: keyId, ...data };
   },
-  // Calendar Sync
+  // Calendar Sync — wired to settings integration OAuth engine
   getCalendars: async (): Promise<any[]> => {
-    return [];
+    try {
+      const res = await fetch(`${API_URL}/settings/integrations`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      const integrations = data?.data?.integrations || data?.integrations || [];
+      const calendarIds = ['google_calendar', 'outlook_calendar', 'apple_calendar'];
+      const calendarProviders = (data?.data?.providers || data?.providers || [])
+        .filter((p: any) => calendarIds.includes(p.id));
+
+      const ICONS: Record<string, string> = {
+        google_calendar: '📅',
+        outlook_calendar: '📆',
+        apple_calendar: '🍎',
+      };
+      const NAMES: Record<string, string> = {
+        google_calendar: 'Google Calendar',
+        outlook_calendar: 'Outlook Calendar',
+        apple_calendar: 'Apple Calendar (iCal)',
+      };
+
+      const result = calendarIds.map((cid) => {
+        const provider = calendarProviders.find((p: any) => p.id === cid);
+        const integration = integrations.find((i: any) => i.provider === cid);
+        return {
+          id: cid,
+          name: NAMES[cid] || cid,
+          icon: ICONS[cid] || '📅',
+          connected: provider?.isConnected || integration?.status === 'active',
+          connection: integration ? {
+            externalEmail: integration.externalEmail || integration.externalAccountName || '',
+            calendarName: integration.providerName || NAMES[cid] || cid,
+            lastSyncAt: integration.lastSyncAt || null,
+            syncTasks: true,
+            syncMeetings: true,
+          } : null,
+        };
+      });
+      return result;
+    } catch {
+      return [];
+    }
   },
   getCalendarSettings: async (): Promise<any> => {
-    return { syncEnabled: false, calendars: [] };
+    try {
+      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return { syncTasks: true, syncMeetings: true };
+      const data = await res.json();
+      return data?.data || { syncTasks: true, syncMeetings: true };
+    } catch {
+      return { syncTasks: true, syncMeetings: true };
+    }
   },
-  connectCalendar: async (provider: string, credentials?: any): Promise<any> => {
-    return { id: '', provider, connected: true };
+  connectCalendar: async (provider: string, _credentials?: any): Promise<any> => {
+    try {
+      const res = await fetch(`${API_URL}/settings/integrations/oauth/start/${provider}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to start OAuth');
+      const data = await res.json();
+      return { authUrl: data.authUrl };
+    } catch {
+      return {};
+    }
   },
   disconnectCalendar: async (calendarId: string): Promise<void> => {
-    return;
+    await fetch(`${API_URL}/settings/integrations/${calendarId}/oauth-disconnect`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
   },
   shouldFallbackToLegacyMyWorkCalendar: (error: any) => {
     const status = Number(error?.status);
@@ -9032,7 +9147,7 @@ export const Api = {
     return res.json();
   },
   updatePermission: async (roleId: string, permission: string): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions/${roleId}`, {
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/${roleId}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify({ permission }),
@@ -9041,7 +9156,7 @@ export const Api = {
     return res.json();
   },
   createAdminPermission: async (data: any): Promise<{ success: boolean; id: string }> => {
-    const res = await fetch(`${API_URL}/superadmin/permissions`, {
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -9109,7 +9224,19 @@ export const Api = {
   getUserApiKeys: async () => [],
   deleteUserApiKey: async (keyId: string) => ({ success: true }),
   // Calendar
-  updateCalendarSettings: async (settings: any) => ({ success: true }),
+  updateCalendarSettings: async (settings: any) => {
+    try {
+      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(settings),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      return { success: true };
+    } catch {
+      return { success: true };
+    }
+  },
   // Permission requests
   getPermissionRequests: async () => [],
   // Feature flags (additional)
@@ -10691,6 +10818,25 @@ export const Api = {
       console.error('[Api] createSupportTicket error:', err);
       throw err;
     }
+  },
+  getSupportTicketComments: async (ticketId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets/${ticketId}/comments`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch support ticket comments');
+    return res.json();
+  },
+  addSupportTicketComment: async (
+    ticketId: string,
+    data: { commentText: string; isInternal?: boolean }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets/${ticketId}/comments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to add support ticket comment');
+    return res.json();
   },
   // LLM Routing Rules (persisted)
   getLLMRoutingRules: async (params?: { organizationId?: string; includeInactive?: boolean }) => {

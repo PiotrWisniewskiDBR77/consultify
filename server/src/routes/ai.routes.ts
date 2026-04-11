@@ -2723,6 +2723,55 @@ router.post(
       }
 
       // --------------------------------------------------------
+      // Notebook RAG: inject relevant notes when user is on Notebook tab
+      // --------------------------------------------------------
+      const wsCtx = (context as any)?.workspaceContext;
+      if (
+        wsCtx?.type === 'notebook' &&
+        req.organizationId &&
+        message &&
+        message.trim().length > 0
+      ) {
+        try {
+          const nbSearchMod = await import('../services/v8/notebookSearchService.js');
+          const nbSearch = (nbSearchMod.default || nbSearchMod) as any;
+          const searchFn = nbSearch.searchNotebook || nbSearch.default?.searchNotebook;
+          if (searchFn) {
+            const results = await searchFn(
+              req.organizationId,
+              (req as any).userId || '',
+              { q: message.slice(0, 300), limit: 5 } as any
+            );
+            const notes = Array.isArray(results?.results) ? results.results : [];
+            if (notes.length > 0) {
+              const notesText = notes
+                .slice(0, 5)
+                .map(
+                  (n: any, i: number) =>
+                    `[N${i + 1}] ${String(n.title || 'Untitled')}\n${String(n.snippet || '').slice(0, 500)}`
+                )
+                .join('\n\n');
+
+              pipelineRequest = {
+                ...pipelineRequest,
+                options: {
+                  ...(pipelineRequest.options || {}),
+                  systemInstruction:
+                    String((pipelineRequest.options as any)?.systemInstruction || '') +
+                    `\n\n## NOTEBOOK CONTEXT (relevant notes from user's Notebook)\n${notesText}\n\nRules:\n- The user is currently working in their Notebook. The above notes are relevant to their query.\n- Reference these notes when helpful, citing as [N1], [N2], etc.\n- You can suggest editing, expanding, or connecting these notes.\n`,
+                },
+              } as any;
+            }
+          }
+        } catch (err: any) {
+          logger.warn(
+            '[AI Stream] Notebook RAG failed, continuing without it:',
+            err?.message || String(err)
+          );
+        }
+      }
+
+      // --------------------------------------------------------
       // Deep Thinking orchestration (standalone, composable)
       // --------------------------------------------------------
       // NOTE: `aiModes.deepResearch` is used as the Deep Thinking toggle in the client (ToolsMenu).

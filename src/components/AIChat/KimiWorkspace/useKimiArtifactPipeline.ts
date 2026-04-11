@@ -30,6 +30,7 @@ import {
 } from '@/hooks/useV8Execution';
 import { Api } from '@/services/api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { downloadSheetArtifactXlsx } from '@/utils/sheetArtifactOpen';
 
@@ -273,6 +274,7 @@ export interface KimiPipelineState {
   isGenerating: boolean;
   isCompleted: boolean;
   isFailed: boolean;
+  failureReason: string | null;
   preview: ArtifactPreview | null;
   currentRun: ArtifactRunRecord | null;
   isBusy: boolean;
@@ -287,6 +289,8 @@ export interface KimiPipelineState {
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const { activeConversationId } = useConversationStore();
   const conversationId = activeConversationId;
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const currentProjectId = useAppStore((s) => s.currentProjectId);
 
   const outputType: ArtifactPlanOutputType =
     lane === 'wordy' ? 'report' : lane === 'excele' ? 'sheet' : 'presentation';
@@ -447,7 +451,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         const reportId = origin.originRecordId;
         Api.post(`/report-builder/${reportId}/generate`, { regenerateAll: false })
           .then(() => {
-            const pdfUrl = `/api/report-builder/reports/${reportId}/export/pdf`;
+            const pdfUrl = `/api/report-builder/${reportId}/export/pdf`;
             setPreview({
               type: 'pdf',
               title,
@@ -460,7 +464,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             setPreview({
               type: 'pdf',
               title,
-              url: `/api/report-builder/reports/${reportId}/export/pdf`,
+              url: `/api/report-builder/${reportId}/export/pdf`,
               fileName: `${title.replace(/\s+/g, '_')}.pdf`,
             });
             setContentGenerated(true);
@@ -587,17 +591,61 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       try {
         let snapshotId = latestSnapshot?.snapshotId;
         if (!snapshotId) {
+          // Fetch recent user artifacts to include as context refs for AI awareness
+          let artifactRefs: Array<{
+            artifactId: string;
+            artifactType: string;
+            artifactModule: string;
+            relationship: string;
+          }> = [];
+          try {
+            const recentArtifacts = await Api.get('/artifacts', { params: { limit: 5 } });
+            const items = Array.isArray(recentArtifacts)
+              ? recentArtifacts
+              : (recentArtifacts as any)?.data || [];
+            artifactRefs = items.slice(0, 5).map((a: any) => ({
+              artifactId: a.artifactId || a.artifact_id,
+              artifactType: a.outputType || a.output_type || 'report',
+              artifactModule: 'outputs_library',
+              relationship: 'reference' as const,
+            }));
+          } catch {
+            // Non-critical; proceed with empty refs
+          }
+
+          const sourceContextRefs: Array<{
+            sourceId: string;
+            scopeType: string;
+            sourceKind: string;
+            freshnessAt: string | null;
+          }> = [];
+          if (currentOrganization?.id) {
+            sourceContextRefs.push({
+              sourceId: currentOrganization.id,
+              scopeType: 'organization',
+              sourceKind: 'organization_profile',
+              freshnessAt: new Date().toISOString(),
+            });
+          }
+          if (currentProjectId) {
+            sourceContextRefs.push({
+              sourceId: currentProjectId,
+              scopeType: 'organization',
+              sourceKind: 'project',
+              freshnessAt: new Date().toISOString(),
+            });
+          }
           const snap = await captureSnapshot.mutateAsync({
             workspaceId: conversationId,
-            projectId: null,
+            projectId: currentProjectId || null,
             conversationId,
             executionRunId: null,
-            artifactRefs: [],
+            artifactRefs,
             effectiveScopeRef: 'workspace',
             resolvedRoleRef: 'member',
             consumerClass: 'chat',
             privacyMode: false,
-            sourceContextRefs: [],
+            sourceContextRefs,
           });
           snapshotId = (snap as { snapshotId?: string })?.snapshotId;
         }
@@ -731,7 +779,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
     if (lane === 'wordy' && currentRun.materializationOrigin?.originRecordId) {
       const reportId = currentRun.materializationOrigin.originRecordId;
-      window.open(`/api/report-builder/reports/${reportId}/export/docx`, '_blank');
+      window.open(`/api/report-builder/${reportId}/export/docx`, '_blank');
       return;
     }
 
@@ -744,6 +792,31 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     toast.error('No artifact available for download yet');
   }, [currentRun, lane]);
 
+  const failureReason = isFailed
+    ? (currentRun as any)?.failureReason ?? (currentRun as any)?.failurePackage?.message ?? null
+    : null;
+
+  const myWorkNotified = useRef(false);
+  useEffect(() => {
+    if (!isCompleted || myWorkNotified.current || !currentRun) return;
+    myWorkNotified.current = true;
+
+    const origin = currentRun.materializationOrigin;
+    const artifactPath = origin?.originRecordId
+      ? `/${lane === 'wordy' ? 'wordy' : lane === 'prezentacje' ? 'prezentacje' : 'excele'}?artifactId=${origin.originRecordId}`
+      : null;
+
+    Api.post('/mywork/items', {
+      type: 'artifact_completion',
+      title: currentRun.plan?.titleHint || 'Artifact completed',
+      description: `${lane} pipeline completed`,
+      linkPath: artifactPath,
+      artifactRunId: currentRun.runId,
+    }).catch(() => {
+      // Non-critical; My Work notification is best-effort
+    });
+  }, [isCompleted, currentRun, lane]);
+
   return {
     taskSteps,
     totalSteps: PIPELINE_STEPS.length,
@@ -751,6 +824,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     isGenerating,
     isCompleted,
     isFailed,
+    failureReason,
     preview,
     currentRun,
     isBusy,

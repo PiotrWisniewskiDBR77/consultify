@@ -187,6 +187,11 @@ const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
     '  • When the user describes a problem, default to Builder mode and propose an initial structure.',
     '  • When the user asks "why", "what if", or "am I missing", switch to Expert mode.',
     '  • Reference the active system (mind map, whiteboard, process flow, table) when relevant.',
+    '  • When proposing structural changes to the mindmap, you may include a JSON proposal block:',
+    '    ```mindmap-proposal',
+    '    {"addNodes":[{"label":"Node A","parentId":"root"}],"removeNodeIds":[],"renameNodes":[]}',
+    '    ```',
+    '  • The proposal block will be detected and sent to the mindmap for preview/accept/reject.',
   ].join('\n'),
   notebook:
     'You are a knowledge companion. Help the user develop ideas, structure notes, extract insights, and connect concepts. Be thoughtful and build on existing content.',
@@ -537,6 +542,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setChatKickoffMessage,
     isChatCollapsed,
     toggleChatCollapse,
+    setMyWorkBreadcrumbs,
   } = useAppStore();
 
   const lazyFallback = (
@@ -575,6 +581,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
   const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [ideaLocked, setIdeaLocked] = useState(true);
+  const [ideaGraphSummary, setIdeaGraphSummary] = useState<string | null>(null);
+  const [ideaTableContext, setIdeaTableContext] = useState<Record<string, unknown> | null>(null);
   const [ideaWorkspaceStateById, setIdeaWorkspaceStateById] = useState<
     Record<string, IdeaWorkspaceHubState>
   >({});
@@ -741,20 +749,27 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           : activeTab === 'calendar'
             ? 'general'
             : activeTab === 'notebook'
-              ? 'document'
+              ? 'notebook'
               : activeTab === 'manager'
                 ? 'dashboard'
                 : 'general';
 
+    const notebookEntityId = activeTab === 'notebook' ? notebookOpenPageId : null;
+
     const ctx = createWorkspaceContext(AppView.MY_WORK, typeFromActiveDoc || typeFromTab, {
       projectId: currentProjectId || undefined,
-      entityId: activeDoc?.id || undefined,
+      entityId: activeDoc?.id || notebookEntityId || undefined,
       entityName: activeDoc?.name || undefined,
       entityData: {
         module: 'my_work',
         tab: activeTab,
-        open: activeDoc ? { type: activeDoc.type, id: activeDoc.id } : null,
+        open: activeDoc
+          ? { type: activeDoc.type, id: activeDoc.id }
+          : notebookEntityId
+            ? { type: 'notebook', id: notebookEntityId }
+            : null,
         url: `${location.pathname}${location.search || ''}`,
+        ...(ideaTableContext ? { tableContext: ideaTableContext } : {}),
       },
     });
 
@@ -764,6 +779,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     activeDocumentId,
     openDocuments,
     currentProjectId,
+    notebookOpenPageId,
+    ideaTableContext,
     location.pathname,
     location.search,
     setWorkspaceContext,
@@ -965,6 +982,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           `Selection: ${activeIdeaWorkspaceState.selection.count} ${activeIdeaWorkspaceState.selection.type}(s) selected`
         );
       }
+      if (ideaGraphSummary) {
+        wsCtx.push(`Graph state: ${ideaGraphSummary}`);
+      }
       prompt += `\n\nWorkspace context:\n${wsCtx.join('\n')}`;
     }
 
@@ -973,12 +993,37 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [
     activeTab,
     activeIdeaWorkspaceState,
+    ideaGraphSummary,
     contextSummary,
     activeIdeaToolLabel,
     setChatSystemPrompt,
     setChatQuickPrompts,
     activeIdeaDoc,
   ]);
+
+  // Update breadcrumbs for the app topbar
+  useEffect(() => {
+    const TAB_LABELS: Record<ModuleTab, string> = {
+      home: isPolish ? 'Start' : 'Home',
+      ideas: isPolish ? 'Pomysły' : 'Ideas',
+      notebook: isPolish ? 'Notatnik' : 'Notebook',
+      inbox: isPolish ? 'Skrzynka' : 'Inbox',
+      calendar: isPolish ? 'Kalendarz' : 'Calendar',
+      tasks: isPolish ? 'Zadania' : 'Tasks',
+      decisions: isPolish ? 'Decyzje' : 'Decisions',
+      manager: isPolish ? 'Menedżer' : 'Manager',
+    };
+    const base = isPolish ? 'Moja praca' : 'My Work';
+    const tabLabel = TAB_LABELS[activeTab] || activeTab;
+    const crumbs = [base, tabLabel];
+
+    if (activeIdeaDoc && activeTab === 'ideas') {
+      crumbs.push(activeIdeaDoc.name || (isPolish ? 'Pomysł' : 'Idea'));
+      if (activeIdeaToolLabel) crumbs.push(activeIdeaToolLabel);
+    }
+    setMyWorkBreadcrumbs(crumbs);
+    return () => setMyWorkBreadcrumbs(null);
+  }, [activeTab, activeIdeaDoc, activeIdeaToolLabel, isPolish, setMyWorkBreadcrumbs]);
 
   // Deep link support: header dropdown → open inside My Work
   useEffect(() => {
@@ -2748,6 +2793,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               onActivePanelChange={handleIdeaPanelChange}
               onSelectionChange={handleIdeaSelectionChange}
               onLockedChange={handleIdeaLockedChange}
+              onGraphSummaryChange={setIdeaGraphSummary}
+              onTableContextChange={setIdeaTableContext}
             />
           </React.Suspense>
         );
@@ -3362,6 +3409,23 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               >
                 {actionButton.icon}
                 <span>{actionButton.label}</span>
+              </button>
+            )}
+
+            {/* Area AI Context Button — opens/closes the side chat panel with module context */}
+            {activeTab === 'ideas' && activeDocumentId && (
+              <button
+                onClick={() => toggleChatCollapse()}
+                className={`inline-flex items-center justify-center h-9 w-9 rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
+                  !isChatCollapsed
+                    ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                    : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                }`}
+                title={isPolish ? 'AI Kontekst' : 'AI Context'}
+                aria-label={isPolish ? 'AI Kontekst' : 'AI Context'}
+                data-testid="mywork-area-ai-button"
+              >
+                <Sparkles size={16} />
               </button>
             )}
           </div>

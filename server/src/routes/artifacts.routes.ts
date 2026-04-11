@@ -5,12 +5,14 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
 import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
+import activityService from '../services/ActivityService.js';
 import * as organizationService from '../services/organizationService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as executionSpineService from '../services/v8/executionSpineService.js';
 import * as publishReviewService from '../services/v8/publishReviewService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -527,6 +529,26 @@ router.post(
         reviewers,
       });
 
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'start_review',
+        resourceType: 'artifact',
+        resourceId: artifact.artifactId,
+        after: { reviewers, publishState: started?.publishState || 'reviewable_share' },
+      });
+
+      activityService.log({
+        organizationId,
+        userId,
+        action: 'artifact_review_started',
+        entityType: 'artifact',
+        entityId: artifact.artifactId,
+        entityName: artifact.title || artifact.artifactId,
+        metadata: { reviewers, artifactFamily: artifact.artifactFamily },
+      }).catch((err) => {
+        logger.warn('[artifacts] Failed to log review activity', { error: err });
+      });
+
       return res.status(200).json({ data: started });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not start artifact review';
@@ -834,7 +856,128 @@ router.post(
       validationState: 'validated',
     });
 
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'publish',
+      resourceType: 'artifact',
+      resourceId: artifactId,
+      after: { publishState: current.currentState, reviewType },
+    });
+
     res.status(200).json({ data: { publishRecord: current, gate } });
+  })
+);
+
+/**
+ * POST /api/artifacts/:id/deprecate
+ * Marks a template artifact as deprecated with an optional migrationHint (P24 contract §2.3.3).
+ * Deprecated templates remain browsable (read-only) but are excluded from selection by default.
+ */
+router.post(
+  '/:id/deprecate',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, roleKey } = getAuthContext(req);
+    const artifactId = String(req.params.id || '');
+    const deprecationReason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    const migrationHint = typeof req.body?.migrationHint === 'string' ? req.body.migrationHint.trim() : null;
+    const replacedByArtifactId = typeof req.body?.replacedByArtifactId === 'string' ? req.body.replacedByArtifactId.trim() : null;
+
+    if (!canPublishOrgTemplate(roleKey)) {
+      return res.status(403).json({ error: 'Only admins/owners can deprecate templates' });
+    }
+
+    const artifact = await artifactRegistryService.getArtifactForUser({
+      organizationId,
+      artifactId,
+      userId,
+      roleKey,
+    });
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
+    if (artifact.artifactFamily !== 'template') {
+      return res.status(409).json({ error: 'Only template artifacts can be deprecated via this endpoint' });
+    }
+
+    const now = new Date().toISOString();
+    const row = await dbGet<{ origin_summary_json: string | null }>(
+      `SELECT origin_summary_json FROM v8_output_artifacts
+       WHERE artifact_id = ? AND organization_id = ?`,
+      [artifactId, organizationId]
+    );
+    let summary: Record<string, unknown> | null = null;
+    try {
+      summary = row?.origin_summary_json ? (JSON.parse(row.origin_summary_json) as any) : null;
+    } catch {
+      summary = null;
+    }
+
+    const nextSummary = summary && typeof summary === 'object' ? { ...summary } : {};
+    const template = (nextSummary as any).template && typeof (nextSummary as any).template === 'object'
+      ? { ...(nextSummary as any).template }
+      : {};
+    template.status = 'deprecated';
+    template.deprecationReason = deprecationReason || null;
+    template.migrationHint = migrationHint;
+    template.replacedByArtifactId = replacedByArtifactId;
+    template.metadata = {
+      ...(template.metadata && typeof template.metadata === 'object' ? template.metadata : {}),
+      deprecatedBy: userId,
+      deprecatedAt: now,
+      updatedAt: now,
+    };
+    (nextSummary as any).template = template;
+
+    await dbRun(
+      `UPDATE v8_output_artifacts
+       SET origin_summary_json = ?,
+           last_transition_at = ?
+       WHERE artifact_id = ? AND organization_id = ?`,
+      [JSON.stringify(nextSummary), now, artifactId, organizationId]
+    );
+
+    if (process.env.V8_TEMPLATES_EXECUTION_SPINE_ENABLED === 'true') {
+      try {
+        await executionSpineService.createRun({
+          organizationId,
+          artifactId,
+          agentType: 'template_deprecation',
+          userId,
+          goalDescription: `Deprecate template: ${deprecationReason || 'no reason'}`,
+        });
+      } catch {
+        // Non-fatal: spine integration is supplementary
+      }
+    }
+
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'deprecate',
+      resourceType: 'artifact',
+      resourceId: artifactId,
+      after: { status: 'deprecated', deprecationReason: deprecationReason || null, migrationHint, replacedByArtifactId },
+    });
+
+    res.status(200).json({
+      data: {
+        artifactId,
+        status: 'deprecated',
+        deprecationReason: deprecationReason || null,
+        migrationHint,
+        replacedByArtifactId,
+      },
+    });
+  })
+);
+
+router.get(
+  '/:id/usage-count',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const artifactId = String(req.params.id || '');
+    const count = await artifactRegistryService.countTemplateUsage(artifactId, organizationId);
+    res.json({ data: { artifactId, usageCount: count } });
   })
 );
 

@@ -12,6 +12,13 @@ import {
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
 } from '../execution-control.routes.js';
 
+vi.mock('googleapis', () => ({
+  google: {
+    auth: { OAuth2: class {} },
+    calendar: () => ({}),
+  },
+}));
+
 const mockDetectRiskSignals = vi.fn();
 const mockGetTimelineWarningsSnapshot = vi.fn();
 const mockDetectDelaySignals = vi.fn();

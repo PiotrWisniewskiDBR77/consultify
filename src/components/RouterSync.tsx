@@ -100,6 +100,15 @@ export const RouterSync: React.FC = () => {
       navigate(`/interview?${nextParams.toString()}`, { replace: true });
       return;
     }
+
+    if (type === 'notebook') {
+      setMyWorkIntent({
+        tab: 'notebook' as any,
+        open: { type: 'notebook', id },
+      });
+      navigate(`/my-work?${nextParams.toString()}`, { replace: true });
+      return;
+    }
   }, [searchParams, navigate, setMyWorkIntent]);
 
   // 1. Attribution Capture

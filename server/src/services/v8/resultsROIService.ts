@@ -52,6 +52,8 @@ import {
 } from '../../types/resultsROIContinuity.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { eventBus } from '../event/EventBus.js';
+import { send as sendNotification } from '../notificationService.js';
 
 // ==========================================
 // HELPERS
@@ -580,6 +582,44 @@ export async function initiateReconciliation(
   logger.info(
     `${LOG_PREFIX} Initiated reconciliation ${reconciliationId} for KPI ${reconciliation.kpiId} by ${reconciliation.initiatedBy}`
   );
+
+  eventBus.publish('kpi.reconciliation_initiated', {
+    organizationId: reconciliation.organizationId,
+    kpiId: reconciliation.kpiId,
+    reconciliationId,
+    financeRef: reconciliation.financeRef,
+    initiatedBy: reconciliation.initiatedBy,
+  });
+
+  try {
+    const kpiRow = await dbGet<{ name?: string }>(
+      `SELECT name FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
+      [reconciliation.kpiId, reconciliation.organizationId],
+      { fallback: true }
+    );
+    const orgMembers: Array<{ user_id: string }> = await dbAll(
+      `SELECT user_id FROM organization_members WHERE organization_id = ? AND role IN ('owner', 'admin') LIMIT 5`,
+      [reconciliation.organizationId],
+      { fallback: true }
+    ) || [];
+    for (const member of orgMembers) {
+      if (member.user_id === reconciliation.initiatedBy) continue;
+      sendNotification({
+        userId: member.user_id,
+        organizationId: reconciliation.organizationId,
+        type: 'KPI_RECONCILIATION_INITIATED',
+        title: `Reconciliation Needed: ${kpiRow?.name || reconciliation.kpiId}`,
+        body: `A KPI-Finance reconciliation has been initiated and requires review.`,
+        severity: 'WARNING',
+        entityType: 'kpi',
+        entityId: reconciliation.kpiId,
+        actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+      }).catch(() => {});
+    }
+  } catch {
+    // non-blocking
+  }
+
   return reconciliation;
 }
 
@@ -622,6 +662,28 @@ export async function resolveReconciliation(
   updated.updatedAt = now;
 
   logger.info(`${LOG_PREFIX} Reconciliation ${reconciliationId} resolved to ${newStatus}`);
+
+  eventBus.publish('kpi.reconciliation_resolved', {
+    organizationId,
+    reconciliationId,
+    kpiId: updated.kpiId,
+    newStatus,
+  });
+
+  if (updated.initiatedBy) {
+    sendNotification({
+      userId: updated.initiatedBy,
+      organizationId,
+      type: 'KPI_RECONCILIATION_RESOLVED',
+      title: `Reconciliation Resolved`,
+      body: `KPI-Finance reconciliation resolved with status: ${newStatus}`,
+      severity: 'INFO',
+      entityType: 'kpi',
+      entityId: updated.kpiId,
+      actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+    }).catch((err: any) => logger.debug(`${LOG_PREFIX} Reconciliation resolved notification failed: ${err?.message}`));
+  }
+
   return updated;
 }
 
@@ -2027,6 +2089,38 @@ export async function createKpiSignal(params: {
   logger.info(
     `${LOG_PREFIX} Created KPI signal ${signalId} type=${params.signalType} for KPI ${params.kpiId}`
   );
+
+  eventBus.publish('kpi.signal_created', {
+    organizationId: params.organizationId,
+    kpiId: params.kpiId,
+    signalId,
+    signalType: params.signalType,
+    severity: params.severity,
+  });
+
+  try {
+    const kpiRow = await dbGet<{ owner_user_id?: string; name?: string }>(
+      `SELECT owner_user_id, name FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
+      [params.kpiId, params.organizationId],
+      { fallback: true }
+    );
+    if (kpiRow?.owner_user_id) {
+      sendNotification({
+        userId: kpiRow.owner_user_id,
+        organizationId: params.organizationId,
+        type: 'KPI_SIGNAL_DETECTED',
+        title: `KPI Signal: ${kpiRow.name || params.kpiId}`,
+        body: params.description || `${params.signalType} signal detected (${params.severity})`,
+        severity: params.severity === 'RED' ? 'CRITICAL' : 'WARNING',
+        entityType: 'kpi',
+        entityId: params.kpiId,
+        actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+      }).catch((err: any) => logger.debug(`${LOG_PREFIX} Signal notification failed: ${err?.message}`));
+    }
+  } catch {
+    // non-blocking
+  }
+
   return signal;
 }
 
@@ -2144,6 +2238,30 @@ export async function createKpiNextAction(params: {
   );
 
   logger.info(`${LOG_PREFIX} Created next action ${actionId} for signal ${params.signalId}`);
+
+  eventBus.publish('kpi.next_action_created', {
+    organizationId: params.organizationId,
+    kpiId: params.kpiId,
+    signalId: params.signalId,
+    actionId,
+    actionType: params.actionType,
+    assignedTo: params.assignedTo || null,
+  });
+
+  if (params.assignedTo) {
+    sendNotification({
+      userId: params.assignedTo,
+      organizationId: params.organizationId,
+      type: 'KPI_NEXT_ACTION_ASSIGNED',
+      title: `KPI Action Assigned`,
+      body: params.description || `New ${params.actionType} action for KPI`,
+      severity: 'INFO',
+      entityType: 'kpi',
+      entityId: params.kpiId,
+      actionUrl: `/benefits?tab=results_kpi&mode=queue`,
+    }).catch((err: any) => logger.debug(`${LOG_PREFIX} Next action notification failed: ${err?.message}`));
+  }
+
   return action;
 }
 
@@ -2194,13 +2312,8 @@ export async function completeKpiNextAction(actionId: string, organizationId: st
   );
 }
 
-export const KpiWorkflowDegradedReasonValues = [
-  'missing_data',
-  'discrepancy_unresolved',
-  'linkage_unavailable',
-  'permission_denied',
-] as const;
-export type KpiWorkflowDegradedReason = (typeof KpiWorkflowDegradedReasonValues)[number];
+export { KPI_WORKFLOW_DEGRADED_REASONS as KpiWorkflowDegradedReasonValues } from './kpiWorkflowCanon.js';
+export type { KpiWorkflowDegradedReason } from './kpiWorkflowCanon.js';
 
 export interface KpiWorkflowStatus {
   kpiId: string;

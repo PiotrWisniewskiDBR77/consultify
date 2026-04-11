@@ -51,6 +51,7 @@ import * as artifactRegistryService from '../services/v8/artifactRegistryService
 import { getActiveRoomsByOrg, getRoomHealth } from '../services/v8/collaborationRoomService.js';
 import { rollupSignals } from '../services/v8/executionVisibilityService.js';
 import { getPendingDecisions } from '../services/v8/planningContinuityService.js';
+import * as pfService from '../services/v8/processFlowService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -6611,6 +6612,17 @@ router.post(
       ? summary.nextSteps.map((s: any) => String(s || '').trim()).filter(Boolean)
       : [];
 
+    const activeTool = typeof options?.activeTool === 'string' ? options.activeTool : null;
+    let processFlowReadback = '';
+    if (activeTool === 'process_flow') {
+      try {
+        const readbackResult = await pfService.semanticReadback(ideaId, orgId);
+        processFlowReadback = typeof readbackResult === 'string' ? readbackResult : (readbackResult as any)?.text || '';
+      } catch {
+        /* best-effort: readback unavailable */
+      }
+    }
+
     const promote = async (promotedTo: string, promotedEntityId: string | null) => {
       await queryHelpers.queryRun(
         `UPDATE my_ideas
@@ -6655,7 +6667,11 @@ router.post(
       add('name', safeTitle.slice(0, 255));
 
       // V51-15: When nodeIds provided, enrich summary with selected node labels
+      // P14 integration: prepend process flow readback when converting from PF
       let initSummary = (safeExpansion || safeBody).slice(0, 5000) || null;
+      if (processFlowReadback) {
+        initSummary = `## Process Flow\n${processFlowReadback}\n\n${initSummary || ''}`.slice(0, 5000);
+      }
       if (nodeIds.length > 0) {
         try {
           const mapRow = await queryHelpers.queryOne<any>(
@@ -6947,6 +6963,7 @@ router.post(
       add(
         'description',
         [
+          processFlowReadback ? `## Process Flow\n${processFlowReadback}` : null,
           safeBody ? `Idea:\n${safeBody}` : null,
           safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
         ]
@@ -8380,7 +8397,7 @@ router.put(
 
 /**
  * POST /api/my-work/notebook/pages/:id/convert
- * Convert a notebook page to a task, decision, initiative, report, or presentation.
+ * Legacy endpoint — delegates to V8 notebookConversionService (single source of truth).
  */
 router.post(
   '/notebook/pages/:id/convert',
@@ -8402,380 +8419,39 @@ router.post(
         .json({ error: 'target must be task|decision|initiative|report|presentation|assessment' });
     }
 
-    const page = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id, project_id, title, content_text, tags_json, converted_to_json
-       FROM notebook_pages WHERE id = ? LIMIT 1`,
-      [pageId]
-    );
-    if (!page) return res.status(404).json({ error: 'Not found' });
-    if (String(page.organization_id || '') !== String(orgId))
-      return res.status(403).json({ error: 'Forbidden' });
-    if (String(page.owner_user_id || '') !== String(userId))
-      return res.status(403).json({ error: 'Owner-only' });
-
-    const overrideTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
-    const overrideDesc = typeof req.body?.description === 'string' ? req.body.description : '';
-    const entityTitle = overrideTitle || page.title || 'Untitled';
-    const entityDesc = overrideDesc || (page.content_text || '').slice(0, 2000);
-    const newId = uuidv4();
-    let createdEntity: {
-      id: string;
-      type: string;
-      title: string;
-      sourceSessionId?: string;
-    } | null = null;
-
-    if (target === 'task') {
-      const cols = await getTableColumns('tasks');
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [newId];
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-      add('organization_id', orgId);
-      add('title', entityTitle);
-      add('description', entityDesc);
-      add('status', 'todo');
-      add('priority', 'medium');
-      add('assignee_id', userId);
-      add('reporter_id', userId);
-      add('tags', page.tags_json || '[]');
-      add('task_type', 'personal');
-      add('source_type', 'notebook');
-      add('source_id', pageId);
-      await queryHelpers.queryRun(
-        `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-      createdEntity = { id: newId, type: 'task', title: entityTitle };
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'task',
-        sourceId: newId,
-        targetType: 'notebook',
-        targetId: pageId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: pageId,
-      });
-    } else if (target === 'decision') {
-      const cols = await getTableColumns('decisions');
-      if (cols.size > 0) {
-        const insertCols: string[] = ['id'];
-        const insertVals: string[] = ['?'];
-        const insertParams: any[] = [newId];
-        const add = (col: string, val: any) => {
-          if (!cols.has(col)) return;
-          insertCols.push(col);
-          insertVals.push('?');
-          insertParams.push(val);
-        };
-        add('organization_id', orgId);
-        add('title', entityTitle);
-        add('description', entityDesc);
-        add('status', 'pending');
-        add('decision_maker_id', userId);
-        add('created_by', userId);
-        add('priority', 'medium');
-        add('source_type', 'notebook');
-        add('source_id', pageId);
-        await queryHelpers.queryRun(
-          `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-          insertParams
-        );
-      }
-      createdEntity = { id: newId, type: 'decision', title: entityTitle };
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'decision',
-        sourceId: newId,
-        targetType: 'notebook',
-        targetId: pageId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: pageId,
-      });
-    } else if (target === 'initiative') {
-      if (!(await requireTables(res, ['initiatives', 'tool_sessions']))) return;
-      const cols = await getTableColumns('initiatives');
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'notebook',
-        sourceId: pageId,
-        title: entityTitle,
-        summary: entityDesc,
-      });
-      // V3-A01: Traceability guard
-      if (!toolSessionId) {
-        return res
-          .status(500)
-          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
-      }
-
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [newId];
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-
-      add('organization_id', orgId);
-      add('name', entityTitle.slice(0, 255));
-      add('title', entityTitle.slice(0, 255));
-      add('summary', entityDesc.slice(0, 5000));
-      add('description', entityDesc.slice(0, 5000));
-      add('status', 'DRAFT');
-      add('owner_execution_id', userId);
-      add('owner_business_id', userId);
-      add('sponsor_id', userId);
-      add('source_type', 'tool');
-      add('source_id', toolSessionId);
-
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-      createdEntity = {
-        id: newId,
-        type: 'initiative',
-        title: entityTitle,
-        sourceSessionId: toolSessionId,
-      };
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'initiative',
-        sourceId: newId,
-        targetType: 'notebook',
-        targetId: pageId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'initiative',
-        sourceId: newId,
-        targetType: 'tool_session',
-        targetId: toolSessionId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-    } else if (target === 'assessment') {
-      if (!(await requireTables(res, ['assessments']))) return;
-      const cols = await getTableColumns('assessments');
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [newId];
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-
-      add('organization_id', orgId);
-      add('project_id', page.project_id || null);
-      add('assessment_type', String(req.body?.assessmentType || 'DRD').toUpperCase());
-      add('name', entityTitle.slice(0, 255));
-      add('description', entityDesc.slice(0, 5000));
-      add('status', 'DRAFT');
-      add('created_by', userId);
-      add('updated_by', userId);
-      add('source_type', 'notebook');
-      add('source_id', pageId);
-
-      await queryHelpers.queryRun(
-        `INSERT INTO assessments (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-
-      createdEntity = { id: newId, type: 'assessment', title: entityTitle };
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'assessment',
-        sourceId: newId,
-        targetType: 'notebook_page',
-        targetId: pageId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: pageId,
-      });
-    } else if (target === 'report') {
-      if (!(await requireTables(res, ['tool_sessions']))) return;
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'notebook',
-        sourceId: pageId,
-        title: entityTitle,
-        summary: entityDesc,
-      });
-      // V3-A01: Traceability guard
-      if (!toolSessionId) {
-        return res
-          .status(500)
-          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
-      }
-
-      const reportBuilderService = await import('../services/reportBuilderService.js');
-      const v3Params: Record<string, any> = {};
-      if (req.body.reportTypeV3) v3Params.reportTypeV3 = req.body.reportTypeV3;
-      if (req.body.goalV3) v3Params.goalV3 = req.body.goalV3;
-      if (req.body.communicationRegister)
-        v3Params.communicationRegister = req.body.communicationRegister;
-      if (req.body.density) v3Params.density = req.body.density;
-      if (req.body.periodFrom) v3Params.periodFrom = req.body.periodFrom;
-      if (req.body.periodTo) v3Params.periodTo = req.body.periodTo;
-      if (req.body.confidentiality) v3Params.confidentiality = req.body.confidentiality;
-
-      const created = await reportBuilderService.createReport({
-        organizationId: orgId,
-        sourceType: 'TOOL',
-        sourceId: toolSessionId,
-        title: entityTitle.slice(0, 255),
-        description: entityDesc.slice(0, 2000),
-        createdBy: userId,
-        ...v3Params,
-      });
-      createdEntity = {
-        id: String(created.report.id),
-        type: 'report',
-        title: String(created.report.title || entityTitle),
-        sourceSessionId: toolSessionId,
-      };
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'report',
-        sourceId: String(created.report.id),
-        targetType: 'notebook',
-        targetId: pageId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'report',
-        sourceId: String(created.report.id),
-        targetType: 'tool_session',
-        targetId: toolSessionId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-    } else {
-      if (!(await requireTables(res, ['tool_sessions']))) return;
-      const toolSessionId = await createMyWorkToolSession({
-        userId,
-        orgId,
-        sourceType: 'notebook',
-        sourceId: pageId,
-        title: entityTitle,
-        summary: entityDesc,
-      });
-      // V3-A01: Traceability guard
-      if (!toolSessionId) {
-        return res
-          .status(500)
-          .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
-      }
-
-      const presentationGeneratorService =
-        await import('../services/presentationGeneratorService.js');
-      const outline = await presentationGeneratorService.generateOutline(
-        {
-          title: entityTitle.slice(0, 255),
-          audience: 'internal',
-          goal: 'inform',
-          language: 'en',
-          theme: 'corporate',
-          confidentiality: 'internal',
-          sourceType: 'tool',
-          sourceId: toolSessionId,
-          sourceArtifacts: [
-            {
-              type: 'tool_session',
-              id: toolSessionId,
-              label: `MyWork session: ${entityTitle.slice(0, 120)}`,
-              data: {
-                sourceType: 'notebook',
-                sourceId: pageId,
-              },
-            },
-          ],
-        },
-        orgId
-      );
-      createdEntity = {
-        id: String(outline.deckId),
-        type: 'presentation',
-        title: entityTitle,
-        sourceSessionId: toolSessionId,
-      };
-
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'presentation',
-        sourceId: String(outline.deckId),
-        targetType: 'notebook',
-        targetId: pageId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-      await linkGraphAddEdge({
-        orgId,
-        userId,
-        sourceType: 'presentation',
-        sourceId: String(outline.deckId),
-        targetType: 'tool_session',
-        targetId: toolSessionId,
-        relation: 'ref',
-        containerType: 'mywork_convert',
-        containerId: toolSessionId,
-      });
-    }
-
-    // Update notebook page: track conversion + set status
-    let existingConverted: any[] = [];
     try {
-      existingConverted = JSON.parse(page.converted_to_json || '[]');
-    } catch {
-      existingConverted = [];
+      const { convertNotebookPage: v8Convert } = await import(
+        '../services/notebookConversionService.js'
+      );
+      const result = await v8Convert({
+        pageId,
+        orgId,
+        userId,
+        target: target as
+          | 'task'
+          | 'decision'
+          | 'initiative'
+          | 'report'
+          | 'presentation'
+          | 'assessment',
+        title: typeof req.body?.title === 'string' ? req.body.title : undefined,
+        description: typeof req.body?.description === 'string' ? req.body.description : undefined,
+        assessmentType:
+          typeof req.body?.assessmentType === 'string'
+            ? (String(req.body.assessmentType).toUpperCase() as
+                | 'DRD'
+                | 'SIRI'
+                | 'ADMA'
+                | 'CMMI'
+                | 'LEAN')
+            : undefined,
+      });
+      return res.status(201).json(result);
+    } catch (err: any) {
+      const status = err?.status || 500;
+      const code = err?.code || 'NOTEBOOK_CONVERT_FAILED';
+      return res.status(status).json({ error: err?.message || 'Conversion failed', code });
     }
-    if (!Array.isArray(existingConverted)) existingConverted = [];
-    if (createdEntity?.id) {
-      existingConverted.push({ type: target, id: createdEntity.id });
-    }
-
-    await queryHelpers.queryRun(
-      `UPDATE notebook_pages SET status = 'converted', converted_to_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [JSON.stringify(existingConverted), pageId]
-    );
-
-    res.status(201).json(createdEntity);
   })
 );
 
@@ -9329,7 +9005,7 @@ router.get(
         for (const keyword of keywords) {
           const pages = await queryHelpers.queryAll<any>(
             `SELECT id, title, 'notebook' as type FROM notebook_pages 
-             WHERE user_id = ? AND organization_id = ? AND title LIKE ? 
+             WHERE owner_user_id = ? AND organization_id = ? AND title LIKE ? 
              AND id != ? LIMIT 3`,
             [userId, orgId, `%${keyword}%`, entityId]
           );

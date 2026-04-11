@@ -1,6 +1,6 @@
 import { getArtifactPath } from '@/utils/artifactLinks';
 
-import type { ArtifactGovernanceSummary } from './types';
+import type { ArtifactGovernanceSummary, TemplateType } from './types';
 
 type ArtifactNavigationKind = 'document' | 'presentation' | 'sheet';
 
@@ -18,7 +18,29 @@ export function resolveArtifactOpenPath(params: {
   // Same primary URL as deep links / chat (getArtifactPath) — preview “Open” must not fork truth.
   if (params.kind === 'document') return getArtifactPath('report', id);
   if (params.kind === 'presentation') return getArtifactPath('presentation', id);
+  if (params.kind === 'sheet') return getArtifactPath('sheet', id);
   return null;
+}
+
+export function resolveTemplateUsePath(templateId: string, templateType: TemplateType): string {
+  if (templateType === 'presentation') {
+    return `/presentations/wizard?templateArtifactId=${encodeURIComponent(templateId)}`;
+  }
+  return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateId)}`;
+}
+
+export function resolveTemplateEditPath(templateId: string, templateType: TemplateType): string {
+  if (templateType === 'presentation') {
+    return `/presentations/wizard?templateArtifactId=${encodeURIComponent(templateId)}&edit=true`;
+  }
+  return `/reports/builder?tab=templates&templateArtifactId=${encodeURIComponent(templateId)}&edit=true`;
+}
+
+export function resolveTemplateClonePath(templateId: string, templateType: TemplateType): string {
+  if (templateType === 'presentation') {
+    return `/presentations/wizard?cloneTemplateArtifactId=${encodeURIComponent(templateId)}`;
+  }
+  return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateId)}`;
 }
 
 export function appendArtifactOpenAction(path: string | null, action: string): string | null {

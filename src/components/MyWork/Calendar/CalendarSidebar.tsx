@@ -3,14 +3,15 @@ import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
 
-import type { CalendarEventSource, CalendarFilter } from './calendarTypes';
-import { SOURCE_COLORS, SOURCE_LABELS } from './calendarTypes';
+import type { CalendarEventSource, CalendarFilter, SourceLifecycleState } from './calendarTypes';
+import { SOURCE_COLORS, SOURCE_LABELS, LIFECYCLE_LABELS, LIFECYCLE_RECOVERY } from './calendarTypes';
 
 interface ExternalCalendarSourceState {
   available: boolean;
   statusLabel: string;
   helper: string;
   nextStep?: string | null;
+  lifecycleState?: SourceLifecycleState;
 }
 
 interface CalendarWorkloadSummary {
@@ -184,15 +185,27 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
           <div className="mt-3 space-y-2">
             {(['google', 'outlook'] as const).map((source) => {
               const state = externalSourceStatus?.[source];
-              if (!state || state.available) return null;
+              if (!state) return null;
+
+              const lifecycle = state.lifecycleState;
+              const lifecycleInfo = lifecycle ? LIFECYCLE_LABELS[lifecycle] : null;
+              const recoveryHint = lifecycle ? LIFECYCLE_RECOVERY[lifecycle] : null;
+
+              if (state.available && lifecycle === 'connected') return null;
+
+              const variant = lifecycleInfo
+                ? lifecycleInfo.variant === 'success' ? 'info' : lifecycleInfo.variant
+                : 'info';
+
               return (
                 <Callout
                   key={source}
-                  variant="info"
+                  variant={variant as 'info' | 'warning' | 'error' | 'success'}
                   compact
-                  title={`${isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}: ${state.statusLabel}`}
+                  title={`${isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}: ${lifecycleInfo ? lifecycleInfo.label : state.statusLabel}`}
                 >
                   <div>{state.helper}</div>
+                  {recoveryHint ? <div className="mt-1 text-[10px]">{recoveryHint}</div> : null}
                   {state.nextStep ? <div className="mt-1">{state.nextStep}</div> : null}
                 </Callout>
               );

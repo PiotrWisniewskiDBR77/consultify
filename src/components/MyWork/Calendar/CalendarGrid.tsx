@@ -57,24 +57,40 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const fcEvents = useMemo(
     () =>
-      events.map((e) => ({
-        id: e.id,
-        title: e.title,
-        start: e.start,
-        end: e.end || undefined,
-        allDay: e.allDay ?? false,
-        backgroundColor: e.color || SOURCE_COLORS[e.source] || '#64748b',
-        borderColor: e.status === 'ai_suggestion' ? '#7c3aed' : 'transparent',
-        classNames: e.status === 'ai_suggestion' ? ['fc-ai-focus'] : [],
-        extendedProps: {
-          source: e.source,
-          sourceId: e.sourceId,
-          status: e.status,
-          priority: e.priority,
-          description: e.description,
-        },
-      })),
-    [events]
+      events.map((e) => {
+        const isFreeBusy = e.visibilityClass === 'free_busy_only';
+        const isConflict = e.syncState === 'conflict';
+        const classNames: string[] = [];
+        if (e.status === 'ai_suggestion') classNames.push('fc-ai-focus');
+        if (isFreeBusy) classNames.push('fc-free-busy');
+        if (isConflict) classNames.push('fc-conflict');
+        if (e.editAuthority === 'none') classNames.push('fc-readonly');
+
+        return {
+          id: e.id,
+          title: isFreeBusy ? (isPolish ? 'Zajęte' : 'Busy') : e.title,
+          start: e.start,
+          end: e.end || undefined,
+          allDay: e.allDay ?? false,
+          backgroundColor: e.color || SOURCE_COLORS[e.source] || '#64748b',
+          borderColor: isConflict ? '#ef4444' : e.status === 'ai_suggestion' ? '#7c3aed' : 'transparent',
+          classNames,
+          editable: e.editAuthority !== 'none' && e.editAuthority !== undefined,
+          extendedProps: {
+            source: e.source,
+            sourceId: e.sourceId,
+            status: e.status,
+            priority: e.priority,
+            description: isFreeBusy ? undefined : e.description,
+            editAuthority: e.editAuthority,
+            syncState: e.syncState,
+            permissionGradient: e.permissionGradient,
+            visibilityClass: e.visibilityClass,
+            etag: e.etag,
+          },
+        };
+      }),
+    [events, isPolish]
   );
 
   const handleEventClick = useCallback(

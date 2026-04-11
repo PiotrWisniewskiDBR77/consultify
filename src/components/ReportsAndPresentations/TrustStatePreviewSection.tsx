@@ -1,0 +1,270 @@
+/**
+ * TrustStatePreviewSection — Shared trust-state display for artifact preview panels.
+ *
+ * P18 contract §2.3: trust-state must be surfaced consistently across all
+ * artifact preview surfaces (Outputs Library, Reports, Presentations).
+ *
+ * Renders the 5 P18 trust grammar pillars:
+ *   source, run_id (execution), stage (validation + publish/review + execution),
+ *   visibility, export_ledger
+ *
+ * Badge anatomy follows module-hub-standard.md: pill-shaped chips with
+ * semantic color dots and standardized sizing.
+ */
+
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { ArtifactGovernanceSummary } from './types';
+
+const TRUST_AUTHORITY_LABELS: Record<string, string> = {
+  execution_spine: 'Execution spine',
+  artifact_review: 'Artifact review',
+};
+
+function authorityLabel(raw: string | null | undefined): string {
+  if (!raw) return '—';
+  return TRUST_AUTHORITY_LABELS[raw] ?? raw;
+}
+
+const TRUST_BADGE_BASE =
+  'inline-flex items-center gap-1 h-6 rounded-full px-2 text-[10px] font-semibold border transition-colors';
+
+const TRUST_BADGE_VARIANTS: Record<string, string> = {
+  validated:
+    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  pending:
+    'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+  attention_required:
+    'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
+  passed:
+    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  failed:
+    'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
+  private_draft:
+    'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/30',
+  in_review:
+    'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30',
+  published:
+    'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+  completed:
+    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  running:
+    'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
+  default:
+    'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60',
+};
+
+const DOT_COLORS: Record<string, string> = {
+  validated: 'bg-emerald-500',
+  pending: 'bg-amber-500',
+  attention_required: 'bg-rose-500',
+  passed: 'bg-emerald-500',
+  failed: 'bg-rose-500',
+  private_draft: 'bg-slate-400',
+  in_review: 'bg-purple-500',
+  published: 'bg-cyan-500',
+  completed: 'bg-emerald-500',
+  running: 'bg-blue-500',
+  default: 'bg-slate-400',
+};
+
+function badgeVariant(state: string | null | undefined): string {
+  const key = String(state || '').toLowerCase().trim();
+  return TRUST_BADGE_VARIANTS[key] || TRUST_BADGE_VARIANTS.default;
+}
+
+function dotColor(state: string | null | undefined): string {
+  const key = String(state || '').toLowerCase().trim();
+  return DOT_COLORS[key] || DOT_COLORS.default;
+}
+
+function displayLabel(value: string | null | undefined): string {
+  const normalized = String(value || '').trim();
+  if (!normalized) return '—';
+  return normalized
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+interface TrustBadgeProps {
+  state: string | null | undefined;
+  label?: string;
+}
+
+const TrustBadge: React.FC<TrustBadgeProps> = ({ state, label }) => {
+  const text = label || displayLabel(state);
+  if (text === '—') {
+    return <span className="text-[10px] text-slate-400 dark:text-slate-500">—</span>;
+  }
+  return (
+    <span className={`${TRUST_BADGE_BASE} ${badgeVariant(state)}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dotColor(state)}`} />
+      {text}
+    </span>
+  );
+};
+
+export interface TrustStatePreviewSectionProps {
+  governance: ArtifactGovernanceSummary | null | undefined;
+  artifactId?: string | null;
+  exportFormats?: string[];
+  onTrace?: (params: {
+    executionRunId: string;
+    lineagePaths: ArtifactGovernanceSummary['lineagePaths'];
+  }) => void;
+}
+
+export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> = ({
+  governance,
+  artifactId,
+  exportFormats,
+  onTrace,
+}) => {
+  const { t } = useTranslation();
+
+  if (!governance) return null;
+
+  const originCount = governance.originLinks?.length ?? 0;
+  const sourceCount = governance.sourceRefs?.length ?? 0;
+  const lineageSummary = [
+    originCount > 0
+      ? `${originCount} ${t('rap.outputs.preview.originsShort', 'origins')}`
+      : null,
+    sourceCount > 0
+      ? `${sourceCount} ${t('rap.outputs.preview.sourcesShort', 'sources')}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ') || '—';
+
+  const exportTraceText = governance.exportHistory?.length
+    ? `${governance.exportHistory.length} · ${displayLabel(governance.exportHistory[0]?.status)}`
+    : '—';
+
+  const validationChecksText =
+    Array.isArray(governance.validationChecks) && governance.validationChecks.length > 0
+      ? governance.validationChecks
+          .filter((check) => check.status !== 'passed')
+          .map((check) => `${check.id}:${check.status}`)
+          .join(' · ') || t('rap.outputs.preview.validationChecksAllGood', 'all passed')
+      : '—';
+
+  return (
+    <div className="space-y-2 pt-2 border-t border-slate-200/60 dark:border-white/[0.06]">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        {t('rap.outputs.preview.trustState', 'Trust state')}
+      </div>
+
+      <div className="space-y-1.5">
+        <Row label={t('rap.outputs.preview.visibility', 'Visibility')}>
+          <TrustBadge state={governance.visibilityScope} />
+        </Row>
+
+        <Row label={t('rap.outputs.preview.validation', 'Validation')}>
+          <TrustBadge state={governance.validationState} />
+        </Row>
+
+        <Row label={t('rap.outputs.preview.execution', 'Execution')}>
+          <TrustBadge state={governance.executionState} />
+        </Row>
+
+        <Row label={t('rap.outputs.preview.review', 'Review')}>
+          <TrustBadge state={governance.publishState} />
+          {typeof governance.reviewGateCount === 'number' && governance.reviewGateCount > 0 ? (
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-0.5">
+              ({governance.reviewGateCount} {t('rap.outputs.preview.reviewersShort', 'gates')})
+            </span>
+          ) : null}
+        </Row>
+
+        <Row label={t('rap.outputs.preview.source', 'Source')}>
+          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+            {displayLabel(governance.originSummary?.type as string) || '—'}
+          </span>
+        </Row>
+
+        <Row label={t('rap.outputs.preview.lineage', 'Lineage')}>
+          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+            {lineageSummary}
+          </span>
+        </Row>
+
+        <Row label={t('rap.outputs.preview.artifactId', 'Artifact ID')}>
+          <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300">
+            {artifactId || '—'}
+          </span>
+        </Row>
+
+        <Row label={t('rap.outputs.preview.executionRunId', 'Execution run')}>
+          <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300">
+            {governance.executionRunId || '—'}
+          </span>
+          {governance.executionRunId && onTrace ? (
+            <button
+              type="button"
+              onClick={() =>
+                onTrace({
+                  executionRunId: governance.executionRunId!,
+                  lineagePaths: governance.lineagePaths || null,
+                })
+              }
+              className="ml-1.5 inline-flex items-center rounded-full border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[9px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900 transition-colors"
+            >
+              {t('rap.outputs.preview.trace', 'Trace')}
+            </button>
+          ) : null}
+        </Row>
+
+        {exportFormats && exportFormats.length > 0 ? (
+          <Row label={t('rap.outputs.preview.exports', 'Exports')}>
+            <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+              {exportFormats.join(', ').toUpperCase()}
+            </span>
+          </Row>
+        ) : null}
+
+        <Row label={t('rap.outputs.preview.exportTrace', 'Export trace')}>
+          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+            {exportTraceText}
+          </span>
+        </Row>
+
+        <Row label={t('rap.outputs.preview.accessControl', 'Access control')}>
+          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+            {typeof governance.canManageAccess === 'boolean'
+              ? governance.canManageAccess
+                ? t('rap.outputs.preview.canManageAccess', 'Can manage')
+                : t('rap.outputs.preview.readOnly', 'Read only')
+              : '—'}
+          </span>
+        </Row>
+
+        <Row label={t('rap.outputs.preview.trustBoundary', 'Trust boundary')}>
+          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+            {t('rap.outputs.preview.executionAuthority', 'Execution')}:{' '}
+            {authorityLabel(governance.executionAuthority)}
+            {' · '}
+            {t('rap.outputs.preview.reviewAuthority', 'Review')}:{' '}
+            {authorityLabel(governance.reviewAuthority)}
+          </span>
+        </Row>
+
+        <Row label={t('rap.outputs.preview.validationChecks', 'Validation checks')}>
+          <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">
+            {validationChecksText}
+          </span>
+        </Row>
+      </div>
+    </div>
+  );
+};
+
+const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="flex items-center gap-2">
+    <span className="text-[10px] text-slate-500 dark:text-slate-400 w-24 shrink-0">{label}</span>
+    <div className="flex items-center gap-1 flex-wrap min-w-0">{children}</div>
+  </div>
+);

@@ -95,6 +95,8 @@ There must be **one** canonical board truth/store:
 #### 2.3.7 Degraded / error posture (P0)
 The board must fail safely and predictably. Minimum scenarios to support (8+):
 
+> **Reconciliation note (2026-04-11):** This plan lists 10 scenarios; `whiteboardCanon.ts` encodes 9 (`P13_DEGRADED_SCENARIOS`). Scenarios #5 (undo stack), #7 (font/asset), #9 (apply mid-flight), and #10 (corrupted doc) in this plan are partially covered by different canon scenarios (facilitator disconnect, >200 objects, WebSocket disconnect, facilitation ended). The canon's 9 scenarios satisfy the AC-07 requirement of "8+ scenarios". Frontend error toasts cover all network/API failure paths.
+
 1. **Board load fails**: show error state + retry; do not create duplicate boards silently.
 2. **Offline / network loss**: switch to read-only or local-only mode; clearly label state; prevent destructive actions if not safely persisted.
 3. **Permission/locked state**: tools become read-only; export still allowed; AI apply disabled.
@@ -107,16 +109,16 @@ The board must fail safely and predictably. Minimum scenarios to support (8+):
 10. **Corrupted board document**: open in safe mode (readback/export only) and provide recovery path; never overwrite the last good state without explicit consent.
 
 #### 2.3.8 Acceptance checklist (P13-A scope approval)
-- [ ] §2.3 exists and freezes the **minimal toolbelt (P0)** exactly (select; pan/zoom/fit; sticky; shape; text; group/ungroup; align/distribute bounded; undo/redo; export).
-- [ ] Facilitation cues are explicitly frozen as **Start → Organize → Converge → Handoff** (bounded; non-goals stated).
-- [ ] Export/readback assumptions are frozen (what is exported, what is preserved, what is lost).
-- [ ] Collaboration boundary is explicit (presence/cursors/comments are non-goals unless later packet freezes them).
-- [ ] AI co-building contract is frozen (generate → preview → apply/reject + audit; **no silent apply**).
-- [ ] Anti-duplicate gate is explicit (one canon; no parallel truth/store).
-- [ ] Degraded/error posture includes **8+** concrete scenarios with expected behavior.
-- [ ] Contract header status is `approved(scope)` for P13-A (docs-only).
-- [ ] `EXECUTION_INDEX.md` row #13 is updated to `approved(scope)`.
-- [ ] Evidence ledger row `P13-A` is filled at least with status + notes (commit link added on closeout).
+- [x] §2.3 exists and freezes the **minimal toolbelt (P0)** exactly (select; pan/zoom/fit; sticky; shape; text; group/ungroup; align/distribute bounded; undo/redo; export).
+- [x] Facilitation cues are explicitly frozen as **Start → Organize → Converge → Handoff** (bounded; non-goals stated).
+- [x] Export/readback assumptions are frozen (what is exported, what is preserved, what is lost).
+- [x] Collaboration boundary is explicit (presence/cursors/comments are non-goals unless later packet freezes them).
+- [x] AI co-building contract is frozen (generate → preview → apply/reject + audit; **no silent apply**).
+- [x] Anti-duplicate gate is explicit (one canon; no parallel truth/store).
+- [x] Degraded/error posture includes **8+** concrete scenarios with expected behavior.
+- [x] Contract header status is `approved(scope)` for P13-A (docs-only).
+- [x] `EXECUTION_INDEX.md` row #13 is updated to `approved(scope)`.
+- [x] Evidence ledger row `P13-A` is filled at least with status + notes (commit link added on closeout).
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`

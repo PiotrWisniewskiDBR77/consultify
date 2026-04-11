@@ -13,10 +13,17 @@ export type ChatActionType =
   | 'CREATE_INITIATIVE'
   | 'GENERATE_REPORT'
   | 'GENERATE_PRESENTATION'
+  | 'USE_TEMPLATE'
+  | 'BROWSE_TEMPLATES'
   | 'START_TOOL'
   | 'OPEN_PREVIEW'
   | 'ASSIGN_INTERVIEW'
-  | 'RECORD_KPI';
+  | 'RECORD_KPI'
+  | 'START_ARTIFACT_REVIEW'
+  | 'CHECK_TRUST_STATE'
+  | 'ANALYZE_STATEMENT'
+  | 'REVIEW_MODEL'
+  | 'CHECK_LANE_STATUS';
 
 export type ActionCategory = 'navigation' | 'creation' | 'generation' | 'assignment' | 'recording';
 
@@ -223,6 +230,92 @@ export const CHAT_ACTION_DEFINITIONS: ChatActionDefinition[] = [
       initiativeId: { type: 'string', required: false, description: 'Initiative context' },
     },
     requiredCapabilities: ['record_kpi'],
+    styling: 'secondary',
+  },
+  {
+    type: 'START_ARTIFACT_REVIEW',
+    label: 'chat.actions.startArtifactReview.label',
+    description: 'chat.actions.startArtifactReview.description',
+    icon: 'ShieldCheck',
+    category: 'creation',
+    payloadSchema: {
+      artifactId: { type: 'string', required: true, description: 'Artifact ID to start review for' },
+    },
+    requiredCapabilities: ['create_report'],
+    styling: 'primary',
+  },
+  {
+    type: 'CHECK_TRUST_STATE',
+    label: 'chat.actions.checkTrustState.label',
+    description: 'chat.actions.checkTrustState.description',
+    icon: 'Eye',
+    category: 'navigation',
+    payloadSchema: {
+      artifactId: { type: 'string', required: true, description: 'Artifact ID to inspect trust state' },
+    },
+    requiredCapabilities: ['read'],
+    styling: 'secondary',
+  },
+  {
+    type: 'USE_TEMPLATE',
+    label: 'chat.actions.useTemplate.label',
+    description: 'chat.actions.useTemplate.description',
+    icon: 'BookTemplate',
+    category: 'generation',
+    payloadSchema: {
+      templateArtifactId: { type: 'string', required: true, description: 'Template artifact ID to use' },
+      outputType: { type: 'string', required: false, description: 'report or presentation' },
+    },
+    requiredCapabilities: ['create_report'],
+    styling: 'primary',
+  },
+  {
+    type: 'BROWSE_TEMPLATES',
+    label: 'chat.actions.browseTemplates.label',
+    description: 'chat.actions.browseTemplates.description',
+    icon: 'LayoutGrid',
+    category: 'navigation',
+    payloadSchema: {
+      templateType: { type: 'string', required: false, description: 'Filter: report or presentation' },
+      category: { type: 'string', required: false, description: 'Filter: R1, R2, R3, R4, etc.' },
+    },
+    requiredCapabilities: ['read'],
+    styling: 'secondary',
+  },
+  {
+    type: 'ANALYZE_STATEMENT',
+    label: 'chat.actions.analyzeStatement.label',
+    description: 'chat.actions.analyzeStatement.description',
+    icon: 'FileText',
+    category: 'recording',
+    payloadSchema: {
+      statementPackId: { type: 'string', required: true, description: 'Financial statement pack ID to analyze' },
+    },
+    requiredCapabilities: ['read'],
+    styling: 'primary',
+  },
+  {
+    type: 'REVIEW_MODEL',
+    label: 'chat.actions.reviewModel.label',
+    description: 'chat.actions.reviewModel.description',
+    icon: 'Calculator',
+    category: 'recording',
+    payloadSchema: {
+      modelId: { type: 'string', required: true, description: 'Financial model ID to review' },
+    },
+    requiredCapabilities: ['read'],
+    styling: 'primary',
+  },
+  {
+    type: 'CHECK_LANE_STATUS',
+    label: 'chat.actions.checkLaneStatus.label',
+    description: 'chat.actions.checkLaneStatus.description',
+    icon: 'GitBranch',
+    category: 'navigation',
+    payloadSchema: {
+      runId: { type: 'string', required: false, description: 'Specific lane run ID (optional)' },
+    },
+    requiredCapabilities: ['read'],
     styling: 'secondary',
   },
 ];

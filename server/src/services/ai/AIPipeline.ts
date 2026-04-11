@@ -1312,6 +1312,21 @@ export class AIPipeline {
     if (ops?.deliveryModel) {
       lines.push(`- Model dostarczania: ${ops.deliveryModel}`);
     }
+    if (ops?.productionArchetype) {
+      lines.push(`- Archetyp produkcji: ${ops.productionArchetype}`);
+    }
+    if (ops?.shiftPattern) {
+      lines.push(`- System zmianowy: ${ops.shiftPattern}`);
+    }
+    if (ops?.automationLevel) {
+      lines.push(`- Poziom automatyzacji: ${ops.automationLevel}`);
+    }
+    if (p?.communicationStyle) {
+      lines.push(`- Styl komunikacji: ${p.communicationStyle}`);
+    }
+    if (p?.industryJargonLevel) {
+      lines.push(`- Żargon branżowy: ${p.industryJargonLevel}`);
+    }
 
     if (org.terminology && Object.keys(org.terminology).length > 0) {
       lines.push('', '### Terminologia organizacji (używaj tych terminów):');

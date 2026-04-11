@@ -41,6 +41,7 @@ import {
   P14_VALIDATION_RULES,
   isValidSemanticObject,
 } from '../../services/v8/processFlowCanon.js';
+import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
 import * as pfService from '../../services/v8/processFlowService.js';
 import type { AIProposalOperation, ValidationResult } from '../../services/v8/processFlowService.js';
 
@@ -271,6 +272,18 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const result = await pfService.validateProcess(req.params.processId, organizationId);
+
+    organizationContextService.recordContextSource({
+      organizationId,
+      sourceType: 'tools.sessionOutput',
+      sourceId: req.params.processId,
+      authorUserId: req.user?.id ?? null,
+      channel: 'process_flow_validate',
+      sourceLabel: 'Process Flow Validation',
+      content: { processId: req.params.processId, valid: result.valid, issueCount: result.issues?.length ?? 0 },
+      metadata: { surface: 'process_flow', action: 'validate' },
+    }).catch(() => {});
+
     return res.json({ data: result, meta: pfMeta({ action: 'validated', valid: result.valid }) });
   }),
 );
@@ -284,6 +297,18 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const result = await pfService.semanticReadback(req.params.processId, organizationId);
+
+    organizationContextService.recordContextSource({
+      organizationId,
+      sourceType: 'tools.sessionOutput',
+      sourceId: req.params.processId,
+      authorUserId: req.user?.id ?? null,
+      channel: 'process_flow_readback',
+      sourceLabel: 'Process Flow Readback',
+      content: { processId: req.params.processId, readbackText: typeof result === 'string' ? result.slice(0, 500) : '' },
+      metadata: { surface: 'process_flow', action: 'readback' },
+    }).catch(() => {});
+
     return res.json({ data: result, meta: pfMeta({ action: 'readback' }) });
   }),
 );

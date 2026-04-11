@@ -26,3 +26,8 @@ ALTER TABLE organization_profiles ADD COLUMN cloud_adoption_level TEXT;
 ALTER TABLE organization_profiles ADD COLUMN industry_code TEXT;
 ALTER TABLE organization_profiles ADD COLUMN industry_subsector TEXT;
 ALTER TABLE organization_profiles ADD COLUMN currency TEXT;
+
+-- P30-D Phase 2: Manufacturing-specific fields
+ALTER TABLE organization_profiles ADD COLUMN production_archetype TEXT; -- discrete, process, hybrid
+ALTER TABLE organization_profiles ADD COLUMN shift_pattern TEXT; -- single, double, triple, continuous
+ALTER TABLE organization_profiles ADD COLUMN automation_level TEXT; -- manual, semi_automated, fully_automated

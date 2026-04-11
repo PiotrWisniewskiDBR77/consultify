@@ -13,6 +13,9 @@ export const SupportTicketsView: React.FC = () => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+  const [ticketComments, setTicketComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentDraft, setCommentDraft] = useState('');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [filters, setFilters] = useState({
     status: '',
@@ -32,6 +35,29 @@ export const SupportTicketsView: React.FC = () => {
   useEffect(() => {
     fetchTickets();
   }, [filters]);
+
+  useEffect(() => {
+    if (!showDetailsModal || !selectedTicket?.id) {
+      setTicketComments([]);
+      setCommentDraft('');
+      return;
+    }
+
+    const loadComments = async () => {
+      setCommentsLoading(true);
+      try {
+        const comments = await Api.getSupportTicketComments(selectedTicket.id);
+        setTicketComments(Array.isArray(comments) ? comments : []);
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to load ticket comments');
+        setTicketComments([]);
+      } finally {
+        setCommentsLoading(false);
+      }
+    };
+
+    void loadComments();
+  }, [selectedTicket?.id, showDetailsModal]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -65,6 +91,25 @@ export const SupportTicketsView: React.FC = () => {
       fetchTickets();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create ticket');
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!selectedTicket?.id || !commentDraft.trim()) {
+      toast.error('Enter a reply before sending');
+      return;
+    }
+
+    try {
+      const comment = await Api.addSupportTicketComment(selectedTicket.id, {
+        commentText: commentDraft.trim(),
+        isInternal: false,
+      });
+      setTicketComments((current) => [...current, comment]);
+      setCommentDraft('');
+      toast.success('Reply added');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to add reply');
     }
   };
 
@@ -352,7 +397,52 @@ export const SupportTicketsView: React.FC = () => {
             </div>
 
             <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-              Conversation / replies are not implemented in this build yet.
+              Conversation
+            </div>
+            <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-navy-900 space-y-3">
+              {commentsLoading ? (
+                <div className="text-sm text-slate-500 dark:text-slate-400">Loading replies...</div>
+              ) : ticketComments.length > 0 ? (
+                ticketComments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-800 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+                      <span>{comment.isInternal ? 'Internal note' : 'Reply'}</span>
+                      <span>
+                        {comment.created_at ? new Date(comment.created_at).toLocaleString() : 'Just now'}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm text-slate-900 dark:text-white whitespace-pre-wrap">
+                      {comment.comment_text || comment.commentText}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  No replies yet. Add the first response below.
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="block text-xs text-slate-500 dark:text-slate-400">Add reply</label>
+                <textarea
+                  value={commentDraft}
+                  onChange={(e) => setCommentDraft(e.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm text-slate-900 dark:text-white"
+                  placeholder="Write a customer-visible reply or operator note..."
+                />
+                <div className="flex justify-end">
+                  <button
+                    className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm"
+                    onClick={() => void handleAddComment()}
+                  >
+                    Send reply
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

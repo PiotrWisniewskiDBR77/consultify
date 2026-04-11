@@ -49,6 +49,39 @@ export interface V8SyncConflictRecord {
   createdAt: string;
 }
 
+export interface V8SyncWorkflowRecord {
+  workflowId: string;
+  integrationId: string;
+  connectorId: string;
+  name: string;
+  lifecycleState: 'draft' | 'connected' | 'degraded' | 'requires_action' | 'recovered' | 'blocked';
+  mode: 'manual' | 'schedule' | 'webhook';
+  isPaused: boolean;
+  syncSchedule: string | null;
+  scopes: string[];
+  hasMappings: boolean;
+  lastSyncAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface V8SyncRunRecord {
+  id: string;
+  integrationId: string;
+  provider: string;
+  direction: string;
+  status: string;
+  lifecycleState: 'draft' | 'connected' | 'degraded' | 'requires_action';
+  canReplay: boolean;
+  itemsProcessed: number | null;
+  durationMs: number | null;
+  errorSummary: string | null;
+  triggeredBy: string;
+  startedAt: string;
+  completedAt: string | null;
+}
+
 export interface V8SyncConnectorHealthSummary {
   healthy: boolean;
   syncStatus: string;
@@ -234,6 +267,62 @@ export interface V8SyncTriggeredRun {
   duration: number;
 }
 
+export interface V8SyncMappingData {
+  integrationId: string;
+  connectorId: string;
+  fieldMappings: unknown[];
+  entityMappings: {
+    id: string;
+    localType: string;
+    localId: string;
+    externalType: string;
+    externalId: string;
+    syncStatus: string;
+    lastSyncedAt: string | null;
+  }[];
+  driftEvents: {
+    driftId: string;
+    driftType: string;
+    affectedFields: string;
+    detectedAt: string;
+    resolvedAt: string | null;
+  }[];
+  syncStates: {
+    id: string;
+    objectType: string;
+    objectId: string;
+    syncStatus: string;
+    errorClass: string | null;
+    lastSyncedAt: string | null;
+  }[];
+}
+
+export interface V8SyncSecretsStatusData {
+  secrets: {
+    secretId: string;
+    connectorId: string | null;
+    secretKey: string;
+    lastRotatedAt: string;
+    ageDays: number;
+    needsRotation: boolean;
+    rotationThresholdDays: number;
+  }[];
+  summary: {
+    total: number;
+    needsRotation: number;
+    healthy: number;
+  };
+}
+
+export interface V8SyncWorkflowPolicyData {
+  integrationId: string;
+  workflowPolicy: 'active' | 'paused' | 'blocked' | 'safety_gate';
+  reason: string | null;
+  setBy: string | null;
+  setAt: string | null;
+  isPaused: boolean;
+}
+
 export const shouldFallbackToLegacySync = (error: any) => {
   const status = Number(error?.status);
   // V8 sync endpoints live under `/api/v8/*` and are gated by org-level V8 enablement.
@@ -246,6 +335,8 @@ export const shouldFallbackToLegacySync = (error: any) => {
 export const V8SyncApi = {
   getIntegrations: () =>
     v8Get<{ integrations: V8SyncIntegrationInventoryRow[]; count: number }>('/sync/integrations'),
+  getWorkflows: () =>
+    v8Get<{ workflows: V8SyncWorkflowRecord[]; count: number }>('/sync/workflows'),
   getConnectors: (params?: { category?: string }) =>
     v8Get<{ connectors: V8SyncCatalogConnector[]; count: number }>(
       '/sync/connectors',
@@ -385,4 +476,45 @@ export const V8SyncApi = {
     v8Get<{ conflicts: V8SyncConflictRecord[]; count: number }>('/sync/conflicts', {
       limit: String(limit),
     }),
+  replayRun: (runId: string) =>
+    v8Post<{ replayRunId: string; originalRunId: string; status: string }>(
+      `/sync/runs/${encodeURIComponent(runId)}/replay`,
+      {}
+    ),
+  getRuns: (params?: { integrationId?: string; status?: string; limit?: number; offset?: number }) =>
+    v8Get<{ runs: V8SyncRunRecord[]; total: number }>('/sync/runs', {
+      ...(params?.integrationId ? { integrationId: params.integrationId } : {}),
+      ...(params?.status ? { status: params.status } : {}),
+      ...(typeof params?.limit === 'number' ? { limit: String(params.limit) } : {}),
+      ...(typeof params?.offset === 'number' ? { offset: String(params.offset) } : {}),
+    }),
+
+  getMappings: (integrationId: string) =>
+    v8Get<V8SyncMappingData>(`/sync/integrations/${encodeURIComponent(integrationId)}/mappings`),
+
+  saveMappings: (integrationId: string, fieldMappings: unknown[]) =>
+    v8Post<{ success: true; fieldCount: number }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/mappings`,
+      { fieldMappings }
+    ),
+
+  getSecretsStatus: () =>
+    v8Get<V8SyncSecretsStatusData>('/sync/secrets/status'),
+
+  rotateSecret: (secretId: string) =>
+    v8Post<{ success: true; secretId: string; rotatedAt: string }>(
+      `/sync/secrets/${encodeURIComponent(secretId)}/rotate`,
+      {}
+    ),
+
+  getWorkflowPolicy: (integrationId: string) =>
+    v8Get<V8SyncWorkflowPolicyData>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/workflow-policy`
+    ),
+
+  setWorkflowPolicy: (integrationId: string, policy: string, reason?: string) =>
+    v8Post<{ success: true; policy: string; isPaused: boolean }>(
+      `/sync/integrations/${encodeURIComponent(integrationId)}/workflow-policy`,
+      { policy, reason }
+    ),
 };

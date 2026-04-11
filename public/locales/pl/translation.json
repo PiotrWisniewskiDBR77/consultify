@@ -680,7 +680,10 @@
     "presentations": "Prezentacje",
     "partnerPortal": "Portal Partnerski",
     "tasks": "Zadania",
-    "toolsLibrary": "Biblioteka"
+    "toolsLibrary": "Biblioteka",
+    "wordy": "Wordy",
+    "excele": "Excele",
+    "prezentacje": "Generator prezentacji"
   },
   "widgets": {
     "help": {
@@ -1049,6 +1052,236 @@
         "tableTooltip": "Widok tabeli — strukturalna lista pomysłów",
         "whiteboard": "Tablica",
         "whiteboardTooltip": "Tablica — swobodny canvas"
+      }
+    },
+    "whiteboard": {
+      "regionLabel": "Tablica idei z elementami swobodnymi",
+      "toolbar": {
+        "select": "Zaznacz",
+        "pan": "Przesuń / Zoom",
+        "sticky": "Notatka",
+        "shape": "Kształt",
+        "text": "Blok tekstowy",
+        "frame": "Ramka",
+        "image": "Obraz",
+        "link": "Karta linku",
+        "draw": "Rysuj",
+        "clearDrawings": "Wyczyść rysunki",
+        "undo": "Cofnij",
+        "redo": "Ponów",
+        "export": "Eksport",
+        "save": "Zapisz",
+        "shortcuts": "Skróty klawiszowe",
+        "fitView": "Dopasuj widok",
+        "voting": "Głosowanie",
+        "background": "Wzór tła"
+      },
+      "session": {
+        "governance": "Tryb zarządzania",
+        "activityLog": "Dziennik aktywności",
+        "history": "Historia",
+        "library": "Biblioteka",
+        "restoreLatest": "Przywróć ostatni",
+        "noActivity": "Brak aktywności",
+        "noHistory": "Brak wpisów historii",
+        "noLibrary": "Biblioteka jest pusta"
+      },
+      "selection": {
+        "elementsSelected": "{{count}} elementów zaznaczonych",
+        "alignLeft": "Wyrównaj do lewej",
+        "alignCenter": "Wyrównaj do środka",
+        "alignRight": "Wyrównaj do prawej",
+        "alignTop": "Wyrównaj do góry",
+        "alignMiddle": "Wyrównaj do środka (pion)",
+        "alignBottom": "Wyrównaj do dołu",
+        "distributeH": "Rozłóż poziomo",
+        "distributeV": "Rozłóż pionowo",
+        "group": "Grupuj",
+        "ungroup": "Rozgrupuj",
+        "duplicate": "Duplikuj",
+        "lock": "Zablokuj",
+        "delete": "Usuń"
+      },
+      "empty": {
+        "title": "Pusta tablica",
+        "subtitle": "Dodaj notatki, kształty lub tekst z paska narzędzi",
+        "quickStart": "Szybki start z szablonu",
+        "addSticky": "Dodaj pustą notatkę"
+      },
+      "facilitation": {
+        "start": "Start",
+        "organize": "Organizacja",
+        "converge": "Konwergencja",
+        "handoff": "Przekazanie",
+        "advanceTo": "Przejdź do {{phase}}",
+        "invalidTransition": "Nie można przejść z {{from}} do {{to}}"
+      },
+      "ai": {
+        "proposalTitle": "Propozycja AI",
+        "apply": "Zastosuj",
+        "reject": "Odrzuć",
+        "acceptedProposal": "Zaakceptowano propozycję AI",
+        "rejectedProposal": "Odrzucono propozycję AI",
+        "acceptedAll": "Zaakceptowano wszystkie propozycje AI",
+        "rejectedAll": "Odrzucono wszystkie propozycje AI",
+        "generated": "AI wygenerowało propozycję",
+        "proposalApplied": "Propozycja zastosowana",
+        "allProposalsApplied": "Wszystkie propozycje zastosowane"
+      },
+      "errors": {
+        "saveFailed": "Błąd zapisu",
+        "loadFailed": "Nie udało się załadować tablicy",
+        "roleChangeFailed": "Błąd zmiany roli",
+        "timerFailed": "Błąd timera",
+        "votingFailed": "Błąd głosowania",
+        "followFailed": "Błąd follow-me",
+        "phaseChangeFailed": "Błąd zmiany fazy",
+        "exportFailed": "Błąd eksportu",
+        "syncFailed": "Błąd synchronizacji tablicy",
+        "presenceFailed": "Błąd aktualizacji obecności",
+        "disconnectFailed": "Błąd rozłączenia",
+        "voteSyncFailed": "Błąd synchronizacji głosów",
+        "missingSessionId": "Brak sessionId",
+        "voteSaveFailed": "Nie udało się zapisać głosu",
+        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy"
+      },
+      "drawingsCleared": "Rysunki wyczyszczone",
+      "boardMode": "Tryb tablicy",
+      "drawMode": "Tryb rysowania",
+      "presence": {
+        "you": "Ty"
+      },
+      "activity": {
+        "undo": "Cofnięto zmianę",
+        "redo": "Ponowiono zmianę",
+        "drawModeEnabled": "Włączono tryb rysowania",
+        "boardModeEnabled": "Włączono tryb board",
+        "sessionRole": "Rola sesji: {{role}}",
+        "timerStarted": "Uruchomiono timer warsztatu",
+        "timerStopped": "Zatrzymano timer warsztatu",
+        "timerCompleted": "Timer warsztatu zakończony",
+        "votingOpened": "Otworzono głosowanie",
+        "votingClosed": "Zamknięto głosowanie",
+        "followMeOn": "Włączono follow-me",
+        "followMeOff": "Wyłączono follow-me",
+        "phase": "Faza: {{phase}}",
+        "spotlightSet": "Ustawiono spotlight na zaznaczeniu",
+        "spotlightCleared": "Wyczyszczono spotlight",
+        "savedToLibrary": "Zapisano fragment do biblioteki",
+        "insertedFromLibrary": "Wstawiono fragment z biblioteki",
+        "restoredSnapshot": "Przywrócono ostatni snapshot",
+        "classification": "Klasyfikacja: {{classification}}",
+        "pasteImport": "Dodano elementy z wklejania/importu",
+        "addedElement": "Dodano element: {{kind}}",
+        "quickStart": "Uruchomiono quick start: {{mode}}",
+        "voteSaved": "Zapisano głos w sesji",
+        "updatedObject": "Zmieniono właściwości obiektu"
+      },
+      "toast": {
+        "selectFirst": "Najpierw zaznacz elementy",
+        "libraryEmpty": "Biblioteka jest pusta",
+        "noSnapshot": "Brak snapshotu do przywrócenia",
+        "importedNotes": "Zaimportowano {{count}} notatek",
+        "noUnlockedSelection": "Brak odblokowanego zaznaczenia",
+        "duplicated": "Zduplikowano",
+        "grouped": "Zgrupowano",
+        "ungrouped": "Rozgrupowano",
+        "quickStartBrainstorm": "Utworzono start do brainstormu",
+        "quickStartAffinity": "Utworzono start do affinity map",
+        "quickStartWorkshop": "Utworzono workshop wall",
+        "phaseChanged": "Faza: {{phase}}"
+      },
+      "history": {
+        "insertLibraryFragment": "Wstawiono fragment z biblioteki",
+        "importExternal": "Zaimportowano elementy zewnętrzne",
+        "manualSave": "Ręczny zapis",
+        "quickStart": "Quick start: {{mode}}",
+        "checkpoint": "Whiteboard checkpoint"
+      },
+      "nodes": {
+        "groupLabel": "Grupa",
+        "defaultSticky": "Nowa notatka",
+        "defaultText": "Tekst",
+        "defaultGroup": "Grupa",
+        "defaultShape": "Kształt",
+        "defaultFrame": "Sekcja",
+        "defaultImage": "Obraz",
+        "defaultLink": "Link",
+        "defaultKpi": "KPI",
+        "defaultScore": "Wynik",
+        "defaultProgress": "Postęp",
+        "defaultSummary": "Podsumowanie"
+      },
+      "sessionPanel": {
+        "layer": "Warstwa sesji",
+        "roleFacilitator": "Facylitator",
+        "roleParticipant": "Uczestnik",
+        "roleObserver": "Obserwator",
+        "timerOff": "Timer wyłączony",
+        "votingOpen": "Głosowanie otwarte",
+        "votingClosed": "Głosowanie zamknięte",
+        "followOn": "Follow-me włączone",
+        "followOff": "Follow-me wyłączone",
+        "spotlightActive": "Spotlight aktywny",
+        "opsGovernance": "Ops + governance",
+        "cyclePolicy": "Zmień policy",
+        "libraryPrefix": "Biblioteka:",
+        "restorePrefix": "Przywróć:"
+      },
+      "phaseBar": {
+        "title": "Faza warsztatu",
+        "tabsAria": "Fazy warsztatu",
+        "hint_start": "Swobodnie zbieraj pomysły",
+        "hint_organize": "Grupuj i porządkuj",
+        "hint_converge": "Oznacz najlepsze wyniki",
+        "hint_handoff": "Eksportuj i udostępnij wyniki"
+      },
+      "toolbarExtra": {
+        "ariaLabel": "Pasek narzędzi tablicy",
+        "title": "Tablica",
+        "create": "Utwórz",
+        "role": "Rola",
+        "bgDots": "Kropki",
+        "bgGrid": "Siatka",
+        "bgLines": "Linie",
+        "bgBlank": "Puste",
+        "saving": "Zapisuję…"
+      },
+      "selectionBar": {
+        "ariaLabel": "Akcje zaznaczenia",
+        "attach": "Dołącz",
+        "linked": "Powiązane",
+        "align": "Wyrównaj",
+        "distribute": "Rozłóż",
+        "convertDecision": "Promuj do decyzji",
+        "convertAction": "Promuj do akcji"
+      },
+      "emptyExtra": {
+        "toolsHint": "Więcej akcji organizacji i AI znajdziesz w panelu Tools po prawej stronie."
+      },
+      "outlineImport": {
+        "title": "Import outline",
+        "description": "Wklej punkty, po jednym w linii. Zostaną dodane jako notatki lub krótkie bloki tekstu.",
+        "placeholder": "Punkt 1\nPunkt 2\nPunkt 3",
+        "confirm": "Importuj",
+        "cancel": "Anuluj"
+      },
+      "quickStart": {
+        "brainstorm": {
+          "sessionTopic": "Temat sesji",
+          "idea": "Pomysł {{n}}"
+        },
+        "affinity": {
+          "themeA": "Temat A",
+          "themeB": "Temat B",
+          "input": "Wrzutka {{n}}"
+        },
+        "workshop": {
+          "goals": "Cele warsztatu",
+          "discuss": "Do omówienia",
+          "decisions": "Decyzje",
+          "parkingLot": "Parking lot"
+        }
       }
     },
     "notebook": {
@@ -6988,5 +7221,46 @@
         "noObligation": "Bez zobowiązań • Odpowiemy w ciągu 24h"
       }
     }
+  },
+  "kimi": {
+    "taskCompleted": "Zadanie ukończone",
+    "executingTask": "Wykonywanie zadania...",
+    "taskProgress": "Postęp zadania",
+    "replay": "Powtórz",
+    "remix": "Remix",
+    "generating": "Generowanie...",
+    "generatingDoc": "Tworzenie dokumentu",
+    "generatingSheet": "Tworzenie arkusza",
+    "generatingDeck": "Tworzenie prezentacji",
+    "emptyWordy": "Twój dokument pojawi się tutaj",
+    "emptyExcele": "Twój arkusz pojawi się tutaj",
+    "emptyDeck": "Twoja prezentacja pojawi się tutaj",
+    "emptyHint": "Opisz czego potrzebujesz i kliknij Generuj",
+    "generateDoc": "Generuj dokument",
+    "generateSheet": "Generuj arkusz",
+    "generateDeck": "Generuj prezentację",
+    "docReady": "Dokument gotowy — użyj Podglądu pliku lub Pobierz",
+    "showingRows": "Pokazywanie 25 z {{total}} wierszy",
+    "xlsxPreview": "Podgląd arkusza",
+    "deckPreview": "Podgląd prezentacji",
+    "openInBuilder": "Otwórz w kreatorze prezentacji",
+    "previewFile": "Podgląd pliku",
+    "allFiles": "Wszystkie pliki",
+    "viewOrDownload": "Przeglądaj lub pobierz pliki",
+    "generationFailed": "Generowanie nie powiodło się",
+    "retry": "Spróbuj ponownie",
+    "workspace": "Przestrzeń robocza",
+    "laneWordy": "Wordy",
+    "laneExcele": "Excele",
+    "lanePrezentacje": "Prezentacje",
+    "stepSnapshot": "Przechwytywanie kontekstu",
+    "stepPlan": "Tworzenie planu artefaktu",
+    "stepPreflight": "Walidacja kontroli wstępnej",
+    "stepAccept": "Akceptacja planu i tworzenie propozycji",
+    "stepReview": "Przesłanie do recenzji",
+    "stepApprove": "Zatwierdzenie wykonania",
+    "stepMaterialize": "Materializacja artefaktu",
+    "stepGenerate": "Generowanie treści",
+    "sheetReady": "Arkusz gotowy — użyj Podglądu pliku lub Pobierz"
   }
 }

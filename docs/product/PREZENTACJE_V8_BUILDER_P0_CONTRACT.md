@@ -296,3 +296,29 @@ Builder P0 must not depend on `/api/presentations-v4` to render the standard aut
 - Share/export actions are available from the same deck context.
 - Traceability and refresh are visible but do not dominate the editing flow.
 - Builder can be the default second step after generation for Gamma-like usage.
+
+---
+
+## 13. Implementation status notes (2026-04-11 compliance uplift)
+
+### AI edit proposal mode (§6.3, §12 item 3)
+**Status**: Implemented. The `agent-edit` endpoint returns proposed changes which are displayed
+in a banner with Accept/Reject actions before being applied to the deck state. This replaces
+the original direct-apply behavior.
+
+**Implementation**: `DeckBuilder.tsx` — `pendingAgentEdit` state, `handleAcceptAgentEdit`,
+`handleRejectAgentEdit` callbacks, amber proposal banner UI.
+
+### HTML export (§6.6)
+**Status**: Deferred. The builder exports PPTX, PDF, and PNG. HTML export is available via
+the server route (`POST /decks/:deckId/export/html`) but is not wired into the DeckBuilder
+export dialog. This is a P1 item; the server capability exists.
+
+### Version history (§4.1)
+**Status**: Now server-backed. Client-side snapshots (max 50, auto every 30s, checkpoint every 5min)
+are supplemented by server-side `presentation_deck_versions` table with autosave snapshots.
+Restore via `POST /decks/:deckId/versions/:versionId/restore`.
+
+### Export error handling
+**Status**: Implemented. `handleExport` now surfaces errors via toast with descriptive messages.
+Export limits (60 slides, 50MB payload) enforced server-side with 422 response.

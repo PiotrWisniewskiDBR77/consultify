@@ -1,5 +1,8 @@
 # Wave 1 Final Implementation Plan - Integracja
 
+> **Status: SUPERSEDED** (2026-04-11). This plan has been superseded by the P01 closeout (2026-03-31).
+> See: `evidence/P01_VERIFIED_CLOSEOUT_2026-03-31.md` and `final-v8-contracts/FINAL_IMPLEMENTATION_PLAN_01_INTEGRACJA_2026-03-29.md` for canonical state.
+
 Date: 2026-03-29
 Module: `Integracja`
 Scope: final implementation plan for the active Wave 1 connection and governed sync surface

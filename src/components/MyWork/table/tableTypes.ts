@@ -102,6 +102,8 @@ export interface NodeComment {
   author: string;
   createdAt: string;
   editedAt?: string;
+  /** @mention display names parsed from comment text */
+  mentions?: string[];
 }
 
 export interface NodeActivity {

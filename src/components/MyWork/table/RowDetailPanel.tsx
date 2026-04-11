@@ -10,8 +10,11 @@ import {
   Bold,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
   Clock,
   Code,
+  Eye,
+  EyeOff,
   FileText,
   GitBranch,
   Heading1,
@@ -38,6 +41,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import toast from 'react-hot-toast';
+
+import type { TablePlatformField } from '@/types/tablePlatform';
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+import { OrganizationApi } from '@/services/api/organizations.api';
+import { useAppStore } from '@/store/useAppStore';
 
 import { CellRenderer } from './CellRenderer';
 import { MiniCanvas } from './MiniCanvas';
@@ -50,6 +59,30 @@ import type {
   TableNode,
 } from './tableTypes';
 import { ROW_ACCENT_COLORS } from './tableTypes';
+
+function extractLinkedIds(val: unknown): string[] {
+  if (val == null) return [];
+  if (typeof val === 'string') {
+    const t = val.trim();
+    return t ? [t] : [];
+  }
+  if (Array.isArray(val)) {
+    return val.flatMap((v) => {
+      if (typeof v === 'string') {
+        const s = v.trim();
+        return s ? [s] : [];
+      }
+      if (v && typeof v === 'object' && 'id' in v && typeof (v as { id: unknown }).id === 'string') {
+        return [(v as { id: string }).id];
+      }
+      return [];
+    });
+  }
+  if (typeof val === 'object' && 'id' in val && typeof (val as { id: unknown }).id === 'string') {
+    return [(val as { id: string }).id];
+  }
+  return [];
+}
 
 interface RowDetailPanelProps {
   open: boolean;
@@ -68,9 +101,15 @@ interface RowDetailPanelProps {
   onAddRelation?: (sourceId: string, targetId: string) => void;
   onLinkArtifact?: (nodeId: string) => void;
   ideaId?: string;
+  /** Platform table fields — when present, enables platform sheet UX (tabs, related records). */
+  fields?: TablePlatformField[];
+  /** `tp_tables.id` for platform API calls (watch, comments). Falls back to `fields[0].tableId`. */
+  platformTableId?: string | null;
 }
 
 type TabId = 'properties' | 'comments' | 'attachments' | 'activity' | 'ai' | 'drawing';
+
+type PlatformSheetTabId = 'fields' | 'activity' | 'audit' | 'comments';
 
 export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   open,
@@ -89,12 +128,37 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   onAddRelation,
   onLinkArtifact,
   ideaId,
+  fields,
+  platformTableId,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
+  const isPlatform = fields?.some((f) => 'fieldType' in f) ?? false;
+
+  const resolvedPlatformTableId = useMemo(() => {
+    if (!isPlatform) return null;
+    return platformTableId ?? fields?.[0]?.tableId ?? null;
+  }, [isPlatform, platformTableId, fields]);
+
+  const currentUser = useAppStore((s) => s.currentUser);
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const currentUserId = String(currentUser?.id ?? '');
+  const authorDisplayName = useMemo(
+    () =>
+      [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ') ||
+      currentUser?.email ||
+      'You',
+    [currentUser?.email, currentUser?.firstName, currentUser?.lastName]
+  );
+
   const [activeTab, setActiveTab] = useState<TabId>('properties');
+  const [platformSheetTab, setPlatformSheetTab] = useState<PlatformSheetTabId>('fields');
   const [newComment, setNewComment] = useState('');
+  const [isWatching, setIsWatching] = useState(false);
+  const [watchLoading, setWatchLoading] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionPool, setMentionPool] = useState<Array<{ id: string; name: string }>>([]);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [subItemsExpanded, setSubItemsExpanded] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
@@ -107,6 +171,46 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   const bodyTextareaRef = useRef<HTMLTextAreaElement>(null);
   const relationDropdownRef = useRef<HTMLDivElement>(null);
   const artifactDropdownRef = useRef<HTMLDivElement>(null);
+  const commentComposerRef = useRef<HTMLDivElement>(null);
+  const commentTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setPlatformSheetTab('fields');
+  }, [node?.id]);
+
+  useEffect(() => {
+    if (!open || !node?.id || !isPlatform) return;
+    TablePlatformApi.getRecordWatchers(node.id)
+      .then((watchers: any[]) => {
+        setIsWatching(
+          (watchers || []).some(
+            (w: any) => String(w.user_id ?? w.userId ?? '') === currentUserId && currentUserId !== ''
+          )
+        );
+      })
+      .catch(() => {});
+  }, [open, node?.id, isPlatform, currentUserId]);
+
+  useEffect(() => {
+    if (!open || !currentOrganization?.id) return;
+    let cancelled = false;
+    OrganizationApi.getOrganizationMembers(currentOrganization.id)
+      .then((rows) => {
+        if (cancelled) return;
+        setMentionPool(
+          rows.map((r) => ({
+            id: r.userId,
+            name: (r.name && r.name.trim()) || r.email || r.userId,
+          }))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setMentionPool([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, currentOrganization?.id]);
 
   useEffect(() => {
     const closeOnClickOutside = (e: MouseEvent) => {
@@ -124,10 +228,17 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       ) {
         setArtifactDropdownOpen(false);
       }
+      if (
+        mentionQuery !== null &&
+        commentComposerRef.current &&
+        !commentComposerRef.current.contains(e.target as Node)
+      ) {
+        setMentionQuery(null);
+      }
     };
     document.addEventListener('mousedown', closeOnClickOutside);
     return () => document.removeEventListener('mousedown', closeOnClickOutside);
-  }, [relationDropdownOpen, artifactDropdownOpen]);
+  }, [relationDropdownOpen, artifactDropdownOpen, mentionQuery]);
 
   const connectedEdges = useMemo(() => {
     if (!node) return [];
@@ -168,29 +279,157 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   const attachments: NodeAttachment[] = useMemo(() => node?.data?.attachments || [], [node]);
   const activities: NodeActivity[] = useMemo(() => node?.data?.activity || [], [node]);
 
+  const linkedColumnKeys = useMemo(() => {
+    if (isPlatform && fields?.length) {
+      return fields
+        .filter((f) => 'fieldType' in f && f.fieldType === 'linkedRecord')
+        .map((f) => f.id)
+        .filter(Boolean);
+    }
+    return columns.filter((c) => c.type === 'relation').map((c) => c.key);
+  }, [isPlatform, fields, columns]);
+
+  const relatedRecordChips = useMemo(() => {
+    if (!node) return [] as { id: string; label: string }[];
+    const chips: { id: string; label: string }[] = [];
+    const seen = new Set<string>();
+    for (const key of linkedColumnKeys) {
+      for (const id of extractLinkedIds(node.data?.[key])) {
+        if (seen.has(id)) continue;
+        seen.add(id);
+        chips.push({
+          id,
+          label: allNodes.find((x) => x.id === id)?.data?.label || id,
+        });
+      }
+    }
+    return chips;
+  }, [node, linkedColumnKeys, allNodes]);
+
+  const mentionSuggestions = useMemo(() => {
+    if (mentionQuery === null) return [];
+    const q = mentionQuery.toLowerCase();
+    return mentionPool
+      .filter(
+        (u) =>
+          !q ||
+          u.name.toLowerCase().includes(q) ||
+          String(u.id).toLowerCase().includes(q)
+      )
+      .slice(0, 12);
+  }, [mentionQuery, mentionPool]);
+
+  const auditActivities = useMemo(
+    () =>
+      activities.filter((a) =>
+        ['edited', 'status_change', 'created'].includes(String(a.action))
+      ),
+    [activities]
+  );
+
   const accentColor = node?.data?.color || ROW_ACCENT_COLORS[0];
 
-  const handleAddComment = useCallback(() => {
+  const handleAddComment = useCallback(async () => {
     if (!node || !newComment.trim() || locked) return;
-    const comment: NodeComment = {
-      id: `cmt-${Date.now()}`,
-      text: newComment.trim(),
-      author: 'You',
-      createdAt: new Date().toISOString(),
-    };
-    const prev = node.data?.comments || [];
-    onFieldChange(node.id, 'comments', [...prev, comment]);
-    const activity: NodeActivity = {
-      id: `act-${Date.now()}`,
-      action: 'comment',
-      author: 'You',
-      newValue: newComment.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    const prevAct = node.data?.activity || [];
-    onFieldChange(node.id, 'activity', [...prevAct, activity]);
+    const text = newComment.trim();
+    const mentions = text.match(/@(\S+)/g)?.map((m) => m.slice(1)) || [];
+    const tableId = resolvedPlatformTableId;
+
+    if (isPlatform && tableId) {
+      try {
+        const created = await TablePlatformApi.addRecordComment(
+          node.id,
+          tableId,
+          text,
+          authorDisplayName,
+          undefined,
+          mentions.length ? mentions : undefined
+        );
+        const comment: NodeComment = {
+          id: String(created?.id ?? `cmt-${Date.now()}`),
+          text,
+          author: authorDisplayName,
+          createdAt: String(created?.created_at ?? new Date().toISOString()),
+          mentions: mentions.length ? mentions : undefined,
+        };
+        const prev = node.data?.comments || [];
+        onFieldChange(node.id, 'comments', [...prev, comment]);
+        const activity: NodeActivity = {
+          id: `act-${Date.now()}`,
+          action: 'comment',
+          author: authorDisplayName,
+          newValue: text,
+          createdAt: new Date().toISOString(),
+        };
+        const prevAct = node.data?.activity || [];
+        onFieldChange(node.id, 'activity', [...prevAct, activity]);
+      } catch {
+        toast.error(isPl ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+        return;
+      }
+    } else {
+      const comment: NodeComment = {
+        id: `cmt-${Date.now()}`,
+        text,
+        author: authorDisplayName,
+        createdAt: new Date().toISOString(),
+        mentions: mentions.length ? mentions : undefined,
+      };
+      const prev = node.data?.comments || [];
+      onFieldChange(node.id, 'comments', [...prev, comment]);
+      const activity: NodeActivity = {
+        id: `act-${Date.now()}`,
+        action: 'comment',
+        author: authorDisplayName,
+        newValue: text,
+        createdAt: new Date().toISOString(),
+      };
+      const prevAct = node.data?.activity || [];
+      onFieldChange(node.id, 'activity', [...prevAct, activity]);
+    }
     setNewComment('');
-  }, [locked, newComment, node, onFieldChange]);
+    setMentionQuery(null);
+  }, [
+    authorDisplayName,
+    isPl,
+    isPlatform,
+    locked,
+    newComment,
+    node,
+    onFieldChange,
+    resolvedPlatformTableId,
+  ]);
+
+  const handleCommentInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setNewComment(val);
+    const caret = e.target.selectionStart ?? val.length;
+    const beforeCaret = val.slice(0, caret);
+    const lastAtIdx = beforeCaret.lastIndexOf('@');
+    if (lastAtIdx < 0) {
+      setMentionQuery(null);
+      return;
+    }
+    const afterAt = beforeCaret.slice(lastAtIdx + 1);
+    if (afterAt.includes(' ') || afterAt.includes('\n')) {
+      setMentionQuery(null);
+      return;
+    }
+    setMentionQuery(afterAt);
+  }, []);
+
+  const toggleWatch = useCallback(async () => {
+    if (!node?.id || watchLoading || !resolvedPlatformTableId) return;
+    setWatchLoading(true);
+    try {
+      const { watching } = await TablePlatformApi.toggleRecordWatch(node.id, resolvedPlatformTableId);
+      setIsWatching(watching);
+    } catch {
+      toast.error(isPl ? 'Nie udało się zmienić obserwacji' : 'Failed to update watch status');
+    } finally {
+      setWatchLoading(false);
+    }
+  }, [isPl, node?.id, resolvedPlatformTableId, watchLoading]);
 
   const handleAddAttachmentLink = useCallback(() => {
     if (!node || locked) return;
@@ -331,7 +570,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       onClick={onClose}
     >
       <div
-        className={`${mode === 'preview' ? 'w-[360px]' : 'w-[520px]'} max-w-[90vw] h-full bg-white dark:bg-navy-950 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200 transition-[width]`}
+        className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Color accent bar ── */}
@@ -389,6 +628,21 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               {node.data?.icon && <span className="text-lg mr-1">{node.data.icon}</span>}
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
+              {isPlatform && node?.id && resolvedPlatformTableId && (
+                <button
+                  type="button"
+                  onClick={() => void toggleWatch()}
+                  disabled={watchLoading}
+                  className={`rounded-lg p-1.5 transition ${
+                    isWatching
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                      : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  }`}
+                  title={isWatching ? (isPl ? 'Przestań obserwować' : 'Stop watching') : isPl ? 'Obserwuj zmiany' : 'Watch for changes'}
+                >
+                  {isWatching ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              )}
               {mode === 'preview' && onExpand && (
                 <button
                   onClick={onExpand}
@@ -483,33 +737,35 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           </div>
         )}
 
-        {/* ── Notion-style property strip ── */}
-        <div className="px-5 py-2.5 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
-          <div className="space-y-1.5">
-            {columns
-              .filter((col) => col.key !== 'label' && col.key !== 'type' && col.visible)
-              .slice(0, 8)
-              .map((col) => {
-                return (
-                  <div key={col.key} className="flex items-center gap-2 min-h-[28px]">
-                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 w-24 flex-shrink-0 truncate">
-                      {col.header}
-                    </span>
-                    <div className="flex-1 min-w-0 rounded-md hover:bg-slate-50 dark:hover:bg-white/[0.02] px-1.5 py-0.5 -mx-1.5 transition-colors">
-                      <CellRenderer
-                        column={col}
-                        value={node.data?.[col.key]}
-                        rowData={node.data || {}}
-                        onChange={(val) => onFieldChange(node.id, col.key, val)}
-                        locked={locked}
-                        allNodes={allNodes.map((n) => ({ id: n.id, label: n.data?.label }))}
-                      />
+        {/* ── Notion-style property strip (hidden in platform full mode — fields live in the Fields tab) ── */}
+        {!(isPlatform && mode === 'full') && (
+          <div className="px-5 py-2.5 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
+            <div className="space-y-1.5">
+              {columns
+                .filter((col) => col.key !== 'label' && col.key !== 'type' && col.visible)
+                .slice(0, 8)
+                .map((col) => {
+                  return (
+                    <div key={col.key} className="flex items-center gap-2 min-h-[28px]">
+                      <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 w-24 flex-shrink-0 truncate">
+                        {col.header}
+                      </span>
+                      <div className="flex-1 min-w-0 rounded-md hover:bg-slate-50 dark:hover:bg-white/[0.02] px-1.5 py-0.5 -mx-1.5 transition-colors">
+                        <CellRenderer
+                          column={col}
+                          value={node.data?.[col.key]}
+                          rowData={node.data || {}}
+                          onChange={(val) => onFieldChange(node.id, col.key, val)}
+                          locked={locked}
+                          allNodes={allNodes.map((n) => ({ id: n.id, label: n.data?.label }))}
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── Sub-items (full mode only) ── */}
         {mode === 'full' && (childNodes.length > 0 || !locked) && (
@@ -555,8 +811,67 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           </div>
         )}
 
-        {/* ── Tabs (full mode only) ── */}
-        {mode === 'full' && (
+        {/* ── Tabs (full mode): platform = HIG pill strip ── */}
+        {mode === 'full' && isPlatform && (
+          <div className="flex items-center gap-1.5 px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0 overflow-x-auto">
+            {(
+              [
+                { id: 'fields' as const, labelEn: 'Fields', labelPl: 'Pola', Icon: FileText },
+                {
+                  id: 'activity' as const,
+                  labelEn: 'Activity',
+                  labelPl: 'Aktywność',
+                  Icon: Clock,
+                  count: activities.length,
+                },
+                {
+                  id: 'audit' as const,
+                  labelEn: 'Audit',
+                  labelPl: 'Audyt',
+                  Icon: ClipboardList,
+                  count: auditActivities.length,
+                },
+                {
+                  id: 'comments' as const,
+                  labelEn: 'Comments',
+                  labelPl: 'Komentarze',
+                  Icon: MessageSquare,
+                  count: comments.length,
+                },
+              ] as const
+            ).map((tab) => {
+              const Icon = tab.Icon;
+              const isActive = platformSheetTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setPlatformSheetTab(tab.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-navy-950'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  }`}
+                >
+                  <Icon size={12} className="opacity-90" />
+                  {isPl ? tab.labelPl : tab.labelEn}
+                  {'count' in tab && tab.count != null && tab.count > 0 && (
+                    <span
+                      className={`min-w-[1.1rem] px-1 py-0 text-[9px] font-bold rounded-full tabular-nums ${
+                        isActive
+                          ? 'bg-white/20 text-white dark:bg-navy-900/25 dark:text-navy-900'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {mode === 'full' && !isPlatform && (
           <div className="flex items-center gap-0.5 px-5 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0 overflow-x-auto">
             {TABS.map((tab) => {
               const Icon = tab.icon;
@@ -587,8 +902,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         {/* ── Tab content (full mode only) ── */}
         {mode === 'full' && (
           <div className="flex-1 overflow-auto px-5 py-4">
-            {/* Properties tab */}
-            {activeTab === 'properties' && (
+            {/* Properties / platform Fields */}
+            {((isPlatform && platformSheetTab === 'fields') ||
+              (!isPlatform && activeTab === 'properties')) && (
               <div className="space-y-3">
                 {columns.map((col) => (
                   <div key={col.key}>
@@ -702,8 +1018,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               </div>
             )}
 
-            {/* Comments tab */}
-            {activeTab === 'comments' && (
+            {/* Comments */}
+            {((isPlatform && platformSheetTab === 'comments') ||
+              (!isPlatform && activeTab === 'comments')) && (
               <div className="space-y-3">
                 {comments.length === 0 && (
                   <p className="text-[11px] text-slate-400 text-center py-6">
@@ -729,18 +1046,66 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   </div>
                 ))}
                 {!locked && (
-                  <div className="flex items-center gap-2 pt-2">
-                    <input
+                  <div ref={commentComposerRef} className="relative flex items-end gap-2 pt-2">
+                    {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                      <div className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900 shadow-lg max-h-40 overflow-y-auto z-50">
+                        {mentionSuggestions.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
+                            onClick={() => {
+                              const ta = commentTextareaRef.current;
+                              const text = newComment || '';
+                              const caretPos = ta?.selectionStart ?? text.length;
+                              const beforeCaret = text.slice(0, caretPos);
+                              const lastAt = beforeCaret.lastIndexOf('@');
+                              if (lastAt < 0) return;
+                              const newText =
+                                text.slice(0, lastAt) + `@${user.name} ` + text.slice(caretPos);
+                              setNewComment(newText);
+                              setMentionQuery(null);
+                              requestAnimationFrame(() => {
+                                if (ta) {
+                                  const pos = lastAt + user.name.length + 2;
+                                  ta.focus();
+                                  ta.setSelectionRange(pos, pos);
+                                }
+                              });
+                            }}
+                          >
+                            <div className="h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-700 dark:text-primary-300">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-slate-700 dark:text-slate-200">{user.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <textarea
+                      ref={commentTextareaRef}
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                      placeholder={isPl ? 'Dodaj komentarz...' : 'Add a comment...'}
-                      className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-violet-500/30"
+                      onChange={handleCommentInput}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape' && mentionQuery !== null) {
+                          e.preventDefault();
+                          setMentionQuery(null);
+                          return;
+                        }
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          void handleAddComment();
+                        }
+                      }}
+                      rows={2}
+                      placeholder={isPl ? 'Dodaj komentarz... (@ aby wspomnieć)' : 'Add a comment... (@ to mention)'}
+                      className="flex-1 min-h-[40px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-violet-500/30 resize-y"
                     />
                     <button
-                      onClick={handleAddComment}
+                      type="button"
+                      onClick={() => void handleAddComment()}
                       disabled={!newComment.trim()}
-                      className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 disabled:opacity-40 transition-colors"
+                      className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Send size={14} />
                     </button>
@@ -749,8 +1114,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               </div>
             )}
 
-            {/* Attachments tab */}
-            {activeTab === 'attachments' && (
+            {/* Attachments (legacy workspace) */}
+            {!isPlatform && activeTab === 'attachments' && (
               <div className="space-y-2">
                 {/* Linked Artifacts (from artifact linking API) */}
                 <div className="mb-3">
@@ -932,8 +1297,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               </div>
             )}
 
-            {/* Activity tab */}
-            {activeTab === 'activity' && (
+            {/* Activity */}
+            {((isPlatform && platformSheetTab === 'activity') ||
+              (!isPlatform && activeTab === 'activity')) && (
               <div className="space-y-2">
                 {activities.length === 0 && (
                   <p className="text-[11px] text-slate-400 text-center py-6">
@@ -984,8 +1350,45 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               </div>
             )}
 
+            {/* Audit (platform sheet) */}
+            {isPlatform && platformSheetTab === 'audit' && (
+              <div className="space-y-2">
+                {auditActivities.length === 0 && (
+                  <p className="text-[11px] text-slate-400 text-center py-6">
+                    {isPl ? 'Brak wpisów audytu' : 'No audit entries'}
+                  </p>
+                )}
+                {[...auditActivities].reverse().map((act) => (
+                  <div key={act.id} className="flex items-start gap-2.5 py-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500/80 mt-1.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] text-slate-700 dark:text-slate-300">
+                        <strong>{act.author}</strong>{' '}
+                        {act.action === 'edited'
+                          ? isPl
+                            ? `zmienił ${act.field ?? ''}`
+                            : `edited ${act.field ?? ''}`
+                          : act.action === 'status_change'
+                            ? isPl
+                              ? `zmienił status: ${act.oldValue} → ${act.newValue}`
+                              : `changed status: ${act.oldValue} → ${act.newValue}`
+                            : act.action === 'created'
+                              ? isPl
+                                ? 'utworzył rekord'
+                                : 'created record'
+                              : String(act.action)}
+                      </span>
+                      <span className="text-[9px] text-slate-400 block mt-0.5">
+                        {formatTime(act.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* AI Insights tab */}
-            {activeTab === 'ai' && (
+            {!isPlatform && activeTab === 'ai' && (
               <div className="space-y-3">
                 <button
                   onClick={handleGenerateAI}
@@ -1033,7 +1436,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
             )}
 
             {/* Drawing tab */}
-            {activeTab === 'drawing' && (
+            {!isPlatform && activeTab === 'drawing' && (
               <div>
                 <MiniCanvas
                   value={node.data?.drawing || []}
@@ -1047,6 +1450,34 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     ? 'Rysuj, dodawaj kształty i strzałki do tego pomysłu'
                     : 'Draw, add shapes and arrows to this idea'}
                 </p>
+              </div>
+            )}
+
+            {/* Related Records — linkedRecord (platform) or relation columns */}
+            {linkedColumnKeys.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-slate-200/30 dark:border-white/[0.04]">
+                <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                  <Link2 size={10} />
+                  {isPl ? 'Powiązane rekordy' : 'Related Records'}
+                </label>
+                {relatedRecordChips.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 py-1">
+                    {isPl ? 'Brak powiązanych rekordów' : 'No linked records'}
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {relatedRecordChips.map((chip) => (
+                      <button
+                        key={chip.id}
+                        type="button"
+                        onClick={() => onNodeClick?.(chip.id)}
+                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-navy-800/90 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-navy-600/60 hover:bg-violet-500/10 hover:border-violet-300/50 dark:hover:border-violet-500/30 hover:text-violet-800 dark:hover:text-violet-200 transition-colors truncate"
+                      >
+                        <span className="truncate">{chip.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

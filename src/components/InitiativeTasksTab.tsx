@@ -9,7 +9,7 @@ interface Props {
   initiativeId: string;
   users?: User[];
   currentUser?: User;
-  tasks?: any[]; // For compatibility with InitiativeDetailCard
+  tasks?: any[];
   initiative?: FullInitiative; // Added initiative context
 }
 

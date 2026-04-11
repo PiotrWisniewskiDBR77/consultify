@@ -5,7 +5,7 @@
  */
 
 import { detectDelaySignals, type DelaySignal } from './delayDetectionService.js';
-import { getOverloadAlerts, type OverloadAlert } from './workloadCapacityService.js';
+import { getOverloadAlerts, type OverloadAlert, type OverloadWindow } from './workloadCapacityService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 
 export const V8_EXECUTION_CONTROL_TOWER_CONTRACT = 'execution_control_tower_v1';
@@ -185,6 +185,7 @@ interface InitRow {
   status: string;
   project_id: string | null;
   planned_end_date: string | null;
+  forecast_end_date: string | null;
   sla_deadline: string | null;
   updated_at: string | null;
   blocked_reason: string | null;
@@ -210,7 +211,7 @@ async function loadActiveInitiatives(
   projectId?: string
 ): Promise<InitRow[]> {
   let q = `
-    SELECT id, name, status, project_id, planned_end_date,
+    SELECT id, name, status, project_id, planned_end_date, forecast_end_date,
            end_date as sla_deadline, updated_at,
            NULL as blocked_reason, NULL as blocked_at
     FROM initiatives
@@ -388,14 +389,15 @@ function mergeItem(into: Map<string, ControlTowerItem>, item: ControlTowerItem):
 
 export async function getExecutionControlTowerQueues(
   organizationId: string,
-  options?: { projectId?: string; queue?: ControlTowerQueue | 'all' }
+  options?: { projectId?: string; queue?: ControlTowerQueue | 'all'; overloadWindow?: OverloadWindow }
 ): Promise<ControlTowerQueuesResult> {
   const projectId = options?.projectId;
   const queueFilter = options?.queue;
+  const overloadWindow = options?.overloadWindow || 'week';
 
   const [delaySignals, overloadAlerts, initiatives, tasks] = await Promise.all([
     detectDelaySignals(organizationId, projectId, { maxSignals: 2000 }),
-    getOverloadAlerts(organizationId),
+    getOverloadAlerts(organizationId, overloadWindow),
     loadActiveInitiatives(organizationId, projectId),
     loadActiveTasks(organizationId, projectId),
   ]);
@@ -446,7 +448,8 @@ export async function getExecutionControlTowerQueues(
   }
 
   for (const init of initiatives) {
-    const end = parseDay(init.planned_end_date || init.sla_deadline);
+    const effectiveEnd = init.forecast_end_date || init.planned_end_date || init.sla_deadline;
+    const end = parseDay(effectiveEnd);
     if (end !== null && end < today && !isInitTerminal(init.status)) {
       mergeItem(late, {
         entityType: 'INITIATIVE',
@@ -458,7 +461,7 @@ export async function getExecutionControlTowerQueues(
         why: [
           {
             kind: 'baseline_forecast',
-            detail: `Planowany koniec (${init.planned_end_date || init.sla_deadline}) jest w przeszłości.`,
+            detail: `Forecast/planowany koniec (${effectiveEnd}) jest w przeszłości.`,
           },
         ],
         whatNext: defaultWhatNextForQueue('late'),

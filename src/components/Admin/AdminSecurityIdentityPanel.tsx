@@ -1,5 +1,6 @@
 import { KeyRound, Link2, Shield, UserCog, UsersRound } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { ApiKeysManagementView } from '../../views/admin/ApiKeysManagementView';
 import { cn } from '../../utils/cn';
@@ -19,7 +20,23 @@ const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
 ];
 
 export const AdminSecurityIdentityPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabId>('policy');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = useMemo(() => {
+    const raw = searchParams.get('tab');
+    return tabs.some((tab) => tab.id === raw) ? (raw as TabId) : 'policy';
+  }, [searchParams]);
+  const [activeTab, setActiveTab] = useState<TabId>(requestedTab);
+
+  useEffect(() => {
+    setActiveTab(requestedTab);
+  }, [requestedTab]);
+
+  const handleTabChange = (tab: TabId) => {
+    setActiveTab(tab);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('tab', tab);
+    setSearchParams(nextParams, { replace: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -40,7 +57,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
                   activeTab === tab.id

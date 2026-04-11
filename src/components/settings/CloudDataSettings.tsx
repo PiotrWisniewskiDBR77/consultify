@@ -10,6 +10,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
+
 interface CloudSource {
   id: string;
   provider: string;
@@ -44,14 +46,8 @@ export const CloudDataSettings: React.FC = () => {
 
   const fetchSources = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/cloud/sources', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSources(data.sources || []);
-      }
+      const data = await Api.get('/api/cloud/sources');
+      setSources(data?.sources || []);
     } catch {
       // best-effort
     } finally {
@@ -66,23 +62,11 @@ export const CloudDataSettings: React.FC = () => {
   const handleAdd = async () => {
     if (!newName.trim()) return;
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/cloud/sources', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ provider: newProvider, name: newName.trim() }),
-      });
-      if (res.ok) {
-        toast.success(t('cloud.sourceConnected', 'Cloud source connected'));
-        setShowAddForm(false);
-        setNewName('');
-        fetchSources();
-      } else {
-        toast.error(t('cloud.connectFailed', 'Failed to connect cloud source'));
-      }
+      await Api.post('/api/cloud/sources', { provider: newProvider, name: newName.trim() });
+      toast.success(t('cloud.sourceConnected', 'Cloud source connected'));
+      setShowAddForm(false);
+      setNewName('');
+      fetchSources();
     } catch {
       toast.error(t('cloud.connectFailed', 'Failed to connect cloud source'));
     }
@@ -91,18 +75,9 @@ export const CloudDataSettings: React.FC = () => {
   const handleSync = async (id: string) => {
     setSyncingId(id);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/cloud/sources/${id}/sync`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        toast.success(t('cloud.syncComplete', `Synced ${data.filesSynced || 0} files`));
-        fetchSources();
-      } else {
-        toast.error(t('cloud.syncFailed', 'Sync failed'));
-      }
+      const data = await Api.post(`/api/cloud/sources/${id}/sync`, {});
+      toast.success(t('cloud.syncComplete', `Synced ${data?.filesSynced || 0} files`));
+      fetchSources();
     } catch {
       toast.error(t('cloud.syncFailed', 'Sync failed'));
     } finally {
@@ -111,12 +86,13 @@ export const CloudDataSettings: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      t('cloud.deleteConfirm', 'Are you sure you want to disconnect this cloud source? This will stop syncing files from this source.')
+    );
+    if (!confirmed) return;
+
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`/api/cloud/sources/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await Api.delete(`/api/cloud/sources/${id}`);
       toast.success(t('cloud.sourceDisconnected', 'Cloud source disconnected'));
       fetchSources();
     } catch {
@@ -124,18 +100,29 @@ export const CloudDataSettings: React.FC = () => {
     }
   };
 
+  const openInProvider = (source: CloudSource) => {
+    const urls: Record<string, string> = {
+      google_drive: 'https://drive.google.com',
+      onedrive: 'https://onedrive.live.com',
+      dropbox: 'https://www.dropbox.com/home',
+      sharepoint: 'https://sharepoint.com',
+    };
+    const url = urls[source.provider];
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cloud size={20} className="text-primary-500" />
+          <Cloud size={20} className="text-brand" />
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
             {t('cloud.title', 'Cloud Data Sources')}
           </h3>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
         >
           <Plus size={14} />
           {t('cloud.addSource', 'Add source')}
@@ -186,7 +173,7 @@ export const CloudDataSettings: React.FC = () => {
             <button
               onClick={handleAdd}
               disabled={!newName.trim()}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 rounded-lg"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark disabled:bg-slate-300 rounded-lg"
             >
               {t('cloud.connect', 'Connect')}
             </button>
@@ -225,7 +212,7 @@ export const CloudDataSettings: React.FC = () => {
                             : 'text-slate-400'
                       }
                     >
-                      {source.status}
+                      {t(`cloud.status.${source.status}`, source.status)}
                     </span>
                   </div>
                 </div>
@@ -240,6 +227,7 @@ export const CloudDataSettings: React.FC = () => {
                   <RefreshCw size={14} className={syncingId === source.id ? 'animate-spin' : ''} />
                 </button>
                 <button
+                  onClick={() => openInProvider(source)}
                   className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
                   title={t('cloud.openInProvider', 'Open in provider')}
                 >

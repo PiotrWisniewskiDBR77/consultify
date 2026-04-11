@@ -51,7 +51,7 @@ import {
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
-import { getArtifactPath } from '@/utils/artifactLinks';
+import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
 
@@ -723,7 +723,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                 onOpen={(row) => {
                   const targetPath =
                     row.kind === 'sheet'
-                      ? '/presentations?tab=sheets'
+                      ? buildMyWorkSheetTableOpenPath(row.originRecordId)
                       : getArtifactPath(
                           row.kind === 'presentation' ? 'presentation' : 'report',
                           row.originRecordId

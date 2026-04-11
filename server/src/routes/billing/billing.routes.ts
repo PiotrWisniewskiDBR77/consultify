@@ -96,9 +96,16 @@ interface InvoiceRow {
 }
 
 // Billing access middleware
+const hasBillingAccess = (req: AuthRequest): boolean => {
+  const role = String(req.user?.role || '')
+    .trim()
+    .toLowerCase();
+  const allowedRoles = new Set(['superadmin', 'admin', 'administrator', 'billing_manager', 'owner']);
+  return Boolean(req.user && (req.user.isSuperAdmin || allowedRoles.has(role)));
+};
+
 const requireBillingAccess = (req: AuthRequest, res: Response, next: () => void): void => {
-  const allowedRoles = ['SUPERADMIN', 'ADMIN', 'billing_manager', 'owner'];
-  if (!req.user || !allowedRoles.includes(req.user.role)) {
+  if (!hasBillingAccess(req)) {
     res.status(403).json({ error: 'Billing access required' });
     return;
   }
@@ -971,7 +978,7 @@ router.get(
       };
       const offset = (page - 1) * pageSize;
 
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT i.*, o.name as organization_name
@@ -1040,29 +1047,28 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
-
-      let query = `
-            SELECT i.*, o.name as organization_name
-            FROM invoices i
-            LEFT JOIN organizations o ON i.organization_id = o.id
-            WHERE i.id = ?
-        `;
-      const params: SQLParams = [id];
-
-      if (!isSuperAdmin) {
-        query += ` AND i.organization_id = ?`;
-        params.push(req.user!.organizationId);
-      }
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       interface InvoiceDetailRow extends InvoiceRow {
         // Additional fields from JOIN
       }
-      const invoice = await dbGet<InvoiceDetailRow>(query, params);
+      const invoice = await dbGet<InvoiceDetailRow>(
+        `
+          SELECT i.*, o.name as organization_name
+          FROM invoices i
+          LEFT JOIN organizations o ON i.organization_id = o.id
+          WHERE i.id = ?
+        `,
+        [id]
+      );
 
       if (!invoice) {
         return res.status(404).json({ error: 'Invoice not found' });
         return;
+      }
+
+      if (!isSuperAdmin && invoice.organization_id !== req.user!.organizationId) {
+        return res.status(403).json({ error: 'Access denied' });
       }
 
       return res.json({
@@ -1091,7 +1097,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       // Verify access
       const invoice = await dbGet<{
@@ -1301,27 +1307,32 @@ router.get(
       }
 
       const billing = await dbGet(
-        `SELECT ob.subscription_plan_id, ob.status, ob.current_period_end,
-                sp.name as plan_name, sp.price_monthly, sp.price_yearly
-         FROM organization_billing ob
-         LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
-         WHERE ob.organization_id = ?
+        `SELECT subscription_plan_id, status, current_period_end
+         FROM organization_billing
+         WHERE organization_id = ?
          LIMIT 1`,
         [orgId]
       );
-
       if (!billing || !(billing as any).subscription_plan_id) {
         return res.json({ data: null });
       }
 
+      const plan = await dbGet(
+        `SELECT name, price_monthly, price_yearly
+         FROM subscription_plans
+         WHERE id = ?
+         LIMIT 1`,
+        [(billing as any).subscription_plan_id]
+      );
+
       return res.json({
         data: {
           plan: (billing as any).subscription_plan_id,
-          planName: (billing as any).plan_name,
+          planName: (plan as any)?.name ?? null,
           status: (billing as any).status || 'trialing',
           currentPeriodEnd: (billing as any).current_period_end,
           cancelAtPeriodEnd: (billing as any).status === 'canceling',
-          priceMonthly: (billing as any).price_monthly,
+          priceMonthly: (plan as any)?.price_monthly ?? null,
         },
       });
     } catch (error: any) {
@@ -1526,7 +1537,7 @@ router.get(
       };
       const offset = (page - 1) * pageSize;
 
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly,
@@ -1591,7 +1602,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly,
@@ -1764,7 +1775,7 @@ router.post(
     try {
       const { id } = req.params;
       const { immediately } = req.body;
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       const subscription = (await dbGet(`SELECT * FROM subscriptions WHERE id = ?`, [id])) as {
         organization_id: string;
@@ -1823,9 +1834,33 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      const BillingService = await import('../../services/BillingService.js');
-      const status = await BillingService.getGracePeriodStatus(orgId);
-      return res.json(status);
+      const billing = (await dbGet(
+        `SELECT status, current_period_end
+         FROM organization_billing
+         WHERE organization_id = ?
+         LIMIT 1`,
+        [orgId]
+      )) as { status?: string; current_period_end?: string | null } | null;
+      if (!billing || billing.status !== 'canceling' || !billing.current_period_end) {
+        return res.json({ isInGracePeriod: false, accessUntil: null, daysRemaining: null });
+      }
+
+      const accessUntil = new Date(billing.current_period_end);
+      if (Number.isNaN(accessUntil.getTime())) {
+        return res.json({ isInGracePeriod: false, accessUntil: null, daysRemaining: null });
+      }
+
+      const now = new Date();
+      const daysRemaining = Math.max(
+        0,
+        Math.ceil((accessUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      );
+
+      return res.json({
+        isInGracePeriod: true,
+        accessUntil: accessUntil.toISOString(),
+        daysRemaining,
+      });
     } catch (error: unknown) {
       logger.error('[Billing] Grace period status error:', error);
       return res.status(500).json({ error: 'Failed to get grace period status' });
@@ -1844,12 +1879,24 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const orgId = req.user!.organizationId;
-      const BillingService = await import('../../services/BillingService.js');
-      const result = await BillingService.reactivateSubscription(orgId);
+      const billing = (await dbGet(
+        `SELECT status
+         FROM organization_billing
+         WHERE organization_id = ?
+         LIMIT 1`,
+        [orgId]
+      )) as { status?: string } | null;
 
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
+      if (!billing || billing.status !== 'canceling') {
+        return res.status(400).json({ error: 'No subscription in cancellation period' });
       }
+
+      await dbRun(
+        `UPDATE organization_billing
+         SET status = 'active', updated_at = datetime('now')
+         WHERE organization_id = ?`,
+        [orgId]
+      );
 
       return res.json({ success: true, message: 'Subscription reactivated successfully' });
     } catch (error: unknown) {
@@ -2147,7 +2194,7 @@ router.get(
       };
       const offset = ((page || 1) - 1) * (pageSize || 50);
 
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT cn.*, o.name as organization_name
@@ -2744,7 +2791,7 @@ router.get(
         startDate?: string;
         endDate?: string;
       };
-      const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       const orgId = isSuperAdmin && organizationId ? organizationId : req.user!.organizationId;
 
@@ -3790,13 +3837,13 @@ router.put(
       if (!template) {
         return res.status(404).json({ error: 'Template not found' });
       }
-      if (template.is_system && req.user!.role !== 'SUPERADMIN') {
+      if (template.is_system && !req.user?.isSuperAdmin) {
         return res.status(403).json({ error: 'Cannot modify system templates' });
       }
       if (
         template.organization_id &&
         template.organization_id !== orgId &&
-        req.user!.role !== 'SUPERADMIN'
+        !req.user?.isSuperAdmin
       ) {
         return res.status(403).json({ error: 'Access denied' });
       }
@@ -3865,7 +3912,7 @@ router.delete(
       if (template.is_system) {
         return res.status(403).json({ error: 'Cannot delete system templates' });
       }
-      if (template.organization_id !== orgId && req.user!.role !== 'SUPERADMIN') {
+      if (template.organization_id !== orgId && !req.user?.isSuperAdmin) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -4147,6 +4194,9 @@ router.get(
   requireBillingAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
+      if (!hasBillingAccess(req)) {
+        return res.status(403).json({ error: 'Billing access required' });
+      }
       const orgId =
         (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
       const limit = parseInt((req.query.limit as string) || '100', 10);
@@ -4165,6 +4215,9 @@ router.get(
   requireBillingAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
+      if (!hasBillingAccess(req)) {
+        return res.status(403).json({ error: 'Billing access required' });
+      }
       const orgId =
         (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
       const period = (req.query.period as string) || '30 days';
@@ -4184,6 +4237,9 @@ router.get(
   validateParams(InvoiceIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
+      if (!hasBillingAccess(req)) {
+        return res.status(403).json({ error: 'Billing access required' });
+      }
       const event = await BillingWebhookService.getEventById(req.params.id);
       if (!event) {
         return res.status(404).json({ error: 'Webhook event not found' });
@@ -4193,7 +4249,7 @@ router.get(
         (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
       if (
         (event as { organization_id: string }).organization_id !== orgId &&
-        req.user!.role !== 'SUPERADMIN'
+        !req.user?.isSuperAdmin
       ) {
         return res.status(403).json({ error: 'Permission denied' });
         return;

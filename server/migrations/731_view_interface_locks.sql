@@ -1,0 +1,8 @@
+-- View and interface lock semantics (P15 contract §2.3.7)
+ALTER TABLE tp_views ADD COLUMN IF NOT EXISTS locked BOOLEAN DEFAULT false;
+ALTER TABLE tp_views ADD COLUMN IF NOT EXISTS locked_by UUID;
+ALTER TABLE tp_views ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ;
+
+ALTER TABLE tp_interfaces ADD COLUMN IF NOT EXISTS locked BOOLEAN DEFAULT false;
+ALTER TABLE tp_interfaces ADD COLUMN IF NOT EXISTS locked_by UUID;
+ALTER TABLE tp_interfaces ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ;

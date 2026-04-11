@@ -281,6 +281,21 @@ const recordsService = {
     const db = getDatabase();
     const id = uuidv4();
     try {
+      // Apply default values before validation
+      const allFieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [tableId]);
+      const allFields = allFieldsResult.rows as Array<{
+        id: string;
+        name: string;
+        field_type: string;
+        options: Record<string, unknown> | null;
+      }>;
+      for (const field of allFields) {
+        const opts = field.options;
+        if (opts?.default !== undefined && data[field.id] === undefined && data[field.name] === undefined) {
+          data[field.id] = opts.default;
+        }
+      }
+
       const validation = await schemaValidationService.validateRecord(tableId, data);
       if (!validation.valid) {
         throw new ValidationError('Record validation failed', {
@@ -470,7 +485,10 @@ const recordsService = {
         });
       }
 
-      const validation = await schemaValidationService.validateRecord(tableId, data);
+      const validation = await schemaValidationService.validateRecord(tableId, data, {
+        recordId,
+        isUpdate: true,
+      });
       if (!validation.valid) {
         throw new ValidationError('Record validation failed', {
           errors: validation.errors,

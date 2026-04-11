@@ -377,9 +377,10 @@ export const PresentationsHub: React.FC = () => {
         toast.success(t('presentations.exportSuccess', 'Export started'));
         trackFunnelEvent('presentation_exported', { deckId: deck.id });
         fetchDecks();
-      } catch {
-        toast.success(t('presentations.exportSuccess', 'Export started'));
-        trackFunnelEvent('presentation_exported', { deckId: deck.id });
+      } catch (err: any) {
+        const message = err?.message || t('presentations.exportFailed', 'Export failed. Please try again.');
+        toast.error(message);
+        trackFunnelEvent('presentation_export_failed', { deckId: deck.id });
       }
     },
     [fetchDecks, t]

@@ -59,7 +59,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/billing/payment-methods`, {
+      const response = await fetch(`/api/admin/billing/payment-methods`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -104,7 +104,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
     try {
       // Use Stripe Elements or payment method creation API
       // For now, return error if Stripe integration is not properly configured
-      const res = await fetch(`/api/billing/payment-methods`, {
+      const res = await fetch(`/api/admin/billing/payment-methods`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,22 +126,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
         loadPaymentMethods();
       } else {
         const errorData = await res.json().catch(() => ({}));
-        console.warn('Backend failed, using dev-mode fallback:', errorData.error);
-
-        const newMethod: PaymentMethod = {
-          id: 'pm_' + Math.random().toString(36).substr(2, 9),
-          type: 'card',
-          brand: 'Visa',
-          last4: cardNumber.replace(/\s/g, '').slice(-4),
-          expMonth: parseInt(cardExpiry.split('/')[0]),
-          expYear: 2000 + parseInt(cardExpiry.split('/')[1]),
-          isDefault: paymentMethods.length === 0,
-          createdAt: new Date().toISOString(),
-        };
-        setPaymentMethods((prev) => [...prev, newMethod]);
-        toast.success('Payment method added (dev mode)');
-        setShowAddModal(false);
-        resetForm();
+        toast.error(errorData.error || 'Failed to add payment method');
       }
     } catch (error) {
       console.error('Failed to add payment method:', error);
@@ -152,7 +137,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
 
   const handleSetDefault = async (methodId: string) => {
     try {
-      const res = await fetch(`/api/billing/payment-methods/${methodId}/default`, {
+      const res = await fetch(`/api/admin/billing/payment-methods/${methodId}/default`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
@@ -183,7 +168,7 @@ export const PaymentMethodsView: React.FC<PaymentMethodsViewProps> = ({ classNam
     if (!confirm('Are you sure you want to remove this payment method?')) return;
 
     try {
-      const res = await fetch(`/api/billing/payment-methods/${methodId}`, {
+      const res = await fetch(`/api/admin/billing/payment-methods/${methodId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });

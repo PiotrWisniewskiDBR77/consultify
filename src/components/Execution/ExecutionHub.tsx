@@ -3748,6 +3748,13 @@ Please return:
     );
   }, []);
 
+  const handleGenerateInWordy = useCallback(
+    (report: ReportDef) => {
+      navigate(`/wordy?sourceType=execution_report&sourceId=${encodeURIComponent(report.id)}`);
+    },
+    [navigate]
+  );
+
   const renderReportPreviewFooter = useCallback((report: ReportDef) => {
     const rag = computeRAG(report);
     return (
@@ -3758,6 +3765,13 @@ Please return:
           className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
         >
           {t('execution.reportPanel.generateAI', 'Generate with AI')}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleGenerateInWordy(report)}
+          className="h-8 px-3 rounded-lg text-xs font-medium border border-brand/40 text-brand hover:bg-brand/5 dark:border-brand/50 dark:text-brand dark:hover:bg-brand/10 transition-colors"
+        >
+          {t('execution.reportPanel.generateInWordy', 'Generate in Wordy')}
         </button>
         <button
           type="button"
@@ -3784,7 +3798,7 @@ Please return:
         </button>
       </div>
     );
-  }, [handleGenerateReport, t]);
+  }, [handleGenerateReport, handleGenerateInWordy, t]);
 
   const renderReportsCatalog = () => {
     if (reportDataContext.totalInitiatives === 0) {

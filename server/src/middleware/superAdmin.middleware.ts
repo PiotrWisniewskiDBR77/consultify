@@ -54,12 +54,11 @@ const normalizeSuperAdminRole = (role?: string): string => {
     .toLowerCase()
     .replace(/\s+/g, '_');
 
-  // Supported aliases: SUPERADMIN, SUPER_ADMIN, superadmin, super_admin, owner.
+  // Supported aliases: SUPERADMIN, SUPER_ADMIN, superadmin, super_admin.
   if (
     normalized === 'superadmin' ||
     normalized === 'super_admin' ||
-    normalized === 'super-admin' ||
-    normalized === 'owner'
+    normalized === 'super-admin'
   ) {
     return 'superadmin';
   }
@@ -181,7 +180,8 @@ export const verifySuperAdmin = async (
     // Attach super admin status to request
     if (req.user) {
       req.user.isSuperAdmin = true;
-      req.user.role = normalizeSuperAdminRole(userRole) === 'superadmin' ? 'owner' : (userRole as any);
+      req.user.role =
+        normalizeSuperAdminRole(userRole) === 'superadmin' ? 'SUPERADMIN' : (userRole as any);
       req.user.organizationId = decoded.organizationId || decoded.organization_id || '';
       req.user.superadminCapabilities = getSuperAdminCapabilities(
         userRole,
@@ -192,7 +192,8 @@ export const verifySuperAdmin = async (
         id: decoded.id,
         email: '',
         name: '',
-        role: normalizeSuperAdminRole(userRole) === 'superadmin' ? 'owner' : (userRole as any),
+        role:
+          normalizeSuperAdminRole(userRole) === 'superadmin' ? 'SUPERADMIN' : (userRole as any),
         organizationId: decoded.organizationId || decoded.organization_id || '',
         isSuperAdmin: true,
         superadminCapabilities: getSuperAdminCapabilities(userRole, decoded.superadminCapabilities),

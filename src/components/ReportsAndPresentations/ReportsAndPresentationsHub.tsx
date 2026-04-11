@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
+import { useConversationStore } from '@/store/useConversationStore';
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
@@ -55,18 +56,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     useHelpSidePanel();
 
   const openContextualHelp = useCallback(() => {
-    setKnowledgeModuleIdOverride('outputs');
+    setKnowledgeModuleIdOverride(activeTab === 'templates' ? 'templates' : 'outputs');
     setHelpTab('knowledge');
     setHelpOpen(true);
-  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
+  }, [activeTab, setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
 
-  const initialTab = useMemo<RapTab>(() => {
+  const { initialTab, initialArtifactId } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
     const fromQuery = parseRapTabFromQuery(params.get('tab'));
-    if (fromQuery) return fromQuery;
-    if (location.pathname.startsWith('/reports')) return 'outputs_documents';
-    if (location.pathname.startsWith('/presentations')) return 'presentations';
-    return 'outputs_all';
+    let tab: RapTab;
+    if (fromQuery) tab = fromQuery;
+    else if (location.pathname.startsWith('/reports')) tab = 'outputs_documents';
+    else if (location.pathname.startsWith('/presentations')) tab = 'presentations';
+    else tab = 'outputs_all';
+    return { initialTab: tab, initialArtifactId: params.get('artifactId') || null };
   }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
@@ -197,6 +200,17 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     setActiveFilters([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTab]);
+
+  const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
+  React.useEffect(() => {
+    if (activeTab === 'templates') {
+      setWorkspaceContext({
+        type: 'templates' as any,
+        view: 'PRESENTATIONS_TEMPLATES',
+        entityData: { tab: 'templates' },
+      } as any);
+    }
+  }, [activeTab, setWorkspaceContext]);
 
   const handleRemoveFilter = useCallback((id: string) => {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
@@ -699,6 +713,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             }`}
             title={t('common.all', 'All')}
           >
+            <span className="w-2 h-2 rounded-full bg-gradient-to-br from-blue-400 via-purple-400 to-emerald-400" />
             <span>{t('common.all', 'All')}</span>
             <span
               className={`${badgeBase} ${
@@ -746,7 +761,17 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     }
 
     if (activeTab === 'outputs_sheets') {
-      return null;
+      return (
+        <div className="flex items-center gap-2">
+          <span className={`${chipBase} bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 border-emerald-500/40`}>
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>{t('rap.outputs.kind.sheet', 'Sheets')}</span>
+            <span className={`${badgeBase} bg-emerald-500/30 text-emerald-700 dark:text-emerald-200`}>
+              {sheetRows.length}
+            </span>
+          </span>
+        </div>
+      );
     }
 
     const items =
@@ -777,6 +802,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               dot: 'bg-emerald-400',
             },
             { value: 'draft', label: t('rap.filters.status.draft', 'Draft'), dot: 'bg-slate-400' },
+            {
+              value: 'deprecated',
+              label: t('rap.filters.status.deprecated', 'Deprecated'),
+              dot: 'bg-amber-500',
+            },
             {
               value: 'archived',
               label: t('rap.filters.status.archived', 'Archived'),
@@ -893,6 +923,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={artifactOutputsError}
             onRefresh={refetchArtifactOutputs}
             actions={actions}
+            initialArtifactId={initialArtifactId}
           />
         );
       case 'templates':
@@ -906,6 +937,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             loading={templatesLoading}
             error={templatesError}
             onRefresh={fetchTemplates}
+            actions={{ startArtifactReview: actions.startArtifactReview }}
           />
         );
       case 'outputs_documents':
@@ -920,6 +952,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={reportsError}
             onRefresh={fetchReports}
             actions={actions}
+            initialArtifactId={initialArtifactId}
           />
         );
       case 'presentations':
@@ -934,6 +967,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={presentationsError}
             onRefresh={fetchPresentations}
             actions={actions}
+            initialArtifactId={initialArtifactId}
           />
         );
       case 'outputs_sheets':

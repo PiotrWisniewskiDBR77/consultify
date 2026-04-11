@@ -15,8 +15,6 @@ import {
   BarChart3,
   Calendar,
   Copy,
-  Eye,
-  EyeOff,
   Key,
   Loader2,
   Plus,
@@ -31,8 +29,6 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Legend,
   Line,
@@ -66,7 +62,6 @@ interface APIKey {
 
 interface APIAccessSettingsProps {
   className?: string;
-  currentUser?: any; // User type
 }
 
 const AVAILABLE_SCOPES = [
@@ -78,10 +73,10 @@ const AVAILABLE_SCOPES = [
 
 export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
   className = '',
-  currentUser,
 }) => {
   const { t } = useTranslation();
   const [keys, setKeys] = useState<APIKey[]>([]);
+  const [loadingKeys, setLoadingKeys] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -115,10 +110,10 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
   }, [selectedKey]);
 
   const fetchKeys = async () => {
+    setLoadingKeys(true);
     try {
       const response = await Api.get('/api/settings/api-keys');
       const data = response?.data?.keys || [];
-      // Map API response to component format
       const mappedKeys = data.map((k: any) => ({
         id: k.id,
         name: k.name,
@@ -131,7 +126,6 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
           typeof k.permissions === 'string' ? JSON.parse(k.permissions || '[]') : k.permissions,
       }));
       setKeys(mappedKeys);
-      // Initialize settings for each key
       const settings: Record<string, any> = {};
       mappedKeys.forEach((key: APIKey) => {
         settings[key.id] = {
@@ -146,9 +140,10 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
     } catch (error) {
       console.error('Failed to load API keys:', error);
       toast.error(t('settings.api.loadError', 'Failed to load API keys'));
-      // Set empty state instead of mock data
       setKeys([]);
       setKeySettings({});
+    } finally {
+      setLoadingKeys(false);
     }
   };
 
@@ -188,14 +183,13 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
           },
         ]);
         toast.success(t('settings.api.keyCreated', 'API key created'));
+        setNewKeyName('');
+        setShowNew(false);
       }
     } catch (error: any) {
       console.error('Failed to create API key:', error);
       toast.error(error.message || t('settings.api.createError', 'Failed to create API key'));
     }
-
-    setNewKeyName('');
-    setShowNew(false);
   };
 
   const deleteKey = async (keyId: string) => {
@@ -292,6 +286,22 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   };
 
+  if (loadingKeys) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <div>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+            <Key size={20} />
+            {t('settings.api.title', 'API Access')}
+          </h3>
+        </div>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-brand" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
@@ -312,6 +322,23 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
           {t('settings.api.createKey', 'Create Key')}
         </button>
       </div>
+
+      {/* Empty state */}
+      {keys.length === 0 && !showNew && (
+        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
+          <Key className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            {t('settings.api.noKeys', 'No API keys yet. Create one to get started.')}
+          </p>
+          <button
+            onClick={() => setShowNew(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm"
+          >
+            <Plus size={16} />
+            {t('settings.api.createKey', 'Create Key')}
+          </button>
+        </div>
+      )}
 
       {/* New Key Warning */}
       {newKey && (
@@ -535,11 +562,11 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
                   {usage.requests && usage.requests.length > 0 && (
                     <ResponsiveContainer width="100%" height={200}>
                       <LineChart data={usage.requests}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#64748b" />
-                        <YAxis tick={{ fontSize: 10 }} stroke="#64748b" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-navy-700, #334155)" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="var(--color-navy-400, #94a3b8)" />
+                        <YAxis tick={{ fontSize: 10 }} stroke="var(--color-navy-400, #94a3b8)" />
                         <Tooltip />
-                        <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} />
+                        <Line type="monotone" dataKey="count" stroke="var(--color-brand, #7C3AED)" strokeWidth={2} />
                       </LineChart>
                     </ResponsiveContainer>
                   )}
@@ -571,71 +598,6 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
                       placeholder="1000"
                       className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
                     />
-                  </div>
-
-                  {/* Quota Limit */}
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {t('settings.api.quotaLimit', 'Quota Limit')} (
-                      {t('settings.api.requestsPerPeriod', 'requests/period')})
-                    </label>
-                    <input
-                      type="number"
-                      value={keySettings[key.id]?.quotaLimit || ''}
-                      onChange={(e) =>
-                        setKeySettings((prev) => ({
-                          ...prev,
-                          [key.id]: { ...prev[key.id], quotaLimit: e.target.value },
-                        }))
-                      }
-                      placeholder="100000"
-                      className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
-                    />
-                  </div>
-
-                  {/* Expiration Date */}
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {t('settings.api.expirationDate', 'Expiration Date')}
-                    </label>
-                    <input
-                      type="date"
-                      value={
-                        keySettings[key.id]?.expiresAt
-                          ? new Date(keySettings[key.id].expiresAt).toISOString().split('T')[0]
-                          : ''
-                      }
-                      onChange={(e) =>
-                        setKeySettings((prev) => ({
-                          ...prev,
-                          [key.id]: { ...prev[key.id], expiresAt: e.target.value },
-                        }))
-                      }
-                      className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
-                    />
-                  </div>
-
-                  {/* IP Whitelist */}
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                      {t('settings.api.ipWhitelist', 'IP Whitelist')} (
-                      {t('settings.api.onePerLine', 'one per line')})
-                    </label>
-                    <textarea
-                      value={keySettings[key.id]?.ipWhitelist || ''}
-                      onChange={(e) =>
-                        setKeySettings((prev) => ({
-                          ...prev,
-                          [key.id]: { ...prev[key.id], ipWhitelist: e.target.value },
-                        }))
-                      }
-                      placeholder="192.168.1.1&#10;10.0.0.1"
-                      rows={3}
-                      className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg font-mono"
-                    />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {t('settings.api.ipWhitelistHint', 'Leave empty to allow all IPs')}
-                    </p>
                   </div>
 
                   {/* Scopes */}

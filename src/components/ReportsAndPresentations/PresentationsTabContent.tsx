@@ -4,12 +4,13 @@
  * Connected to /api/presentations/decks backend
  */
 
-import { Archive, Download, Edit, ExternalLink, Loader2, Share2 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Archive, Download, Edit, ExternalLink, Loader2, MessageCircle, Share2 } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { API_URL, getHeaders } from '../../services/api';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+
 import {
   FilterableTable,
   type FilterChip,
@@ -24,6 +25,7 @@ import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNav
 import { PresentationPreviewBody, PresentationPreviewFooter } from './previews/PresentationPreview';
 import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
 import type { useRapActions } from './useRapData';
+import { useTrustState } from './useTrustState';
 
 interface PresentationsTabContentProps {
   viewMode: ViewMode;
@@ -35,6 +37,7 @@ interface PresentationsTabContentProps {
   error?: string | null;
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
+  initialArtifactId?: string | null;
 }
 
 export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = ({
@@ -47,14 +50,14 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
   error,
   onRefresh,
   actions,
+  initialArtifactId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedGovernance, setSelectedGovernance] = useState<
-    PresentationItem['governance'] | null
-  >(null);
+  const deepLinkConsumed = useRef(false);
   const [reviewBusyArtifactId, setReviewBusyArtifactId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
@@ -212,6 +215,18 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       onClick: () => openPresentation(row),
     },
     {
+      id: 'discuss',
+      label: t('rap.actions.discuss', 'Discuss'),
+      icon: MessageCircle,
+      onClick: () => {
+        void openChatWithContext({
+          entityType: 'presentation',
+          entityId: row.id,
+          entityName: row.title,
+        });
+      },
+    },
+    {
       id: 'export',
       label: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
       icon: Download,
@@ -262,7 +277,17 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     },
   ];
 
+  useEffect(() => {
+    if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
+    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    if (match) {
+      setSelectedId(match.id);
+      deepLinkConsumed.current = true;
+    }
+  }, [initialArtifactId, filteredData]);
+
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
+  const selectedGovernance = useTrustState(selectedItem?.artifactId, selectedItem?.governance);
   const previewItem = selectedItem
     ? {
         ...selectedItem,
@@ -278,69 +303,6 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       previewItem.governance.validationState !== 'validated') ||
     (!!previewItem?.governance?.publishState &&
       previewItem.governance.publishState !== 'private_draft');
-
-  useEffect(() => {
-    let isMounted = true;
-    setSelectedGovernance(selectedItem?.governance || null);
-
-    async function fetchGovernance() {
-      if (!selectedItem?.artifactId) {
-        setSelectedGovernance(selectedItem?.governance || null);
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/artifacts/${selectedItem.artifactId}/trust-state`, {
-          headers: getHeaders(),
-        });
-        if (!res.ok) {
-          if (isMounted) setSelectedGovernance(selectedItem.governance || null);
-          return;
-        }
-        const data = await res.json();
-        const payload = data?.data || data;
-        if (!isMounted) return;
-        setSelectedGovernance({
-          ...(selectedItem.governance || {}),
-          visibilityScope: payload.visibilityScope,
-          publishState: payload.publishState,
-          validationState: payload.validationState || null,
-          validationChecks: Array.isArray(payload.validationChecks) ? payload.validationChecks : [],
-          publishReviewers: Array.isArray(payload.reviewers) ? payload.reviewers : [],
-          reviewGateCount:
-            typeof payload.reviewGateCount === 'number' ? payload.reviewGateCount : 0,
-          projectId: payload.projectId || null,
-          executionRunId: payload.executionRunId || null,
-          executionState: payload.executionState || null,
-          contextSnapshotId: payload.contextSnapshotId || null,
-          canonicalHome: payload.canonicalHome || null,
-          lastTransitionAt: payload.lastTransitionAt || null,
-          sourceRefs: Array.isArray(payload.sourceRefs) ? payload.sourceRefs : [],
-          originSummary:
-            payload.originSummary && typeof payload.originSummary === 'object'
-              ? payload.originSummary
-              : null,
-          openPath: payload.openPath || null,
-          exportPath: payload.exportPath || null,
-          authority: payload.authority || null,
-          manageAccessPath: payload.manageAccessPath || null,
-          canManageAccess: Boolean(payload.canManageAccess),
-          exportHistory: Array.isArray(payload.exportHistory) ? payload.exportHistory : [],
-          reviewAuthority: payload.reviewAuthority || 'artifact_review',
-          executionAuthority: payload.executionAuthority || 'execution_spine',
-          accessGrants: Array.isArray(payload.accessGrants) ? payload.accessGrants : [],
-          originLinks: Array.isArray(payload.originLinks) ? payload.originLinks : [],
-        });
-      } catch {
-        if (isMounted) setSelectedGovernance(selectedItem.governance || null);
-      }
-    }
-
-    void fetchGovernance();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedItem?.artifactId, selectedItem?.governance]);
 
   if (loading) {
     return (
@@ -404,9 +366,22 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         selectedId={selectedId}
         selectedItem={previewItem}
         onSelect={setSelectedId}
+        onOpenFull={(id) => {
+          const row = filteredData.find((x) => x.id === id);
+          if (row) openPresentation(row);
+        }}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => <PresentationPreviewBody presentation={item} />}
+        renderPreview={(item) => (
+          <PresentationPreviewBody
+            presentation={item}
+            trustProps={{
+              governance: item.governance,
+              artifactId: item.artifactId,
+              exportFormats: item.exportFormats,
+            }}
+          />
+        )}
         renderPreviewFooter={(item) => (
           <PresentationPreviewFooter
             presentation={item}
@@ -422,7 +397,6 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                 : undefined
             }
             reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
-            onOpen={() => openPresentation(item)}
             onExport={() => {
               actions.exportDeckPptx(item);
             }}

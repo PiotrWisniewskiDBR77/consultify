@@ -49,14 +49,17 @@ import {
 } from '../../services/v8/pmSyncRefreshExecutionService.js';
 import {
   getConnectorHealth,
+  getProviderCatalogState,
   getUnresolvedConflicts,
+  listProviderCatalogStates,
   resolveConflict,
   setConnectorAuthState,
+  setProviderCatalogState,
 } from '../../services/v8/pmSyncTruthService.js';
 import { LastRefreshResultValues, ProviderFamilyValues } from '../../types/pmSyncAuthBaseline.js';
 import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 const router = Router();
 
@@ -467,6 +470,240 @@ router.get(
   })
 );
 
+// ── Workflow / Sync (logical view over integrations) ─────────
+
+router.get(
+  '/workflows',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const rows = await dbAll(
+      `SELECT i.id, i.connector_id, i.name, i.status, i.is_paused, i.sync_schedule,
+              i.scopes, i.field_mappings, i.last_sync_at, i.last_error,
+              i.created_at, i.updated_at
+       FROM integrations i
+       WHERE i.organization_id = ? AND i.status != 'deleted'
+       ORDER BY i.updated_at DESC`,
+      [organizationId]
+    );
+
+    const workflows = (rows || []).map((r: Record<string, unknown>) => {
+      const isPaused = r.is_paused === 1 || r.is_paused === true;
+      let lifecycleState: string;
+      if (isPaused) {
+        lifecycleState = 'blocked';
+      } else if (r.status === 'pending') {
+        lifecycleState = 'draft';
+      } else if (r.status === 'connected' && !r.last_error) {
+        lifecycleState = 'connected';
+      } else if (r.status === 'connected' && r.last_error) {
+        lifecycleState = 'degraded';
+      } else if (r.status === 'requires_reauth' || r.status === 'error') {
+        lifecycleState = 'requires_action';
+      } else {
+        lifecycleState = 'draft';
+      }
+
+      let scopes: string[] = [];
+      try { scopes = JSON.parse(String(r.scopes || '[]')); } catch { /* */ }
+
+      let mode: string = 'manual';
+      if (r.sync_schedule && String(r.sync_schedule) !== 'null') {
+        mode = 'schedule';
+      }
+
+      return {
+        workflowId: r.id,
+        integrationId: r.id,
+        connectorId: r.connector_id,
+        name: r.name,
+        lifecycleState,
+        mode,
+        isPaused,
+        syncSchedule: r.sync_schedule || null,
+        scopes,
+        hasMappings: !!r.field_mappings && String(r.field_mappings) !== '{}' && String(r.field_mappings) !== 'null',
+        lastSyncAt: r.last_sync_at || null,
+        lastError: r.last_error || null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      };
+    });
+
+    return res.json({
+      data: { workflows, count: workflows.length },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+// ── Mappings (preview / validate / drift) ────────────────────
+
+router.get(
+  '/mappings/overview',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+
+    const integrations = await dbAll(
+      `SELECT id, name, connector_id, field_mappings, status, last_sync_at
+       FROM integrations WHERE organization_id = ? AND status NOT IN ('deleted', 'disconnected')
+       ORDER BY name ASC`,
+      [organizationId]
+    );
+
+    const driftCounts = await dbAll(
+      `SELECT connector_id, COUNT(*) as cnt
+       FROM v8_schema_drift_events
+       WHERE organization_id = ? AND resolved_at IS NULL
+       GROUP BY connector_id`,
+      [organizationId]
+    );
+    const driftMap = new Map((driftCounts || []).map((d: Record<string, unknown>) => [d.connector_id, Number(d.cnt)]));
+
+    const mappingCounts = await dbAll(
+      `SELECT integration_id, COUNT(*) as cnt
+       FROM integration_sync_mappings
+       WHERE organization_id = ?
+       GROUP BY integration_id`,
+      [organizationId]
+    );
+    const mappingMap = new Map((mappingCounts || []).map((m: Record<string, unknown>) => [m.integration_id, Number(m.cnt)]));
+
+    const items = (integrations || []).map((i: Record<string, unknown>) => {
+      let fmCount = 0;
+      try { fmCount = JSON.parse(String(i.field_mappings || '[]')).length; } catch { /* */ }
+      return {
+        integrationId: i.id,
+        name: i.name,
+        connectorId: i.connector_id,
+        status: i.status,
+        lastSyncAt: i.last_sync_at,
+        fieldMappingCount: fmCount,
+        entityMappingCount: mappingMap.get(i.id) || 0,
+        openDriftCount: driftMap.get(i.connector_id) || 0,
+      };
+    });
+
+    return res.json({
+      data: { integrations: items },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+router.get(
+  '/integrations/:integrationId/mappings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+
+    const fieldMappingsRow = await dbGet(
+      `SELECT field_mappings, connector_id FROM integrations WHERE id = ? AND organization_id = ?`,
+      [integrationId, organizationId]
+    );
+    if (!fieldMappingsRow) {
+      return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
+    }
+
+    const fm = fieldMappingsRow as Record<string, unknown>;
+    let fieldMappings: unknown[] = [];
+    try { fieldMappings = JSON.parse(String(fm.field_mappings || '[]')); } catch { /* */ }
+
+    const entityMappings = await dbAll(
+      `SELECT id, local_type, local_id, external_type, external_id, sync_status, last_synced_at, metadata
+       FROM integration_sync_mappings
+       WHERE integration_id = ? AND organization_id = ?
+       ORDER BY last_synced_at DESC`,
+      [integrationId, organizationId]
+    );
+
+    const driftEvents = await dbAll(
+      `SELECT drift_id, connector_id, drift_type, affected_fields, detected_at, resolved_at
+       FROM v8_schema_drift_events
+       WHERE connector_id = ? AND organization_id = ?
+       ORDER BY detected_at DESC LIMIT 20`,
+      [fm.connector_id, organizationId]
+    );
+
+    const syncStates = await dbAll(
+      `SELECT object_sync_state_id, object_type, object_id, sync_status, error_class, last_synced_at
+       FROM v8_business_object_sync_states
+       WHERE connector_id = ? AND organization_id = ?
+       ORDER BY last_synced_at DESC LIMIT 50`,
+      [fm.connector_id, organizationId]
+    );
+
+    return res.json({
+      data: {
+        integrationId,
+        connectorId: fm.connector_id,
+        fieldMappings,
+        entityMappings: (entityMappings || []).map((m: Record<string, unknown>) => ({
+          id: m.id,
+          localType: m.local_type,
+          localId: m.local_id,
+          externalType: m.external_type,
+          externalId: m.external_id,
+          syncStatus: m.sync_status,
+          lastSyncedAt: m.last_synced_at,
+        })),
+        driftEvents: (driftEvents || []).map((d: Record<string, unknown>) => ({
+          driftId: d.drift_id,
+          driftType: d.drift_type,
+          affectedFields: d.affected_fields,
+          detectedAt: d.detected_at,
+          resolvedAt: d.resolved_at,
+        })),
+        syncStates: (syncStates || []).map((s: Record<string, unknown>) => ({
+          id: s.object_sync_state_id,
+          objectType: s.object_type,
+          objectId: s.object_id,
+          syncStatus: s.sync_status,
+          errorClass: s.error_class,
+          lastSyncedAt: s.last_synced_at,
+        })),
+      },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/integrations/:integrationId/mappings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const { fieldMappings } = req.body as { fieldMappings: unknown[] };
+
+    if (!Array.isArray(fieldMappings)) {
+      return res.status(400).json({ error: 'fieldMappings must be an array', code: 'INVALID_PARAM' });
+    }
+
+    const existing = await dbGet(
+      `SELECT field_mappings FROM integrations WHERE id = ? AND organization_id = ?`,
+      [integrationId, organizationId]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
+    }
+
+    await dbRun(
+      `UPDATE integrations SET field_mappings = ?::JSONB, updated_at = NOW() WHERE id = ?`,
+      [JSON.stringify(fieldMappings), integrationId]
+    );
+
+    await dbRun(
+      `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, 'mapping_changed', ?, 'user', ?::JSONB)`,
+      [organizationId, integrationId, userId, JSON.stringify({ fieldCount: fieldMappings.length })]
+    );
+
+    return res.json({
+      data: { success: true, fieldCount: fieldMappings.length },
+      meta: syncMutationMeta(),
+    });
+  })
+);
+
 router.get(
   '/connectors',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -490,6 +727,121 @@ router.get(
     });
   })
 );
+
+// ── Provider Catalog State (§2.3.3A) ────────────────────────────
+
+const ProviderLifecycleStateValues = [
+  'draft', 'connected', 'degraded', 'requires_action', 'recovered', 'blocked',
+] as const;
+
+const SetProviderStateBodySchema = z.object({
+  targetState: z.enum(ProviderLifecycleStateValues),
+  reason: z.string().trim().nullable().optional(),
+  incidentDescription: z.string().trim().nullable().optional(),
+  expectedRecoveryAt: z.string().trim().nullable().optional(),
+});
+
+router.get(
+  '/providers/states',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const states = await listProviderCatalogStates(organizationId);
+    return res.json({
+      data: { states, count: states.length },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+router.get(
+  '/providers/:providerId/status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const providerId =
+      typeof req.params.providerId === 'string' ? req.params.providerId.trim().toLowerCase() : '';
+    if (!providerId) {
+      return res.status(400).json({ error: 'providerId is required', code: 'INVALID_PARAM' });
+    }
+
+    const state = await getProviderCatalogState(providerId, organizationId);
+    return res.json({
+      data: {
+        providerId,
+        state: state ?? { lifecycleState: 'connected', reason: 'default — no explicit state recorded' },
+      },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/providers/:providerId/status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const providerId =
+      typeof req.params.providerId === 'string' ? req.params.providerId.trim().toLowerCase() : '';
+    const actorId =
+      typeof req.user?.id === 'string' && req.user.id.trim()
+        ? req.user.id.trim()
+        : typeof req.userId === 'string' && req.userId.trim()
+          ? req.userId.trim()
+          : '';
+
+    if (!providerId) {
+      return res.status(400).json({ error: 'providerId is required', code: 'INVALID_PARAM' });
+    }
+    if (!actorId) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
+
+    const parsed = SetProviderStateBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: parsed.error.issues[0]?.message ?? 'Invalid provider state payload',
+        code: 'INVALID_BODY',
+      });
+    }
+
+    try {
+      const state = await setProviderCatalogState({
+        providerId,
+        organizationId,
+        targetState: parsed.data.targetState,
+        transitionedBy: actorId,
+        reason: parsed.data.reason ?? null,
+        incidentDescription: parsed.data.incidentDescription ?? null,
+        expectedRecoveryAt: parsed.data.expectedRecoveryAt ?? null,
+      });
+
+      await logIntegrationAudit(
+        organizationId,
+        null,
+        `provider_state_changed`,
+        actorId,
+        actorId,
+        {
+          providerId,
+          targetState: parsed.data.targetState,
+          previousState: state.previousState,
+          reason: parsed.data.reason,
+        }
+      );
+
+      return res.json({
+        data: { state },
+        meta: syncMutationMeta(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update provider state';
+      if (message.includes('Invalid provider state transition')) {
+        return res.status(409).json({ error: message, code: 'INVALID_PROVIDER_STATE_TRANSITION' });
+      }
+      throw error;
+    }
+  })
+);
+
+// ── Connector Connection ────────────────────────────────────────
 
 router.post(
   '/connectors/:connectorId/connect',
@@ -1156,6 +1508,82 @@ router.post(
   })
 );
 
+// ── Per-workflow policy gate (blocked / paused / safety_gate) ─
+
+router.get(
+  '/integrations/:integrationId/workflow-policy',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const row = await dbGet(
+      `SELECT workflow_policy, workflow_policy_reason, workflow_policy_set_by, workflow_policy_set_at, is_paused
+       FROM integrations WHERE id = ? AND organization_id = ?`,
+      [integrationId, organizationId]
+    );
+    if (!row) {
+      return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
+    }
+    const r = row as Record<string, unknown>;
+    return res.json({
+      data: {
+        integrationId,
+        workflowPolicy: r.workflow_policy || 'active',
+        reason: r.workflow_policy_reason || null,
+        setBy: r.workflow_policy_set_by || null,
+        setAt: r.workflow_policy_set_at || null,
+        isPaused: !!r.is_paused,
+      },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/integrations/:integrationId/workflow-policy',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const integrationId = typeof req.params.integrationId === 'string' ? req.params.integrationId.trim() : '';
+    const { policy, reason } = req.body as { policy: string; reason?: string };
+
+    const VALID_POLICIES = ['active', 'paused', 'blocked', 'safety_gate'];
+    if (!policy || !VALID_POLICIES.includes(policy)) {
+      return res.status(400).json({ error: `policy must be one of: ${VALID_POLICIES.join(', ')}`, code: 'INVALID_PARAM' });
+    }
+
+    const existing = await dbGet(
+      `SELECT id FROM integrations WHERE id = ? AND organization_id = ?`,
+      [integrationId, organizationId]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: 'Integration not found', code: 'NOT_FOUND' });
+    }
+
+    const isPaused = policy === 'paused' || policy === 'blocked' || policy === 'safety_gate';
+    await dbRun(
+      `UPDATE integrations
+       SET workflow_policy = ?,
+           workflow_policy_reason = ?,
+           workflow_policy_set_by = ?,
+           workflow_policy_set_at = NOW(),
+           is_paused = ?,
+           paused_at = CASE WHEN ? THEN NOW() ELSE NULL END,
+           updated_at = NOW()
+       WHERE id = ? AND organization_id = ?`,
+      [policy, reason || null, userId, isPaused, isPaused, integrationId, organizationId]
+    );
+
+    await logIntegrationAudit(organizationId, integrationId, `workflow_policy_${policy}`, userId, userId, {
+      policy,
+      reason: reason || null,
+    });
+
+    return res.json({
+      data: { success: true, policy, isPaused },
+      meta: syncMutationMeta(),
+    });
+  })
+);
+
 router.post(
   '/integrations/:integrationId/refresh-secret',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -1447,23 +1875,229 @@ router.post(
   })
 );
 
+// ── Error Posture (§2.3.8 traceability) ─────────────────────────
+
+router.get(
+  '/error-posture',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const posture = [
+      {
+        scenario: 'Reauth required (consent revoked / invalid_grant)',
+        object: 'connection',
+        state: 'requires_action',
+        owner: 'tenant',
+        nextAction: 'Initiate reauth flow via POST /integrations/:id/reauth',
+        errorClassification: 'AUTH',
+      },
+      {
+        scenario: 'Rate limit (429 / vendor throttling)',
+        object: 'run',
+        state: 'degraded (recoverable)',
+        owner: 'platform',
+        nextAction: 'Wait/backoff — automatic retry with exponential delay',
+        errorClassification: 'RATE_LIMIT',
+      },
+      {
+        scenario: 'Permission revoked / scopes reduced (403)',
+        object: 'connection',
+        state: 'requires_action',
+        owner: 'tenant + platform policy visibility',
+        nextAction: 'Reauth/consent with corrected scopes',
+        errorClassification: 'AUTH',
+      },
+      {
+        scenario: 'Mapping drift / schema change',
+        object: 'workflow',
+        state: 'requires_action',
+        owner: 'tenant',
+        nextAction: 'Review mapping + verify/test before re-enable',
+        errorClassification: 'VALIDATION',
+      },
+      {
+        scenario: 'Run failed (transient timeout / network)',
+        object: 'run',
+        state: 'degraded (recoverable)',
+        owner: 'platform',
+        nextAction: 'Auto-retry with backoff',
+        errorClassification: 'NETWORK',
+      },
+      {
+        scenario: 'Run failed (permanent validation / bad config)',
+        object: 'run',
+        state: 'requires_action',
+        owner: 'tenant',
+        nextAction: 'Fix config/mapping, replay run',
+        errorClassification: 'VALIDATION',
+      },
+      {
+        scenario: 'Provider outage',
+        object: 'provider_catalog_item',
+        state: 'degraded',
+        owner: 'platform',
+        nextAction: 'Platform incident + comms; POST /providers/:id/status',
+        errorClassification: 'PROVIDER',
+      },
+      {
+        scenario: 'Webhook delivery failure (410/401/invalid endpoint)',
+        object: 'workflow',
+        state: 'degraded → requires_action (if persistent)',
+        owner: 'tenant + platform',
+        nextAction: 'Retry/backoff; deactivate after 5 consecutive failures',
+        errorClassification: 'NETWORK',
+      },
+      {
+        scenario: 'Org policy blocks provider',
+        object: 'connection',
+        state: 'blocked',
+        owner: 'platform + tenant admin',
+        nextAction: 'Unblock/policy change or disconnect',
+        errorClassification: 'AUTH',
+      },
+    ];
+
+    return res.json({
+      data: {
+        posture,
+        count: posture.length,
+        contractReference: '§2.3.8',
+      },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+// ── Run History ──────────────────────────────────────────────────
+
+router.get(
+  '/runs',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const integrationId = firstQueryString(req.query.integrationId);
+    const status = firstQueryString(req.query.status);
+    const limit = Math.min(parseInt(firstQueryString(req.query.limit) || '50', 10), 200);
+    const offset = parseInt(firstQueryString(req.query.offset) || '0', 10);
+
+    let query = `SELECT * FROM integration_sync_runs WHERE organization_id = ?`;
+    const params: unknown[] = [organizationId];
+
+    if (integrationId) {
+      query += ` AND integration_id = ?`;
+      params.push(integrationId);
+    }
+    if (status) {
+      query += ` AND status = ?`;
+      params.push(status);
+    }
+    query += ` ORDER BY started_at DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
+    const runs = await dbAll(query, params);
+
+    const countQuery = integrationId
+      ? `SELECT COUNT(*) as total FROM integration_sync_runs WHERE organization_id = ? AND integration_id = ?`
+      : `SELECT COUNT(*) as total FROM integration_sync_runs WHERE organization_id = ?`;
+    const countParams = integrationId ? [organizationId, integrationId] : [organizationId];
+    const countRow = await dbGet(countQuery, countParams);
+
+    return res.json({
+      data: {
+        runs: (runs || []).map((r: Record<string, unknown>) => {
+          let lifecycleState: string;
+          const retryCount = Number(r.retry_count || 0);
+          if (r.status === 'running') lifecycleState = 'connected';
+          else if (r.status === 'completed') lifecycleState = 'connected';
+          else if (r.status === 'failed' && retryCount > 0 && retryCount < 3) lifecycleState = 'degraded';
+          else if (r.status === 'failed') lifecycleState = 'requires_action';
+          else if (r.status === 'partial') lifecycleState = 'degraded';
+          else lifecycleState = 'draft';
+
+          const canReplay = r.status === 'failed';
+
+          return {
+            id: r.id,
+            integrationId: r.integration_id,
+            provider: r.provider,
+            direction: r.direction,
+            status: r.status,
+            lifecycleState,
+            canReplay,
+            itemsProcessed: r.items_processed,
+            durationMs: r.duration_ms,
+            errorSummary: r.error_summary,
+            triggeredBy: r.triggered_by,
+            startedAt: r.started_at,
+            completedAt: r.completed_at,
+          };
+        }),
+        total: (countRow as Record<string, unknown>)?.total ?? 0,
+      },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+// ── Health ───────────────────────────────────────────────────────
+
 router.get(
   '/health',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
+    const filter = firstQueryString(req.query.filter);
     const integrations = await getConnectedIntegrations(organizationId);
     const healthChecks = await Promise.all(
-      integrations.map((int) => getIntegrationHealth(organizationId, int.id))
+      integrations.map(async (int) => {
+        const health = await getIntegrationHealth(organizationId, int.id);
+        const lastRunRow = await dbGet(
+          `SELECT * FROM integration_sync_runs WHERE organization_id = ? AND integration_id = ? ORDER BY started_at DESC LIMIT 1`,
+          [organizationId, int.id]
+        );
+        const isPaused = (int as Record<string, unknown>).is_paused === 1 || (int as Record<string, unknown>).is_paused === true;
+
+        let lifecycleState: string;
+        if (isPaused) lifecycleState = 'blocked';
+        else if (health.status === 'healthy') lifecycleState = 'connected';
+        else if (health.status === 'degraded') lifecycleState = 'degraded';
+        else lifecycleState = 'requires_action';
+
+        const ownerType = ['degraded', 'requires_action'].includes(lifecycleState) ? 'tenant' : 'platform';
+
+        return {
+          integrationId: int.id,
+          connectorId: (int as Record<string, unknown>).connector_id,
+          providerFamily: (int as Record<string, unknown>).category || (int as Record<string, unknown>).connector_id,
+          name: (int as Record<string, unknown>).name || (int as Record<string, unknown>).connector_id,
+          healthStatus: health.status,
+          lifecycleState,
+          reason: (int as Record<string, unknown>).last_error || null,
+          nextAction: lifecycleState === 'requires_action' ? 'reauth_or_fix_config' :
+                      lifecycleState === 'degraded' ? 'monitor_or_retry' :
+                      lifecycleState === 'blocked' ? 'resume_or_unblock' : 'none',
+          owner: ownerType,
+          lastRunAt: lastRunRow ? (lastRunRow as Record<string, unknown>).started_at : null,
+          lastRunStatus: lastRunRow ? (lastRunRow as Record<string, unknown>).status : null,
+          isPaused,
+        };
+      })
     );
+
+    let filtered = healthChecks;
+    if (filter === 'requires_action') {
+      filtered = healthChecks.filter((h) => h.lifecycleState === 'requires_action');
+    } else if (filter === 'degraded') {
+      filtered = healthChecks.filter((h) => h.lifecycleState === 'degraded');
+    } else if (filter === 'blocked') {
+      filtered = healthChecks.filter((h) => h.lifecycleState === 'blocked');
+    }
+
     const summary = {
       total: healthChecks.length,
-      healthy: healthChecks.filter((h) => h.status === 'healthy').length,
-      degraded: healthChecks.filter((h) => h.status === 'degraded').length,
-      unhealthy: healthChecks.filter((h) => h.status === 'unhealthy').length,
+      healthy: healthChecks.filter((h) => h.healthStatus === 'healthy').length,
+      degraded: healthChecks.filter((h) => h.healthStatus === 'degraded').length,
+      unhealthy: healthChecks.filter((h) => h.healthStatus === 'unhealthy').length,
     };
 
     return res.json({
-      data: { summary },
+      data: { summary, integrations: filtered },
       meta: syncReadMeta(),
     });
   })
@@ -1475,18 +2109,40 @@ router.get(
     const { organizationId } = getV8Context(req);
     const integrationId = firstQueryString(req.query.integrationId);
     const errors = await getUnresolvedErrors(organizationId, integrationId || undefined);
+
+    const integrationNames: Record<string, string> = {};
+    for (const error of errors || []) {
+      if (error.integrationId && !integrationNames[error.integrationId]) {
+        const row = await dbGet(
+          `SELECT name, connector_id FROM integrations WHERE id = ?`,
+          [error.integrationId]
+        );
+        integrationNames[error.integrationId] = row
+          ? String((row as Record<string, unknown>).name || (row as Record<string, unknown>).connector_id || 'Unknown')
+          : 'Unknown';
+      }
+    }
+
     return res.json({
       data: {
-        errors: (errors || []).map((error) => ({
-          id: error.id,
-          integrationId: error.integrationId,
-          errorType: error.errorType,
-          errorMessage: error.errorMessage,
-          isRetryable: error.isRetryable,
-          retryCount: error.retryCount,
-          maxRetries: error.maxRetries,
-          createdAt: error.createdAt,
-        })),
+        errors: (errors || []).map((error) => {
+          const ownerType = error.errorType === 'AUTH' || error.errorType === 'VALIDATION'
+            ? 'tenant' : 'platform';
+          return {
+            id: error.id,
+            integrationId: error.integrationId,
+            integrationName: integrationNames[error.integrationId] || 'Unknown',
+            errorType: error.errorType,
+            errorMessage: error.errorMessage,
+            isRetryable: error.isRetryable,
+            retryCount: error.retryCount,
+            maxRetries: error.maxRetries,
+            owner: ownerType,
+            nextAction: ownerType === 'tenant' ? 'reauth_or_fix_config' : 'auto_retry',
+            firstSeen: error.createdAt,
+            createdAt: error.createdAt,
+          };
+        }),
         count: errors.length,
       },
       meta: syncReadMeta(),
@@ -1508,6 +2164,89 @@ router.post(
     await resolveError(errorId);
     return res.json({
       data: { success: true as const },
+      meta: syncMutationMeta(),
+    });
+  })
+);
+
+// ── Run replay ──────────────────────────────────────────────────
+
+router.post(
+  '/runs/:runId/replay',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const runId = typeof req.params.runId === 'string' ? req.params.runId.trim() : '';
+    if (!runId) {
+      return res.status(400).json({ error: 'runId is required', code: 'INVALID_PARAM' });
+    }
+
+    const originalRun = await dbGet(
+      `SELECT * FROM integration_sync_runs WHERE id = ? AND organization_id = ?`,
+      [runId, organizationId]
+    );
+    if (!originalRun) {
+      return res.status(404).json({ error: 'Run not found', code: 'NOT_FOUND' });
+    }
+    const orig = originalRun as Record<string, unknown>;
+
+    if (orig.status !== 'failed') {
+      return res.status(400).json({
+        error: 'Only failed runs can be replayed',
+        code: 'REPLAY_NOT_ALLOWED',
+      });
+    }
+
+    const replayRunId = `replay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    await dbRun(
+      `INSERT INTO integration_sync_runs
+         (id, organization_id, integration_id, provider, direction, status, started_at, triggered_by)
+       VALUES (?, ?, ?, ?, ?, 'running', NOW(), ?)`,
+      [replayRunId, organizationId, orig.integration_id, orig.provider, orig.direction || 'pull', `replay:${userId}`]
+    );
+
+    await dbRun(
+      `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, 'run_replayed', ?, ?, ?::JSONB)`,
+      [
+        organizationId,
+        orig.integration_id,
+        userId,
+        'user',
+        JSON.stringify({ originalRunId: runId, replayRunId }),
+      ]
+    );
+
+    try {
+      const integration = await dbAll(
+        `SELECT * FROM integrations WHERE id = ? AND organization_id = ?`,
+        [orig.integration_id, organizationId]
+      );
+      if (integration && integration.length > 0) {
+        const config = integration[0].config ? JSON.parse(String(integration[0].config)) : {};
+        const result = await syncIntegration(
+          String(orig.integration_id),
+          config,
+          {}
+        );
+        await dbRun(
+          `UPDATE integration_sync_runs
+           SET status = 'completed', items_processed = ?, duration_ms = ?, completed_at = NOW()
+           WHERE id = ?`,
+          [result.recordsSynced, result.duration, replayRunId]
+        );
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      await dbRun(
+        `UPDATE integration_sync_runs
+         SET status = 'failed', error_summary = ?, completed_at = NOW()
+         WHERE id = ?`,
+        [errorMessage, replayRunId]
+      );
+    }
+
+    return res.json({
+      data: { replayRunId, originalRunId: runId, status: 'initiated' },
       meta: syncMutationMeta(),
     });
   })
@@ -1539,6 +2278,171 @@ router.get(
     return res.json({
       data: { entries, count: entries.length },
       meta: syncReadMeta(),
+    });
+  })
+);
+
+// ── Secrets rotation ────────────────────────────────────────────
+
+router.get(
+  '/secrets/status',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const secrets = await dbAll(
+      `SELECT id, connector_id, secret_key, rotated_at, created_at
+       FROM integration_secrets
+       WHERE organization_id = ?
+       ORDER BY rotated_at DESC NULLS LAST`,
+      [organizationId]
+    );
+
+    const now = Date.now();
+    const ROTATION_THRESHOLD_DAYS = 90;
+
+    const items = (secrets || []).map((s: Record<string, unknown>) => {
+      const rotatedAt = s.rotated_at ? new Date(String(s.rotated_at)).getTime() : new Date(String(s.created_at)).getTime();
+      const ageDays = Math.floor((now - rotatedAt) / (1000 * 60 * 60 * 24));
+      const needsRotation = ageDays > ROTATION_THRESHOLD_DAYS;
+
+      return {
+        secretId: s.id,
+        connectorId: s.connector_id,
+        secretKey: s.secret_key,
+        lastRotatedAt: s.rotated_at || s.created_at,
+        ageDays,
+        needsRotation,
+        rotationThresholdDays: ROTATION_THRESHOLD_DAYS,
+      };
+    });
+
+    return res.json({
+      data: {
+        secrets: items,
+        summary: {
+          total: items.length,
+          needsRotation: items.filter((i) => i.needsRotation).length,
+          healthy: items.filter((i) => !i.needsRotation).length,
+        },
+      },
+      meta: syncReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/secrets/:secretId/rotate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const secretId = typeof req.params.secretId === 'string' ? req.params.secretId.trim() : '';
+
+    const existing = await dbGet(
+      `SELECT id, connector_id, secret_key FROM integration_secrets WHERE id = ? AND organization_id = ?`,
+      [secretId, organizationId]
+    );
+    if (!existing) {
+      return res.status(404).json({ error: 'Secret not found', code: 'NOT_FOUND' });
+    }
+
+    await dbRun(
+      `UPDATE integration_secrets SET rotated_at = NOW() WHERE id = ?`,
+      [secretId]
+    );
+
+    const ex = existing as Record<string, unknown>;
+    await dbRun(
+      `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+       VALUES (gen_random_uuid()::TEXT, ?, NULL, 'secret_rotated', ?, 'user', ?::JSONB)`,
+      [organizationId, userId, JSON.stringify({ secretId, connectorId: ex.connector_id, secretKey: ex.secret_key })]
+    );
+
+    return res.json({
+      data: { success: true, secretId, rotatedAt: new Date().toISOString() },
+      meta: syncMutationMeta(),
+    });
+  })
+);
+
+// ── Inbound webhook receiver ────────────────────────────────────
+
+router.post(
+  '/webhooks/inbound/:registrationId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const registrationId = typeof req.params.registrationId === 'string' ? req.params.registrationId.trim() : '';
+
+    const reg = await dbGet(
+      `SELECT registration_id, integration_id, organization_id, secret_key, event_types, is_active, direction
+       FROM v8_webhook_registrations
+       WHERE registration_id = ?`,
+      [registrationId]
+    );
+
+    if (!reg) {
+      return res.status(404).json({ error: 'Webhook registration not found' });
+    }
+
+    const r = reg as Record<string, unknown>;
+
+    if (!r.is_active) {
+      return res.status(410).json({ error: 'Webhook registration is inactive' });
+    }
+    if (r.direction !== 'inbound') {
+      return res.status(400).json({ error: 'Registration is not an inbound webhook' });
+    }
+
+    if (r.secret_key) {
+      const signature = req.headers['x-webhook-signature'] as string | undefined;
+      if (!signature) {
+        return res.status(401).json({ error: 'Missing x-webhook-signature header' });
+      }
+      const crypto = await import('crypto');
+      const rawBody = JSON.stringify(req.body);
+      const expected = crypto.createHmac('sha256', String(r.secret_key)).update(rawBody).digest('hex');
+      if (signature !== expected) {
+        return res.status(401).json({ error: 'Invalid webhook signature' });
+      }
+    }
+
+    const { eventType, payload } = req.body as { eventType?: string; payload?: unknown };
+    const resolvedEventType = eventType || 'generic';
+
+    let allowedTypes: string[] = [];
+    try { allowedTypes = JSON.parse(String(r.event_types || '[]')); } catch { /* */ }
+    if (allowedTypes.length > 0 && !allowedTypes.includes(resolvedEventType)) {
+      return res.status(422).json({ error: `Event type '${resolvedEventType}' is not registered` });
+    }
+
+    const crypto2 = await import('crypto');
+    const payloadHash = crypto2.createHash('sha256').update(JSON.stringify(payload || {})).digest('hex');
+
+    const existingDelivery = await dbGet(
+      `SELECT delivery_id FROM v8_webhook_deliveries
+       WHERE registration_id = ? AND payload_hash = ? AND status = 'delivered'
+       LIMIT 1`,
+      [registrationId, payloadHash]
+    );
+    if (existingDelivery) {
+      return res.json({ data: { accepted: true, deduplicated: true } });
+    }
+
+    await dbRun(
+      `INSERT INTO v8_webhook_deliveries (delivery_id, registration_id, organization_id, event_type, payload_hash, status, attempt_count, completed_at)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, 'delivered', 1, NOW())`,
+      [registrationId, r.organization_id, resolvedEventType, payloadHash]
+    );
+
+    await dbRun(
+      `UPDATE v8_webhook_registrations SET last_delivery_at = NOW(), consecutive_failures = 0 WHERE registration_id = ?`,
+      [registrationId]
+    );
+
+    await dbRun(
+      `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, 'webhook_received', 'system', 'webhook', ?::JSONB)`,
+      [r.organization_id, r.integration_id, JSON.stringify({ registrationId, eventType: resolvedEventType })]
+    );
+
+    return res.json({
+      data: { accepted: true, deduplicated: false, eventType: resolvedEventType },
     });
   })
 );

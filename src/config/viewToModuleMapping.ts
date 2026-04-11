@@ -162,10 +162,18 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
     case AppView.REPORTS_MANAGEMENT:
     case AppView.PRESENTATIONS:
       return {
-        moduleId: 'reports',
+        moduleId: 'outputs',
         supportModule: 'presentations',
         stage: 'results',
-        aiPromptKey: 'presentations',
+        aiPromptKey: 'outputs',
+      };
+
+    case 'PRESENTATIONS_TEMPLATES' as any:
+      return {
+        moduleId: 'templates',
+        supportModule: 'presentations',
+        stage: 'results',
+        aiPromptKey: 'templates',
       };
 
     case AppView.MEETING:

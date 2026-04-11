@@ -12,14 +12,16 @@
  */
 
 import { resolveCname } from 'dns/promises';
-import { Response, Router } from 'express';
+import { NextFunction, Response, Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { getRequestAccessRole, isRequestSuperAdmin } from '../../middleware/requestAccess.js';
 import { verifySuperAdmin } from '../../middleware/superAdmin.middleware.js';
+import { normalizeOrganizationRole } from '../../services/organizationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -130,6 +132,44 @@ const mapBrandingToResponse = (row: any) => {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+};
+
+const ensureBrandingWriteAccess = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (isRequestSuperAdmin(req)) {
+    next();
+    return;
+  }
+
+  const targetOrgId = String(req.params.orgId || '');
+  const requesterId = req.user?.id;
+  const requesterOrgId = req.user?.organizationId || req.organizationId || '';
+
+  if (!targetOrgId || !requesterId || requesterOrgId !== targetOrgId) {
+    res.status(403).json({ error: 'Access denied to this organization branding' });
+    return;
+  }
+
+  try {
+    const membership = await dbGet<{ role?: string }>(
+      `SELECT role FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1`,
+      [targetOrgId, requesterId],
+      { fallback: true }
+    );
+    const normalizedRole = normalizeOrganizationRole(membership?.role || getRequestAccessRole(req));
+
+    if (normalizedRole === 'OWNER' || normalizedRole === 'ADMIN') {
+      next();
+      return;
+    }
+  } catch {
+    // Fail closed when membership resolution is unavailable.
+  }
+
+  res.status(403).json({ error: 'Admin access required for organization branding' });
 };
 
 // ===========================================
@@ -253,6 +293,7 @@ router.get(
 router.patch(
   '/:orgId',
   verifyToken,
+  ensureBrandingWriteAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
     const brandingData = req.body;
@@ -391,6 +432,7 @@ router.patch(
 router.delete(
   '/:orgId',
   verifyToken,
+  ensureBrandingWriteAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
 

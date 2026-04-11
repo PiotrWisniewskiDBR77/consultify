@@ -167,7 +167,7 @@ router.get(
       const pageSize = Number(queryParams.pageSize) || 20;
       const offset = (page - 1) * pageSize;
 
-      const isSuperAdmin = req.user!.role === 'owner';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT i.*, o.name as organization_name
@@ -250,7 +250,7 @@ router.get(
     try {
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
-      const isSuperAdmin = req.user!.role === 'owner';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT i.*, o.name as organization_name
@@ -468,7 +468,7 @@ router.get(
       const pageSize = Number(queryParams.pageSize) || 20;
       const offset = (page - 1) * pageSize;
 
-      const isSuperAdmin = req.user!.role === 'owner';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly,
@@ -534,7 +534,7 @@ router.get(
     try {
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
-      const isSuperAdmin = req.user!.role === 'owner';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly,
@@ -709,7 +709,7 @@ router.post(
       const { id } = req.params;
       const idStr = Array.isArray(id) ? id[0] : id;
       const { immediately } = req.body;
-      const isSuperAdmin = req.user!.role === 'owner';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       const subscription = (await dbGet(`SELECT * FROM subscriptions WHERE id = ?`, [idStr])) as {
         organization_id: string;
@@ -941,7 +941,7 @@ router.get(
       };
       const offset = ((page || 1) - 1) * (pageSize || 50);
 
-      const isSuperAdmin = req.user!.role === 'owner';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       let query = `
             SELECT cn.*, o.name as organization_name
@@ -1017,7 +1017,7 @@ router.get(
         startDate?: string;
         endDate?: string;
       };
-      const isSuperAdmin = req.user!.role === 'owner';
+      const isSuperAdmin = Boolean(req.user?.isSuperAdmin);
 
       const orgId = isSuperAdmin && organizationId ? organizationId : req.user!.organizationId;
 
@@ -1393,7 +1393,7 @@ router.get(
         (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
       if (
         (event as { organization_id: string }).organization_id !== orgId &&
-        req.user!.role !== 'owner'
+        !req.user?.isSuperAdmin
       ) {
         res.status(403).json({ error: 'Permission denied' });
         return;

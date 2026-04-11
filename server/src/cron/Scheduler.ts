@@ -497,6 +497,17 @@ export const Scheduler = {
     });
     this.jobs.push(job27);
 
+    // 28. P02 Calendar Sync — Run every 5 minutes
+    const job28 = cron.schedule('*/5 * * * *', async () => {
+      try {
+        const { syncAllSources } = await import('../services/v8/calendarSyncRuntime.js');
+        await syncAllSources();
+      } catch (err: any) {
+        logger.error('[Scheduler] Calendar sync tick failed:', err?.message);
+      }
+    });
+    this.jobs.push(job28);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM)'
     );

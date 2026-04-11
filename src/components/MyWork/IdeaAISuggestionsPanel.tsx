@@ -35,7 +35,7 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import type { CanvasToolType } from './ideaSelectionTypes';
 
-const AI_GENERATOR_ACTIONS = [
+const MM_GENERATOR_ACTIONS = [
   {
     action: 'mm_ai_expand',
     iconEl: Sparkles,
@@ -68,6 +68,50 @@ const AI_GENERATOR_ACTIONS = [
     labelEn: 'Auto cross-links',
   },
 ];
+
+const WB_GENERATOR_ACTIONS = [
+  {
+    action: 'wb_add_sticky',
+    iconEl: Sparkles,
+    labelPl: 'Dodaj notatki (AI)',
+    labelEn: 'Add notes (AI)',
+  },
+  {
+    action: 'wb_add_cluster',
+    iconEl: GitBranch,
+    labelPl: 'Auto-klasteryzacja',
+    labelEn: 'Auto-clustering',
+  },
+  {
+    action: 'wb_add_theme',
+    iconEl: Target,
+    labelPl: 'Wyodrębnij tematy',
+    labelEn: 'Extract themes',
+  },
+  {
+    action: 'wb_add_outcome',
+    iconEl: Lightbulb,
+    labelPl: 'Zidentyfikuj wyniki',
+    labelEn: 'Identify outcomes',
+  },
+  {
+    action: 'wb_add_decision',
+    iconEl: ListChecks,
+    labelPl: 'Zapisz decyzję',
+    labelEn: 'Record decision',
+  },
+  {
+    action: 'wb_add_action',
+    iconEl: Target,
+    labelPl: 'Dodaj akcję',
+    labelEn: 'Add action item',
+  },
+];
+
+function getGeneratorActions(tool?: CanvasToolType) {
+  if (tool === 'whiteboard') return WB_GENERATOR_ACTIONS;
+  return MM_GENERATOR_ACTIONS;
+}
 
 type SuggestionCategory =
   | 'branch_suggestions'
@@ -557,7 +601,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
             {isPl ? 'Generatory AI' : 'AI Generators'}
           </div>
           <div className="space-y-1">
-            {AI_GENERATOR_ACTIONS.map((gen) => {
+            {getGeneratorActions(activeTool).map((gen) => {
               const Icon = gen.iconEl;
               return (
                 <button

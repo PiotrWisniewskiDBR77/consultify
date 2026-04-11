@@ -633,6 +633,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             _startEditing,
             _collapsed,
             _dropTarget,
+            _isNew,
+            _justMoved,
+            _childCount,
             count,
             ...cleanData
           } = rest.data || {};
@@ -697,6 +700,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
               _startEditing,
               _collapsed,
               _dropTarget,
+              _isNew,
+              _justMoved,
+              _childCount,
               count,
               ...cleanData
             } = rest.data || {};
@@ -799,6 +805,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             _startEditing,
             _collapsed,
             _dropTarget,
+            _isNew,
+            _justMoved,
+            _childCount,
             count,
             ...cleanData
           } = rest.data || {};

@@ -3,6 +3,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { getRequestAccessRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import adminAuditService from '../services/adminAuditService.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -187,8 +188,8 @@ async function getAdminActor(
 > {
   const orgId = String(req.query.orgId || req.user?.organizationId || '').trim();
   const actorId = String(req.user?.id || '').trim();
-  const isSuperAdmin =
-    req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = isRequestSuperAdmin(req);
+  const requestRole = getRequestAccessRole(req);
 
   if (!orgId || !actorId) {
     res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -209,14 +210,16 @@ async function getAdminActor(
     [orgId, actorId],
     { fallback: true }
   );
-  const actorRole = normalizeOrganizationRole(membership?.role || req.user?.role);
+  const actorRole = normalizeOrganizationRole(
+    membership?.role || (requestRole === 'superadmin' ? 'OWNER' : requestRole)
+  );
   const capabilities = await getActorCapabilities(orgId, actorId, actorRole, isSuperAdmin);
 
   if (!isSuperAdmin && !membership) {
     res.status(403).json({
       error: 'Admin access required',
       code: 'ADMIN_ACCESS_REQUIRED',
-      guidance: adminGuidance(req.user?.role),
+      guidance: adminGuidance(requestRole),
     });
     return null;
   }

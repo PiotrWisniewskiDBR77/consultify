@@ -24,6 +24,7 @@ import {
   Calculator,
   ChevronDown,
   FileText,
+  GitBranch,
   Plus,
   Sparkles,
   Target,
@@ -35,6 +36,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyFinance,
@@ -42,6 +45,14 @@ import {
   type V8FinanceDashboard,
 } from '@/services/api/v8/finance';
 import { ROUTES } from '@/routes/routeConfig';
+import { useAppStore } from '@/store/useAppStore';
+import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
+
+import { FinanceDegradedBanner } from './FinanceDegradedBanner';
+import { getFinanceErrorMessage } from './financeErrorMap';
+import { FinanceLanePanel } from './FinanceLanePanel';
+import { FinanceLaneStrip } from './FinanceLaneStrip';
+import { useFinanceLane } from './hooks/useFinanceLane';
 
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
@@ -60,6 +71,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { FinanceModelDocumentView } from './FinanceModelDocumentView';
@@ -114,8 +126,12 @@ export const FinanceHub: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
 
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const {
+    openDocuments,
+    setOpenDocuments,
+    activeDocumentId,
+    setActiveDocumentId,
+  } = useModuleOpenDocuments('finance');
   const [activeDocument, setActiveDocument] = useState<FinanceRow | null>(null);
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -133,6 +149,8 @@ export const FinanceHub: React.FC = () => {
   const [showValuationCreateModal, setShowValuationCreateModal] = useState(false);
   const [showAnalyzeMenu, setShowAnalyzeMenu] = useState(false);
   const [v8Dashboard, setV8Dashboard] = useState<V8FinanceDashboard | null>(null);
+  const [lanePanelOpen, setLanePanelOpen] = useState(false);
+  const lane = useFinanceLane();
   const [createModelSourceStatementPackId, setCreateModelSourceStatementPackId] = useState<
     string | null
   >(null);
@@ -147,6 +165,11 @@ export const FinanceHub: React.FC = () => {
   }>({});
   const [valuationInitialTitle, setValuationInitialTitle] = useState('');
   const analyzeMenuRef = useRef<HTMLDivElement | null>(null);
+  const openChatWithContext = useOpenChatWithContext();
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const { isEnabled: isV8FinanceEnabled, isLoading: isV8FlagLoading } = useV8FeatureFlag('finance');
+  const { isFeatureBlocked } = usePolicySnapshot();
+  const isFinanceBlocked = isFeatureBlocked('finance');
   const validFinanceTabs = useMemo(
     () => ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'] as ModuleTab[],
     []
@@ -192,6 +215,31 @@ export const FinanceHub: React.FC = () => {
     deselectRow,
   } = useFinanceSelection(activeTab);
 
+  const handleOpenEntityChat = useCallback(
+    (row: FinanceRow) => {
+      const entityTypeMap: Record<string, string> = {
+        statements: 'financial_statement',
+        models: 'financial_model',
+        analysis: 'financial_analysis',
+        prediction: 'financial_model',
+        valuation: 'valuation',
+        investment: 'financial_analysis',
+      };
+      openChatWithContext({
+        entityType: entityTypeMap[row.kind] || 'financial_model',
+        entityId: row.id,
+        entityName: row.name,
+        contextData: {
+          kind: row.kind,
+          status: row.status,
+          tab: activeTab,
+          organizationName: currentOrganization?.name,
+        },
+      });
+    },
+    [openChatWithContext, activeTab, currentOrganization?.name]
+  );
+
   const loadV8Dashboard = useCallback(async () => {
     const response = await V8FinanceApi.getDashboard();
     setV8Dashboard(response.dashboard);
@@ -217,6 +265,30 @@ export const FinanceHub: React.FC = () => {
       { replace: true }
     );
   }, [location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    const deepLinkMatch = location.pathname.match(
+      /^\/finance\/(statements|models|analyses)\/(.+)$/
+    );
+    if (!deepLinkMatch) return;
+    const [, segment, entityId] = deepLinkMatch;
+    const tabMap: Record<string, ModuleTab> = {
+      statements: 'statements',
+      models: 'models',
+      analyses: 'analysis',
+    };
+    const tab = tabMap[segment];
+    if (tab && tab !== activeTab) setActiveTab(tab);
+    if (entityId && entityId !== activeDocumentId) {
+      setActiveDocumentId(entityId);
+      const row = rowsForActiveTab.find((r) => r.id === entityId);
+      if (row) {
+        setActiveDocument(row);
+        onSelectRow(row);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!activeDocument) return;
@@ -582,6 +654,7 @@ export const FinanceHub: React.FC = () => {
     loadValuations,
     loadValuationPreviewResults,
     getBudgetRawId,
+    versionSnapshots: lane.versionSnapshots,
   });
 
   // ---- URL param handling for cross-module deep links ----
@@ -1060,7 +1133,7 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-cyan-600 text-white shadow-sm hover:bg-cyan-700 transition-all duration-150 active:scale-[0.97]"
+        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-violet-600 text-white shadow-sm hover:bg-violet-700 transition-all duration-150 active:scale-[0.97]"
       >
         <Plus size={14} strokeWidth={2.5} />
         <span>{labels[currentKind] || labels.models}</span>
@@ -1278,8 +1351,37 @@ export const FinanceHub: React.FC = () => {
     t,
   ]);
 
+  const laneActions = useMemo(() => {
+    if (lane.activeLaneRun) {
+      return [{
+        id: 'lane_status',
+        label: t('finance.analyze.laneStatus', 'View Lane Status'),
+        description: t('finance.analyze.laneStatusHint', 'View active finance lane progress and issues.'),
+        disabled: false,
+        onSelect: () => setLanePanelOpen(true),
+      }];
+    }
+    return [{
+      id: 'lane_start',
+      label: t('finance.analyze.laneStart', 'Start Finance Lane'),
+      description: t('finance.analyze.laneStartHint', 'Begin a governed import→analysis→mutation→readback workflow.'),
+      disabled: false,
+      onSelect: async () => {
+        try {
+          await lane.startRun();
+          toast.success(t('finance.lane.started', 'Finance lane started'));
+          setLanePanelOpen(true);
+        } catch (err: any) {
+          toast.error(getFinanceErrorMessage(err));
+        }
+      },
+    }];
+  }, [lane, t]);
+
   const analyzeActionIcons: Record<string, React.ReactNode> = useMemo(
     () => ({
+      lane_start: <GitBranch size={14} className="text-teal-500" />,
+      lane_status: <GitBranch size={14} className="text-teal-500" />,
       model: <Calculator size={14} className="text-blue-500" />,
       budget: <TrendingUp size={14} className="text-purple-500" />,
       analysis: <BarChart3 size={14} className="text-emerald-500" />,
@@ -1288,8 +1390,13 @@ export const FinanceHub: React.FC = () => {
     []
   );
 
+  const allAnalyzeActions = useMemo(
+    () => [...laneActions, ...analyzeActions],
+    [laneActions, analyzeActions]
+  );
+
   const rightControls = useMemo(() => {
-    if (analyzeActions.length === 0) return null;
+    if (allAnalyzeActions.length === 0) return null;
 
     return (
       <div ref={analyzeMenuRef} className="relative">
@@ -1299,8 +1406,8 @@ export const FinanceHub: React.FC = () => {
           aria-haspopup="menu"
           className={`inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border transition-all duration-150 ${
             showAnalyzeMenu
-              ? 'border-cyan-400/40 bg-cyan-100/80 text-cyan-800 dark:border-cyan-400/30 dark:bg-cyan-500/15 dark:text-cyan-200'
-              : 'border-cyan-200/70 bg-cyan-50/80 text-cyan-700 hover:bg-cyan-100/60 dark:border-cyan-400/20 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/15'
+              ? 'border-violet-400/40 bg-violet-100/80 text-violet-800 dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-200'
+              : 'border-violet-200/70 bg-violet-50/80 text-violet-700 hover:bg-violet-100/60 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/15'
           }`}
         >
           <Sparkles size={13} />
@@ -1319,7 +1426,7 @@ export const FinanceHub: React.FC = () => {
               {t('finance.analyze.menuTitle', 'Choose next step')}
             </div>
             <div className="space-y-0.5">
-              {analyzeActions.map((action) => (
+              {allAnalyzeActions.map((action) => (
                 <button
                   key={action.id}
                   role="menuitem"
@@ -1354,7 +1461,7 @@ export const FinanceHub: React.FC = () => {
         )}
       </div>
     );
-  }, [analyzeActions, showAnalyzeMenu, analyzeActionIcons, isPl, t]);
+  }, [allAnalyzeActions, showAnalyzeMenu, analyzeActionIcons, isPl, t]);
 
   // ---- Command Row ----
   const commandRowContent = useMemo(() => {
@@ -1410,7 +1517,7 @@ export const FinanceHub: React.FC = () => {
         label: t('finance.v8.ingestion', 'V8 Ingestion'),
         value:
           v8Dashboard == null ? '—' : String(v8Dashboard.ingestionPipeline.totalCount ?? '—'),
-        dotClassName: 'bg-cyan-400',
+        dotClassName: 'bg-violet-400',
       },
       {
         label: t('finance.v8.escalations', 'Escalations'),
@@ -1460,9 +1567,9 @@ export const FinanceHub: React.FC = () => {
                 },
               ]);
             }}
-            className={`h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border transition-all duration-150 whitespace-nowrap ${
+            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-all duration-150 whitespace-nowrap ${
               chip.active
-                ? 'bg-cyan-50/80 text-cyan-700 border-cyan-300/60 shadow-sm dark:bg-cyan-500/10 dark:text-cyan-200 dark:border-cyan-400/30'
+                ? 'bg-violet-50/80 text-violet-700 border-violet-300/60 shadow-sm dark:bg-violet-500/10 dark:text-violet-200 dark:border-violet-400/30'
                 : 'bg-white/60 text-slate-600 border-slate-200/60 hover:bg-slate-50 hover:border-slate-300/60 dark:bg-white/[0.02] dark:text-slate-400 dark:border-white/[0.06] dark:hover:bg-white/[0.04]'
             }`}
           >
@@ -1473,7 +1580,7 @@ export const FinanceHub: React.FC = () => {
             <span
               className={`ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none ${
                 chip.active
-                  ? 'bg-cyan-200/60 text-cyan-800 dark:bg-cyan-500/20 dark:text-cyan-200'
+                  ? 'bg-violet-200/60 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200'
                   : 'bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
               }`}
             >
@@ -1485,7 +1592,7 @@ export const FinanceHub: React.FC = () => {
         {runtimeChips.map((chip) => (
           <div
             key={chip.label}
-            className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]"
+            className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]"
           >
             <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
             <span>{chip.label}</span>
@@ -1494,9 +1601,33 @@ export const FinanceHub: React.FC = () => {
             </span>
           </div>
         ))}
+        {v8Dashboard && (
+          <>
+            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
+              <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
+              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+                {v8Dashboard.linkageHealth.unlinkedInitiativesCount ?? 0}
+              </span>
+            </div>
+            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-orange-400" />
+              <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
+              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+                {v8Dashboard.staleSourceRefreshesCount ?? 0}
+              </span>
+            </div>
+          </>
+        )}
+        <FinanceLaneStrip
+          activeLaneRun={lane.activeLaneRun}
+          degradedAlerts={lane.degradedAlerts}
+          onOpenPanel={() => setLanePanelOpen(true)}
+        />
       </div>
     );
-  }, [rowsForActiveTab.length, statusCounts, activeFilters, activeTab, t, v8Dashboard]);
+  }, [rowsForActiveTab.length, statusCounts, activeFilters, activeTab, t, v8Dashboard, lane.activeLaneRun, lane.degradedAlerts]);
 
   const emptyMessage = useMemo(() => {
     const activeStatusFilter = activeFilters.find((filter) => filter.column === 'status')?.value;
@@ -1804,6 +1935,28 @@ export const FinanceHub: React.FC = () => {
   ]);
 
   // ---- Render ----
+  if (!isV8FlagLoading && !isV8FinanceEnabled) {
+    return (
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
+        <div>
+          <Calculator size={40} className="mx-auto mb-4 opacity-40" />
+          <p className="text-lg font-medium">{t('finance.v8Disabled', 'Finance module is not enabled for this organization.')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFinanceBlocked) {
+    return (
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
+        <div>
+          <Calculator size={40} className="mx-auto mb-4 opacity-40" />
+          <p className="text-lg font-medium">{t('finance.blocked', 'Access to the Finance module is restricted by your organization\'s policy.')}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <ModuleHub
@@ -1830,8 +1983,34 @@ export const FinanceHub: React.FC = () => {
         commandRowContent={commandRowContent}
         rightControls={rightControls}
       >
+        <FinanceDegradedBanner
+          degradedAlerts={lane.degradedAlerts}
+          onViewAll={() => setLanePanelOpen(true)}
+        />
         {content}
       </ModuleHub>
+
+      <FinanceLanePanel
+        open={lanePanelOpen}
+        onClose={() => setLanePanelOpen(false)}
+        activeLaneRun={lane.activeLaneRun}
+        degradedAlerts={lane.degradedAlerts}
+        mutationAudits={lane.mutationAudits}
+        kpiCoherence={lane.kpiCoherence}
+        versionSnapshots={lane.versionSnapshots}
+        onAdvanceStep={lane.advanceStep}
+        onFinalizeVersion={async (snapshotId) => {
+          try {
+            await V8FinanceApi.finalizeVersion(snapshotId);
+            toast.success(t('finance.lane.finalized', 'Version finalized'));
+            await lane.refreshLane();
+          } catch (err: any) {
+            toast.error(getFinanceErrorMessage(err));
+          }
+        }}
+        onRefreshCoherence={lane.refreshCoherence}
+        loading={lane.loading}
+      />
 
       {showCreateModelModal && (
         <CreateModelModal

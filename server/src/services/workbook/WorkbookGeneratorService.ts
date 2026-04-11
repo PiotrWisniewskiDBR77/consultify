@@ -15,7 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../../utils/Logger.js';
 import { AIPipeline } from '../ai/AIPipeline.js';
-import { buildWorkbookBuffer, validateWorkbookSchema } from './WorkbookBuilder.js';
+import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
+import { buildWorkbookBuffer, classifyBuildError, validateWorkbookSchema } from './WorkbookBuilder.js';
 import { WorkbookSchemaValidator, type WorkbookSchema } from './WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
@@ -318,6 +319,7 @@ export interface WorkbookGenerationResult {
   buffer: Buffer;
   fileName: string;
   validationErrors: string[];
+  classifiedErrors: P23ClassifiedError[];
   qualityScore: number | null;
   pipelineLog: PipelinePhaseLog[];
   generatedAt: string;
@@ -622,12 +624,30 @@ class WorkbookGeneratorService {
     // PHASE 5: BUILD — ExcelJS materializes the validated schema
     // =====================================================================
     const p5Start = Date.now();
+    const classifiedErrors: P23ClassifiedError[] = [];
     const structuralValidation = validateWorkbookSchema(schema!);
     if (!structuralValidation.valid) {
       logger.warn(`[WorkbookGenerator] Phase 5: Structural warnings:`, structuralValidation.errors);
+      for (const err of structuralValidation.errors) {
+        classifiedErrors.push(createP23Error('validation_failed', err));
+      }
     }
 
-    const buffer = await buildWorkbookBuffer(schema!);
+    let buffer: Buffer;
+    try {
+      buffer = await buildWorkbookBuffer(schema!);
+    } catch (buildError) {
+      const classified = classifyBuildError(buildError);
+      classifiedErrors.push(classified);
+      pipelineLog.push({
+        phase: 'build',
+        status: 'failed',
+        durationMs: Date.now() - p5Start,
+        detail: `Build failed: ${classified.code} — ${classified.detail}`,
+      });
+      throw buildError;
+    }
+
     const safeTitle = (schema!.title || 'Workbook').replace(/[^a-zA-Z0-9_\- ]/g, '').trim();
     const fileName = `${safeTitle.replace(/\s+/g, '_')}.xlsx`;
 
@@ -647,6 +667,7 @@ class WorkbookGeneratorService {
       buffer,
       fileName,
       validationErrors: structuralValidation.errors,
+      classifiedErrors,
       qualityScore,
       pipelineLog,
       generatedAt: new Date().toISOString(),

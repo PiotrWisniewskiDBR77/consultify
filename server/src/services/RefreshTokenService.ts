@@ -27,15 +27,15 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
-const FORCED_SUPERADMIN_EMAILS = (() => {
-  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+const getForcedSuperAdminEmails = (): Set<string> => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
   return new Set(
     raw
       .split(',')
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean)
   );
-})();
+};
 
 // ==========================================
 // TYPES
@@ -138,7 +138,7 @@ class RefreshTokenService {
       .trim()
       .toLowerCase();
     if (!normalizedEmail) return { role };
-    if (!FORCED_SUPERADMIN_EMAILS.has(normalizedEmail)) return { role };
+    if (!getForcedSuperAdminEmails().has(normalizedEmail)) return { role };
     if (role === 'SUPERADMIN') return { role };
 
     // Best-effort: persist to DB so all future tokens are consistent.

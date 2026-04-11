@@ -14,15 +14,15 @@ import logger from '../utils/Logger.js';
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
 
-const FORCED_SUPERADMIN_EMAILS = (() => {
-  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+const getForcedSuperAdminEmails = (): Set<string> => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
   return new Set(
     raw
       .split(',')
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean)
   );
-})();
+};
 
 // Dependencies interface for dependency injection
 interface Dependencies {
@@ -155,7 +155,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Permanent role fix: selected internal accounts must always be SUPERADMIN.
     // This also updates DB so refresh tokens and /auth/me stay consistent.
     if (
-      FORCED_SUPERADMIN_EMAILS.has(
+      getForcedSuperAdminEmails().has(
         String(user.email || '')
           .trim()
           .toLowerCase()

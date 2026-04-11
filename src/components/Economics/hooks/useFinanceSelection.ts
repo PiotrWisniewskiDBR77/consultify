@@ -726,7 +726,18 @@ export function useFinanceSelection(activeTab: ModuleTab) {
           value: Number(statement.mapped_line_count ?? 0),
         })),
       });
-      setStatementPreviewRatios(null);
+
+      const firstStatementId = statements[0]?.id;
+      if (firstStatementId) {
+        try {
+          const ratiosData = await V8FinanceApi.getStatementRatios(String(firstStatementId));
+          setStatementPreviewRatios(ratiosData?.ratios ?? null);
+        } catch {
+          setStatementPreviewRatios(null);
+        }
+      } else {
+        setStatementPreviewRatios(null);
+      }
     } catch {
       setStatementPreviewDetail(null);
       setStatementPreviewRatios(null);

@@ -1,0 +1,398 @@
+/**
+ * MappingDriftPanel — Field mapping preview, validation, and drift review.
+ *
+ * Two modes:
+ *  - Overview mode (no integrationId): shows all integrations' mapping summaries
+ *  - Detail mode (integrationId provided): shows field mappings, entity maps, drift, sync states
+ */
+
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle,
+  Code,
+  FileWarning,
+  GitMerge,
+  Loader2,
+  RefreshCw,
+  Save,
+  XCircle,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { V8SyncApi, V8SyncMappingData } from '../../../services/api/v8/sync';
+import { v8Get } from '../../../services/api/v8/client';
+
+interface MappingOverviewItem {
+  integrationId: string;
+  name: string;
+  connectorId: string;
+  status: string;
+  lastSyncAt: string | null;
+  fieldMappingCount: number;
+  entityMappingCount: number;
+  openDriftCount: number;
+}
+
+interface MappingDriftPanelProps {
+  integrationId?: string;
+  onBack?: () => void;
+}
+
+type SubTab = 'fields' | 'entities' | 'drift' | 'sync';
+
+const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({ integrationId: initialId, onBack }) => {
+  const { t } = useTranslation();
+  const [selectedId, setSelectedId] = useState<string | null>(initialId && initialId !== '__all__' ? initialId : null);
+  const [overview, setOverview] = useState<MappingOverviewItem[]>([]);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [data, setData] = useState<V8SyncMappingData | null>(null);
+  const [fieldMappingsJson, setFieldMappingsJson] = useState('[]');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<SubTab>('fields');
+
+  const loadOverview = useCallback(async () => {
+    setOverviewLoading(true);
+    try {
+      const resp = await v8Get<{ integrations: MappingOverviewItem[] }>('/sync/mappings/overview');
+      const d = (resp as any)?.data ?? resp;
+      setOverview(d.integrations || []);
+    } catch {
+      setOverview([]);
+    } finally {
+      setOverviewLoading(false);
+    }
+  }, []);
+
+  const loadDetail = useCallback(async (id: string) => {
+    setLoading(true);
+    try {
+      const resp = await V8SyncApi.getMappings(id);
+      const d = (resp as any)?.data ?? resp;
+      setData(d);
+      setFieldMappingsJson(JSON.stringify(d.fieldMappings ?? [], null, 2));
+    } catch {
+      toast.error(t('integrations.mappings.loadError', 'Failed to load mapping data'));
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (selectedId) {
+      loadDetail(selectedId);
+    } else {
+      loadOverview();
+    }
+  }, [selectedId, loadDetail, loadOverview]);
+
+  const handleJsonChange = (value: string) => {
+    setFieldMappingsJson(value);
+    try {
+      JSON.parse(value);
+      setJsonError(null);
+    } catch (e: any) {
+      setJsonError(e.message);
+    }
+  };
+
+  const handleSave = async () => {
+    if (jsonError || !selectedId) return;
+    setSaving(true);
+    try {
+      const parsed = JSON.parse(fieldMappingsJson);
+      await V8SyncApi.saveMappings(selectedId, parsed);
+      toast.success(t('integrations.mappings.saved', 'Mappings saved'));
+      loadDetail(selectedId);
+    } catch {
+      toast.error(t('integrations.mappings.saveError', 'Failed to save mappings'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, { color: string; icon: React.ReactNode }> = {
+      synced: { color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: <CheckCircle className="w-3 h-3" /> },
+      conflict: { color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400', icon: <AlertTriangle className="w-3 h-3" /> },
+      error: { color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: <XCircle className="w-3 h-3" /> },
+      stale: { color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: <AlertTriangle className="w-3 h-3" /> },
+      pending: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: <Loader2 className="w-3 h-3" /> },
+      active: { color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: <CheckCircle className="w-3 h-3" /> },
+    };
+    const m = map[status] || { color: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400', icon: null };
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${m.color}`}>
+        {m.icon} {status}
+      </span>
+    );
+  };
+
+  // ─── Overview mode ─────────────────────────────────────────────────────────
+  if (!selectedId) {
+    if (overviewLoading) {
+      return (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-brand" />
+        </div>
+      );
+    }
+
+    if (overview.length === 0) {
+      return (
+        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
+          <GitMerge className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('integrations.mappings.noIntegrations', 'No integrations with mappings found.')}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+              <GitMerge size={20} />
+              {t('integrations.mappings.overviewTitle', 'Mapping Overview')}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {t('integrations.mappings.overviewDesc', 'Select an integration to view and manage its field mappings.')}
+            </p>
+          </div>
+          <button
+            onClick={loadOverview}
+            className="p-2 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          >
+            <RefreshCw size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {overview.map((item) => (
+            <button
+              key={item.integrationId}
+              onClick={() => setSelectedId(item.integrationId)}
+              className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800/40 hover:border-brand/30 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm text-slate-900 dark:text-white">{item.name || item.connectorId}</span>
+                    {statusBadge(item.status)}
+                  </div>
+                  <div className="flex gap-4 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <span>{item.fieldMappingCount} {t('integrations.mappings.fieldMappings', 'field mappings')}</span>
+                    <span>{item.entityMappingCount} {t('integrations.mappings.entityMaps', 'entity maps')}</span>
+                    {item.openDriftCount > 0 && (
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        {item.openDriftCount} {t('integrations.mappings.openDrift', 'open drift')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Detail mode ───────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-6 h-6 animate-spin text-brand" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="space-y-4">
+        <button onClick={() => { setSelectedId(null); onBack?.(); }} className="flex items-center gap-1 text-sm text-brand hover:underline">
+          <ArrowLeft size={14} /> {t('common.back', 'Back')}
+        </button>
+        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl text-slate-500 dark:text-slate-400 text-sm">
+          {t('integrations.mappings.noData', 'No mapping data available for this integration.')}
+        </div>
+      </div>
+    );
+  }
+
+  const tabs: { id: SubTab; label: string; icon: React.ReactNode; count?: number }[] = [
+    { id: 'fields', label: t('integrations.mappings.tabs.fields', 'Field Mappings'), icon: <Code className="w-4 h-4" /> },
+    { id: 'entities', label: t('integrations.mappings.tabs.entities', 'Entity Maps'), icon: <GitMerge className="w-4 h-4" />, count: data.entityMappings.length },
+    { id: 'drift', label: t('integrations.mappings.tabs.drift', 'Schema Drift'), icon: <FileWarning className="w-4 h-4" />, count: data.driftEvents.filter(d => !d.resolvedAt).length },
+    { id: 'sync', label: t('integrations.mappings.tabs.sync', 'Sync States'), icon: <RefreshCw className="w-4 h-4" />, count: data.syncStates.length },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <button onClick={() => { setSelectedId(null); onBack?.(); }} className="flex items-center gap-1 text-sm text-brand hover:underline">
+        <ArrowLeft size={14} /> {t('common.back', 'Back to overview')}
+      </button>
+
+      <div className="bg-white dark:bg-navy-800/40 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="flex border-b border-slate-200 dark:border-navy-700 overflow-x-auto">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-brand text-brand'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+              {typeof tab.count === 'number' && tab.count > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-navy-700 rounded-full">{tab.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4">
+          {activeTab === 'fields' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {t('integrations.mappings.fieldEditor', 'Field Mapping Configuration')}
+                </h3>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !!jsonError}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand rounded-lg hover:bg-brand-dark disabled:opacity-50 transition-colors"
+                >
+                  {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  {t('common.save', 'Save')}
+                </button>
+              </div>
+              <textarea
+                value={fieldMappingsJson}
+                onChange={e => handleJsonChange(e.target.value)}
+                className={`w-full h-64 p-3 text-xs font-mono rounded-lg border ${
+                  jsonError
+                    ? 'border-red-400 bg-red-50 dark:bg-red-900/20'
+                    : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900'
+                } text-slate-900 dark:text-white`}
+                spellCheck={false}
+              />
+              {jsonError && <p className="text-xs text-red-500">{jsonError}</p>}
+            </div>
+          )}
+
+          {activeTab === 'entities' && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700">
+                    <th className="pb-2 pr-4">{t('integrations.mappings.localType', 'Local Type')}</th>
+                    <th className="pb-2 pr-4">{t('integrations.mappings.localId', 'Local ID')}</th>
+                    <th className="pb-2 pr-4">{t('integrations.mappings.externalType', 'External Type')}</th>
+                    <th className="pb-2 pr-4">{t('integrations.mappings.externalId', 'External ID')}</th>
+                    <th className="pb-2 pr-4">{t('common.status', 'Status')}</th>
+                    <th className="pb-2">{t('integrations.mappings.lastSync', 'Last Sync')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.entityMappings.length === 0 ? (
+                    <tr><td colSpan={6} className="py-8 text-center text-slate-400 dark:text-slate-500">{t('common.noData', 'No data')}</td></tr>
+                  ) : data.entityMappings.map(m => (
+                    <tr key={m.id} className="border-b border-slate-100 dark:border-navy-700/50">
+                      <td className="py-2 pr-4 font-mono text-xs">{m.localType}</td>
+                      <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">{m.localId}</td>
+                      <td className="py-2 pr-4 font-mono text-xs">{m.externalType}</td>
+                      <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">{m.externalId}</td>
+                      <td className="py-2 pr-4">{statusBadge(m.syncStatus)}</td>
+                      <td className="py-2 text-xs text-slate-500">{m.lastSyncedAt ? new Date(m.lastSyncedAt).toLocaleString() : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'drift' && (
+            <div className="space-y-3">
+              {data.driftEvents.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+                  <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-400" />
+                  <p className="text-sm">{t('integrations.mappings.noDrift', 'No schema drift detected')}</p>
+                </div>
+              ) : data.driftEvents.map(d => (
+                <div
+                  key={d.driftId}
+                  className={`p-3 rounded-lg border ${
+                    d.resolvedAt
+                      ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10 dark:border-green-900/30'
+                      : 'border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-900/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">{d.driftType}</span>
+                    {d.resolvedAt ? (
+                      <span className="text-xs text-green-600 dark:text-green-400">{t('common.resolved', 'Resolved')}</span>
+                    ) : (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">{t('common.open', 'Open')}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {t('integrations.mappings.detected', 'Detected')}: {new Date(d.detectedAt).toLocaleString()}
+                  </p>
+                  {d.affectedFields && <p className="text-xs font-mono text-slate-600 dark:text-slate-400 mt-1">{d.affectedFields}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'sync' && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700">
+                    <th className="pb-2 pr-4">{t('integrations.mappings.objectType', 'Object Type')}</th>
+                    <th className="pb-2 pr-4">{t('integrations.mappings.objectId', 'Object ID')}</th>
+                    <th className="pb-2 pr-4">{t('common.status', 'Status')}</th>
+                    <th className="pb-2 pr-4">{t('integrations.mappings.errorClass', 'Error Class')}</th>
+                    <th className="pb-2">{t('integrations.mappings.lastSync', 'Last Sync')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.syncStates.length === 0 ? (
+                    <tr><td colSpan={5} className="py-8 text-center text-slate-400 dark:text-slate-500">{t('common.noData', 'No data')}</td></tr>
+                  ) : data.syncStates.map(s => (
+                    <tr key={s.id} className="border-b border-slate-100 dark:border-navy-700/50">
+                      <td className="py-2 pr-4 text-xs">{s.objectType}</td>
+                      <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">{s.objectId}</td>
+                      <td className="py-2 pr-4">{statusBadge(s.syncStatus)}</td>
+                      <td className="py-2 pr-4 text-xs text-slate-500 dark:text-slate-400">{s.errorClass || '—'}</td>
+                      <td className="py-2 text-xs text-slate-500 dark:text-slate-400">{s.lastSyncedAt ? new Date(s.lastSyncedAt).toLocaleString() : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ChevronRight: React.FC<{ className?: string }> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
+);
+
+export default MappingDriftPanel;

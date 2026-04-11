@@ -36,7 +36,7 @@ export type PermissionGradient = (typeof PermissionGradientValues)[number];
 export const SourceLifecycleStateValues = ['connected', 'degraded', 'requires_action', 'blocked', 'recoverable'] as const;
 export type SourceLifecycleState = (typeof SourceLifecycleStateValues)[number];
 
-export const ItemTypeValues = ['task_due', 'initiative_milestone', 'decision_deadline', 'meeting', 'external_event'] as const;
+export const ItemTypeValues = ['task_due', 'task_window', 'initiative_milestone', 'decision_deadline', 'meeting', 'external_event', 'assignment', 'adjustment', 'approval_window', 'escalation_window', 'focus_block'] as const;
 export type ItemType = (typeof ItemTypeValues)[number];
 
 export const SourceSystemValues = ['consultify', 'google_calendar', 'outlook_calendar', 'caldav'] as const;
@@ -57,6 +57,8 @@ export type SyncState = (typeof SyncStateValues)[number];
 
 export interface SyncCheckpoint {
   cursor: string | null;
+  /** Per-calendar cursors for multi-calendar sync (syncToken/deltaLink/sync-token per calendar). */
+  calendarCursors?: Record<string, string> | null;
   rangeWatermark: { startAt: string; endAt: string } | null;
   lastFullSyncAt: string | null;
   lastIncrementalSyncAt: string | null;
@@ -79,6 +81,7 @@ export interface CalendarSource {
   lastSyncAt: string | null;
   syncCheckpoint: SyncCheckpoint;
   lastError: string | null;
+  connectionId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -194,6 +197,7 @@ function rowToCalendarSource(row: Record<string, unknown>): CalendarSource {
     lastSyncAt: (row.last_sync_at as string) || null,
     syncCheckpoint: safeJsonParse(row.sync_checkpoint_json as string, { ...EMPTY_CHECKPOINT }),
     lastError: (row.last_error as string) || null,
+    connectionId: (row.connection_id as string) || null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -234,6 +238,7 @@ export interface CreateCalendarSourceParams {
   selectedCalendars?: string[];
   declaredMode: DeclaredMode;
   permissionGradient?: PermissionGradient;
+  connectionId?: string;
 }
 
 export async function createCalendarSource(params: CreateCalendarSourceParams): Promise<CalendarSource> {
@@ -253,8 +258,8 @@ export async function createCalendarSource(params: CreateCalendarSourceParams): 
        calendar_source_id, organization_id, user_id, provider, account_ref,
        selected_calendars_json, declared_mode, effective_mode, permission_gradient,
        lifecycle_state, requires_action_reason, last_ok_at, last_sync_at,
-       sync_checkpoint_json, last_error, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       sync_checkpoint_json, last_error, connection_id, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       params.organizationId,
@@ -271,6 +276,7 @@ export async function createCalendarSource(params: CreateCalendarSourceParams): 
       null,
       JSON.stringify(checkpoint),
       null,
+      params.connectionId ?? null,
       now,
       now,
     ],
@@ -693,14 +699,23 @@ export async function handleSyncError(
   const mapping = mapProviderError(errorType);
   const now = nowISO();
 
+  const existing = await getCalendarSource(sourceId, organizationId);
+  const newEffectiveMode = existing
+    ? computeEffectiveMode({
+        ...existing,
+        lifecycleState: mapping.sourceState as SourceLifecycleState,
+      })
+    : 'read';
+
   await dbRun(
     `UPDATE v8_calendar_sources
        SET lifecycle_state = ?,
+           effective_mode = ?,
            requires_action_reason = ?,
            last_error = ?,
            updated_at = ?
      WHERE calendar_source_id = ? AND organization_id = ?`,
-    [mapping.sourceState, mapping.recovery, errorType, now, sourceId, organizationId],
+    [mapping.sourceState, newEffectiveMode, mapping.recovery, errorType, now, sourceId, organizationId],
   );
 
   const pendingItems = await getCalendarItems(organizationId, { sourceId, syncState: 'pending' });

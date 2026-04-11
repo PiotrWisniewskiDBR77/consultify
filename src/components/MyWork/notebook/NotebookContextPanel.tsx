@@ -241,13 +241,14 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       try {
         const q = searchTerms.slice(0, 300);
 
-        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes] =
+        const [ideasRes, initiativesRes, tasksRes, decisionsRes, backlinksRes, backlinksPageRes] =
           await Promise.allSettled([
             q ? Api.suggestMyIdeas(q, 12) : Api.getMyIdeas({ limit: 12 }),
             Api.get(`/initiatives?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
             Api.get(`/my-work/tasks?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
             Api.get(`/decisions?q=${encodeURIComponent(q.slice(0, 100))}&limit=12`),
             Api.getLinkGraphBacklinks({ type: 'notebook', id: noteId, limit: 50 }),
+            Api.getLinkGraphBacklinks({ type: 'notebook_page', id: noteId, limit: 50 }),
           ]);
 
         if (!cancelled) {
@@ -298,10 +299,15 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             }))
           );
 
-          const backlinks =
+          const backlinksA =
             backlinksRes.status === 'fulfilled' && Array.isArray(backlinksRes.value)
               ? (backlinksRes.value as any[])
               : [];
+          const backlinksB =
+            backlinksPageRes.status === 'fulfilled' && Array.isArray(backlinksPageRes.value)
+              ? (backlinksPageRes.value as any[])
+              : [];
+          const backlinks = [...backlinksA, ...backlinksB];
           const backlinkRows = backlinks
             .map((x: any) => ({
               id: String(x?.id || ''),

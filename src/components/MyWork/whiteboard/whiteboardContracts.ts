@@ -30,6 +30,17 @@ export interface WhiteboardPresenceState {
   spotlightNodeId: string | null;
 }
 
+export type FacilitationPhase = 'start' | 'organize' | 'converge' | 'handoff';
+
+export const FACILITATION_PHASES: readonly FacilitationPhase[] = ['start', 'organize', 'converge', 'handoff'];
+
+export const FACILITATION_TRANSITIONS: Record<FacilitationPhase, FacilitationPhase[]> = {
+  start: ['organize'],
+  organize: ['converge', 'start'],
+  converge: ['handoff', 'organize'],
+  handoff: [],
+};
+
 export interface WhiteboardSessionState {
   active: boolean;
   role: WhiteboardRole;
@@ -41,6 +52,7 @@ export interface WhiteboardSessionState {
   followMe: boolean;
   spotlightNodeId: string | null;
   reactionsEnabled: boolean;
+  facilitationPhase: FacilitationPhase;
   updatedAt: number;
 }
 
@@ -78,7 +90,8 @@ export interface WhiteboardActivityEntry {
     | 'library'
     | 'import'
     | 'history'
-    | 'governance';
+    | 'governance'
+    | 'ai';
   label: string;
   nodeIds?: string[];
   actorId?: string;

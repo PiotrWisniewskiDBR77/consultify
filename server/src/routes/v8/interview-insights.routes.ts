@@ -6,6 +6,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { getById as getInsightById } from '../../services/InterviewInsightService.js';
 import type { InsightStatus } from '../../services/InterviewInsightService.js';
+import notificationService from '../../services/notificationService.js';
 import { canPublishFinding } from '../../services/v8/interviewInsightCanon.js';
 import {
   validateLifecycleTransition,
@@ -19,7 +20,12 @@ import {
   recordHandoff,
   type InsightLifecycleAction,
 } from '../../services/v8/interviewInsightFindingsService.js';
+import {
+  organizationContextService,
+  rebuildOrganizationContextSnapshot,
+} from '../../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 const router = Router();
@@ -37,6 +43,81 @@ const LIFECYCLE_ACTIONS: InsightLifecycleAction[] = [
   'reject',
   'revert_to_draft',
 ];
+
+async function getOrgAdminUserIds(organizationId: string): Promise<string[]> {
+  try {
+    const rows = await queryHelpers.queryAll(
+      `SELECT user_id, role FROM organization_members WHERE organization_id = ?`,
+      [organizationId]
+    );
+    const admins = (rows || []).filter((r: any) => {
+      const role = String(r.role || '').toLowerCase();
+      return role === 'owner' || role === 'admin' || role === 'administrator';
+    });
+    return admins.map((r: any) => String(r.user_id));
+  } catch {
+    return [];
+  }
+}
+
+function emitInsightLifecycleNotifications(
+  organizationId: string,
+  insightId: string,
+  insightTitle: string,
+  action: InsightLifecycleAction,
+  actorUserId: string,
+  createdBy?: string
+): void {
+  const fire = async () => {
+    try {
+      if (action === 'submit_for_review') {
+        const adminIds = await getOrgAdminUserIds(organizationId);
+        const recipients = adminIds.filter((uid) => uid !== actorUserId);
+        if (recipients.length === 0) return;
+
+        await Promise.allSettled(
+          recipients.map((uid) =>
+            notificationService.send({
+              userId: uid,
+              organizationId,
+              type: 'insight_review_requested',
+              title: 'Insight requires review',
+              body: `Insight "${insightTitle}" has been submitted for review and awaits your approval.`,
+              entityType: 'interview_insight',
+              entityId: insightId,
+              actionUrl: `/interview?artifact=insight:${insightId}`,
+              priority: 'high',
+              actorId: actorUserId,
+              isActionable: true,
+            })
+          )
+        );
+      }
+
+      if (action === 'approve' || action === 'publish') {
+        const notifyUserId = createdBy && createdBy !== actorUserId ? createdBy : null;
+        if (!notifyUserId) return;
+
+        await notificationService.send({
+          userId: notifyUserId,
+          organizationId,
+          type: 'insight_published',
+          title: 'Your insight has been published',
+          body: `Insight "${insightTitle}" has been approved and published.`,
+          entityType: 'interview_insight',
+          entityId: insightId,
+          actionUrl: `/interview?artifact=insight:${insightId}`,
+          priority: 'normal',
+          actorId: actorUserId,
+        });
+      }
+    } catch (err) {
+      logger.warn('[InsightLifecycle] Failed to emit notification', err);
+    }
+  };
+
+  fire().catch(() => {});
+}
 
 router.post(
   '/insights/:insightId/lifecycle',
@@ -109,6 +190,19 @@ router.post(
     await queryHelpers.run(
       `UPDATE interview_insights SET ${setClauses} WHERE id = ? AND organization_id = ?`,
       values
+    );
+
+    if (transition.targetStatus === 'published') {
+      rebuildOrganizationContextSnapshot(organizationId).catch(() => {});
+    }
+
+    emitInsightLifecycleNotifications(
+      organizationId,
+      insightId,
+      insight.title,
+      typedAction,
+      userId,
+      insight.createdBy
     );
 
     return res.json({
@@ -271,7 +365,7 @@ router.patch(
 router.post(
   '/insights/:insightId/findings/:findingId/handoff',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const { insightId, findingId } = req.params as { insightId: string; findingId: string };
     const { target_initiative_id } = req.body as { target_initiative_id?: string };
 
@@ -325,6 +419,43 @@ router.post(
     }
 
     recordHandoff(insightId, findingId, payload, target_initiative_id);
+
+    organizationContextService
+      .recordContextSource({
+        organizationId,
+        sourceType: 'interview_finding_handoff',
+        sourceId: findingId,
+        authorUserId: userId,
+        channel: 'interview',
+        sourceLabel: `Finding handoff: ${finding.finding_statement.slice(0, 80)}`,
+        content: {
+          insightId,
+          findingId,
+          findingStatement: finding.finding_statement,
+          confidenceLevel: finding.confidence_level,
+          limits: finding.limits,
+          nextAction: finding.next_action,
+          targetInitiativeId: target_initiative_id || null,
+          initiativeRefType: initiativeRef.type,
+        },
+        isExplicit: true,
+        claims: [
+          {
+            claimPath: 'signals.interviewFindings',
+            value: {
+              findingStatement: finding.finding_statement,
+              confidenceLevel: finding.confidence_level,
+              limits: finding.limits,
+              nextAction: finding.next_action,
+              evidenceCount: finding.evidence_pointers.filter((p) => !p.isTombstone).length,
+              insightId,
+              handoffTarget: target_initiative_id || initiativeRef.id,
+            },
+            confidence: finding.confidence_level === 'HIGH' ? 0.95 : finding.confidence_level === 'MEDIUM' ? 0.75 : 0.55,
+          },
+        ],
+      })
+      .catch(() => {});
 
     return res.json({
       data: {

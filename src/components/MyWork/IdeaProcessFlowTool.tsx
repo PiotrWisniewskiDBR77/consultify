@@ -18,44 +18,8 @@
  */
 import 'reactflow/dist/style.css';
 
-// @ts-ignore — getSmoothStepPath is exported at runtime but types re-export may not resolve
-import { getSmoothStepPath } from '@reactflow/core';
 import * as dagre from 'dagre';
-import {
-  AlertTriangle,
-  ArrowDownUp,
-  ArrowLeftFromLine,
-  ArrowRightFromLine,
-  BarChart3,
-  Bot,
-  Box,
-  Building2,
-  CheckCircle,
-  CircleDot,
-  Copy,
-  Database,
-  Diamond,
-  GitMerge,
-  LayoutGrid,
-  Lightbulb,
-  ListOrdered,
-  Loader2,
-  Palette,
-  Plus,
-  Redo2,
-  Save,
-  ShoppingCart,
-  Square,
-  StopCircle,
-  Trash2,
-  Triangle,
-  Truck,
-  Undo2,
-  Users,
-  UserSquare2,
-  X,
-  Zap,
-} from 'lucide-react';
+import { AlertTriangle, Bot, GitMerge, Lightbulb, Loader2, MessageSquare, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -68,13 +32,12 @@ import ReactFlow, {
   type Edge,
   type EdgeChange,
   type EdgeProps,
-  Handle,
   MiniMap,
   type Node,
   type NodeChange,
   type NodeProps,
-  Position,
   ReactFlowProvider,
+  type ReactFlowInstance,
 } from 'reactflow';
 
 import { Api } from '@/services/api';
@@ -106,172 +69,51 @@ import {
   CollaborationOverlay,
   type CollaborationSessionState,
 } from './mindmap/CollaborationOverlay';
+
+import { FlowNodeComponent, type FlowShape, SHAPE_CONFIG, LANE_HEIGHT } from './processflow/FlowNodeComponent';
+import { FlowEdgeComponent } from './processflow/FlowEdgeComponent';
+import { type Lane, LANE_COLORS, DEFAULT_LANES, FLOW_THEME_PRESETS } from './processflow/LaneSystem';
+import { LaneSystem } from './processflow/LaneSystem';
+import {
+  type ProcessFlowMode,
+  FLOW_MODE_LABELS,
+  FLOW_MODE_GUIDANCE,
+  SHAPES_BY_MODE,
+  SHAPES_BY_SEMANTIC_KIT,
+} from './processflow/ProcessFlowToolbar';
+import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
+import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
+import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
+import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
+import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
+import { useProcessFlowExport } from './processflow/useProcessFlowExport';
+import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
+import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
+import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
+import { AIProposalPanel } from './processflow/AIProposalPanel';
+import { ReadbackPanel } from './processflow/ReadbackPanel';
+import { ExportDialog } from './processflow/ExportDialog';
+import { ProcessFlowContextMenu, getNodeContextActions, getCanvasContextActions } from './processflow/ProcessFlowContextMenu';
+import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
+import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
+import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
+import { ActivityNode } from './processflow/nodes/ActivityNode';
+import { GatewayNode } from './processflow/nodes/GatewayNode';
+import { DataObjectNode } from './processflow/nodes/DataObjectNode';
+import { SubprocessNode } from './processflow/nodes/SubprocessNode';
+import { PoolNode } from './processflow/nodes/PoolNode';
+import { MessageFlowEdge } from './processflow/MessageFlowEdge';
 import { ProcessKPIDashboard } from './ProcessKPIDashboard';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { vsmNodeTypes } from './VSMNodeComponent';
 import { VSMTimelineBar } from './VSMTimelineBar';
 
-// ── Lane helpers ─────────────────────────────────────────────────────────────
-
-type Lane = {
-  id: string;
-  label: string;
-  color: string;
-};
-
-const LANE_COLORS = [
-  '#e0e7ff',
-  '#dbeafe',
-  '#d1fae5',
-  '#fef3c7',
-  '#fce7f3',
-  '#ede9fe',
-  '#ccfbf1',
-  '#fecaca',
-  '#e2e8f0',
-  '#c7d2fe',
-];
-
-const FLOW_THEME_PRESETS: Record<string, string[]> = {
-  ops: ['#dbeafe', '#e0e7ff', '#d1fae5', '#fef3c7', '#fee2e2'],
-  workshop: ['#fce7f3', '#ede9fe', '#ccfbf1', '#dbeafe', '#fde68a'],
-  strategy: ['#e2e8f0', '#c7d2fe', '#bfdbfe', '#ddd6fe', '#fecdd3'],
-};
-
-const LANE_HEIGHT = 140;
-
-const DEFAULT_LANES: Lane[] = [{ id: 'lane-1', label: 'Main Process', color: LANE_COLORS[0] }];
-
-// ── V5-IDEA-21: Process Flow modes ──────────────────────────────────────────
-export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
-
-export const FLOW_MODE_LABELS: Record<ProcessFlowMode, { en: string; pl: string }> = {
-  classic: { en: 'Classic Flow', pl: 'Klasyczny przepływ' },
-  automation: { en: 'Automation', pl: 'Automatyzacja' },
-  vsm: { en: 'Value Stream', pl: 'Strumień wartości' },
-};
-
-const FLOW_MODE_GUIDANCE: Record<
-  ProcessFlowMode,
-  { en: string; pl: string; stageEn: string; stagePl: string }
-> = {
-  classic: {
-    en: 'Map the current process, decisions, and ownership before optimization.',
-    pl: 'Mapuj bieżący proces, decyzje i odpowiedzialność zanim zaczniesz optymalizację.',
-    stageEn: 'Map and classify',
-    stagePl: 'Mapuj i klasyfikuj',
-  },
-  automation: {
-    en: 'Focus on triggers, integrations, and hand-offs that can be automated safely.',
-    pl: 'Skup się na triggerach, integracjach i hand-offach, które można bezpiecznie automatyzować.',
-    stageEn: 'Measure and automate',
-    stagePl: 'Mierz i automatyzuj',
-  },
-  vsm: {
-    en: 'Show end-to-end flow, inventory, and waiting time to expose bottlenecks.',
-    pl: 'Pokaż przepływ end-to-end, zapasy i czas oczekiwania, aby ujawnić bottlenecki.',
-    stageEn: 'Measure and optimize',
-    stagePl: 'Mierz i optymalizuj',
-  },
-};
-
-// ── Shape types ──────────────────────────────────────────────────────────────
-
-type FlowShape =
-  | 'start'
-  | 'end'
-  | 'action'
-  | 'decision'
-  | 'bpmn_event'
-  | 'bpmn_task'
-  | 'bpmn_gateway'
-  | 'system_service'
-  | 'system_db'
-  | 'system_actor'
-  | 'org_role'
-  | 'org_team'
-  | 'org_handoff'
-  | 'auto_trigger'
-  | 'auto_api'
-  | 'auto_condition'
-  | 'vsm_process'
-  | 'vsm_inventory'
-  | 'vsm_supplier'
-  | 'vsm_customer'
-  | 'vsm_kaizen'
-  | 'vsm_push_arrow'
-  | 'vsm_pull_arrow'
-  | 'vsm_supermarket'
-  | 'vsm_fifo';
-
-const SHAPE_CONFIG: Record<
-  FlowShape,
-  { icon: React.ComponentType<{ size?: number }>; label: string; labelPl: string }
-> = {
-  start: { icon: CircleDot, label: 'Start', labelPl: 'Start' },
-  end: { icon: StopCircle, label: 'End', labelPl: 'Koniec' },
-  action: { icon: Square, label: 'Action', labelPl: 'Akcja' },
-  decision: { icon: Diamond, label: 'Decision', labelPl: 'Decyzja' },
-  bpmn_event: { icon: CircleDot, label: 'BPMN Event', labelPl: 'Zdarzenie BPMN' },
-  bpmn_task: { icon: Square, label: 'BPMN Task', labelPl: 'Zadanie BPMN' },
-  bpmn_gateway: { icon: Diamond, label: 'BPMN Gateway', labelPl: 'Bramka BPMN' },
-  system_service: { icon: Box, label: 'Service', labelPl: 'Serwis' },
-  system_db: { icon: Database, label: 'Data Store', labelPl: 'Magazyn danych' },
-  system_actor: { icon: Users, label: 'Actor', labelPl: 'Aktor' },
-  org_role: { icon: UserSquare2, label: 'Role', labelPl: 'Rola' },
-  org_team: { icon: Building2, label: 'Team', labelPl: 'Zespół' },
-  org_handoff: { icon: GitMerge, label: 'Handoff', labelPl: 'Przekazanie' },
-  auto_trigger: { icon: Zap, label: 'Trigger', labelPl: 'Wyzwalacz' },
-  auto_api: { icon: GitMerge, label: 'API Call', labelPl: 'Wywołanie API' },
-  auto_condition: { icon: Diamond, label: 'Condition', labelPl: 'Warunek' },
-  vsm_process: { icon: Box, label: 'VSM Process', labelPl: 'Proces VSM' },
-  vsm_inventory: { icon: Triangle, label: 'Inventory', labelPl: 'Zapas' },
-  vsm_supplier: { icon: Truck, label: 'Supplier', labelPl: 'Dostawca' },
-  vsm_customer: { icon: Users, label: 'Customer', labelPl: 'Klient' },
-  vsm_kaizen: { icon: Zap, label: 'Kaizen', labelPl: 'Kaizen' },
-  vsm_push_arrow: { icon: ArrowRightFromLine, label: 'Push Arrow', labelPl: 'Strzałka Push' },
-  vsm_pull_arrow: { icon: ArrowLeftFromLine, label: 'Pull Arrow', labelPl: 'Strzałka Pull' },
-  vsm_supermarket: { icon: ShoppingCart, label: 'Supermarket', labelPl: 'Supermarket' },
-  vsm_fifo: { icon: ListOrdered, label: 'FIFO Lane', labelPl: 'Kolejka FIFO' },
-};
-
-const CLASSIC_SHAPES: FlowShape[] = ['start', 'end', 'action', 'decision'];
-const BPMN_SHAPES: FlowShape[] = ['bpmn_event', 'bpmn_task', 'bpmn_gateway', 'start', 'end'];
-const SYSTEM_SHAPES: FlowShape[] = ['system_actor', 'system_service', 'system_db', 'decision'];
-const ORG_SHAPES: FlowShape[] = ['org_role', 'org_team', 'org_handoff', 'decision'];
-const AUTOMATION_SHAPES: FlowShape[] = [
-  'start',
-  'end',
-  'action',
-  'auto_trigger',
-  'auto_api',
-  'auto_condition',
-];
-const VSM_SHAPES: FlowShape[] = [
-  'vsm_process',
-  'vsm_inventory',
-  'vsm_supplier',
-  'vsm_customer',
-  'vsm_kaizen',
-  'vsm_push_arrow',
-  'vsm_pull_arrow',
-  'vsm_supermarket',
-  'vsm_fifo',
-];
-
-const SHAPES_BY_MODE: Record<ProcessFlowMode, FlowShape[]> = {
-  classic: CLASSIC_SHAPES,
-  automation: AUTOMATION_SHAPES,
-  vsm: VSM_SHAPES,
-};
-
-const SHAPES_BY_SEMANTIC_KIT: Partial<Record<ProcessFlowSemanticKit, FlowShape[]>> = {
-  bpmn: BPMN_SHAPES,
-  system: SYSTEM_SHAPES,
-  org: ORG_SHAPES,
-};
+// Types, constants, and components imported from extracted modules:
+// Lane, LANE_COLORS, DEFAULT_LANES, FLOW_THEME_PRESETS from ./processflow/LaneSystem
+// FlowShape, SHAPE_CONFIG, LANE_HEIGHT from ./processflow/FlowNodeComponent
+// ProcessFlowMode, FLOW_MODE_LABELS, FLOW_MODE_GUIDANCE, SHAPES_BY_MODE, SHAPES_BY_SEMANTIC_KIT from ./processflow/ProcessFlowToolbar
 
 function resolveSemanticInsertShape(
   value: string | undefined,
@@ -312,431 +154,28 @@ function resolveSemanticInsertShape(
   return 'action';
 }
 
-// ── Custom node component ────────────────────────────────────────────────────
-
-const STATUS_COLORS: Record<string, string> = {
-  todo: 'bg-slate-300',
-  in_progress: 'bg-blue-500',
-  done: 'bg-green-500',
-  blocked: 'bg-red-500',
-};
-
-const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
-  const shape: FlowShape = data?.shape || 'action';
-  const laneColor: string = data?.laneColor || '#e2e8f0';
-  const isGhost = Boolean(data?._isGhost);
-  const [editing, setEditing] = React.useState(false);
-  const [editValue, setEditValue] = React.useState(String(data?.label || ''));
-  const [showTooltip, setShowTooltip] = React.useState(false);
-  const tooltipTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
-
-  const commitEdit = () => {
-    setEditing(false);
-    if (data?.onLabelChange && editValue !== data?.label) {
-      data.onLabelChange(editValue);
-    }
-  };
-
-  const hasMetrics =
-    data?.duration || data?.cost || data?.fteCount || (data?.status && data.status !== 'todo');
-  const hasAttachments = data?.attachments?.length > 0;
-
-  const shapeStyles: Record<FlowShape, string> = {
-    start:
-      'rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400',
-    end: 'rounded-full border-2 border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400',
-    action: 'rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800',
-    decision:
-      'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    bpmn_event:
-      'rounded-full border-2 border-sky-500 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-400',
-    bpmn_task:
-      'rounded-xl border-2 border-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-400',
-    bpmn_gateway:
-      'rotate-45 border-2 border-sky-600 bg-sky-50 dark:bg-sky-900/30 dark:border-sky-400',
-    system_service:
-      'rounded-xl border-2 border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
-    system_db:
-      'rounded-2xl border-2 border-cyan-700 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
-    system_actor:
-      'rounded-xl border-2 border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-400',
-    org_role:
-      'rounded-xl border-2 border-violet-600 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
-    org_team:
-      'rounded-xl border-2 border-fuchsia-600 bg-fuchsia-50 dark:bg-fuchsia-900/30 dark:border-fuchsia-400',
-    org_handoff:
-      'rounded-lg border-2 border-violet-700 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
-    auto_trigger:
-      'rounded-xl border-2 border-dashed border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
-    auto_api:
-      'rounded-xl border-2 border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
-    auto_condition:
-      'rotate-45 border-2 border-dashed border-orange-500 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-400',
-    vsm_process:
-      'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    vsm_inventory:
-      'border-2 border-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    vsm_supplier:
-      'rounded-xl border-2 border-slate-600 bg-slate-50 dark:bg-slate-800 dark:border-slate-400',
-    vsm_customer:
-      'rounded-xl border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400',
-    vsm_kaizen:
-      'rounded-full border-2 border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400',
-    vsm_push_arrow:
-      'rounded-lg border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-400',
-    vsm_pull_arrow:
-      'rounded-lg border-2 border-teal-500 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-400',
-    vsm_supermarket:
-      'rounded-lg border-2 border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
-    vsm_fifo:
-      'rounded-lg border-2 border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
-  };
-
-  const innerRotate =
-    shape === 'decision' || shape === 'auto_condition' || shape === 'bpmn_gateway'
-      ? '-rotate-45'
-      : '';
-
-  return (
-    <div
-      className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-primary-500/60' : ''}`}
-      style={{
-        borderLeftColor: laneColor,
-        borderLeftWidth: shape === 'action' ? 4 : undefined,
-        backgroundColor: shape === 'action' ? `${laneColor}08` : undefined,
-      }}
-      onDoubleClick={() => {
-        if (isGhost) return;
-        if (!data?.locked && data?.onNodeDetail) {
-          data.onNodeDetail(id, data);
-        } else if (!data?.locked) {
-          setEditValue(String(data?.label || ''));
-          setEditing(true);
-        }
-      }}
-      onMouseEnter={() => {
-        tooltipTimer.current = setTimeout(() => setShowTooltip(true), 400);
-      }}
-      onMouseLeave={() => {
-        if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
-        setShowTooltip(false);
-      }}
-    >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
-
-      {/* Status dot */}
-      {data?.status && data.status !== 'todo' && !isGhost && (
-        <div
-          className={`absolute top-1 right-1 w-2 h-2 rounded-full ${STATUS_COLORS[data.status] || STATUS_COLORS.todo}`}
-        />
-      )}
-
-      {/* Attachment badge */}
-      {hasAttachments && !isGhost && (
-        <div className="absolute top-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-slate-100/80 dark:bg-navy-700/80 text-[7px] font-bold text-slate-500 dark:text-slate-400">
-          📎 {data.attachments.length}
-        </div>
-      )}
-
-      {/* Ghost node Accept button */}
-      {isGhost && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            data?.onAcceptGhost?.(id);
-          }}
-          className="absolute -top-2 -right-2 z-10 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md hover:bg-emerald-600 transition-colors text-[10px] font-bold"
-          title="Accept"
-        >
-          +
-        </button>
-      )}
-
-      {editing ? (
-        <input
-          ref={inputRef}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commitEdit();
-            if (e.key === 'Escape') setEditing(false);
-          }}
-          className={`bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full ${innerRotate}`}
-        />
-      ) : (
-        <div
-          className={`text-xs font-medium text-slate-800 dark:text-slate-200 text-center ${innerRotate}`}
-        >
-          {data?.label || shape}
-        </div>
-      )}
-
-      {/* Metrics badges */}
-      {hasMetrics && shape !== 'decision' && !isGhost && (
-        <div className={`flex items-center gap-1 mt-1 ${innerRotate}`}>
-          {data?.duration && (
-            <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[8px] font-bold text-blue-700 dark:text-blue-300">
-              {data.duration}
-              {data.durationUnit || 'h'}
-            </span>
-          )}
-          {data?.cost && (
-            <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[8px] font-bold text-emerald-700 dark:text-emerald-300">
-              ${data.cost}
-            </span>
-          )}
-          {data?.fteCount && (
-            <span className="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-[8px] font-bold text-violet-700 dark:text-violet-300">
-              {data.fteCount} FTE
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* V5-IDEA-22: Automation mode indicators */}
-      {data?.automationCandidate && !isGhost && (
-        <div
-          className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black ${
-            data.automationPotential === 'high'
-              ? 'bg-emerald-500 text-white'
-              : data.automationPotential === 'medium'
-                ? 'bg-amber-500 text-white'
-                : 'bg-slate-400 text-white'
-          }`}
-          title={`Automation: ${data.automationPotential || 'low'}`}
-        >
-          A
-        </div>
-      )}
-      {data?.savingsEstimate && !isGhost && (
-        <div
-          className={`px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[7px] font-bold text-emerald-700 dark:text-emerald-300 mt-0.5 ${innerRotate}`}
-        >
-          {data.savingsEstimate}
-        </div>
-      )}
-
-      {/* VSM-specific data fields */}
-      {shape === 'vsm_process' &&
-        (data?.cycleTime || data?.changeoverTime || data?.uptimePercent) && (
-          <div
-            className={`text-[8px] text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 ${innerRotate}`}
-          >
-            {data.cycleTime && <div>C/T: {data.cycleTime}</div>}
-            {data.changeoverTime && <div>C/O: {data.changeoverTime}</div>}
-            {data.uptimePercent != null && <div>Up: {data.uptimePercent}%</div>}
-            {data.operators != null && <div>Ops: {data.operators}</div>}
-          </div>
-        )}
-      {shape === 'vsm_inventory' && data?.inventory != null && (
-        <div
-          className={`text-[8px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 ${innerRotate}`}
-        >
-          {data.inventory} pcs
-        </div>
-      )}
-
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
-
-      {/* Context tooltip on hover */}
-      {showTooltip && !editing && !isGhost && (data?.owner || data?.description || hasMetrics) && (
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-50 pointer-events-none">
-          <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg px-2.5 py-1.5 shadow-lg text-[9px] max-w-[200px] whitespace-normal">
-            {data?.owner && (
-              <div>
-                <span className="font-bold">Owner:</span> {data.owner}
-              </div>
-            )}
-            {data?.duration && (
-              <div>
-                <span className="font-bold">Duration:</span> {data.duration}
-                {data.durationUnit || 'h'}
-              </div>
-            )}
-            {data?.cost && (
-              <div>
-                <span className="font-bold">Cost:</span> ${data.cost}
-              </div>
-            )}
-            {data?.status && data.status !== 'todo' && (
-              <div>
-                <span className="font-bold">Status:</span> {data.status.replace('_', ' ')}
-              </div>
-            )}
-            {data?.description && (
-              <div className="mt-0.5 opacity-80 line-clamp-2">{data.description}</div>
-            )}
-            {hasAttachments && (
-              <div className="mt-0.5 opacity-60">{data.attachments.length} attachment(s)</div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── Custom edge component with inline label editing ──────────────────────────
-
-const CONDITION_TYPES = ['', 'yes', 'no', 'default', 'exception'] as const;
-
-const FlowEdgeComponent: React.FC<EdgeProps> = ({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  data,
-  label,
-  selected,
-  style,
-}) => {
-  const [editing, setEditing] = React.useState(false);
-  const [editValue, setEditValue] = React.useState(String(label || data?.label || ''));
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
-
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
-
-  const commitEdit = () => {
-    setEditing(false);
-    if (data?.onLabelChange) data.onLabelChange(id, editValue);
-  };
-  const edgeLocked = Boolean(data?.locked);
-
-  const conditionType = data?.conditionType || '';
-  const conditionColor =
-    conditionType === 'yes'
-      ? '#22c55e'
-      : conditionType === 'no'
-        ? '#ef4444'
-        : conditionType === 'exception'
-          ? '#f59e0b'
-          : undefined;
-  const edgeStroke = conditionColor || data?.sourceLaneColor || style?.stroke;
-
-  // V5-IDEA-44: Living edge behavior
-  const baseW = selected ? 2.5 : 1.5;
-
-  return (
-    <g className="group/flowedge">
-      <style>{`@keyframes flowEdgeDash { to { stroke-dashoffset: -12; } }`}</style>
-      {/* Invisible wide hit area */}
-      <path d={edgePath} fill="none" stroke="transparent" strokeWidth={14} />
-      {/* Selection pulse */}
-      {selected && (
-        <path
-          d={edgePath}
-          fill="none"
-          stroke={edgeStroke || '#94a3b8'}
-          strokeWidth={baseW + 4}
-          strokeOpacity={0.12}
-          strokeLinecap="round"
-          className="animate-pulse"
-        />
-      )}
-      <path
-        id={id}
-        className="react-flow__edge-path transition-all duration-200"
-        d={edgePath}
-        style={{ ...style, stroke: edgeStroke, strokeWidth: baseW }}
-      />
-      <path
-        d={edgePath}
-        fill="none"
-        strokeDasharray="8 4"
-        stroke={edgeStroke || '#94a3b8'}
-        strokeWidth={baseW}
-        strokeOpacity={selected ? 0.55 : 0.45}
-        style={{ animation: 'flowEdgeDash 0.6s linear infinite' }}
-      />
-      {/* Directional particle on selected edge */}
-      {selected && (
-        <circle r="3" fill={edgeStroke || '#94a3b8'} opacity={0.7}>
-          <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
-        </circle>
-      )}
-      <foreignObject
-        x={labelX - 50}
-        y={labelY - 12}
-        width={100}
-        height={24}
-        requiredExtensions="http://www.w3.org/1999/xhtml"
-      >
-        {editing ? (
-          <div className="flex items-center gap-0.5">
-            <input
-              ref={inputRef}
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onBlur={commitEdit}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commitEdit();
-                if (e.key === 'Escape') setEditing(false);
-              }}
-              className="w-full text-[9px] font-medium text-center bg-white dark:bg-navy-800 border border-primary-400 rounded px-1 outline-none"
-            />
-            <select
-              value={conditionType}
-              onChange={(e) => {
-                if (data?.onConditionChange) data.onConditionChange(id, e.target.value);
-              }}
-              disabled={edgeLocked}
-              className="text-[8px] bg-white dark:bg-navy-800 border border-slate-300 rounded"
-            >
-              {CONDITION_TYPES.map((ct) => (
-                <option key={ct} value={ct}>
-                  {ct || '—'}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <div
-            className="text-[9px] font-medium text-slate-600 dark:text-slate-300 text-center cursor-pointer hover:text-primary-600 truncate"
-            onDoubleClick={(e) => {
-              e.stopPropagation();
-              if (edgeLocked) return;
-              setEditValue(String(label || data?.label || ''));
-              setEditing(true);
-            }}
-          >
-            {label || data?.label || ''}
-          </div>
-        )}
-      </foreignObject>
-    </g>
-  );
-};
+// FlowNodeComponent imported from ./processflow/FlowNodeComponent
+// FlowEdgeComponent imported from ./processflow/FlowEdgeComponent
 
 type RFNodeTypes = Record<string, React.ComponentType<NodeProps<any>>>;
 type RFEdgeTypes = Record<string, React.ComponentType<EdgeProps<any>>>;
 
 const baseNodeTypes: RFNodeTypes = {
   flowNode: FlowNodeComponent,
+  start_event: BPMNStartNode,
+  end_event: BPMNEndNode,
+  task: ActivityNode,
+  decision_gateway: GatewayNode,
+  parallel_gateway: GatewayNode,
+  subprocess: SubprocessNode,
+  annotation: DataObjectNode,
+  data_object: DataObjectNode,
+  pool: PoolNode,
 };
 
 const edgeTypes: RFEdgeTypes = {
   flowEdge: FlowEdgeComponent,
+  messageFlow: MessageFlowEdge,
 };
 
 // ── Validation ───────────────────────────────────────────────────────────────
@@ -920,157 +359,8 @@ function validateFlow(
   return warnings;
 }
 
-// ── Lane background with editable label + delete + color picker ──────────────
-
-const LaneBackground: React.FC<{
-  lane: Lane;
-  idx: number;
-  locked: boolean;
-  onRename: (id: string, next: string) => void;
-  onDelete?: (id: string) => void;
-  onColorChange?: (id: string, color: string) => void;
-  onMoveUp?: (id: string) => void;
-  onMoveDown?: (id: string) => void;
-  isFirst?: boolean;
-  isLast?: boolean;
-  laneCount: number;
-}> = ({
-  lane,
-  idx,
-  locked,
-  onRename,
-  onDelete,
-  onColorChange,
-  onMoveUp,
-  onMoveDown,
-  isFirst,
-  isLast,
-  laneCount,
-}) => {
-  const [editing, setEditing] = React.useState(false);
-  const [value, setValue] = React.useState(lane.label);
-  const [showColorPicker, setShowColorPicker] = React.useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
-
-  const commit = () => {
-    setEditing(false);
-    if (value.trim() && value !== lane.label) onRename(lane.id, value.trim());
-  };
-
-  return (
-    <div
-      className="absolute left-0 right-0 border-b border-slate-200/40 dark:border-navy-700/40"
-      style={{ top: idx * LANE_HEIGHT, height: LANE_HEIGHT, background: `${lane.color}15` }}
-    >
-      <div className="absolute left-2 top-1 z-10 flex items-center gap-1">
-        {editing ? (
-          <input
-            ref={inputRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commit();
-              if (e.key === 'Escape') setEditing(false);
-            }}
-            className="text-[10px] font-semibold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-navy-800/80 rounded px-1 outline-none border border-primary-400"
-          />
-        ) : (
-          <div
-            className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 select-none cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
-            onDoubleClick={() => {
-              if (!locked) {
-                setValue(lane.label);
-                setEditing(true);
-              }
-            }}
-          >
-            {lane.label}
-          </div>
-        )}
-
-        {!locked && (
-          <div
-            className="flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-opacity group-hover:opacity-100"
-            style={{ opacity: undefined }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = '1';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = '0';
-            }}
-          >
-            {!isFirst && (
-              <button
-                onClick={() => onMoveUp?.(lane.id)}
-                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
-                title="Move up"
-              >
-                <ArrowDownUp size={9} className="text-slate-400 rotate-180" />
-              </button>
-            )}
-            {!isLast && (
-              <button
-                onClick={() => onMoveDown?.(lane.id)}
-                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
-                title="Move down"
-              >
-                <ArrowDownUp size={9} className="text-slate-400" />
-              </button>
-            )}
-            <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
-              title="Change color"
-            >
-              <Palette size={9} className="text-slate-400" />
-            </button>
-            {laneCount > 1 && (
-              <button
-                onClick={() => onDelete?.(lane.id)}
-                className="p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                title="Delete lane"
-              >
-                <X size={9} className="text-red-400" />
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Color picker popover */}
-      {showColorPicker && !locked && (
-        <div className="absolute left-2 top-5 z-20 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
-          {LANE_COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => {
-                onColorChange?.(lane.id, c);
-                setShowColorPicker(false);
-              }}
-              className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-primary-500 scale-110' : 'border-transparent'}`}
-              style={{ backgroundColor: c }}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── Undo/Redo types ──────────────────────────────────────────────────────────
-
-interface UndoEntry {
-  nodes: Node[];
-  edges: Edge[];
-  lanes: Lane[];
-}
-
-const MAX_UNDO_STEPS = 30;
+// LaneBackground replaced by LaneSystem import (./processflow/LaneSystem)
+// Undo/Redo replaced by useProcessFlowUndoRedo hook (./processflow/useProcessFlowUndoRedo)
 
 // ── Auto-layout with dagre ───────────────────────────────────────────────────
 
@@ -1116,6 +406,8 @@ interface IdeaProcessFlowToolProps {
   focusObjectId?: string | null;
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
+  onOpenChat?: (prefill?: string) => void;
+  onQuickAction?: (action: string, detail?: Record<string, any>) => void;
   onGraphChange?: (graph: {
     nodes: any[];
     edges: any[];
@@ -1135,6 +427,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   focusObjectId,
   onFullscreenToggle: externalOnFullscreenToggle,
   isFullscreen: externalIsFullscreen,
+  onOpenChat,
+  onQuickAction,
   onGraphChange,
 }) => {
   const { i18n } = useTranslation();
@@ -1176,6 +470,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [internalFullscreen, setInternalFullscreen] = useState(false);
   const flowContainerRef = useRef<HTMLDivElement>(null);
+  const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
   const toggleInternalFullscreen = useCallback(() => {
     if (!flowContainerRef.current) return;
@@ -1225,12 +520,35 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [flowMode]
   );
 
+  // ── New hooks: validation, AI proposal, readback, export, degraded ──────
+  const processId = ideaId;
+  const { result: validationResult, isValidating: isBackendValidating, validate: runBackendValidation, issuesForObject } =
+    useProcessFlowValidation({ processId, nodes, edges, autoValidate: false });
+  const { activeProposal, isGenerating: isAIGenerating, error: aiError, createProposal, resolveProposal, dismiss: dismissProposal } =
+    useProcessFlowAIProposal({ processId });
+  const { result: readbackResult, isLoading: isReadbackLoading, fetchReadback } =
+    useProcessFlowReadback({ processId });
+  const { isExporting, exportAs } =
+    useProcessFlowExport({ processId, canvasRef: flowContainerRef as React.RefObject<HTMLDivElement | null> });
+  const { isDegraded, activeScenarios: degradedScenarios, checkHealth } =
+    useProcessFlowDegraded({ processId });
+
+  // ── New UI state: panels, context menu, export dialog ─────────────────
+  const [showValidationPanel, setShowValidationPanel] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const [showReadbackPanel, setShowReadbackPanel] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId?: string; edgeId?: string } | null>(null);
+
   const didPersistRef = useRef(false);
   const selectedNodeId = useMemo(() => nodes.find((node) => node.selected)?.id ?? null, [nodes]);
   const selectedNodeIds = useMemo(
     () => nodes.filter((node) => node.selected).map((node) => node.id),
     [nodes]
   );
+  const selectedNode = useMemo(() => nodes.find((node) => node.selected) ?? null, [nodes]);
+  const selectedEdge = useMemo(() => (edges as Edge[]).find((e) => e.selected) ?? null, [edges]);
   const metricsEditorNode = useMemo(
     () => nodes.find((node) => node.id === metricsEditorNodeId) || null,
     [metricsEditorNodeId, nodes]
@@ -1285,55 +603,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     }
   }, [flowMode]);
 
-  // ── Undo/Redo ──────────────────────────────────────────────────────────
-  const undoStackRef = useRef<UndoEntry[]>([]);
-  const redoStackRef = useRef<UndoEntry[]>([]);
+  // ── Undo/Redo (via extracted hook) ──────────────────────────────────
+  const { pushUndo, undo, redo, resetUndo, canUndo, canRedo, undoRedoTick } = useProcessFlowUndoRedo({
+    nodes, edges, lanes, setNodes, setEdges, setLanes,
+  });
   const dragSnapshotTakenRef = useRef(false);
-  const [undoRedoTick, setUndoRedoTick] = useState(0);
-
-  const pushUndo = useCallback(() => {
-    undoStackRef.current.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges)),
-      lanes: JSON.parse(JSON.stringify(lanes)),
-    });
-    if (undoStackRef.current.length > MAX_UNDO_STEPS) {
-      undoStackRef.current.shift();
-    }
-    redoStackRef.current = [];
-    setUndoRedoTick((v) => v + 1);
-  }, [nodes, edges, lanes]);
-
-  const undo = useCallback(() => {
-    if (undoStackRef.current.length === 0) return;
-    const entry = undoStackRef.current.pop()!;
-    redoStackRef.current.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges)),
-      lanes: JSON.parse(JSON.stringify(lanes)),
-    });
-    setNodes(entry.nodes);
-    setEdges(entry.edges);
-    setLanes(entry.lanes);
-    setUndoRedoTick((v) => v + 1);
-  }, [nodes, edges, lanes]);
-
-  const redo = useCallback(() => {
-    if (redoStackRef.current.length === 0) return;
-    const entry = redoStackRef.current.pop()!;
-    undoStackRef.current.push({
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges)),
-      lanes: JSON.parse(JSON.stringify(lanes)),
-    });
-    setNodes(entry.nodes);
-    setEdges(entry.edges);
-    setLanes(entry.lanes);
-    setUndoRedoTick((v) => v + 1);
-  }, [nodes, edges, lanes]);
-
-  const canUndo = undoStackRef.current.length > 0;
-  const canRedo = redoStackRef.current.length > 0;
 
   // ── Selection tracking ─────────────────────────────────────────────────
   const handleSelectionUpdate = useCallback(
@@ -1611,9 +885,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       );
       setExtensions(rawExt);
 
-      undoStackRef.current = [];
-      redoStackRef.current = [];
-      setUndoRedoTick(0);
+      resetUndo();
 
       if (!didPersistRef.current) {
         didPersistRef.current = true;
@@ -1793,9 +1065,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
     const insertShape: FlowShape =
       flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+    const isVsmShape = insertShape.startsWith('vsm_');
+    const resolvedType = flowMode === 'vsm' && isVsmShape ? insertShape : 'flowNode';
     const newNode: Node = {
       id: newId,
-      type: flowMode === 'vsm' ? 'vsmNode' : 'flowNode',
+      type: resolvedType,
       position: { x: midX, y: midY },
       data: {
         label: isPl ? 'Nowy krok' : 'New step',
@@ -1846,9 +1120,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
     const splitShape: FlowShape =
       flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+    const isVsmSplitShape = splitShape.startsWith('vsm_');
+    const resolvedSplitType = flowMode === 'vsm' && isVsmSplitShape ? splitShape : 'flowNode';
     const newNode: Node = {
       id: newId,
-      type: flowMode === 'vsm' ? 'vsmNode' : 'flowNode',
+      type: resolvedSplitType,
       position: { x: selected.position.x + 250, y: selected.position.y + 80 },
       data: {
         label: isPl ? 'Alternatywna ścieżka' : 'Alternative path',
@@ -2058,7 +1334,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const w = validateFlow(nodes, edges, semanticKit);
     setWarnings(w);
     setShowWarnings(true);
-  }, [edges, nodes]);
+  }, [edges, nodes, semanticKit]);
 
   // ── Auto-layout ────────────────────────────────────────────────────────
 
@@ -2201,34 +1477,49 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   // ── Lane backgrounds ──────────────────────────────────────────────────
 
-  const laneBackgrounds = useMemo(
-    () =>
-      lanes.map((lane, idx) => (
-        <LaneBackground
-          key={lane.id}
-          lane={lane}
-          idx={idx}
-          locked={locked}
-          onRename={handleLaneRename}
-          onDelete={handleLaneDelete}
-          onColorChange={handleLaneColorChange}
-          onMoveUp={handleLaneMoveUp}
-          onMoveDown={handleLaneMoveDown}
-          isFirst={idx === 0}
-          isLast={idx === lanes.length - 1}
-          laneCount={lanes.length}
-        />
-      )),
-    [
-      handleLaneColorChange,
-      handleLaneDelete,
-      handleLaneMoveDown,
-      handleLaneMoveUp,
-      handleLaneRename,
-      lanes,
-      locked,
-    ]
-  );
+  // Lane rendering delegated to LaneSystem component
+
+  // ── Chat integration ───────────────────────────────────────────────────
+
+  const handleConvert = useCallback((action: string) => {
+    if (onQuickAction) {
+      const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
+      onQuickAction(action, { selectedIds, activeTool: 'process_flow' });
+    }
+  }, [nodes, onQuickAction]);
+
+  const handleOpenChatWithContext = useCallback(() => {
+    if (!onOpenChat) return;
+    const selectedNodes = nodes.filter((n) => n.selected);
+    const flowNodeCount = nodes.filter((n) => n.type === 'flowNode').length;
+    const modeLabelObj = FLOW_MODE_LABELS[flowMode];
+    const modeLabel = isPl ? modeLabelObj.pl : modeLabelObj.en;
+    const parts: string[] = [];
+
+    if (isPl) {
+      parts.push(`Analizuję przepływ procesu (tryb: ${modeLabel}, ${flowNodeCount} kroków, ${lanes.length} torów).`);
+      if (selectedNodes.length > 0) {
+        const names = selectedNodes.map((n) => n.data?.label || n.id).join(', ');
+        parts.push(`Zaznaczone elementy: ${names}.`);
+      }
+      if (warnings.length > 0) {
+        parts.push(`Walidacja wykryła ${warnings.length} ostrzeżeń.`);
+      }
+      parts.push('Pomóż mi ulepszyć ten proces.');
+    } else {
+      parts.push(`I'm working on a process flow (mode: ${modeLabel}, ${flowNodeCount} steps, ${lanes.length} lanes).`);
+      if (selectedNodes.length > 0) {
+        const names = selectedNodes.map((n) => n.data?.label || n.id).join(', ');
+        parts.push(`Selected elements: ${names}.`);
+      }
+      if (warnings.length > 0) {
+        parts.push(`Validation found ${warnings.length} warning(s).`);
+      }
+      parts.push('Help me improve this process.');
+    }
+
+    onOpenChat(parts.join(' '));
+  }, [flowMode, isPl, lanes.length, nodes, onOpenChat, warnings]);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
@@ -2264,7 +1555,38 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         return;
       }
 
+      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
+        e.preventDefault();
+        setShowExportDialog(true);
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'v') {
+        e.preventDefault();
+        runBackendValidation();
+        setShowValidationPanel(true);
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
+        e.preventDefault();
+        handleAutoLayout();
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+        e.preventDefault();
+        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
+        return;
+      }
+
       if (isInput) return;
+
+      if (e.key === 'F2') {
+        e.preventDefault();
+        setShowPropertiesPanel(true);
+        return;
+      }
 
       if (e.key === 'Escape') {
         setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
@@ -2299,7 +1621,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addNode, duplicateSelected, flowMode, handleSave, onSelectionChange, open, redo, undo]);
+  }, [addNode, duplicateSelected, flowMode, handleAutoLayout, handleSave, onSelectionChange, open, redo, runBackendValidation, undo]);
 
   // ── Graph update listener (from workspace proposals) ───────────────────
   useEffect(() => {
@@ -2331,7 +1653,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   useEffect(() => {
     if (!open) return;
     const handler = (e: Event) => {
-      const detail = ((e as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail;
+      const detail = ((e as CustomEvent).detail || {}) as IdeaWorkspaceInsertDetail & { edges?: any[] };
       if (detail.ideaId && detail.ideaId !== ideaId) return;
 
       if (Array.isArray(detail.items) && detail.items.length > 0) {
@@ -2344,9 +1666,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           addNode(shape, {
             label: item.label || item.text,
             position: item.position || detail.position,
-            data: item.data,
+            data: { ...item.data, artifactLinks: item.data?.artifactLinks },
           });
         });
+
+        if (Array.isArray(detail.edges) && detail.edges.length > 0) {
+          setEdges((prev) => [
+            ...prev,
+            ...detail.edges!.map((edge: any) => ({
+              id: edge.id || `e-${edge.source}-${edge.target}-${Date.now()}`,
+              source: edge.source,
+              target: edge.target,
+              type: 'flowEdge',
+              data: { label: edge.label || edge.data?.label || '', ...edge.data },
+            })),
+          ]);
+        }
         return;
       }
 
@@ -2425,288 +1760,50 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col bg-white dark:bg-navy-950"
+      className="w-full h-full flex flex-col bg-white dark:bg-navy-950 relative"
       role="region"
       aria-label={isPl ? 'Edytor przepływu procesu' : 'Process flow editor'}
     >
-      {/* Toolbar */}
-      <div className="border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
-        <div className="px-4 py-3 flex flex-col gap-3">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-[240px]">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                {isPl ? 'Workspace / Process Flow' : 'Workspace / Process Flow'}
-              </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {isPl ? 'Nawigacja procesu' : 'Process navigation'}
-                </div>
-                <span className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-600 dark:text-primary-300">
-                  {isPl ? FLOW_MODE_LABELS[flowMode].pl : FLOW_MODE_LABELS[flowMode].en}
-                </span>
-                <span className="inline-flex items-center rounded-full bg-slate-200/70 dark:bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
-                  {isPl
-                    ? FLOW_MODE_GUIDANCE[flowMode].stagePl
-                    : FLOW_MODE_GUIDANCE[flowMode].stageEn}
-                </span>
-                <span className="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-300">
-                  {isPl ? `Kit ${semanticKit}` : `Kit ${semanticKit}`}
-                </span>
-              </div>
-              <p className="mt-1 max-w-2xl text-[11px] text-slate-600 dark:text-slate-300">
-                {isPl ? FLOW_MODE_GUIDANCE[flowMode].pl : FLOW_MODE_GUIDANCE[flowMode].en}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-white/80 dark:bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-300">
-                {isPl ? `Kroki ${nodes.length}` : `Steps ${nodes.length}`}
-              </span>
-              <span className="inline-flex items-center rounded-full bg-white/80 dark:bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-300">
-                {isPl ? `Lanes ${lanes.length}` : `Lanes ${lanes.length}`}
-              </span>
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium ${
-                  warnings.length > 0
-                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                }`}
-              >
-                {warnings.length > 0
-                  ? isPl
-                    ? `Ostrzeżenia ${warnings.length}`
-                    : `Warnings ${warnings.length}`
-                  : isPl
-                    ? 'Brak ostrzeżeń'
-                    : 'No warnings'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <div className="min-w-[250px] rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-2.5">
-              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                {isPl ? 'Tryb flow' : 'Flow mode'}
-              </div>
-              <div className="flex flex-wrap items-center gap-1 rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
-                {(['classic', 'automation', 'vsm'] as ProcessFlowMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setFlowMode(mode)}
-                    className={`px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                      flowMode === mode
-                        ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                    }`}
-                  >
-                    {isPl ? FLOW_MODE_LABELS[mode].pl : FLOW_MODE_LABELS[mode].en}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex-1 min-w-[320px] rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-2.5">
-              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                {isPl ? 'Budowanie procesu' : 'Build flow'}
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {availableShapes.map((shape) => {
-                  const cfg = SHAPE_CONFIG[shape];
-                  const Icon = cfg.icon;
-                  return (
-                    <button
-                      key={shape}
-                      type="button"
-                      onClick={() => addNode(shape)}
-                      disabled={locked}
-                      className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
-                      title={isPl ? cfg.labelPl : cfg.label}
-                    >
-                      <Icon size={14} />
-                      {isPl ? cfg.labelPl : cfg.label}
-                    </button>
-                  );
-                })}
-                <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-1" />
-                <button
-                  type="button"
-                  onClick={addLane}
-                  disabled={locked}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
-                  title={isPl ? 'Dodaj lane' : 'Add lane'}
-                >
-                  <Plus size={14} />
-                  Lane
-                </button>
-                <button
-                  type="button"
-                  onClick={insertBetween}
-                  disabled={locked}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
-                  title={isPl ? 'Wstaw krok między' : 'Insert between'}
-                >
-                  <Plus size={14} />
-                  {isPl ? 'Wstaw' : 'Insert'}
-                </button>
-                <button
-                  type="button"
-                  onClick={splitPath}
-                  disabled={locked}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
-                  title={isPl ? 'Rozdziel ścieżkę' : 'Split path'}
-                >
-                  <GitMerge size={14} />
-                  {isPl ? 'Rozdziel' : 'Split'}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 min-w-[260px] rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-2.5">
-              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                {isPl ? 'Analiza i walidacja' : 'Analyze and validate'}
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowKPIDashboard((v) => !v)}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                    showKPIDashboard
-                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
-                  }`}
-                  title={isPl ? 'KPI Dashboard' : 'KPI Dashboard'}
-                >
-                  <BarChart3 size={14} />
-                  KPI
-                </button>
-                <button
-                  type="button"
-                  onClick={runValidation}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                    showWarnings
-                      ? 'text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-300'
-                      : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                  }`}
-                  title={isPl ? 'Waliduj przepływ' : 'Validate flow'}
-                >
-                  <AlertTriangle size={14} />
-                  {isPl ? 'Waliduj' : 'Validate'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAICoach}
-                  disabled={locked || nodes.length < 2 || coachLoading}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                    showCoach
-                      ? 'text-violet-700 bg-violet-50 dark:bg-violet-900/20 dark:text-violet-300'
-                      : 'text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20'
-                  }`}
-                  title={isPl ? 'AI Coach' : 'AI Coach'}
-                >
-                  {coachLoading ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Bot size={14} />
-                  )}
-                  {isPl ? 'AI Coach' : 'AI Coach'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleProcessSummary}
-                  disabled={locked || nodes.length < 2 || summaryLoading}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                    showSummary
-                      ? 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-300'
-                      : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-                  }`}
-                  title={isPl ? 'Podsumowanie' : 'Summary'}
-                >
-                  {summaryLoading ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <BarChart3 size={14} />
-                  )}
-                  {isPl ? 'Podsumuj' : 'Summary'}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 min-w-[280px] rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-2.5">
-              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                {isPl ? 'Zarządzanie canvasem' : 'Manage canvas'}
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={undo}
-                  disabled={!canUndo || locked}
-                  className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-30"
-                  title={isPl ? 'Cofnij (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
-                >
-                  <Undo2 size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={redo}
-                  disabled={!canRedo || locked}
-                  className="inline-flex items-center rounded-lg px-1.5 py-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-30"
-                  title={isPl ? 'Ponów (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
-                >
-                  <Redo2 size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAutoLayout}
-                  disabled={locked || nodes.length === 0}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
-                  title={isPl ? 'Auto układ' : 'Auto arrange'}
-                >
-                  <LayoutGrid size={14} />
-                  {isPl ? 'Auto' : 'Auto'}
-                </button>
-                <button
-                  type="button"
-                  onClick={duplicateSelected}
-                  disabled={locked}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
-                  title={isPl ? 'Duplikuj (Ctrl+D)' : 'Duplicate (Ctrl+D)'}
-                >
-                  <Copy size={14} />
-                  {isPl ? 'Duplikuj' : 'Duplicate'}
-                </button>
-                <button
-                  type="button"
-                  onClick={deleteSelected}
-                  disabled={locked}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40"
-                  title={isPl ? 'Usuń zaznaczone' : 'Delete selected'}
-                >
-                  <Trash2 size={14} />
-                  {isPl ? 'Usuń' : 'Delete'}
-                </button>
-                <div className="ml-auto" />
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving || loading || locked}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    saving || loading || locked
-                      ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-                      : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
-                  }`}
-                >
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
-                </button>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {saveStatusLabel}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ProcessFlowToolbar
+        isPl={!!isPl}
+        locked={locked}
+        flowMode={flowMode}
+        setFlowMode={setFlowMode}
+        semanticKit={semanticKit}
+        availableShapes={availableShapes}
+        addNode={addNode}
+        addLane={addLane}
+        insertBetween={insertBetween}
+        splitPath={splitPath}
+        runValidation={runValidation}
+        showWarnings={showWarnings}
+        warnings={warnings}
+        showCoach={showCoach}
+        setShowCoach={setShowCoach}
+        coachLoading={coachLoading}
+        runProcessCoach={handleAICoach}
+        showSummary={showSummary}
+        setShowSummary={setShowSummary}
+        summaryLoading={summaryLoading}
+        generateSummary={handleProcessSummary}
+        showKPIDashboard={showKPIDashboard}
+        setShowKPIDashboard={setShowKPIDashboard}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        undo={undo}
+        redo={redo}
+        handleAutoLayout={handleAutoLayout}
+        duplicateSelected={duplicateSelected}
+        deleteSelected={deleteSelected}
+        saving={saving}
+        syncLabel={saveStatusLabel}
+        handleSave={handleSave}
+        stepCount={nodes.length}
+        laneCount={lanes.length}
+        guidance={FLOW_MODE_GUIDANCE[flowMode]}
+        onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
+        onConvert={onQuickAction ? handleConvert : undefined}
+      />
 
       {loadError && !loading && nodes.length === 0 && (
         <div className="px-4 pt-3">
@@ -3003,18 +2100,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       ) : (
         <div ref={flowContainerRef} className="flex-1 relative">
           <div className="absolute inset-0">
-            {laneBackgrounds}
-            {/* Drag-over lane highlight */}
-            {dragOverLaneId && (
-              <div
-                className="absolute left-0 right-0 pointer-events-none border-2 border-primary-400/40 rounded-lg"
-                style={{
-                  top: lanes.findIndex((l) => l.id === dragOverLaneId) * LANE_HEIGHT,
-                  height: LANE_HEIGHT,
-                  background: 'rgba(99, 102, 241, 0.05)',
-                }}
-              />
-            )}
+            <LaneSystem
+              lanes={lanes}
+              isPl={!!isPl}
+              locked={locked}
+              onRename={handleLaneRename}
+              onDelete={handleLaneDelete}
+              onColorChange={handleLaneColorChange}
+              onMoveUp={handleLaneMoveUp}
+              onMoveDown={handleLaneMoveDown}
+              dragOverLaneId={dragOverLaneId}
+            />
           </div>
           {/* V51-28: Empty state overlay */}
           {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
@@ -3060,6 +2156,24 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onConnect={onConnect}
               nodeTypes={nodeTypes}
               edgeTypes={edgeTypes}
+              edgesReconnectable={!locked}
+              onReconnect={(oldEdge, newConnection) => {
+                if (locked) return;
+                pushUndo();
+                setEdges((prev) => {
+                  const filtered = prev.filter((e) => e.id !== oldEdge.id);
+                  return addEdge({ ...newConnection, type: 'flowEdge' }, filtered);
+                });
+              }}
+              onNodeContextMenu={(event, node) => {
+                event.preventDefault();
+                setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
+              }}
+              onPaneContextMenu={(event) => {
+                event.preventDefault();
+                setContextMenu({ x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY });
+              }}
+              onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
               fitView
               deleteKeyCode={locked ? null : 'Delete'}
               className="bg-transparent"
@@ -3112,6 +2226,198 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             selectedNodeIds={selectedNodeIds}
             onSessionStateChange={(_: CollaborationSessionState | null) => undefined}
           />
+
+          {selectedNode && !locked && (
+            <ProcessFlowFloatingToolbar
+              nodeId={selectedNode.id}
+              nodeData={selectedNode.data}
+              position={{
+                x: (selectedNode.position?.x ?? 0) + ((selectedNode.width ?? 140) / 2),
+                y: selectedNode.position?.y ?? 0,
+              }}
+              locked={locked}
+              isPl={isPl}
+              onRename={() => setShowPropertiesPanel(true)}
+              onDuplicate={duplicateSelected}
+              onDelete={deleteSelected}
+              onInsertBetween={insertBetween}
+              onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
+              artifactLinks={selectedNode.data?.artifactLinks}
+              onArtifactLinksChange={(links) => {
+                setNodes((nds) =>
+                  nds.map((n) =>
+                    n.id === selectedNode.id
+                      ? { ...n, data: { ...n.data, artifactLinks: links } }
+                      : n
+                  )
+                );
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {/* ── New panels: Validation, AI Proposal, Readback, Properties, Export, Context Menu ── */}
+
+      {showValidationPanel && (
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {isPl ? 'Walidacja' : 'Validation'}
+            </span>
+            <button onClick={() => setShowValidationPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+              <X size={14} className="text-slate-400" />
+            </button>
+          </div>
+          <ValidationResultsPanel
+            result={validationResult}
+            isValidating={isBackendValidating}
+            isPl={!!isPl}
+            onClickIssue={(objectId) => {
+              setNodes((prev) => prev.map((n) => ({ ...n, selected: n.id === objectId })));
+              setShowValidationPanel(false);
+            }}
+            onValidate={runBackendValidation}
+          />
+        </div>
+      )}
+
+      {showAIPanel && (
+        <div className="absolute right-0 top-0 bottom-0 w-96 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {isPl ? 'Propozycja AI' : 'AI Proposal'}
+            </span>
+            <button onClick={() => setShowAIPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+              <X size={14} className="text-slate-400" />
+            </button>
+          </div>
+          <AIProposalPanel
+            proposal={activeProposal}
+            isGenerating={isAIGenerating}
+            error={aiError}
+            isPl={!!isPl}
+            onAccept={() => resolveProposal('accept')}
+            onReject={() => resolveProposal('reject')}
+            onEditPrompt={(prompt) => { dismissProposal(); createProposal(prompt); }}
+            onDismiss={dismissProposal}
+            onGenerate={createProposal}
+          />
+        </div>
+      )}
+
+      {showReadbackPanel && (
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {isPl ? 'Odczyt semantyczny' : 'Semantic Readback'}
+            </span>
+            <button onClick={() => setShowReadbackPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+              <X size={14} className="text-slate-400" />
+            </button>
+          </div>
+          <ReadbackPanel
+            result={readbackResult}
+            isLoading={isReadbackLoading}
+            isPl={!!isPl}
+            onFetchReadback={fetchReadback}
+            onClickStep={(objectId) => {
+              setNodes((prev) => prev.map((n) => ({ ...n, selected: n.id === objectId })));
+            }}
+          />
+        </div>
+      )}
+
+      {showPropertiesPanel && (
+        <div className="absolute right-0 top-0 bottom-0 w-80 z-30 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-950 overflow-y-auto shadow-lg">
+          <div className="flex items-center justify-between p-3 border-b border-slate-200/60 dark:border-navy-700/60">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {isPl ? 'Właściwości' : 'Properties'}
+            </span>
+            <button onClick={() => setShowPropertiesPanel(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+              <X size={14} className="text-slate-400" />
+            </button>
+          </div>
+          <ProcessFlowPropertiesPanel
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            lanes={lanes}
+            isPl={!!isPl}
+            locked={locked}
+            onNodeLabelChange={(nodeId, label) => {
+              setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, label } } : n));
+            }}
+            onGatewayKindChange={(nodeId, kind) => {
+              setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, gatewayKind: kind } } : n));
+            }}
+            onLaneChange={(nodeId, laneId) => {
+              const lane = lanes.find((l) => l.id === laneId);
+              if (lane) {
+                setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, laneId, laneColor: lane.color } } : n));
+              }
+            }}
+            onEdgeLabelChange={(edgeId, label) => {
+              setEdges((prev) => prev.map((e) => e.id === edgeId ? { ...e, label, data: { ...e.data, label } } : e));
+            }}
+            onNodeMetricsChange={(nodeId, metrics) => {
+              setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, ...metrics } } : n));
+            }}
+          />
+        </div>
+      )}
+
+      <ExportDialog
+        open={showExportDialog}
+        onClose={() => setShowExportDialog(false)}
+        onExport={exportAs}
+        isExporting={isExporting}
+        isPl={!!isPl}
+      />
+
+      {contextMenu && (
+        <ProcessFlowContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          actions={
+            contextMenu.nodeId
+              ? getNodeContextActions({
+                  nodeId: contextMenu.nodeId,
+                  isPl: !!isPl,
+                  locked,
+                  onEditLabel: () => {
+                    const node = nodes.find((n) => n.id === contextMenu.nodeId);
+                    if (node?.data?.onLabelChange) {
+                      setNodes((prev) => prev.map((n) => n.id === contextMenu.nodeId ? { ...n, selected: true } : n));
+                    }
+                  },
+                  onDuplicate: () => duplicateSelected(),
+                  onDelete: () => deleteSelected(),
+                  onOpenProperties: () => { setShowPropertiesPanel(true); },
+                })
+              : getCanvasContextActions({
+                  isPl: !!isPl,
+                  locked,
+                  onAddNode: (shape) => addNode(shape),
+                  onPaste: () => duplicateSelected(),
+                  onAutoLayout: () => handleAutoLayout(),
+                })
+          }
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {/* ── Degraded state banner ── */}
+      {isDegraded && degradedScenarios.length > 0 && (
+        <div className="absolute top-14 left-4 right-4 z-30">
+          <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-2.5 flex items-center gap-2">
+            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <div className="text-xs text-amber-800 dark:text-amber-300 flex-1">
+              {degradedScenarios.map((s) => s.scenario).join(', ')}
+            </div>
+            <button onClick={checkHealth} className="text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline flex-shrink-0">
+              {isPl ? 'Sprawdź ponownie' : 'Retry'}
+            </button>
+          </div>
         </div>
       )}
 

@@ -11,7 +11,7 @@ export function resolveLegacySyncSettingsEntry(
   }
 
   if (isAdminOrSuperAdminRole(role)) {
-    return `${ROUTES.ADMIN.ROOT}?tab=integrations`;
+    return ROUTES.ADMIN.INTEGRATIONS;
   }
 
   return `${ROUTES.SETTINGS.ROOT}/connected-apps`;

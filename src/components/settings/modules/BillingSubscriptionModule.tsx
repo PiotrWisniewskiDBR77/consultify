@@ -73,49 +73,34 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
-// TODO(T109): Replace with data from subscription_plans DB table / API
-const plans = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    features: ['5 users', '3 projects', '1GB storage', '10K AI tokens'],
-    popular: false,
-  },
-  {
-    id: 'pro',
-    name: 'Professional',
-    price: 29,
-    features: ['25 users', 'Unlimited projects', '50GB storage', '500K AI tokens'],
-    popular: true,
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    price: 79,
-    features: [
-      '100 users',
-      'Unlimited projects',
-      '500GB storage',
-      '2M AI tokens',
-      'Priority support',
-    ],
-    popular: false,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: null,
-    features: [
-      'Unlimited users',
-      'Unlimited everything',
-      'Custom integrations',
-      'Dedicated support',
-      'SLA',
-    ],
-    popular: false,
-  },
-];
+interface BillingPlanOption {
+  id: string;
+  name: string;
+  price: number | null;
+  features: string[];
+  popular: boolean;
+}
+
+const parsePlanFeatures = (raw: unknown): string[] => {
+  if (Array.isArray(raw)) return raw.map((item) => String(item));
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item));
+    } catch {
+      if (raw.trim()) return [raw.trim()];
+    }
+  }
+  return [];
+};
+
+const normalizePlan = (plan: any): BillingPlanOption => ({
+  id: String(plan?.id || ''),
+  name: String(plan?.name || 'Plan'),
+  price: plan?.price_monthly == null ? null : Number(plan.price_monthly),
+  features: parsePlanFeatures(plan?.features),
+  popular: Boolean(plan?.is_popular),
+});
 
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -136,6 +121,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [availablePlans, setAvailablePlans] = useState<BillingPlanOption[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payment' | 'usage'>(
     'overview'
   );
@@ -157,11 +143,12 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   const loadData = async () => {
     try {
       setLoading(true);
-      const [subRes, usageRes, invoicesRes, paymentRes] = await Promise.all([
+      const [subRes, usageRes, invoicesRes, paymentRes, plansRes] = await Promise.all([
         Api.get('/api/billing/subscription').catch(() => ({ data: null })),
         Api.get('/api/billing/usage').catch(() => ({ data: null })),
         Api.get('/api/billing/invoices').catch(() => ({ data: [] })),
         Api.get('/api/billing/payment-methods').catch(() => ({ data: [] })),
+        Api.getSubscriptionPlans().catch(() => []),
       ]);
 
       if (subRes.data) setSubscription(subRes.data);
@@ -175,6 +162,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       if (paymentRes.data) setPaymentMethods(paymentRes.data);
       else setPaymentMethods([]);
+
+      setAvailablePlans(Array.isArray(plansRes) ? plansRes.map(normalizePlan).filter((plan) => plan.id) : []);
     } catch (error) {
       console.error('Error loading billing data:', error);
     } finally {
@@ -314,7 +303,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     );
   }
 
-  const currentPlan = plans.find((p) => p.id === subscription?.plan);
+  const currentPlan = availablePlans.find((p) => p.id === subscription?.plan);
   const effectiveStatus = subscriptionStatus || subscription?.status || 'trialing';
 
   return (
@@ -434,7 +423,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           </h3>
           <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
             <p className="text-sm text-purple-700 dark:text-purple-300">
-              {t('access.upgrade.whatChanges')}: {plans.find((p) => p.id === checkoutPlanId)?.name}
+              {t('access.upgrade.whatChanges')}:{' '}
+              {availablePlans.find((p) => p.id === checkoutPlanId)?.name || checkoutPlanId}
             </p>
             <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
               {t('access.upgrade.instantUnlock')}
@@ -498,8 +488,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           </div>
 
           {/* Plan Comparison */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {plans.map((plan) => (
+          {availablePlans.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {availablePlans.map((plan) => (
               <div
                 key={plan.id}
                 className={`p-4 rounded-xl border-2 relative ${
@@ -537,7 +528,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     onClick={() => handleSelectPlan(plan.id)}
                     className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors"
                   >
-                    {plans.indexOf(plan) > plans.findIndex((p) => p.id === subscription?.plan)
+                    {availablePlans.indexOf(plan) >
+                    availablePlans.findIndex((p) => p.id === subscription?.plan)
                       ? 'Upgrade'
                       : 'Downgrade'}
                   </button>
@@ -548,8 +540,14 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   </button>
                 )}
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+              Live pricing plans are currently unavailable. Refresh the page or retry after billing
+              services recover.
+            </div>
+          )}
 
           {/* Cancel */}
           {subscription?.status === 'active' && (

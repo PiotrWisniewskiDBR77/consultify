@@ -73,6 +73,7 @@ vi.mock('../../../src/services/api/v8/sync', () => ({
     resolveAuthEscalation: vi.fn(),
     resolveConflict: vi.fn(),
     setRefreshTimingPolicy: vi.fn(),
+    getRuns: vi.fn(),
   },
   shouldFallbackToLegacySync: (error: any) => {
     const status = Number(error?.status);
@@ -127,6 +128,10 @@ describe('UnifiedSyncHub V8 health continuity', () => {
     vi.mocked(V8SyncApi.getConflicts).mockResolvedValue({
       conflicts: [],
       count: 0,
+    } as any);
+    vi.mocked(V8SyncApi.getRuns).mockResolvedValue({
+      runs: [],
+      total: 0,
     } as any);
     vi.mocked(V8SyncApi.getRefreshTimingPolicy).mockResolvedValue({ policy: null } as any);
     vi.mocked(V8MultiplayerApi.getWorkspaceMapping).mockResolvedValue({ mapping: null } as any);

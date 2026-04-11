@@ -85,7 +85,7 @@
   z-index: -1;
   opacity: 0.08;
   filter: blur(30px);
-  transition: all 0.5s ease;
+  transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
 .dark .cluster-bubble {
@@ -228,7 +228,15 @@
   position: absolute;
   inset: -2px;
   border-radius: inherit;
-  background: conic-gradient(from var(--angle, 0deg), #f59e0b, #f97316, #ef4444, #8b5cf6, #3b82f6, #f59e0b);
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    rgb(var(--color-amber-500, 245 158 11)),
+    rgb(var(--color-orange-500, 249 115 22)),
+    rgb(var(--color-red-500, 239 68 68)),
+    rgb(var(--color-violet-500, 139 92 246)),
+    rgb(var(--color-blue-500, 59 130 246)),
+    rgb(var(--color-amber-500, 245 158 11))
+  );
   opacity: 0.3;
   z-index: -1;
   animation: centerBorderRotate 4s linear infinite;
@@ -242,4 +250,33 @@
 
 .center-node-hint {
   animation: hintPulse 2s ease-in-out infinite;
+}
+
+/* Accessibility: disable decorative animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-dash,
+  .animate-pulse-slow,
+  .particle-dot,
+  .selected-branch-edge path,
+  .dark .center-node-glow,
+  .center-node-animated-border::before,
+  .center-node-hint {
+    animation: none !important;
+  }
+
+  .floating-node-toolbar,
+  .canvas-left-toolbar-enter,
+  .onboarding-overlay-enter {
+    animation: none !important;
+  }
+
+  .cluster-bubble,
+  .react-flow__node {
+    transition: none !important;
+  }
+
+  .react-flow__node:hover,
+  .dark .react-flow__node:hover {
+    filter: none;
+  }
 }

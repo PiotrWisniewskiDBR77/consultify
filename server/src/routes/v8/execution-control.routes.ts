@@ -235,8 +235,12 @@ router.get(
       queueRaw && CONTROL_TOWER_QUEUES.has(queueRaw)
         ? (queueRaw as 'late' | 'at_risk' | 'blocked' | 'overloaded' | 'stale' | 'all')
         : 'all';
+    const windowRaw = firstQueryString(req.query.overloadWindow);
+    const overloadWindow = (windowRaw && ['day', 'week', 'month'].includes(windowRaw)
+      ? windowRaw
+      : 'week') as 'day' | 'week' | 'month';
 
-    const payload = await getExecutionControlTowerQueues(organizationId, { projectId, queue });
+    const payload = await getExecutionControlTowerQueues(organizationId, { projectId, queue, overloadWindow });
     return res.json({
       data: payload,
       meta: executionControlTowerMeta(),
@@ -621,26 +625,49 @@ async function auditLog(
   }
 }
 
+function checkInterventionPermission(req: AuthRequest): { allowed: boolean; reason?: string } {
+  if (!req.user) {
+    return { allowed: false, reason: 'Authentication required' };
+  }
+  const role = String(req.userRole || req.user?.role || '').toUpperCase();
+  if (role === 'VIEWER' || role === 'READONLY') {
+    return { allowed: false, reason: `Role "${role}" does not have write access to execution interventions` };
+  }
+  return { allowed: true };
+}
+
 async function refreshControlTower(
   organizationId: string,
   projectId?: string,
   entityType?: 'INITIATIVE' | 'TASK',
   entityId?: string
 ) {
-  const queues = await getExecutionControlTowerQueues(organizationId, {
-    projectId,
-    queue: 'all',
-  });
-  let drillDown = null;
-  if (entityType && entityId) {
-    drillDown = await getExecutionControlTowerItemDetail(
-      organizationId,
-      entityType,
-      entityId,
-      projectId
-    );
+  const refreshedAt = new Date().toISOString();
+  try {
+    const queues = await getExecutionControlTowerQueues(organizationId, {
+      projectId,
+      queue: 'all',
+    });
+    let drillDown = null;
+    if (entityType && entityId) {
+      drillDown = await getExecutionControlTowerItemDetail(
+        organizationId,
+        entityType,
+        entityId,
+        projectId
+      );
+    }
+    return { queues, drillDown, stale: false, refreshedAt };
+  } catch {
+    return {
+      queues: null,
+      drillDown: null,
+      stale: true,
+      refreshedAt,
+      degradedNote: 'Partial refresh failure: some views may be stale. Retry or check control tower directly.',
+      retryHint: 'GET /api/v8/execution-control/control-tower/queues',
+    };
   }
-  return { queues, drillDown };
 }
 
 /**
@@ -652,6 +679,15 @@ router.post(
   '/interventions/reassign',
   validateBody(ReassignSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, newOwnerId, reason } = req.body;
 
@@ -707,6 +743,15 @@ router.post(
   '/interventions/smooth',
   validateBody(SmoothSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, forecastStartDate, forecastEndDate, allocatedHours, reason } =
       req.body;
@@ -741,20 +786,20 @@ router.post(
       await auditLog(organizationId, null, 'smooth', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, allocatedHours }), reason || null, userId);
     } else {
       const old = (await dbAll(
-        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
-      )) as { planned_start_date: string | null; planned_end_date: string | null }[];
+      )) as { forecast_start_date: string | null; forecast_end_date: string | null; planned_start_date: string | null; planned_end_date: string | null }[];
       if (!old?.length) {
         return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
       if (forecastStartDate) {
-        sets.push('planned_start_date = ?');
+        sets.push('forecast_start_date = ?');
         params.push(forecastStartDate);
       }
       if (forecastEndDate) {
-        sets.push('planned_end_date = ?');
+        sets.push('forecast_end_date = ?');
         params.push(forecastEndDate);
       }
       if (sets.length === 0) {
@@ -785,6 +830,15 @@ router.post(
   '/interventions/replan',
   validateBody(ReplanSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, forecastStartDate, forecastEndDate, forecastEffortHours, reason } =
       req.body;
@@ -819,20 +873,20 @@ router.post(
       await auditLog(organizationId, null, 'replan', JSON.stringify(old[0]), JSON.stringify({ forecastEndDate, forecastEffortHours }), reason, userId);
     } else {
       const old = (await dbAll(
-        `SELECT planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
+        `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
-      )) as { planned_start_date: string | null; planned_end_date: string | null }[];
+      )) as { forecast_start_date: string | null; forecast_end_date: string | null; planned_start_date: string | null; planned_end_date: string | null }[];
       if (!old?.length) {
         return res.status(404).json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
       const sets: string[] = [];
       const params: unknown[] = [];
       if (forecastStartDate) {
-        sets.push('planned_start_date = ?');
+        sets.push('forecast_start_date = ?');
         params.push(forecastStartDate);
       }
       if (forecastEndDate) {
-        sets.push('planned_end_date = ?');
+        sets.push('forecast_end_date = ?');
         params.push(forecastEndDate);
       }
       if (sets.length === 0) {
@@ -863,6 +917,15 @@ router.post(
   '/interventions/escalate',
   validateBody(EscalateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, escalationType, title, description, ownerId, dueDate } = req.body;
 
@@ -919,6 +982,99 @@ router.post(
 );
 
 // ────────────────────────────────────────────────────────────────
+// P03-F §2.4.4 — Dependency link/unlink with mandatory readback
+// ────────────────────────────────────────────────────────────────
+
+const DependencySchema = z.object({
+  action: z.enum(['link', 'unlink']),
+  fromEntityType: z.enum(['INITIATIVE', 'TASK']),
+  fromEntityId: z.string().min(1),
+  toEntityType: z.enum(['INITIATIVE', 'TASK']),
+  toEntityId: z.string().min(1),
+  semantics: z.enum(['blocking', 'waiting_on']),
+  reason: z.string().optional(),
+});
+
+router.post(
+  '/interventions/dependency',
+  validateBody(DependencySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+        whatNext: 'Request write access or ask an operator with ADMIN/EDITOR role to perform this intervention.',
+      });
+    }
+    const { organizationId, userId } = getV8Context(req);
+    const { action, fromEntityType, fromEntityId, toEntityType, toEntityId, semantics, reason } =
+      req.body;
+
+    if (fromEntityType === 'TASK' && toEntityType === 'TASK') {
+      if (action === 'link') {
+        const depId = `dep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        await dbRun(
+          `INSERT OR IGNORE INTO task_dependencies (id, from_task_id, to_task_id, dependency_type, created_at)
+           VALUES (?, ?, ?, ?, NOW())`,
+          [depId, fromEntityId, toEntityId, semantics]
+        );
+      } else {
+        await dbRun(
+          `DELETE FROM task_dependencies WHERE from_task_id = ? AND to_task_id = ?`,
+          [fromEntityId, toEntityId]
+        );
+      }
+    } else if (fromEntityType === 'INITIATIVE' && toEntityType === 'INITIATIVE') {
+      if (action === 'link') {
+        const depId = `dep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        await dbRun(
+          `INSERT OR IGNORE INTO initiative_dependencies (id, from_initiative_id, to_initiative_id, type, organization_id, created_at)
+           VALUES (?, ?, ?, ?, ?, NOW())`,
+          [depId, fromEntityId, toEntityId, semantics, organizationId]
+        );
+      } else {
+        await dbRun(
+          `DELETE FROM initiative_dependencies WHERE from_initiative_id = ? AND to_initiative_id = ? AND organization_id = ?`,
+          [fromEntityId, toEntityId, organizationId]
+        );
+      }
+    } else {
+      return res.status(400).json({
+        error: 'Cross-type dependencies (INITIATIVE↔TASK) are not supported in bounded dependency interventions',
+        code: 'EXECUTION_DEPENDENCY_CROSS_TYPE',
+      });
+    }
+
+    await auditLog(
+      organizationId,
+      null,
+      `dependency_${action}`,
+      JSON.stringify({ fromEntityType, fromEntityId, toEntityType, toEntityId }),
+      JSON.stringify({ semantics }),
+      reason || null,
+      userId
+    );
+
+    const readback = await refreshControlTower(organizationId);
+    return res.json({
+      data: {
+        success: true,
+        action: `dependency_${action}`,
+        fromEntityType,
+        fromEntityId,
+        toEntityType,
+        toEntityId,
+        semantics,
+        readback,
+      },
+      meta: executionControlMutationMeta(),
+    });
+  })
+);
+
+// ────────────────────────────────────────────────────────────────
 // P03-B §2.4.5 — Baseline / forecast / variance read
 // ────────────────────────────────────────────────────────────────
 
@@ -934,12 +1090,15 @@ router.get(
     const { initiativeId } = req.params;
 
     const inits = (await dbAll(
-      `SELECT planned_start_date, planned_end_date, start_date, actual_end_date, progress
+      `SELECT planned_start_date, planned_end_date, forecast_start_date, forecast_end_date,
+              start_date, actual_end_date, progress
        FROM initiatives WHERE id = ? AND organization_id = ?`,
       [initiativeId, organizationId]
     )) as {
       planned_start_date: string | null;
       planned_end_date: string | null;
+      forecast_start_date: string | null;
+      forecast_end_date: string | null;
       start_date: string | null;
       actual_end_date: string | null;
       progress: number | null;
@@ -966,8 +1125,8 @@ router.get(
     const baselineSnapshot = snapshots.length > 0 ? snapshots[0] : null;
     const hasBaseline = !!(init.planned_start_date || init.planned_end_date);
 
-    const forecastStart = init.start_date || init.planned_start_date;
-    const forecastEnd = init.actual_end_date || init.planned_end_date;
+    const forecastStart = init.forecast_start_date || init.start_date || init.planned_start_date;
+    const forecastEnd = init.forecast_end_date || init.actual_end_date || init.planned_end_date;
 
     let startVarianceDays: number | null = null;
     let endVarianceDays: number | null = null;

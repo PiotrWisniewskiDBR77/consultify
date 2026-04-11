@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Clock, Eye, FileWarning, Lock, Shield } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, Clock, Eye, FileWarning, Lock, Shield } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -210,14 +210,24 @@ export function RadarTriageCard({ signal, onAction }: RadarTriageCardProps) {
           <div className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
             {t(`${TK}.nextAction`)}
           </div>
-          <button
-            type="button"
-            onClick={handleHandoff}
-            className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]"
-          >
-            {t(`${TK}.goTo`, { module: signal.nextAction.targetModule })}
-            <ArrowRight className="size-3.5 opacity-80" aria-hidden />
-          </button>
+          <div className="mt-1 flex gap-1.5">
+            <button
+              type="button"
+              onClick={handleHandoff}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.08] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]"
+            >
+              {t(`${TK}.goTo`, { module: signal.nextAction.targetModule })}
+              <ArrowRight className="size-3.5 opacity-80" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => onAction({ type: 'create', target: 'note' })}
+              title={t(`${TK}.saveToNotebook`, 'Save to Notebook')}
+              className="flex items-center justify-center gap-1 rounded-lg border border-indigo-400/25 bg-indigo-500/10 px-2 py-1.5 text-[11px] font-medium text-indigo-200 transition hover:bg-indigo-500/20"
+            >
+              <BookOpen className="size-3.5" aria-hidden />
+            </button>
+          </div>
           <p className="mt-1.5 text-[10px] leading-snug text-slate-500">
             {t(`${TK}.fallback`, { fallback: signal.nextAction.safeFallback })}
           </p>

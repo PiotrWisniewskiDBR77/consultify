@@ -43,6 +43,12 @@ import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
 
+router.use((_req, res, next) => {
+  res.setHeader('X-Deprecated', 'This endpoint is deprecated. Use /api/v8/sync equivalents instead.');
+  res.setHeader('Sunset', '2026-09-01');
+  next();
+});
+
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string; firstName?: string; lastName?: string };
 }
@@ -366,10 +372,10 @@ router.post(
       result.id,
     ]);
 
-    await updateIntegrationStatus(result.id, 'connected');
+    await updateIntegrationStatus(result.id, 'pending');
 
     const actorName = `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || userId;
-    await logAudit(orgId, result.id, 'connected', userId, actorName, { connectorId, displayName });
+    await logAudit(orgId, result.id, 'connect_initiated', userId, actorName, { connectorId, displayName });
 
     return res.json({ success: true, integration: result });
   })

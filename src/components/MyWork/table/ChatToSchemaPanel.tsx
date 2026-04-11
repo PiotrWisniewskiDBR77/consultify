@@ -458,7 +458,13 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             })) ?? null
         );
         setExecuted(true);
-        onExecuted?.(result);
+        onExecuted?.({
+          ...((result && typeof result === 'object') ? result : {}),
+          type: 'table_proposal',
+          proposalId: proposal.id,
+          workspaceId,
+          summary: proposal.summary || proposal.intent || '',
+        });
       } catch {
         setExecutionOps(
           (prev) =>
@@ -475,7 +481,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
         );
       }
     },
-    [proposal, isPl, executeProposal, onExecuted]
+    [proposal, isPl, executeProposal, onExecuted, workspaceId]
   );
 
   const handleReject = useCallback(async () => {

@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { createP23Error } from '../services/v8/exceleCanon.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -73,7 +74,7 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
   const user = req.user;
   if (!user) { res.status(401).json({ error: 'Unauthorized' }); return; }
 
-  const { prompt, researchContext, language } = req.body;
+  const { prompt, researchContext, language, projectId, sourceInitiativeId, conversationId } = req.body;
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {
     res.status(400).json({ error: 'prompt is required (min 5 chars)' });
     return;
@@ -87,6 +88,7 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
     prompt: prompt.trim(),
     userId: user.id,
     organizationId: user.organizationId,
+    projectId: projectId || null,
     researchContext,
     language: language || req.headers['accept-language']?.split(',')[0],
   });
@@ -126,6 +128,39 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
     logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
   }
 
+  // Register in V8 artifact registry (P19 Outputs Library integration)
+  let artifactId: string | null = null;
+  try {
+    const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
+    const registered = await registerArtifactOrigin({
+      organizationId: user.organizationId,
+      actorUserId: user.id,
+      outputType: 'sheet',
+      originRuntime: 'sheet',
+      originRecordId: result.id,
+      sourceInitiativeId: sourceInitiativeId || null,
+      originSummary: {
+        title: result.schema.title,
+        description: result.schema.description || null,
+        sheetCount: result.schema.sheets.length,
+        exportFormat: 'xlsx',
+        source: 'workbook_generator_p23d',
+        qualityScore: result.qualityScore,
+        sourceRefs: {
+          conversationId: conversationId || null,
+          initiativeId: sourceInitiativeId || null,
+          projectId: projectId || null,
+        },
+      },
+    });
+    artifactId = registered?.artifactId ?? null;
+    if (artifactId) {
+      logger.info(`[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`);
+    }
+  } catch (err) {
+    logger.warn('[WorkbookRoutes] Failed to register workbook in artifact registry:', err);
+  }
+
   res.json({
     id: result.id,
     title: result.schema.title,
@@ -139,10 +174,63 @@ router.post('/generate', asyncHandler(async (req: AuthenticatedRequest, res) => 
     fileName: result.fileName,
     fileSize: result.buffer.length,
     validationErrors: result.validationErrors,
+    classifiedErrors: result.classifiedErrors,
     qualityScore: result.qualityScore,
     pipelineLog: result.pipelineLog,
+    artifactId,
     downloadUrl: `/api/workbook/${result.id}/download`,
     generatedAt: result.generatedAt,
+  });
+}));
+
+/**
+ * GET /api/workbook/:id
+ * Returns workbook metadata (for reopen/preview without downloading binary)
+ */
+router.get('/:id', asyncHandler(async (req: AuthenticatedRequest, res) => {
+  const user = req.user;
+  if (!user) { res.status(401).json({ error: 'Unauthorized' }); return; }
+
+  const { id } = req.params;
+  if (id === 'list') { return; } // skip — handled by /list route
+
+  await ensureWorkbookSchema();
+
+  const row = await queryHelpers.queryOne<{
+    id: string;
+    title: string;
+    description: string | null;
+    schema_json: string;
+    sheet_count: number;
+    file_name: string;
+    file_size: number;
+    quality_score: number | null;
+    created_by: string;
+    created_at: string;
+  }>(
+    `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, created_by, created_at
+     FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+    [id, user.organizationId]
+  );
+
+  if (!row) {
+    res.status(404).json({ error: 'Workbook not found' });
+    return;
+  }
+
+  const schemaJson = row.schema_json ? JSON.parse(row.schema_json) : null;
+  res.json({
+    id: row.id,
+    title: row.title || schemaJson?.title,
+    description: row.description || schemaJson?.description,
+    schema_json: schemaJson,
+    sheet_count: row.sheet_count,
+    file_name: row.file_name,
+    file_size: row.file_size,
+    quality_score: row.quality_score,
+    created_by: row.created_by,
+    created_at: row.created_at,
+    downloadUrl: `/api/workbook/${row.id}/download`,
   });
 }));
 
@@ -171,13 +259,28 @@ router.get('/:id/download', asyncHandler(async (req: AuthenticatedRequest, res) 
   );
 
   if (!row?.schema_json) {
-    res.status(404).json({ error: 'Workbook not found or expired' });
+    res.status(404).json({
+      error: 'Workbook not found or expired',
+      classified: createP23Error('access_denied', `Workbook ${id} not found for this organization`),
+    });
     return;
   }
 
-  const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
+  const { buildWorkbookBuffer, classifyBuildError } = await import('../services/workbook/WorkbookBuilder.js');
   const schema = JSON.parse(row.schema_json);
-  const buffer = await buildWorkbookBuffer(schema);
+
+  let buffer: Buffer;
+  try {
+    buffer = await buildWorkbookBuffer(schema);
+  } catch (err) {
+    const classified = classifyBuildError(err);
+    logger.error(`[WorkbookRoutes] Rebuild from schema failed: ${classified.code}`, err);
+    res.status(500).json({
+      error: 'Failed to rebuild workbook from stored schema',
+      classified,
+    });
+    return;
+  }
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="${row.file_name || 'workbook.xlsx'}"`);

@@ -11,6 +11,7 @@ import {
   Check,
   Clock,
   ExternalLink,
+  GitMerge,
   Link2,
   Loader2,
   RefreshCw,
@@ -22,6 +23,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type Provider, type UserIntegration, useUserIntegrations } from '../../hooks/useUserIntegrations';
+import MappingDriftPanel from './integrations/MappingDriftPanel';
 
 // ─── Brand SVG Icons ─────────────────────────────────────────────────────────
 
@@ -223,11 +225,11 @@ interface CatalogApp {
   configFields: string[];
 }
 
-const CATEGORY_META: Record<CatalogCategory, { label: string; emoji: string }> = {
-  email: { label: 'Email & Communication', emoji: '' },
-  calendar: { label: 'Calendar', emoji: '' },
-  task_management: { label: 'Task Management', emoji: '' },
-  cloud_storage: { label: 'Cloud Storage', emoji: '' },
+const CATEGORY_META: Record<CatalogCategory, { labelKey: string; fallback: string }> = {
+  email: { labelKey: 'settings.integrations.cat.email', fallback: 'Email & Communication' },
+  calendar: { labelKey: 'settings.integrations.cat.calendar', fallback: 'Calendar' },
+  task_management: { labelKey: 'settings.integrations.cat.taskMgmt', fallback: 'Task Management' },
+  cloud_storage: { labelKey: 'settings.integrations.cat.cloud', fallback: 'Cloud Storage' },
 };
 
 const CATALOG: CatalogApp[] = [
@@ -260,12 +262,12 @@ const CATALOG: CatalogApp[] = [
   { id: 'box', name: 'Box', category: 'cloud_storage', description: 'Enterprise file sync with Box workflows', features: ['File sync', 'Workflows', 'Governance'], icon: BoxIcon, authType: 'oauth2', configFields: [] },
 ];
 
-const ALL_CATEGORIES: Array<{ id: 'all' | CatalogCategory; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'email', label: 'Email & Communication' },
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'task_management', label: 'Task Management' },
-  { id: 'cloud_storage', label: 'Cloud Storage' },
+const ALL_CATEGORIES: Array<{ id: 'all' | CatalogCategory; labelKey: string; fallback: string }> = [
+  { id: 'all', labelKey: 'settings.integrations.cat.all', fallback: 'All' },
+  { id: 'email', labelKey: 'settings.integrations.cat.email', fallback: 'Email & Communication' },
+  { id: 'calendar', labelKey: 'settings.integrations.cat.calendar', fallback: 'Calendar' },
+  { id: 'task_management', labelKey: 'settings.integrations.cat.taskMgmt', fallback: 'Task Management' },
+  { id: 'cloud_storage', labelKey: 'settings.integrations.cat.cloud', fallback: 'Cloud Storage' },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -282,6 +284,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   const [draftConfig, setDraftConfig] = useState<Record<string, string>>({});
   const [connecting, setConnecting] = useState(false);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const [mappingIntegrationId, setMappingIntegrationId] = useState<string | null>(null);
 
   const {
     integrations,
@@ -331,7 +334,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     const oauthSuccess = params.get('oauth_success');
     const oauthError = params.get('oauth_error');
     if (oauthSuccess) {
-      toast.success(`Connected to ${oauthSuccess} successfully!`);
+      toast.success(t('settings.integrations.oauthSuccess', `Connected to ${oauthSuccess} successfully!`));
       window.history.replaceState({}, '', window.location.pathname);
       refresh();
     } else if (oauthError) {
@@ -361,18 +364,18 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   }, [t]);
 
   const handleConnect = useCallback(async (app: CatalogApp) => {
-    if (app.authType === 'oauth2' || app.authType === 'token') {
-      await startOAuthFlow(app.id);
-    } else if (app.authType === 'basic') {
+    if (app.authType === 'basic') {
       const draft: Record<string, string> = { username: '', password: '' };
       if (app.configFields.includes('caldav_url')) draft.serverUrl = 'https://caldav.icloud.com/';
       setDraftConfig(draft);
       setConnectModalApp(app);
-    } else if (app.configFields.length > 0) {
+    } else if (app.configFields.length > 0 || app.authType === 'api_key') {
       const draft: Record<string, string> = {};
       app.configFields.forEach((f) => { draft[f] = ''; });
       setDraftConfig(draft);
       setConnectModalApp(app);
+    } else if (app.authType === 'oauth2' || app.authType === 'token') {
+      await startOAuthFlow(app.id);
     } else {
       await startOAuthFlow(app.id);
     }
@@ -438,10 +441,52 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           }),
         });
         if (!resp.ok) throw new Error('Connection failed');
-        toast.success('Connected successfully');
+        toast.success(t('settings.integrations.connected', 'Connected successfully'));
         setConnectModalApp(null);
         refresh();
       } else {
+        // For providers requiring config (Jira site_url, Teams tenant_id, Monday api_token, etc.)
+        // submit the config first so the backend can use it during/after OAuth
+        if (connectModalApp.configFields.length > 0) {
+          const configPayload: Record<string, string> = {};
+          for (const field of connectModalApp.configFields) {
+            const val = draftConfig[field]?.trim();
+            if (!val) {
+              toast.error(t('settings.integrations.fieldRequired', `Please fill in ${field.replace(/_/g, ' ')}`));
+              setConnecting(false);
+              return;
+            }
+            configPayload[field] = val;
+          }
+
+          // For api_key auth (e.g. Monday), we connect directly with the token — no OAuth redirect
+          if (connectModalApp.authType === 'api_key') {
+            const resp = await fetch(`/api/settings/integrations/${connectModalApp.id}/connect`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ config: configPayload }),
+            });
+            if (!resp.ok) {
+              const err = await resp.json().catch(() => ({}));
+              throw new Error(err.error || 'Connection failed');
+            }
+            toast.success(t('settings.integrations.connected', 'Connected successfully'));
+            setConnectModalApp(null);
+            refresh();
+            setConnecting(false);
+            return;
+          }
+
+          // For OAuth providers with config: store config before redirecting
+          await fetch(`/api/settings/integrations/${connectModalApp.id}/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ config: configPayload }),
+          });
+        }
+
         await startOAuthFlow(connectModalApp.id);
         setConnectModalApp(null);
       }
@@ -529,7 +574,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                 : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
             }`}
           >
-            {cat.label}
+            {t(cat.labelKey, cat.fallback)}
             <span className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}>
               {categoryCounts[cat.id] || 0}
             </span>
@@ -563,7 +608,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               <div key={catId}>
                 {selectedCategory === 'all' && (
                   <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                    {meta.label}
+                    {t(meta.labelKey, meta.fallback)}
                   </h4>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -604,13 +649,13 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                               </span>
                               {isConnected && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">
-                                  <Check size={8} /> Connected
+                                  <Check size={8} /> {t('common.connected', 'Connected')}
                                 </span>
                               )}
                               {needsReauth && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full">
                                   {isExpired ? <Clock size={8} /> : <AlertTriangle size={8} />}
-                                  {isExpired ? 'Expired' : 'Error'}
+                                  {isExpired ? t('common.expired', 'Expired') : t('common.error', 'Error')}
                                 </span>
                               )}
                             </div>
@@ -642,10 +687,17 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                   {testingProvider === app.id ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                                 </button>
                                 <button
+                                  onClick={() => setMappingIntegrationId(app.id)}
+                                  className="p-1.5 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                  title={t('settings.integrations.viewMappings', 'View Mappings')}
+                                >
+                                  <GitMerge size={14} />
+                                </button>
+                                <button
                                   onClick={() => handleDisconnect(app.id)}
                                   className="px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 >
-                                  Disconnect
+                                  {t('common.disconnect', 'Disconnect')}
                                 </button>
                               </>
                             )}
@@ -654,7 +706,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 onClick={() => openConnectModal(app)}
                                 className="px-2.5 py-1 text-xs font-medium text-amber-600 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                               >
-                                Reconnect
+                                {t('common.reconnect', 'Reconnect')}
                               </button>
                             )}
                             {!isConnected && !needsReauth && (
@@ -663,7 +715,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors shadow-sm"
                               >
                                 <ExternalLink size={12} />
-                                Connect
+                                {t('common.connect', 'Connect')}
                               </button>
                             )}
                           </div>
@@ -694,7 +746,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Connect {connectModalApp.name}
+                  {t('settings.integrations.connectProvider', 'Connect {{name}}', { name: connectModalApp.name })}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {connectModalApp.authType === 'basic'
@@ -759,17 +811,27 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                 onClick={() => setConnectModalApp(null)}
                 className="px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 onClick={submitConnectModal}
                 disabled={connecting}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-brand hover:bg-brand-dark text-white transition-colors disabled:opacity-50 shadow-sm"
               >
-                {connecting ? 'Connecting...' : 'Connect'}
+                {connecting ? t('common.connecting', 'Connecting...') : t('common.connect', 'Connect')}
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Mapping Drift Panel (per-integration detail view) */}
+      {mappingIntegrationId && (
+        <div className="rounded-xl border border-navy-700/50 bg-navy-800/40 p-4">
+          <MappingDriftPanel
+            integrationId={mappingIntegrationId}
+            onBack={() => setMappingIntegrationId(null)}
+          />
         </div>
       )}
 

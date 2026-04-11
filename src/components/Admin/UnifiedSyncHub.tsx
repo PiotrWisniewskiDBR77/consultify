@@ -21,6 +21,8 @@ import {
   Database,
   ExternalLink,
   FileText,
+  GitMerge,
+  History,
   Layers,
   Link2Off,
   Loader2,
@@ -68,17 +70,21 @@ import {
   type V8SyncProviderFamily,
   type V8SyncRefreshSecretRef,
   type V8SyncRefreshTimingPolicy,
+  type V8SyncRunRecord,
+  type V8SyncWorkflowRecord,
 } from '@/services/api/v8/sync';
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import MappingDriftPanel from '../settings/integrations/MappingDriftPanel';
+import { IntegrationHealthDashboard } from '../settings/integrations/IntegrationHealthDashboard';
 import { useAppStore } from '../../store/useAppStore';
 
 // ── Types ──────────────────────────────────────────────────────
 
 type IntegrationStatus = 'connected' | 'disconnected' | 'error' | 'pending' | 'requires_reauth';
 type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
-type TabId = 'apps' | 'health' | 'users' | 'logs' | 'webhooks' | 'audit';
+type TabId = 'apps' | 'health' | 'runs' | 'workflows' | 'mappings' | 'users' | 'logs' | 'policies' | 'audit';
 
 interface AdminIntegrationOwnershipItem {
   integrationId: string;
@@ -417,7 +423,7 @@ function getAuditDetailString(details: Record<string, unknown> | undefined, key:
 
 export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { currentOrganization } = useAppStore();
+  const { currentOrganization, currentUser } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<TabId>('apps');
   const [integrations, setIntegrations] = useState<IntegrationItem[]>([]);
@@ -443,6 +449,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   >({});
   const [v8ConnectorHealthLoading, setV8ConnectorHealthLoading] = useState(false);
   const [v8Conflicts, setV8Conflicts] = useState<V8SyncConflictRecord[]>([]);
+  const [v8Runs, setV8Runs] = useState<V8SyncRunRecord[]>([]);
+  const [v8RunsTotal, setV8RunsTotal] = useState(0);
+  const [v8RunsLoading, setV8RunsLoading] = useState(false);
+  const [v8RunsFilter, setV8RunsFilter] = useState<string>('');
+  const [v8RunsStatusFilter, setV8RunsStatusFilter] = useState<string>('');
+  const [v8Workflows, setV8Workflows] = useState<V8SyncWorkflowRecord[]>([]);
+  const [v8WorkflowsLoading, setV8WorkflowsLoading] = useState(false);
   const [v8RefreshPolicies, setV8RefreshPolicies] = useState<
     Partial<Record<V8SyncProviderFamily, V8SyncRefreshTimingPolicy | null>>
   >({});
@@ -766,6 +779,39 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   }, []);
 
+  const fetchRuns = useCallback(
+    async (integrationId?: string, status?: string) => {
+      setV8RunsLoading(true);
+      try {
+        const data = await V8SyncApi.getRuns({
+          integrationId: integrationId || undefined,
+          status: status || undefined,
+          limit: 50,
+        });
+        setV8Runs(data.runs || []);
+        setV8RunsTotal(data.total ?? 0);
+      } catch {
+        setV8Runs([]);
+        setV8RunsTotal(0);
+      } finally {
+        setV8RunsLoading(false);
+      }
+    },
+    []
+  );
+
+  const fetchWorkflows = useCallback(async () => {
+    setV8WorkflowsLoading(true);
+    try {
+      const data = await V8SyncApi.getWorkflows();
+      setV8Workflows(data.workflows || []);
+    } catch {
+      setV8Workflows([]);
+    } finally {
+      setV8WorkflowsLoading(false);
+    }
+  }, []);
+
   const fetchAdminOwnership = useCallback(async () => {
     setOwnershipLoading(true);
     setOwnershipError(null);
@@ -827,6 +873,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         fetchV8AuthHealth(),
         fetchV8AuthEscalations(),
         fetchV8Conflicts(),
+        fetchRuns(),
       ]);
     } finally {
       setLoading(false);
@@ -846,6 +893,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     fetchV8AuthHealth,
     fetchV8AuthEscalations,
     fetchV8Conflicts,
+    fetchRuns,
     fetchV8RefreshPolicies,
     fetchV8WorkspaceMapping,
     fetchV8WorkspaceBinding,
@@ -871,9 +919,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   }, [activeTab, fetchV8ConnectorHealth]);
 
   useEffect(() => {
-    if (activeTab !== 'webhooks') return;
+    if (activeTab !== 'policies') return;
     void fetchV8RefreshPolicies();
   }, [activeTab, fetchV8RefreshPolicies]);
+
+  useEffect(() => {
+    if (activeTab !== 'workflows') return;
+    void fetchWorkflows();
+  }, [activeTab, fetchWorkflows]);
 
   useEffect(() => {
     if (activeTab !== 'users') return;
@@ -1751,6 +1804,21 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       badge: errors.length > 0 ? errors.length : undefined,
     },
     {
+      id: 'runs',
+      label: t('integrations.syncHub.tabs.runs', 'Run History'),
+      icon: <History size={16} />,
+    },
+    {
+      id: 'workflows',
+      label: t('integrations.syncHub.tabs.workflows', 'Workflows'),
+      icon: <Activity size={16} />,
+    },
+    {
+      id: 'mappings',
+      label: t('integrations.syncHub.tabs.mappings', 'Mappings'),
+      icon: <GitMerge size={16} />,
+    },
+    {
       id: 'users',
       label: t('integrations.syncHub.tabs.users', 'Users'),
       icon: <Users size={16} />,
@@ -1763,8 +1831,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       badge: connectionLogTotal > 0 ? connectionLogTotal : undefined,
     },
     {
-      id: 'webhooks',
-      label: t('integrations.syncHub.tabs.webhooks', 'Permissions & Scopes'),
+      id: 'policies',
+      label: t('integrations.syncHub.tabs.policies', 'Policies & Scopes'),
       icon: <Shield size={16} />,
     },
     {
@@ -3602,7 +3670,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 </div>
                 <button
                   onClick={() => handleResolveError(err.id)}
-                  className="px-2 py-1 text-xs text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors shrink-0"
+                  className="px-2 py-1 text-xs text-brand hover:bg-brand/10 rounded transition-colors shrink-0"
                 >
                   {t('integrations.syncHub.resolve', 'Resolve')}
                 </button>
@@ -3611,6 +3679,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </div>
         )}
       </div>
+
+      {currentUser && (
+        <IntegrationHealthDashboard currentUser={currentUser} />
+      )}
     </div>
   );
 
@@ -3863,6 +3935,69 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     </div>
   );
 
+  // ── Workflows tab ────────────────────────────────────────────
+
+  const renderWorkflowsTab = () => {
+    if (v8WorkflowsLoading) {
+      return (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-5 h-5 animate-spin text-brand" />
+        </div>
+      );
+    }
+
+    if (v8Workflows.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Activity className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+          <p className="text-sm text-slate-500">{t('integrations.syncHub.noWorkflows', 'No workflows configured yet.')}</p>
+        </div>
+      );
+    }
+
+    const stateColor = (s: string) => {
+      if (s === 'connected' || s === 'recovered') return 'text-green-500';
+      if (s === 'degraded' || s === 'requires_action') return 'text-amber-500';
+      if (s === 'blocked') return 'text-red-500';
+      return 'text-slate-400';
+    };
+
+    return (
+      <div className="space-y-3">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-white/10">
+                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfName', 'Name')}</th>
+                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfConnector', 'Connector')}</th>
+                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfState', 'State')}</th>
+                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfMode', 'Mode')}</th>
+                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfPaused', 'Paused')}</th>
+                <th className="text-left pb-2">{t('integrations.syncHub.wfLastSync', 'Last Sync')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {v8Workflows.map((wf) => (
+                <tr key={wf.workflowId} className="border-b border-white/5">
+                  <td className="py-2 pr-4 font-medium">{wf.name || wf.connectorId}</td>
+                  <td className="py-2 pr-4 text-slate-400">{wf.connectorId}</td>
+                  <td className="py-2 pr-4">
+                    <span className={`font-medium ${stateColor(wf.lifecycleState)}`}>
+                      {wf.lifecycleState}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4 text-slate-400">{wf.mode}</td>
+                  <td className="py-2 pr-4">{wf.isPaused ? <span className="text-amber-400">Yes</span> : <span className="text-green-400">No</span>}</td>
+                  <td className="py-2 text-slate-500">{wf.lastSyncAt ? new Date(wf.lastSyncAt).toLocaleString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   // ── Permissions & Scopes tab ─────────────────────────────────
 
   const renderScopesTab = () => (
@@ -3970,6 +4105,186 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       )}
     </div>
   );
+
+  // ── Run History tab ──────────────────────────────────────────
+
+  const renderRunsTab = () => {
+    const statusColors: Record<string, string> = {
+      running: 'text-blue-400 bg-blue-500/10',
+      completed: 'text-emerald-400 bg-emerald-500/10',
+      failed: 'text-red-400 bg-red-500/10',
+    };
+
+    const formatDuration = (ms: number | null) => {
+      if (!ms) return '—';
+      if (ms < 1000) return `${ms}ms`;
+      return `${(ms / 1000).toFixed(1)}s`;
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <select
+            className="bg-navy-800 border border-navy-700 rounded-lg px-3 py-1.5 text-sm text-slate-300"
+            value={v8RunsFilter}
+            onChange={(e) => {
+              setV8RunsFilter(e.target.value);
+              void fetchRuns(e.target.value || undefined, v8RunsStatusFilter || undefined);
+            }}
+          >
+            <option value="">
+              {t('integrations.syncHub.runsAllIntegrations', 'All integrations')}
+            </option>
+            {integrations
+              .filter((i) => i.status === 'connected')
+              .map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+          </select>
+          <select
+            className="bg-navy-800 border border-navy-700 rounded-lg px-3 py-1.5 text-sm text-slate-300"
+            value={v8RunsStatusFilter}
+            onChange={(e) => {
+              setV8RunsStatusFilter(e.target.value);
+              void fetchRuns(v8RunsFilter || undefined, e.target.value || undefined);
+            }}
+          >
+            <option value="">
+              {t('integrations.syncHub.runsAllStatuses', 'All statuses')}
+            </option>
+            <option value="running">{t('integrations.syncHub.runsRunning', 'Running')}</option>
+            <option value="completed">
+              {t('integrations.syncHub.runsCompleted', 'Completed')}
+            </option>
+            <option value="failed">{t('integrations.syncHub.runsFailed', 'Failed')}</option>
+          </select>
+          <div className="ml-auto text-xs text-slate-500">
+            {t('integrations.syncHub.runsTotal', '{{count}} total', { count: v8RunsTotal })}
+          </div>
+        </div>
+
+        {v8RunsLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="animate-spin text-slate-500" size={24} />
+          </div>
+        ) : v8Runs.length === 0 ? (
+          <div className="text-center py-12 text-slate-500 text-sm">
+            {t('integrations.syncHub.noRuns', 'No sync runs recorded yet')}
+          </div>
+        ) : (
+          <div className="border border-navy-700/50 rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-navy-800/60 text-xs text-slate-500 uppercase tracking-wider">
+                  <th className="text-left px-4 py-2">
+                    {t('integrations.syncHub.runsStatus', 'Status')}
+                  </th>
+                  <th className="text-left px-4 py-2">
+                    {t('integrations.syncHub.runsProvider', 'Provider')}
+                  </th>
+                  <th className="text-left px-4 py-2">
+                    {t('integrations.syncHub.runsDirection', 'Direction')}
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    {t('integrations.syncHub.runsItems', 'Items')}
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    {t('integrations.syncHub.runsDuration', 'Duration')}
+                  </th>
+                  <th className="text-left px-4 py-2">
+                    {t('integrations.syncHub.runsTriggeredBy', 'Trigger')}
+                  </th>
+                  <th className="text-left px-4 py-2">
+                    {t('integrations.syncHub.runsStarted', 'Started')}
+                  </th>
+                  <th className="text-left px-4 py-2">
+                    {t('integrations.syncHub.runsLifecycle', 'Lifecycle')}
+                  </th>
+                  <th className="text-center px-4 py-2">
+                    {t('integrations.syncHub.runsActions', 'Actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {v8Runs.map((run) => {
+                  const lifecycleColors: Record<string, string> = {
+                    connected: 'text-emerald-400',
+                    degraded: 'text-amber-400',
+                    requires_action: 'text-red-400',
+                    draft: 'text-slate-400',
+                  };
+                  return (
+                    <React.Fragment key={run.id}>
+                      <tr className="border-t border-navy-700/30 hover:bg-navy-800/30">
+                        <td className="px-4 py-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[run.status] || 'text-slate-400 bg-slate-500/10'}`}
+                          >
+                            {run.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-slate-300">{run.provider || '—'}</td>
+                        <td className="px-4 py-2 text-slate-400">{run.direction || '—'}</td>
+                        <td className="px-4 py-2 text-right text-slate-300">
+                          {run.itemsProcessed ?? '—'}
+                        </td>
+                        <td className="px-4 py-2 text-right text-slate-400">
+                          {formatDuration(run.durationMs)}
+                        </td>
+                        <td className="px-4 py-2 text-slate-400">{run.triggeredBy || '—'}</td>
+                        <td className="px-4 py-2 text-slate-500">
+                          {run.startedAt
+                            ? new Date(run.startedAt).toLocaleString()
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span className={`text-xs font-medium ${lifecycleColors[run.lifecycleState] || 'text-slate-400'}`}>
+                            {run.lifecycleState}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          {run.canReplay && (
+                            <button
+                              type="button"
+                              className="px-2 py-1 text-xs rounded bg-violet-600/20 text-violet-400 hover:bg-violet-600/40 transition-colors"
+                              onClick={async () => {
+                                try {
+                                  await V8SyncApi.replayRun(run.id);
+                                  toast.success(t('integrations.syncHub.replayInitiated', 'Replay initiated'));
+                                  void fetchRuns(v8RunsFilter || undefined, v8RunsStatusFilter || undefined);
+                                } catch {
+                                  toast.error(t('integrations.syncHub.replayFailed', 'Replay failed'));
+                                }
+                              }}
+                            >
+                              <RefreshCw size={12} className="inline mr-1" />
+                              {t('integrations.syncHub.replay', 'Replay')}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {run.errorSummary && (
+                        <tr className="bg-red-500/5">
+                          <td colSpan={9} className="px-4 py-1.5 text-xs text-red-400/80">
+                            <span className="text-slate-500 mr-2">
+                              {t('integrations.syncHub.traceId', 'Trace:')} {run.id}
+                            </span>
+                            {run.errorSummary}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // ── Audit Log tab ────────────────────────────────────────────
 
@@ -4185,9 +4500,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         >
           {activeTab === 'apps' && renderAppsTab()}
           {activeTab === 'health' && renderHealthTab()}
+          {activeTab === 'runs' && renderRunsTab()}
+          {activeTab === 'mappings' && <MappingDriftPanel />}
           {activeTab === 'users' && renderUsersTab()}
           {activeTab === 'logs' && renderLogsTab()}
-          {activeTab === 'webhooks' && renderScopesTab()}
+          {activeTab === 'policies' && renderScopesTab()}
+          {activeTab === 'workflows' && renderWorkflowsTab()}
           {activeTab === 'audit' && renderAuditTab()}
         </motion.div>
       </AnimatePresence>

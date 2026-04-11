@@ -32,11 +32,14 @@ This card covers:
 
 ## 4. Current repo and doc truth
 
-Current truth is strong but still transitional:
+**Status: P19-A/B/C verified(evidence) — 2026-03-31. Full audit 2026-04-11.**
 
-- the artifact runtime lane is green in the closure ledger,
-- the functional spec treats Outputs Library as canonical home,
-- but the Wave 2 packet and final closure plan both say the surface still needs closure as a real product-grade operating surface.
+- Artifact runtime lane is green in the closure ledger and `EXECUTION_INDEX`.
+- The functional spec treats Outputs Library as canonical home — implemented via `canonical_home: 'outputs_library'` in `artifactRegistryService.ts`.
+- P19 contract (10/10 acceptance checklist) fully satisfied.
+- Unified hub delivered at `/presentations` with `ReportsAndPresentationsHub` — tabs: All, Mine, Needs review, Documents, Presentations, Sheets, Templates.
+- Trust-state consumed from P18 (display only, no library-local enums).
+- See: `evidence/P19_FULL_AUDIT_2026-04-11.md`.
 
 ## 5. Competitive standard
 
@@ -48,20 +51,26 @@ The benchmark is artifact and document hubs where:
 
 ## 6. Current-state assessment
 
-- `User value`: good. The direction is clear and already partially real.
-- `Flow completeness`: partial. Registry truth is stronger than final surface breadth.
-- `UX quality`: partial. The shell is better than before, still not the full doctrine.
-- `Data / logic quality`: strong. Canonical registry rule is explicit.
-- `Integration quality`: strong. Library is meant to serve documents, presentations, sheets, and My Work.
-- `Trust / governance`: good. Review and visibility semantics are defined.
-- `Market standard fit`: partial to good. Strong structure, still needs final product closure.
+- `User value`: strong. One canonical artifact home is real and operational.
+- `Flow completeness`: strong. Registry truth + surface breadth both delivered (7 tabs, 3 queue semantics).
+- `UX quality`: strong. PreviewPaneShell standard, table+preview layout, single-click=preview, double-click=open.
+- `Data / logic quality`: strong. Canonical registry rule is explicit (`v8_output_artifacts`).
+- `Integration quality`: strong. Library serves documents, presentations, sheets, templates, and My Work.
+- `Trust / governance`: strong. Review and visibility semantics consumed from P18 trust-state API.
+- `Market standard fit`: strong. Artifact hub with queue semantics, trust display, and cross-format discovery.
 
 ## 7. Main gaps
 
-- final taxonomy and queue semantics need clearer closure,
-- visible aggregate semantics are thinner than full doctrine,
-- preview/open/review/export behavior still needs consistent final polish,
-- some historical compatibility behavior may still leak old RAP shell assumptions.
+All major gaps resolved by P19-A/B/C:
+
+- ~~final taxonomy and queue semantics need clearer closure~~ → delivered: 7 tabs, mine/review/by-type queues
+- ~~visible aggregate semantics are thinner than full doctrine~~ → delivered: aggregate All/Mine/Needs review with registry-backed rows
+- ~~preview/open/review/export behavior still needs consistent final polish~~ → delivered: PreviewPaneShell + `resolveArtifactOpenPath` coherence
+- ~~some historical compatibility behavior may still leak old RAP shell assumptions~~ → resolved: `/reports` redirects to `/presentations`
+
+Residual known limits:
+- `native_artifact` originRuntime unmapped in aggregate UI mapper (future extension point)
+- No demo fallback for aggregate/sheet views
 
 ## 8. Minimal acceptance state now
 
@@ -84,18 +93,22 @@ The first acceptable Wave 2 state is:
 
 ## 10. Top missing functions and flows
 
-- library taxonomy and queue model
-- preview/open/reopen flow
-- review queue visibility
-- source/export/placement semantics
-- compatibility path from old surfaces
+All originally identified missing functions delivered:
+
+- ~~library taxonomy and queue model~~ → P19-A
+- ~~preview/open/reopen flow~~ → P19-B
+- ~~review queue visibility~~ → P19-B
+- ~~source/export/placement semantics~~ → P19-B
+- ~~compatibility path from old surfaces~~ → P19-B (route redirects)
 
 ## 11. Proposed bounded delivery packets
 
-1. `Library taxonomy closure`
-2. `Aggregate row and preview semantics`
-3. `Review and ownership queues`
-4. `Legacy alias and deep-link cleanup`
+All delivered:
+
+1. ~~`Library taxonomy closure`~~ → P19-A
+2. ~~`Aggregate row and preview semantics`~~ → P19-B
+3. ~~`Review and ownership queues`~~ → P19-B
+4. ~~`Legacy alias and deep-link cleanup`~~ → P19-B
 
 ## 12. Risks and dependencies
 

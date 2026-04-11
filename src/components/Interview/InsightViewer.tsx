@@ -9,6 +9,7 @@ import {
   AlertCircle,
   AlertTriangle,
   BarChart3,
+  BookOpen,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -426,6 +427,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Export states
   const [isExportingTools, setIsExportingTools] = useState(false);
   const [isExportingAssessment, setIsExportingAssessment] = useState(false);
+  const [isExportingNotebook, setIsExportingNotebook] = useState(false);
 
   // Handoff modal state
   const [handoffModalOpen, setHandoffModalOpen] = useState(false);
@@ -863,6 +865,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       toast.error(isPolish ? 'Nie udało się wyeksportować' : 'Failed to export');
     } finally {
       setIsExportingAssessment(false);
+    }
+  };
+
+  const handleExportToNotebook = async () => {
+    if (!insight) return;
+    setIsExportingNotebook(true);
+    try {
+      await Api.post('/my-work/notebook/pages', {
+        title: insight.title,
+        content: insight.content || '',
+        source: 'interview_insight',
+        metadata: { insightId: insight.id },
+      });
+      toast.success(isPolish ? 'Zapisano w Notatniku' : 'Saved to Notebook');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zapisać w Notatniku' : 'Failed to save to Notebook');
+    } finally {
+      setIsExportingNotebook(false);
     }
   };
 
@@ -2523,6 +2543,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <BarChart3 size={14} />
                   )}
                   {isPolish ? 'Do Assessment' : 'Export Assessment'}
+                </button>
+
+                <button
+                  onClick={handleExportToNotebook}
+                  disabled={isExportingNotebook || insight?.status !== 'completed'}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                >
+                  {isExportingNotebook ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <BookOpen size={14} />
+                  )}
+                  {isPolish ? 'Do Notatnika' : 'To Notebook'}
                 </button>
 
                 <button

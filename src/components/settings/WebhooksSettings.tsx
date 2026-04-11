@@ -16,11 +16,6 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
-  Clock,
-  Code,
-  Eye,
-  EyeOff,
-  Filter,
   Loader2,
   Play,
   Plus,
@@ -72,7 +67,6 @@ interface DeliveryLog {
 
 interface WebhooksSettingsProps {
   className?: string;
-  currentUser?: any;
 }
 
 const AVAILABLE_EVENTS = [
@@ -94,7 +88,6 @@ const AVAILABLE_EVENTS = [
 
 export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
   className = '',
-  currentUser,
 }) => {
   const { t } = useTranslation();
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
@@ -185,10 +178,30 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     }
   };
 
-  const fetchDeliveries = async (_webhookId: string) => {
-    // Delivery logs are stored server-side, this is a placeholder
-    // In a full implementation, we'd have an endpoint for this
-    setDeliveries((prev) => ({ ...prev }));
+  const fetchDeliveries = async (webhookId: string) => {
+    try {
+      const response = await Api.get(`/api/webhooks/${encodeURIComponent(webhookId)}/deliveries`);
+      const deliveryRows = Array.isArray(response?.data) ? response.data : [];
+
+      setDeliveries((prev) => ({
+        ...prev,
+        [webhookId]: deliveryRows.map((delivery: any) => ({
+          id: delivery.id,
+          event_type: delivery.event_type || delivery.event || 'unknown',
+          status: delivery.status || 'pending',
+          response_code: delivery.response_code ?? delivery.status_code,
+          response_time_ms: delivery.response_time_ms ?? delivery.duration_ms,
+          retry_count: delivery.retry_count ?? delivery.attempts ?? 0,
+          error_message: delivery.error_message,
+          delivered_at: delivery.delivered_at,
+          created_at: delivery.created_at || delivery.delivered_at || new Date().toISOString(),
+        })),
+      }));
+    } catch (error) {
+      console.error('Failed to fetch webhook deliveries:', error);
+      toast.error(t('settings.webhooks.deliveriesError', 'Failed to load delivery history'));
+      setDeliveries((prev) => ({ ...prev, [webhookId]: [] }));
+    }
   };
 
   const createWebhook = async () => {
@@ -202,6 +215,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         name: newWebhook.name || `Webhook ${Date.now()}`,
         url: newWebhook.url,
         events: newWebhook.events,
+        secret: newWebhook.signatureSecret || undefined,
       });
 
       toast.success(t('settings.webhooks.created', 'Webhook created'));
@@ -253,12 +267,12 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     }
   };
 
-  const retryDelivery = async (webhookId: string, _deliveryId: string) => {
+  const retryDelivery = async (webhookId: string, deliveryId: string) => {
     try {
-      // Retry functionality would be implemented in a full solution
+      await Api.post(`/api/settings/webhooks/${webhookId}/deliveries/${deliveryId}/retry`, {});
       toast.success(t('settings.webhooks.retryStarted', 'Retry started'));
-      setTimeout(() => fetchDeliveries(webhookId), 1000);
-    } catch (error) {
+      setTimeout(() => fetchDeliveries(webhookId), 1500);
+    } catch {
       toast.error(t('settings.webhooks.retryError', 'Failed to retry'));
     }
   };
@@ -276,6 +290,8 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         headers: undefined,
         isActive: existing?.active ? 1 : 0,
         secret: settings.signatureSecret || undefined,
+        retryConfig: settings.retryConfig ? JSON.stringify(settings.retryConfig) : undefined,
+        filterRules: settings.filterRules ? JSON.stringify(settings.filterRules) : undefined,
       });
 
       toast.success(t('settings.webhooks.settingsSaved', 'Settings saved'));

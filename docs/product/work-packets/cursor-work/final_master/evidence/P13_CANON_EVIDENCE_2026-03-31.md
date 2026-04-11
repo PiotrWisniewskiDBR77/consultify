@@ -16,7 +16,7 @@ AI co-building contract, anti-duplicate gate, and 9 degraded scenarios.
 | Artifact | Path | Description |
 |----------|------|-------------|
 | Canon module | `server/src/services/v8/whiteboardCanon.ts` | Frozen canon: toolbelt, facilitation, collab |
-| Test file | `server/src/routes/v8/__tests__/p13-whiteboard-canon.test.ts` | 15+ tests covering all canon exports |
+| Test file | `server/src/routes/v8/__tests__/p13-whiteboard-canon.test.ts` | 57 tests covering all canon exports |
 
 ## Acceptance Checklist Coverage
 
@@ -35,7 +35,7 @@ AI co-building contract, anti-duplicate gate, and 9 degraded scenarios.
 
 ## Test Results
 
-- **Total tests:** 15+ (see test file)
+- **Total tests:** 57 (see test file)
 - **Pass rate:** 100%
 - **Coverage areas:** toolbelt, facilitation flow, transitions, export, collaboration, AI rules, anti-duplicate, degraded scenarios, acceptance checklist
 

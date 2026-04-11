@@ -42,7 +42,6 @@ import {
   MoreVertical,
   Plus,
   RotateCcw,
-  Search,
   Send,
   Settings2,
   Sparkles,
@@ -80,6 +79,14 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 
+import {
+  type FilterChip,
+  ModuleHub,
+  type ModuleTab,
+  type OpenDocument as SharedOpenDocument,
+  type ViewMode,
+} from '../shared/ModuleHub';
+import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssignInterviewModal } from './AssignInterviewModal';
@@ -234,8 +241,7 @@ interface InterviewTemplate {
   createdAt: string;
 }
 
-type ModuleTab = 'my-assignments' | 'sessions' | 'templates' | 'insights' | 'managed';
-type ViewMode = 'table' | 'grid';
+type InterviewTab = 'my_assignments' | 'sessions' | 'templates' | 'insights' | 'managed' | 'pending_review';
 type InsightsViewMode = 'flat' | 'report';
 type ItemStatus =
   | 'draft'
@@ -296,13 +302,7 @@ interface InterviewAssignment {
   };
 }
 
-interface OpenDocument {
-  id: string;
-  type: 'session' | 'insight' | 'template';
-  name: string;
-  status: ItemStatus;
-  data?: InterviewSession | InterviewInsight | InterviewTemplate;
-}
+type OpenDocument = SharedOpenDocument;
 
 // Shared button styles (KANON v3): pills, h-9, hover = bg-only.
 const BUTTON_BASE = `
@@ -352,24 +352,30 @@ const TAB_ACTIVE = `
 `;
 
 // Type colors
-const TYPE_COLORS = {
-  session: 'border-l-purple-500',
-  insight: 'border-l-amber-500',
-  template: 'border-l-blue-500',
+const TYPE_COLORS: Record<string, string> = {
+  interview_session: 'border-l-purple-500',
+  interview_insight: 'border-l-amber-500',
+  interview_template: 'border-l-blue-500',
 };
 
-const STATUS_COLORS: Record<ItemStatus, string> = {
+const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-slate-400',
+  DRAFT: 'bg-slate-400',
   drafting: 'bg-slate-400',
   in_review: 'bg-amber-400',
+  PENDING_REVIEW: 'bg-amber-400',
   review: 'bg-amber-400',
+  REVIEW: 'bg-amber-400',
   approved: 'bg-emerald-400',
+  APPROVED: 'bg-emerald-400',
   accepted: 'bg-emerald-400',
   rejected: 'bg-red-400',
   completed: 'bg-emerald-400',
+  DONE: 'bg-emerald-400',
   active: 'bg-purple-400',
+  EXECUTING: 'bg-purple-400',
   archived: 'bg-slate-500',
-  // Assignment statuses
+  ARCHIVED: 'bg-slate-500',
   assigned: 'bg-blue-400',
   in_progress: 'bg-purple-400',
   submitted: 'bg-amber-400',
@@ -404,12 +410,12 @@ export const InterviewHub: React.FC = () => {
   const insightIdFromUrl = searchParams.get('insightId');
 
   // State - domyślnie Inbox (moje przydziały)
-  const [activeTab, setActiveTab] = useState<ModuleTab>('my-assignments');
+  const [activeTab, setActiveTab] = useState<InterviewTab>('my_assignments');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [sessionsViewMenuOpen, setSessionsViewMenuOpen] = useState(false);
   const [assignmentsViewMode, setAssignmentsViewMode] = useState<'list' | 'cards'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [sessionStatusFilter, setSessionStatusFilter] = useState<string>('all');
   const [sessionsHiddenColumns, setSessionsHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
@@ -589,37 +595,9 @@ export const InterviewHub: React.FC = () => {
     return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
   }, []);
 
-  // V3-A02: Dynamic documents state with sessionStorage persistence
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
-    } catch {
-      return [];
-    }
-  });
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return typeof parsed?.activeDocumentId === 'string' ? parsed.activeDocumentId : null;
-    } catch {
-      return null;
-    }
-  });
-  useEffect(() => {
-    try {
-      window.sessionStorage.setItem(
-        'moduleHub.openDocuments.interview',
-        JSON.stringify({ openDocuments, activeDocumentId })
-      );
-    } catch {
-      /* ignore */
-    }
-  }, [openDocuments, activeDocumentId]);
+  // V3-A02: Dynamic documents state with sessionStorage persistence (shared hook)
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
+    useModuleOpenDocuments('interview');
 
   useEffect(() => {
     // Close preview menus on context change (avoid “leaking” open menus)
@@ -631,7 +609,7 @@ export const InterviewHub: React.FC = () => {
 
   useEffect(() => {
     // Preview state should not leak across tabs/docs.
-    if (activeTab !== 'my-assignments' && activeTab !== 'managed') {
+    if (activeTab !== 'my_assignments' && activeTab !== 'managed') {
       setPreviewAssignmentId(null);
       setPreviewAssignmentOpen(false);
     }
@@ -767,16 +745,10 @@ export const InterviewHub: React.FC = () => {
     if (sessionIdFromUrl && sessions.length > 0) {
       const session = sessions.find((s) => s.id === sessionIdFromUrl);
       if (session) {
-        handleOpenDocument({
-          id: session.id,
-          type: 'session',
-          name: session.name || 'Interview Session',
-          status: session.status as ItemStatus,
-          data: session,
-        });
+        handleViewSession(session);
       }
     }
-  }, [sessionIdFromUrl, sessions]);
+  }, [sessionIdFromUrl, sessions, handleViewSession]);
 
   // Open assignment from URL (deep link from notifications)
   useEffect(() => {
@@ -786,7 +758,7 @@ export const InterviewHub: React.FC = () => {
     const assignment = allAssignments.find((a) => a.id === assignmentIdFromUrl);
     if (!assignment) return;
     const isManagerView = managedAssignments.some((a) => a.id === assignmentIdFromUrl);
-    setActiveTab(isManagerView ? 'managed' : 'my-assignments');
+    setActiveTab(isManagerView ? 'managed' : 'my_assignments');
     void openInterviewAssignmentFull(assignment, isManagerView);
     const next = new URLSearchParams(searchParams);
     next.delete('assignmentId');
@@ -799,23 +771,17 @@ export const InterviewHub: React.FC = () => {
     if (!insightIdFromUrl) return;
     const insight = insights.find((i) => i.id === insightIdFromUrl);
     if (!insight) return;
-    handleOpenDocument({
-      id: insight.id,
-      type: 'insight',
-      name: insight.title || 'Insight',
-      status: (insight.status as ItemStatus) || 'approved',
-      data: insight,
-    });
+    handleViewInsight(insight);
     const next = new URLSearchParams(searchParams);
     next.delete('insightId');
     setSearchParams(next, { replace: true });
-  }, [insightIdFromUrl, insights, searchParams, setSearchParams]);
+  }, [insightIdFromUrl, insights, searchParams, setSearchParams, handleViewInsight]);
 
   // Load template questions when a template doc is opened
   useEffect(() => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
     const templateId =
-      (doc?.type === 'template' ? doc.id : null) ||
+      (doc?.type === 'interview_template' ? doc.id : null) ||
       (activeTab === 'templates' && selectedTemplateId ? selectedTemplateId : null);
     if (!templateId) return;
     if (templateQuestionsById[templateId] || templateQuestionsLoading[templateId]) return;
@@ -1074,6 +1040,12 @@ export const InterviewHub: React.FC = () => {
 
   // Tab configuration - role-based visibility
   // Pracownik (TEAM_MEMBER/VIEWER): tylko Inbox
+  // Pending review insights (for triage tab)
+  const pendingReviewInsights = useMemo(
+    () => insights.filter((i) => i.status === 'in_review'),
+    [insights]
+  );
+
   // Manager (PM/ADMIN): wszystkie zakładki
   const tabs = useMemo(() => {
     const baseTabs: Array<{
@@ -1081,11 +1053,9 @@ export const InterviewHub: React.FC = () => {
       label: string;
       icon: React.ReactNode;
       count?: number;
-      hasWarning?: boolean;
     }> = [
-      // 1. Inbox - przydzielone do mnie (widoczne dla wszystkich)
       {
-        id: 'my-assignments' as ModuleTab,
+        id: 'my_assignments' as ModuleTab,
         label: isPolish ? 'Inbox' : 'Inbox',
         icon: <Inbox size={16} />,
         count: myAssignments.filter((a) => a.status !== 'approved' && a.status !== 'completed')
@@ -1093,9 +1063,7 @@ export const InterviewHub: React.FC = () => {
       },
     ];
 
-    // Dodatkowe zakładki tylko dla PM/Admin
     if (canViewManaged) {
-      // 2. Sessions - sesje wywiadów (PM/Admin)
       baseTabs.push({
         id: 'sessions' as ModuleTab,
         label: isPolish ? 'Sesje' : 'Sessions',
@@ -1103,18 +1071,13 @@ export const InterviewHub: React.FC = () => {
         count: sessions.length,
       });
 
-      // 3. Assigned - wywiady które przydzieliłem (PM/Admin)
-      const assignedCount = managedAssignments.length;
-      const overdueCount = overdueAssignments.length;
       baseTabs.push({
         id: 'managed' as ModuleTab,
         label: isPolish ? 'Przydzielone' : 'Assigned',
         icon: <ClipboardList size={16} />,
-        count: assignedCount,
-        hasWarning: overdueCount > 0,
+        count: managedAssignments.length,
       });
 
-      // 4. Templates - biblioteka szablonów (PM/Admin)
       baseTabs.push({
         id: 'templates' as ModuleTab,
         label: isPolish ? 'Szablony' : 'Templates',
@@ -1122,12 +1085,18 @@ export const InterviewHub: React.FC = () => {
         count: templates.length,
       });
 
-      // 5. Insights - wnioski AI (PM/Admin) - rightmost
       baseTabs.push({
         id: 'insights' as ModuleTab,
         label: isPolish ? 'Wnioski' : 'Insights',
         icon: <Lightbulb size={16} />,
         count: insights.length,
+      });
+
+      baseTabs.push({
+        id: 'pending_review' as ModuleTab,
+        label: isPolish ? 'Do przeglądu' : 'Pending Review',
+        icon: <AlertTriangle size={16} />,
+        count: pendingReviewInsights.length,
       });
     }
 
@@ -1139,8 +1108,8 @@ export const InterviewHub: React.FC = () => {
     templates.length,
     myAssignments,
     managedAssignments,
-    overdueAssignments,
     canViewManaged,
+    pendingReviewInsights.length,
   ]);
 
   const ensureProjectId = useCallback(async (): Promise<string | null> => {
@@ -1180,10 +1149,10 @@ export const InterviewHub: React.FC = () => {
       // Open the new session (inline to avoid TDZ issues)
       const doc: OpenDocument = {
         id: (newSession as InterviewSession).id,
-        type: 'session',
+        type: 'interview_session',
         name: (newSession as InterviewSession).name || 'Interview Session',
-        status: (newSession as any)?.status || 'in_progress',
-        data: newSession as InterviewSession,
+        subType: 'interview',
+        status: ((newSession as any)?.status || 'IN_PROGRESS').toString().toUpperCase() as any,
       };
       setOpenDocuments((prev) => {
         if (prev.find((d) => d.id === doc.id)) return prev;
@@ -1224,10 +1193,10 @@ export const InterviewHub: React.FC = () => {
     (session: InterviewSession) => {
       handleOpenDocument({
         id: session.id,
-        type: 'session',
+        type: 'interview_session',
+        subType: 'interview',
         name: session.name || 'Interview Session',
-        status: session.status as ItemStatus,
-        data: session,
+        status: (session.status?.toUpperCase() || 'DRAFT') as any,
       });
     },
     [handleOpenDocument]
@@ -1235,13 +1204,12 @@ export const InterviewHub: React.FC = () => {
 
   const handleViewInsight = useCallback(
     (insight: InterviewInsight) => {
-      // Open as dynamic tab with full view (like sessions and templates)
       handleOpenDocument({
         id: insight.id,
-        type: 'insight',
+        type: 'interview_insight',
+        subType: 'interview',
         name: insight.title,
-        status: (insight.status as ItemStatus) || 'approved',
-        data: insight,
+        status: ((insight.status || 'approved').toUpperCase()) as any,
       });
     },
     [handleOpenDocument]
@@ -1251,10 +1219,10 @@ export const InterviewHub: React.FC = () => {
     (template: InterviewTemplate) => {
       handleOpenDocument({
         id: template.id,
-        type: 'template',
+        type: 'interview_template',
+        subType: 'interview',
         name: template.name,
-        status: 'approved',
-        data: template,
+        status: 'APPROVED' as any,
       });
     },
     [handleOpenDocument]
@@ -1272,36 +1240,25 @@ export const InterviewHub: React.FC = () => {
   );
 
   const handleSessionChange = useCallback((session: InterviewSession) => {
-    // Update open document
     setOpenDocuments((prev) =>
       prev.map((doc) =>
         doc.id === session.id
-          ? { ...doc, name: session.name || 'Interview Session', data: session }
+          ? { ...doc, name: session.name || 'Interview Session' }
           : doc
       )
     );
-  }, []);
+  }, [setOpenDocuments]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleCloseSearch = () => {
-    setShowSearch(false);
-    setSearchQuery('');
-  };
+  // Search is handled by ModuleHub's onSearch prop
 
   // Template actions
   const handleNewTemplate = useCallback(() => {
     handleOpenDocument({
       id: `new-template:${Date.now()}`,
-      type: 'template',
+      type: 'interview_template',
+      subType: 'interview',
       name: isPolish ? 'Nowy template' : 'New template',
-      status: 'draft',
-      data: {
-        name: isPolish ? 'Nowy template' : 'New template',
-        status: 'draft',
-      } as unknown as InterviewTemplate,
+      status: 'DRAFT' as any,
     });
   }, [handleOpenDocument, isPolish]);
 
@@ -1310,16 +1267,10 @@ export const InterviewHub: React.FC = () => {
       const template = templates.find((item) => item.id === templateId);
       handleOpenDocument({
         id: templateId,
-        type: 'template',
+        type: 'interview_template',
+        subType: 'interview',
         name: template?.name || (isPolish ? 'Template' : 'Template'),
-        status: (template?.status as ItemStatus) || 'draft',
-        data:
-          template ||
-          ({
-            id: templateId,
-            name: isPolish ? 'Template' : 'Template',
-            status: 'draft',
-          } as unknown as InterviewTemplate),
+        status: ((template?.status || 'draft').toUpperCase()) as any,
       });
     },
     [handleOpenDocument, isPolish, templates]
@@ -1344,10 +1295,10 @@ export const InterviewHub: React.FC = () => {
         // Open the cloned template in the dynamic document area
         handleOpenDocument({
           id: (cloned as any).id,
-          type: 'template',
+          type: 'interview_template',
+          subType: 'interview',
           name: (cloned as any).name || `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
-          status: ((cloned as any).status as ItemStatus) || 'draft',
-          data: cloned as InterviewTemplate,
+          status: (((cloned as any).status || 'draft').toUpperCase()) as any,
         });
       } catch (error) {
         toast.dismiss();
@@ -1588,9 +1539,9 @@ export const InterviewHub: React.FC = () => {
               onClick={() => setActiveDocumentId(doc.id)}
             >
               {/* Type Icon */}
-              {doc.type === 'session' && <MessageSquare size={14} />}
-              {doc.type === 'insight' && <Lightbulb size={14} />}
-              {doc.type === 'template' && <FileText size={14} />}
+              {doc.type === 'interview_session' && <MessageSquare size={14} />}
+              {doc.type === 'interview_insight' && <Lightbulb size={14} />}
+              {doc.type === 'interview_template' && <FileText size={14} />}
 
               {/* Name (truncated) */}
               <span className="max-w-[120px] truncate">{doc.name}</span>
@@ -1616,64 +1567,12 @@ export const InterviewHub: React.FC = () => {
   };
 
   const renderCommandRow = () => {
-    // V3-A03 MUST: single command row under topbar
-    // 1) Search row (when enabled)
-    if (showSearch && !activeDocumentId) {
-      return (
-        <div className="px-4 pb-3">
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder={
-                activeTab === 'sessions'
-                  ? isPolish
-                    ? 'Szukaj sesji...'
-                    : 'Search sessions...'
-                  : activeTab === 'insights'
-                    ? isPolish
-                      ? 'Szukaj wniosków...'
-                      : 'Search insights...'
-                    : activeTab === 'templates'
-                      ? isPolish
-                        ? 'Szukaj szablonów...'
-                        : 'Search templates...'
-                      : isPolish
-                        ? 'Szukaj przydziałów...'
-                        : 'Search assignments...'
-              }
-              autoFocus
-              className="w-full pl-10 pr-10 py-2 rounded-lg bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // 2) Dynamic tabs row (when documents open)
-    if (openDocuments.length > 0) {
-      return renderDynamicTabs();
-    }
-
-    // 3) Context counters row (list view default)
+    // Search and dynamic tabs are now handled by ModuleHub
     if (activeDocumentId) return null;
 
     // Interview Inbox counters/status chips — Command Row (single line)
     // MUST: Inbox (moja) / Do zatwierdzenia / Zaległe with counters; click sets filter.
-    if (activeTab === 'my-assignments' || activeTab === 'managed') {
+    if (activeTab === 'my_assignments' || activeTab === 'managed') {
       const myInboxCount = (myAssignments || []).filter(
         (a) => a.status !== 'approved' && a.status !== 'completed'
       ).length;
@@ -1697,7 +1596,7 @@ export const InterviewHub: React.FC = () => {
           label: 'ALL',
           count: myInboxCount,
           onClick: () => {
-            setActiveTab('my-assignments');
+            setActiveTab('my_assignments');
             setAssignmentStatusFilter('all');
             setActiveDocumentId(null);
           },
@@ -1707,7 +1606,7 @@ export const InterviewHub: React.FC = () => {
           label: isPolish ? 'Inbox (moja)' : 'My inbox',
           count: myInboxCount,
           onClick: () => {
-            setActiveTab('my-assignments');
+            setActiveTab('my_assignments');
             setAssignmentStatusFilter('all');
             setActiveDocumentId(null);
           },
@@ -1739,7 +1638,7 @@ export const InterviewHub: React.FC = () => {
       ];
 
       const activeId: 'my' | 'to-approve' | 'overdue' | null =
-        activeTab === 'my-assignments' && assignmentStatusFilter === 'all'
+        activeTab === 'my_assignments' && assignmentStatusFilter === 'all'
           ? null
           : assignmentStatusFilter === 'overdue'
             ? 'overdue'
@@ -3041,10 +2940,10 @@ export const InterviewHub: React.FC = () => {
                                   setSessions((prev) => [newSession, ...prev]);
                                   handleOpenDocument({
                                     id: newSession.id,
-                                    type: 'session',
+                                    type: 'interview_session',
+                                    subType: 'interview',
                                     name: newSession.name || 'Interview Session',
-                                    status: (newSession as any)?.status || 'in_progress',
-                                    data: newSession,
+                                    status: (((newSession as any)?.status || 'in_progress').toUpperCase()) as any,
                                   });
                                   toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
                                 })
@@ -3263,11 +3162,10 @@ export const InterviewHub: React.FC = () => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
     if (!doc) return null;
 
-    if (doc.type === 'session') {
-      const session = doc.data as InterviewSession;
+    if (doc.type === 'interview_session') {
       return (
         <InterviewWorkspace
-          sessionId={session.id}
+          sessionId={doc.id}
           projectId={currentProjectId || undefined}
           onComplete={handleSessionComplete}
           onSessionChange={handleSessionChange}
@@ -3275,12 +3173,11 @@ export const InterviewHub: React.FC = () => {
       );
     }
 
-    if (doc.type === 'insight') {
-      const insight = doc.data as InterviewInsight;
+    if (doc.type === 'interview_insight') {
       return (
         <InsightViewer
-          insightId={insight.id}
-          onClose={() => handleCloseDocument(insight.id)}
+          insightId={doc.id}
+          onClose={() => handleCloseDocument(doc.id)}
           onRegenerate={async () => {
             const insightsRes = await V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => []));
             const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
@@ -3291,23 +3188,21 @@ export const InterviewHub: React.FC = () => {
             );
           }}
           onSaved={(data) => {
-            // Update local insight data
             setInsights((prev) => prev.map((i) => (i.id === data.id ? { ...i, ...data } : i)));
           }}
         />
       );
     }
 
-    if (doc.type === 'template') {
-      const template = doc.data as InterviewTemplate;
-      const isNewTemplateDocument = template.id.startsWith('new-template:');
+    if (doc.type === 'interview_template') {
+      const isNewTemplateDocument = doc.id.startsWith('new-template:');
 
       return (
         <TemplateBuilder
           key={doc.id}
           isOpen
           presentation="document"
-          templateId={isNewTemplateDocument ? null : template.id}
+          templateId={isNewTemplateDocument ? null : doc.id}
           onClose={() => handleCloseDocument(doc.id)}
           onSuccess={async (savedTemplate) => {
             const templatesRes = await Api.get('/interview/templates').catch(() => []);
@@ -3330,10 +3225,9 @@ export const InterviewHub: React.FC = () => {
             const nextTemplate =
               refreshedTemplates.find((item) => item.id === savedId) ||
               ({
-                ...template,
                 ...savedTemplate,
                 id: savedId,
-                name: savedTemplate.name || template.name,
+                name: savedTemplate.name || doc.name,
               } as InterviewTemplate);
 
             setOpenDocuments((prev) => {
@@ -3345,8 +3239,7 @@ export const InterviewHub: React.FC = () => {
                 next[existingIdx] = {
                   ...next[existingIdx],
                   name: nextTemplate.name,
-                  status: (nextTemplate.status as ItemStatus) || 'draft',
-                  data: nextTemplate,
+                  status: ((nextTemplate.status || 'draft').toUpperCase()) as any,
                 };
                 return next;
               }
@@ -3355,10 +3248,10 @@ export const InterviewHub: React.FC = () => {
                 ...withoutOld,
                 {
                   id: savedId,
-                  type: 'template' as const,
+                  type: 'interview_template' as const,
+                  subType: 'interview',
                   name: nextTemplate.name,
-                  status: (nextTemplate.status as ItemStatus) || 'draft',
-                  data: nextTemplate,
+                  status: ((nextTemplate.status || 'draft').toUpperCase()) as any,
                 },
               ];
             });
@@ -3540,10 +3433,10 @@ export const InterviewHub: React.FC = () => {
           toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
           handleOpenDocument({
             id: session.id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: session.name || 'Interview Session',
-            status: (session.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: ((session.status || 'in_progress').toUpperCase()) as any,
           });
         } else {
           console.warn('[InterviewHub] No session in result:', result);
@@ -3600,10 +3493,10 @@ export const InterviewHub: React.FC = () => {
           }
           handleOpenDocument({
             id: (session as InterviewSession).id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: (session as InterviewSession).name || 'Interview Session',
-            status: ((session as any)?.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: (((session as any)?.status || 'in_progress').toUpperCase()) as any,
           });
           return;
         }
@@ -3855,10 +3748,10 @@ Return ONLY the answer text (no markdown fences).`;
           toast.success(isPolish ? 'Wywiad rozpoczęty!' : 'Interview started!');
           handleOpenDocument({
             id: session.id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: session.name || 'Interview Session',
-            status: (session.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: ((session.status || 'in_progress').toUpperCase()) as any,
           });
         } else {
           console.warn('[InterviewHub] No session in result:', result);
@@ -3941,10 +3834,10 @@ Return ONLY the answer text (no markdown fences).`;
             .catch(() => Api.get(`/interview/sessions/${sid}`));
           handleOpenDocument({
             id: (session as InterviewSession).id,
-            type: 'session',
+            type: 'interview_session',
+            subType: 'interview',
             name: (session as InterviewSession).name || 'Interview Session',
-            status: ((session as any)?.status || 'in_progress') as any,
-            data: session as InterviewSession,
+            status: (((session as any)?.status || 'in_progress').toUpperCase()) as any,
           });
           return;
         }
@@ -4220,11 +4113,11 @@ Return ONLY the answer text (no markdown fences).`;
                                     );
                                     handleOpenDocument({
                                       id: (session as InterviewSession).id,
-                                      type: 'session',
+                                      type: 'interview_session',
+                                      subType: 'interview',
                                       name:
                                         (session as InterviewSession).name || 'Interview Session',
-                                      status: ((session as any)?.status || 'in_progress') as any,
-                                      data: session as InterviewSession,
+                                      status: (((session as any)?.status || 'in_progress').toUpperCase()) as any,
                                     });
                                   },
                                 },
@@ -4244,11 +4137,11 @@ Return ONLY the answer text (no markdown fences).`;
                                     );
                                     handleOpenDocument({
                                       id: (session as InterviewSession).id,
-                                      type: 'session',
+                                      type: 'interview_session',
+                                      subType: 'interview',
                                       name:
                                         (session as InterviewSession).name || 'Interview Session',
-                                      status: ((session as any)?.status || 'in_progress') as any,
-                                      data: session as InterviewSession,
+                                      status: (((session as any)?.status || 'in_progress').toUpperCase()) as any,
                                     });
                                   },
                                 },
@@ -4879,7 +4772,7 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
-    if (activeTab === 'my-assignments') {
+    if (activeTab === 'my_assignments') {
       const rows = myAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
@@ -5290,6 +5183,75 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
+    if (activeTab === 'pending_review') {
+      const reviewInsights = pendingReviewInsights;
+
+      if (reviewInsights.length === 0) {
+        return (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <AlertTriangle size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+            <p className="text-lg font-medium text-slate-900 dark:text-white">
+              {isPolish ? 'Brak wniosków do przeglądu' : 'No insights pending review'}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {isPolish
+                ? 'Wszystkie wnioski zostały przejrzane.'
+                : 'All insights have been reviewed.'}
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="p-4 space-y-2">
+          {reviewInsights.map((insight) => {
+            const findingsCount =
+              ((insight as any).findings?.length) ||
+              ((insight as any).findingsCount) ||
+              0;
+
+            return (
+              <button
+                key={insight.id}
+                type="button"
+                onClick={() => handleViewInsight(insight)}
+                className="w-full text-left p-4 rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-navy-900/70 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Lightbulb size={14} className="text-amber-500 shrink-0" />
+                      <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                        {insight.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                      {insight.createdAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock size={12} />
+                          {new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}
+                        </span>
+                      )}
+                      {findingsCount > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Target size={12} />
+                          {findingsCount} {isPolish ? 'wyników' : 'findings'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    {isPolish ? 'Do przeglądu' : 'In Review'}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -5305,405 +5267,234 @@ Return ONLY the answer text (no markdown fences).`;
   };
 
   const sessionsViewLabel = useMemo(() => {
-    const map: Record<ViewMode, { en: string; pl: string; icon: React.ElementType }> = {
+    const map: Record<string, { en: string; pl: string; icon: React.ElementType }> = {
       table: { en: 'List', pl: 'Lista', icon: LayoutList },
       grid: { en: 'Cards', pl: 'Karty', icon: LayoutGrid },
     };
     return map[viewMode] || map.table;
   }, [viewMode]);
 
-  // Insights view uses icon segmented toggle (Inbox canonical)
+  const handleMainTabChange = useCallback((tab: ModuleTab) => {
+    setActiveTab(tab as InterviewTab);
+    if (tab === 'managed') {
+      setAssignmentStatusFilter('submitted');
+    }
+    setActiveDocumentId(null);
+  }, [setActiveDocumentId]);
+
+  const handleRemoveFilter = useCallback((id: string) => {
+    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setActiveFilters([]);
+  }, []);
+
+  // Tab-specific right controls
+  const rightControls = useMemo(() => {
+    if (activeDocumentId) return null;
+    const controls: React.ReactNode[] = [];
+
+    if (activeTab === 'templates') {
+      controls.push(
+        <div key="area-filter" className="relative">
+          <button
+            type="button"
+            onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
+            className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
+            title={isPolish ? 'Filtr obszarów' : 'Area filter'}
+          >
+            <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
+              {templateAreaTagFilter.length > 0
+                ? `${isPolish ? 'Obszary' : 'Areas'} (${templateAreaTagFilter.length})`
+                : isPolish ? 'Wszystkie obszary' : 'All areas'}
+            </span>
+            <ChevronDown size={14} />
+          </button>
+          {isTemplateAreaFilterOpen ? (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsTemplateAreaFilterOpen(false)} />
+              <div className="absolute right-0 top-full mt-2 z-50 w-64 max-h-80 overflow-auto rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-2">
+                <button type="button" onClick={() => setTemplateAreaTagFilter([])} className="w-full text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg">
+                  {isPolish ? 'Wyczyść filtr' : 'Clear filter'}
+                </button>
+                {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
+                  const checked = templateAreaTagFilter.includes(tag);
+                  return (
+                    <label key={tag} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer text-sm text-slate-700 dark:text-slate-200">
+                      <input type="checkbox" checked={checked} onChange={() => setTemplateAreaTagFilter((prev) => checked ? prev.filter((item) => item !== tag) : [...prev, tag])} className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                      <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          ) : null}
+        </div>,
+        <div key="source-filter" className="relative">
+          <select value={templateSourceFilter} onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)} className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors" title={isPolish ? 'Filtr źródła' : 'Source filter'}>
+            <option value="all">{isPolish ? 'Wszystkie źródła' : 'All sources'}</option>
+            <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
+            <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
+            <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
+          </select>
+          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+        </div>,
+        <div key="templates-view" className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5" role="radiogroup" aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}>
+          <button type="button" onClick={() => setTemplatesViewMode('cards')} className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${templatesViewMode === 'cards' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`} title={isPolish ? 'Karty' : 'Cards'} role="radio" aria-checked={templatesViewMode === 'cards'}>
+            <LayoutGrid size={15} />
+          </button>
+          <button type="button" onClick={() => setTemplatesViewMode('table')} className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${templatesViewMode === 'table' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`} title={isPolish ? 'Tabela' : 'Table'} role="radio" aria-checked={templatesViewMode === 'table'}>
+            <List size={15} />
+          </button>
+        </div>,
+      );
+    }
+
+    if (activeTab === 'insights') {
+      controls.push(
+        <div key="insights-view" className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5" role="radiogroup" aria-label={isPolish ? 'Tryb widoku' : 'View mode'}>
+          <button onClick={() => setInsightsViewMode('flat')} className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${insightsViewMode === 'flat' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`} title={isPolish ? 'Lista' : 'List'} role="radio" aria-checked={insightsViewMode === 'flat'}>
+            <LayoutList size={16} />
+          </button>
+          <button onClick={() => setInsightsViewMode('report')} className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${insightsViewMode === 'report' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`} title={isPolish ? 'Wg raportu' : 'By report'} role="radio" aria-checked={insightsViewMode === 'report'}>
+            <LayoutGrid size={16} />
+          </button>
+        </div>,
+      );
+    }
+
+    if (activeTab === 'sessions') {
+      controls.push(
+        <div key="sessions-status" className="relative">
+          <select value={sessionStatusFilter} onChange={(e) => setSessionStatusFilter(e.target.value)} className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors" title={isPolish ? 'Filtr statusu' : 'Status filter'}>
+            {sessionStatusOptions.map((o) => (<option key={o.id} value={o.id}>{o.display}</option>))}
+          </select>
+          <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+        </div>,
+        <div key="sessions-view" className="relative">
+          <button onClick={() => setSessionsViewMenuOpen((v) => !v)} className={TOPBAR_PILL_INACTIVE} title={isPolish ? 'Widok' : 'View'}>
+            <sessionsViewLabel.icon size={14} />
+            <span>{isPolish ? sessionsViewLabel.pl : sessionsViewLabel.en}</span>
+            <ChevronDown size={12} className={`transition-transform ${sessionsViewMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {sessionsViewMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setSessionsViewMenuOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
+                {([{ id: 'table' as ViewMode, icon: LayoutList, en: 'List', pl: 'Lista' }, { id: 'grid' as ViewMode, icon: LayoutGrid, en: 'Cards', pl: 'Karty' }] as const).map(({ id, icon: Icon, en, pl }) => (
+                  <button key={id} onClick={() => { setViewMode(id); setSessionsViewMenuOpen(false); }} className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${viewMode === id ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'}`}>
+                    <span className="flex items-center gap-2"><Icon size={14} />{isPolish ? pl : en}</span>
+                    {viewMode === id ? <Check size={14} /> : null}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>,
+      );
+    }
+
+    if (activeTab === 'my_assignments' || activeTab === 'managed') {
+      controls.push(
+        <div key="assignments-view" className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5" role="radiogroup" aria-label={isPolish ? 'Tryb widoku' : 'View mode'}>
+          <button onClick={() => setAssignmentsViewMode('list')} className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${assignmentsViewMode === 'list' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`} title={isPolish ? 'Lista' : 'List'} role="radio" aria-checked={assignmentsViewMode === 'list'}>
+            <LayoutList size={16} />
+          </button>
+          <button onClick={() => setAssignmentsViewMode('cards')} className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${assignmentsViewMode === 'cards' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`} title={isPolish ? 'Karty' : 'Cards'} role="radio" aria-checked={assignmentsViewMode === 'cards'}>
+            <LayoutGrid size={16} />
+          </button>
+        </div>,
+      );
+    }
+
+    return controls.length > 0 ? <div className="flex items-center gap-1.5">{controls}</div> : null;
+  }, [activeDocumentId, activeTab, isPolish, templateAreaTagFilter, isTemplateAreaFilterOpen, templateSourceFilter, templatesViewMode, insightsViewMode, sessionStatusFilter, sessionsViewMenuOpen, sessionsViewLabel, viewMode, assignmentsViewMode, sessionStatusOptions, TOPBAR_PILL_INACTIVE]);
+
+  // Tab-specific primary CTA
+  const primaryCta = useMemo(() => {
+    if (activeDocumentId) return null;
+    if (activeTab === 'sessions') {
+      return (
+        <button onClick={handleNewSession} className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-purple-400/30 hover:from-purple-400 hover:to-purple-500 shadow-lg shadow-purple-500/20 transition-colors">
+          <Plus size={16} /><span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
+        </button>
+      );
+    }
+    if (activeTab === 'templates' && canAssign) {
+      return (
+        <button onClick={handleNewTemplate} className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors">
+          <Plus size={16} /><span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
+        </button>
+      );
+    }
+    if (activeTab === 'insights') {
+      return (
+        <button onClick={() => { setSelectedSessionsForInsight([]); setShowInsightModal(true); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors">
+          <Plus size={16} /><span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
+        </button>
+      );
+    }
+    if ((activeTab === 'my_assignments' || activeTab === 'managed') && canAssign) {
+      return (
+        <button onClick={() => { setSelectedTemplateForAssign(null); setShowAssignModal(true); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors">
+          <Plus size={16} /><span>{isPolish ? 'Przydziel' : 'Assign'}</span>
+        </button>
+      );
+    }
+    return null;
+  }, [activeDocumentId, activeTab, isPolish, canAssign, handleNewSession, handleNewTemplate]);
+
+  // Tool control: Contextual Help
+  const toolControl = useMemo(() => {
+    if (activeDocumentId) return null;
+    return (
+      <button
+        type="button"
+        onClick={openContextualHelp}
+        className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+        title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
+        data-testid="contextual-help-entry-interview"
+      >
+        <CircleHelp size={16} />
+        <span>{t('help.entrypoint.contextual', 'Help')}</span>
+      </button>
+    );
+  }, [activeDocumentId, openContextualHelp, isPolish, t]);
+
+  // Command row content (from renderCommandRow, minus search/dynamic tabs which ModuleHub handles)
+  const commandRowContent = useMemo(() => {
+    if (activeDocumentId) return null;
+    return renderCommandRow();
+  }, [activeDocumentId, activeTab, renderCommandRow]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
-      {/* Navigation Bar (Golden Standard) */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
-        {/* Main Navigation Row */}
-        <div className="flex items-center justify-between px-4 py-3">
-          {/* Left: Search + Tabs + Status Filters */}
-          <div className="flex items-center gap-3">
-            {/* Search Toggle — h-9 per App Table Standard */}
-            <button
-              onClick={() => setShowSearch(!showSearch)}
-              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                showSearch
-                  ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
-                  : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-              }`}
-              title={isPolish ? 'Szukaj' : 'Search'}
-            >
-              <Search size={18} />
-            </button>
-
-            {/* Main Tabs (KANON v3: NO counts/badges on main tabs) */}
-            <div className="flex items-center gap-2">
-              {tabs.map((tab: any) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      if (tab.id === 'managed') {
-                        // Default managed mode is approvals (KANON: "Do zatwierdzenia").
-                        setAssignmentStatusFilter('submitted');
-                      }
-                      setActiveDocumentId(null); // Go back to list when changing tabs
-                    }}
-                    className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right: (scan from right) AI → CTA → View */}
-          <div className="flex items-center gap-1.5">
-            {/* NOTE: Order here is rendered LEFT→RIGHT, but we want visual order FROM RIGHT EDGE:
-                AI → CTA → View → Filters. So JSX order must be: Filters → View → CTA → AI. */}
-
-            {/* Templates: Filters must be to the LEFT of CTA (scan from right: AI → CTA → Filters) */}
-            {activeTab === 'templates' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Filtr obszarów' : 'Area filter'}
-                >
-                  <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
-                    {templateAreaTagFilter.length > 0
-                      ? `${isPolish ? 'Obszary' : 'Areas'} (${templateAreaTagFilter.length})`
-                      : isPolish
-                        ? 'Wszystkie obszary'
-                        : 'All areas'}
-                  </span>
-                  <ChevronDown size={14} />
-                </button>
-                {isTemplateAreaFilterOpen ? (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsTemplateAreaFilterOpen(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-2 z-50 w-64 max-h-80 overflow-auto rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg p-2">
-                      <button
-                        type="button"
-                        onClick={() => setTemplateAreaTagFilter([])}
-                        className="w-full text-left px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg"
-                      >
-                        {isPolish ? 'Wyczyść filtr' : 'Clear filter'}
-                      </button>
-                      {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
-                        const checked = templateAreaTagFilter.includes(tag);
-                        return (
-                          <label
-                            key={tag}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer text-sm text-slate-700 dark:text-slate-200"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() =>
-                                setTemplateAreaTagFilter((prev) =>
-                                  checked ? prev.filter((item) => item !== tag) : [...prev, tag]
-                                )
-                              }
-                              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                            />
-                            <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            )}
-
-            {activeTab === 'templates' && !activeDocumentId && (
-              <div className="relative">
-                <select
-                  value={templateSourceFilter}
-                  onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
-                  className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Filtr źródła' : 'Source filter'}
-                >
-                  <option value="all">{isPolish ? 'Wszystkie źródła' : 'All sources'}</option>
-                  <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
-                  <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
-                  <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                />
-              </div>
-            )}
-
-            {/* Tool slot: Contextual Help (P25-B) */}
-            {!activeDocumentId && (
-              <button
-                type="button"
-                onClick={openContextualHelp}
-                className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-                data-testid="contextual-help-entry-interview"
-              >
-                <CircleHelp size={16} />
-                <span>{t('help.entrypoint.contextual', 'Help')}</span>
-              </button>
-            )}
-
-            {activeTab === 'templates' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}
-                title={isPolish ? 'Widok' : 'View'}
-              >
-                <button
-                  type="button"
-                  onClick={() => setTemplatesViewMode('cards')}
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    templatesViewMode === 'cards'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Karty' : 'Cards'}
-                  role="radio"
-                  aria-checked={templatesViewMode === 'cards'}
-                >
-                  <LayoutGrid size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTemplatesViewMode('table')}
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    templatesViewMode === 'table'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Tabela' : 'Table'}
-                  role="radio"
-                  aria-checked={templatesViewMode === 'table'}
-                >
-                  <List size={15} />
-                </button>
-              </div>
-            )}
-
-            {activeTab === 'templates' && !activeDocumentId && canAssign && (
-              <button
-                onClick={handleNewTemplate}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
-              </button>
-            )}
-
-            {activeTab === 'insights' && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-                title={isPolish ? 'Widok' : 'View'}
-              >
-                <button
-                  onClick={() => setInsightsViewMode('flat')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    insightsViewMode === 'flat'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Lista' : 'List'}
-                  role="radio"
-                  aria-checked={insightsViewMode === 'flat'}
-                >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setInsightsViewMode('report')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    insightsViewMode === 'report'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Wg raportu' : 'By report'}
-                  role="radio"
-                  aria-checked={insightsViewMode === 'report'}
-                >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-            )}
-
-            {activeTab === 'insights' && !activeDocumentId && (
-              <button
-                onClick={() => {
-                  setSelectedSessionsForInsight([]);
-                  setShowInsightModal(true);
-                }}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
-              </button>
-            )}
-
-            {/* 5) Filters (tab-specific) */}
-            {activeTab === 'sessions' && !activeDocumentId && (
-              <div className="relative">
-                <select
-                  value={sessionStatusFilter}
-                  onChange={(e) => setSessionStatusFilter(e.target.value)}
-                  className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Filtr statusu' : 'Status filter'}
-                >
-                  {sessionStatusOptions.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.display}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                />
-              </div>
-            )}
-
-            {/* 3) View tool (pill dropdown) */}
-            {activeTab === 'sessions' && !activeDocumentId && (
-              <div className="relative">
-                <button
-                  onClick={() => setSessionsViewMenuOpen((v) => !v)}
-                  className={TOPBAR_PILL_INACTIVE}
-                  title={isPolish ? 'Widok' : 'View'}
-                >
-                  <sessionsViewLabel.icon size={14} />
-                  <span>{isPolish ? sessionsViewLabel.pl : sessionsViewLabel.en}</span>
-                  <ChevronDown
-                    size={12}
-                    className={`transition-transform ${sessionsViewMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {sessionsViewMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-30"
-                      onClick={() => setSessionsViewMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
-                      {(
-                        [
-                          { id: 'table' as ViewMode, icon: LayoutList, en: 'List', pl: 'Lista' },
-                          { id: 'grid' as ViewMode, icon: LayoutGrid, en: 'Cards', pl: 'Karty' },
-                        ] as const
-                      ).map(({ id, icon: Icon, en, pl }) => (
-                        <button
-                          key={id}
-                          onClick={() => {
-                            setViewMode(id);
-                            setSessionsViewMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${
-                            viewMode === id
-                              ? 'text-primary-700 dark:text-primary-200 bg-primary-500/10 font-semibold'
-                              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Icon size={14} />
-                            {isPolish ? pl : en}
-                          </span>
-                          {viewMode === id ? <Check size={14} /> : null}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* 2) Primary CTA (Sessions) */}
-            {activeTab === 'sessions' && !activeDocumentId && (
-              <button
-                onClick={handleNewSession}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-purple-400/30 hover:from-purple-400 hover:to-purple-500 shadow-lg shadow-purple-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                title={isPolish ? 'Nowa sesja' : 'New session'}
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
-              </button>
-            )}
-
-            {/* Assignments View Mode Toggle (list / cards) — match MyWork Inbox canonical */}
-            {(activeTab === 'my-assignments' || activeTab === 'managed') && !activeDocumentId && (
-              <div
-                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
-                role="radiogroup"
-                aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
-              >
-                <button
-                  onClick={() => setAssignmentsViewMode('list')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    assignmentsViewMode === 'list'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Lista' : 'List'}
-                  role="radio"
-                  aria-checked={assignmentsViewMode === 'list'}
-                >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setAssignmentsViewMode('cards')}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                    assignmentsViewMode === 'cards'
-                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                  }`}
-                  title={isPolish ? 'Karty' : 'Cards'}
-                  role="radio"
-                  aria-checked={assignmentsViewMode === 'cards'}
-                >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-            )}
-
-            {/* Assignments Primary CTA (Add) — SHOULD be next to right edge (before Area/AI) */}
-            {(activeTab === 'my-assignments' || activeTab === 'managed') &&
-              !activeDocumentId &&
-              canAssign && (
-                <button
-                  onClick={() => {
-                    setSelectedTemplateForAssign(null);
-                    setShowAssignModal(true);
-                  }}
-                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                  title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
-                >
-                  <Plus size={16} />
-                  <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
-                </button>
-              )}
-
-            {/* Area/AI — rightmost in the topbar cluster */}
-          </div>
-        </div>
-      </div>
-      {/* Command Row (search | dynamic tabs | counters) */}
-      {renderCommandRow()}
-
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-auto">{renderContent()}</div>
+    <div className="h-full" data-testid="interview-hub">
+      <ModuleHub
+        persistViewModeKey="interview"
+        tabs={tabs}
+        activeTab={activeTab as ModuleTab}
+        onTabChange={handleMainTabChange}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onSearch={setSearchQuery}
+        openDocuments={openDocuments}
+        activeDocumentId={activeDocumentId}
+        onSelectDocument={setActiveDocumentId}
+        onCloseDocument={handleCloseDocument}
+        onShowList={handleShowList}
+        activeFilters={activeFilters}
+        onRemoveFilter={handleRemoveFilter}
+        onClearFilters={handleClearFilters}
+        rightControls={rightControls}
+        primaryCta={primaryCta}
+        toolControl={toolControl}
+        commandRowContent={commandRowContent}
+        availableViewModes={['table', 'grid']}
+        showTabCounts={false}
+      >
+        <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
+      </ModuleHub>
 
       {/* Table View Settings (standard) — Sessions */}
       <Modal

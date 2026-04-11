@@ -5,6 +5,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
+import { MAX_MINDMAP_NODES, resolveDeleteAnchor, wouldCreateCycle } from './mindmapCanonHelpers';
 
 // ── Clipboard ────────────────────────────────────────────────────────────────
 
@@ -184,6 +185,15 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   const addChildNode = useCallback(
     (anchorNodeId?: string) => {
       if (locked) return;
+      if (nodes.length >= MAX_MINDMAP_NODES) {
+        toast.error(
+          isPolish
+            ? `Mapa osiągnęła limit ${MAX_MINDMAP_NODES} węzłów`
+            : `Map reached ${MAX_MINDMAP_NODES} node limit`,
+          { id: 'mm-limit' }
+        );
+        return;
+      }
       const selected =
         getNodeById(anchorNodeId) ||
         getSelectedNode() ||
@@ -250,10 +260,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       setNodes((prev: Node[]) => [
         ...prev.map((n) => ({ ...n, selected: false })),
-        { ...newNode, selected: true },
+        { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
       ]);
       setEdges((prev: Edge[]) => [...prev, newEdge]);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
+
+      toast.success(isPolish ? 'Dodano gałąź' : 'Child added', { id: 'mm-op-cue', duration: 1500 });
 
       setTimeout(() => {
         try {
@@ -262,6 +274,14 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           /* */
         }
       }, 60);
+
+      setTimeout(() => {
+        setNodes((prev) =>
+          prev.map((n) =>
+            n.id === newId && n.data?._isNew ? { ...n, data: { ...n.data, _isNew: false } } : n
+          )
+        );
+      }, 3000);
     },
     [
       edges,
@@ -282,6 +302,15 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   const addSiblingNode = useCallback(
     (anchorNodeId?: string) => {
       if (locked) return;
+      if (nodes.length >= MAX_MINDMAP_NODES) {
+        toast.error(
+          isPolish
+            ? `Mapa osiągnęła limit ${MAX_MINDMAP_NODES} węzłów`
+            : `Map reached ${MAX_MINDMAP_NODES} node limit`,
+          { id: 'mm-limit' }
+        );
+        return;
+      }
       const selected = getNodeById(anchorNodeId) || getSelectedNode();
       if (!selected) {
         toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
@@ -342,9 +371,12 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
       setNodes((prev: Node[]) => [
         ...prev.map((n) => ({ ...n, selected: false })),
-        { ...newNode, selected: true },
+        { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
       ]);
       setEdges((prev: Edge[]) => [...prev, newEdge]);
+      ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
+
+      toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', { id: 'mm-op-cue', duration: 1500 });
 
       setTimeout(() => {
         try {
@@ -353,9 +385,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           /* */
         }
       }, 60);
+
+      setTimeout(() => {
+        setNodes((prev) =>
+          prev.map((n) =>
+            n.id === newId && n.data?._isNew ? { ...n, data: { ...n.data, _isNew: false } } : n
+          )
+        );
+      }, 3000);
     },
     [
       edges,
+      ensureCreatedNodePersists,
       findChildrenIds,
       findParentId,
       fitView,
@@ -370,24 +411,97 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     ]
   );
 
-  const deleteSelected = useCallback(() => {
-    if (locked) return;
-    pushUndo();
-    let removedIds: Set<string>;
-    setNodes((prev: Node[]) => {
-      removedIds = new Set(
+  const deleteSelected = useCallback(
+    (opts?: { confirmed?: boolean }) => {
+      if (locked) return;
+
+      const selectedIds = nodes
+        .filter((n: Node) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'))
+        .map((n: Node) => n.id);
+      if (selectedIds.length === 0) return;
+
+      const removedIds = new Set<string>();
+      for (const sid of selectedIds) {
+        for (const tid of getSubtreeNodeIds(sid)) removedIds.add(tid);
+      }
+
+      const subtreeExtra = removedIds.size - selectedIds.length;
+      if (subtreeExtra > 0 && !opts?.confirmed) {
+        toast(
+          (t) => {
+            const msg = isPolish
+              ? `Usunięcie obejmie ${subtreeExtra} podwęzłów. Kontynuować?`
+              : `This will also delete ${subtreeExtra} child node${subtreeExtra === 1 ? '' : 's'}. Continue?`;
+            return (
+              <span className="flex items-center gap-2 text-sm">
+                {msg}
+                <button
+                  className="ml-2 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700"
+                  onClick={() => {
+                    toast.dismiss(t.id);
+                    deleteSelected({ confirmed: true });
+                  }}
+                >
+                  {isPolish ? 'Usuń' : 'Delete'}
+                </button>
+                <button
+                  className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-medium hover:bg-slate-300"
+                  onClick={() => toast.dismiss(t.id)}
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+              </span>
+            ) as any;
+          },
+          { duration: 10000, id: 'mm-delete-confirm' }
+        );
+        return;
+      }
+
+      const firstSelectedId = selectedIds[0];
+      const parentEdge = edges.find((e) => e.target === firstSelectedId && isStructuralEdge(e));
+      const parentId = parentEdge?.source ?? null;
+      const siblingIds = parentId
+        ? edges
+            .filter((e) => e.source === parentId && isStructuralEdge(e))
+            .map((e) => e.target)
+            .filter((id) => !removedIds.has(id))
+        : [];
+      const rootId = nodes.find((n) => n.id === 'root')?.id ?? null;
+
+      const anchor = resolveDeleteAnchor(firstSelectedId, parentId, siblingIds, rootId);
+
+      pushUndo();
+
+      setNodes((prev: Node[]) =>
         prev
-          .filter((n: Node) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'))
-          .map((n: Node) => n.id)
+          .filter((n: Node) => !removedIds.has(n.id))
+          .map((n) => ({ ...n, selected: n.id === anchor }))
       );
-      return prev.filter((n: Node) => !removedIds.has(n.id));
-    });
-    setEdges((prev: Edge[]) =>
-      prev.filter(
-        (e: Edge) => !e.selected && !removedIds!.has(e.source) && !removedIds!.has(e.target)
-      )
-    );
-  }, [locked, pushUndo, setEdges, setNodes]);
+      setEdges((prev: Edge[]) =>
+        prev.filter(
+          (e: Edge) => !e.selected && !removedIds.has(e.source) && !removedIds.has(e.target)
+        )
+      );
+
+      const deletedCount = removedIds.size;
+      toast.success(
+        isPolish
+          ? `Usunięto ${deletedCount} ${deletedCount === 1 ? 'węzeł' : 'węzłów'}`
+          : `Deleted ${deletedCount} node${deletedCount === 1 ? '' : 's'}`,
+        { id: 'mm-op-cue', duration: 2000 }
+      );
+
+      if (anchor) {
+        setTimeout(() => {
+          try {
+            fitView({ nodes: [{ id: anchor } as any], padding: 0.5, duration: 300 });
+          } catch { /* */ }
+        }, 60);
+      }
+    },
+    [edges, fitView, getSubtreeNodeIds, isPolish, locked, nodes, pushUndo, setEdges, setNodes]
+  );
 
   const duplicateSelected = useCallback(() => {
     if (locked) return;
@@ -455,8 +569,19 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       if (!currentParentId) return false;
       if (currentParentId === newParentId) return false;
 
-      const subtree = getSubtreeNodeIds(nodeId);
-      if (subtree.includes(newParentId)) return false;
+      const parentMap = new Map<string, string | null>();
+      for (const e of edges) {
+        if (isStructuralEdge(e)) parentMap.set(e.target, e.source);
+      }
+      if (wouldCreateCycle(nodeId, newParentId, parentMap)) {
+        toast.error(
+          isPolish
+            ? 'Nie można przenieść pod własnego potomka'
+            : 'Cannot move under own descendant',
+          { id: 'mm-op-cue', duration: 2500 }
+        );
+        return false;
+      }
 
       const newParent = nodes.find((n) => n.id === newParentId);
       if (!newParent) return false;
@@ -480,18 +605,42 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         } as any;
         return [...without, newEdge];
       });
+
+      setNodes((prev) =>
+        prev.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, _justMoved: true } } : n
+        )
+      );
+      setTimeout(() => {
+        setNodes((prev) =>
+          prev.map((n) =>
+            n.id === nodeId && n.data?._justMoved
+              ? { ...n, data: { ...n.data, _justMoved: false } }
+              : n
+          )
+        );
+      }, 2500);
+
+      const parentLabel = newParent.data?.label || newParentId;
+      toast.success(
+        isPolish ? `Przeniesiono pod ${parentLabel}` : `Moved under ${parentLabel}`,
+        { id: 'mm-op-cue', duration: 2000 }
+      );
+
       setTimeout(() => focusSelectedNode(), 30);
       return true;
     },
     [
+      edges,
       findParentId,
       focusSelectedNode,
-      getSubtreeNodeIds,
+      isPolish,
       isReparentable,
       locked,
       nodes,
       pushUndo,
       setEdges,
+      setNodes,
     ]
   );
 
@@ -767,7 +916,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     copySelected();
     pushUndo();
 
-    const removedIds = new Set(selected.map((n) => n.id));
+    const removedIds = new Set<string>();
+    for (const n of selected) {
+      for (const tid of getSubtreeNodeIds(n.id)) removedIds.add(tid);
+    }
     setNodes((prev: Node[]) => prev.filter((n) => !removedIds.has(n.id)));
     setEdges((prev: Edge[]) =>
       prev.filter((e) => !removedIds.has(e.source) && !removedIds.has(e.target))
@@ -775,11 +927,11 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
     toast.success(
       isPolish
-        ? `Wycięto ${selected.length} ${selected.length === 1 ? 'węzeł' : 'węzłów'}`
-        : `Cut ${selected.length} node${selected.length === 1 ? '' : 's'}`,
+        ? `Wycięto ${removedIds.size} ${removedIds.size === 1 ? 'węzeł' : 'węzłów'}`
+        : `Cut ${removedIds.size} node${removedIds.size === 1 ? '' : 's'}`,
       { duration: 1200 }
     );
-  }, [copySelected, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+  }, [copySelected, getSubtreeNodeIds, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
 
   const pasteNodes = useCallback(
     (targetPosition?: { x: number; y: number }) => {

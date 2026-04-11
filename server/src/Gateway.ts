@@ -257,6 +257,7 @@ import virtualWorkersRoutes from './routes/virtual-workers.routes.js';
 import voiceRoutes from './routes/voice.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
+import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
@@ -520,6 +521,7 @@ export class ApiGateway {
 
       // Webhook routes (stripe webhook is handled by webhookRoutes)
       app.use('/api/webhooks', sellixInboundWebhookRoutes);
+      app.use('/api/webhooks/v8-sync', v8SyncInboundWebhookRoutes);
       app.use('/api/webhooks', webhookRoutes);
 
       // Billing routes

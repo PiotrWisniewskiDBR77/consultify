@@ -23,7 +23,7 @@
 
 export const P08_COPILOT_CONTRACT = 'teresa_copilot_v1';
 
-export type HandoffTargetModule = 'radar' | 'initiatives' | 'calendar' | 'notebook';
+export type HandoffTargetModule = 'radar' | 'initiatives' | 'calendar' | 'notebook' | 'interview' | 'excele';
 
 export interface TeresaHandoffContext {
   origin: 'teresa';
@@ -101,6 +101,16 @@ export interface NotebookHandoffPayload {
   evidence_pointers: string[];
 }
 
+export interface InterviewHandoffPayload {
+  interview_handoff_context: {
+    action: 'generate_insight' | 'submit_review' | 'export_initiative' | 'view_evidence';
+    session_ids?: string[];
+    insight_id?: string;
+    title?: string;
+  };
+  evidence_pointers: string[];
+}
+
 export const P08_HANDOFF_TARGETS = {
   radar: {
     module: 'Radar' as const,
@@ -149,9 +159,19 @@ export const P08_HANDOFF_TARGETS = {
       'evidence_pointers',
     ] as const,
   },
+  interview: {
+    module: 'Wywiady' as const,
+    contract_ref: 'P10',
+    description: 'Interview insights — generate, review, export, evidence map',
+    required_common_payload: true,
+    required_extra_fields: [
+      'interview_handoff_context',
+      'evidence_pointers',
+    ] as const,
+  },
 } as const;
 
-export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = ['radar', 'initiatives', 'calendar', 'notebook'];
+export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = ['radar', 'initiatives', 'calendar', 'notebook', 'interview', 'excele'];
 
 export const P08_COMMON_PAYLOAD_FIELDS = [
   'origin',
@@ -286,7 +306,7 @@ export const P08_ANNA_BOUNDARY = {
 
 export const P08_WRITE_OWNERSHIP = {
   rule: 'Teresa initiates handoff, module owns writes',
-  detail: 'The only place where writes happen are target modules (Radar/Inicjatywy/Kalendarz/Notatki) per their own canon. Teresa does not create side-writes or parallel models.',
+  detail: 'The only place where writes happen are target modules (Radar/Inicjatywy/Kalendarz/Notatki/Wywiady) per their own canon. Teresa does not create side-writes or parallel models.',
   teresa_role: 'initiator' as const,
   module_role: 'writer' as const,
   forbidden: [

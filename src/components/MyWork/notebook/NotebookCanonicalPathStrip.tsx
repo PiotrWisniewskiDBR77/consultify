@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, FileOutput, Paperclip, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileOutput, Lightbulb, Paperclip, Radar, Sparkles } from 'lucide-react';
 import React from 'react';
 
 interface NotebookCanonicalPathStripProps {
@@ -10,6 +10,8 @@ interface NotebookCanonicalPathStripProps {
   onCreateAIProposal: () => void;
   onReviewAIProposal: () => void;
   onConvert: () => void;
+  onHandoffRadar?: () => void;
+  onHandoffInitiatives?: () => void;
 }
 
 export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProps> = ({
@@ -21,6 +23,8 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
   onCreateAIProposal,
   onReviewAIProposal,
   onConvert,
+  onHandoffRadar,
+  onHandoffInitiatives,
 }) => {
   return (
     <div className="mt-3 rounded-2xl border border-indigo-200/70 bg-indigo-50/80 px-3 py-3 dark:border-indigo-500/20 dark:bg-indigo-500/10">
@@ -91,6 +95,34 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
           disabled={!canConvertDeliverable}
         />
       </div>
+
+      {(onHandoffRadar || onHandoffInitiatives) && (
+        <div className="mt-3 flex items-center gap-2 border-t border-indigo-200/50 pt-3 dark:border-indigo-500/15">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-600/70 dark:text-indigo-300/60">
+            {isPolish ? 'Przekaż do:' : 'Send to:'}
+          </span>
+          {onHandoffRadar && (
+            <button
+              type="button"
+              onClick={onHandoffRadar}
+              className="inline-flex items-center gap-1 rounded-full border border-indigo-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-500/20 dark:bg-navy-950/40 dark:text-indigo-300 dark:hover:bg-indigo-500/15"
+            >
+              <Radar size={12} />
+              Radar
+            </button>
+          )}
+          {onHandoffInitiatives && (
+            <button
+              type="button"
+              onClick={onHandoffInitiatives}
+              className="inline-flex items-center gap-1 rounded-full border border-indigo-200/70 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-50 dark:border-indigo-500/20 dark:bg-navy-950/40 dark:text-indigo-300 dark:hover:bg-indigo-500/15"
+            >
+              <Lightbulb size={12} />
+              {isPolish ? 'Inicjatywy' : 'Initiatives'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

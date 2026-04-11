@@ -14,6 +14,7 @@
 
 import { RefreshCw, Shield } from 'lucide-react';
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DocumentSidePanel } from '../../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../../components/documents/DocumentToggleButton';
@@ -32,6 +33,7 @@ import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
 import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
+import { getRouteFromAppView } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
 
@@ -62,25 +64,31 @@ interface SuperAdminViewProps {
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onNavigate }) => {
   const { isSidebarCollapsed, currentView, setCurrentView, logout } = useAppStore();
+  const navigate = useNavigate();
 
   // Derive activeSection from currentView
   const activeSection: SuperAdminSection = appViewToSection[currentView] || 'customers';
 
   // Helper to set section (updates currentView in store)
   const setActiveSection = (section: SuperAdminSection) => {
-    setCurrentView(sectionToAppView[section]);
+    const targetView = sectionToAppView[section];
+    setCurrentView(targetView);
+    navigate(getRouteFromAppView(targetView));
   };
 
   // Normalize all entry points to the mounted root branches.
   useEffect(() => {
     if (!currentView.startsWith('SUPERADMIN_')) {
-      setCurrentView(AppView.SUPERADMIN_CUSTOMERS);
+      const rootView = AppView.SUPERADMIN_CUSTOMERS;
+      setCurrentView(rootView);
+      navigate(getRouteFromAppView(rootView), { replace: true });
     }
-  }, [currentView, setCurrentView]);
+  }, [currentView, navigate, setCurrentView]);
 
   const handleLogout = () => {
     logout();
     onNavigate(AppView.WELCOME);
+    navigate('/');
   };
 
   // Render content based on currentView (Modular AI Platform - Variant A)

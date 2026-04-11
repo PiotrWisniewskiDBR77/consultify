@@ -153,13 +153,25 @@ export const KPI_WORKFLOW_TRANSITIONS: Record<KpiWorkflowState, KpiWorkflowState
 // §8.1F — Degraded posture types
 // ────────────────────────────────────────────────────────────────
 
-export type KpiDegradedPosture =
-  | 'nominal'
-  | 'missing_data'
-  | 'discrepancy_unresolved'
-  | 'linkage_unavailable'
-  | 'permission_denied'
-  | 'stale_data';
+export const KPI_DEGRADED_POSTURE_VALUES = [
+  'nominal',
+  'missing_data',
+  'discrepancy_unresolved',
+  'linkage_unavailable',
+  'permission_denied',
+  'stale_data',
+] as const;
+
+export type KpiDegradedPosture = (typeof KPI_DEGRADED_POSTURE_VALUES)[number];
+
+export const KPI_WORKFLOW_DEGRADED_REASONS = [
+  'missing_data',
+  'discrepancy_unresolved',
+  'linkage_unavailable',
+  'permission_denied',
+] as const;
+
+export type KpiWorkflowDegradedReason = (typeof KPI_WORKFLOW_DEGRADED_REASONS)[number];
 
 export interface KpiHealthStatus {
   kpiId: string;
@@ -241,14 +253,15 @@ export type KpiPermissionRole = (typeof KPI_PERMISSION_ROLES)[keyof typeof KPI_P
 export const KPI_PERMISSION_MATRIX: Record<string, KpiPermissionRole[]> = {
   edit_definition: ['kpi_owner'],
   edit_targets: ['kpi_owner'],
+  delete_kpi: ['kpi_owner'],
+  record_measurement: ['kpi_owner', 'finance_owner'],
+  create_report: ['kpi_owner', 'finance_owner'],
+  manage_deviation: ['kpi_owner', 'finance_owner'],
   manage_reconciliation_results: ['kpi_owner'],
   edit_finance_artifacts: ['finance_owner'],
   manage_reconciliation_finance: ['finance_owner'],
-  /** P04-B HTTP: create workflow signal */
   create_signal: ['kpi_owner', 'finance_owner'],
-  /** P04-B HTTP: create next action */
   create_next_action: ['kpi_owner', 'finance_owner'],
-  /** P04-B HTTP: initiate or resolve reconciliation */
   manage_reconciliation: ['kpi_owner', 'finance_owner'],
   view: ['kpi_owner', 'finance_owner', 'viewer', 'commenter'],
   comment: ['kpi_owner', 'finance_owner', 'commenter'],
@@ -285,11 +298,20 @@ export const P04_ACCEPTANCE_CHECKLIST = [
   { id: 3, requirement: 'KPI truth vs finance model truth boundary explicit', section: '§8.1B' },
   { id: 4, requirement: 'Linkage optional, supports interpretation/driver/review/realization', section: '§8.1B' },
   { id: 5, requirement: 'Reconciliation ownership: Results starts, Finance resolves', section: '§8.1B' },
-  { id: 6, requirement: 'Permissions frozen: edit def, edit targets, view, comment, manage reconciliation', section: '§8.1C' },
+  { id: 6, requirement: 'Permissions frozen and enforced on all write routes', section: '§8.1C' },
   { id: 7, requirement: 'Permission denied has explicit degraded posture', section: '§8.1F' },
   { id: 8, requirement: 'Missing data has explicit degraded posture', section: '§8.1F' },
   { id: 9, requirement: 'Discrepancy unresolved has explicit degraded posture', section: '§8.1F' },
   { id: 10, requirement: 'Linkage unavailable has explicit degraded posture', section: '§8.1F' },
   { id: 11, requirement: 'Anti-duplicate gates explicit', section: '§8.1E' },
   { id: 12, requirement: 'Canonical workflow: signal→inspect→report→reconcile→next-action', section: '§8.1D' },
+  { id: 13, requirement: 'Operator cockpit: Overview/Queue/Catalog modes', section: 'P04-D' },
+  { id: 14, requirement: 'Queue semantics: needs-entry/below-target/discrepancy/requires-review', section: 'P04-D' },
+  { id: 15, requirement: 'Template-first reports with snapshot refresh and task materialization', section: 'P04-D' },
+  { id: 16, requirement: 'Batch measurement via signal sheets', section: 'P04-D' },
+  { id: 17, requirement: 'Distribution surfaces: Schedules/Wallboards/Connectors', section: 'P04-E' },
+  { id: 18, requirement: 'Goals/Scorecards: create, link initiatives, rollup, progress', section: 'P04-E' },
+  { id: 19, requirement: 'Full 7-tab KPI drawer with deviation lifecycle and metric audit', section: 'P04-F' },
+  { id: 20, requirement: 'AI-assisted operations without silent truth mutation', section: 'P04-G' },
+  { id: 21, requirement: 'KPI attribution and showcase/demo data layer', section: 'P04-H' },
 ] as const;

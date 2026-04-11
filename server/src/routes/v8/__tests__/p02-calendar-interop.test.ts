@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // ── Canon imports ──────────────────────────────────────────────────────
 import {
   P02_ACCEPTANCE_CHECKLIST,
+  P02_ACCEPTANCE_CHECKLIST_EXTENDED,
   P02_ANTI_DUPLICATE_RULES,
   P02_CONFLICT_WRITES_MODEL,
   P02_DECLARED_PROVIDERS,
@@ -19,6 +20,11 @@ import {
   P02_LIFECYCLE_TRANSITIONS,
   P02_PERMISSION_GRADIENTS,
   P02_RECURRENCE_DOCTRINE,
+  P02_P01_BRIDGE,
+  P02_ADAPTER_REGISTRY,
+  P02_SYNC_RUNTIME,
+  P02_FRONTEND_CONTRACT,
+  P02_ITEM_TYPES,
 } from '../../../services/v8/calendarInteropCanon.js';
 
 // ── Mock DbPromise before service import ───────────────────────────────
@@ -43,6 +49,7 @@ import {
   createCalendarSource,
   getSourceHealth,
   handleSyncError,
+  ItemTypeValues,
   mapProviderError,
   performFullResync,
   performIncrementalSync,
@@ -597,5 +604,91 @@ describe('getSourceHealth', () => {
     expect(health.totalSources).toBe(0);
     expect(health.connected).toBe(0);
     expect(health.degraded).toBe(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// §11  P02-D through P02-J — Extended canon tests
+// ═══════════════════════════════════════════════════════════════════════
+
+describe('P02-D: P01 Bridge canon', () => {
+  it('defines P01 bridge with connectionRef, tokenLifecycle, oauthFlow', () => {
+    expect(P02_P01_BRIDGE.connectionRef).toContain('connectionId');
+    expect(P02_P01_BRIDGE.tokenLifecycle).toBeDefined();
+    expect(P02_P01_BRIDGE.oauthFlow).toBeDefined();
+  });
+
+  it('lists all calendar providers in catalog', () => {
+    expect(P02_P01_BRIDGE.providerCatalog).toEqual(
+      expect.arrayContaining(['google_calendar', 'outlook_calendar', 'apple_calendar']),
+    );
+  });
+});
+
+describe('P02-E/F/G: Provider Adapter Registry canon', () => {
+  it('has entries for all 3 declared providers', () => {
+    const keys = Object.keys(P02_ADAPTER_REGISTRY);
+    expect(keys).toContain('google');
+    expect(keys).toContain('microsoft');
+    expect(keys).toContain('caldav');
+  });
+
+  it('caldav marked as read-only', () => {
+    expect(P02_ADAPTER_REGISTRY.caldav).toContain('read-only');
+  });
+
+  it('google and microsoft are full adapters', () => {
+    expect(P02_ADAPTER_REGISTRY.google).toContain('full');
+    expect(P02_ADAPTER_REGISTRY.microsoft).toContain('full');
+  });
+});
+
+describe('P02-H: Sync Runtime canon', () => {
+  it('has 5-minute cron interval', () => {
+    expect(P02_SYNC_RUNTIME.cronInterval).toBe('*/5 * * * *');
+  });
+
+  it('declares incremental sync and full resync fallback', () => {
+    expect(P02_SYNC_RUNTIME.incrementalSync).toContain('cursor');
+    expect(P02_SYNC_RUNTIME.fullResyncFallback).toContain('cursor invalid');
+  });
+
+  it('has webhook routes for google and microsoft', () => {
+    expect(P02_SYNC_RUNTIME.webhookRoutes.length).toBe(2);
+  });
+
+  it('uses RRULE-based recurrence engine', () => {
+    expect(P02_SYNC_RUNTIME.recurrenceEngine).toContain('rrule');
+  });
+});
+
+describe('P02-I: Frontend Contract canon', () => {
+  it('extends unified API with P02 metadata', () => {
+    expect(P02_FRONTEND_CONTRACT.apiSurface).toContain('my-work/calendar/unified');
+  });
+
+  it('enforces permission gradients and edit gating', () => {
+    expect(P02_FRONTEND_CONTRACT.permissionEnforcement).toContain('P02_PERMISSION_UI_RULES');
+    expect(P02_FRONTEND_CONTRACT.editAffordanceGating).toContain('editAuthority');
+  });
+});
+
+describe('P02-J: Extended ItemType (SSOT completeness)', () => {
+  it('service ItemTypeValues includes all 11 types', () => {
+    expect(ItemTypeValues).toContain('task_window');
+    expect(ItemTypeValues).toContain('assignment');
+    expect(ItemTypeValues).toContain('adjustment');
+    expect(ItemTypeValues).toContain('approval_window');
+    expect(ItemTypeValues).toContain('escalation_window');
+    expect(ItemTypeValues).toContain('focus_block');
+    expect(ItemTypeValues.length).toBe(11);
+  });
+
+  it('canon P02_ITEM_TYPES matches service ItemTypeValues', () => {
+    expect([...P02_ITEM_TYPES].sort()).toEqual([...ItemTypeValues].sort());
+  });
+
+  it('extended acceptance checklist has 15+ points', () => {
+    expect(P02_ACCEPTANCE_CHECKLIST_EXTENDED.length).toBeGreaterThanOrEqual(15);
   });
 });

@@ -22,7 +22,9 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
-import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import { type FinanceVersionSnapshot, shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+
+import { FinanceVersionTimeline } from './FinanceVersionTimeline';
 
 import {
   type FinanceAnalysisRow,
@@ -67,6 +69,53 @@ async function approveModelWithFallback(modelId: string) {
   }
 }
 
+function PackValidationsSection({ validations }: { validations: Array<{ checkCode: string; checkName: string; severity: string; status: string; message?: string | null; expectedValue?: number | null; actualValue?: number | null; computedAt?: string }> }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const shown = expanded ? validations : validations.slice(0, 3);
+  return (
+    <div className="pt-1">
+      <div className="flex flex-wrap gap-1">
+        {shown.map((validation) => (
+          <span
+            key={`${validation.checkCode}-${validation.computedAt || ''}`}
+            title={validation.message || undefined}
+            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium cursor-default ${
+              validation.status === 'fail'
+                ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+                : validation.status === 'warning'
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+            }`}
+          >
+            {validation.checkName}
+          </span>
+        ))}
+      </div>
+      {validations.length > 3 && (
+        <button
+          type="button"
+          className="text-[10px] font-medium text-primary-500 hover:text-primary-600 mt-1 transition-colors"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? 'Show less' : `Show all ${validations.length} validations`}
+        </button>
+      )}
+      {expanded && (
+        <div className="mt-2 space-y-1.5">
+          {validations.filter((v) => v.status !== 'pass').map((v) => (
+            <div key={`${v.checkCode}-detail`} className="text-[10px] text-slate-600 dark:text-slate-400">
+              <span className="font-medium">{v.checkCode}</span>: {v.message || v.checkName}
+              {v.expectedValue != null && v.actualValue != null && (
+                <span className="text-slate-400"> (expected: {v.expectedValue}, actual: {v.actualValue})</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface FinancePreviewPanelProps {
   statementPreviewDetail: PreviewDataState['statementPreviewDetail'];
   statementPreviewRatios: PreviewDataState['statementPreviewRatios'];
@@ -90,6 +139,7 @@ interface FinancePreviewPanelProps {
   loadValuations: () => Promise<void>;
   loadValuationPreviewResults: (id: string) => Promise<void>;
   getBudgetRawId: (id: string) => string;
+  versionSnapshots?: FinanceVersionSnapshot[];
 }
 
 export function useFinancePreview({
@@ -115,6 +165,7 @@ export function useFinancePreview({
   loadValuations,
   loadValuationPreviewResults,
   getBudgetRawId,
+  versionSnapshots,
 }: FinancePreviewPanelProps) {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -487,22 +538,7 @@ export function useFinancePreview({
                       )}
                     {Array.isArray(statementPreviewDetail.packValidations) &&
                       statementPreviewDetail.packValidations.length > 0 && (
-                        <div className="flex flex-wrap gap-1 pt-1">
-                          {statementPreviewDetail.packValidations.slice(0, 3).map((validation) => (
-                            <span
-                              key={`${validation.checkCode}-${validation.computedAt || ''}`}
-                              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                validation.status === 'fail'
-                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
-                                  : validation.status === 'warning'
-                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                              }`}
-                            >
-                              {validation.checkName}
-                            </span>
-                          ))}
-                        </div>
+                        <PackValidationsSection validations={statementPreviewDetail.packValidations} />
                       )}
                   </div>
                 </>
@@ -1182,6 +1218,12 @@ export function useFinancePreview({
             items={relationItems}
             emptyLabel={t('common.noRelations', 'No relations')}
           />
+          {versionSnapshots && versionSnapshots.length > 0 && (
+            <>
+              <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+              <FinanceVersionTimeline snapshots={versionSnapshots} />
+            </>
+          )}
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
           <PreviewActionBar rows={[{ buttons: actionButtons }]} />
         </div>
@@ -1205,6 +1247,7 @@ export function useFinancePreview({
       getBudgetRawId,
       loadValuations,
       loadValuationPreviewResults,
+      versionSnapshots,
     ]
   );
 

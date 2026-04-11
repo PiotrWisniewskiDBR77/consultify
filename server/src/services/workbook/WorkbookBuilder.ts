@@ -8,6 +8,7 @@
 import ExcelJS from 'exceljs';
 
 import logger from '../../utils/Logger.js';
+import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
 import type { CellStyle, WorkbookSchema } from './WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
@@ -254,3 +255,24 @@ export function validateWorkbookSchema(schema: WorkbookSchema): { valid: boolean
 
   return { valid: errors.length === 0, errors };
 }
+
+// ---------------------------------------------------------------------------
+// §7.1 — Classified error helpers (P23 canon integration)
+// ---------------------------------------------------------------------------
+
+export function classifyBuildError(error: unknown): P23ClassifiedError {
+  const msg = error instanceof Error ? error.message : String(error);
+
+  if (msg.includes('circular') || msg.includes('cycle')) {
+    return createP23Error('formula_cycle_detected', msg);
+  }
+  if (msg.includes('formula') || msg.includes('#DIV') || msg.includes('#REF')) {
+    return createP23Error('formula_error', msg);
+  }
+  if (msg.includes('merge') || msg.includes('column') || msg.includes('schema')) {
+    return createP23Error('validation_failed', msg);
+  }
+  return createP23Error('export_failed', msg);
+}
+
+export type { P23ClassifiedError } from '../v8/exceleCanon.js';

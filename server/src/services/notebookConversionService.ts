@@ -372,7 +372,7 @@ export async function convertNotebookPage(params: {
       userId,
       sourceType: 'assessment',
       sourceId: newId,
-      targetType: 'notebook_page',
+      targetType: 'notebook',
       targetId: pageId,
       relation: 'ref',
       containerType: 'mywork_convert',

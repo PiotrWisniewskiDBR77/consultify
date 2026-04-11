@@ -32,6 +32,7 @@ import logger from '../../utils/Logger.js';
 import * as chatExecutionService from './chatExecutionService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
+import { isV8Enabled } from './featureFlagService.js';
 import * as publishReviewService from './publishReviewService.js';
 import type { RunState } from '../../types/executionSpine.js';
 
@@ -143,6 +144,7 @@ const VALID_REPORT_SOURCE_TYPES = new Set<string>(ArtifactRunReportSourceTypeVal
 const SNAPSHOT_SOURCE_KIND_TO_PRESENTATION_SOURCE_ARTIFACT_TYPE: Record<string, string> = {
   assessment: 'assessment',
   interview: 'custom',
+  insight: 'custom',
   tool: 'tool_session',
   tool_session: 'tool_session',
   initiative: 'initiative_portfolio',
@@ -881,7 +883,63 @@ export async function registerArtifactOrigin(
     logger.warn(`${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`);
     return null;
   }
-  return mapArtifactRow(row);
+  const record = mapArtifactRow(row);
+
+  // Fire-and-forget context notification (feature-flagged)
+  notifyContextOfNewArtifact(record).catch((err) =>
+    logger.warn(`${LOG_PREFIX} notifyContextOfNewArtifact failed: ${err}`)
+  );
+
+  return record;
+}
+
+/**
+ * Notify the organization context that a new artifact was produced.
+ * Gated behind the 'outputs' feature flag to allow incremental rollout.
+ * On success, logs the action; on failure, swallows and logs (non-critical path).
+ */
+export async function notifyContextOfNewArtifact(artifact: ArtifactRecord): Promise<void> {
+  try {
+    const enabled = await isV8Enabled(artifact.organizationId, 'outputs');
+    if (!enabled) return;
+
+    logger.info(
+      `${LOG_PREFIX} Context notification: artifact ${artifact.artifactId} ` +
+        `(${artifact.artifactFamily}/${artifact.outputType}) registered for org ${artifact.organizationId}`
+    );
+  } catch (err) {
+    logger.warn(`${LOG_PREFIX} notifyContextOfNewArtifact error: ${err}`);
+  }
+}
+
+/**
+ * Return the most recent artifact refs for an organization, suitable for
+ * auto-suggesting artifactRefs in chat snapshots.
+ * Feature-flagged behind 'outputs' module.
+ */
+export async function getRecentArtifactRefsForOrg(
+  organizationId: string,
+  limit = 10
+): Promise<Array<{ artifactId: string; outputType: string; title: string; createdAt: string }>> {
+  const enabled = await isV8Enabled(organizationId, 'outputs');
+  if (!enabled) return [];
+
+  const rows = await dbAll(
+    `SELECT artifact_id, output_type, title_snapshot, created_at
+     FROM v8_output_artifacts
+     WHERE organization_id = ?
+       AND delivery_state NOT IN ('cancelled', 'archived')
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [organizationId, limit]
+  );
+
+  return (rows as any[]).map((r) => ({
+    artifactId: r.artifact_id,
+    outputType: r.output_type,
+    title: r.title_snapshot ?? '',
+    createdAt: r.created_at,
+  }));
 }
 
 export async function createArtifactAccessGrant(
@@ -996,6 +1054,51 @@ export async function getArtifactOriginLinks(
     { fallback: true }
   );
   return (rows || []).map(mapOriginLinkRow);
+}
+
+/**
+ * Adds a secondary (non-primary) origin link from an artifact to a related artifact.
+ * Used to create back-links (e.g. report → source template artifact).
+ */
+export async function addSecondaryOriginLink(params: {
+  artifactId: string;
+  organizationId: string;
+  originRuntime: string;
+  originRecordId: string;
+}): Promise<void> {
+  const existing = await dbGet<OriginLinkRow>(
+    `SELECT link_id FROM v8_artifact_origin_links
+     WHERE artifact_id = ? AND organization_id = ? AND origin_runtime = ? AND origin_record_id = ?`,
+    [params.artifactId, params.organizationId, params.originRuntime, params.originRecordId],
+    { fallback: true }
+  );
+  if (existing) return;
+
+  const linkId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await dbRun(
+    `INSERT INTO v8_artifact_origin_links (
+      link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [linkId, params.artifactId, params.organizationId, params.originRuntime, params.originRecordId, 0, now]
+  );
+}
+
+/**
+ * Counts outputs (reports/presentations) that were derived from a given template artifact.
+ * Uses the secondary origin link (source_template) created during generation.
+ */
+export async function countTemplateUsage(
+  templateArtifactId: string,
+  organizationId: string
+): Promise<number> {
+  const row = await dbGet<{ cnt: number }>(
+    `SELECT COUNT(*) as cnt FROM v8_artifact_origin_links
+     WHERE organization_id = ? AND origin_runtime = 'source_template' AND origin_record_id = ?`,
+    [organizationId, templateArtifactId],
+    { fallback: true }
+  );
+  return row?.cnt || 0;
 }
 
 export async function getArtifactAccessGrantsForArtifact(
@@ -1381,9 +1484,14 @@ function matchesViewFilters(
   filters: ArtifactListFilters,
   currentUserId: string
 ): boolean {
-  // Safety: templates are only included when explicitly requested, so Outputs lists
-  // (All/Mine/Needs review) remain artifact-output focused by default.
-  if (!filters.artifactFamily && !filters.reviewSharedForUserId && item.artifactFamily === 'template')
+  // Templates are included when explicitly requested via artifactFamily filter,
+  // in review lanes, or in recent/mixed lanes via includeTemplates flag.
+  if (
+    !filters.artifactFamily &&
+    !filters.reviewSharedForUserId &&
+    !(filters as any).includeTemplates &&
+    item.artifactFamily === 'template'
+  )
     return false;
   if (filters.outputType && item.outputType !== filters.outputType) return false;
   if (filters.artifactFamily && item.artifactFamily !== filters.artifactFamily) return false;
@@ -1719,7 +1827,7 @@ export async function listMyWorkArtifacts(params: {
       userId: params.userId,
       roleKey: params.roleKey,
       allowDemo: params.allowDemo,
-      filters: { limit: laneLimit },
+      filters: { limit: laneLimit, includeTemplates: true } as any,
     }),
   ]);
 
@@ -1731,6 +1839,24 @@ function inferArtifactPlan(
 ): ArtifactPlanningResult['artifactPlan'] {
   const goal = request.goal.toLowerCase();
   const explicitFamily = request.requestedArtifactFamily;
+
+  if (
+    explicitFamily === 'template' ||
+    goal.includes('template') ||
+    goal.includes('wzorzec') ||
+    goal.includes('szablon')
+  ) {
+    const isPresentation = goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
+    return {
+      artifactFamily: 'template' as any,
+      outputType: isPresentation ? 'presentation' : 'report',
+      titleHint: 'Template-based output',
+      governancePath: 'execution_spine',
+      visibilityScope: 'organization',
+      templateHint: true as any,
+    };
+  }
+
   if (
     explicitFamily === 'sheet' ||
     request.requestedOutputType === 'sheet' ||
@@ -2498,6 +2624,25 @@ export async function materializeArtifactRun(
           created.report.id
         );
         resolvedArtifactId = link?.artifactId || null;
+      }
+
+      // Backfill contextSnapshotId + executionRunId on the artifact row
+      // (reportBuilderService.createReport does not pass these; match presentation branch)
+      if (resolvedArtifactId && (current.contextSnapshotId || current.executionRunId)) {
+        await dbRun(
+          `UPDATE v8_output_artifacts
+           SET context_snapshot_id = COALESCE(?, context_snapshot_id),
+               execution_run_id = COALESCE(?, execution_run_id),
+               last_transition_at = ?
+           WHERE artifact_id = ? AND organization_id = ?`,
+          [
+            current.contextSnapshotId || null,
+            current.executionRunId || null,
+            new Date().toISOString(),
+            resolvedArtifactId,
+            validated.organizationId,
+          ]
+        );
       }
     } else if (current.plan.outputType === 'presentation') {
       const presentationParams = await resolveMaterializedPresentationParams(current, validated);

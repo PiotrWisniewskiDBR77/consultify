@@ -15,15 +15,15 @@ import logger from '../utils/Logger.js';
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = process.env.NODE_ENV === 'production';
 
-const FORCED_SUPERADMIN_EMAILS = (() => {
-  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || 'admin@dbr77.com');
+const getForcedSuperAdminEmails = (): Set<string> => {
+  const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
   return new Set(
     raw
       .split(',')
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean)
   );
-})();
+};
 
 type UserSessionCompatibility = {
   activityColumn: 'last_activity_at' | 'last_active_at' | 'created_at';
@@ -251,7 +251,8 @@ const attachUser = async (
     const normalizedEmail = String(decoded.email || '')
       .trim()
       .toLowerCase();
-    if (normalizedEmail && FORCED_SUPERADMIN_EMAILS.has(normalizedEmail)) {
+    const forcedEmails = getForcedSuperAdminEmails();
+    if (!isProductionEnv && normalizedEmail && forcedEmails.has(normalizedEmail)) {
       req.userRole = 'SUPERADMIN';
       decoded.isSuperAdmin = true;
     }
@@ -619,7 +620,12 @@ export const requireRole = (...roles: string[]) => {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    const effectiveRole = String(req.userRole || req.user.role || '');
+    const grantedRoles = req.user.isSuperAdmin
+      ? Array.from(new Set([effectiveRole, req.user.role, 'SUPERADMIN', 'superadmin']))
+      : [effectiveRole, req.user.role];
+
+    if (!roles.some((role) => grantedRoles.includes(role))) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }

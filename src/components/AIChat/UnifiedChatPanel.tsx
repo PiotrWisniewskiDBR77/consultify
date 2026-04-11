@@ -32,7 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import type {
   IdeaWorkspaceCreationPayload,
@@ -79,7 +79,8 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
-import { detectTableIntent } from './tableIntentDetector';
+import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
+import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 
@@ -1234,6 +1235,35 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       });
     }
 
+    if (workspaceContext?.type === 'insight' || workspaceContext?.type === 'interview') {
+      items.push(
+        {
+          id: 'generate-insights',
+          label: t('chat.suggestions.generateInsights', 'Generate AI insights from completed sessions'),
+          type: 'interview' as any,
+          action: { type: 'chat', prompt: t('chat.suggestions.generateInsightsPrompt', 'Generate AI insights from completed interview sessions') },
+        },
+        {
+          id: 'submit-review',
+          label: t('chat.suggestions.submitReview', 'Submit this insight for review'),
+          type: 'interview' as any,
+          action: { type: 'chat', prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review') },
+        },
+        {
+          id: 'export-initiative',
+          label: t('chat.suggestions.exportInsight', 'Export insight to initiative'),
+          type: 'interview' as any,
+          action: { type: 'chat', prompt: t('chat.suggestions.exportInsightPrompt', 'Export this insight to an initiative') },
+        },
+        {
+          id: 'view-evidence',
+          label: t('chat.suggestions.viewEvidence', 'View evidence map'),
+          type: 'interview' as any,
+          action: { type: 'NAVIGATE', targetModule: 'interview' },
+        },
+      );
+    }
+
     items.push({
       id: 'open-tools',
       label: t('chat.suggestions.openTools', 'Open Tools hub'),
@@ -1247,6 +1277,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       type: 'results',
       action: { type: 'NAVIGATE', targetModule: 'results' },
     });
+
+    const lastContent = String(
+      (displayMessages[displayMessages.length - 1] as any)?.content || ''
+    ).toLowerCase();
+    const artifactMentioned =
+      workspaceContext?.type === 'report' ||
+      workspaceContext?.type === 'presentation' ||
+      /\b(report|presentation|artifact|output|deck|sheet|template)\b/.test(lastContent);
+
+    if (artifactMentioned) {
+      items.push(
+        {
+          id: 'open-outputs',
+          label: t('chat.suggestions.openOutputs', 'Open Outputs Library'),
+          type: 'outputs' as any,
+          action: { type: 'NAVIGATE', targetModule: 'presentations' },
+        },
+        {
+          id: 'review-pending',
+          label: t('chat.suggestions.reviewPending', 'Review pending artifacts'),
+          type: 'outputs' as any,
+          action: { type: 'NAVIGATE', targetModule: 'presentations', params: { tab: 'review' } },
+        },
+      );
+    }
 
     return items;
   }, [displayMessages.length, isStreaming, workspaceContext, t]);
@@ -1368,6 +1423,38 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         setTableBuilderInitialMsg(text);
         setTableBuilderOpen(true);
+
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Whiteboard: intercept brainstorm/whiteboard/workshop intents
+      const wbAction = detectWhiteboardIntent(text);
+      if (wbAction) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `wb-intent-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLang === 'pl'
+              ? 'Wykonuję akcję na tablicy…'
+              : 'Running whiteboard action…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: wbAction },
+          })
+        );
 
         onMessageSent?.(content);
         return;
@@ -3166,7 +3253,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       {/* AI Table Builder slide-over panel */}
       {tableBuilderOpen && (
         <ChatToSchemaPanel
-          workspaceId={workspaceContext?.entityId || ''}
+          workspaceId={
+            (workspaceContext?.entityData?.tableContext as { baseId?: string } | undefined)
+              ?.baseId ||
+            workspaceContext?.entityId ||
+            ''
+          }
           initialMessage={tableBuilderInitialMsg}
           slideOver
           companyContext={{

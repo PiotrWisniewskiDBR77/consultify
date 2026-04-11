@@ -63,6 +63,50 @@ export class TestDatabaseFactory {
     db.initPromise = Promise.resolve();
     db.__CLOSED__ = false;
 
+    const originalRun = db.run.bind(db);
+    const originalGet = db.get.bind(db);
+    const originalAll = db.all.bind(db);
+
+    // Support both sqlite callback style and Promise-based service callers.
+    db.run = function (sql, params = [], callback) {
+      const actualParams = Array.isArray(params) ? params : [];
+      if (typeof callback === 'function') {
+        return originalRun(sql, actualParams, callback);
+      }
+      return new Promise((resolve, reject) => {
+        originalRun(sql, actualParams, function (err) {
+          if (err) return reject(err);
+          resolve({ lastID: this.lastID, changes: this.changes });
+        });
+      });
+    };
+
+    db.get = function (sql, params = [], callback) {
+      const actualParams = Array.isArray(params) ? params : [];
+      if (typeof callback === 'function') {
+        return originalGet(sql, actualParams, callback);
+      }
+      return new Promise((resolve, reject) => {
+        originalGet(sql, actualParams, (err, row) => {
+          if (err) return reject(err);
+          resolve(row);
+        });
+      });
+    };
+
+    db.all = function (sql, params = [], callback) {
+      const actualParams = Array.isArray(params) ? params : [];
+      if (typeof callback === 'function') {
+        return originalAll(sql, actualParams, callback);
+      }
+      return new Promise((resolve, reject) => {
+        originalAll(sql, actualParams, (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows || []);
+        });
+      });
+    };
+
     // Add promise wrappers for services expecting async methods
     db.runAsync = function (sql, params = []) {
       return new Promise((resolve, reject) => {

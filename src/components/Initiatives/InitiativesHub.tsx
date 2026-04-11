@@ -1,7 +1,7 @@
 /**
  * InitiativesHub
  * Unified Initiatives module with ModuleHub UI pattern
- * Integrates original Portfolio components (Kanban, List, Timeline, Matrix)
+ * Integrates original Portfolio components (Kanban, List, Timeline, Grid)
  * Connected to real API endpoints
  */
 
@@ -54,7 +54,6 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
-import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
 // ModuleHub components
 import {
   FilterChip,
@@ -455,9 +454,41 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [t]
   );
 
-  // Bulk edit lives inside Filters dropdown (per contract: no extra top-level icons/buttons)
+  const PRIORITY_OPTIONS = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const;
+
+  const togglePriorityFilter = useCallback(
+    (priority: (typeof PRIORITY_OPTIONS)[number]) => {
+      setFilters((prev) => {
+        const current = prev.priority || [];
+        const next = current.includes(priority)
+          ? current.filter((p) => p !== priority)
+          : [...current, priority];
+        return { ...prev, priority: next.length ? next : undefined };
+      });
+      setActiveFilters((prev) => {
+        const withoutPriority = prev.filter((f) => !f.id.startsWith('priority:'));
+        const currentPriorities = filters.priority || [];
+        const next = currentPriorities.includes(priority)
+          ? currentPriorities.filter((p) => p !== priority)
+          : [...currentPriorities, priority];
+        const chips: FilterChip[] = next.map((p) => ({
+          id: `priority:${p}`,
+          label: t(`initiatives.priority.${p.toLowerCase()}`, p),
+        }));
+        return [...withoutPriority, ...chips];
+      });
+    },
+    [filters.priority, t]
+  );
+
   const filterActions = useMemo(() => {
     return [
+      ...PRIORITY_OPTIONS.map((p) => ({
+        id: `priority-${p}`,
+        label: t(`initiatives.priority.${p.toLowerCase()}`, p),
+        badge: filters.priority?.includes(p) ? 1 : 0,
+        onClick: () => togglePriorityFilter(p),
+      })),
       {
         id: 'bulk-edit',
         label: t('initiatives.bulkEdit.title'),
@@ -472,7 +503,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         },
       },
     ];
-  }, [selectedIds.size]);
+  }, [selectedIds.size, filters.priority, togglePriorityFilter, t]);
 
   // ============================================
   // HANDLERS
@@ -841,10 +872,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   const handleRemoveFilter = useCallback((id: string) => {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+    if (id.startsWith('priority:')) {
+      const value = id.split(':')[1] as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+      setFilters((prev) => {
+        const next = (prev.priority || []).filter((p) => p !== value);
+        return { ...prev, priority: next.length ? next : undefined };
+      });
+    }
   }, []);
 
   const handleClearFilters = useCallback(() => {
     setActiveFilters([]);
+    setFilters({});
   }, []);
 
   const handleShowList = useCallback(() => {
@@ -1220,13 +1259,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               />
             </TableWithPreviewLayout>
           </div>
-        );
-      case 'matrix':
-        return (
-          <PortfolioMatrixView
-            initiatives={searchedInitiatives}
-            onInitiativeClick={handleInitiativeClick}
-          />
         );
       default:
         return null;

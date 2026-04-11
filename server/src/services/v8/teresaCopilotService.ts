@@ -3,7 +3,7 @@
  *
  * Runtime logic for the Teresa contextual copilot:
  *   - Proposal lifecycle (create → approve → execute → complete/reject)
- *   - Cross-surface handoff to 4 P0 targets (Radar/Inicjatywy/Kalendarz/Notatki)
+ *   - Cross-surface handoff to 5 P0 targets (Radar/Inicjatywy/Kalendarz/Notatki/Wywiady)
  *   - Audit trail for every action
  *   - Voice posture resolution
  *   - Anti-duplicate gate
@@ -146,6 +146,22 @@ const CHAT_ACTION_KEYWORDS: Array<{
       /\b(ryzyk|radar|sygnał|alert|monitor|eskaluj|ostrzeż|zagrożen|bloker|przeszkod|problem|incydent)\b/i,
     ],
   },
+  {
+    targetModule: 'interview',
+    handoffIntent: 'open',
+    patterns: [
+      /\b(insight|insights|interview|findings|generate.?insight|review.?insight|publish.?insight|evidence.?map|completed.?session)\b/i,
+      /\b(wnioski|wywiad|wywiady|wygeneruj.?wnioski|recenzja|recenzuj|opublikuj.?wnioski|mapa.?dowodów|zakończon.?sesj)\b/i,
+    ],
+  },
+  {
+    targetModule: 'excele',
+    handoffIntent: 'generate',
+    patterns: [
+      /\b(workbook|excel\s*file|financial.?model|budget.?plan|balance.?sheet|cash.?flow|p\s*&\s*l|profit.?loss|multi.?sheet|xlsx)\b/i,
+      /\b(skoroszyt|plik\s*excel|model.?finansowy|plan.?budżet|bilans|przepływy?.?pienięż|rachunek.?zysków|arkusz.?kalkulacyjny)\b/i,
+    ],
+  },
 ];
 
 const TARGET_LABELS: Record<HandoffTargetModule, string> = {
@@ -153,6 +169,8 @@ const TARGET_LABELS: Record<HandoffTargetModule, string> = {
   initiatives: 'Initiatives',
   calendar: 'Calendar',
   notebook: 'Notebook',
+  interview: 'Interview Insights',
+  excele: 'Excele Workbooks',
 };
 
 // ---------------------------------------------------------------------------
@@ -335,7 +353,7 @@ function extractResultRef(detail: Record<string, unknown> | null | undefined): s
   if (!detail || typeof detail !== 'object') return null;
   const handoff = detail.handoff_result;
   if (!handoff || typeof handoff !== 'object') return null;
-  const keys = ['signal_id', 'initiative_ref', 'calendar_ref', 'note_ref'];
+  const keys = ['signal_id', 'initiative_ref', 'calendar_ref', 'note_ref', 'insight_ref'];
   for (const key of keys) {
     const value = (handoff as Record<string, unknown>)[key];
     if (typeof value === 'string' && value.trim().length > 0) return value.trim();
@@ -362,6 +380,10 @@ function buildPreviewLines(proposal: ProposalRecord, execution?: HandoffResult |
     const calendar = (payload.calendar_intent || {}) as Record<string, unknown>;
     lines.push(trimPreview(calendar.what || proposal.handoff_context.user_intent, 120));
     lines.push(trimPreview(calendar.when || 'Scheduling slot will be confirmed on execute', 120));
+  } else if (target === 'interview') {
+    const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
+    lines.push(trimPreview(interviewCtx.title || proposal.handoff_context.user_intent, 120));
+    lines.push(trimPreview(interviewCtx.action || 'Open Interview Insights module', 120));
   } else {
     lines.push(trimPreview(payload.why_now || proposal.handoff_context.user_intent, 120));
     lines.push(
@@ -434,6 +456,10 @@ function inferTargetModuleFromChatRegex(
     return { targetModule: 'calendar', handoffIntent: 'schedule' };
   if (moduleHint.includes('radar') || moduleHint.includes('signal'))
     return { targetModule: 'radar', handoffIntent: 'triage' };
+  if (moduleHint.includes('interview') || moduleHint.includes('insight'))
+    return { targetModule: 'interview', handoffIntent: 'open' };
+  if (moduleHint.includes('excele') || moduleHint.includes('spreadsheet') || moduleHint.includes('workbook'))
+    return { targetModule: 'excele', handoffIntent: 'generate' };
 
   return null;
 }
@@ -444,8 +470,10 @@ Given a user message, determine if it contains an actionable intent for one of t
 - initiatives: projects, plans, roadmaps, strategies, goals, sprints, milestones
 - calendar: meetings, scheduling, appointments, availability, deadlines
 - notebook: notes, summaries, minutes, drafts, memos, documentation
+- interview: insights from interviews, generate insights, review insights, findings, evidence map, completed sessions
+- excele: spreadsheets, workbooks, Excel files, financial models, budgets, P&L, balance sheets, cash flow forecasts, multi-sheet calculations, xlsx generation
 
-Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|null,"intent":"string describing the action"}
+Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"excele"|null,"intent":"string describing the action"}
 If the message is conversational or has no actionable intent, respond: {"module":null,"intent":"none"}`;
 
 async function inferTargetModuleWithLLM(
@@ -566,6 +594,16 @@ function buildTargetPayloadForChat(params: {
         source: 'teresa',
       },
       provenance_markers: { source: 'teresa', user_edit: false, ai_transform: true },
+      evidence_pointers: ['chat:teresa'],
+    };
+  }
+
+  if (targetModule === 'interview') {
+    return {
+      interview_handoff_context: {
+        action: 'generate_insight',
+        title: title || 'Interview insight from Teresa',
+      },
       evidence_pointers: ['chat:teresa'],
     };
   }
@@ -1183,6 +1221,10 @@ async function performHandoff(params: {
       return handleCalendarHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'notebook':
       return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
+    case 'interview':
+      return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
+    case 'excele':
+      return handleExceleHandoff(proposalId, organizationId, handoffContext, targetPayload);
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -1370,6 +1412,77 @@ async function handleNotebookHandoff(
   };
 }
 
+async function handleInterviewHandoff(
+  proposalId: string,
+  organizationId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const fallbackRef = randomUUID();
+  let realInsightRef: string | null = null;
+
+  const interviewMod = await tryImport('./interviewInsightService.js');
+  if (interviewMod) {
+    try {
+      const fn =
+        interviewMod.generateInsight ??
+        interviewMod.default?.generateInsight ??
+        interviewMod.createInsight ??
+        interviewMod.default?.createInsight;
+      const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
+      const result = await fn?.({
+        organizationId,
+        action: interviewCtx.action || 'generate_insight',
+        session_ids: interviewCtx.session_ids,
+        title: interviewCtx.title || context.user_intent,
+        source: 'teresa',
+        proposalId,
+      });
+      realInsightRef = result?.id || result?.insightId || null;
+    } catch {
+      logger.warn(`${LOG_PREFIX} Interview service call failed, using fallback ref`);
+    }
+  }
+
+  const ref = realInsightRef || fallbackRef;
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'interview', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
+  );
+  return {
+    handoff: 'interview',
+    insight_ref: ref,
+    real_entity: Boolean(realInsightRef),
+    interview_context: payload.interview_handoff_context,
+    user_intent: context.user_intent,
+  };
+}
+
+async function handleExceleHandoff(
+  proposalId: string,
+  organizationId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const fallbackRef = randomUUID();
+  const ref = fallbackRef;
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'excele', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    { fallback: true }
+  );
+  return {
+    handoff: 'excele',
+    workbook_ref: ref,
+    navigate_to: '/excele',
+    user_intent: context.user_intent,
+    prompt_hint: payload.prompt || context.user_intent,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Internal: state transitions + audit
 // ---------------------------------------------------------------------------
@@ -1427,6 +1540,52 @@ async function loadAuditEntries(proposalId: string): Promise<AuditRow[]> {
     [proposalId],
     { fallback: true }
   );
+}
+
+// ---------------------------------------------------------------------------
+// Proactive suggestions: interview sessions without insights (L6.4)
+// ---------------------------------------------------------------------------
+
+export interface ProactiveSuggestion {
+  id: string;
+  targetModule: HandoffTargetModule;
+  label: string;
+  labelPl: string;
+  handoffIntent: string;
+  context: Record<string, unknown>;
+}
+
+export async function getProactiveSuggestions(
+  organizationId: string,
+): Promise<ProactiveSuggestion[]> {
+  const suggestions: ProactiveSuggestion[] = [];
+
+  try {
+    const interviewMod = await tryImport('./interviewInsightService.js');
+    if (interviewMod) {
+      const fn =
+        interviewMod.getCompletedSessionsWithoutInsights ??
+        interviewMod.default?.getCompletedSessionsWithoutInsights;
+      if (fn) {
+        const result = await fn({ organizationId });
+        const count = typeof result === 'number' ? result : Array.isArray(result) ? result.length : 0;
+        if (count > 0) {
+          suggestions.push({
+            id: `proactive-interview-insights-${organizationId}`,
+            targetModule: 'interview',
+            label: `Generate insights from ${count} completed session${count === 1 ? '' : 's'}`,
+            labelPl: `Wygeneruj wnioski z ${count} zakończon${count === 1 ? 'ej sesji' : 'ych sesji'}`,
+            handoffIntent: 'generate_insight',
+            context: { completedSessionCount: count },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn(`${LOG_PREFIX} Proactive interview suggestion check failed: ${(err as Error).message}`);
+  }
+
+  return suggestions;
 }
 
 // ---------------------------------------------------------------------------

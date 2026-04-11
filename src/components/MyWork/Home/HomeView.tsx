@@ -1,11 +1,15 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, ChevronDown, ChevronRight, Info, Sparkles } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { AlertTriangle, ArrowRight, ChevronDown, ChevronRight, ExternalLink, Info, Lightbulb, Sparkles } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { cn } from '@/lib/utils';
+import { V8ResultsApi } from '@/services/api/v8/results';
+import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { AIPulseCore } from './AIPulseCore';
 import { DecisionTemperatureBlock } from './DecisionTemperatureBlock';
@@ -27,11 +31,27 @@ interface HomeViewProps {
 
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
   const { t, i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
   const { screen, blocks, layout, loading, error, refresh } = useHomeData(refreshTrigger);
   const triageData = useRadarTriageData();
   const roofSummary = useV8MyWorkRoofSummary();
   const [roofMetaOpen, setRoofMetaOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const [recentInsights, setRecentInsights] = useState<V8InterviewInsight[]>([]);
+  useEffect(() => {
+    V8InterviewApi.listInsights({ limit: 5 })
+      .then((res) => setRecentInsights(res?.insights ?? []))
+      .catch(() => setRecentInsights([]));
+  }, [refreshTrigger]);
+
+  const [kpiAlerts, setKpiAlerts] = useState<Array<{ signalId: string; kpiId: string; severity: string; description: string; createdAt: string; kpiName?: string }>>([]);
+  useEffect(() => {
+    V8ResultsApi.getWorkflowSignals()
+      .then((res) => setKpiAlerts((res?.data ?? []).slice(0, 5)))
+      .catch(() => setKpiAlerts([]));
+  }, [refreshTrigger]);
 
   const alignedHomeBlocks = useMemo(() => {
     const homeBlocks = roofSummary.data?.homeBlocks;
@@ -198,6 +218,55 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
         </div>
       )}
 
+      {kpiAlerts.length > 0 && (
+        <div className="relative z-10 px-4 md:px-5 pb-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+                <AlertTriangle size={14} className="text-amber-400" />
+                {t('myWork.radar.kpiAlerts.title', 'KPI Alerts')}
+              </h2>
+              <p className="text-[11px] text-slate-400">{t('myWork.radar.kpiAlerts.subtitle', 'Open deviations requiring attention')}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/benefits?tab=results_kpi&mode=queue')}
+              className="text-[11px] text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1"
+            >
+              {t('common.viewAll', 'View all')} <ArrowRight size={12} />
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            {kpiAlerts.map((alert) => (
+              <button
+                key={alert.signalId}
+                type="button"
+                onClick={() => navigate('/benefits?tab=results_kpi&mode=queue')}
+                className="w-full text-left flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 transition hover:bg-white/[0.06]"
+              >
+                <span className={cn(
+                  'h-2 w-2 rounded-full shrink-0',
+                  alert.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'
+                )} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-slate-200 truncate">{alert.kpiName || alert.kpiId}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{alert.description}</p>
+                </div>
+                <span className="text-[10px] text-slate-500 shrink-0 tabular-nums">
+                  {new Date(alert.createdAt).toLocaleDateString(lang)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {recentInsights.length > 0 && (
+        <div className="relative z-10 px-4 md:px-5 pb-3">
+          <RecentInsightsCard insights={recentInsights} isPolish={isPolish} />
+        </div>
+      )}
+
       <div className="relative z-10 flex-1 overflow-auto px-4 md:px-5 pb-4">
         <div className="grid grid-cols-12 gap-2.5">
           {blocks.map((block) => (
@@ -357,3 +426,66 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
     />
   </>
 );
+
+const INSIGHT_STATUS_STYLES: Record<string, { bg: string; text: string; label: string; labelPl: string }> = {
+  draft: { bg: 'bg-slate-500/20', text: 'text-slate-300', label: 'Draft', labelPl: 'Szkic' },
+  in_review: { bg: 'bg-amber-500/20', text: 'text-amber-300', label: 'In Review', labelPl: 'W przeglądzie' },
+  published: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', label: 'Published', labelPl: 'Opublikowany' },
+};
+
+const PROMPT_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
+  themes: { en: 'Themes', pl: 'Tematy' },
+  issues: { en: 'Issues', pl: 'Problemy' },
+  opportunities: { en: 'Opportunities', pl: 'Szanse' },
+  synthesis: { en: 'Synthesis', pl: 'Synteza' },
+};
+
+function RecentInsightsCard({ insights, isPolish }: { insights: V8InterviewInsight[]; isPolish: boolean }) {
+  return (
+    <div className="rounded-2xl border border-lime-400/20 bg-white/[0.025] backdrop-blur-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06]">
+        <Lightbulb size={14} className="text-lime-400/80" />
+        <h3 className="text-sm font-semibold text-white">
+          {isPolish ? 'Ostatnie insighty' : 'Recent Insights'}
+        </h3>
+        <span className="ml-auto font-mono text-[9px] text-slate-500 uppercase tracking-wider">
+          INS
+        </span>
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {insights.map((insight) => {
+          const statusMeta = INSIGHT_STATUS_STYLES[insight.status] ?? INSIGHT_STATUS_STYLES.draft;
+          const promptLabel = PROMPT_TYPE_LABELS[insight.promptType];
+          const insightPath = getArtifactPath('insight', insight.id);
+          return (
+            <a
+              key={insight.id}
+              href={insightPath}
+              className="flex items-center gap-3 px-3 py-2 hover:bg-white/[0.04] transition-colors group"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="text-[12px] font-medium text-slate-200 truncate group-hover:text-white transition-colors">
+                  {insight.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-medium', statusMeta.bg, statusMeta.text)}>
+                    {isPolish ? statusMeta.labelPl : statusMeta.label}
+                  </span>
+                  {promptLabel && (
+                    <span className="text-[9px] text-slate-500">
+                      {isPolish ? promptLabel.pl : promptLabel.en}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <span className="shrink-0 font-mono text-[9px] tabular-nums text-slate-600">
+                {new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' })}
+              </span>
+              <ExternalLink size={10} className="shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors" />
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

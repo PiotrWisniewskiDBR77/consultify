@@ -8,6 +8,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import type { AuthRequest } from './auth.middleware.js';
+import { getRequestAccessRole, isRequestSuperAdmin } from './requestAccess.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 
@@ -39,11 +40,11 @@ export const verifyAdmin = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const role = req.user?.role || req.userRole;
+  const role = getRequestAccessRole(req);
   const orgId = req.user?.organizationId || req.organizationId;
   const userId = req.user?.id;
 
-  if (isAdminRole(role)) {
+  if (isRequestSuperAdmin(req)) {
     next();
     return;
   }

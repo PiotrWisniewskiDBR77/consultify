@@ -169,7 +169,8 @@ export const AdminScimLifecyclePanel: React.FC = () => {
             <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
               {(summary?.groupMappings || []).map((mapping: any) => (
                 <div key={mapping.id}>
-                  {mapping.external_group_name} {'->'} {mapping.internal_role}
+                  {mapping.external_group_name} <span aria-hidden="true">&rarr;</span>{' '}
+                  {mapping.internal_role}
                 </div>
               ))}
             </div>

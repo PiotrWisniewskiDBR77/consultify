@@ -8,10 +8,16 @@
  * SSOT: FINAL_IMPLEMENTATION_PLAN_23_EXCELE_2026-03-29.md
  */
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 
+import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
+import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
+import { downloadSheetArtifactXlsx, resolveTablePlatformWorkspaceIdForTable } from '@/utils/sheetArtifactOpen';
 
+import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 
@@ -38,11 +44,55 @@ If the user asks to modify the workbook, suggest changes and regenerate.`;
 export const ExceleView: React.FC = () => {
   const pipeline = useKimiArtifactPipeline('excele');
   const { activeMessages } = useConversationStore();
+  const [searchParams] = useSearchParams();
+  const artifactId = searchParams.get('artifactId');
   const advanceRef = useRef(pipeline.advancePipeline);
   advanceRef.current = pipeline.advancePipeline;
   const autoTriggered = useRef(false);
   const startRef = useRef(pipeline.startGeneration);
   startRef.current = pipeline.startGeneration;
+
+  const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
+  const [reopenWorkbookId, setReopenWorkbookId] = useState<string | null>(null);
+  const reopenLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!artifactId || reopenLoaded.current) return;
+    reopenLoaded.current = true;
+
+    Api.get(`/workbook/${artifactId}`)
+      .then((wbData: any) => {
+        const title = wbData?.title || wbData?.schema_json?.title || 'Spreadsheet';
+        const sheets = wbData?.schema_json?.sheets || [];
+        setReopenWorkbookId(artifactId);
+        setReopenPreview({
+          type: 'xlsx',
+          title,
+          fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+          summary: `Workbook "${title}" — ${sheets.length || 1} sheets.`,
+          kpiItems: [
+            { label: 'Sheets', value: String(sheets.length || 1) },
+            { label: 'Format', value: 'XLSX' },
+          ],
+          sheetNames: sheets.map((s: any) => s.name || 'Sheet'),
+          workbookId: artifactId,
+          downloadUrl: `/api/workbook/${artifactId}/download`,
+        });
+      })
+      .catch(() => {
+        setReopenWorkbookId(artifactId);
+        setReopenPreview({
+          type: 'xlsx',
+          title: 'Spreadsheet',
+          fileName: 'spreadsheet.xlsx',
+          summary: 'Workbook loaded from library.',
+          kpiItems: [],
+          sheetNames: ['Sheet1'],
+          workbookId: artifactId,
+          downloadUrl: `/api/workbook/${artifactId}/download`,
+        });
+      });
+  }, [artifactId]);
 
   useEffect(() => {
     if (!pipeline.isGenerating || pipeline.isBusy) return undefined;
@@ -53,7 +103,8 @@ export const ExceleView: React.FC = () => {
   }, [pipeline.isGenerating, pipeline.isBusy]);
 
   useEffect(() => {
-    if (autoTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    if (autoTriggered.current || pipeline.currentRun || pipeline.isGenerating || reopenWorkbookId)
+      return;
     const userMessages = activeMessages.filter((m) => m.role === 'user');
     const aiMessages = activeMessages.filter((m) => m.role === 'ai');
     if (userMessages.length >= 1 && aiMessages.length >= 1) {
@@ -63,20 +114,35 @@ export const ExceleView: React.FC = () => {
         void startRef.current(firstUserMsg.trim());
       }
     }
-  }, [activeMessages, pipeline.currentRun, pipeline.isGenerating]);
+  }, [activeMessages, pipeline.currentRun, pipeline.isGenerating, reopenWorkbookId]);
+
+  const effectivePreview = pipeline.preview || reopenPreview;
+  const effectiveCompleted = pipeline.isCompleted || (!!reopenPreview && !pipeline.currentRun);
 
   const handlePreviewFile = useCallback(() => {
+    const workbookId = (pipeline.preview as any)?.workbookId || reopenWorkbookId;
+    if (workbookId) {
+      window.open(`/api/workbook/${workbookId}/download`, '_blank');
+      return;
+    }
     if (pipeline.currentRun?.materializationOrigin?.originRecordId) {
       const tableId = pipeline.currentRun.materializationOrigin.originRecordId;
-      window.open(
-        `/my-work/ideas/workspace/table?tpTable=${encodeURIComponent(tableId)}`,
-        '_blank'
-      );
+      void (async () => {
+        const workspaceId = await resolveTablePlatformWorkspaceIdForTable(tableId);
+        if (workspaceId) {
+          window.open(buildMyWorkSheetTableOpenPath(workspaceId, tableId), '_blank');
+          return;
+        }
+        const ok = await downloadSheetArtifactXlsx(tableId);
+        if (!ok) {
+          toast.error('Could not open the table workspace');
+        }
+      })();
     }
-  }, [pipeline.currentRun]);
+  }, [pipeline.currentRun, pipeline.preview, reopenWorkbookId]);
 
   const handleAllFiles = useCallback(() => {
-    window.open('/my-work', '_blank');
+    window.open('/presentations?tab=sheets', '_blank');
   }, []);
 
   return (
@@ -86,8 +152,10 @@ export const ExceleView: React.FC = () => {
       totalSteps={pipeline.totalSteps}
       completedSteps={pipeline.completedSteps}
       isGenerating={pipeline.isGenerating}
-      isCompleted={pipeline.isCompleted}
-      preview={pipeline.preview}
+      isCompleted={effectiveCompleted}
+      isFailed={pipeline.isFailed}
+      failureReason={pipeline.failureReason}
+      preview={effectivePreview}
       onReplay={pipeline.handleReplay}
       onRemix={pipeline.handleRemix}
       onDownload={pipeline.handleDownload}

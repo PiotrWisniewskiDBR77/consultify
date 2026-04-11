@@ -24,7 +24,13 @@ vi.mock('../../utils/DbPromise.js', () => ({
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: any) => {
-    req.user = { id: 'user-1', organizationId: 'org-1', role: mockUserRole };
+    req.user = {
+      id: 'user-1',
+      organizationId: 'org-1',
+      role: mockUserRole,
+      isSuperAdmin: String(mockUserRole).toLowerCase() === 'superadmin',
+    };
+    req.userRole = mockUserRole;
     next();
   },
 }));
@@ -371,5 +377,55 @@ describe('adminP32Routes', () => {
     });
     expect(scimRes.status).toBe(201);
     expect(String(scimRes.body.token.token)).toContain('scim_');
+  });
+
+  it('allows platform superadmins to read another organization via explicit orgId context', async () => {
+    mockUserRole = 'superadmin';
+    dbGet
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ total: 3 })
+      .mockResolvedValueOnce({
+        subscription_plan_id: 'plan-9',
+        status: 'active',
+        current_period_end: '2026-06-01',
+        plan_name: 'Global Enterprise',
+        price_monthly: 4999,
+        token_limit: 500000,
+        storage_limit_gb: 500,
+      })
+      .mockResolvedValueOnce({
+        trial_tokens_used: 2000,
+        token_balance: 420000,
+        plan: 'enterprise',
+        trial_expires_at: null,
+      })
+      .mockResolvedValueOnce({
+        token_threshold_80: 1,
+        token_threshold_90: 1,
+        token_threshold_100: 1,
+        cost_cap_monthly: 20000,
+        email_notifications: 1,
+      })
+      .mockResolvedValueOnce({ mfa_required: 1, mfa_grace_period_days: 7 })
+      .mockResolvedValueOnce({ setting_value: JSON.stringify({ passwordPolicy: 'strict' }) })
+      .mockResolvedValueOnce({ is_enabled: 1, provider_name: 'Okta', provider_type: 'okta', protocol: 'saml' })
+      .mockResolvedValueOnce({ mode: 'approved', review_state: 'published', audit_required: 1, updated_at: 'now' });
+
+    dbAll
+      .mockResolvedValueOnce([
+        { role: 'OWNER', total: 1 },
+        { role: 'ADMIN', total: 4 },
+      ])
+      .mockResolvedValueOnce([
+        { key: 'tenant:org-2:guest_access_enabled', value: 'false' },
+        { key: 'tenant:org-2:external_link_sharing', value: 'false' },
+      ]);
+    getLogs.mockResolvedValueOnce([]);
+
+    const app = createApp();
+    const res = await request(app).get('/api/admin/overview').query({ orgId: 'org-2' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.overview.billing.plan.name).toBe('Global Enterprise');
   });
 });

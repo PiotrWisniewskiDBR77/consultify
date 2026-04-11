@@ -559,3 +559,168 @@ describe('financeCanon — unit tests', () => {
     });
   });
 });
+
+describe('P05 Concurrent Lane Run Prevention', () => {
+  let app: Express;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser = { id: USER, role: 'admin', organizationId: ORG, isSuperAdmin: false };
+    app = createApp();
+    mockDbGet.mockResolvedValue(null);
+    mockDbRun.mockResolvedValue(undefined);
+    mockDbAll.mockResolvedValue([]);
+  });
+
+  it('rejects second concurrent lane run with 409 and P05_CONCURRENT_RUN_EXISTS', async () => {
+    // Atomic INSERT...WHERE NOT EXISTS returns 0 changes when active run exists
+    mockDbRun.mockResolvedValueOnce({ changes: 0 });
+    // Follow-up SELECT to get the active run for the error message
+    mockDbGet.mockResolvedValueOnce({ run_id: 'existing-run' });
+
+    const res = await request(app).post('/api/v8/finance/lane/start').send({ versionType: 'current' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('P05_CONCURRENT_RUN_EXISTS');
+    expect(res.body.error).toContain('Active lane run already exists');
+  });
+
+  it('allows new run after previous completed (readback confirmed)', async () => {
+    mockDbRun.mockResolvedValueOnce({ changes: 1 });
+
+    const res = await request(app).post('/api/v8/finance/lane/start').send({ versionType: 'current' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.currentStep).toBe('import');
+  });
+});
+
+describe('P05 AdvanceLaneContext from HTTP', () => {
+  let app: Express;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser = { id: USER, role: 'admin', organizationId: ORG, isSuperAdmin: false };
+    app = createApp();
+    mockDbGet.mockResolvedValue(null);
+    mockDbRun.mockResolvedValue(undefined);
+    mockDbAll.mockResolvedValue([]);
+  });
+
+  it('returns P05_PERMISSION_DENIED when user lacks finance mutation role', async () => {
+    mockDbGet
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        run_id: 'run-1',
+        organization_id: 'org-1',
+        current_step: 'import',
+        import_outcome: null,
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: '[]',
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .mockResolvedValueOnce({ role: 'viewer' })
+      .mockResolvedValueOnce(null);
+
+    mockDbRun.mockResolvedValue(undefined);
+
+    const res = await request(app)
+      .post('/api/v8/finance/lane/run-1/advance')
+      .send({ outcome: 'completed' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('P05_PERMISSION_DENIED');
+  });
+
+  it('returns 422 for invalid outcome on import step (P05_INVALID_OUTCOME)', async () => {
+    mockDbGet
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        run_id: 'run-1', organization_id: ORG, current_step: 'import',
+        import_outcome: null, analysis_completed: 0, mutation_outcome: null,
+        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: '[]',
+        version_type: 'current', kpi_linkage_status: 'coherent',
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      })
+      .mockResolvedValueOnce({ role: 'admin' })
+      .mockResolvedValueOnce(null);
+    mockDbRun.mockResolvedValue(undefined);
+
+    const res = await request(app)
+      .post('/api/v8/finance/lane/run-1/advance')
+      .send({ outcome: 'totally_bogus' });
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('P05_INVALID_OUTCOME');
+  });
+
+  it('advances from import to analysis on completed_with_warnings and adds degraded', async () => {
+    mockDbGet
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        run_id: 'run-1', organization_id: ORG, current_step: 'import',
+        import_outcome: null, analysis_completed: 0, mutation_outcome: null,
+        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: '[]',
+        version_type: 'current', kpi_linkage_status: 'coherent',
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      })
+      .mockResolvedValueOnce({ role: 'admin' })
+      .mockResolvedValueOnce(null);
+    mockDbRun.mockResolvedValue(undefined);
+
+    const res = await request(app)
+      .post('/api/v8/finance/lane/run-1/advance')
+      .send({ outcome: 'completed_with_warnings', detail: 'Minor date format issues' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.currentStep).toBe('analysis');
+    expect(res.body.data.importOutcome).toBe('completed_with_warnings');
+    const degraded = res.body.data.degraded || [];
+    const warningEntry = degraded.find((d: any) => d.reason === 'import_completed_with_warnings');
+    expect(warningEntry).toBeDefined();
+    expect(warningEntry.detail).toContain('Minor date format issues');
+  });
+
+  it('adds stale_model degraded when model >30d old', async () => {
+    const oldDate = new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString();
+
+    mockDbGet
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        run_id: 'run-1',
+        organization_id: 'org-1',
+        current_step: 'import',
+        import_outcome: null,
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: '[]',
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .mockResolvedValueOnce({ role: 'admin' })
+      .mockResolvedValueOnce({ max_updated: oldDate });
+
+    mockDbRun.mockResolvedValue(undefined);
+
+    const res = await request(app)
+      .post('/api/v8/finance/lane/run-1/advance')
+      .send({ outcome: 'completed' });
+
+    expect(res.status).toBe(200);
+    const degraded = res.body?.data?.degraded || [];
+    const staleEntry = degraded.find((d: any) => d.reason === 'stale_model');
+    expect(staleEntry).toBeDefined();
+    expect(staleEntry.detail).toContain('days ago');
+  });
+});

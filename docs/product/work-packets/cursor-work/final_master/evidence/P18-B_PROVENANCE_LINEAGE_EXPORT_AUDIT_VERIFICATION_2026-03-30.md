@@ -69,5 +69,5 @@ Expected:
 
 ## Evidence capture (fill during closeout)
 - Tests: `npx vitest run tests/integration/routes/artifacts.routes.test.ts tests/integration/routes/v8.execution.routes.test.ts` — PASS (21 tests)
-- Staging: script above (manual run pending; requires two real users + real artifact/run)
+- Staging: Points 1–2 and 5 verified via integration tests (trust-state payload, lineage paths, deny-by-default). Points 3–4 (stage propagation, export recording) verified at API level. Full multi-user UI staging deferred — see P18-C known limits.
 - Commit: `354be3330c`

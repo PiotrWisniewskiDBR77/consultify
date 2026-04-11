@@ -497,6 +497,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     <ChatTableProposalCard
                       proposal={(msg as any).metadata.proposal}
                       onStatusChange={() => {}}
+                      onNavigateToTable={(baseId) => {
+                        const path = `/my-work/ideas/${encodeURIComponent(baseId)}/workspace/table`;
+                        window.location.href = path;
+                      }}
                     />
                   </div>
                 ) : isDeepThinkingConfirm ? (

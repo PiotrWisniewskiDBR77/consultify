@@ -152,6 +152,10 @@ import type {
 import { computeAggregation } from './table/tableTypes';
 import { TemplateGallery } from './table/TemplateGallery';
 import { TimelineView } from './table/TimelineView';
+// P15 Table Platform – extracted components
+import { TableDataProvider } from './table/TableDataProvider';
+import { TableToolbar as P15TableToolbar } from './table/TableToolbar';
+import { ViewRouter as P15ViewRouter } from './table/ViewRouter';
 // Domain hooks extracted from this file (Stage 1 refactor)
 import { useRollupComputation } from './table/useRollupComputation';
 import { useTableKeyboard } from './table/useTableKeyboard';
@@ -164,7 +168,7 @@ import { useTableSchema } from './table/useTableSchema';
 import { useTableViews } from './table/useTableViews';
 import { useUndoRedo } from './table/useUndoRedo';
 import type { ViewConfigState } from './table/views/ViewConfigPanel';
-import { ViewRouter } from './table/views/ViewRouter';
+import { ViewRouter as LegacyViewRouter } from './table/views/ViewRouter';
 import { VoiceImageInput } from './table/VoiceImageInput';
 import { WorkflowDashboard } from './table/WorkflowDashboard';
 
@@ -173,6 +177,8 @@ interface IdeaTableToolProps {
   ideaId: string;
   /** When set (e.g. `?tpTable=` deep link), load this table-platform table if it belongs to `ideaId`. */
   preferredPlatformTableId?: string | null;
+  /** When set (e.g. `?tpView=` deep link), activate this view after the table loads. */
+  preferredViewId?: string | null;
   locked?: boolean;
   refreshToken?: number;
   focusMode?: 'system' | 'object' | null;
@@ -185,6 +191,14 @@ interface IdeaTableToolProps {
     edges: any[];
     extensions?: Record<string, unknown>;
   }) => void;
+  onTableContextChange?: (ctx: {
+    baseId?: string;
+    tableId: string;
+    tableName: string;
+    activeViewId?: string;
+    fieldCount: number;
+    recordCount: number;
+  }) => void;
 }
 
 // DEFAULT_COLUMNS now lives in useTableSchema.ts
@@ -193,6 +207,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   open,
   ideaId,
   preferredPlatformTableId = null,
+  preferredViewId = null,
   locked = false,
   refreshToken,
   focusMode,
@@ -201,6 +216,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   onSelectionChange,
   onConvert: onConvertProp,
   onGraphChange,
+  onTableContextChange,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -221,6 +237,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // ── Data connectors ────────────────────────────────────────────────────────
   const connectors = useConnectors(ideaId);
 
+  /** User-selected table from the bottom tab strip; overrides `preferredPlatformTableId` until cleared. */
+  const [platformTableOverrideId, setPlatformTableOverrideId] = useState<string | null>(null);
+
   // ── Table Platform integration (metadata-first) ──────────────────────────
   const platformIntegration = useTablePlatformIntegration({
     ideaId,
@@ -228,12 +247,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     isPl,
     open,
     onSelectionChange: onSelectionChange as (sel: unknown) => void | undefined,
-    preferredTableId: preferredPlatformTableId,
+    preferredTableId: platformTableOverrideId ?? preferredPlatformTableId,
   });
 
   // Platform may be active via feature flags, but we can still fall back to
   // legacy graph persistence if the new backend is effectively empty.
   const platformActive = platformIntegration.active;
+
+  useEffect(() => {
+    setPlatformTableOverrideId(null);
+  }, [ideaId, preferredPlatformTableId]);
+
+  useEffect(() => {
+    if (preferredViewId && platformActive && platformIntegration.setActiveViewId) {
+      platformIntegration.setActiveViewId(preferredViewId);
+    }
+  }, [preferredViewId, platformActive, platformIntegration.setActiveViewId]);
 
   // ── Table Platform real-time collaboration ─────────────────────────────────
   const realtime = useTableRealtime({
@@ -372,6 +401,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     platformIntegration.columns.length <= 1;
   const legacyLooksPopulated = nodes.length > 0 || columns.length > 1;
   const usePlatform = platformActive && !(platformLooksEmpty && legacyLooksPopulated);
+
+  useEffect(() => {
+    if (!usePlatform || !platformIntegration.table) return;
+    onTableContextChange?.({
+      baseId: platformIntegration.base?.id,
+      tableId: platformIntegration.table.id,
+      tableName: platformIntegration.table.name,
+      activeViewId: platformIntegration.activeViewId || undefined,
+      fieldCount: platformIntegration.platformFields?.length || 0,
+      recordCount: platformIntegration.totalRecords || 0,
+    });
+  }, [usePlatform, platformIntegration.table?.id, platformIntegration.activeViewId, onTableContextChange]);
 
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
@@ -599,6 +640,19 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     ? ((platformIntegration as any).platformFields?.[0]?.tableId ?? ideaId)
     : null;
 
+  const primaryPlatformInterfaceView = useMemo(() => {
+    const views = platformIntegration.platformViews ?? [];
+    return views.find(
+      (v: { viewType?: string; name?: string }) =>
+        v.viewType === 'interface' || String(v.name ?? '').toLowerCase().includes('interface')
+    ) as
+      | {
+          id?: string;
+          config?: { blocks?: unknown[]; theme?: Record<string, unknown> };
+        }
+      | undefined;
+  }, [platformIntegration.platformViews]);
+
   useEffect(() => {
     if (!usePlatform) return;
     let cancelled = false;
@@ -629,12 +683,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [usePlatform, ideaId]);
 
   const handleTabSelectTable = useCallback(
-    async (tableId: string) => {
+    (tableId: string) => {
       if (!usePlatform) return;
-      await platformIntegration.refresh();
+      setPlatformTableOverrideId(tableId);
+      setExpandedRecordId(null);
       toast(isPl ? 'Przełączono tabelę' : 'Switched table');
     },
-    [usePlatform, platformIntegration, isPl]
+    [usePlatform, isPl]
   );
 
   const handleTabCreateTable = useCallback(async () => {
@@ -1164,7 +1219,81 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       }
     >
       <div className="flex-1 flex flex-col overflow-hidden">
+        <TableDataProvider
+          integration={platformIntegration}
+          base={null}
+          table={null}
+          locked={locked}
+          isPl={!!isPl}
+        >
         {/* Toolbar */}
+        {usePlatform ? (
+          <P15TableToolbar
+            ideaId={ideaId}
+            nodesUndo={nodesUndo}
+            onPlatformUndo={handlePlatformUndo}
+            onCSVImport={handleCSVImport}
+            onExportCSV={() => {
+              const csv = exportToCSV(_cols, effectiveNodes);
+              downloadCSV(csv, `idea-${ideaId}.csv`);
+            }}
+            onCopyToClipboard={() => {
+              copyTableToClipboard(_cols, effectiveNodes);
+              toast.success(isPl ? 'Skopiowano' : 'Copied');
+            }}
+            onAddRowWithTemplate={handleAddRowWithTemplate}
+            onBulkConvert={handleBulkConvert}
+            onShowAIAssistant={() => setShowAIAssistant(true)}
+            onShowAICategorize={() => setShowAICategorize(true)}
+            onShowScoringModel={() => setShowScoringModel(true)}
+            onShowExportPresentation={() => setShowExportPresentation(true)}
+            onShowPipeline={() => setShowPipeline(true)}
+            onShowCopilot={() => setShowCopilot(true)}
+            onShowVoiceInput={() => setShowVoiceInput(true)}
+            onShowCrossRelations={() => setShowCrossRelations(true)}
+            onShowFrameworkGen={() => setShowFrameworkGen(true)}
+            onShowConditionalFmt={() => setShowConditionalFmt(true)}
+            onShowKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
+            connectors={connectors}
+            onShowConnectorWizard={() => setShowConnectorWizard(true)}
+            onShowConnectorList={() => setShowConnectorList(true)}
+            onShowWebhookRelays={() => setShowWebhookRelays(true)}
+            onShowAutomationsManager={() => setShowAutomationsManager(true)}
+            onShowSyncManager={() => setShowSyncManager(true)}
+            onShowSharingManager={() => setShowSharingManager(true)}
+            onShowDistributionManager={() => setShowDistributionManager(true)}
+            onShowConsultifyLink={() => setShowConsultifyLink(true)}
+            heatmapColumns={heatmapColumns}
+            showHeatmap={showHeatmap}
+            onToggleHeatmap={() => setShowHeatmap((p) => !p)}
+            onToggleHeatmapColumn={toggleHeatmapColumn}
+            heatmapPalette={heatmapPalette}
+            onHeatmapPaletteChange={(id) => setHeatmapPalette(id as typeof heatmapPalette)}
+            activePalette={activePalette}
+            onAutoAssignColors={handleAutoAssignColors}
+            onPaletteChange={(id) => setActivePalette(id)}
+            formatRules={formatRules}
+            realtime={realtime}
+            isV8MultiplayerEnabled={isV8MultiplayerEnabled}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            workspaceId={workspaceId || ''}
+            remotePresenceUsers={remotePresenceUsers}
+            onPresenceUpdate={setRemotePresenceUsers}
+            filterInput={filterInput}
+            onFilterInputChange={setFilterInput}
+            FilterBuilderComponent={FilterBuilder}
+            FilterPanelComponent={FilterPanel}
+            HeatmapControlsComponent={HeatmapControls}
+            ColorPaletteComponent={ColorPalette}
+            MobileToolbarMenuComponent={MobileToolbarMenu}
+            BatchAIFillButtonComponent={BatchAIFillButton}
+            WorkspacePresenceIndicatorComponent={WorkspacePresenceIndicator}
+            WorkspaceLockIndicatorComponent={WorkspaceLockIndicator}
+            CollaborationPresenceComponent={CollaborationPresence}
+            PresenceIndicatorsComponent={PresenceIndicators}
+          />
+        ) : (
         <div className="flex flex-wrap items-center gap-1 md:gap-2 px-2 md:px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
           <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2">
             {isPl ? 'Tabela' : 'Table'}
@@ -2213,6 +2342,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             {_saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
           </button>
         </div>
+        )}
 
         {/* AI Table Assistant overlay */}
         <AITableAssistant
@@ -2398,12 +2528,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   locked={locked}
                 />
               </div>
+            ) : usePlatform ? (
+              <P15ViewRouter onCSVImport={handleCSVImport} />
             ) : _loading ? (
               <div className="flex-1 flex items-center justify-center">
                 <Loader2 className="animate-spin text-slate-400" size={24} />
               </div>
             ) : usePlatform && (_vl === 'kanban' || _vl === 'calendar' || _vl === 'grid') ? (
-              <ViewRouter
+              <LegacyViewRouter
                 viewType={_vl === 'grid' ? 'gallery' : (_vl as 'kanban' | 'calendar')}
                 records={processedRowsWithRollups}
                 columns={_cols}
@@ -2493,7 +2625,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <GridView
                 rows={processedRowsWithRollups}
                 columns={_cols}
+                locked={locked}
                 onNodeClick={(id) => setDetailNodeId(id)}
+                onFieldChange={_fieldChange}
               />
             ) : _vl === 'matrix' ? (
               <MatrixView
@@ -2805,7 +2939,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <TableTabStrip
                 baseId={ideaId}
                 tables={baseTables}
-                activeTableId={platformTableId ?? baseTables[0]?.id ?? ''}
+                activeTableId={
+                  platformTableOverrideId ?? platformTableId ?? baseTables[0]?.id ?? ''
+                }
                 onSelectTable={handleTabSelectTable}
                 onCreateTable={handleTabCreateTable}
                 onRenameTable={handleTabRenameTable}
@@ -2865,6 +3001,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             </div>
           </div>
         )}
+        </TableDataProvider>
       </div>
 
       {/* Row Detail Panel */}
@@ -2919,6 +3056,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           trackFunnelEvent('ideas_table_artifact_linked' as any, { ideaId, nodeId });
         }}
         ideaId={ideaId}
+        fields={usePlatform ? platformIntegration.platformFields : undefined}
+        platformTableId={usePlatform ? platformTableId ?? ideaId : undefined}
       />
 
       {/* Add Column Dialog */}
@@ -3139,12 +3278,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </button>
             </div>
             <InterfaceDesigner
-              interfaceId={`iface-${ideaId}`}
+              key={primaryPlatformInterfaceView?.id ?? `iface-${ideaId}`}
+              interfaceId={primaryPlatformInterfaceView?.id ?? `iface-${ideaId}`}
               baseId={ideaId}
-              layout={{ blocks: [] }}
+              layout={{
+                blocks: (primaryPlatformInterfaceView?.config?.blocks as any[]) ?? [],
+                ...(primaryPlatformInterfaceView?.config?.theme
+                  ? { theme: primaryPlatformInterfaceView.config.theme }
+                  : {}),
+              }}
               tables={[
                 {
-                  id: ideaId,
+                  id: platformTableId ?? ideaId,
                   name: isPl ? 'Bieżąca tabela' : 'Current table',
                   fields: _cols.map((c) => ({ id: c.key, name: c.header })),
                 },
@@ -3208,7 +3353,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           open={!!expandedRecordId}
           onClose={() => setExpandedRecordId(null)}
           recordId={expandedRecordId}
-          tableId={ideaId}
+          tableId={platformTableId ?? ideaId}
           tableName={isPl ? 'Bieżąca tabela' : 'Current table'}
           onOpenAuditTrail={(recId) => {
             setDetailNodeId(recId);

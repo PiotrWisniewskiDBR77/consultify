@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { hasColumn } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
+import { listFindings as listP10Findings } from '../v8/interviewInsightFindingsService.js';
 
 export const ORGANIZATION_CONTEXT_SCHEMA_VERSION = 1;
 
@@ -45,6 +46,7 @@ export const ORGANIZATION_CONTEXT_CLAIM_PATHS = [
   'evidence.interview',
   'evidence.documentExtraction',
   'signals.interviewInsights',
+  'signals.interviewFindings',
   'tools.sessionOutput',
   'myWork.idea',
   'chat.explicitContext',
@@ -53,7 +55,16 @@ export const ORGANIZATION_CONTEXT_CLAIM_PATHS = [
   'profile.revenueModel',
   'profile.foundingYear',
   'operations.deliveryModel',
+  'operations.productionArchetype',
+  'operations.shiftPattern',
+  'operations.automationLevel',
   'systems.coreSystems',
+  'profile.communicationStyle',
+  'profile.industryJargonLevel',
+  'finance.statements',
+  'finance.models',
+  'finance.laneStatus',
+  'finance.versionStatus',
 ] as const;
 
 export type OrganizationContextClaimPath = (typeof ORGANIZATION_CONTEXT_CLAIM_PATHS)[number];
@@ -130,6 +141,8 @@ export interface ResolvedOrganizationContext {
     organizationType: string | null;
     revenueModel: string | null;
     foundingYear: number | null;
+    communicationStyle: string | null;
+    industryJargonLevel: string | null;
   };
   strategic: {
     goals: string[];
@@ -146,6 +159,9 @@ export interface ResolvedOrganizationContext {
     gaps: Array<Record<string, unknown>>;
     interviewAnswers: Array<Record<string, unknown>>;
     deliveryModel: string | null;
+    productionArchetype: string | null;
+    shiftPattern: string | null;
+    automationLevel: string | null;
   };
   systems: {
     stack: string[];
@@ -163,6 +179,14 @@ export interface ResolvedOrganizationContext {
   evidence: Array<Record<string, unknown>>;
   signals: {
     interviewInsights: string[];
+    interviewFindings: Array<{
+      findingStatement: string;
+      confidenceLevel: string;
+      limits: string;
+      nextAction: string;
+      evidenceCount: number;
+      insightId: string;
+    }>;
   };
   trust: {
     mfa: {
@@ -454,7 +478,12 @@ function buildOrganizationProfileClaims(input: Record<string, unknown>): Context
   add('profile.revenueModel', asString(input.revenue_model));
   add('profile.foundingYear', asNumber(input.founding_year));
   add('operations.deliveryModel', asString(input.delivery_model));
+  add('operations.productionArchetype', asString(input.production_archetype));
+  add('operations.shiftPattern', asString(input.shift_pattern));
+  add('operations.automationLevel', asString(input.automation_level));
   add('systems.coreSystems', input.core_systems);
+  add('profile.communicationStyle', asString(input.communication_style));
+  add('profile.industryJargonLevel', asString(input.industry_jargon_level));
   return claims;
 }
 
@@ -1032,6 +1061,38 @@ export class OrganizationContextService {
       .map((row) => asString(row.title) || asString(row.content) || asString(row.description))
       .filter((value): value is string => Boolean(value));
 
+    const publishedInsightIds = interviewInsights
+      .filter((row) => asString(row.status) === 'published')
+      .map((row) => asString(row.id))
+      .filter((id): id is string => Boolean(id));
+
+    const p10Findings: Array<{
+      findingStatement: string;
+      confidenceLevel: string;
+      limits: string;
+      nextAction: string;
+      evidenceCount: number;
+      insightId: string;
+    }> = [];
+    for (const insightId of publishedInsightIds) {
+      try {
+        const findings = listP10Findings(insightId);
+        for (const f of findings) {
+          const activePointers = f.evidence_pointers.filter((p) => !p.isTombstone);
+          p10Findings.push({
+            findingStatement: f.finding_statement,
+            confidenceLevel: f.confidence_level,
+            limits: f.limits,
+            nextAction: f.next_action,
+            evidenceCount: activePointers.length,
+            insightId: f.insightId,
+          });
+        }
+      } catch {
+        // findings service may not have data for this insight
+      }
+    }
+
     const customMetadataRows = metadataRows.map((row) => ({
       key: asString(row.key),
       value: row.value,
@@ -1117,6 +1178,12 @@ export class OrganizationContextService {
         foundingYear:
           asNumber(pickBestClaim(claimRows, 'profile.foundingYear')?.value) ||
           asNumber(organizationProfile?.founding_year),
+        communicationStyle:
+          asString(pickBestClaim(claimRows, 'profile.communicationStyle')?.value) ||
+          asString(organizationProfile?.communication_style),
+        industryJargonLevel:
+          asString(pickBestClaim(claimRows, 'profile.industryJargonLevel')?.value) ||
+          asString(organizationProfile?.industry_jargon_level),
       },
       strategic: {
         goals: uniqStrings([...strategicGoalValues, ...legacyStrategicPriorities]),
@@ -1132,7 +1199,7 @@ export class OrganizationContextService {
           asString(riskAppetiteClaim?.value) || asString(organizationProfile?.risk_appetite),
       },
       operations: {
-        keyMetrics: mergeUniqueObjects(metricValues, legacyKeyMetrics),
+        keyMetrics: await this.enrichKeyMetricsWithKpiHealth(organizationId, mergeUniqueObjects(metricValues, legacyKeyMetrics)),
         constraints: uniqStrings([
           ...constraintValues,
           asString(organizationProfile?.budget_constraints),
@@ -1143,6 +1210,15 @@ export class OrganizationContextService {
         deliveryModel:
           asString(pickBestClaim(claimRows, 'operations.deliveryModel')?.value) ||
           asString(organizationProfile?.delivery_model),
+        productionArchetype:
+          asString(pickBestClaim(claimRows, 'operations.productionArchetype')?.value) ||
+          asString(organizationProfile?.production_archetype),
+        shiftPattern:
+          asString(pickBestClaim(claimRows, 'operations.shiftPattern')?.value) ||
+          asString(organizationProfile?.shift_pattern),
+        automationLevel:
+          asString(pickBestClaim(claimRows, 'operations.automationLevel')?.value) ||
+          asString(organizationProfile?.automation_level),
       },
       systems: {
         stack: uniqStrings([...systemStackValues, ...legacyTechStack]),
@@ -1171,6 +1247,7 @@ export class OrganizationContextService {
       ),
       signals: {
         interviewInsights: uniqStrings([...insightValues, ...signalsFromRows]),
+        interviewFindings: p10Findings,
       },
       trust: {
         mfa: {
@@ -1214,7 +1291,71 @@ export class OrganizationContextService {
       },
       conflicts,
       timeline,
+      finance: await this._collectFinanceContext(organizationId),
     };
+  }
+
+  private async _collectFinanceContext(organizationId: string): Promise<{
+    statementCount: number;
+    modelCount: number;
+    activeLaneRunId: string | null;
+    activeLaneStep: string | null;
+    latestVersionType: string | null;
+    degradedCount: number;
+  }> {
+    try {
+      const counts = await dbGet<{ stmt_count?: number; model_count?: number }>(
+        `SELECT
+          (SELECT COUNT(*) FROM financial_statement_packs WHERE organization_id = ?) as stmt_count,
+          (SELECT COUNT(*) FROM financial_model_versions WHERE organization_id = ?) as model_count`,
+        [organizationId, organizationId]
+      ).catch(() => null);
+
+      const activeRun = await dbGet<{
+        run_id?: string;
+        current_step?: string;
+        degraded_json?: string;
+      }>(
+        `SELECT run_id, current_step, degraded_json FROM v8_finance_lane_runs
+         WHERE organization_id = ? AND (current_step != 'readback' OR readback_confirmed = 0)
+         ORDER BY created_at DESC LIMIT 1`,
+        [organizationId]
+      ).catch(() => null);
+
+      const latestVersion = await dbGet<{ version_type?: string }>(
+        `SELECT version_type FROM v8_finance_version_snapshots
+         WHERE organization_id = ? AND is_finalized = 1
+         ORDER BY created_at DESC LIMIT 1`,
+        [organizationId]
+      ).catch(() => null);
+
+      let degradedCount = 0;
+      if (activeRun?.degraded_json) {
+        try {
+          const arr = JSON.parse(String(activeRun.degraded_json));
+          degradedCount = Array.isArray(arr) ? arr.length : 0;
+        } catch { /* ignore */ }
+      }
+
+      return {
+        statementCount: Number(counts?.stmt_count ?? 0),
+        modelCount: Number(counts?.model_count ?? 0),
+        activeLaneRunId: activeRun?.run_id ? String(activeRun.run_id) : null,
+        activeLaneStep: activeRun?.current_step ? String(activeRun.current_step) : null,
+        latestVersionType: latestVersion?.version_type ? String(latestVersion.version_type) : null,
+        degradedCount,
+      };
+    } catch (err) {
+      logger.warn('[OrgContext] Finance context collection failed (non-blocking)', err);
+      return {
+        statementCount: 0,
+        modelCount: 0,
+        activeLaneRunId: null,
+        activeLaneStep: null,
+        latestVersionType: null,
+        degradedCount: 0,
+      };
+    }
   }
 
   async recordOrganizationProfile(params: {
@@ -1408,6 +1549,57 @@ export class OrganizationContextService {
         snippet: extractedText.slice(0, 2000),
       }),
     });
+  }
+
+  private async enrichKeyMetricsWithKpiHealth(
+    organizationId: string,
+    existingMetrics: Array<Record<string, unknown>>
+  ): Promise<Array<Record<string, unknown>>> {
+    try {
+      const [totalRow, onTargetRow, openDeviationsRow, openReconciliationsRow] = await Promise.all([
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM initiative_kpis WHERE organization_id = ?`,
+          [organizationId]
+        ),
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM initiative_kpis WHERE organization_id = ? AND is_on_target = 1`,
+          [organizationId]
+        ),
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM kpi_deviation_cases dc
+           JOIN initiative_kpis ik ON ik.id = dc.kpi_id
+           WHERE ik.organization_id = ? AND dc.status NOT IN ('CLOSED', 'RESOLVED')`,
+          [organizationId]
+        ),
+        safeGet<{ cnt: number }>(
+          `SELECT COUNT(*) as cnt FROM v8_kpi_finance_reconciliations
+           WHERE organization_id = ? AND reconciliation_status = 'pending'`,
+          [organizationId]
+        ),
+      ]);
+
+      const total = totalRow?.cnt ?? 0;
+      if (total === 0) return existingMetrics;
+
+      const onTarget = onTargetRow?.cnt ?? 0;
+      const pctOnTarget = total > 0 ? Math.round((onTarget / total) * 100) : 0;
+
+      return [
+        ...existingMetrics,
+        {
+          name: 'KPI Health',
+          source: 'kpi_module',
+          totalKpis: total,
+          onTarget,
+          pctOnTarget,
+          openDeviations: openDeviationsRow?.cnt ?? 0,
+          pendingReconciliations: openReconciliationsRow?.cnt ?? 0,
+        },
+      ];
+    } catch (err) {
+      logger.debug('[OrganizationContextService] KPI health enrichment skipped:', (err as Error)?.message);
+      return existingMetrics;
+    }
   }
 }
 

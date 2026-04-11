@@ -10,7 +10,12 @@ import { SuperAdminView } from '../../../src/views/superadmin/SuperAdminView';
 const h = vi.hoisted(() => ({
   setCurrentView: vi.fn(),
   logout: vi.fn(),
+  navigate: vi.fn(),
   overviewView: 'SUPERADMIN_OVERVIEW',
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => h.navigate,
 }));
 
 vi.mock('../../../src/store/useAppStore', () => ({
@@ -104,6 +109,6 @@ describe('SuperAdminView root closure', () => {
 
     expect(screen.queryByText('One visible platform control plane')).not.toBeInTheDocument();
     expect(screen.getByText('Super Admin Console')).toBeInTheDocument();
-    expect(await screen.findByText('OverviewModule')).toBeInTheDocument();
+    expect(await screen.findByText('CustomersModule')).toBeInTheDocument();
   });
 });

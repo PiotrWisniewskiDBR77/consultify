@@ -307,6 +307,11 @@ router.get(
           timeline_constraints: profile?.timeline_constraints || '',
           industry_code: resolvedContext?.profile.industryCode || profile?.industry_code || '',
           industry_subsector: resolvedContext?.profile.industrySubsector || profile?.industry_subsector || '',
+          communication_style: resolvedContext?.profile?.communicationStyle || profile?.communication_style || '',
+          industry_jargon_level: resolvedContext?.profile?.industryJargonLevel || profile?.industry_jargon_level || '',
+          production_archetype: resolvedContext?.operations?.productionArchetype || profile?.production_archetype || '',
+          shift_pattern: resolvedContext?.operations?.shiftPattern || profile?.shift_pattern || '',
+          automation_level: resolvedContext?.operations?.automationLevel || profile?.automation_level || '',
         },
         completeness,
       });
@@ -386,6 +391,11 @@ router.put(
       timeline_constraints,
       industry_code,
       industry_subsector,
+      communication_style,
+      industry_jargon_level,
+      production_archetype,
+      shift_pattern,
+      automation_level,
     } = req.body;
 
     try {
@@ -437,6 +447,11 @@ router.put(
         industry_code,
         industry_subsector,
         currency,
+        communication_style,
+        industry_jargon_level,
+        production_archetype,
+        shift_pattern,
+        automation_level,
       };
 
       const definedFields = Object.entries(profileFields).filter(([, v]) => v !== undefined);

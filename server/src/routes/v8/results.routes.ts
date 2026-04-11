@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import logger from '../../utils/Logger.js';
 import * as ReportBuilderService from '../../services/reportBuilderService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
@@ -112,6 +113,12 @@ function p04KpiRoleFromRequest(req: AuthRequest): KpiPermissionRole {
 }
 
 type P04KpiGuardedAction =
+  | 'edit_definition'
+  | 'edit_targets'
+  | 'delete_kpi'
+  | 'record_measurement'
+  | 'create_report'
+  | 'manage_deviation'
   | 'create_signal'
   | 'create_next_action'
   | 'manage_reconciliation'
@@ -190,6 +197,7 @@ router.get(
 router.post(
   '/kpis',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
     const { organizationId } = getV8Context(req);
     const {
       name,
@@ -267,6 +275,7 @@ router.post(
 router.put(
   '/kpis/:kpiId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
     const { organizationId, userId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     if (!kpiId) {
@@ -444,6 +453,7 @@ router.put(
 router.delete(
   '/kpis/:kpiId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'delete_kpi'))) return;
     const { organizationId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     if (!kpiId) {
@@ -595,6 +605,7 @@ router.delete(
 router.post(
   '/deviation-cases/:caseId/acknowledge',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     if (!caseId) {
@@ -638,6 +649,7 @@ router.post(
 router.put(
   '/deviation-cases/:caseId/rca',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { rcaText } = req.body || {};
@@ -683,6 +695,7 @@ router.put(
 router.post(
   '/deviation-cases/:caseId/actions',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { title, ownerUserId, dueDate } = req.body || {};
@@ -735,6 +748,7 @@ router.post(
 router.put(
   '/deviation-cases/:caseId/actions/:actionId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const actionId = typeof req.params.actionId === 'string' ? req.params.actionId.trim() : '';
@@ -801,6 +815,7 @@ router.put(
 router.post(
   '/deviation-cases/:caseId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     if (!caseId) {
@@ -844,6 +859,7 @@ router.post(
 router.post(
   '/deviation-cases/:caseId/close',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
     const { organizationId, userId } = getV8Context(req);
     const caseId = typeof req.params.caseId === 'string' ? req.params.caseId.trim() : '';
     const { evidenceText, evidenceRef, resolutionNotes, linkedInitiativeId, linkedTaskId } =
@@ -949,6 +965,7 @@ router.get(
 router.post(
   '/kpis/:kpiId/time-series',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'record_measurement'))) return;
     const { organizationId, userId } = getV8Context(req);
     const kpiId = typeof req.params.kpiId === 'string' ? req.params.kpiId.trim() : '';
     const body = req.body || {};
@@ -1086,8 +1103,9 @@ router.get(
 router.post(
   '/kpi-reports',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'create_report'))) return;
     const { organizationId, userId } = getV8Context(req);
-    const { periodStart, periodEnd, title, filters, kpiIds } = req.body || {};
+    const { periodStart, periodEnd, title, filters, kpiIds, goalIds } = req.body || {};
     const safeStart = String(periodStart || '').slice(0, 10);
     if (!safeStart) {
       return res.status(400).json({
@@ -1100,13 +1118,22 @@ router.post(
       ? (kpiIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
       : null;
 
+    const selectedGoalIds: string[] | null = Array.isArray(goalIds)
+      ? (goalIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
+      : null;
+
+    const enrichedFilters = {
+      ...(filters && typeof filters === 'object' ? filters : {}),
+      ...(selectedGoalIds && selectedGoalIds.length ? { goalIds: selectedGoalIds } : {}),
+    };
+
     const created = await createKpiReportSnapshot({
       organizationId,
       periodStart: safeStart,
       periodEnd: periodEnd ? String(periodEnd).slice(0, 10) : null,
       title: title ? String(title) : null,
       createdBy: userId,
-      filters: filters && typeof filters === 'object' ? filters : null,
+      filters: Object.keys(enrichedFilters).length ? enrichedFilters : null,
       kpiIds: selectedKpiIds && selectedKpiIds.length ? selectedKpiIds : null,
     });
 
@@ -1122,6 +1149,7 @@ router.post(
 router.post(
   '/kpi-reports/:snapshotId/refresh',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'create_report'))) return;
     const { organizationId, userId } = getV8Context(req);
     const snapshotId = typeof req.params.snapshotId === 'string' ? req.params.snapshotId.trim() : '';
     if (!snapshotId) {
@@ -1325,6 +1353,7 @@ import {
   P04_KPI_WORKFLOW_CONTRACT,
   computeKpiHealthPosture,
   canPerformKpiAction,
+  KPI_WORKFLOW_STATES,
   KPI_WORKFLOW_TRANSITIONS,
   P04_ACCEPTANCE_CHECKLIST,
   KPI_ANTI_DUPLICATE_RULES,
@@ -1547,6 +1576,35 @@ router.post(
       createdAt: new Date().toISOString(),
     };
 
+    let taskId: string | null = null;
+    const { createTask } = req.body || {};
+    if (createTask) {
+      try {
+        taskId = uuidv4();
+        await dbRun(
+          `INSERT INTO tasks (id, organization_id, title, description, status, priority, assigned_to, due_date, created_by, source_type, source_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'todo', 'medium', ?, ?, ?, 'kpi_next_action', ?, datetime('now'), datetime('now'))`,
+          [
+            taskId,
+            organizationId,
+            title,
+            `KPI next action from ${sourceType}: ${sourceRef}`,
+            assigneeId || userId || null,
+            dueDate || null,
+            userId,
+            actionId,
+          ]
+        );
+        await dbRun(
+          `UPDATE kpi_deviation_actions SET execution_follow_up_ref = ? WHERE id = ?`,
+          [taskId, actionId]
+        );
+        (action as any).taskId = taskId;
+      } catch (err: any) {
+        logger.warn(`[V8:Results] Task creation from next-action failed: ${err?.message}`);
+      }
+    }
+
     return res.json({ data: action, meta: { ...p04Meta(), contract: P04_KPI_WORKFLOW_CONTRACT } });
   })
 );
@@ -1747,7 +1805,7 @@ router.get(
       data: {
         contract: P04_KPI_WORKFLOW_CONTRACT,
         vocabulary: ['signal', 'target', 'trend', 'report', 'reconciliation', 'next_action'],
-        workflowStates: [...KPI_WORKFLOW_TRANSITIONS.signal_detected, 'signal_detected'],
+        workflowStates: [...KPI_WORKFLOW_STATES],
         linkagePatterns: [...LINKAGE_PATTERNS],
         permissions: KPI_PERMISSION_MATRIX,
         antiDuplicateRules: KPI_ANTI_DUPLICATE_RULES,

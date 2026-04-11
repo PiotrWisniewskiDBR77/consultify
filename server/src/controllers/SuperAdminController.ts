@@ -145,7 +145,13 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
         (err, row) => {
           if (err) {
             console.warn('[SuperAdmin] AI Stats query fallback:', err.message);
-            resolve({ total_ai_calls: 0, total_tokens: 0, active_users: 0 });
+            resolve({
+              total_ai_calls: 0,
+              total_tokens: 0,
+              active_users: 0,
+              degraded: true,
+              error: 'ai_stats_unavailable',
+            });
           } else {
             resolve(row || { total_ai_calls: 0, total_tokens: 0, active_users: 0 });
           }
@@ -174,7 +180,13 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
       (err, row) => {
         if (err) {
           console.warn('[SuperAdmin] Counts query error:', err.message);
-          resolve({ total_users: 0, total_orgs: 0, active_users_7d: 0 });
+          resolve({
+            total_users: 0,
+            total_orgs: 0,
+            active_users_7d: 0,
+            degraded: true,
+            error: 'platform_counts_unavailable',
+          });
         } else {
           resolve(row || { total_users: 0, total_orgs: 0, active_users_7d: 0 });
         }
@@ -3469,6 +3481,12 @@ const addTicketComment = catchAsync(async (req, res, next) => {
   res.json(comment);
 });
 
+const getTicketComments = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const comments = await deps.SupportTicketService.getComments(id);
+  res.json(comments);
+});
+
 const getCustomerSuccessNotes = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const filters = {
@@ -5256,6 +5274,7 @@ export default {
   getSupportTickets,
   createSupportTicket,
   updateSupportTicket,
+  getTicketComments,
   addTicketComment,
   getCustomerSuccessNotes,
   createCustomerSuccessNote,

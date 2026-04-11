@@ -400,6 +400,86 @@ export interface V8FinanceInitiativeCreateResult {
   initiativeIds: string[];
 }
 
+// ==========================================
+// P05 Lane / Version / Degraded types
+// ==========================================
+
+export type FinanceLaneStep = 'import' | 'analysis' | 'mutation' | 'readback';
+export type ImportOutcome =
+  | 'completed'
+  | 'completed_with_warnings'
+  | 'failed'
+  | 'queued'
+  | 'running'
+  | 'cancelled'
+  | 'mapping_missing'
+  | 'schema_drift';
+export type MutationOutcome = 'applied' | 'failed' | 'conflict' | 'rolled_back';
+export type FinanceVersionType = 'current' | 'actual';
+export type KpiLinkageStatus = 'coherent' | 'stale' | 'unavailable';
+
+export interface FinanceDegradedEntry {
+  reason: string;
+  detail: string;
+  nextAction: string;
+  at?: string;
+}
+
+export interface FinanceLaneRun {
+  runId: string;
+  organizationId: string;
+  currentStep: FinanceLaneStep;
+  importOutcome: ImportOutcome | null;
+  analysisCompleted: boolean;
+  mutationOutcome: MutationOutcome | null;
+  readbackConfirmed: boolean;
+  degraded: FinanceDegradedEntry[];
+  auditTrail: Array<{
+    at: string;
+    step: FinanceLaneStep;
+    actor: string;
+    outcome: string;
+    detail?: string;
+  }>;
+  versionType: FinanceVersionType;
+  kpiLinkageStatus: KpiLinkageStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FinanceMutationAudit {
+  auditId: string;
+  organizationId: string;
+  runId: string;
+  mutationType: string;
+  targetEntity: string;
+  previousValue: string | null;
+  newValue: string;
+  outcome: MutationOutcome;
+  actor: string;
+  createdAt: string;
+}
+
+export interface FinanceVersionSnapshot {
+  snapshotId: string;
+  organizationId: string;
+  versionType: FinanceVersionType;
+  snapshotData: Record<string, unknown>;
+  isFinalized: boolean;
+  switchoverDate: string | null;
+  switchoverActor: string | null;
+  createdAt: string;
+}
+
+export interface KpiCoherenceResult {
+  status: KpiLinkageStatus;
+  detail: string;
+  reconciliationMismatches?: Array<{
+    reconciliationId: string;
+    mismatchCategory: string;
+  }>;
+}
+
 export interface V8FinanceAnalysisCreatePayload {
   title: string;
   description?: string;
@@ -515,4 +595,41 @@ export const V8FinanceApi = {
     v8Post<{ success: boolean; result: unknown }>(`/finance/analyses/${analysisId}/run`, {}),
   approveAnalysis: (analysisId: string) =>
     v8Post<{ success: boolean }>(`/finance/analyses/${analysisId}/approve`, {}),
+
+  // P05 Lane endpoints
+  startLaneRun: (versionType?: FinanceVersionType) =>
+    v8Post<{ data: FinanceLaneRun }>('/finance/lane/start', { versionType: versionType || 'current' }),
+  advanceLaneStep: (runId: string, outcome: string, detail?: string) =>
+    v8Post<{ data: FinanceLaneRun }>(`/finance/lane/${runId}/advance`, { outcome, detail }),
+  getLaneRun: (runId: string) =>
+    v8Get<{ data: FinanceLaneRun }>(`/finance/lane/${runId}`),
+  getLaneRuns: (limit?: number) =>
+    v8Get<{ data: FinanceLaneRun[] }>('/finance/lane', {
+      ...(typeof limit === 'number' ? { limit: String(limit) } : {}),
+    }),
+  recordMutationAudit: (
+    runId: string,
+    params: {
+      mutationType: string;
+      targetEntity: string;
+      previousValue?: string;
+      newValue: string;
+      outcome: string;
+    }
+  ) =>
+    v8Post<{ data: FinanceMutationAudit }>(`/finance/lane/${runId}/mutation-audit`, params),
+  getMutationAudits: (runId: string) =>
+    v8Get<{ data: FinanceMutationAudit[] }>(`/finance/lane/${runId}/mutation-audit`),
+  checkKpiCoherence: (runId: string) =>
+    v8Get<{ data: KpiCoherenceResult }>(`/finance/lane/${runId}/kpi-coherence`),
+
+  // P05 Version endpoints
+  createVersionSnapshot: (versionType: FinanceVersionType, snapshotData: Record<string, unknown>) =>
+    v8Post<{ data: FinanceVersionSnapshot }>('/finance/versions/snapshot', { versionType, snapshotData }),
+  finalizeVersion: (snapshotId: string) =>
+    v8Post<{ data: FinanceVersionSnapshot }>(`/finance/versions/${snapshotId}/finalize`, {}),
+  getVersionSnapshots: (versionType?: FinanceVersionType) =>
+    v8Get<{ data: FinanceVersionSnapshot[] }>('/finance/versions', {
+      ...(versionType ? { versionType } : {}),
+    }),
 };

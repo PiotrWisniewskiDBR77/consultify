@@ -421,3 +421,176 @@ describe('P30-D: Organization Profile Evolution', () => {
     expect(content).not.toContain('CompanyProfileModule');
   });
 });
+
+// ─── P30-D Phase 2: Conditional sections, new fields, taxonomy ────────
+describe('P30-D Phase 2: Conditional sections and manufacturing fields', () => {
+  it('ORGANIZATION_CONTEXT_CLAIM_PATHS includes manufacturing + communication paths', async () => {
+    const { ORGANIZATION_CONTEXT_CLAIM_PATHS } = await import(
+      '../../../server/src/services/organizationContext/OrganizationContextService.js'
+    );
+    const phase2Paths = [
+      'operations.productionArchetype',
+      'operations.shiftPattern',
+      'operations.automationLevel',
+      'profile.communicationStyle',
+      'profile.industryJargonLevel',
+    ];
+    for (const p of phase2Paths) {
+      expect(ORGANIZATION_CONTEXT_CLAIM_PATHS).toContain(p);
+    }
+  });
+
+  it('ResolvedOrganizationContext has Phase 2 fields in source', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'server/src/services/organizationContext/OrganizationContextService.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('productionArchetype: string | null');
+    expect(content).toContain('shiftPattern: string | null');
+    expect(content).toContain('automationLevel: string | null');
+    expect(content).toContain('communicationStyle: string | null');
+    expect(content).toContain('industryJargonLevel: string | null');
+  });
+
+  it('AIPipeline includes manufacturing and communication fields', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'server/src/services/ai/AIPipeline.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('productionArchetype');
+    expect(content).toContain('shiftPattern');
+    expect(content).toContain('automationLevel');
+    expect(content).toContain('communicationStyle');
+    expect(content).toContain('industryJargonLevel');
+  });
+
+  it('organization-profiles routes handle Phase 2 fields', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'server/src/routes/organization/organization-profiles.routes.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('production_archetype');
+    expect(content).toContain('shift_pattern');
+    expect(content).toContain('automation_level');
+    expect(content).toContain('communication_style');
+    expect(content).toContain('industry_jargon_level');
+  });
+
+  it('OrganizationProfileModule has conditional manufacturing section', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'src/views/ContextBuilder/modules/OrganizationProfileModule.tsx'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('showProductionSection');
+    expect(content).toContain('showDeliveryModel');
+    expect(content).toContain('showRevenueModel');
+    expect(content).toContain('showCoreSystems');
+    expect(content).toContain('PRODUCTION_ARCHETYPES');
+    expect(content).toContain('SHIFT_PATTERNS');
+    expect(content).toContain('AUTOMATION_LEVELS');
+    expect(content).toContain('Communication & AI Preferences');
+  });
+});
+
+// ─── P30-D Phase 3: Cross-validation, coaching, readiness, doc extraction ──
+describe('P30-D Phase 3: Cross-validation, coaching, readiness', () => {
+  it('OrganizationProfileModule includes cross-validation logic', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'src/views/ContextBuilder/modules/OrganizationProfileModule.tsx'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('crossValidate');
+    expect(content).toContain('ValidationWarning');
+    expect(content).toContain('validationWarnings');
+  });
+
+  it('Teresa guidance includes downstream module context', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'src/views/ContextBuilder/modules/OrganizationProfileModule.tsx'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('downstream');
+    expect(content).toContain('Assessment');
+    expect(content).toContain('Deep Research');
+    expect(content).toContain('CompletenessHint');
+  });
+
+  it('Downstream readiness indicators are present', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'src/views/ContextBuilder/modules/OrganizationProfileModule.tsx'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('computeDownstreamReadiness');
+    expect(content).toContain('ReadinessCheck');
+    expect(content).toContain('Module Readiness');
+    expect(content).toContain('Assessment & Benchmarking');
+    expect(content).toContain('Competitive Intelligence');
+  });
+
+  it('Document extraction UI is present', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'src/views/ContextBuilder/modules/OrganizationProfileModule.tsx'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('handleDocumentExtract');
+    expect(content).toContain('docExtractProposals');
+    expect(content).toContain('extract-org-context');
+    expect(content).toContain('Accept');
+    expect(content).toContain('Reject');
+  });
+});
+
+// ─── P30-D Phase 4: contextPackBuilder org injection + downstream audit ──
+describe('P30-D Phase 4: ContextPack org injection and downstream audit', () => {
+  it('contextPackBuilder imports and uses OrganizationContextService', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'server/src/services/contextPackBuilder.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('OrganizationContextService');
+    expect(content).toContain('injectOrganizationContext');
+    expect(content).toContain('buildResolvedContext');
+  });
+
+  it('aiOperatorService uses buildResolvedContext instead of direct SQL for identity', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'server/src/services/aiOperatorService.ts'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('OrganizationContextService');
+    expect(content).toContain('buildResolvedContext');
+    expect(content).not.toContain('SELECT id, name, industry, size, updated_at');
+  });
+
+  it('DB migration includes Phase 2 manufacturing columns', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(
+      __dirname, '..', '..', '..', 'server/migrations/20260411_p30d_organization_type_and_new_fields.sql'
+    );
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain('production_archetype');
+    expect(content).toContain('shift_pattern');
+    expect(content).toContain('automation_level');
+  });
+});

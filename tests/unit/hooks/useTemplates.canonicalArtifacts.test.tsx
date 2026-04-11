@@ -156,5 +156,84 @@ describe('useTemplates (canonical artifacts)', () => {
       }),
     ]);
   });
+
+  it('sets error when both template fetches fail (P24-D: U11 error handling)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      return {
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Server error' }),
+      } as Response;
+    });
+
+    const { result } = renderHook(() => useTemplates());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('Canonical artifact registry failed to load templates.');
+    expect(result.current.templates).toEqual([]);
+  });
+
+  it('preserves deprecated status distinctly from archived (P24-D: G4 deprecation)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: any) => {
+      const url = String(input);
+      const u = new URL(url, 'http://localhost');
+      const outputType = u.searchParams.get('outputType');
+
+      if (outputType === 'report') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                artifactId: 'tmpl-deprecated-1',
+                outputType: 'report',
+                artifactFamily: 'template',
+                resolvedTitle: 'Old steering template',
+                createdBy: 'user-1',
+                lastTransitionAt: '2026-04-01T10:00:00.000Z',
+                originSummary: {
+                  template: {
+                    scope: 'org',
+                    status: 'deprecated',
+                    description: 'Replaced by new steering template.',
+                    reportType: 'R2',
+                    deprecationReason: 'Superseded by v2 template',
+                    migrationHint: 'Use tmpl-report-v2 instead',
+                    structureBlueprint: { sections: [{ key: 's1', title: 'Summary' }] },
+                    metadata: { createdBy: 'user-1', updatedAt: '2026-04-01T10:00:00.000Z' },
+                  },
+                },
+              },
+            ],
+          }),
+        } as Response;
+      }
+
+      return {
+        ok: true,
+        json: async () => ({ data: [] }),
+      } as Response;
+    });
+
+    const { result } = renderHook(() => useTemplates());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.templates).toHaveLength(1);
+    expect(result.current.templates[0]).toEqual(
+      expect.objectContaining({
+        id: 'tmpl-deprecated-1',
+        status: 'deprecated',
+        deprecationReason: 'Superseded by v2 template',
+        migrationHint: 'Use tmpl-report-v2 instead',
+      })
+    );
+  });
 });
 

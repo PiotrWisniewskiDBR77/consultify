@@ -2,6 +2,7 @@ import { BarChart3, DollarSign, FileText, ListChecks, Plus, Target } from 'lucid
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 import {
@@ -120,11 +121,26 @@ const ResultsControlSelect: React.FC<ResultsControlSelectProps> = ({
   </div>
 );
 
+const VALID_TABS: ModuleTab[] = [
+  'results_initiatives' as ModuleTab,
+  'results_kpi' as ModuleTab,
+  'results_reports' as ModuleTab,
+  'roi' as ModuleTab,
+  'roi_analysis' as ModuleTab,
+];
+const VALID_KPI_MODES = ['overview', 'queue', 'catalog', 'scorecards'] as const;
+const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'connectors'] as const;
+
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<ModuleTab>('results_initiatives');
+  const [activeTab, setActiveTabRaw] = useState<ModuleTab>(
+    (VALID_TABS.includes(searchParams.get('tab') as ModuleTab)
+      ? searchParams.get('tab')!
+      : 'results_initiatives') as ModuleTab
+  );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -139,12 +155,20 @@ export const ResultsHub: React.FC = () => {
   const [initiativeKpiLinkFilter, setInitiativeKpiLinkFilter] = useState<
     'all' | 'attached' | 'unattached'
   >('all');
-  const [kpiWorkspaceMode, setKpiWorkspaceMode] = useState<
+  const [kpiWorkspaceMode, setKpiWorkspaceModeRaw] = useState<
     'overview' | 'queue' | 'catalog' | 'scorecards'
-  >('catalog');
-  const [reportWorkspaceMode, setReportWorkspaceMode] = useState<
+  >(
+    (VALID_KPI_MODES as readonly string[]).includes(searchParams.get('mode') || '')
+      ? (searchParams.get('mode') as 'overview' | 'queue' | 'catalog' | 'scorecards')
+      : 'catalog'
+  );
+  const [reportWorkspaceMode, setReportWorkspaceModeRaw] = useState<
     'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors'
-  >('tracked');
+  >(
+    (VALID_REPORT_MODES as readonly string[]).includes(searchParams.get('rmode') || '')
+      ? (searchParams.get('rmode') as 'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors')
+      : 'tracked'
+  );
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
   const [kpiScorecardCreateNonce, setKpiScorecardCreateNonce] = useState(0);
@@ -181,6 +205,51 @@ export const ResultsHub: React.FC = () => {
       '',
     [currentUser]
   );
+
+  const setActiveTab = useCallback(
+    (tab: ModuleTab) => {
+      setActiveTabRaw(tab);
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', tab);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  const setKpiWorkspaceMode = useCallback(
+    (mode: 'overview' | 'queue' | 'catalog' | 'scorecards') => {
+      setKpiWorkspaceModeRaw(mode);
+      const next = new URLSearchParams(searchParams);
+      next.set('mode', mode);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  const setReportWorkspaceMode = useCallback(
+    (mode: 'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors') => {
+      setReportWorkspaceModeRaw(mode);
+      const next = new URLSearchParams(searchParams);
+      next.set('rmode', mode);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  useEffect(() => {
+    const tab = searchParams.get('tab') as ModuleTab | null;
+    if (tab && VALID_TABS.includes(tab) && tab !== activeTab) {
+      setActiveTabRaw(tab);
+    }
+    const mode = searchParams.get('mode') as typeof kpiWorkspaceMode | null;
+    if (mode && (VALID_KPI_MODES as readonly string[]).includes(mode) && mode !== kpiWorkspaceMode) {
+      setKpiWorkspaceModeRaw(mode);
+    }
+    const rmode = searchParams.get('rmode') as typeof reportWorkspaceMode | null;
+    if (rmode && (VALID_REPORT_MODES as readonly string[]).includes(rmode) && rmode !== reportWorkspaceMode) {
+      setReportWorkspaceModeRaw(rmode);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchKPIs = useCallback(async () => {
     setLoading(true);
@@ -981,6 +1050,11 @@ export const ResultsHub: React.FC = () => {
               t('results.kpi.workspace.overview', 'Overview'),
               () => setKpiWorkspaceMode('overview'),
               kpiWorkspaceMode === 'overview'
+            )}
+            {actionButton(
+              t('results.kpi.workspace.scorecards', 'Goals'),
+              () => setKpiWorkspaceMode('scorecards'),
+              kpiWorkspaceMode === 'scorecards'
             )}
             {actionButton(
               t('results.actions.recordValue', 'Record value'),

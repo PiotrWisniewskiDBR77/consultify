@@ -1,7 +1,7 @@
 /**
  * useChatActions (V3-B01)
- * Hook integrating chat with navigation and mechanical transfers.
- * Uses executeChatNavigate, openDocumentsStore, toasts, and analytics.
+ * Hook integrating chat with navigation, generation, and mechanical transfers.
+ * Dispatches NAVIGATE via chatNavigator; all other action types via chatActionHandler.
  */
 
 import { useCallback, useState } from 'react';
@@ -9,10 +9,15 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  handleChatAction,
+  type ActionHandlerDeps,
+} from '@/services/chatActionHandler';
 import { executeChatNavigate, type NavigateAction } from '@/services/chatNavigator';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { ACTION_SCHEMA_VERSION, type ChatActionPayload, type ChatActionType } from '@/types/domain/chatActions';
 
-export type ChatAction = NavigateAction;
+export type ChatAction = NavigateAction | ChatActionPayload;
 
 export function useChatActions() {
   const navigate = useNavigate();
@@ -49,15 +54,28 @@ export function useChatActions() {
 
   const handleAction = useCallback(
     async (action: ChatAction): Promise<void> => {
+      setLastError(null);
+
       if (action.type === 'NAVIGATE') {
-        await handleNavigate(action);
+        await handleNavigate(action as NavigateAction);
         return;
       }
-      // Future: extend for other action types (execute, copy, etc.)
-      setLastError('Unsupported action type');
-      toast.error(t('chat.action.unsupported', 'Action not supported'));
+
+      const payload: ChatActionPayload = 'version' in action
+        ? action as ChatActionPayload
+        : { type: action.type as ChatActionType, version: ACTION_SCHEMA_VERSION, params: (action as any).params ?? {} };
+
+      const deps: ActionHandlerDeps = { navigate, context: {} };
+      const result = await handleChatAction(payload, deps);
+
+      if (result.success) {
+        toast.success(t('chat.action.success', 'Done'), { duration: 1500 });
+      } else {
+        setLastError(result.error ?? 'Unknown error');
+        toast.error(result.error ?? t('chat.action.failed', 'Action failed'), { duration: 3000 });
+      }
     },
-    [handleNavigate, t]
+    [handleNavigate, navigate, t]
   );
 
   return {

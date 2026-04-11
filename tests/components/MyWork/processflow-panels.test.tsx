@@ -1,0 +1,396 @@
+/**
+ * @vitest-environment jsdom
+ */
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { ValidationResultsPanel } from '../../../src/components/MyWork/processflow/ValidationResultsPanel';
+import { AIProposalPanel } from '../../../src/components/MyWork/processflow/AIProposalPanel';
+import { ReadbackPanel } from '../../../src/components/MyWork/processflow/ReadbackPanel';
+import { ExportDialog } from '../../../src/components/MyWork/processflow/ExportDialog';
+import {
+  ProcessFlowContextMenu,
+  getNodeContextActions,
+  getCanvasContextActions,
+} from '../../../src/components/MyWork/processflow/ProcessFlowContextMenu';
+
+describe('ValidationResultsPanel', () => {
+  it('shows "no result" when result is null', () => {
+    render(
+      <ValidationResultsPanel
+        result={null}
+        isValidating={false}
+        isPl={false}
+        onClickIssue={vi.fn()}
+        onValidate={vi.fn()}
+      />
+    );
+    // Should show run validation prompt or "no result" indicator
+    expect(screen.getByRole('heading', { name: 'Validation' })).toBeDefined();
+    expect(screen.getByText('No result')).toBeDefined();
+  });
+
+  it('shows issues grouped by layer', () => {
+    const result = {
+      valid: false,
+      issues: [
+        {
+          layer: 'semantic_first' as const,
+          severity: 'error' as const,
+          object_id: 'n1',
+          rule: 'missing_start',
+          message: 'Missing start node',
+        },
+        {
+          layer: 'structural_bounded' as const,
+          severity: 'warning' as const,
+          object_id: 'n2',
+          rule: 'dangling',
+          message: 'Dangling node',
+        },
+      ],
+      validated_at: '2026-04-11T00:00:00Z',
+    };
+    render(
+      <ValidationResultsPanel
+        result={result}
+        isValidating={false}
+        isPl={false}
+        onClickIssue={vi.fn()}
+        onValidate={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/Missing start node/)).toBeDefined();
+    expect(screen.getByText(/Dangling node/)).toBeDefined();
+  });
+
+  it('calls onClickIssue when issue with object_id is clicked', () => {
+    const onClickIssue = vi.fn();
+    const result = {
+      valid: false,
+      issues: [
+        {
+          layer: 'semantic_first' as const,
+          severity: 'error' as const,
+          object_id: 'n1',
+          rule: 'r1',
+          message: 'Error on n1',
+        },
+      ],
+      validated_at: '2026-04-11',
+    };
+    render(
+      <ValidationResultsPanel
+        result={result}
+        isValidating={false}
+        isPl={false}
+        onClickIssue={onClickIssue}
+        onValidate={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByText(/Error on n1/));
+    expect(onClickIssue).toHaveBeenCalledWith('n1');
+  });
+
+  it('shows success when valid with no issues', () => {
+    render(
+      <ValidationResultsPanel
+        result={{ valid: true, issues: [], validated_at: '2026-04-11' }}
+        isValidating={false}
+        isPl={false}
+        onClickIssue={vi.fn()}
+        onValidate={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/no issues/i)).toBeDefined();
+  });
+});
+
+describe('ExportDialog', () => {
+  it('renders nothing when not open', () => {
+    const { container } = render(
+      <ExportDialog open={false} onClose={vi.fn()} onExport={vi.fn()} isExporting={false} isPl={false} />
+    );
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('renders export options when open', () => {
+    render(
+      <ExportDialog open={true} onClose={vi.fn()} onExport={vi.fn()} isExporting={false} isPl={false} />
+    );
+    expect(screen.getByText('JSON (Machine Export)')).toBeDefined();
+    expect(screen.getByText('PNG')).toBeDefined();
+  });
+
+  it('calls onExport with format when option clicked', () => {
+    const onExport = vi.fn();
+    render(
+      <ExportDialog open={true} onClose={vi.fn()} onExport={onExport} isExporting={false} isPl={false} />
+    );
+    fireEvent.click(screen.getByText('JSON (Machine Export)'));
+    expect(onExport).toHaveBeenCalledWith('json');
+  });
+});
+
+describe('ProcessFlowContextMenu', () => {
+  it('renders actions', () => {
+    render(
+      <ProcessFlowContextMenu
+        x={100}
+        y={200}
+        actions={[
+          { id: 'edit', label: 'Edit', icon: <span>E</span>, onClick: vi.fn() },
+          { id: 'delete', label: 'Delete', icon: <span>D</span>, onClick: vi.fn(), danger: true },
+        ]}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Edit')).toBeDefined();
+    expect(screen.getByText('Delete')).toBeDefined();
+  });
+
+  it('calls onClick and onClose when action clicked', () => {
+    const onClick = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <ProcessFlowContextMenu
+        x={100}
+        y={200}
+        actions={[{ id: 'test', label: 'Test Action', icon: <span>T</span>, onClick }]}
+        onClose={onClose}
+      />
+    );
+    fireEvent.click(screen.getByText('Test Action'));
+    expect(onClick).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('closes on Escape key', () => {
+    const onClose = vi.fn();
+    render(
+      <ProcessFlowContextMenu
+        x={100}
+        y={200}
+        actions={[{ id: 'a', label: 'A', icon: <span>A</span>, onClick: vi.fn() }]}
+        onClose={onClose}
+      />
+    );
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('ReadbackPanel', () => {
+  it('shows generate button when no result', () => {
+    render(
+      <ReadbackPanel
+        result={null}
+        isLoading={false}
+        isPl={false}
+        onFetchReadback={vi.fn()}
+        onClickStep={vi.fn()}
+      />
+    );
+    // Should find text about generating readback or a button
+    expect(screen.getByRole('button', { name: /generate readback/i })).toBeDefined();
+  });
+
+  it('renders steps when result exists', () => {
+    const result = {
+      paths: [
+        { type: 'start' as const, label: 'Begin', object_id: 's1' },
+        { type: 'step' as const, label: 'Do something', object_id: 'a1' },
+        { type: 'end' as const, label: 'Finish', object_id: 'e1' },
+      ],
+      warnings: [],
+    };
+    render(
+      <ReadbackPanel
+        result={result}
+        isLoading={false}
+        isPl={false}
+        onFetchReadback={vi.fn()}
+        onClickStep={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Begin')).toBeDefined();
+    expect(screen.getByText('Do something')).toBeDefined();
+    expect(screen.getByText('Finish')).toBeDefined();
+  });
+
+  it('calls onClickStep when step clicked', () => {
+    const onClickStep = vi.fn();
+    const result = {
+      paths: [{ type: 'step' as const, label: 'Step 1', object_id: 'a1' }],
+      warnings: [],
+    };
+    render(
+      <ReadbackPanel
+        result={result}
+        isLoading={false}
+        isPl={false}
+        onFetchReadback={vi.fn()}
+        onClickStep={onClickStep}
+      />
+    );
+    fireEvent.click(screen.getByText('Step 1'));
+    expect(onClickStep).toHaveBeenCalledWith('a1');
+  });
+});
+
+describe('AIProposalPanel', () => {
+  it('shows prompt and generate when no proposal', () => {
+    render(
+      <AIProposalPanel
+        proposal={null}
+        isGenerating={false}
+        error={null}
+        isPl={false}
+        onAccept={vi.fn()}
+        onReject={vi.fn()}
+        onEditPrompt={vi.fn()}
+        onDismiss={vi.fn()}
+        onGenerate={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/AI prompt/i)).toBeDefined();
+    expect(screen.getByRole('button', { name: /generate/i })).toBeDefined();
+  });
+
+  it('calls onGenerate with draft prompt when Generate clicked', () => {
+    const onGenerate = vi.fn();
+    render(
+      <AIProposalPanel
+        proposal={null}
+        isGenerating={false}
+        error={null}
+        isPl={false}
+        onAccept={vi.fn()}
+        onReject={vi.fn()}
+        onEditPrompt={vi.fn()}
+        onDismiss={vi.fn()}
+        onGenerate={onGenerate}
+      />
+    );
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Add a decision node' } });
+    fireEvent.click(screen.getByRole('button', { name: /generate/i }));
+    expect(onGenerate).toHaveBeenCalledWith('Add a decision node');
+  });
+
+  it('renders summary and accept when pending proposal', () => {
+    const proposal = {
+      id: 'p1',
+      status: 'pending' as const,
+      prompt: 'x',
+      summary: 'Proposed graph edits',
+      operations: [{ action: 'create' as const, target_id: 'n1' }],
+      risk_flags: ['review'],
+      validation_before: { valid: false, issue_count: 2 },
+      validation_after: { valid: true, issue_count: 0 },
+      readback_before: 'before',
+      readback_after: 'after',
+      created_at: '2026-04-11',
+    };
+    render(
+      <AIProposalPanel
+        proposal={proposal}
+        isGenerating={false}
+        error={null}
+        isPl={false}
+        onAccept={vi.fn()}
+        onReject={vi.fn()}
+        onEditPrompt={vi.fn()}
+        onDismiss={vi.fn()}
+        onGenerate={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Proposed graph edits')).toBeDefined();
+    expect(screen.getByRole('button', { name: /accept/i })).toBeEnabled();
+  });
+
+  it('calls onAccept when Accept clicked for pending proposal', () => {
+    const onAccept = vi.fn();
+    const proposal = {
+      id: 'p1',
+      status: 'pending' as const,
+      prompt: 'x',
+      summary: 'S',
+      operations: [],
+      risk_flags: [],
+      validation_before: { valid: true, issue_count: 0 },
+      validation_after: { valid: true, issue_count: 0 },
+      readback_before: '',
+      readback_after: '',
+      created_at: '2026-04-11',
+    };
+    render(
+      <AIProposalPanel
+        proposal={proposal}
+        isGenerating={false}
+        error={null}
+        isPl={false}
+        onAccept={onAccept}
+        onReject={vi.fn()}
+        onEditPrompt={vi.fn()}
+        onDismiss={vi.fn()}
+        onGenerate={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /accept/i }));
+    expect(onAccept).toHaveBeenCalled();
+  });
+});
+
+describe('ProcessFlow context menu helpers', () => {
+  it('getNodeContextActions returns English labels and wires callbacks', () => {
+    const onEditLabel = vi.fn();
+    const onDuplicate = vi.fn();
+    const onDelete = vi.fn();
+    const onOpenProperties = vi.fn();
+    const actions = getNodeContextActions({
+      nodeId: 'n1',
+      isPl: false,
+      locked: false,
+      onEditLabel,
+      onDuplicate,
+      onDelete,
+      onOpenProperties,
+    });
+    expect(actions.map((a) => a.label)).toEqual(['Edit label', 'Duplicate', 'Properties', 'Delete']);
+    actions[0].onClick();
+    expect(onEditLabel).toHaveBeenCalled();
+    actions[3].onClick();
+    expect(onDelete).toHaveBeenCalled();
+  });
+
+  it('getNodeContextActions disables destructive actions when locked', () => {
+    const actions = getNodeContextActions({
+      nodeId: 'n1',
+      isPl: false,
+      locked: true,
+      onEditLabel: vi.fn(),
+      onDuplicate: vi.fn(),
+      onDelete: vi.fn(),
+      onOpenProperties: vi.fn(),
+    });
+    expect(actions.filter((a) => a.disabled).map((a) => a.id)).toEqual(['edit', 'duplicate', 'delete']);
+  });
+
+  it('getCanvasContextActions returns Polish labels when isPl', () => {
+    const onAddNode = vi.fn();
+    const onPaste = vi.fn();
+    const onAutoLayout = vi.fn();
+    const actions = getCanvasContextActions({
+      isPl: true,
+      locked: false,
+      onAddNode,
+      onPaste,
+      onAutoLayout,
+    });
+    expect(actions.map((a) => a.label)).toEqual(['Dodaj akcję', 'Dodaj decyzję', 'Wklej', 'Auto-układ']);
+    actions[0].onClick();
+    expect(onAddNode).toHaveBeenCalledWith('action');
+    actions[1].onClick();
+    expect(onAddNode).toHaveBeenCalledWith('decision');
+  });
+});

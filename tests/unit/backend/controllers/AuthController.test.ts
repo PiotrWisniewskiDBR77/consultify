@@ -205,6 +205,7 @@ describe('AuthController (Genuine)', () => {
     });
 
     it('should force admin@dbr77.com to SUPERADMIN (and persist role) on login', async () => {
+      process.env.FORCE_SUPERADMIN_EMAILS = 'admin@dbr77.com';
       mockReq.body = { email: 'admin@dbr77.com', password: 'correct' };
 
       mockDb.get.mockImplementation((sql, params, cb) => {
@@ -263,6 +264,8 @@ describe('AuthController (Genuine)', () => {
           refreshToken: 'rt',
         })
       );
+
+      delete process.env.FORCE_SUPERADMIN_EMAILS;
     });
 
     it('should require MFA if enabled and device not trusted', async () => {

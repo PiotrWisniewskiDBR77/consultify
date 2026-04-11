@@ -61,7 +61,12 @@ export type ModuleTab =
   | 'outputs_mine'
   | 'outputs_review'
   | 'outputs_documents'
-  | 'outputs_sheets';
+  | 'outputs_sheets'
+  // Interview module
+  | 'my_assignments'
+  | 'managed'
+  | 'insights'
+  | 'pending_review';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

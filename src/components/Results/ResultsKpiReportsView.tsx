@@ -1,9 +1,10 @@
-import { FileText, Sparkles, X } from 'lucide-react';
+import { FileText, MessageCircle, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   type ActionRow,
   type MetaPill,
@@ -48,6 +49,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   type ActionItem = {
@@ -565,8 +567,26 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         onClick: () => void loadActionsForRow(row),
         divider: true,
       },
+      {
+        id: 'discuss',
+        label: t('results.kpiReports.discuss', 'Discuss report'),
+        onClick: async () => {
+          try {
+            await openChatWithContext({
+              entityType: 'kpi_report',
+              entityId: String(row.reportId || row.id),
+              entityName: String(row.title || 'KPI Report'),
+              contextData: row as unknown as Record<string, unknown>,
+              pmoContext: { reportId: String(row.reportId || row.id) },
+            });
+            toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
+          } catch {
+            toast.error(t('common.chatOpenError', 'Failed to open chat'));
+          }
+        },
+      },
     ],
-    [navigate, t, loadActionsForRow, refreshingReportId, fetchReports]
+    [navigate, t, loadActionsForRow, refreshingReportId, fetchReports, openChatWithContext]
   );
 
   return (

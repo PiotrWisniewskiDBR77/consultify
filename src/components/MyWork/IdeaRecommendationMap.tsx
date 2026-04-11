@@ -13,6 +13,7 @@ import {
   Lightbulb,
   Link2,
   Loader2,
+  Paperclip,
   Pencil,
   Plus,
   Sparkles,
@@ -142,6 +143,7 @@ import {
 } from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
+import { AIProposalDiffModal } from './mindmap/AIProposalDiffModal';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
 
@@ -752,7 +754,7 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
     {selected && (
       <button
         type="button"
-        className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white text-amber-600 shadow-lg shadow-amber-500/25 hover:bg-amber-50 hover:scale-110 transition-all flex items-center justify-center border-2 border-amber-200"
+        className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white text-amber-600 shadow-lg shadow-amber-500/25 hover:bg-amber-50 active:scale-[0.98] transition-all flex items-center justify-center border-2 border-amber-200"
         onClick={(e) => {
           e.stopPropagation();
           window.dispatchEvent(
@@ -826,7 +828,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <button
           type="button"
           title={data._isPl ? 'Dodaj węzeł (Tab)' : 'Add node (Tab)'}
-          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
+          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 active:scale-[0.98] transition-all"
           onClick={(e) => {
             e.stopPropagation();
             window.dispatchEvent(
@@ -1190,10 +1192,12 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
           data._dropTarget
             ? 'ring-3 ring-primary-400 ring-offset-2 border-primary-500 shadow-lg shadow-primary-500/30'
-            : selected
-              ? `ring-2 ${colors.ring}`
-              : ''
-        } shadow-sm hover:shadow-lg cursor-pointer min-w-[120px] max-w-[210px] relative transition-shadow duration-150`}
+            : data._justMoved
+              ? 'ring-2 ring-emerald-400 animate-pulse'
+              : selected
+                ? `ring-2 ${colors.ring}`
+                : ''
+        } cursor-pointer min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
@@ -1224,7 +1228,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   })
                 );
               }}
-              className="absolute right-2 top-2 z-20 h-7 w-7 rounded-full border border-slate-200/80 bg-white text-slate-500 shadow-sm hover:text-primary-600 hover:border-primary-200 transition-colors flex items-center justify-center dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300"
+              className="absolute right-2 top-2 z-20 h-7 w-7 rounded-full border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 transition-colors flex items-center justify-center dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800"
             >
               <Pencil size={13} />
             </button>
@@ -1235,7 +1239,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1254,7 +1258,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
-              className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white shadow-md hover:bg-slate-600 hover:scale-110 transition-all opacity-70 hover:opacity-100"
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white hover:bg-slate-600 active:scale-[0.98] transition-all opacity-70 hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1279,7 +1283,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* Artifact link badge */}
         {Array.isArray(data.artifactLinks) && data.artifactLinks.length > 0 && (
           <div
-            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[7px] font-bold shadow-sm cursor-pointer hover:bg-blue-600 transition-colors"
+            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-primary-500 text-white px-1 py-0.5 shadow-sm cursor-pointer hover:bg-primary-600 transition-colors"
             title={data.artifactLinks
               .map((l: any) => l.label || l.title || `${l.artifactRef?.type || l.type}`)
               .join(', ')}
@@ -1303,7 +1307,8 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               }
             }}
           >
-            {data.artifactLinks.length}
+            <Paperclip size={8} />
+            <span className="text-[7px] font-bold leading-none">{data.artifactLinks.length}</span>
           </div>
         )}
 
@@ -1435,6 +1440,25 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   </div>
                 )}
               </div>
+              {/* Collapse indicator */}
+              {(data._collapsed || (data._childCount ?? 0) > 0) && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.dispatchEvent(
+                      new CustomEvent('mm-toggle-collapse', { detail: { nodeId: id } })
+                    );
+                  }}
+                  className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
+                  title={data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : (isPl ? 'Zwiń' : 'Collapse')}
+                >
+                  {data._collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
+                  {data._collapsed && (data._childCount ?? 0) > 0 && (
+                    <span className="text-[9px] font-medium">{data._childCount}</span>
+                  )}
+                </button>
+              )}
               {/* Depth context snippet */}
               {(data.context || data.goal) && (
                 <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1 italic">
@@ -1559,7 +1583,7 @@ type IdeaRecommendationMapProps = {
 };
 
 // ─────── Undo/Redo for map state ───────
-type MapSnapshot = { nodes: Node[]; edges: Edge[] };
+type MapSnapshot = { nodes: Node[]; edges: Edge[]; collapsedNodeIds?: Set<string> };
 
 function MindMapInner({
   ideaId,
@@ -1980,25 +2004,55 @@ function MindMapInner({
     return nodes.map((n) => {
       const hiddenByDrill = drillVisibleIds ? !drillVisibleIds.has(n.id) : false;
       const nextHidden = hiddenIds.has(n.id) || hiddenByDrill;
-      if (Boolean(n.hidden) === nextHidden) {
-        return n;
-      }
+      const isCollapsed = collapsedNodeIds.has(n.id);
+      const childCount = (childrenOf.get(n.id) || []).length;
+      const dataChanged =
+        Boolean(n.hidden) !== nextHidden ||
+        Boolean(n.data?._collapsed) !== isCollapsed ||
+        (n.data?._childCount ?? 0) !== childCount;
+      if (!dataChanged) return n;
       return {
         ...n,
         hidden: nextHidden,
+        data: { ...n.data, _collapsed: isCollapsed, _childCount: childCount },
       };
     });
   }, [collapsedNodeIds, drillFocusId, edges, nodes]);
 
   useEffect(() => {
-    const hiddenSelectedIds = new Set(
-      visibleNodes.filter((node) => node.hidden && node.selected).map((node) => node.id)
-    );
-    if (hiddenSelectedIds.size === 0) return;
+    const hiddenSelected = visibleNodes.filter((n) => n.hidden && n.selected);
+    if (hiddenSelected.length === 0) return;
+
+    const targetId = hiddenSelected[0].id;
+    let ancestorId: string | null = null;
+    let currentId: string | null = targetId;
+    while (currentId) {
+      const parentEdge = edges.find((e) => e.target === currentId && isStructuralEdge(e));
+      if (!parentEdge) break;
+      currentId = parentEdge.source;
+      const parentNode = visibleNodes.find((n) => n.id === currentId);
+      if (parentNode && !parentNode.hidden) {
+        ancestorId = currentId;
+        break;
+      }
+    }
+
     setNodes((prev: Node[]) =>
-      prev.map((node) => (hiddenSelectedIds.has(node.id) ? { ...node, selected: false } : node))
+      prev.map((n) => ({
+        ...n,
+        selected: n.id === ancestorId
+          ? true
+          : hiddenSelected.some((h) => h.id === n.id)
+            ? false
+            : n.selected,
+      }))
     );
-  }, [setNodes, visibleNodes]);
+
+    toast(
+      isPolish ? 'Zaznaczenie przeniesione — gałąź zwinięta' : 'Selection moved — branch collapsed',
+      { id: 'mm-op-cue', duration: 2000 }
+    );
+  }, [edges, isPolish, setNodes, visibleNodes]);
 
   const visibleEdges = useMemo(() => {
     const hiddenNodeIds = new Set(visibleNodes.filter((n) => n.hidden).map((n) => n.id));
@@ -2065,36 +2119,61 @@ function MindMapInner({
   const redoStackRef = useRef<MapSnapshot[]>([]);
   const MAX_UNDO = 50;
 
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
   const pushUndo = useCallback(() => {
     undoStackRef.current = [
       ...undoStackRef.current.slice(-(MAX_UNDO - 1)),
-      { nodes: [...nodes], edges: [...edges] },
+      { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
     ];
     redoStackRef.current = [];
-  }, [nodes, edges]);
+    setCanUndo(true);
+    setCanRedo(false);
+  }, [collapsedNodeIds, nodes, edges]);
 
   const undo = useCallback(() => {
     if (undoStackRef.current.length === 0) return;
     const prev = undoStackRef.current[undoStackRef.current.length - 1];
     undoStackRef.current = undoStackRef.current.slice(0, -1);
-    redoStackRef.current = [{ nodes: [...nodes], edges: [...edges] }, ...redoStackRef.current];
+    redoStackRef.current = [
+      { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
+      ...redoStackRef.current,
+    ];
     setNodes(prev.nodes);
     setEdges(prev.edges);
-  }, [edges, nodes, setEdges, setNodes]);
+    if (prev.collapsedNodeIds) setCollapsedNodeIds(prev.collapsedNodeIds);
+    setCanUndo(undoStackRef.current.length > 0);
+    setCanRedo(true);
+  }, [collapsedNodeIds, edges, nodes, setCollapsedNodeIds, setEdges, setNodes]);
 
   const redo = useCallback(() => {
     if (redoStackRef.current.length === 0) return;
     const next = redoStackRef.current[0];
     redoStackRef.current = redoStackRef.current.slice(1);
-    undoStackRef.current = [...undoStackRef.current, { nodes: [...nodes], edges: [...edges] }];
+    undoStackRef.current = [
+      ...undoStackRef.current,
+      { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
+    ];
     setNodes(next.nodes);
     setEdges(next.edges);
-  }, [edges, nodes, setEdges, setNodes]);
+    if (next.collapsedNodeIds) setCollapsedNodeIds(next.collapsedNodeIds);
+    setCanUndo(true);
+    setCanRedo(redoStackRef.current.length > 0);
+  }, [collapsedNodeIds, edges, nodes, setCollapsedNodeIds, setEdges, setNodes]);
 
   const clearUndoHistory = useCallback(() => {
     undoStackRef.current = [];
     redoStackRef.current = [];
+    setCanUndo(false);
+    setCanRedo(false);
   }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('mm-undo-state', { detail: { canUndo, canRedo } })
+    );
+  }, [canUndo, canRedo]);
 
   // ── Context menu ─────────────────────────────────────────────────────────
   const [contextMenu, setContextMenu] = useState<{
@@ -2513,9 +2592,28 @@ function MindMapInner({
   }, [addChildNode, addSiblingNode, autoLayout, edges, fitView, nodes, setNodes]);
 
   const toggleCollapse = useCallback(
-    (nodeId: string) => toggleCollapseNode(nodeId, setCollapsedNodeIds),
-    [toggleCollapseNode, setCollapsedNodeIds]
+    (nodeId: string) => {
+      pushUndo();
+      const wasCollapsed = collapsedNodeIds.has(nodeId);
+      toggleCollapseNode(nodeId, setCollapsedNodeIds);
+      toast(
+        wasCollapsed
+          ? (isPolish ? 'Rozwinięto' : 'Expanded')
+          : (isPolish ? 'Zwinięto' : 'Collapsed'),
+        { id: 'mm-op-cue', duration: 1200 }
+      );
+    },
+    [collapsedNodeIds, isPolish, pushUndo, toggleCollapseNode, setCollapsedNodeIds]
   );
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const nodeId = (e as CustomEvent).detail?.nodeId;
+      if (nodeId) toggleCollapse(nodeId);
+    };
+    window.addEventListener('mm-toggle-collapse', handler);
+    return () => window.removeEventListener('mm-toggle-collapse', handler);
+  }, [toggleCollapse]);
 
   const setFoldLevel = useCallback(
     (maxLevel: number) => setFoldLevelRaw(maxLevel, setCollapsedNodeIds),
@@ -2754,15 +2852,26 @@ function MindMapInner({
         }
         return;
       }
+
+      const existingNode = nodes.find((n) => n.id === nodeId);
+      const originalLabel = existingNode?.data?.label ?? '';
+      if (label !== originalLabel) {
+        pushUndo();
+      }
+
       setNodes((prev: Node[]) =>
         prev.map((n) =>
           n.id === nodeId ? { ...n, data: { ...n.data, label, _startEditing: undefined } } : n
         )
       );
+
+      if (label !== originalLabel) {
+        toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', { id: 'mm-op-cue', duration: 1500 });
+      }
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
     return () => window.removeEventListener('idea-mindmap-node-edit', handler);
-  }, [debugLog, isPolish, nodes, setEdges, setNodes]);
+  }, [debugLog, isPolish, nodes, pushUndo, setEdges, setNodes]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -2967,6 +3076,12 @@ function MindMapInner({
         if (externalRuntime) {
           void externalRuntime.flushGraph({ reason: 'manual' });
         }
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED fitView', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
@@ -3651,13 +3766,14 @@ function MindMapInner({
     );
   }, [aiProposal, selectedAddIdx]);
 
-  const applyAIProposal = useCallback(async () => {
+  const applyAIProposal = useCallback(async (overrideSelectedIdx?: Record<number, boolean>) => {
     if (!aiProposal) return;
     if (locked) {
       toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
       return;
     }
-    const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => selectedAddIdx[idx]);
+    const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
+    const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => effectiveIdx[idx]);
     const toAddEdges = aiProposal.add?.edges || [];
 
     if (toAddNodes.length === 0) {
@@ -4357,6 +4473,13 @@ function MindMapInner({
       if (action === 'ctx_subtree_convert_tasks') convertBranch('task_set', ctxNode?.id);
       if (action === 'ctx_subtree_convert_task_set') convertBranch('task_set', ctxNode?.id);
       if (action === 'ctx_subtree_convert_initiative') convertBranch('initiative', ctxNode?.id);
+      if (action === 'ctx_subtree_convert_process_flow') {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: 'switch_to_process_flow', nodeId: ctxNode?.id },
+          })
+        );
+      }
       if (action === 'ctx_add_image') {
         if (ctxNode && ctxNode.type === 'idea') {
           setImageUrlNodeId(ctxNode.id);
@@ -4759,6 +4882,14 @@ function MindMapInner({
               convertBranch(SUBTREE_MAP[action], floatingToolbarInfo.nodeId);
               return;
             }
+            if (action === 'ctx_subtree_convert_process_flow') {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-quick-action', {
+                  detail: { action: 'switch_to_process_flow', nodeId: floatingToolbarInfo.nodeId },
+                })
+              );
+              return;
+            }
             window.dispatchEvent(
               new CustomEvent('idea-workspace-quick-action', {
                 detail: { action, nodeId: floatingToolbarInfo.nodeId },
@@ -4819,142 +4950,13 @@ function MindMapInner({
 
       {/* AI suggestions modal */}
       {showAIModal && aiProposal && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-            <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Proponowane zmiany mapy (AI)' : 'Proposed map changes (AI)'}
-                </h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz elementy do dodania, a następnie kliknij „Zastosuj".'
-                    : 'Select items to add, then click "Apply".'}
-                </p>
-              </div>
-              <button
-                onClick={closeAIModal}
-                className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Zamknij' : 'Close'}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="px-5 py-4 max-h-[65vh] overflow-y-auto space-y-5">
-              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Do wywalenia' : 'To remove'} (0)
-                </span>
-                <EmptyStateInline
-                  icon={GitBranch}
-                  dashed={false}
-                  className="p-5"
-                  message={isPolish ? 'Brak sugestii usunięć.' : 'No removal suggestions.'}
-                />
-              </div>
-
-              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Do dodania' : 'To add'} ({aiProposal.add.nodes.length})
-                  </span>
-                  {aiProposal.add.nodes.length > 0 && (
-                    <button
-                      onClick={() =>
-                        setSelectedAddIdx(
-                          Object.fromEntries(
-                            aiProposal.add.nodes.map((_, idx) => [idx, true])
-                          ) as Record<number, boolean>
-                        )
-                      }
-                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                    >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
-                    </button>
-                  )}
-                </div>
-                {aiProposal.add.nodes.length === 0 ? (
-                  <EmptyStateInline
-                    icon={Plus}
-                    dashed={false}
-                    className="p-5"
-                    message={isPolish ? 'Brak propozycji do dodania.' : 'No additions proposed.'}
-                  />
-                ) : (
-                  <div className="space-y-1.5">
-                    {aiProposal.add.nodes.map((n, idx) => (
-                      <label
-                        key={String((n as any)?.id || idx)}
-                        className="flex items-start gap-2 p-2 rounded-xl bg-white/60 dark:bg-navy-900/30 hover:bg-white/80 dark:hover:bg-navy-900/40 transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={!!selectedAddIdx[idx]}
-                          onChange={(e) =>
-                            setSelectedAddIdx((prev) => ({ ...prev, [idx]: e.target.checked }))
-                          }
-                          className="mt-1"
-                        />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-slate-800 dark:text-white">
-                            {String((n as any)?.data?.label || (n as any)?.id || 'Node')}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                            {isPolish ? 'Gałąź' : 'Branch'}:{' '}
-                            {String((n as any)?.data?.branchKey || selectedBranchKey)}
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-xl bg-slate-50/50 dark:bg-navy-950/20 p-3 space-y-2">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Proponowana kolejność' : 'Suggested order'} (0)
-                </span>
-                <EmptyStateInline
-                  icon={Sparkles}
-                  dashed={false}
-                  className="p-5"
-                  message={isPolish ? 'Brak sugestii kolejności.' : 'No ordering suggestion.'}
-                />
-              </div>
-
-              <Callout
-                variant="purple"
-                title={isPolish ? 'Plan' : 'Plan'}
-                compact
-                className="rounded-xl"
-              >
-                <ul className="list-disc pl-4 space-y-1">
-                  <li>
-                    {isPolish
-                      ? `Dodaj zaznaczone węzły: ${selectedAddCount}.`
-                      : `Add selected nodes: ${selectedAddCount}.`}
-                  </li>
-                </ul>
-              </Callout>
-            </div>
-
-            <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-end gap-2">
-              <button
-                onClick={closeAIModal}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-              >
-                {isPolish ? 'Anuluj' : 'Cancel'}
-              </button>
-              <button
-                onClick={() => void applyAIProposal()}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-violet-400/50 text-violet-700 dark:text-violet-300 hover:bg-violet-500/10 transition-colors"
-              >
-                {isPolish ? 'Zastosuj' : 'Apply'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AIProposalDiffModal
+          proposal={aiProposal}
+          isPl={isPolish}
+          existingNodes={nodes}
+          onApply={(selected) => void applyAIProposal(selected)}
+          onReject={closeAIModal}
+        />
       )}
 
       {/* Breadcrumb for drill-down — positioned below the unified header */}
@@ -5001,6 +5003,15 @@ function MindMapInner({
           onFullscreenToggle={onFullscreenToggle}
           isFullscreen={isFullscreen}
         />
+      )}
+
+      {/* Large map warning */}
+      {nodes.length >= 500 && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs font-medium shadow-lg">
+          {isPolish
+            ? 'Mapa osiągnęła limit 500 węzłów. Dodawanie zablokowane.'
+            : 'Map reached 500 node limit. Adding blocked.'}
+        </div>
       )}
 
       {/* Canvas */}

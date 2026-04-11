@@ -1,5 +1,10 @@
 import { v8Delete, v8Get, v8Post, v8Put } from './client';
 
+/**
+ * @deprecated V8 Results API (`/api/v8/results/*`) is the canonical SSOT.
+ * Legacy `/api/benefits/*` paths are deprecated and will be removed.
+ * This fallback exists only for backward compatibility during migration.
+ */
 export const shouldFallbackToLegacyResults = (error: any) => {
   const status = Number(error?.status);
   return [400, 404, 405, 501].includes(status);
@@ -555,5 +560,9 @@ export const V8ResultsApi = {
     v8Post<V8ResultsCreateRoiRealizedResponse>(
       `/results/roi/initiative/${encodeURIComponent(initiativeId)}/realized`,
       payload
+    ),
+  getWorkflowSignals: () =>
+    v8Get<{ data: Array<{ signalId: string; kpiId: string; severity: string; description: string; createdAt: string; kpiName?: string }> }>(
+      '/results/workflow/signals'
     ),
 };

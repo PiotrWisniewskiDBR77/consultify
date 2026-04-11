@@ -13,11 +13,13 @@ import type {
   FilterGroup as TPFilterGroup,
   TablePlatformField,
   TablePlatformView,
+  ViewConfig,
 } from '@/types/tablePlatform';
 
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 import { columnToField, fieldToColumn, recordToNode } from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
+import { DEFAULT_COLUMN_WIDTH } from './tableTypes';
 import { useTablePlatformBridge } from './useTablePlatformBridge';
 import { useTablePlatformViews } from './useTablePlatformViews';
 import type { ViewLayout } from './useTableViews';
@@ -31,6 +33,41 @@ const EMPTY_NODES: TableNode[] = [];
 const DEFAULT_FILTERS: FilterGroup = { logic: 'and', rules: [] };
 const NOOP_FN = () => {};
 const NOOP_ASYNC = async () => {};
+
+function missingPlaceholderColumn(fieldId: string): ColumnDef {
+  return {
+    key: fieldId,
+    header: '[Missing field]',
+    type: 'text',
+    visible: true,
+    width: DEFAULT_COLUMN_WIDTH,
+  };
+}
+
+/** Build grid columns from schema + active view order; orphan visible field ids become placeholder columns */
+function buildPlatformColumns(
+  fields: TablePlatformField[],
+  activeView: TablePlatformView | undefined
+): ColumnDef[] {
+  const fieldById = new Map(fields.map((f) => [f.id, f]));
+  const vf = activeView?.visibleFieldIds;
+  if (!vf?.length) {
+    return fields.map(fieldToColumn);
+  }
+  const cols: ColumnDef[] = [];
+  const seen = new Set<string>();
+  for (const fid of vf) {
+    if (seen.has(fid)) continue;
+    seen.add(fid);
+    const f = fieldById.get(fid);
+    if (f) cols.push(fieldToColumn(f));
+    else cols.push(missingPlaceholderColumn(fid));
+  }
+  for (const f of fields) {
+    if (!seen.has(f.id)) cols.push(fieldToColumn(f));
+  }
+  return cols;
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -107,6 +144,11 @@ export interface UseTablePlatformIntegrationReturn {
     viewType?: string,
     config?: Record<string, unknown>
   ) => Promise<TablePlatformView | null>;
+
+  /** Config for the active platform view (includes `missing_fields` / `missing_field_names`) */
+  activeViewConfig: ViewConfig;
+  /** Strip a degraded missing-field column from the view (updates visible_field_ids + config) */
+  removeMissingFieldFromView: (fieldId: string) => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -194,6 +236,21 @@ export function useTablePlatformIntegration(
     enabled: bridge.isNewPlatform && !!tableId,
   });
 
+  const activePlatformView = useMemo(
+    () => bridge.views.find((v) => v.id === views.activeViewId),
+    [bridge.views, views.activeViewId]
+  );
+
+  const derivedColumns = useMemo(
+    () => buildPlatformColumns(bridge.fields, activePlatformView),
+    [bridge.fields, activePlatformView]
+  );
+
+  const activeViewConfig = useMemo(
+    () => (activePlatformView?.config ?? {}) as ViewConfig,
+    [activePlatformView]
+  );
+
   const [localColumns, setLocalColumns] = useState<ColumnDef[]>([]);
   const [localNodes, setLocalNodes] = useState<TableNode[]>([]);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
@@ -201,12 +258,12 @@ export function useTablePlatformIntegration(
 
   const isActive = bridge.isNewPlatform && open && !bridge.platformFailed;
 
-  // Sync columns from bridge when active
+  // Sync columns from schema + active view when active
   useEffect(() => {
-    if (isActive && bridge.columns.length > 0) {
-      setLocalColumns(bridge.columns);
+    if (isActive) {
+      setLocalColumns(derivedColumns);
     }
-  }, [isActive, bridge.columns]);
+  }, [isActive, derivedColumns]);
 
   // Sync nodes from bridge when active (source of truth)
   useEffect(() => {
@@ -215,11 +272,7 @@ export function useTablePlatformIntegration(
     }
   }, [isActive, bridge.nodes]);
 
-  const columns = isActive
-    ? localColumns.length > 0
-      ? localColumns
-      : bridge.columns
-    : EMPTY_COLUMNS;
+  const columns = isActive ? (localColumns.length > 0 ? localColumns : derivedColumns) : EMPTY_COLUMNS;
   const nodes = isActive ? (localNodes.length > 0 ? localNodes : bridge.nodes) : EMPTY_NODES;
 
   const { processed: processedRows, grouped: groupedRows } = useMemo(() => {
@@ -279,7 +332,6 @@ export function useTablePlatformIntegration(
           await bridge.refresh();
         } catch {
           await bridge.refresh();
-          setLocalColumns(bridge.columns);
         }
       })();
     },
@@ -376,6 +428,31 @@ export function useTablePlatformIntegration(
     // useEffect will sync localNodes/localColumns from bridge
   }, [isActive, bridge]);
 
+  const removeMissingFieldFromView = useCallback(
+    async (fieldId: string) => {
+      if (!isActive || !views.activeViewId) return;
+      const v = bridge.views.find((x) => x.id === views.activeViewId);
+      if (!v) return;
+      try {
+        const cfg: Record<string, unknown> = { ...((v.config ?? {}) as Record<string, unknown>) };
+        const prevMissing = Array.isArray(cfg.missing_fields) ? (cfg.missing_fields as string[]) : [];
+        cfg.missing_fields = prevMissing.filter((x) => x !== fieldId);
+        const mfn = { ...((cfg.missing_field_names as Record<string, string>) ?? {}) };
+        delete mfn[fieldId];
+        cfg.missing_field_names = mfn;
+        const newVisible = (v.visibleFieldIds ?? []).filter((id) => id !== fieldId);
+        await TablePlatformApi.updateView(views.activeViewId, {
+          visibleFieldIds: newVisible,
+          config: cfg,
+        });
+        await bridge.refresh();
+      } catch (e) {
+        console.error('Failed to remove missing field', e);
+      }
+    },
+    [isActive, views.activeViewId, bridge]
+  );
+
   // Inactive: return defaults
   if (!isActive) {
     return {
@@ -424,6 +501,8 @@ export function useTablePlatformIntegration(
       platformViews: [],
       applyPlatformFilters: NOOP_ASYNC,
       createPlatformView: async () => null,
+      activeViewConfig: {},
+      removeMissingFieldFromView: NOOP_ASYNC,
     };
   }
 
@@ -476,5 +555,7 @@ export function useTablePlatformIntegration(
     platformViews: bridge.views,
     applyPlatformFilters: bridge.applyFilters,
     createPlatformView: bridge.createView,
+    activeViewConfig,
+    removeMissingFieldFromView,
   };
 }

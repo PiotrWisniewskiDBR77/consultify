@@ -12,9 +12,10 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
+  MessageCircle,
   Presentation,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +28,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
 import {
   downloadSheetArtifactXlsx,
@@ -45,8 +47,10 @@ import {
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { resolveArtifactOpenPath } from './artifactNavigation';
+import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 import type { ArtifactGovernanceSummary, UnifiedOutputRow } from './types';
 import type { useRapActions } from './useRapData';
+import { useTrustState } from './useTrustState';
 
 function rowKey(row: UnifiedOutputRow): string {
   return `${row.kind}:${row.originRecordId}`;
@@ -124,6 +128,7 @@ interface OutputsAggregateTabContentProps {
   error?: string | null;
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
+  initialArtifactId?: string | null;
 }
 
 export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProps> = ({
@@ -136,15 +141,16 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   error,
   onRefresh,
   actions,
+  initialArtifactId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
   const { isEnabled } = useFeatureFlags();
+  const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedGovernance, setSelectedGovernance] = useState<
-    UnifiedOutputRow['governance'] | null
-  >(null);
+  const deepLinkConsumed = useRef(false);
+  // selectedGovernance is provided by useTrustState hook below
   const [lineageOpen, setLineageOpen] = useState(false);
   const [lineageLoading, setLineageLoading] = useState(false);
   const [lineageError, setLineageError] = useState<string | null>(null);
@@ -434,6 +440,19 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         variant: 'primary',
         onClick: () => openRow(row),
       },
+      {
+        id: 'discuss',
+        label: t('rap.actions.discuss', 'Discuss'),
+        icon: MessageCircle,
+        onClick: () => {
+          void openChatWithContext({
+            entityType: row.kind === 'document' ? 'report' : row.kind,
+            entityId: row.originRecordId,
+            entityName: row.title,
+            pmoContext: row.kind === 'document' ? { reportId: row.originRecordId } : undefined,
+          });
+        },
+      },
     ];
 
     if (!isTemplateArtifact && row.artifactId && (row.kind === 'document' || row.kind === 'presentation')) {
@@ -555,7 +574,17 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     return base;
   };
 
+  useEffect(() => {
+    if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
+    const match = filteredData.find((r) => r.artifactId === initialArtifactId);
+    if (match) {
+      setSelectedId(match.id);
+      deepLinkConsumed.current = true;
+    }
+  }, [initialArtifactId, filteredData]);
+
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
+  const selectedGovernance = useTrustState(selectedItem?.artifactId, selectedItem?.governance);
   const previewItem = selectedItem
     ? {
         ...selectedItem,
@@ -563,73 +592,6 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       }
     : null;
   const itemIds = filteredData.map((i) => i.id);
-
-  useEffect(() => {
-    let isMounted = true;
-    setSelectedGovernance(selectedItem?.governance || null);
-
-    async function fetchTrustState() {
-      if (!selectedItem?.artifactId) {
-        setSelectedGovernance(selectedItem?.governance || null);
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/artifacts/${selectedItem.artifactId}/trust-state`, {
-          headers: getHeaders(),
-        });
-        if (!res.ok) {
-          if (isMounted) setSelectedGovernance(selectedItem.governance || null);
-          return;
-        }
-        const data = await res.json();
-        const payload = data?.data || data;
-        if (!isMounted) return;
-        setSelectedGovernance({
-          ...(selectedItem.governance || {}),
-          visibilityScope: payload.visibilityScope,
-          publishState: payload.publishState,
-          validationState: payload.validationState || null,
-          validationChecks: Array.isArray(payload.validationChecks) ? payload.validationChecks : [],
-          publishReviewers: Array.isArray(payload.reviewers) ? payload.reviewers : [],
-          reviewGateCount:
-            typeof payload.reviewGateCount === 'number' ? payload.reviewGateCount : 0,
-          projectId: payload.projectId || null,
-          executionRunId: payload.executionRunId || null,
-          executionState: payload.executionState || null,
-          contextSnapshotId: payload.contextSnapshotId || null,
-          canonicalHome: payload.canonicalHome || null,
-          lastTransitionAt: payload.lastTransitionAt || null,
-          sourceRefs: Array.isArray(payload.sourceRefs) ? payload.sourceRefs : [],
-          originSummary:
-            payload.originSummary && typeof payload.originSummary === 'object'
-              ? payload.originSummary
-              : null,
-          openPath: payload.openPath || null,
-          exportPath: payload.exportPath || null,
-          authority: payload.authority || null,
-          manageAccessPath: payload.manageAccessPath || null,
-          canManageAccess: Boolean(payload.canManageAccess),
-          exportHistory: Array.isArray(payload.exportHistory) ? payload.exportHistory : [],
-          reviewAuthority: payload.reviewAuthority || 'artifact_review',
-          executionAuthority: payload.executionAuthority || 'execution_spine',
-          accessGrants: Array.isArray(payload.accessGrants) ? payload.accessGrants : [],
-          originLinks: Array.isArray(payload.originLinks) ? payload.originLinks : [],
-          lineagePaths:
-            payload.lineagePaths && typeof payload.lineagePaths === 'object'
-              ? payload.lineagePaths
-              : null,
-        });
-      } catch {
-        if (isMounted) setSelectedGovernance(selectedItem?.governance || null);
-      }
-    }
-
-    void fetchTrustState();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedItem?.artifactId, selectedItem?.governance]);
 
   if (loading) {
     return (
@@ -851,10 +813,14 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         selectedId={selectedId}
         selectedItem={previewItem}
         onSelect={setSelectedId}
+        onOpenFull={(id) => {
+          const row = filteredData.find((x) => x.id === id);
+          if (row) openRow(row);
+        }}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
         renderPreview={(item) => (
-          <div className="p-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+          <div className="space-y-3 text-sm text-slate-700 dark:text-slate-200">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {item.kind === 'document'
                 ? t('rap.outputs.kind.document', 'Document')
@@ -862,7 +828,6 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                   ? t('rap.outputs.kind.presentation', 'Presentation')
                   : t('rap.outputs.kind.sheet', 'Sheet')}
             </div>
-            <div className="text-lg font-semibold text-slate-900 dark:text-white">{item.title}</div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {t('rap.outputs.preview.status', 'Status')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">
@@ -873,125 +838,12 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               {t('rap.columns.owner', 'Owner')}:{' '}
               <span className="font-medium text-slate-700 dark:text-slate-200">{item.owner}</span>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.visibility', 'Visibility')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {formatLabel(item.governance?.visibilityScope)}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.validation', 'Validation')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {formatLabel(item.governance?.validationState)}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.execution', 'Execution')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {formatLabel(item.governance?.executionState)}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.review', 'Review')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {formatLabel(item.governance?.publishState)}
-              </span>
-              {typeof item.governance?.reviewGateCount === 'number' ? (
-                <span className="ml-1">
-                  ({item.governance.reviewGateCount}
-                  {t('rap.outputs.preview.reviewersShort', ' gates')})
-                </span>
-              ) : null}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.source', 'Source')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {formatSourceSummary(item, translate)}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.lineage', 'Lineage')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {[
-                  typeof item.governance?.originLinks?.length === 'number'
-                    ? `${item.governance.originLinks.length} ${t('rap.outputs.preview.originsShort', 'origins')}`
-                    : null,
-                  typeof item.governance?.sourceRefs?.length === 'number'
-                    ? `${item.governance.sourceRefs.length} ${t('rap.outputs.preview.sourcesShort', 'sources')}`
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || '—'}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.artifactId', 'Artifact ID')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {item.artifactId || '—'}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.executionRunId', 'Execution run')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {item.governance?.executionRunId || '—'}
-              </span>
-              {item.governance?.executionRunId ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    openLineage({
-                      executionRunId: item.governance?.executionRunId || '',
-                      lineagePaths: item.governance?.lineagePaths || null,
-                    })
-                  }
-                  className="ml-2 inline-flex items-center rounded-md border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900"
-                >
-                  {t('rap.outputs.preview.trace', 'Trace')}
-                </button>
-              ) : null}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.exports', 'Exports')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {item.exportFormats.length ? item.exportFormats.join(', ').toUpperCase() : '—'}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.exportTrace', 'Export trace')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {item.governance?.exportHistory?.length
-                  ? `${item.governance.exportHistory.length} · ${formatLabel(item.governance.exportHistory[0]?.status)}`
-                  : '—'}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.accessControl', 'Access control')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {typeof item.governance?.canManageAccess === 'boolean'
-                  ? item.governance.canManageAccess
-                    ? t('rap.outputs.preview.canManageAccess', 'Can manage')
-                    : t('rap.outputs.preview.readOnly', 'Read only')
-                  : '—'}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.trustBoundary', 'Trust boundary')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {`${t('rap.outputs.preview.executionAuthority', 'Execution')}: ${formatLabel(item.governance?.executionAuthority)} · ${t('rap.outputs.preview.reviewAuthority', 'Review')}: ${formatLabel(item.governance?.reviewAuthority)}`}
-              </span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {t('rap.outputs.preview.validationChecks', 'Validation checks')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {Array.isArray(item.governance?.validationChecks) &&
-                item.governance.validationChecks.length > 0
-                  ? item.governance.validationChecks
-                      .filter((check) => check.status !== 'passed')
-                      .map((check) => `${check.id}:${check.status}`)
-                      .join(' · ') || t('rap.outputs.preview.validationChecksAllGood', 'all passed')
-                  : '—'}
-              </span>
-            </div>
+            <TrustStatePreviewSection
+              governance={item.governance}
+              artifactId={item.artifactId}
+              exportFormats={item.exportFormats}
+              onTrace={openLineage}
+            />
             {item.kind === 'sheet' ? (
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 {t(
@@ -1003,18 +855,18 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           </div>
         )}
         renderPreviewFooter={(item) => (
-          <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-200/70 dark:border-white/[0.08]">
-            <button
-              type="button"
-              onClick={() => openRow(item)}
-              className="h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
-            >
-              {item.kind === 'sheet'
-                ? isEnabled('tablePlatformMetadataFirst')
+          <div className="flex items-center gap-2">
+            {item.kind === 'sheet' ? (
+              <button
+                type="button"
+                onClick={() => openRow(item)}
+                className="h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+              >
+                {isEnabled('tablePlatformMetadataFirst')
                   ? t('rap.actions.openInWorkspace', 'Open in workspace')
-                  : t('rap.actions.exportXlsx', 'Download XLSX')
-                : t('rap.actions.open', 'Otwórz')}
-            </button>
+                  : t('rap.actions.exportXlsx', 'Download XLSX')}
+              </button>
+            ) : null}
             {item.artifactId ? (
               <button
                 type="button"

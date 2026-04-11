@@ -155,6 +155,8 @@ class ResultsEnterpriseService {
         null,
         sourceLabel,
         stringifyCompact({
+          connectorId: data.connectorId,
+          ingestionLogId: id,
           provenance: data.provenance || {},
           qualityScore: data.qualityScore ?? 1.0,
           runSource: data.runSource,

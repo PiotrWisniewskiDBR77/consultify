@@ -358,6 +358,7 @@ class InitiativeGovernanceService {
     );
 
     const appliedAt = new Date().toISOString();
+    let auditWritten = false;
     try {
       const histId = uuidv4();
       let citations: unknown[] = [];
@@ -395,13 +396,17 @@ class InitiativeGovernanceService {
           appliedAt,
         ]
       );
-    } catch {
-      /* P11: best-effort audit — do not block apply on history schema drift */
+      auditWritten = true;
+    } catch (auditErr) {
+      auditWritten = false;
+      const msg = auditErr instanceof Error ? auditErr.message : String(auditErr);
+      console.warn(`[P11] audit trail write failed for blueprint ${blueprintId}: ${msg}`);
     }
 
     return {
       ok: true,
       reused: false,
+      auditWritten,
       initiativeId: blueprint.initiative_id,
       tasksCreated,
       dependenciesCreated,

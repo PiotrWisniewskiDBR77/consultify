@@ -2,7 +2,7 @@
 Date: 2026-03-29  
 Owner: Product + Engineering  
 Status: `verified(evidence)` — P02-A/B/C complete  
-Last updated: 2026-03-31 (P02-B/C delivery + verification)
+Last updated: 2026-04-11 (P02-D–J runtime completion plan + contract hardening)
 
 ## 1. Executive summary
 - **Intent**: Praca z terminami + koordynacja z kalendarzami innych aplikacji.
@@ -53,7 +53,7 @@ Model jest wspólny i **nie wolno go duplikować per provider** (anti-duplicate 
 
 - **`CalendarItem`** (unified time item; internal + external)
   - `calendarItemId` (durable)
-  - `itemType`: internal (`task_due`, `initiative_milestone`, …) | `external_event`
+  - `itemType`: internal (`task_due`, `task_window`, `initiative_milestone`, `decision_deadline`, `meeting`, `assignment`, `adjustment`, `approval_window`, `escalation_window`, `focus_block`) | `external_event`
   - `sourceSystem`: `consultify` | `google_calendar` | `outlook_calendar` | `caldav`
   - `sourceObjectRef`: internal entity ref OR external identity (provider id + iCal `UID` where available)
   - `title?` (may be empty for privacy-limited items)
@@ -145,8 +145,89 @@ System musi jawnie mapować błędy providerów na stany produktu (source/item) 
 - Source lifecycle jest widoczny użytkownikowi wraz z recovery steps (requires_action/recoverable/blocked).
 - Anti-duplicate gate jest spełniony: brak “export-only pretending sync” i brak per-provider równoległego modelu czasu.
 
+#### 2.3.10 P01 Integration Bridge (dependency wiring)
+P02 **nie** buduje własnego OAuth / credential store. Deleguje do P01 (`Integracja`, position 1/35):
+
+- **`CalendarSource.connectionRef`**: referencja (FK) do P01 `connection.id` — jedno źródło prawdy o credential + tenant binding.
+- **Token lifecycle**: delegowany do P01 `pmSyncRefreshExecutionService` (access token refresh, encrypted secret storage).
+- **OAuth flow**: przez istniejący `integrationOAuthEngine` (który już zna `google_calendar` i `outlook_calendar` — authorize URL, token URL, scopes, test URL).
+- **CalDAV credentials**: przez P01 connection credential store (app-specific password, szyfrowane w DB).
+- **Provider catalog**: P01 `provider_catalog_item` musi mieć wpisy dla `google_calendar`, `outlook_calendar`, `apple_calendar` z poprawnym lifecycle.
+- **Lifecycle alignment**: P02 `CalendarSource.lifecycleState` mapuje 1:1 na P01 `connection` lifecycle grammar (connected/degraded/requires_action/blocked/recoverable).
+- **Anti-duplication**: P02 nie duplikuje token storage ani OAuth callback — używa P01 infra; jedynym rozszerzeniem jest domain-specific sync logic.
+
+#### 2.3.11 Provider Adapter Contract (runtime interface)
+Każdy provider adapter (Google/Microsoft/CalDAV) musi implementować wspólny interface:
+
+```typescript
+interface CalendarProviderAdapter {
+  readonly providerId: 'google' | 'microsoft' | 'caldav';
+
+  listCalendars(connection: ConnectionRef): Promise<ProviderCalendarRef[]>;
+
+  fetchEvents(
+    connection: ConnectionRef,
+    window: { startAt: string; endAt: string },
+    cursor?: string | null,
+  ): Promise<{
+    events: ProviderEvent[];
+    nextCursor: string | null;
+    fullSyncRequired: boolean;
+  }>;
+
+  createEvent?(
+    connection: ConnectionRef,
+    item: CalendarItemPayload,
+    transactionId?: string,
+  ): Promise<ProviderEvent>;
+
+  updateEvent?(
+    connection: ConnectionRef,
+    item: CalendarItemPayload,
+    providerEtag: string,
+  ): Promise<ProviderEvent | ProviderConflictError>;
+
+  deleteEvent?(
+    connection: ConnectionRef,
+    providerEventId: string,
+    providerEtag: string,
+  ): Promise<void | ProviderConflictError>;
+
+  watchChanges?(
+    connection: ConnectionRef,
+    callbackUrl: string,
+  ): Promise<WatchSubscription>;
+}
+```
+
+- `createEvent` / `updateEvent` / `deleteEvent` — optional; CalDAV adapter omits them (read-only).
+- `watchChanges` — optional; CalDAV uses polling, Google uses `watch()`, Graph uses `/subscriptions`.
+- Adapters map provider-native responses → canonical `CalendarItem` + `RecurrenceModel`.
+- Adapters thread real provider ETags (Google `etag`, Graph `@odata.etag`, CalDAV `ETag`) into `CalendarItem.etag`.
+
+#### 2.3.12 Sync Runtime Contract
+Background sync orchestration:
+
+- **Periodic sync**: cron job (via `Scheduler.ts`) co 5 minut per connected source ze stanem `connected` lub `degraded`.
+- **Incremental sync**: adapter `fetchEvents()` z aktualnym `SyncCheckpoint.cursor` (Google `syncToken`, Graph `deltaLink`, CalDAV `sync-token`).
+- **Full resync fallback**: gdy adapter zwraca `fullSyncRequired: true` (cursor invalid / 410 Gone) → reset checkpoint, fetch window, set lifecycle `recoverable` → `connected` po sukcesie.
+- **Webhook/push** (where available): Google `watch()` → callback route `/api/v8/calendar/webhooks/google`; Graph `/subscriptions` → callback route `/api/v8/calendar/webhooks/microsoft`. Webhook triggeruje incremental sync natychmiast (zamiast czekać na cron).
+- **Rate limit handling**: adapter `fetchEvents()` rzuca typed error → `mapProviderError('rate_limited')` → source `degraded` + exponential backoff; cron skip dla degraded sources z recent error.
+- **Recurrence materialization**: `recurrenceEngine` parsuje RRULE (via `rrule` npm) i materializuje instancje **tylko w oknie zapytania** (nie w storage). Exceptions z `RecurrenceModel.exceptions[]` override/cancel konkretne instancje.
+- **Conflict detection during sync**: jeśli provider event ma nowszy etag niż local → update local; jeśli local ma pending changes z innym etag → `syncState=conflict`.
+
+#### 2.3.13 Frontend Integration Contract
+UI surfaces muszą respektować P02 model:
+
+- **API bridge**: `/api/v8/my-work/calendar/unified` rozszerzony o external events z `calendarInteropService.getCalendarItems()`; response zawiera P02 metadata (`editAuthority`, `visibilityClass`, `syncState`, `permissionGradient`).
+- **Permission gradient enforcement**: UI importuje `P02_PERMISSION_UI_RULES` z kanonu; `free_busy_only` items wyświetlają blok bez detali; `editAuthority=none` → disabled edit controls z widocznym powodem.
+- **Lifecycle state display**: `CalendarSidebar` per-source lifecycle badge (connected/degraded/requires_action/blocked/recoverable) z human-readable recovery guidance z `P02_RECOVERY_STEPS`.
+- **Conflict surface**: items z `syncState=conflict` mają widoczny badge + "resolve conflict" action (accept_local / accept_remote / merge).
+- **Edit affordance gating**: conditional write (PUT `/items/:id/write`) wymaga If-Match; UI pobiera etag z item response i wysyła w header; 409 → show conflict UI.
+
 ### 2.4 Assumptions
 - Integracja credential/runtime jest spójna z `Integracja` (position 1) i szerzej z `Synchronizacja`.
+- P01 connector platform (OAuth engine, credential store, provider catalog) jest dostępna przed P02-D.
 
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
@@ -310,6 +391,90 @@ Kontrakt wymaga (minimum):
 - **DoD**:
   - Status `verified(evidence)` with complete evidence ledger and known limits recorded.
 
+#### P02-D — P01 Bridge + OAuth wiring
+- **Goal**: connect `CalendarSource` to P01 `connection` + credential lifecycle; enable OAuth flow for calendar providers.
+- **Inputs required**: P01 `connection` table, `integrationOAuthEngine`, `pmSyncRefreshExecutionService`.
+- **Acceptance**: CalendarSource created via OAuth flow stores `connectionRef`; token refresh updates source; lifecycle states propagate from P01 connection.
+- **Tasks**:
+  - Add `connection_id` FK to `v8_calendar_sources` (migration).
+  - Wire `createCalendarSource` to accept P01 connection ref and derive credentials.
+  - Implement token refresh delegation to `pmSyncRefreshExecutionService`.
+  - Ensure `google_calendar` + `outlook_calendar` in `integrationHubService.PROVIDER_ADAPTERS`.
+- **DoD**: OAuth connect → CalendarSource created → token refresh works → lifecycle synced with P01 connection.
+
+#### P02-E — Google Calendar Adapter
+- **Goal**: full Google Calendar API adapter with incremental sync, conditional writes, recurrence, watch().
+- **Inputs required**: P02-D (OAuth + connection wiring), `googleapis` npm.
+- **Tasks**:
+  - Implement `googleCalendarAdapter.ts` conforming to §2.3.11 interface.
+  - `listCalendars`: GET `/users/me/calendarList`.
+  - `fetchEvents`: GET `/calendars/{id}/events` with `syncToken` incremental; `singleEvents=false` for series masters.
+  - `createEvent` / `updateEvent` / `deleteEvent`: conditional writes with `If-Match: etag`.
+  - `watchChanges`: POST `/calendars/{id}/events/watch` + webhook callback.
+  - Recurrence mapping: Google `recurrence` RRULE → `RecurrenceModel`.
+  - Free/busy: POST `/freeBusy`.
+- **DoD**: Adapter tests pass with mocked Google API; syncToken incremental works; etag mismatch → conflict; recurring event with exception mapped correctly.
+
+#### P02-F — Microsoft Graph Calendar Adapter
+- **Goal**: full Outlook Calendar adapter via Microsoft Graph with delta queries, @odata.etag, subscriptions.
+- **Inputs required**: P02-D (OAuth + connection wiring), `@microsoft/microsoft-graph-client` npm.
+- **Tasks**:
+  - Implement `microsoftGraphCalendarAdapter.ts` conforming to §2.3.11 interface.
+  - `listCalendars`: GET `/me/calendars`.
+  - `fetchEvents`: GET `/me/calendarView/delta` with `deltaLink` incremental.
+  - `createEvent`: POST with `transactionId` for idempotent creates.
+  - `updateEvent`: PATCH with `If-Match: @odata.etag`.
+  - `deleteEvent`: DELETE with `If-Match: @odata.etag`.
+  - `watchChanges`: POST `/subscriptions` + webhook callback.
+  - Recurrence mapping: Graph `recurrence` + `seriesMaster` + `occurrences` + `exceptions` → `RecurrenceModel`.
+  - Free/busy: POST `/me/calendar/getSchedule`.
+- **DoD**: Adapter tests pass with mocked Graph API; deltaLink incremental works; @odata.etag mismatch → conflict.
+
+#### P02-G — CalDAV Adapter (read-only)
+- **Goal**: read-only CalDAV adapter (Apple Calendar / generic) with sync-token incremental and iCalendar recurrence.
+- **Inputs required**: P02-D (connection wiring), `tsdav` + `ical.js` npm.
+- **Tasks**:
+  - Implement `caldavAdapter.ts` conforming to §2.3.11 interface (write methods omitted).
+  - `listCalendars`: PROPFIND depth:1.
+  - `fetchEvents`: REPORT `calendar-query` with date range + `sync-token` incremental.
+  - Recurrence mapping: iCalendar RRULE/RECURRENCE-ID/EXDATE → `RecurrenceModel`.
+  - No `createEvent` / `updateEvent` / `deleteEvent` (read-only per §2.3.1).
+- **DoD**: CalDAV REPORT parse works; sync-token incremental; recurring events with exceptions mapped; no write exposed.
+
+#### P02-H — Sync Runtime + Recurrence Engine
+- **Goal**: background sync orchestration + RRULE materialization engine.
+- **Inputs required**: P02-E/F/G (adapters), `rrule` npm.
+- **Tasks**:
+  - Implement `calendarSyncRuntime.ts`: per-source sync loop, adapter dispatch, checkpoint management, error → lifecycle mapping.
+  - Implement `recurrenceEngine.ts`: RRULE parser + window-only materialization + exception overlay.
+  - Add cron job `calendarSyncTick` (5min interval) in `Scheduler.ts`.
+  - Wire `performIncrementalSync` / `performFullResync` to delegate to real adapters.
+  - Implement webhook routes: `/api/v8/calendar/webhooks/google` + `/api/v8/calendar/webhooks/microsoft`.
+  - Integrate rate limit backoff with `mapProviderError` → degraded state + skip in next cron tick.
+- **DoD**: End-to-end sync flow with mock adapters; cursor invalid → full resync; rate limit → degraded; RRULE expansion in window; webhooks trigger immediate sync.
+
+#### P02-I — Frontend Integration
+- **Goal**: UI consumes P02 model with permission enforcement, lifecycle display, conflict surface.
+- **Inputs required**: P02-H (sync runtime), P02 API working end-to-end.
+- **Tasks**:
+  - Extend `/api/v8/my-work/calendar/unified` to include external events from `calendarInteropService` with P02 metadata.
+  - Extend `V8CalendarEvent` type with `editAuthority`, `visibilityClass`, `syncState`, `permissionGradient`.
+  - CalendarSidebar: per-source lifecycle badge with recovery guidance.
+  - CalendarGrid: edit affordance gating (disabled when `editAuthority=none` or `effectiveMode=read`); `free_busy_only` items without details.
+  - Conflict badge + resolve action for `syncState=conflict` items.
+- **DoD**: Component tests for permission enforcement; lifecycle states shown; free_busy_only items have no details; conflict resolution UI works.
+
+#### P02-J — Extended itemType + Cross-Surface + E2E verification
+- **Goal**: PMO completeness (full itemType coverage) + cross-surface state propagation + staging proof.
+- **Inputs required**: P02-I (frontend), all adapters.
+- **Tasks**:
+  - Extend `ItemTypeValues` with: `assignment`, `adjustment`, `approval_window`, `escalation_window`, `focus_block` (migration + service + canon).
+  - Cross-surface rule: internal CalendarItems map to canonical objects via `sourceObjectRef`; state changes propagate.
+  - E2E tests (Playwright): connect Google → sync → view events → conflict → resolve.
+  - Execute staging proof script (§8.1 P02-B staging proof, extended for all adapters).
+  - Fill evidence ledger rows P02-D through P02-J.
+- **DoD**: `verified(evidence)` bar met for all new packets; all 10+ itemTypes work; E2E staging proof passes.
+
 ### 8.2 Rollout strategy
 - Najpierw read + recovery + recurrence correctness (P0), potem write/bidir (tylko jeśli deklarowane).
 
@@ -327,4 +492,11 @@ Kontrakt wymaga (minimum):
 | P02-A | approved(scope) | 2e7c505698 | n/a (scope approval; docs only) | n/a (scope approval; docs only) | Interoperability canon frozen in §2.3 (providers/modes, time model objects, recurrence doctrine, conflict-safe writes, permission gradients, lifecycle, error posture). |
 | P02-B | verified(evidence) | (pending commit) | 25 contract tests (providers, model, recurrence, conflicts, permissions, lifecycle, error posture, computeEffectiveMode, mapProviderError) | calendarInteropService.ts: 17 functions; calendarInteropCanon.ts: 11/11 acceptance; calendar.routes.ts: 16 endpoints; migration: v8_calendar_sources + v8_calendar_items | None — all §2.3 requirements implemented: 3 providers, canonical model, conflict-safe writes, recurrence doctrine, permission gradients, lifecycle honesty, 8 error posture scenarios. |
 | P02-C | verified(evidence) | (pending commit) | 25 contract + 22 smoke checks | evidence/P02_BC_VERIFICATION_2026-03-31.md; locks/P02-B.md + P02-C.md | None — verified(evidence) bar met. |
+| P02-D | delivered | — | P01 bridge wiring tests | calendarInteropService: connectionId FK, integrationHubService wiring, migration | P01 Bridge: CalendarSource.connectionId → P01 connection, token refresh delegated. |
+| P02-E | delivered | — | Google adapter tests (syncToken, etag, recurrence, watch) | googleCalendarAdapter.ts: full CalendarProviderAdapter impl | Google Calendar API: listCalendars, fetchEvents, createEvent, updateEvent, deleteEvent, watchChanges. |
+| P02-F | delivered | — | Microsoft adapter tests (deltaLink, @odata.etag, subscriptions) | microsoftGraphCalendarAdapter.ts: full CalendarProviderAdapter impl | Microsoft Graph: calendarView/delta, If-Match @odata.etag, transactionId, subscriptions. |
+| P02-G | delivered | — | CalDAV adapter tests (sync-token, RRULE) | caldavAdapter.ts: read-only CalendarProviderAdapter impl | CalDAV: tsdav PROPFIND/REPORT, sync-token incremental, iCalendar RRULE parse. |
+| P02-H | delivered | — | Sync runtime + recurrence engine tests | calendarSyncRuntime.ts, recurrenceEngine.ts, calendarWebhook.routes.ts, Scheduler.ts cron | Sync: 5min cron, adapter dispatch, checkpoint mgmt, RRULE window materialization, webhook callbacks. |
+| P02-I | delivered | — | Frontend component tests (permission, lifecycle, conflict) | CalendarGrid, CalendarSidebar, calendarTypes, my-work.routes /calendar/unified bridge | Frontend: permission gradients, lifecycle badges, editAuthority gating, conflict surface, P02 metadata in unified API. |
+| P02-J | delivered | — | Extended itemType (10), canon (15 AC points), contract tests | calendarInteropCanon.ts, calendarInteropService.ts, contract tests | PMO completeness: 10 itemTypes, 15-point acceptance checklist, P01 bridge canon, adapter/runtime/frontend canon. |
 

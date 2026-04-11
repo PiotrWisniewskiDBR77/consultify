@@ -364,6 +364,9 @@ const PublicFormPage = React.lazy(() =>
   }))
 );
 
+// Public Shared View (Table Platform)
+const PublicViewPage = React.lazy(() => import('@/components/MyWork/table/PublicViewPage'));
+
 // Public Mini Assessment (T015)
 const PublicMiniAssessmentView = React.lazy(() =>
   import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
@@ -709,6 +712,16 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* Public Shared View (Table Platform) — no auth required */}
+        <Route
+          path="/public/views/:token"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading shared view..." />}>
+              <PublicViewPage />
+            </Suspense>
+          }
+        />
+
         {/* Public Mini Assessment (T015) */}
         <Route
           path="/assess/:token?"
@@ -1034,7 +1047,9 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || ['Excele']} noPadding>
                 <RouteErrorBoundary>
-                  <ExceleView />
+                  <AnimationWrapper variant="fade">
+                    <ExceleView />
+                  </AnimationWrapper>
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
@@ -1046,7 +1061,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Prezentacje']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Prezentacje')]} noPadding>
                 <RouteErrorBoundary>
                   <PrezentacjeView />
                 </RouteErrorBoundary>
@@ -1337,6 +1352,36 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path="/finance/statements/:id"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Statement']} noPadding>
+              <RouteErrorBoundary>
+                <EconomicsView />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/finance/models/:id"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Model']} noPadding>
+              <RouteErrorBoundary>
+                <EconomicsView />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/finance/analyses/:id"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Analysis']} noPadding>
+              <RouteErrorBoundary>
+                <EconomicsView />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
           path={ROUTES.EXECUTION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
@@ -1397,7 +1442,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.presentations', 'Presentations'),
+                  t('sidebar.outputsLibrary', 'Outputs'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                 ]
               }
@@ -1416,7 +1461,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.presentations', 'Presentations'),
+                  t('sidebar.outputsLibrary', 'Outputs'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                   t('common.edit', 'Edit'),
                 ]
@@ -1484,7 +1529,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/wizard"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.outputsLibrary', 'Outputs'), t('rap.breadcrumb.presentationWizard', 'Presentation Wizard')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <PresentationWizard />
@@ -1496,7 +1541,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/builder/:deckId"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.outputsLibrary', 'Outputs'), t('rap.breadcrumb.deckBuilder', 'Deck Builder')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <DeckBuilder />

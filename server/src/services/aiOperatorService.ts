@@ -5,6 +5,7 @@ import { finalBatchService } from './finalBatchService.js';
 import { ensureMeetingTables, getMeeting } from './meetingService.js';
 import { addMeetingFollowUp } from './meetingService.js';
 import * as NotificationService from './notificationService.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 type OperatorPriority = 'critical' | 'high' | 'medium';
 type WorkstreamStatus = 'ready' | 'partial' | 'blocked';
@@ -227,8 +228,15 @@ class AIOperatorService {
   async getFoundationOverview(organizationId: string, userId?: string | null) {
     await this.ensureSchema();
     const profile = await this.getProfile(organizationId, userId);
+    const resolvedOrgContext = await organizationContextService.buildResolvedContext(organizationId).catch(() => null);
+    const orgRow = {
+      id: organizationId,
+      name: resolvedOrgContext?.profile?.companyName || 'Organization',
+      industry: resolvedOrgContext?.profile?.industry || 'general',
+      size: resolvedOrgContext?.profile?.companySize || 'unknown',
+      updated_at: resolvedOrgContext?.snapshotUpdatedAt || null,
+    };
     const [
-      orgRow,
       convoStats,
       meetingStats,
       initiativeStats,
@@ -236,14 +244,6 @@ class AIOperatorService {
       decisionStats,
       reportStats,
     ] = await Promise.all([
-      this.safeFirst<any>(
-        `SELECT id, name, industry, size, updated_at
-           FROM organizations
-           WHERE id = ?
-           LIMIT 1`,
-        [organizationId],
-        {}
-      ),
       this.safeFirst<any>(
         `SELECT COUNT(*) as total, MAX(updated_at) as last_touch
            FROM conversations

@@ -34,3 +34,17 @@ Result: **PASS** on 2026-03-31
 ## 4) Known limits
 
 - This closeout verifies the bounded trust-state and visibility contract through integration tests rather than a multi-user staging capture.
+- Reports tab and Presentations tab previews fetch trust-state for review-gating logic but do not render the full trust-state badge panel that the Outputs "All" tab preview shows. Surface consistency is partial until `TrustStatePreviewSection` is shared across all preview surfaces (contract §2.3 follow-up).
+- List rows use registry-denormalized governance; `lineagePaths` is only available after preview selection triggers `GET /api/artifacts/:id/trust-state`. This two-tier model is architecturally intentional (performance) but creates a transient gap between list and preview truth.
+
+## 5) Frontend trust-state consumers (reference)
+
+Canonical consumers of `GET /api/artifacts/:id/trust-state` in `src/`:
+- `src/components/ReportsAndPresentations/OutputsAggregateTabContent.tsx` — full trust preview + lineage dialog
+- `src/components/ReportsAndPresentations/ReportsTabContent.tsx` — merged governance for review gating
+- `src/components/ReportsAndPresentations/PresentationsTabContent.tsx` — merged governance for review gating
+
+Supporting types and mapping:
+- `src/components/ReportsAndPresentations/types.ts` — `ArtifactGovernanceSummary` (single TS shape)
+- `src/components/ReportsAndPresentations/useRapData.ts` — `mapArtifactGovernance` (list-derived baseline)
+- `src/components/ReportsAndPresentations/artifactNavigation.ts` — `openPath` routing from governance

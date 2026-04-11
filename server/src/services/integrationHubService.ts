@@ -908,11 +908,128 @@ async function googleSyncAdapter(
 }
 
 async function genericWebhookSyncAdapter(
-  _integrationId: string,
-  _config: Record<string, unknown>,
+  integrationId: string,
+  config: Record<string, unknown>,
   _options: Record<string, unknown>
 ): Promise<ProviderSyncResult> {
-  return { recordsSynced: 0 };
+  const crypto = await import('crypto');
+  const db = getDatabase();
+
+  try {
+    const orgId = String(config._organizationId || config.organizationId || '');
+    if (!orgId) return { recordsSynced: 0, error: 'No organization ID for webhook sync' };
+
+    const registrations = (await db.all(
+      `SELECT registration_id, endpoint_url, secret_key, direction, event_types, is_active, consecutive_failures
+       FROM v8_webhook_registrations
+       WHERE integration_id = ? AND organization_id = ? AND is_active = TRUE`,
+      [integrationId, orgId]
+    )) as Array<{
+      registration_id: string;
+      endpoint_url: string;
+      secret_key: string | null;
+      direction: string;
+      event_types: string;
+      is_active: boolean;
+      consecutive_failures: number;
+    }> | null;
+
+    if (!registrations?.length) {
+      return { recordsSynced: 0 };
+    }
+
+    let delivered = 0;
+    for (const reg of registrations) {
+      if (reg.direction !== 'outbound') continue;
+
+      const payload = JSON.stringify({
+        event: 'sync_heartbeat',
+        integrationId,
+        timestamp: new Date().toISOString(),
+      });
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Webhook-Event': 'sync_heartbeat',
+      };
+
+      if (reg.secret_key) {
+        const signature = crypto
+          .createHmac('sha256', reg.secret_key)
+          .update(payload)
+          .digest('hex');
+        headers['X-Webhook-Signature'] = `sha256=${signature}`;
+      }
+
+      const deliveryId = `wd-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+      try {
+        const resp = await fetch(reg.endpoint_url, {
+          method: 'POST',
+          headers,
+          body: payload,
+          signal: AbortSignal.timeout(10000),
+        });
+
+        const httpStatus = resp.status;
+        const responseBody = await resp.text().catch(() => '');
+
+        await db.run(
+          `INSERT INTO v8_webhook_deliveries
+             (delivery_id, registration_id, organization_id, event_type, payload_hash, status, http_status, response_body, attempt_count, completed_at)
+           VALUES (?, ?, ?, 'sync_heartbeat', ?, ?, ?, ?, 1, NOW())`,
+          [
+            deliveryId,
+            reg.registration_id,
+            orgId,
+            crypto.createHash('sha256').update(payload).digest('hex'),
+            resp.ok ? 'delivered' : 'failed',
+            httpStatus,
+            responseBody.slice(0, 500),
+          ]
+        );
+
+        if (resp.ok) {
+          delivered++;
+          await db.run(
+            `UPDATE v8_webhook_registrations
+             SET last_delivery_at = NOW(), consecutive_failures = 0, updated_at = NOW()
+             WHERE registration_id = ?`,
+            [reg.registration_id]
+          );
+        } else {
+          const newFailures = reg.consecutive_failures + 1;
+          const deactivate = newFailures >= 5;
+          await db.run(
+            `UPDATE v8_webhook_registrations
+             SET consecutive_failures = ?, is_active = ?, updated_at = NOW()
+             WHERE registration_id = ?`,
+            [newFailures, !deactivate, reg.registration_id]
+          );
+        }
+      } catch (deliveryErr) {
+        await db.run(
+          `INSERT INTO v8_webhook_deliveries
+             (delivery_id, registration_id, organization_id, event_type, status, response_body, attempt_count)
+           VALUES (?, ?, ?, 'sync_heartbeat', 'failed', ?, 1)`,
+          [deliveryId, reg.registration_id, orgId, (deliveryErr as Error).message.slice(0, 500)]
+        );
+
+        const newFailures = reg.consecutive_failures + 1;
+        const deactivate = newFailures >= 5;
+        await db.run(
+          `UPDATE v8_webhook_registrations
+           SET consecutive_failures = ?, is_active = ?, updated_at = NOW()
+           WHERE registration_id = ?`,
+          [newFailures, !deactivate, reg.registration_id]
+        );
+      }
+    }
+
+    return { recordsSynced: delivered };
+  } catch (err) {
+    return { recordsSynced: 0, error: `Webhook sync error: ${(err as Error).message}` };
+  }
 }
 
 async function cloudStorageSyncAdapter(

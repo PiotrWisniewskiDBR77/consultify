@@ -199,7 +199,7 @@ Versioning: bump `ORGANIZATION_CONTEXT_SCHEMA_VERSION` only via packet; downstre
 ## 11. P30-D — Organization Profile Evolution (Phase 2)
 
 **Date**: 2026-04-11
-**Status**: in_progress
+**Status**: completed
 **Goal**: Evolve Organization module from manufacturing-centric prototype into a universal, AI-guided organization context workspace that serves any organization type.
 
 ### 11.1 Problem statement
@@ -270,10 +270,18 @@ Versioning: bump `ORGANIZATION_CONTEXT_SCHEMA_VERSION` only via packet; downstre
 
 ### 11.9 Implementation phases
 
-- **Phase 1**: org_type field, merge profiles, fix deepThinking + AIPipeline, Teresa guidance
-- **Phase 2**: Conditional sections, new fields, taxonomy unification
-- **Phase 3**: Document extraction, cross-validation, completeness coaching
-- **Phase 4**: contextPackBuilder org injection, full downstream audit
+- **Phase 1**: org_type field, merge profiles, fix deepThinking + AIPipeline, Teresa guidance ✅
+- **Phase 2**: Conditional sections per §11.4 matrix, manufacturing fields (production_archetype, shift_pattern, automation_level), communication_style + industry_jargon_level, taxonomy unification ✅
+- **Phase 3**: Cross-validation warnings, completeness coaching with downstream context, downstream readiness indicators, document extraction → field proposals (accept/reject) ✅
+- **Phase 4**: contextPackBuilder org injection via buildResolvedContext, aiOperatorService SSOT bypass fix, full downstream audit ✅
+
+### 11.10 Phase 2–4 delivery evidence
+
+| Phase | What was delivered | Tests | Key files |
+| --- | --- | --- | --- |
+| Phase 2 | 3 manufacturing DB columns, 8 new SSOT claim paths, conditional section functions per §11.4, Communication & AI Preferences section, AIPipeline expanded with manufacturing + communication fields | 5 new tests | migration, OrganizationContextService, AIPipeline, organization-profiles.routes, OrganizationProfileModule |
+| Phase 3 | `crossValidate()` with 4 validation rules, `getTeresaGuidance()` with downstream module context, `computeDownstreamReadiness()` for 5 modules, document extraction UI with accept/reject per field | 4 new tests | OrganizationProfileModule |
+| Phase 4 | `injectOrganizationContext()` in contextPackBuilder populates packs with 13 org fields, aiOperatorService migrated from direct SQL to buildResolvedContext, downstream audit confirmed no remaining identity bypasses | 3 new tests | contextPackBuilder, aiOperatorService |
 
 ---
 

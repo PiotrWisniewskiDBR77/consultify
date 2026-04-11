@@ -4546,9 +4546,9 @@ Context: ${JSON.stringify(projectContext)}`;
                   {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
                     {sourceType === 'idea'
-                      ? 'Created from Idea'
+                      ? (isPolish ? 'Utworzone z pomysłu' : 'Created from Idea')
                       : sourceType === 'notebook'
-                        ? 'Created from Note'
+                        ? (isPolish ? 'Utworzone z notatki' : 'Created from Note')
                         : `Created from ${sourceType}`}
                   </span>
                   <button
@@ -4559,13 +4559,16 @@ Context: ${JSON.stringify(projectContext)}`;
                             type: sourceType === 'notebook' ? 'notebook' : sourceType,
                             id: sourceId,
                             name: `Source ${sourceType}`,
+                            initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
                           },
                         })
                       );
                     }}
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
-                    View source →
+                    {sourceType === 'idea'
+                      ? (isPolish ? 'Pokaź źródło w mapie →' : 'View source in mindmap →')
+                      : (isPolish ? 'Pokaź źródło →' : 'View source →')}
                   </button>
                 </div>
               )}

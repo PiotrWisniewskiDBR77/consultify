@@ -1,16 +1,15 @@
 /**
  * TemplatesTabContent — "Biblioteka wzorców" tab
  * Golden standard: FilterableTable (6 columns) + GridView cards + Preview pane
- * Connected to /api/report-builder/templates + /api/presentations/templates
+ * Canonical source: /api/artifacts?artifactFamily=template (P24 Outputs artifacts)
  */
 
-import { BookTemplate, Copy, Edit, FileText, Loader2, Play, Presentation } from 'lucide-react';
+import { BookTemplate, Copy, Edit, FileText, Loader2, MessageSquare, Play, Presentation } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { API_URL, getHeaders } from '../../services/api';
+import { useOpenChatWithContext } from '../../hooks/useOpenChatWithContext';
 import {
   FilterableTable,
   type FilterChip,
@@ -21,8 +20,9 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { resolveTemplateClonePath, resolveTemplateEditPath, resolveTemplateUsePath } from './artifactNavigation';
 import { TemplatePreviewBody, TemplatePreviewFooter } from './previews/TemplatePreview';
-import { TEMPLATE_TYPE_META, type TemplateItem } from './types';
+import { TEMPLATE_STATUS_META, TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
 interface TemplatesTabContentProps {
   viewMode: ViewMode;
@@ -33,6 +33,9 @@ interface TemplatesTabContentProps {
   loading: boolean;
   error?: string | null;
   onRefresh?: () => void;
+  actions?: {
+    startArtifactReview?: (artifactId: string) => Promise<boolean>;
+  };
 }
 
 export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
@@ -44,10 +47,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   loading,
   error,
   onRefresh,
+  actions,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const openChat = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
 
@@ -169,11 +174,27 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           { value: 'active', label: isPolish ? 'Aktywny' : 'Active', color: 'bg-emerald-400' },
           { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
           {
+            value: 'deprecated',
+            label: isPolish ? 'Wycofany' : 'Deprecated',
+            color: 'bg-amber-500',
+          },
+          {
             value: 'archived',
             label: isPolish ? 'Zarchiwizowany' : 'Archived',
             color: 'bg-slate-500',
           },
         ],
+        render: (row: TemplateItem) => {
+          const meta = TEMPLATE_STATUS_META[row.status] || TEMPLATE_STATUS_META.active;
+          return (
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10">
+              <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                {isPolish ? meta.labelPl : meta.label}
+              </span>
+            </div>
+          );
+        },
       },
       {
         id: 'updatedAt',
@@ -203,12 +224,25 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       label: t('rap.actions.useTemplate', 'Użyj wzorca'),
       icon: Play,
       variant: 'primary',
+      onClick: () => navigate(resolveTemplateUsePath(row.id, row.type)),
+    },
+    {
+      id: 'ask_ai',
+      label: t('rap.actions.askAI', 'Zapytaj AI'),
+      icon: MessageSquare,
       onClick: () => {
-        if (row.type === 'report') {
-          navigate(`/reports/builder?new=true&templateArtifactId=${row.id}`);
-        } else {
-          navigate(`/presentations/wizard?templateArtifactId=${row.id}`);
-        }
+        openChat({
+          entityType: 'template',
+          entityId: row.id,
+          entityName: row.title,
+          contextData: {
+            templateType: row.type,
+            category: row.category,
+            scope: row.scope,
+            status: row.status,
+            description: row.description,
+          },
+        });
       },
     },
     ...(row.status === 'draft' && row.scope === 'organization'
@@ -222,20 +256,10 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             onClick: async () => {
               setSubmitBusyId(row.id);
               try {
-                const startRes = await fetch(`${API_URL}/artifacts/${row.id}/start-review`, {
-                  method: 'POST',
-                  headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ reviewers: [] }),
-                });
-                if (!startRes.ok && startRes.status !== 409) {
-                  throw new Error('Failed to start review');
+                if (actions?.startArtifactReview) {
+                  await actions.startArtifactReview(row.id);
                 }
-                toast.success(t('rap.toast.reviewStarted', 'Review started'));
                 onRefresh?.();
-              } catch (e: any) {
-                toast.error(
-                  e?.message ? String(e.message) : t('rap.toast.reviewFailed', 'Failed to start review')
-                );
               } finally {
                 setSubmitBusyId(null);
               }
@@ -247,21 +271,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       id: 'clone',
       label: t('rap.actions.clone', 'Klonuj'),
       icon: Copy,
-      onClick: () => {
-        if (row.type === 'presentation') {
-          navigate(`/presentations/wizard?cloneTemplateArtifactId=${row.id}`);
-        }
-      },
+      onClick: () => navigate(resolveTemplateClonePath(row.id, row.type)),
     },
     {
       id: 'edit',
       label: t('rap.actions.edit', 'Edytuj'),
       icon: Edit,
-      onClick: () => {
-        if (row.type === 'report') {
-          navigate(`/reports/builder?tab=templates&templateArtifactId=${row.id}&edit=true`);
-        }
-      },
+      onClick: () => navigate(resolveTemplateEditPath(row.id, row.type)),
     },
   ];
 
@@ -296,13 +312,87 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     );
   }
 
+  if (!error && templates.length === 0 && !searchQuery && activeFilters.length === 0) {
+    const families = [
+      {
+        key: 'executive_steering',
+        title: isPolish ? 'Executive Steering' : 'Executive Steering',
+        desc: isPolish
+          ? 'Raporty zarządcze i prezentacje dla komitetu sterującego'
+          : 'Governance reports and steering committee presentations',
+        categories: ['R2', 'executive_update'],
+      },
+      {
+        key: 'transformation_status',
+        title: isPolish ? 'Status Transformacji' : 'Transformation Status',
+        desc: isPolish
+          ? 'Cotygodniowe raporty statusowe i przeglądy postępów'
+          : 'Weekly status reports and progress reviews',
+        categories: ['R1', 'R4'],
+      },
+      {
+        key: 'diagnostic_assessment',
+        title: isPolish ? 'Diagnostyka i Ocena' : 'Diagnostic & Assessment',
+        desc: isPolish
+          ? 'Raporty diagnostyczne, wyniki audytów i oceny dojrzałości'
+          : 'Diagnostic reports, audit findings and maturity assessments',
+        categories: ['R3', 'assessment_results'],
+      },
+    ];
+
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 max-w-2xl mx-auto">
+        <BookTemplate size={40} className="text-slate-300 dark:text-slate-600 mb-4" />
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+          {t('rap.empty.templatesOnboarding', 'Biblioteka wzorców')}
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-6">
+          {t(
+            'rap.empty.templatesOnboardingDesc',
+            'Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.'
+          )}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+          {families.map((f) => (
+            <div
+              key={f.key}
+              className="rounded-xl border border-slate-200/70 dark:border-navy-700/50 bg-white/60 dark:bg-navy-800/40 p-4"
+            >
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{f.title}</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{f.desc}</p>
+              <div className="flex gap-1 mt-2">
+                {f.categories.map((c) => (
+                  <span
+                    key={c}
+                    className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300"
+                  >
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (viewMode === 'grid') {
+    const gridStatusMap: Record<string, string> = {
+      active: 'READY',
+      draft: 'DRAFT',
+      deprecated: 'ARCHIVED',
+      archived: 'ARCHIVED',
+    };
+
     const gridItems: GridItem[] = filteredData.map((item) => ({
       id: item.id,
       name: item.title,
-      type: item.type,
+      type: isPolish
+        ? TEMPLATE_TYPE_META[item.type].labelPl
+        : TEMPLATE_TYPE_META[item.type].label,
       typeColor: item.type === 'report' ? 'operational' : 'digital',
-      status: item.status.toUpperCase(),
+      status: gridStatusMap[item.status] || 'DRAFT',
       progress: 0,
       updatedAt: item.updatedAt,
       description: item.description,
@@ -315,6 +405,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         items={gridItems}
         selectedItemId={selectedId}
         onItemClick={(item) => setSelectedId(item.id)}
+        onItemAction={(item, actionId) => {
+          const tpl = filteredData.find((t) => t.id === item.id);
+          if (!tpl) return;
+          if (actionId === 'open') navigate(resolveTemplateUsePath(tpl.id, tpl.type));
+          if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
+          if (actionId === 'edit') navigate(resolveTemplateEditPath(tpl.id, tpl.type));
+        }}
         emptyMessage={t('rap.empty.templates', 'Brak wzorców')}
         newItemLabel={t('rap.actions.newTemplate', 'Nowy wzorzec')}
       />
@@ -327,6 +424,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         selectedId={selectedId}
         selectedItem={previewItem}
         onSelect={setSelectedId}
+        onOpenFull={(id) => {
+          const row = filteredData.find((x) => x.id === id);
+          if (row) {
+            if (row.type === 'report') {
+              navigate(`/reports/builder?new=true&templateArtifactId=${row.id}`);
+            } else {
+              navigate(`/presentations/wizard?templateArtifactId=${row.id}`);
+            }
+          }
+        }}
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
         renderPreview={(item) => <TemplatePreviewBody template={item} />}
@@ -337,6 +444,14 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           data={filteredData}
           selectedRowId={selectedId}
           onRowClick={(row) => setSelectedId(row.id)}
+          onRowDoubleClick={(row) => {
+            const item = row as unknown as TemplateItem;
+            if (item.type === 'report') {
+              navigate(`/reports/builder?new=true&templateArtifactId=${item.id}`);
+            } else {
+              navigate(`/presentations/wizard?templateArtifactId=${item.id}`);
+            }
+          }}
           getRowActions={(row) => getRowActions(row as unknown as TemplateItem)}
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}

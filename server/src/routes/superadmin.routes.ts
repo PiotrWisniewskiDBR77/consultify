@@ -3912,6 +3912,12 @@ router.put(
     await SuperAdminController.updateSupportTicket(req, res, next);
   })
 );
+router.get(
+  '/support/tickets/:id/comments',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    await SuperAdminController.getTicketComments(req, res, next);
+  })
+);
 router.post(
   '/support/tickets/:id/comments',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {

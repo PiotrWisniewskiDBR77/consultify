@@ -75,6 +75,10 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function getExportBgColor(): string {
+  return document.documentElement.classList.contains('dark') ? '#060a18' : '#f8fafc';
+}
+
 export function useMapExport() {
   const exportAsPNG = useCallback(async (filename = 'mindmap.png') => {
     try {
@@ -82,7 +86,7 @@ export function useMapExport() {
       const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
       if (!viewport) return;
       const dataUrl = await toPng(viewport, {
-        backgroundColor: '#f8fafc',
+        backgroundColor: getExportBgColor(),
         pixelRatio: 2,
       });
       const link = document.createElement('a');
@@ -99,7 +103,7 @@ export function useMapExport() {
       const { toSvg } = await import('html-to-image');
       const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
       if (!viewport) return;
-      const dataUrl = await toSvg(viewport, { backgroundColor: '#f8fafc' });
+      const dataUrl = await toSvg(viewport, { backgroundColor: getExportBgColor() });
       const link = document.createElement('a');
       link.download = filename;
       link.href = dataUrl;

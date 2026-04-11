@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 export function useMapExportPdf() {
   const exportAsPdf = useCallback(async (title: string) => {
@@ -43,6 +44,7 @@ export function useMapExportPdf() {
       printWindow.document.close();
     } catch (err) {
       console.error('PDF export failed:', err);
+      toast.error('PDF export failed. Please try again.', { id: 'mm-export-err', duration: 3000 });
     }
   }, []);
 

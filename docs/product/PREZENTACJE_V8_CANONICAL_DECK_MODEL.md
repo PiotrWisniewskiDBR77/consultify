@@ -384,3 +384,38 @@ For `v8`, the team must implement against:
 - one lifecycle contract.
 
 Without this, Gamma-like continuity remains a demo pattern instead of a stable product runtime.
+
+---
+
+## 10. Code-to-model reconciliation (2026-04-11)
+
+### Naming conventions
+
+The canonical model uses `DeckDocument` with `cardId` / `blockId`. The implementation uses:
+- **Wizard/Builder type**: `Deck` (from `wizard/types.ts`) with `card_id` / `block_id` (snake_case)
+- **Server storage**: `presentation_decks.deck_json` stores the `Deck` type directly
+- **Generator output**: `unified_json` uses `slides[]` with `slide.intent` / `slide.content`
+
+The `card_id` field is the implementation-equivalent of the canonical `cardId`. Both serve
+the same purpose: stable per-slide identity that persists across edits and reorder.
+
+### Bridge implementation
+
+`deckFromUnifiedJson()` in `DeckBuilder.tsx` bridges from generator output to builder format.
+As of 2026-04-11, this bridge now preserves existing IDs from the source:
+```
+const cardId = slide.slide_id || slide.id || slide.card_id || `card-${params.deckId}-${idx}`;
+```
+This ensures that if the generator assigns stable IDs, they propagate to the builder.
+
+### Autosave contract
+
+Autosave (`PUT /decks/:deckId/autosave`) now includes:
+- **Optimistic concurrency**: `X-Deck-Version` header checked against `presentation_decks.version`
+- **Version snapshots**: previous `deck_json` is captured in `presentation_deck_versions` before overwrite
+- **409 on conflict**: stale version returns structured error with `serverVersion` and `clientVersion`
+
+### Schema validation gap
+
+The canonical model specifies `schemaVersion: 1` validation on autosave. This is not yet
+implemented — autosave accepts raw JSON. This is documented as a known gap for future hardening.

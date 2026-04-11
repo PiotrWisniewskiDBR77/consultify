@@ -1,6 +1,8 @@
 import { MessageSquare, Send, Sparkles, X } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useConversationStore } from '@/store/useConversationStore';
 
 interface AgentMessage {
   id: string;
@@ -13,6 +15,7 @@ interface AgentPanelProps {
   onClose: () => void;
   sourceNames?: string[];
   onSendMessage?: (message: string) => Promise<{ reply?: string } | string | void>;
+  conversationId?: string | null;
 }
 
 const SUGGESTION_KEYS = [
@@ -23,8 +26,9 @@ const SUGGESTION_KEYS = [
   'presentations.agent.suggestions.improveVisuals',
 ];
 
-export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, onSendMessage }) => {
+export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, onSendMessage, conversationId }) => {
   const { t } = useTranslation();
+  const { activeMessages, addMessage } = useConversationStore();
   const [messages, setMessages] = useState<AgentMessage[]>([
     {
       id: 'greeting',
@@ -38,6 +42,26 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
   ]);
   const [input, setInput] = useState('');
 
+  useEffect(() => {
+    if (!conversationId || !activeMessages?.length) return;
+    const kimiMessages: AgentMessage[] = activeMessages
+      .filter((m) => m.role === 'user' || m.role === 'ai')
+      .map((m) => ({
+        id: m.id || `kimi-${Date.now()}-${Math.random()}`,
+        role: m.role === 'user' ? 'user' as const : 'agent' as const,
+        text: typeof m.content === 'string' ? m.content : '',
+        timestamp: m.timestamp || new Date().toISOString(),
+      }))
+      .filter((m) => m.text);
+    if (kimiMessages.length > 0) {
+      setMessages((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newMsgs = kimiMessages.filter((m) => !existingIds.has(m.id));
+        return newMsgs.length > 0 ? [...prev, ...newMsgs] : prev;
+      });
+    }
+  }, [conversationId, activeMessages]);
+
   const handleSend = useCallback(async () => {
     if (!input.trim()) return;
     const message = input.trim();
@@ -49,6 +73,11 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+
+    if (conversationId) {
+      addMessage?.({ conversationId, role: 'user', content: message, messageType: 'text' }).catch(() => {});
+    }
+
     try {
       const response = await onSendMessage?.(message);
       const reply =
@@ -66,6 +95,10 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, agentMsg]);
+
+      if (conversationId) {
+        addMessage?.({ conversationId, role: 'ai', content: reply, messageType: 'text' }).catch(() => {});
+      }
     } catch {
       const agentMsg: AgentMessage = {
         id: `msg-${Date.now()}-agent-error`,
@@ -78,7 +111,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
       };
       setMessages((prev) => [...prev, agentMsg]);
     }
-  }, [input, onSendMessage, t]);
+  }, [input, onSendMessage, t, conversationId, addMessage]);
 
   const handleSuggestion = (key: string) => {
     const text = t(key, '');

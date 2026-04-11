@@ -96,9 +96,72 @@ export const P02_ACCEPTANCE_CHECKLIST: Array<{ id: string; requirement: string; 
   { id: 'AC-11', requirement: 'Anti-duplicate gate: no export-only pretending sync; no per-provider parallel model', testable: true },
 ];
 
+// §2.3.10 — P01 Integration Bridge
+export const P02_P01_BRIDGE = {
+  connectionRef: 'CalendarSource.connectionId → P01 connection.id (FK)',
+  tokenLifecycle: 'Delegated to P01 pmSyncRefreshExecutionService',
+  oauthFlow: 'Via integrationOAuthEngine (google_calendar, outlook_calendar)',
+  caldavCredentials: 'Via P01 connection credential store (app-specific password)',
+  providerCatalog: ['google_calendar', 'outlook_calendar', 'apple_calendar'],
+  lifecycleAlignment: 'P02 CalendarSource.lifecycleState maps 1:1 to P01 connection lifecycle grammar',
+} as const;
+
+// §2.3.11 — Provider Adapter Contract
+export const P02_ADAPTER_REGISTRY = {
+  google: 'googleCalendarAdapter.ts (full: read/write/bidir/watch)',
+  microsoft: 'microsoftGraphCalendarAdapter.ts (full: read/write/bidir/subscriptions)',
+  caldav: 'caldavAdapter.ts (read-only: sync-token, RRULE parse)',
+} as const;
+
+export const P02_ADAPTER_INTERFACE = [
+  'listCalendars(connection): ProviderCalendarRef[]',
+  'fetchEvents(connection, window, cursor?): FetchEventsResult',
+  'createEvent?(connection, item, transactionId?): ProviderEvent',
+  'updateEvent?(connection, item, etag): ProviderEvent | ProviderConflictError',
+  'deleteEvent?(connection, eventId, etag): void | ProviderConflictError',
+  'watchChanges?(connection, callbackUrl): WatchSubscription',
+] as const;
+
+// §2.3.12 — Sync Runtime Contract
+export const P02_SYNC_RUNTIME = {
+  cronInterval: '*/5 * * * *',
+  incrementalSync: 'Uses provider cursor (syncToken / deltaLink / sync-token)',
+  fullResyncFallback: 'When cursor invalid → reset checkpoint, fetch window',
+  webhookRoutes: ['/api/v8/calendar/webhooks/google', '/api/v8/calendar/webhooks/microsoft'],
+  rateLimitHandling: 'Backoff + degraded state + cron skip',
+  recurrenceEngine: 'RRULE parser (rrule npm) + window-only materialization',
+} as const;
+
+// §2.3.13 — Frontend Contract
+export const P02_FRONTEND_CONTRACT = {
+  apiSurface: '/api/v8/my-work/calendar/unified (extended with P02 metadata)',
+  permissionEnforcement: 'UI imports P02_PERMISSION_UI_RULES; free_busy_only → no details',
+  lifecycleDisplay: 'CalendarSidebar per-source lifecycle badge with recovery guidance',
+  editAffordanceGating: 'editAuthority=none → disabled controls; effectiveMode=read → no edit',
+  conflictSurface: 'syncState=conflict → badge + resolve action',
+} as const;
+
+// Extended itemType (PMO completeness per §2.3.2 + SSOT alignment)
+export const P02_ITEM_TYPES = [
+  'task_due', 'task_window', 'initiative_milestone', 'decision_deadline', 'meeting', 'external_event',
+  'assignment', 'adjustment', 'approval_window', 'escalation_window', 'focus_block',
+] as const;
+
+// §2.3.9 — Extended acceptance checklist (15 points for full delivery)
+export const P02_ACCEPTANCE_CHECKLIST_EXTENDED: Array<{ id: string; requirement: string; testable: boolean }> = [
+  ...P02_ACCEPTANCE_CHECKLIST,
+  { id: 'AC-12', requirement: 'P01 bridge: CalendarSource.connectionId references P01 connection; token refresh delegated', testable: true },
+  { id: 'AC-13', requirement: 'Provider adapters: Google/Microsoft/CalDAV implement CalendarProviderAdapter interface', testable: true },
+  { id: 'AC-14', requirement: 'Sync runtime: cron job syncs connected/degraded sources every 5min; webhooks trigger immediate sync', testable: true },
+  { id: 'AC-15', requirement: 'Frontend: permission gradients enforced; lifecycle states displayed; conflicts surfaced', testable: true },
+];
+
 // Ownership boundary
 export const P02_OWNERSHIP = {
   owner: 'Calendar Interop Service (calendarInteropService.ts)',
   consumers: ['My Work Calendar UI', 'Execution Calendar', 'Settings Calendar Sync'],
   externalDependencies: ['Google Calendar API', 'Microsoft Graph API', 'CalDAV providers'],
+  adapters: ['googleCalendarAdapter.ts', 'microsoftGraphCalendarAdapter.ts', 'caldavAdapter.ts'],
+  runtime: ['calendarSyncRuntime.ts', 'recurrenceEngine.ts'],
+  webhooks: ['calendarWebhook.routes.ts'],
 } as const;

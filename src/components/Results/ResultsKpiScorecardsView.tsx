@@ -1,8 +1,9 @@
-import { Flag, Link2, Milestone, Target } from 'lucide-react';
+import { Flag, Link2, MessageCircle, Milestone, Target } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   type ActionRow,
   type MetaPill,
@@ -118,6 +119,7 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
   initiatives = [],
 }) => {
   const { t } = useTranslation();
+  const openChatWithContext = useOpenChatWithContext();
   const [items, setItems] = useState<GoalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -391,6 +393,25 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
   };
 
   const actions = (item: GoalItem): ActionRow[] => [
+    {
+      id: 'discuss',
+      label: t('results.kpi.scorecards.discuss', 'Discuss goal'),
+      onClick: async () => {
+        try {
+          await openChatWithContext({
+            entityType: 'kpi',
+            entityId: item.id,
+            entityName: item.title,
+            contextData: item as unknown as Record<string, unknown>,
+            pmoContext: { kpiId: item.id },
+          });
+          toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
+        } catch {
+          toast.error(t('common.chatOpenError', 'Failed to open chat'));
+        }
+      },
+      variant: 'secondary',
+    },
     {
       id: 'activate',
       label:

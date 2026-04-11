@@ -123,13 +123,144 @@ describe('P04 KPI Workflow Canon', () => {
       expect(linkagePatterns).toEqual(expect.arrayContaining(['interpretation', 'driver', 'review', 'realization']));
       expect(permissions).toHaveProperty('edit_definition');
       expect(permissions).toHaveProperty('edit_targets');
+      expect(permissions).toHaveProperty('delete_kpi');
+      expect(permissions).toHaveProperty('record_measurement');
+      expect(permissions).toHaveProperty('create_report');
+      expect(permissions).toHaveProperty('manage_deviation');
       expect(permissions).toHaveProperty('view');
       expect(permissions).toHaveProperty('comment');
       expect(permissions).toHaveProperty('manage_reconciliation_results');
       expect(antiDuplicateRules).toHaveProperty('no_bi_suite_drift');
       expect(antiDuplicateRules).toHaveProperty('no_parallel_finance_truth');
       expect(antiDuplicateRules).toHaveProperty('no_charts_only');
-      expect(acceptanceChecklist).toHaveLength(12);
+      expect(acceptanceChecklist).toHaveLength(21);
+    });
+
+    it('returns all 6 canonical workflow states', async () => {
+      const res = await request(app).get('/api/v8/results/workflow/contract');
+      expect(res.status).toBe(200);
+      const { workflowStates } = res.body.data;
+      expect(workflowStates).toHaveLength(6);
+      expect(workflowStates).toEqual(expect.arrayContaining([
+        'signal_detected', 'inspecting', 'report_created',
+        'reconciling', 'action_assigned', 'resolved',
+      ]));
+    });
+  });
+
+  // ─── P04 Permission enforcement on legacy routes ───────────
+
+  describe('P04 permission enforcement — viewer/commenter blocked on write routes', () => {
+    it('POST /kpis returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpis')
+        .set('x-kpi-role', 'viewer')
+        .send({ name: 'Test KPI', kpiType: 'STANDARD' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpis returns 403 for commenter', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpis')
+        .set('x-kpi-role', 'commenter')
+        .send({ name: 'Test KPI', kpiType: 'STANDARD' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('PUT /kpis/:kpiId returns 403 for viewer', async () => {
+      const res = await request(app)
+        .put('/api/v8/results/kpis/kpi-001')
+        .set('x-kpi-role', 'viewer')
+        .send({ name: 'Updated' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('DELETE /kpis/:kpiId returns 403 for viewer', async () => {
+      const res = await request(app)
+        .delete('/api/v8/results/kpis/kpi-001')
+        .set('x-kpi-role', 'viewer');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('DELETE /kpis/:kpiId returns 403 for finance_owner', async () => {
+      const res = await request(app)
+        .delete('/api/v8/results/kpis/kpi-001')
+        .set('x-kpi-role', 'finance_owner');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpis/:kpiId/time-series returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpis/kpi-001/time-series')
+        .set('x-kpi-role', 'viewer')
+        .send({ value: 42, measuredAt: '2026-04-01' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpi-reports returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpi-reports')
+        .set('x-kpi-role', 'viewer')
+        .send({ periodStart: '2026-01-01', periodEnd: '2026-03-31' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpi-reports/:snapshotId/refresh returns 403 for commenter', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/kpi-reports/snap-001/refresh')
+        .set('x-kpi-role', 'commenter');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /deviation-cases/:caseId/acknowledge returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/deviation-cases/case-001/acknowledge')
+        .set('x-kpi-role', 'viewer');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('PUT /deviation-cases/:caseId/rca returns 403 for commenter', async () => {
+      const res = await request(app)
+        .put('/api/v8/results/deviation-cases/case-001/rca')
+        .set('x-kpi-role', 'commenter')
+        .send({ rcaText: 'Root cause' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /deviation-cases/:caseId/resolve returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/deviation-cases/case-001/resolve')
+        .set('x-kpi-role', 'viewer');
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /deviation-cases/:caseId/close returns 403 for viewer', async () => {
+      const res = await request(app)
+        .post('/api/v8/results/deviation-cases/case-001/close')
+        .set('x-kpi-role', 'viewer')
+        .send({ evidenceText: 'Evidence' });
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+    });
+
+    it('POST /kpis succeeds with x-kpi-role: kpi_owner', async () => {
+      mockDbRun.mockResolvedValueOnce({ changes: 1 });
+      const res = await request(app)
+        .post('/api/v8/results/kpis')
+        .set('x-kpi-role', 'kpi_owner')
+        .send({ name: 'Test KPI', kpiType: 'STANDARD' });
+      expect(res.status).not.toBe(403);
     });
   });
 
@@ -430,7 +561,9 @@ describe('P04 KPI Workflow Canon', () => {
 import {
   computeKpiHealthPosture,
   canPerformKpiAction,
+  KPI_WORKFLOW_STATES,
   KPI_WORKFLOW_TRANSITIONS,
+  KPI_WORKFLOW_DEGRADED_REASONS,
   P04_ACCEPTANCE_CHECKLIST,
 } from '../../../services/v8/kpiWorkflowCanon.js';
 
@@ -505,13 +638,70 @@ describe('kpiWorkflowCanon — unit tests', () => {
   });
 
   describe('P04_ACCEPTANCE_CHECKLIST', () => {
-    it('has exactly 12 items', () => {
-      expect(P04_ACCEPTANCE_CHECKLIST).toHaveLength(12);
+    it('has exactly 21 items', () => {
+      expect(P04_ACCEPTANCE_CHECKLIST).toHaveLength(21);
     });
 
-    it('covers all required sections', () => {
+    it('covers all required sections including P04-D/E/F/G/H', () => {
       const sections = new Set(P04_ACCEPTANCE_CHECKLIST.map((c) => c.section));
-      expect(sections).toEqual(new Set(['§8.1A', '§8.1B', '§8.1C', '§8.1D', '§8.1E', '§8.1F']));
+      expect(sections).toEqual(new Set([
+        '§8.1A', '§8.1B', '§8.1C', '§8.1D', '§8.1E', '§8.1F',
+        'P04-D', 'P04-E', 'P04-F', 'P04-G', 'P04-H',
+      ]));
+    });
+  });
+
+  describe('KPI_WORKFLOW_STATES', () => {
+    it('contains all 6 canonical states', () => {
+      expect(KPI_WORKFLOW_STATES).toHaveLength(6);
+      expect([...KPI_WORKFLOW_STATES]).toEqual([
+        'signal_detected', 'inspecting', 'report_created',
+        'reconciling', 'action_assigned', 'resolved',
+      ]);
+    });
+  });
+
+  describe('KPI_WORKFLOW_DEGRADED_REASONS (unified canon)', () => {
+    it('contains all 4 canonical degraded reasons', () => {
+      expect(KPI_WORKFLOW_DEGRADED_REASONS).toHaveLength(4);
+      expect([...KPI_WORKFLOW_DEGRADED_REASONS]).toEqual([
+        'missing_data', 'discrepancy_unresolved',
+        'linkage_unavailable', 'permission_denied',
+      ]);
+    });
+  });
+
+  describe('canPerformKpiAction — extended matrix', () => {
+    it('kpi_owner can delete KPI', () => {
+      expect(canPerformKpiAction('kpi_owner', 'delete_kpi')).toBe(true);
+    });
+
+    it('viewer cannot delete KPI', () => {
+      expect(canPerformKpiAction('viewer', 'delete_kpi')).toBe(false);
+    });
+
+    it('kpi_owner can record measurement', () => {
+      expect(canPerformKpiAction('kpi_owner', 'record_measurement')).toBe(true);
+    });
+
+    it('viewer cannot record measurement', () => {
+      expect(canPerformKpiAction('viewer', 'record_measurement')).toBe(false);
+    });
+
+    it('finance_owner can create report', () => {
+      expect(canPerformKpiAction('finance_owner', 'create_report')).toBe(true);
+    });
+
+    it('commenter cannot create report', () => {
+      expect(canPerformKpiAction('commenter', 'create_report')).toBe(false);
+    });
+
+    it('kpi_owner can manage deviation', () => {
+      expect(canPerformKpiAction('kpi_owner', 'manage_deviation')).toBe(true);
+    });
+
+    it('viewer cannot manage deviation', () => {
+      expect(canPerformKpiAction('viewer', 'manage_deviation')).toBe(false);
     });
   });
 });

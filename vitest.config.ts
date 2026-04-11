@@ -197,6 +197,7 @@ export default defineConfig({
     },
     setupFiles: './tests/setup.ts',
     include: [
+      'src/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/unit/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/components/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'tests/hooks/**/*.{test,spec}.{js,ts,jsx,tsx}',

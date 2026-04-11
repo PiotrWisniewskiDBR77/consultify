@@ -1263,7 +1263,10 @@
     "presentations": "Presentations",
     "partnerPortal": "Partner Portal",
     "tasks": "Tasks",
-    "toolsLibrary": "Library"
+    "toolsLibrary": "Library",
+    "wordy": "Wordy",
+    "excele": "Excele",
+    "prezentacje": "Presentations Gen"
   },
   "widgets": {
     "help": {
@@ -1632,6 +1635,236 @@
         "tableTooltip": "Table view — structured list of ideas",
         "whiteboard": "Whiteboard",
         "whiteboardTooltip": "Whiteboard view — free-form canvas"
+      }
+    },
+    "whiteboard": {
+      "regionLabel": "Idea whiteboard with freeform elements",
+      "toolbar": {
+        "select": "Select",
+        "pan": "Pan / Zoom",
+        "sticky": "Sticky note",
+        "shape": "Shape",
+        "text": "Text block",
+        "frame": "Frame",
+        "image": "Image",
+        "link": "Link card",
+        "draw": "Draw",
+        "clearDrawings": "Clear drawings",
+        "undo": "Undo",
+        "redo": "Redo",
+        "export": "Export",
+        "save": "Save",
+        "shortcuts": "Keyboard shortcuts",
+        "fitView": "Fit to view",
+        "voting": "Voting",
+        "background": "Background pattern"
+      },
+      "session": {
+        "governance": "Governance mode",
+        "activityLog": "Activity log",
+        "history": "History",
+        "library": "Library",
+        "restoreLatest": "Restore latest",
+        "noActivity": "No activity yet",
+        "noHistory": "No history entries",
+        "noLibrary": "Library is empty"
+      },
+      "selection": {
+        "elementsSelected": "{{count}} elements selected",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "alignTop": "Align top",
+        "alignMiddle": "Align middle",
+        "alignBottom": "Align bottom",
+        "distributeH": "Distribute horizontally",
+        "distributeV": "Distribute vertically",
+        "group": "Group",
+        "ungroup": "Ungroup",
+        "duplicate": "Duplicate",
+        "lock": "Lock",
+        "delete": "Delete"
+      },
+      "empty": {
+        "title": "Empty whiteboard",
+        "subtitle": "Add sticky notes, shapes, or text from the toolbar",
+        "quickStart": "Quick start with template",
+        "addSticky": "Add blank sticky"
+      },
+      "facilitation": {
+        "start": "Start",
+        "organize": "Organize",
+        "converge": "Converge",
+        "handoff": "Handoff",
+        "advanceTo": "Advance to {{phase}}",
+        "invalidTransition": "Cannot advance from {{from}} to {{to}}"
+      },
+      "ai": {
+        "proposalTitle": "AI Proposal",
+        "apply": "Apply",
+        "reject": "Reject",
+        "acceptedProposal": "Accepted AI proposal",
+        "rejectedProposal": "Rejected AI proposal",
+        "acceptedAll": "Accepted all AI proposals",
+        "rejectedAll": "Rejected all AI proposals",
+        "generated": "AI generated proposal",
+        "proposalApplied": "Proposal applied",
+        "allProposalsApplied": "All proposals applied"
+      },
+      "errors": {
+        "saveFailed": "Save failed",
+        "loadFailed": "Failed to load whiteboard",
+        "roleChangeFailed": "Role change failed",
+        "timerFailed": "Timer update failed",
+        "votingFailed": "Voting update failed",
+        "followFailed": "Follow-me update failed",
+        "phaseChangeFailed": "Phase change failed",
+        "exportFailed": "Export failed",
+        "syncFailed": "Board sync failed",
+        "presenceFailed": "Presence update failed",
+        "disconnectFailed": "Disconnect failed",
+        "voteSyncFailed": "Vote sync failed",
+        "missingSessionId": "Missing sessionId",
+        "voteSaveFailed": "Failed to save vote",
+        "selectAtLeastTwo": "Select at least 2 elements"
+      },
+      "drawingsCleared": "Drawings cleared",
+      "boardMode": "Board mode",
+      "drawMode": "Drawing mode",
+      "presence": {
+        "you": "You"
+      },
+      "activity": {
+        "undo": "Undid change",
+        "redo": "Redid change",
+        "drawModeEnabled": "Draw mode enabled",
+        "boardModeEnabled": "Board mode enabled",
+        "sessionRole": "Session role: {{role}}",
+        "timerStarted": "Workshop timer started",
+        "timerStopped": "Workshop timer stopped",
+        "timerCompleted": "Workshop timer completed",
+        "votingOpened": "Voting opened",
+        "votingClosed": "Voting closed",
+        "followMeOn": "Follow-me enabled",
+        "followMeOff": "Follow-me disabled",
+        "phase": "Phase: {{phase}}",
+        "spotlightSet": "Spotlight set to selection",
+        "spotlightCleared": "Spotlight cleared",
+        "savedToLibrary": "Saved fragment to library",
+        "insertedFromLibrary": "Inserted library fragment",
+        "restoredSnapshot": "Restored latest snapshot",
+        "classification": "Classification: {{classification}}",
+        "pasteImport": "Inserted items from paste/import",
+        "addedElement": "Added element: {{kind}}",
+        "quickStart": "Quick start: {{mode}}",
+        "voteSaved": "Vote persisted to session",
+        "updatedObject": "Updated object properties"
+      },
+      "toast": {
+        "selectFirst": "Select elements first",
+        "libraryEmpty": "Library is empty",
+        "noSnapshot": "No snapshot to restore",
+        "importedNotes": "Imported {{count}} notes",
+        "noUnlockedSelection": "No unlocked selection",
+        "duplicated": "Duplicated",
+        "grouped": "Grouped",
+        "ungrouped": "Ungrouped",
+        "quickStartBrainstorm": "Brainstorm starter created",
+        "quickStartAffinity": "Affinity map starter created",
+        "quickStartWorkshop": "Workshop wall created",
+        "phaseChanged": "Phase: {{phase}}"
+      },
+      "history": {
+        "insertLibraryFragment": "Inserted library fragment",
+        "importExternal": "Imported external items",
+        "manualSave": "Manual save",
+        "quickStart": "Quick start: {{mode}}",
+        "checkpoint": "Whiteboard checkpoint"
+      },
+      "nodes": {
+        "groupLabel": "Group",
+        "defaultSticky": "New note",
+        "defaultText": "Text",
+        "defaultGroup": "Group",
+        "defaultShape": "Shape",
+        "defaultFrame": "Section",
+        "defaultImage": "Image",
+        "defaultLink": "Link",
+        "defaultKpi": "KPI",
+        "defaultScore": "Score",
+        "defaultProgress": "Progress",
+        "defaultSummary": "Summary"
+      },
+      "sessionPanel": {
+        "layer": "Session layer",
+        "roleFacilitator": "Facilitator",
+        "roleParticipant": "Participant",
+        "roleObserver": "Observer",
+        "timerOff": "Timer off",
+        "votingOpen": "Voting open",
+        "votingClosed": "Voting closed",
+        "followOn": "Follow-me on",
+        "followOff": "Follow-me off",
+        "spotlightActive": "Spotlight active",
+        "opsGovernance": "Ops + governance",
+        "cyclePolicy": "Cycle policy",
+        "libraryPrefix": "Library:",
+        "restorePrefix": "Restore:"
+      },
+      "phaseBar": {
+        "title": "Workshop phase",
+        "tabsAria": "Workshop phases",
+        "hint_start": "Capture ideas freely",
+        "hint_organize": "Cluster and arrange",
+        "hint_converge": "Mark top outcomes",
+        "hint_handoff": "Export and share results"
+      },
+      "toolbarExtra": {
+        "ariaLabel": "Whiteboard toolbar",
+        "title": "Whiteboard",
+        "create": "Create",
+        "role": "Role",
+        "bgDots": "Dots",
+        "bgGrid": "Grid",
+        "bgLines": "Lines",
+        "bgBlank": "Blank",
+        "saving": "Saving…"
+      },
+      "selectionBar": {
+        "ariaLabel": "Selection actions",
+        "attach": "Attach",
+        "linked": "Linked",
+        "align": "Align",
+        "distribute": "Distribute",
+        "convertDecision": "Promote to decision",
+        "convertAction": "Promote to action"
+      },
+      "emptyExtra": {
+        "toolsHint": "More organize and AI actions are available in the Tools panel on the right."
+      },
+      "outlineImport": {
+        "title": "Import outline",
+        "description": "Paste one item per line. They will be added as notes or short text blocks.",
+        "placeholder": "Item 1\nItem 2\nItem 3",
+        "confirm": "Import",
+        "cancel": "Cancel"
+      },
+      "quickStart": {
+        "brainstorm": {
+          "sessionTopic": "Session topic",
+          "idea": "Idea {{n}}"
+        },
+        "affinity": {
+          "themeA": "Theme A",
+          "themeB": "Theme B",
+          "input": "Input {{n}}"
+        },
+        "workshop": {
+          "goals": "Workshop goals",
+          "discuss": "Discuss",
+          "decisions": "Decisions",
+          "parkingLot": "Parking lot"
+        }
       }
     },
     "notebook": {
@@ -6624,5 +6857,46 @@
         "noObligation": "No obligations • We respond within 24h"
       }
     }
+  },
+  "kimi": {
+    "taskCompleted": "Task completed",
+    "executingTask": "Executing task...",
+    "taskProgress": "Task Progress",
+    "replay": "Replay",
+    "remix": "Remix",
+    "generating": "Generating...",
+    "generatingDoc": "Building your document",
+    "generatingSheet": "Building your spreadsheet",
+    "generatingDeck": "Building your presentation",
+    "emptyWordy": "Your document will appear here",
+    "emptyExcele": "Your spreadsheet will appear here",
+    "emptyDeck": "Your presentation will appear here",
+    "emptyHint": "Describe what you need and click Generate",
+    "generateDoc": "Generate Document",
+    "generateSheet": "Generate Spreadsheet",
+    "generateDeck": "Generate Presentation",
+    "docReady": "Document ready — use Preview File or Download",
+    "showingRows": "Showing 25 of {{total}} rows",
+    "xlsxPreview": "Spreadsheet preview",
+    "deckPreview": "Presentation preview",
+    "openInBuilder": "Open in Deck Builder",
+    "previewFile": "Preview File",
+    "allFiles": "All files",
+    "viewOrDownload": "View or download files",
+    "generationFailed": "Generation failed",
+    "retry": "Try again",
+    "workspace": "Workspace",
+    "laneWordy": "Wordy",
+    "laneExcele": "Excele",
+    "lanePrezentacje": "Prezentacje",
+    "stepSnapshot": "Capture context snapshot",
+    "stepPlan": "Create artifact plan",
+    "stepPreflight": "Validate preflight checks",
+    "stepAccept": "Accept plan & create proposal",
+    "stepReview": "Submit for review",
+    "stepApprove": "Approve execution",
+    "stepMaterialize": "Materialize artifact",
+    "stepGenerate": "Generate content",
+    "sheetReady": "Spreadsheet ready — use Preview File or Download"
   }
 }

@@ -146,17 +146,23 @@ Use capability labels from `CANVAS_OS_CONTRACT_FREEZE.md`.
 - auto-layout
 - node movement between lanes
 - basic AI generation and summary entry points
+- **(2026-04-11)** monolith decomposition: FlowNodeComponent, FlowEdgeComponent, LaneBackground, Toolbar, UndoRedo extracted to dedicated modules
+- **(2026-04-11)** all 11 canon semantic types mapped to dedicated React components (incl. PoolNode, MessageFlowEdge)
+- **(2026-04-11)** ExportDialog, ValidationResultsPanel, ReadbackPanel refactored to use shared Dialog/Button primitives
+- **(2026-04-11)** dark mode tokens standardized across all process flow panels
+- **(2026-04-11)** ProcessFlowPropertiesPanel integrated into right-panel IdeaWorkspaceTools
+- **(2026-04-11)** 18/18 V8 API endpoints wired (CRUD via useProcessFlowCRUD behind feature flag)
 
 ### 7.2 Partial
 
-- final properties strip
+- ~~final properties strip~~ → **DONE (2026-04-11)**: `ProcessFlowPropertiesPanel` with full node/edge editing (label, gateway kind, lane, metrics, metadata, edge conditions) integrated into right panel via `IdeaWorkspaceTools`
 - full rules engine and problem workflow
 - manual routing and orthogonal snapping
-- BPMN round-trip semantics
+- ~~BPMN round-trip semantics~~ → **PARTIAL (2026-04-11)**: 11/11 semantic types mapped to dedicated node components (PoolNode, MessageFlowEdge added), BPMN-adjacent visual fidelity achieved; full XML round-trip remains out of scope
 - semantic step templates
 - large-flow navigation and search
 - traceability into downstream execution artifacts
-- enterprise interop
+- ~~enterprise interop~~ → **PARTIAL (2026-04-11)**: `useProcessFlowCRUD` wires all 18 V8 API endpoints (12 CRUD + 6 active); export via JSON/readback/PNG; backend CRUD behind feature flag
 
 ### 7.3 Out of scope for current closure
 

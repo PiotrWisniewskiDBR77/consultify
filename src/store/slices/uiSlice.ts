@@ -92,6 +92,10 @@ export interface UISlice {
   // Per-tab quick prompts shown in chat
   chatQuickPrompts: string[] | null;
   setChatQuickPrompts: (prompts: string[] | null) => void;
+
+  // Dynamic breadcrumbs override set by My Work hub
+  myWorkBreadcrumbs: string[] | null;
+  setMyWorkBreadcrumbs: (crumbs: string[] | null) => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
@@ -141,6 +145,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   setChatSystemPrompt: (prompt) => set({ chatSystemPrompt: prompt }),
   setChatQuickPrompts: (prompts) => set({ chatQuickPrompts: prompts }),
+
+  myWorkBreadcrumbs: null,
+  setMyWorkBreadcrumbs: (crumbs) => set({ myWorkBreadcrumbs: crumbs }),
 
   setChatKickoffMessage: (message) => set({ chatKickoffMessage: message }),
   clearChatKickoffMessage: () => set({ chatKickoffMessage: null }),

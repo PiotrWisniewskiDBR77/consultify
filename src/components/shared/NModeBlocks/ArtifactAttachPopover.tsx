@@ -45,6 +45,7 @@ const QUICK_TYPES: ArtifactType[] = [
   'system',
   'kpi',
   'report',
+  'presentation',
   'tool',
   'tool_session',
   'notebook',

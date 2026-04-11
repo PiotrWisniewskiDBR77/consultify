@@ -78,7 +78,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
-import { buildArtifactCode, buildArtifactPermalink } from '@/utils/artifactLinks';
+import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
@@ -4919,6 +4919,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           />
         ),
       },
+      ...((() => {
+        const srcType = initiative?.source_type || initiative?.sourceType;
+        const srcId = initiative?.source_id || initiative?.sourceId;
+        if (srcType !== 'interview' || !srcId) return [];
+        const insightTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
+        const insightPath = getArtifactPath('insight', srcId);
+        return [{
+          id: 'sourceInsight',
+          label: { en: 'Source', pl: 'Źródło' },
+          type: 'custom' as const,
+          value: srcId,
+          onChange: () => {},
+          readOnly: true,
+          render: () => (
+            <a
+              href={insightPath}
+              title={isPolish ? `Otwórz insight: ${insightTitle}` : `Open insight: ${insightTitle}`}
+              className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 transition-colors truncate"
+            >
+              <Sparkles size={12} className="shrink-0" />
+              <span className="truncate">
+                {isPolish ? 'Z Insightu: ' : 'From Insight: '}{insightTitle}
+              </span>
+              <ExternalLink size={10} className="shrink-0 ml-auto opacity-60" />
+            </a>
+          ),
+        }] as NModePropertyField[];
+      })()),
     ];
   }, [
     initiative,

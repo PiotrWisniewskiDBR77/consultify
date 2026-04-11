@@ -631,6 +631,22 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
   return null;
 }
 
+/**
+ * Map registry list-response fields to the canonical ArtifactGovernanceSummary.
+ *
+ * Two-tier governance model (P18 contract §2.3):
+ *   1. **List-derived (this function):** populated from `GET /api/artifacts`
+ *      registry rows. Covers core fields for table rendering and row actions.
+ *      Does NOT include `lineagePaths` or `accessGrants` — those require the
+ *      full trust-state bundle.
+ *   2. **Preview-enriched:** when a row is selected, the preview fetches
+ *      `GET /api/artifacts/:id/trust-state` and merges the authoritative
+ *      payload (including `lineagePaths`, `accessGrants`, `originLinks`,
+ *      `exportHistory`). This ensures preview always reflects the single
+ *      trust-state authority without penalizing list performance.
+ *
+ * See also: `useTrustState` hook for the preview-enrichment fetch logic.
+ */
 function mapArtifactGovernance(raw: any): ArtifactGovernanceSummary {
   return {
     visibilityScope: raw.visibilityScope,
@@ -892,7 +908,7 @@ export function useArtifactOutputsForOrigins(
             .toLowerCase();
           const id = String(origin?.id || '').trim();
           const runtime =
-            type === 'report' ? 'report' : type === 'presentation' ? 'presentation' : null;
+            type === 'report' ? 'report' : type === 'presentation' ? 'presentation' : type === 'sheet' ? 'sheet' : null;
           if (!runtime || !id) return null;
           return [`${runtime}:${id}`, { runtime, id }] as const;
         })
@@ -1140,7 +1156,8 @@ function mapTemplateStatus(statusRaw: unknown): TemplateItem['status'] {
     .trim()
     .toLowerCase();
   if (normalized === 'draft') return 'draft';
-  if (normalized === 'deprecated' || normalized === 'archived') return 'archived';
+  if (normalized === 'deprecated') return 'deprecated';
+  if (normalized === 'archived') return 'archived';
   if (normalized === 'published' || normalized === 'active') return 'active';
   return 'active';
 }
@@ -1213,6 +1230,9 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
     createdBy: String((metadata as any).createdBy || raw?.createdBy || 'System'),
     sectionCount: outputType === 'report' ? sections.length : undefined,
     slideCount: outputType === 'presentation' ? outline.length : undefined,
+    deprecationReason: template?.deprecationReason ? String(template.deprecationReason) : undefined,
+    migrationHint: template?.migrationHint ? String(template.migrationHint) : undefined,
+    replacedByArtifactId: template?.replacedByArtifactId ? String(template.replacedByArtifactId) : undefined,
   };
 }
 
@@ -1254,6 +1274,12 @@ export function useTemplates() {
             .map(mapCanonicalTemplateArtifact)
             .filter((x: TemplateItem | null): x is TemplateItem => Boolean(x))
         );
+      }
+
+      if (!rptRes.ok && !presRes.ok) {
+        setTemplates([]);
+        setError('Canonical artifact registry failed to load templates.');
+        return;
       }
 
       merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());

@@ -109,6 +109,111 @@ vi.mock('../../../src/components/MyWork/VSMTimelineBar', () => ({
   VSMTimelineBar: () => null,
 }));
 
+vi.mock('../../../src/components/MyWork/processflow/useProcessFlowValidation', () => ({
+  useProcessFlowValidation: () => ({
+    result: null,
+    isValidating: false,
+    validate: vi.fn(),
+    issuesForObject: () => [],
+  }),
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/useProcessFlowAIProposal', () => ({
+  useProcessFlowAIProposal: () => ({
+    activeProposal: null,
+    isGenerating: false,
+    error: null,
+    createProposal: vi.fn(),
+    resolveProposal: vi.fn(),
+    dismiss: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/useProcessFlowReadback', () => ({
+  useProcessFlowReadback: () => ({
+    result: null,
+    isLoading: false,
+    fetchReadback: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/useProcessFlowExport', () => ({
+  useProcessFlowExport: () => ({
+    isExporting: false,
+    exportAs: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/useProcessFlowDegraded', () => ({
+  useProcessFlowDegraded: () => ({
+    isDegraded: false,
+    scenarios: [],
+    isChecking: false,
+    checkHealth: vi.fn(),
+    activeScenarios: [],
+  }),
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/ProcessFlowPropertiesPanel', () => ({
+  ProcessFlowPropertiesPanel: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/ValidationResultsPanel', () => ({
+  ValidationResultsPanel: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/AIProposalPanel', () => ({
+  AIProposalPanel: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/ReadbackPanel', () => ({
+  ReadbackPanel: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/ExportDialog', () => ({
+  ExportDialog: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/ProcessFlowContextMenu', () => ({
+  ProcessFlowContextMenu: () => null,
+  getNodeContextActions: () => [],
+  getCanvasContextActions: () => [],
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/nodes/BPMNStartNode', () => ({
+  BPMNStartNode: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/nodes/BPMNEndNode', () => ({
+  BPMNEndNode: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/nodes/ActivityNode', () => ({
+  ActivityNode: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/nodes/GatewayNode', () => ({
+  GatewayNode: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/nodes/DataObjectNode', () => ({
+  DataObjectNode: () => null,
+}));
+
+vi.mock('../../../src/components/MyWork/processflow/nodes/SubprocessNode', () => ({
+  SubprocessNode: () => null,
+}));
+
+vi.mock('../../../src/components/shared/NModeBlocks/EmptyStateInline', () => ({
+  EmptyStateInline: ({ message, hint, action }: any) => (
+    <div data-testid="empty-state-inline">
+      {message && <div>{message}</div>}
+      {hint && <div>{hint}</div>}
+      {action && <button onClick={action.onClick}>+ {action.label}</button>}
+    </div>
+  ),
+}));
+
 import { IdeaProcessFlowTool } from '../../../src/components/MyWork/IdeaProcessFlowTool';
 
 describe('IdeaProcessFlowTool error honesty', () => {

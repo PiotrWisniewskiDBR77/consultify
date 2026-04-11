@@ -55,11 +55,14 @@ vi.mock('../../services/v8/pmSyncTruthService.js', () => ({
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
+    const role = req.headers['x-user-role'] || 'member';
     req.user = {
       id: 'user-1',
       organizationId: 'org-1',
-      role: req.headers['x-user-role'] || 'member',
+      role,
+      isSuperAdmin: String(role).toLowerCase() === 'superadmin',
     };
+    req.userRole = role;
     req.organizationId = 'org-1';
     next();
   },
@@ -617,6 +620,30 @@ describe('settings integrations authority continuity', () => {
 
     expect(activeRes.status).toBe(200);
     expect(activeRes.body).toEqual({ success: true });
+  });
+});
+
+describe('legacy settings root hardening', () => {
+  it('blocks non-superadmins from reading the legacy global settings root', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings');
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('LEGACY_SETTINGS_SCOPE_BLOCKED');
+  });
+
+  it('allows superadmins to read the legacy global settings root for platform maintenance only', async () => {
+    mockDbAll.mockResolvedValueOnce([{ key: 'platform_mode', value: 'enterprise' }]);
+
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings').set('x-user-role', 'superadmin');
+
+    expect(res.status).toBe(200);
+    expect(res.body.platform_mode).toBe('enterprise');
   });
 });
 

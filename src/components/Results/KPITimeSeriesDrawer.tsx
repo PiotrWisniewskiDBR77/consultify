@@ -4,9 +4,11 @@ import {
   Clock3,
   GitBranch,
   Link2,
+  MessageCircle,
   Pencil,
   ShieldAlert,
   Sigma,
+  Sparkles,
   Target,
   Trash2,
   TrendingUp,
@@ -16,6 +18,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useOrganizationContext } from '@/hooks/discovery/useOrganizationContext';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -118,6 +122,8 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   initialSection,
 }) => {
   const { t } = useTranslation();
+  const openChatWithContext = useOpenChatWithContext();
+  const { formatForPrompt: formatOrgContext } = useOrganizationContext();
   const [kpi, setKpi] = useState<InitiativeKPI | null>(null);
   const [measurements, setMeasurements] = useState<KPIMeasurement[]>([]);
   const [auditLog, setAuditLog] = useState<
@@ -476,6 +482,50 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       setDeleting(false);
     }
   }, [kpiId, onClose, onValueRecorded, t]);
+
+  const openKpiAiChat = useCallback(
+    async (prompt: string) => {
+      if (!kpi) return;
+      try {
+        await openChatWithContext({
+          entityType: 'kpi',
+          entityId: kpiId,
+          entityName: kpi.name,
+          contextData: {
+            ...(kpi as unknown as Record<string, unknown>),
+            organizationContext: formatOrgContext(),
+          },
+          pmoContext: { kpiId },
+        });
+        toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
+      } catch {
+        toast.error(t('common.chatOpenError', 'Failed to open chat'));
+      }
+    },
+    [kpi, kpiId, openChatWithContext, formatOrgContext, t]
+  );
+
+  const openDeviationAiChat = useCallback(
+    async (deviationCase: DeviationCase) => {
+      try {
+        await openChatWithContext({
+          entityType: 'kpi',
+          entityId: kpiId,
+          entityName: `${kpi?.name || 'KPI'} — Deviation ${deviationCase.severity}`,
+          contextData: {
+            kpi: kpi as unknown as Record<string, unknown>,
+            deviation: deviationCase as unknown as Record<string, unknown>,
+            organizationContext: formatOrgContext(),
+          },
+          pmoContext: { kpiId },
+        });
+        toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
+      } catch {
+        toast.error(t('common.chatOpenError', 'Failed to open chat'));
+      }
+    },
+    [kpi, kpiId, openChatWithContext, formatOrgContext, t]
+  );
 
   const handleLinkInitiative = useCallback(
     async (initiativeId: string) => {
@@ -1086,12 +1136,21 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => void openKpiAiChat(t('results.drawer.ai.defaultPrompt', 'Analyze this KPI'))}
+              className="p-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-500/10 text-primary-500 transition-colors"
+              title={t('results.drawer.ai.askAi', 'Ask AI')}
+            >
+              <Sparkles size={18} />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable body */}
@@ -1262,6 +1321,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       className="h-8 px-3 rounded-full text-xs font-medium border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/15 transition-colors disabled:opacity-60"
                     >
                       {t('results.deviation.resolve', 'Resolve')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void openDeviationAiChat(openCase)}
+                      className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <MessageCircle size={13} />
+                      {t('results.deviation.askAi', 'Ask AI')}
                     </button>
                     <button
                       type="button"

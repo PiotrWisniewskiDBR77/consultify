@@ -51,6 +51,8 @@ interface CanvasLeftToolbarProps {
   selection: IdeaWorkspaceSelection;
   isAccepted: boolean;
   ideaId?: string;
+  canUndo?: boolean;
+  canRedo?: boolean;
   onAction: (action: string) => void;
   onOpenChat: () => void;
   onApplyTemplate: (templateId: string) => void;
@@ -191,16 +193,28 @@ const SHARED_BOTTOM: ToolSlot[] = [
   },
 ];
 
-const UNDO_REDO: ToolSlot[] = [
-  { id: 'undo', icon: Undo2, labelPl: 'Cofnij', labelEn: 'Undo', action: 'mm_undo' },
-  { id: 'redo', icon: Redo2, labelPl: 'Ponów', labelEn: 'Redo', action: 'mm_redo' },
-];
+const UNDO_REDO_PREFIX: Record<CanvasToolType, string> = {
+  mindmap: 'mm',
+  whiteboard: 'wb',
+  process_flow: 'pf',
+  table: 'mm',
+};
+
+function getUndoRedoSlots(activeTool: CanvasToolType): ToolSlot[] {
+  const prefix = UNDO_REDO_PREFIX[activeTool] || 'mm';
+  return [
+    { id: 'undo', icon: Undo2, labelPl: 'Cofnij', labelEn: 'Undo', action: `${prefix}_undo` },
+    { id: 'redo', icon: Redo2, labelPl: 'Ponów', labelEn: 'Redo', action: `${prefix}_redo` },
+  ];
+}
 
 export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   activeTool,
   interactionMode = 'select',
   selection,
   isAccepted,
+  canUndo = true,
+  canRedo = true,
   onAction,
   onOpenChat,
   onApplyTemplate,
@@ -264,12 +278,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
-            className="flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 bg-primary-500/10 text-primary-600 dark:text-primary-400"
+            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-primary-500/10 text-primary-600 dark:text-primary-400"
           >
             <PointerIcon size={15} />
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
-            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider whitespace-nowrap bg-primary-500/10 text-primary-500 dark:text-primary-400">
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-primary-500/10 text-primary-500 dark:text-primary-400">
               {interactionMode === 'pan'
                 ? 'PAN'
                 : interactionMode === 'connect'
@@ -305,10 +319,10 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           onClick={() => handleSlotClick(slot)}
           title={slotTitle}
           aria-label={slotTitle}
-          className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ${
+          className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
             isActive
               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
           }`}
         >
           <Icon size={15} />
@@ -368,7 +382,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   return (
     <div
       ref={toolbarRef}
-      className="absolute left-3 top-1/2 -translate-y-1/2 z-[52] flex flex-col items-center gap-0.5 rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-1 py-1.5 canvas-left-toolbar-enter"
+      className="absolute left-3 top-1/2 -translate-y-1/2 z-[52] flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter"
     >
       {SHARED_TOP.map(renderSlot)}
 
@@ -382,7 +396,27 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
       <div className="w-5 border-t border-slate-200/40 dark:border-white/[0.04] my-0.5" />
 
-      {UNDO_REDO.map(renderSlot)}
+      {getUndoRedoSlots(activeTool).map((slot, idx) => {
+        const isDisabled = (slot.id === 'undo' && !canUndo) || (slot.id === 'redo' && !canRedo);
+        const Icon = slot.icon;
+        return (
+          <div key={slot.id} className="relative">
+            <button
+              onClick={() => !isDisabled && slot.action && onAction(slot.action)}
+              disabled={isDisabled}
+              title={isPl ? slot.labelPl : slot.labelEn}
+              aria-label={isPl ? slot.labelPl : slot.labelEn}
+              className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
+                isDisabled
+                  ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
+              }`}
+            >
+              <Icon size={15} />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 };

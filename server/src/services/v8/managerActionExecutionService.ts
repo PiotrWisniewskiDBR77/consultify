@@ -99,6 +99,34 @@ async function getTaskInitiativeId(organizationId: string, taskId: string) {
   return rows[0]?.initiative_id ?? null;
 }
 
+async function managerAuditLog(
+  organizationId: string,
+  userId: string,
+  action: string,
+  entityType: string,
+  entityId: string,
+  detail: string
+) {
+  try {
+    await dbRun(
+      `INSERT INTO execution_audit_log (id, organization_id, entity_type, entity_id, action, old_value, new_value, reason, user_id, created_at)
+       VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, NOW())`,
+      [
+        `mgr-audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        organizationId,
+        entityType,
+        entityId,
+        `manager_${action}`,
+        detail,
+        `Manager cockpit action: ${action}`,
+        userId,
+      ]
+    );
+  } catch {
+    // audit log table may not exist; non-blocking
+  }
+}
+
 async function executeProblemActionInternal(
   organizationId: string,
   userId: string,
@@ -500,6 +528,18 @@ export async function executeManagerProblemAction(args: {
   }
 
   const result = await executeProblemActionInternal(args.organizationId, args.userId, row, args.actionId);
+
+  for (const entity of result.changedEntities) {
+    await managerAuditLog(
+      args.organizationId,
+      args.userId,
+      args.actionId,
+      entity.entityType,
+      entity.entityId,
+      `Lane: ${args.laneId}, Problem: ${args.problemId}, Action: ${args.actionId}`
+    );
+  }
+
   return {
     success: true,
     message: result.message,

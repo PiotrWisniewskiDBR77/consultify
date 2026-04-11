@@ -138,7 +138,7 @@ async function syncArtifactRegistryForReport(
   const sourceType = report?.sourceType ? String(report.sourceType) : null;
   const sourceId = report?.sourceId ? String(report.sourceId) : null;
 
-  await artifactRegistryService.registerArtifactOrigin({
+  const registeredArtifact = await artifactRegistryService.registerArtifactOrigin({
     organizationId,
     outputType: 'report',
     artifactFamily: 'document',
@@ -159,6 +159,22 @@ async function syncArtifactRegistryForReport(
       sourceTable: 'report_builder_reports',
     },
   });
+
+  if (registeredArtifact && report?.templateId) {
+    const templateArtifactId = String(report.templateArtifactId || report.templateId || '');
+    if (templateArtifactId) {
+      try {
+        await artifactRegistryService.addSecondaryOriginLink({
+          artifactId: registeredArtifact.artifactId,
+          organizationId,
+          originRuntime: 'source_template',
+          originRecordId: templateArtifactId,
+        });
+      } catch {
+        // Non-fatal: template link is supplementary
+      }
+    }
+  }
 }
 
 async function enforceQualityGatesForExport(

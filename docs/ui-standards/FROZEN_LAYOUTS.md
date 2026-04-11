@@ -24,9 +24,8 @@
 6. Execution  
 7. Results (Benefits)  
 8. Finance  
-9. Reports  
-10. Presentations  
-11. … (pozostałe według menuConfig)
+9. Outputs (unified Reports & Presentations hub — P19)  
+10. … (pozostałe według menuConfig)
 
 **Reguła:** Nie zmieniaj kolejności, nie dodawaj nowych pozycji między istniejącymi bez aktualizacji `menuConfig.ts` i świadomej decyzji PO/CTO.
 

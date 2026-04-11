@@ -25,6 +25,7 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
+import { useOrganizationContext } from '@/hooks/discovery/useOrganizationContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
 
@@ -139,6 +140,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const openChatWithContext = useOpenChatWithContext();
+  const { formatForPrompt: formatOrgContext } = useOrganizationContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
@@ -364,8 +366,11 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         entityType: 'kpi',
         entityId: kpi.id,
         entityName: kpi.name,
-        contextData: kpi as unknown as Record<string, unknown>,
-        pmoContext: {},
+        contextData: {
+          ...(kpi as unknown as Record<string, unknown>),
+          organizationContext: formatOrgContext(),
+        },
+        pmoContext: { kpiId: kpi.id },
       });
       await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
       toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });

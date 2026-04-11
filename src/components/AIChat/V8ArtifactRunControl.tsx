@@ -1,5 +1,6 @@
 import {
   CheckCircle2,
+  ExternalLink,
   FileOutput,
   GitBranch,
   Loader2,
@@ -11,6 +12,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import type {
   ArtifactFamily,
@@ -36,6 +38,8 @@ import {
   useV8SubmitExecutionReview,
 } from '@/hooks/useV8Execution';
 import { useV8Gate } from '@/hooks/useV8Gate';
+import { TrustStatePreviewSection } from '@/components/ReportsAndPresentations/TrustStatePreviewSection';
+import { useTrustState } from '@/components/ReportsAndPresentations/useTrustState';
 
 interface V8ArtifactRunControlProps {
   conversationId: string | null;
@@ -140,6 +144,7 @@ export function V8ArtifactRunControl({
   snapshotContext,
 }: V8ArtifactRunControlProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { showV8Chat } = useV8Gate();
   const { data: snapshots, isLoading: snapshotsLoading } = useV8Snapshots(
     showV8Chat && conversationId ? conversationId : undefined
@@ -163,6 +168,7 @@ export function V8ArtifactRunControl({
   const submitExecutionReview = useV8SubmitExecutionReview();
   const approveExecutionRun = useV8ApproveExecutionRun();
   const rejectExecutionRun = useV8RejectExecutionRun();
+  const artifactTrustState = useTrustState(currentRun?.artifactId || null, null);
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
   const latestSnapshot = snapshotItems.length > 0 ? snapshotItems[snapshotItems.length - 1] : null;
@@ -596,6 +602,14 @@ export function V8ArtifactRunControl({
                   {t('v8.artifactRun.artifactReady', 'Artifact ready')}: {currentRun.artifactId}
                 </div>
               )}
+              {currentRun.artifactId && artifactTrustState && (
+                <div className="mt-2">
+                  <TrustStatePreviewSection
+                    governance={artifactTrustState}
+                    artifactId={currentRun.artifactId}
+                  />
+                </div>
+              )}
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-rose-600 dark:text-rose-300">
                   {currentRun.failureReason}
@@ -785,6 +799,28 @@ export function V8ArtifactRunControl({
                   </div>
                 </div>
               )}
+
+              {effectiveStatus === 'completed' &&
+                currentRun.plan.outputType === 'report' &&
+                currentRun.materializationOrigin?.originRecordId && (
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      data-testid="v8-artifact-run-open-wordy"
+                      onClick={() => {
+                        const reportId = currentRun.materializationOrigin?.originRecordId;
+                        if (reportId) {
+                          navigate(`/wordy?artifactId=${reportId}`);
+                          setIsOpen(false);
+                        }
+                      }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/5 px-3 py-2 text-sm font-medium text-brand transition hover:bg-brand/10 dark:border-brand/40 dark:bg-brand/10 dark:text-brand dark:hover:bg-brand/20"
+                    >
+                      <ExternalLink size={16} />
+                      {t('v8.artifactRun.openInWordy', 'Continue in Wordy')}
+                    </button>
+                  </div>
+                )}
 
               <div className="mt-3 flex gap-2">
                 {canAccept && (

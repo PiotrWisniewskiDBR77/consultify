@@ -1,6 +1,7 @@
 import { ChevronRight, Menu, Sparkles, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
@@ -57,15 +58,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const chatPanelWidth = useAppStore((s) => s.chatPanelWidth);
   const setChatPanelWidth = useAppStore((s) => s.setChatPanelWidth);
+  const chatSystemPrompt = useAppStore((s) => s.chatSystemPrompt);
+  const chatQuickPrompts = useAppStore((s) => s.chatQuickPrompts);
   const { isMobile, safeAreaInsets } = useDeviceType();
 
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
 
   // Views where chat panel should NOT be shown (full-screen chat only, and settings)
   // AI chat is now available on Admin, SuperAdmin, Context Builder, and Partner screens
   const VIEWS_WITHOUT_CHAT_PANEL: AppView[] = [
     AppView.AI_CHAT, // Full-screen chat mode — no split panel
+    AppView.WORDY, // KIMI workspaces embed their own chat panel
+    AppView.EXCELE,
+    AppView.PREZENTACJE_GEN,
     AppView.SETTINGS_PROFILE,
     AppView.SETTINGS_PROFILE_MODULE,
     AppView.SETTINGS_AI,
@@ -317,11 +324,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     mode="split"
                     workspaceContext={workspaceContext}
                     showModeToggle={true}
-                    onModeToggle={() => expandToFullScreen()}
+                    onModeToggle={() => {
+                      if (workspaceContext?.type === 'document') {
+                        navigate('/wordy');
+                      } else {
+                        expandToFullScreen();
+                      }
+                    }}
                     showHistoryTrigger={true}
                     showFocusMode={true}
                     kickoffMessage={chatKickoffMessage || undefined}
                     onKickoffConsumed={clearChatKickoffMessage}
+                    systemPrompt={chatSystemPrompt || undefined}
+                    quickPrompts={chatQuickPrompts || undefined}
                   />
                 </div>
                 {/* Resizer */}

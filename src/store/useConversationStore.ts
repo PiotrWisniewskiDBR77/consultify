@@ -118,6 +118,7 @@ export interface Conversation {
     taskId?: string;
     decisionId?: string;
     reportId?: string;
+    kpiId?: string;
   };
   messageCount: number;
   lastMessagePreview?: string;
@@ -259,13 +260,14 @@ export function groupConversations(
  */
 export function getConversationEntityType(
   conv: Conversation
-): 'assessment' | 'initiative' | 'roadmap' | 'task' | 'decision' | null {
+): 'assessment' | 'initiative' | 'roadmap' | 'task' | 'decision' | 'kpi' | null {
   const ctx = conv.pmoContext;
   if (ctx?.assessmentId) return 'assessment';
   if (ctx?.initiativeIds && ctx.initiativeIds.length > 0) return 'initiative';
   if (ctx?.roadmapId) return 'roadmap';
   if (ctx?.taskId) return 'task';
   if (ctx?.decisionId) return 'decision';
+  if (ctx?.kpiId) return 'kpi';
   // Fallback: check title prefix (set by useOpenChatWithContext)
   const title = (conv.title || '').toLowerCase();
   if (title.startsWith('task:') || title.startsWith('task ')) return 'task';

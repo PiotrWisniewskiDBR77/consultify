@@ -3,7 +3,7 @@
  * Bases, tables, fields, views, and records CRUD
  */
 
-import { Request as ExpressRequest, Response, Router } from 'express';
+import { NextFunction, Request as ExpressRequest, Response, Router } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import multer from 'multer';
 
@@ -36,7 +36,19 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 },
 });
 
-const { requireBaseAccess, requireTableAccess } = PermissionsService;
+const {
+  requireBaseAccess,
+  requireTableAccess,
+  requireFieldAccess,
+  requireRecordAccess,
+  requireViewAccess,
+  requireRoles,
+  SCHEMA_ROLES,
+  DATA_ROLES,
+  VIEW_ROLES,
+  INTERFACE_ROLES,
+  ALL_ROLES,
+} = PermissionsService;
 
 const router = Router();
 type Request = ExpressRequest<Record<string, string>>;
@@ -91,6 +103,51 @@ const tablePlatformLimiter = rateLimit({
   },
 });
 
+async function checkOrgQuota(req: Request, res: Response, next: NextFunction) {
+  try {
+    const orgId = (req as any).organizationId;
+    if (!orgId) return next();
+
+    const db = (await import('../database/Database.js')).getDatabase();
+
+    const usage = await db.query(`
+      SELECT COUNT(*) as record_count
+      FROM tp_records r
+      JOIN tp_tables t ON r.table_id = t.id
+      JOIN tp_bases b ON t.base_id = b.id
+      WHERE b.organization_id = $1
+    `, [orgId]);
+
+    const recordCount = parseInt(usage.rows[0]?.record_count || '0', 10);
+
+    let maxRecords = 100000;
+    try {
+      const orgPlan = await db.query(
+        'SELECT plan_config FROM organizations WHERE id = $1',
+        [orgId]
+      );
+      const config = orgPlan.rows[0]?.plan_config;
+      if (config?.maxTableRecords) {
+        maxRecords = config.maxTableRecords;
+      }
+    } catch {
+      // organizations table may not have plan_config — use default
+    }
+
+    if (recordCount >= maxRecords) {
+      return res.status(429).json({
+        error: 'Record limit reached for your organization plan',
+        usage: recordCount,
+        limit: maxRecords,
+      });
+    }
+
+    next();
+  } catch {
+    next();
+  }
+}
+
 // ==========================================
 // HEALTH CHECK (no auth required)
 // ==========================================
@@ -137,6 +194,36 @@ router.use(requireTablePlatform);
 router.use(tablePlatformLimiter);
 
 // ==========================================
+// GLOBAL SEARCH
+// ==========================================
+
+router.get('/search', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as any;
+    const orgId = authReq.organizationId;
+    const q = req.query.q as string;
+    const limit = Math.min(Number(req.query.limit) || 20, 50);
+    if (!q || q.length < 2) return res.json({ results: [] });
+    const db = (await import('../database/Database.js')).getDatabase();
+    const results = await db.query(`
+      SELECT r.id as record_id, r.data, t.id as table_id, t.name as table_name,
+             b.id as base_id, b.name as base_name, b.workspace_id
+      FROM tp_records r
+      JOIN tp_tables t ON r.table_id = t.id
+      JOIN tp_bases b ON t.base_id = b.id
+      WHERE b.organization_id = $1 AND r.data::text ILIKE $2
+      ORDER BY r.updated_at DESC LIMIT $3
+    `, [orgId, `%${q}%`, limit]);
+    res.json({ results: results.rows.map((r: any) => ({
+      recordId: r.record_id, data: r.data, tableId: r.table_id,
+      tableName: r.table_name, baseId: r.base_id, baseName: r.base_name,
+      workspaceId: r.workspace_id,
+      deepLink: `/my-work/ideas/${encodeURIComponent(r.workspace_id)}/workspace/table?tpTable=${encodeURIComponent(r.table_id)}`,
+    })) });
+  } catch (e) { res.status(500).json({ error: (e as Error).message }); }
+});
+
+// ==========================================
 // METADATA API
 // ==========================================
 
@@ -164,6 +251,18 @@ router.post('/bases', async (req: Request, res: Response) => {
     return res.status(201).json(base);
   } catch (err) {
     handleRouteError(err, res, 'createBase');
+  }
+});
+
+router.post('/bases/:baseId/sync-members', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    const orgId = (req as any).organizationId;
+    const OrgMemberSyncService = (await import('../services/tablePlatform/OrgMemberSyncService.js')).default;
+    const result = await OrgMemberSyncService.syncOrgMembersToBase(baseId, orgId);
+    res.json({ success: true, ...result });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
@@ -292,7 +391,7 @@ router.get('/workspaces/:workspaceId/bases', async (req: Request, res: Response)
   }
 });
 
-router.post('/bases/:baseId/tables', requireBaseAccess, async (req: Request, res: Response) => {
+router.post('/bases/:baseId/tables', requireBaseAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -314,7 +413,7 @@ router.post('/bases/:baseId/tables', requireBaseAccess, async (req: Request, res
   }
 });
 
-router.patch('/tables/:tableId', requireTableAccess, async (req: Request, res: Response) => {
+router.patch('/tables/:tableId', requireTableAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { tableId } = req.params;
@@ -332,7 +431,7 @@ router.patch('/tables/:tableId', requireTableAccess, async (req: Request, res: R
   }
 });
 
-router.delete('/tables/:tableId', requireTableAccess, async (req: Request, res: Response) => {
+router.delete('/tables/:tableId', requireTableAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { tableId } = req.params;
@@ -365,7 +464,7 @@ router.get('/tables/:tableId', requireTableAccess, async (req: Request, res: Res
   }
 });
 
-router.post('/tables/:tableId/fields', requireTableAccess, async (req: Request, res: Response) => {
+router.post('/tables/:tableId/fields', requireTableAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -396,7 +495,7 @@ router.post('/tables/:tableId/fields', requireTableAccess, async (req: Request, 
   }
 });
 
-router.delete('/fields/:fieldId', async (req: Request, res: Response) => {
+router.delete('/fields/:fieldId', requireFieldAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { fieldId } = req.params;
@@ -413,7 +512,7 @@ router.delete('/fields/:fieldId', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/fields/:fieldId', async (req: Request, res: Response) => {
+router.patch('/fields/:fieldId', requireFieldAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
   try {
     const { fieldId } = req.params;
     const { name, options } = req.body ?? {};
@@ -430,7 +529,23 @@ router.patch('/fields/:fieldId', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/fields/:fieldId/permissions', async (req: Request, res: Response) => {
+router.post('/fields/:fieldId/change-type', requireFieldAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { fieldId } = req.params;
+    const { newType, options, preview } = req.body ?? {};
+    if (!fieldId) return res.status(400).json({ error: 'fieldId is required' });
+    if (!newType || typeof newType !== 'string') {
+      return res.status(400).json({ error: 'newType is required' });
+    }
+    const result = await MetadataService.changeFieldType(fieldId, newType, authReq.userId!, options, preview);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'changeFieldType');
+  }
+});
+
+router.patch('/fields/:fieldId/permissions', requireFieldAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { fieldId } = req.params;
@@ -479,7 +594,7 @@ router.patch('/fields/:fieldId/permissions', async (req: Request, res: Response)
   }
 });
 
-router.post('/tables/:tableId/views', requireTableAccess, async (req: Request, res: Response) => {
+router.post('/tables/:tableId/views', requireTableAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -509,7 +624,7 @@ router.post('/tables/:tableId/views', requireTableAccess, async (req: Request, r
   }
 });
 
-router.patch('/views/:viewId', async (req: Request, res: Response) => {
+router.patch('/views/:viewId', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
   try {
     const { viewId } = req.params;
     const { name, config, visibleFieldIds } = req.body ?? {};
@@ -526,7 +641,7 @@ router.patch('/views/:viewId', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/views/:viewId', async (req: Request, res: Response) => {
+router.delete('/views/:viewId', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { viewId } = req.params;
@@ -661,7 +776,7 @@ router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, 
   }
 });
 
-router.post('/tables/:tableId/records', requireTableAccess, async (req: Request, res: Response) => {
+router.post('/tables/:tableId/records', requireTableAccess, requireRoles(...DATA_ROLES), checkOrgQuota as any, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -683,7 +798,7 @@ router.post('/tables/:tableId/records', requireTableAccess, async (req: Request,
   }
 });
 
-router.get('/records/:recordId', async (req: Request, res: Response) => {
+router.get('/records/:recordId', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
     if (!recordId) {
@@ -699,7 +814,7 @@ router.get('/records/:recordId', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/records/:recordId', async (req: Request, res: Response) => {
+router.patch('/records/:recordId', requireRecordAccess, requireRoles(...DATA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -721,7 +836,7 @@ router.patch('/records/:recordId', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/records/:recordId', async (req: Request, res: Response) => {
+router.delete('/records/:recordId', requireRecordAccess, requireRoles(...DATA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -743,17 +858,20 @@ router.delete('/records/:recordId', async (req: Request, res: Response) => {
 // RECORD COMMENTS
 // ==========================================
 
-router.post('/records/:recordId/comments', async (req: Request, res: Response) => {
+router.post('/records/:recordId/comments', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
     const { recordId } = req.params;
-    const { tableId, content, parentId, authorName } = req.body ?? {};
+    const { tableId, content, parentId, authorName, mentions } = req.body ?? {};
     if (!recordId) return res.status(400).json({ error: 'recordId is required' });
     if (!tableId) return res.status(400).json({ error: 'tableId is required' });
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return res.status(400).json({ error: 'content is required' });
     }
+    const mentionList = Array.isArray(mentions)
+      ? mentions.filter((m: unknown) => typeof m === 'string' && m.trim().length > 0).map((m: string) => m.trim())
+      : [];
     const RecordCommentService = (await import('../services/tablePlatform/RecordCommentService.js'))
       .default;
     const comment = await RecordCommentService.addComment(
@@ -762,7 +880,8 @@ router.post('/records/:recordId/comments', async (req: Request, res: Response) =
       userId!,
       authorName,
       content.trim(),
-      parentId
+      parentId,
+      mentionList.length ? mentionList : undefined
     );
     return res.status(201).json(comment);
   } catch (err) {
@@ -770,7 +889,7 @@ router.post('/records/:recordId/comments', async (req: Request, res: Response) =
   }
 });
 
-router.get('/records/:recordId/comments', async (req: Request, res: Response) => {
+router.get('/records/:recordId/comments', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
     if (!recordId) return res.status(400).json({ error: 'recordId is required' });
@@ -829,7 +948,7 @@ router.delete('/comments/:commentId', async (req: Request, res: Response) => {
 // RECORD UNDO
 // ==========================================
 
-router.post('/tables/:tableId/undo', async (req: Request, res: Response) => {
+router.post('/tables/:tableId/undo', requireRoles(...DATA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -850,7 +969,7 @@ router.post('/tables/:tableId/undo', async (req: Request, res: Response) => {
 // CELL HISTORY
 // ==========================================
 
-router.get('/records/:recordId/cell-history', async (req: Request, res: Response) => {
+router.get('/records/:recordId/cell-history', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
     if (!recordId) return res.status(400).json({ error: 'recordId is required' });
@@ -873,7 +992,7 @@ router.get('/records/:recordId/cell-history', async (req: Request, res: Response
 // RECORD WATCHES
 // ==========================================
 
-router.post('/records/:recordId/watch', async (req: Request, res: Response) => {
+router.post('/records/:recordId/watch', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
@@ -897,7 +1016,7 @@ router.post('/records/:recordId/watch', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/records/:recordId/watchers', async (req: Request, res: Response) => {
+router.get('/records/:recordId/watchers', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
     if (!recordId) return res.status(400).json({ error: 'recordId is required' });
@@ -943,6 +1062,8 @@ router.post(
 router.post(
   '/tables/:tableId/records/batch',
   requireTableAccess,
+  requireRoles(...DATA_ROLES),
+  checkOrgQuota as any,
   async (req: Request, res: Response) => {
     try {
       const authReq = req as AuthRequest;
@@ -1010,6 +1131,7 @@ router.post(
 router.post(
   '/tables/:tableId/records/upsert',
   requireTableAccess,
+  checkOrgQuota,
   async (req: Request, res: Response) => {
     try {
       const authReq = req as AuthRequest;
@@ -1276,7 +1398,7 @@ router.post('/schema/propose', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/schema/proposals/:proposalId/execute', async (req: Request, res: Response) => {
+router.post('/schema/proposals/:proposalId/execute', requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { proposalId } = req.params;
@@ -1505,6 +1627,7 @@ router.get('/tables/:tableId/audit', requireTableAccess, async (req: Request, re
 router.post(
   '/tables/:tableId/records/bulk-delete',
   requireTableAccess,
+  requireRoles(...DATA_ROLES),
   async (req: Request, res: Response) => {
     try {
       const authReq = req as AuthRequest;
@@ -1542,6 +1665,7 @@ router.post(
 router.post(
   '/tables/:tableId/records/bulk-update',
   requireTableAccess,
+  requireRoles(...DATA_ROLES),
   async (req: Request, res: Response) => {
     try {
       const authReq = req as AuthRequest;
@@ -1833,7 +1957,7 @@ router.put(
 // COLUMN CONFIG
 // ==========================================
 
-router.patch('/views/:viewId/columns', async (req: Request, res: Response) => {
+router.patch('/views/:viewId/columns', requireViewAccess, async (req: Request, res: Response) => {
   try {
     const { viewId } = req.params;
     const { columns } = req.body ?? {};
@@ -1910,7 +2034,7 @@ router.post('/migrate/rollback', async (req: Request, res: Response) => {
 // LINKED RECORDS / RELATIONS
 // ==========================================
 
-router.post('/records/:recordId/links', async (req: Request, res: Response) => {
+router.post('/records/:recordId/links', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { recordId } = req.params;
@@ -1927,7 +2051,7 @@ router.post('/records/:recordId/links', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/records/:recordId/links', async (req: Request, res: Response) => {
+router.delete('/records/:recordId/links', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { recordId } = req.params;
@@ -1944,7 +2068,7 @@ router.delete('/records/:recordId/links', async (req: Request, res: Response) =>
   }
 });
 
-router.get('/records/:recordId/links/:fieldId', async (req: Request, res: Response) => {
+router.get('/records/:recordId/links/:fieldId', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const { recordId, fieldId } = req.params;
     const RelationService = (await import('../services/tablePlatform/RelationService.js')).default;
@@ -1956,7 +2080,7 @@ router.get('/records/:recordId/links/:fieldId', async (req: Request, res: Respon
   }
 });
 
-router.get('/records/:recordId/expand', async (req: Request, res: Response) => {
+router.get('/records/:recordId/expand', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
     if (!recordId) {
@@ -2034,7 +2158,7 @@ router.post(
   }
 );
 
-router.post('/records/:recordId/attachments', async (req: Request, res: Response) => {
+router.post('/records/:recordId/attachments', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { recordId } = req.params;
@@ -2124,7 +2248,7 @@ router.get('/attachments/download/:token', async (req: Request, res: Response) =
   }
 });
 
-router.get('/records/:recordId/attachments', async (req: Request, res: Response) => {
+router.get('/records/:recordId/attachments', requireRecordAccess, async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
     const fieldId = typeof req.query.fieldId === 'string' ? req.query.fieldId : undefined;
@@ -2157,7 +2281,7 @@ router.delete('/attachments/:attachmentId', async (req: Request, res: Response) 
 // FORMS API (authenticated)
 // ==========================================
 
-router.post('/tables/:tableId/forms', requireTableAccess, async (req: Request, res: Response) => {
+router.post('/tables/:tableId/forms', requireTableAccess, requireRoles(...ALL_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { tableId } = req.params;
@@ -2438,7 +2562,7 @@ router.post('/automations/:automationId/trigger', async (req: Request, res: Resp
 // INTERFACE DESIGNER API
 // ==========================================
 
-router.post('/bases/:baseId/interfaces', requireBaseAccess, async (req: Request, res: Response) => {
+router.post('/bases/:baseId/interfaces', requireBaseAccess, requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const { baseId } = req.params;
@@ -2480,7 +2604,7 @@ router.get('/interfaces/:interfaceId', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/interfaces/:interfaceId/layout', async (req: Request, res: Response) => {
+router.put('/interfaces/:interfaceId/layout', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
   try {
     const { interfaceId } = req.params;
     const { blocks, theme } = req.body ?? {};
@@ -2494,7 +2618,7 @@ router.put('/interfaces/:interfaceId/layout', async (req: Request, res: Response
   }
 });
 
-router.post('/interfaces/:interfaceId/publish', async (req: Request, res: Response) => {
+router.post('/interfaces/:interfaceId/publish', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
   try {
     const { interfaceId } = req.params;
     if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
@@ -2505,7 +2629,7 @@ router.post('/interfaces/:interfaceId/publish', async (req: Request, res: Respon
   }
 });
 
-router.post('/interfaces/:interfaceId/unpublish', async (req: Request, res: Response) => {
+router.post('/interfaces/:interfaceId/unpublish', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
   try {
     const { interfaceId } = req.params;
     if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
@@ -2516,7 +2640,7 @@ router.post('/interfaces/:interfaceId/unpublish', async (req: Request, res: Resp
   }
 });
 
-router.delete('/interfaces/:interfaceId', async (req: Request, res: Response) => {
+router.delete('/interfaces/:interfaceId', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
   try {
     const { interfaceId } = req.params;
     if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
@@ -2527,7 +2651,7 @@ router.delete('/interfaces/:interfaceId', async (req: Request, res: Response) =>
   }
 });
 
-router.patch('/interfaces/:interfaceId/roles', async (req: Request, res: Response) => {
+router.patch('/interfaces/:interfaceId/roles', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
   try {
     const { interfaceId } = req.params;
     const { roles } = req.body ?? {};
@@ -3172,7 +3296,7 @@ router.post(
 // VIEW SHARING
 // ==========================================
 
-router.post('/views/:viewId/share', async (req: Request, res: Response) => {
+router.post('/views/:viewId/share', requireViewAccess, async (req: Request, res: Response) => {
   try {
     const { viewId } = req.params;
     if (!viewId) return res.status(400).json({ error: 'viewId is required' });
@@ -3184,7 +3308,7 @@ router.post('/views/:viewId/share', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/views/:viewId/unshare', async (req: Request, res: Response) => {
+router.post('/views/:viewId/unshare', requireViewAccess, async (req: Request, res: Response) => {
   try {
     const { viewId } = req.params;
     if (!viewId) return res.status(400).json({ error: 'viewId is required' });
@@ -3192,6 +3316,62 @@ router.post('/views/:viewId/unshare', async (req: Request, res: Response) => {
     return res.status(200).json({ success: true });
   } catch (err) {
     handleRouteError(err, res, 'unshareView');
+  }
+});
+
+// ==========================================
+// VIEW LOCKS
+// ==========================================
+
+router.post('/views/:viewId/lock', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { viewId } = req.params;
+    if (!viewId) return res.status(400).json({ error: 'viewId is required' });
+    await MetadataService.lockView(viewId, authReq.userId!);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'lockView');
+  }
+});
+
+router.post('/views/:viewId/unlock', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { viewId } = req.params;
+    if (!viewId) return res.status(400).json({ error: 'viewId is required' });
+    await MetadataService.unlockView(viewId, authReq.userId!);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'unlockView');
+  }
+});
+
+// ==========================================
+// INTERFACE LOCKS
+// ==========================================
+
+router.post('/interfaces/:interfaceId/lock', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { interfaceId } = req.params;
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    await MetadataService.lockInterface(interfaceId, authReq.userId!);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'lockInterface');
+  }
+});
+
+router.post('/interfaces/:interfaceId/unlock', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { interfaceId } = req.params;
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    await MetadataService.unlockInterface(interfaceId, authReq.userId!);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'unlockInterface');
   }
 });
 

@@ -20,6 +20,8 @@ export const ALLOWED_FIELD_TYPES = [
   'percent',
   'checkbox',
   'date',
+  'datetime',
+  'user',
   'singleSelect',
   'multiSelect',
   'url',
@@ -312,7 +314,8 @@ const schemaValidationService = {
 
   async validateRecord(
     tableId: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
+    options?: { recordId?: string; isUpdate?: boolean }
   ): Promise<{ valid: boolean; errors: Array<{ fieldId: string; message: string }> }> {
     const db = getDatabase();
     const fieldsResult = await (db as any).query('SELECT * FROM tp_fields WHERE table_id = $1', [
@@ -344,6 +347,54 @@ const schemaValidationService = {
     const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/;
 
     const errors: Array<{ fieldId: string; message: string }> = [];
+
+    // Enforce required constraints (skip on update — only check fields present in data)
+    if (!options?.isUpdate) {
+      for (const field of fields) {
+        if (AUTO_FIELD_TYPES.has(field.field_type)) continue;
+        const opts = field.options as Record<string, unknown> | null;
+        if (opts?.required) {
+          const val = data[field.id] ?? data[field.name];
+          if (val === undefined || val === null || val === '') {
+            if (opts.default === undefined) {
+              errors.push({
+                fieldId: field.id,
+                message: `Required field '${field.name}' is missing`,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Enforce unique constraints
+    for (const field of fields) {
+      const opts = field.options as Record<string, unknown> | null;
+      if (!opts?.unique) continue;
+      const val = data[field.id] ?? data[field.name];
+      if (val === undefined || val === null || val === '') continue;
+      try {
+        const excludeClause = options?.recordId ? ' AND id != $4' : '';
+        const params: unknown[] = [tableId, field.id, String(val)];
+        if (options?.recordId) params.push(options.recordId);
+        const uniqueCheck = await (db as any).query(
+          `SELECT COUNT(*)::int AS cnt FROM tp_records
+           WHERE table_id = $1 AND data->>$2 = $3${excludeClause}`,
+          params
+        );
+        if (uniqueCheck.rows[0]?.cnt > 0) {
+          errors.push({
+            fieldId: field.id,
+            message: `Field '${field.name}' must be unique; value '${val}' already exists`,
+          });
+        }
+      } catch (uniqueErr) {
+        logger.error('[SchemaValidationService] unique check failed', {
+          fieldId: field.id,
+          error: (uniqueErr as Error).message,
+        });
+      }
+    }
 
     for (const [key, value] of Object.entries(data)) {
       const field = fieldByName.get(key) ?? fieldById.get(key);
@@ -419,6 +470,26 @@ const schemaValidationService = {
             });
           }
           break;
+
+        case 'user':
+          if (typeof value !== 'string' || !UUID_REGEX.test(value)) {
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' must be a valid UUID`,
+            });
+          }
+          break;
+
+        case 'datetime': {
+          const d = new Date(value as string | number | Date);
+          if (isNaN(d.getTime())) {
+            errors.push({
+              fieldId: field.id,
+              message: `'${field.name}' has an invalid datetime value`,
+            });
+          }
+          break;
+        }
 
         case 'singleSelect':
         case 'single_select': {

@@ -45,6 +45,13 @@ export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
       throw error;
     }
 
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[kpiRuntime] V8 Results API unavailable, falling back to deprecated /api/benefits/* paths. ' +
+          'The /api/v8/results/* endpoints are the canonical SSOT. Legacy paths will be removed in a future release.'
+      );
+    }
+
     const [kpisRes, mappingsRes] = await Promise.allSettled([
       Api.get('/benefits/kpis'),
       Api.get('/benefits/kpi-mappings'),

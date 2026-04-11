@@ -21,6 +21,8 @@ export type WorkspaceType =
   | 'report'
   | 'dashboard'
   | 'project'
+  | 'notebook'
+  | 'finance'
   | 'general'
   | 'empty';
 
@@ -121,6 +123,10 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
     [AppView.REPORTS_MANAGEMENT]: 'report',
     [AppView.DASHBOARD]: 'dashboard',
     [AppView.USER_DASHBOARD]: 'dashboard',
+    [AppView.WORDY]: 'document',
+    [AppView.EXCELE]: 'artifact',
+    [AppView.PREZENTACJE_GEN]: 'artifact',
+    [AppView.ECONOMICS]: 'finance',
   };
 
   return viewTypeMap[view] || 'empty';

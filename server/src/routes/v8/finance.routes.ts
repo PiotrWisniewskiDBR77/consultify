@@ -2043,14 +2043,34 @@ router.delete(
 // P05-B: Finance Lane E2E endpoints
 // ==========================================
 
+const P05_HTTP_STATUS: Record<string, number> = {
+  P05_CONCURRENT_RUN_EXISTS: 409,
+  P05_PERMISSION_DENIED: 403,
+  P05_SWITCHOVER_MISCONFIGURED: 409,
+  P05_INVALID_OUTCOME: 422,
+  P05_RUN_NOT_FOUND: 404,
+  P05_SNAPSHOT_NOT_FOUND: 404,
+};
+
+function sendP05Error(res: Response, err: unknown): Response {
+  const code = (err as { code?: string })?.code;
+  const status = (code && P05_HTTP_STATUS[code]) || 500;
+  const message = err instanceof Error ? err.message : String(err);
+  return res.status(status).json({ error: message, code: code || 'P05_INTERNAL_ERROR' });
+}
+
 router.post(
   '/lane/start',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { startLaneRun } = await import('../../services/v8/financeLaneService.js');
     const { versionType } = req.body || {};
-    const run = await startLaneRun({ organizationId, actor: userId, versionType: versionType || 'current' });
-    return res.json({ data: run, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+    try {
+      const run = await startLaneRun({ organizationId, actor: userId, versionType: versionType || 'current' });
+      return res.json({ data: run, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+    } catch (err) {
+      return sendP05Error(res, err);
+    }
   })
 );
 
@@ -2063,8 +2083,38 @@ router.post(
     const { outcome, detail } = req.body || {};
     if (!outcome) return res.status(400).json({ error: 'outcome required', code: 'P05_OUTCOME_REQUIRED' });
     const { advanceLaneStep } = await import('../../services/v8/financeLaneService.js');
-    const run = await advanceLaneStep(runId, organizationId, userId, outcome, detail);
-    return res.json({ data: run, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+
+    const context: { hasPermission?: boolean; blockedCapability?: string; modelUpdatedAt?: string | null } = {};
+    try {
+      const permRow = await (await import('../../utils/DbPromise.js')).get<Record<string, unknown>>(
+        `SELECT role FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [organizationId, userId],
+        { fallback: true }
+      );
+      const mutationRoles = ['owner', 'admin', 'editor', 'finance_admin', 'finance_editor'];
+      context.hasPermission = permRow ? mutationRoles.includes(String(permRow.role || '')) : false;
+      if (!context.hasPermission) context.blockedCapability = 'finance_mutation';
+    } catch {
+      context.hasPermission = false;
+      context.blockedCapability = 'permission_check_failed';
+    }
+    try {
+      const modelRow = await (await import('../../utils/DbPromise.js')).get<Record<string, unknown>>(
+        `SELECT MAX(updated_at) as max_updated FROM financial_model_versions WHERE organization_id = ?`,
+        [organizationId],
+        { fallback: true }
+      );
+      context.modelUpdatedAt = modelRow?.max_updated ? String(modelRow.max_updated) : null;
+    } catch {
+      context.modelUpdatedAt = null;
+    }
+
+    try {
+      const run = await advanceLaneStep(runId, organizationId, userId, outcome, detail, context);
+      return res.json({ data: run, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+    } catch (err) {
+      return sendP05Error(res, err);
+    }
   })
 );
 
@@ -2139,8 +2189,12 @@ router.post(
     const snapshotId = req.params.snapshotId?.trim();
     if (!snapshotId) return res.status(400).json({ error: 'snapshotId required', code: 'P05_SNAPSHOT_ID_REQUIRED' });
     const { finalizeSwitchover } = await import('../../services/v8/financeLaneService.js');
-    const snapshot = await finalizeSwitchover(snapshotId, organizationId, userId);
-    return res.json({ data: snapshot, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+    try {
+      const snapshot = await finalizeSwitchover(snapshotId, organizationId, userId);
+      return res.json({ data: snapshot, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+    } catch (err) {
+      return sendP05Error(res, err);
+    }
   })
 );
 

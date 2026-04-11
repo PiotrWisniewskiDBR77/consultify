@@ -43,7 +43,7 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   const isPl = i18n.language?.startsWith('pl');
 
   return (
-    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[50]">
+    <div className="absolute top-3 right-3 z-[50]">
       <div className="flex items-center gap-0.5 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-2 py-1.5">
         {/* Canvas tool switcher */}
         {TOOL_CONFIG.map((tool) => {
@@ -54,10 +54,10 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
             <button
               key={tool.id}
               onClick={() => onToolChange(tool.id)}
-              className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-semibold transition-all ${
+              className={`relative flex items-center gap-1.5 h-9 px-3 rounded-hig-xl text-xs font-semibold transition-all ${
                 isActive
                   ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
               title={getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl))}
             >

@@ -8,9 +8,64 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import auditService from './AuditService.js';
-import { PermissionError } from './ErrorHandling.js';
+import { NotFoundError, PermissionError } from './ErrorHandling.js';
+import OrgMemberSyncService from './OrgMemberSyncService.js';
 import projectionService from './ProjectionService.js';
 import { webhookDispatcher } from './WebhookDispatcherService.js';
+
+function convertValue(value: unknown, fromType: string, toType: string): unknown {
+  if (value === null || value === undefined) return null;
+  if (fromType === toType) return value;
+
+  const key = `${fromType}->${toType}`;
+  switch (key) {
+    case 'single_line_text->number':
+    case 'text->number': {
+      const n = parseFloat(String(value));
+      if (isNaN(n)) throw new Error(`Cannot convert "${value}" to number`);
+      return n;
+    }
+    case 'number->single_line_text':
+    case 'number->text':
+      return String(value);
+    case 'single_line_text->checkbox':
+    case 'text->checkbox': {
+      const s = String(value).toLowerCase().trim();
+      return s === 'true' || s === '1' || s === 'yes';
+    }
+    case 'checkbox->single_line_text':
+    case 'checkbox->text':
+      return value ? 'true' : 'false';
+    case 'date->single_line_text':
+    case 'date->text':
+      return new Date(value as string | number).toISOString();
+    case 'single_line_text->date':
+    case 'text->date': {
+      const d = new Date(String(value));
+      if (isNaN(d.getTime())) throw new Error(`Cannot parse "${value}" as date`);
+      return d.toISOString();
+    }
+    case 'number->date': {
+      const d = new Date(value as number);
+      if (isNaN(d.getTime())) throw new Error(`Cannot convert ${value} to date`);
+      return d.toISOString();
+    }
+    case 'date->number':
+      return new Date(value as string).getTime();
+    case 'number->checkbox':
+      return Boolean(value);
+    case 'checkbox->number':
+      return value ? 1 : 0;
+    default:
+      break;
+  }
+
+  if (toType === 'single_line_text' || toType === 'text') {
+    return String(value);
+  }
+
+  throw new Error(`Unsupported conversion from ${fromType} to ${toType}`);
+}
 
 async function bumpSchemaVersion(
   baseId: string,
@@ -68,6 +123,11 @@ const metadataService = {
       );
       const row = (await db.query('SELECT * FROM tp_bases WHERE id = $1', [id])).rows[0];
       await auditService.logEvent('create', 'base', id, createdBy, undefined, row, undefined);
+
+      await OrgMemberSyncService.syncOrgMembersToBase(id, orgId).catch(err =>
+        logger.warn('[MetadataService] Org member sync failed after createBase', { error: (err as Error).message })
+      );
+
       return (row ?? null) as Record<string, unknown> | null;
     } catch (e) {
       logger.error('[MetadataService] createBase failed', {
@@ -242,6 +302,64 @@ const metadataService = {
       if (!before) return false;
       const tableId = (before as { table_id?: string }).table_id;
       if (tableId) await assertNotGoverned(tableId);
+
+      // Cascade: keep field id in visible_field_ids; mark as missing in view config (degraded UI)
+      if (tableId) {
+        const fieldName = (before as { name?: string }).name ?? 'Unknown';
+        await db.query(
+          `UPDATE tp_views
+           SET config = jsonb_set(
+             COALESCE(config, '{}'::jsonb),
+             '{missing_fields}',
+             COALESCE(config->'missing_fields', '[]'::jsonb) || jsonb_build_array($1::text)
+           ),
+           updated_at = NOW()
+           WHERE table_id = $2 AND $1 = ANY(visible_field_ids)`,
+          [fieldId, tableId]
+        );
+        await db.query(
+          `UPDATE tp_views
+           SET config = jsonb_set(
+             COALESCE(config, '{}'::jsonb),
+             '{missing_field_names}',
+             COALESCE(config->'missing_field_names', '{}'::jsonb) || jsonb_build_object($1::text, $2::text)
+           ),
+           updated_at = NOW()
+           WHERE table_id = $3 AND $1 = ANY(visible_field_ids)`,
+          [fieldId, fieldName, tableId]
+        );
+      }
+
+      // Cascade: remove field references from form configs
+      if (tableId) {
+        try {
+          const formsResult = await db.query('SELECT id, config FROM tp_forms WHERE table_id = $1', [tableId]);
+          for (const form of formsResult.rows as Array<{ id: string; config: any }>) {
+            const config = form.config;
+            if (config && Array.isArray(config.fields)) {
+              const filtered = config.fields.filter((f: any) => f.fieldId !== fieldId && f.id !== fieldId);
+              if (filtered.length !== config.fields.length) {
+                await db.query(
+                  `UPDATE tp_forms SET config = jsonb_set(config, '{fields}', $2::jsonb), updated_at = NOW() WHERE id = $1`,
+                  [form.id, JSON.stringify(filtered)]
+                );
+              }
+            }
+          }
+        } catch (formErr) {
+          logger.warn('[MetadataService] deleteField form cascade failed', {
+            fieldId,
+            error: (formErr as Error).message,
+          });
+        }
+      }
+
+      // Cascade: clean up record links if this was a linkedRecord field
+      const fieldType = (before as { field_type?: string }).field_type;
+      if (fieldType === 'linkedRecord') {
+        await db.query('DELETE FROM tp_record_links WHERE from_field_id = $1', [fieldId]);
+      }
+
       await db.query('DELETE FROM tp_fields WHERE id = $1', [fieldId]);
       await auditService.logEvent(
         'delete',
@@ -250,7 +368,7 @@ const metadataService = {
         deletedBy,
         before,
         undefined,
-        undefined
+        { fieldName: (before as { name?: string }).name }
       );
       if (tableId) {
         const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
@@ -585,6 +703,11 @@ const metadataService = {
   ): Promise<any> {
     const db = getDatabase();
     try {
+      const viewLockRow = await db.query('SELECT locked, locked_by FROM tp_views WHERE id = $1', [viewId]);
+      if (viewLockRow.rows[0]?.locked) {
+        const lockedBy = (viewLockRow.rows[0] as { locked_by?: string }).locked_by;
+        throw new PermissionError(`View is locked${lockedBy ? ` by user ${lockedBy}` : ''}. Unlock it before editing.`);
+      }
       const before = (await db.query('SELECT * FROM tp_views WHERE id = $1', [viewId])).rows[0];
       if (!before) return null;
       const setClauses: string[] = [];
@@ -619,6 +742,154 @@ const metadataService = {
       return (after ?? null) as Record<string, unknown> | null;
     } catch (e) {
       logger.error('[MetadataService] updateView failed', { viewId, error: (e as Error).message });
+      throw e;
+    }
+  },
+
+  // ==========================================
+  // VIEW LOCKS
+  // ==========================================
+
+  async lockView(viewId: string, userId: string): Promise<void> {
+    const db = getDatabase();
+    await db.query(
+      'UPDATE tp_views SET locked = true, locked_by = $1, locked_at = NOW() WHERE id = $2',
+      [userId, viewId]
+    );
+  },
+
+  async unlockView(viewId: string, userId: string): Promise<void> {
+    const db = getDatabase();
+    const row = await db.query('SELECT locked_by FROM tp_views WHERE id = $1', [viewId]);
+    const lockedBy = (row.rows[0] as { locked_by?: string } | undefined)?.locked_by;
+    if (lockedBy && lockedBy !== userId) {
+      throw new PermissionError('Only the user who locked this view can unlock it.');
+    }
+    await db.query(
+      'UPDATE tp_views SET locked = false, locked_by = NULL, locked_at = NULL WHERE id = $1',
+      [viewId]
+    );
+  },
+
+  // ==========================================
+  // INTERFACE LOCKS
+  // ==========================================
+
+  async lockInterface(interfaceId: string, userId: string): Promise<void> {
+    const db = getDatabase();
+    await db.query(
+      'UPDATE tp_interfaces SET locked = true, locked_by = $1, locked_at = NOW() WHERE id = $2',
+      [userId, interfaceId]
+    );
+  },
+
+  async unlockInterface(interfaceId: string, userId: string): Promise<void> {
+    const db = getDatabase();
+    const row = await db.query('SELECT locked_by FROM tp_interfaces WHERE id = $1', [interfaceId]);
+    const lockedBy = (row.rows[0] as { locked_by?: string } | undefined)?.locked_by;
+    if (lockedBy && lockedBy !== userId) {
+      throw new PermissionError('Only the user who locked this interface can unlock it.');
+    }
+    await db.query(
+      'UPDATE tp_interfaces SET locked = false, locked_by = NULL, locked_at = NULL WHERE id = $1',
+      [interfaceId]
+    );
+  },
+
+  // ==========================================
+  // FIELD TYPE CHANGE
+  // ==========================================
+
+  async changeFieldType(
+    fieldId: string,
+    newType: string,
+    userId: string,
+    options?: Record<string, unknown>,
+    preview?: boolean
+  ): Promise<
+    | { compatible: number; incompatible: number; samples: Array<{ recordId: string; currentValue: unknown; convertedValue: unknown; error?: string }> }
+    | { success: boolean }
+  > {
+    const db = getDatabase();
+
+    const field = await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId]);
+    if (!field.rows[0]) throw new NotFoundError('field', fieldId);
+
+    const fieldRow = field.rows[0] as Record<string, unknown>;
+    const currentType = fieldRow.field_type as string;
+    const tableId = fieldRow.table_id as string;
+
+    const records = await db.query(
+      'SELECT id, data FROM tp_records WHERE table_id = $1 LIMIT 100',
+      [tableId]
+    );
+
+    const results = (records.rows as Array<{ id: string; data: Record<string, unknown> | null }>).map((r) => {
+      const val = r.data?.[fieldId];
+      try {
+        const converted = convertValue(val, currentType, newType);
+        return { recordId: r.id, currentValue: val, convertedValue: converted };
+      } catch (e) {
+        return { recordId: r.id, currentValue: val, convertedValue: null, error: (e as Error).message };
+      }
+    });
+
+    const compatible = results.filter((r) => !r.error).length;
+    const incompatible = results.filter((r) => r.error).length;
+
+    if (preview) {
+      return { compatible, incompatible, samples: results.slice(0, 10) };
+    }
+
+    await db.query('BEGIN');
+    try {
+      await db.query(
+        'UPDATE tp_fields SET field_type = $1, options = $2, updated_at = NOW() WHERE id = $3',
+        [newType, JSON.stringify(options || fieldRow.options || {}), fieldId]
+      );
+
+      for (const r of records.rows as Array<{ id: string; data: Record<string, unknown> | null }>) {
+        const val = r.data?.[fieldId];
+        try {
+          const converted = convertValue(val, currentType, newType);
+          if (converted !== val) {
+            const newData = { ...r.data, [fieldId]: converted };
+            await db.query(
+              'UPDATE tp_records SET data = $1, updated_at = NOW() WHERE id = $2',
+              [JSON.stringify(newData), r.id]
+            );
+          }
+        } catch {
+          const newData = { ...r.data, [fieldId]: null };
+          await db.query(
+            'UPDATE tp_records SET data = $1, updated_at = NOW() WHERE id = $2',
+            [JSON.stringify(newData), r.id]
+          );
+        }
+      }
+
+      await db.query(
+        'UPDATE tp_bases SET schema_version = schema_version + 1 WHERE id = (SELECT base_id FROM tp_tables WHERE id = $1)',
+        [tableId]
+      );
+
+      await db.query('COMMIT');
+
+      try {
+        await auditService.logEvent('update', 'field', fieldId, userId, undefined, undefined, {
+          action: 'field_type_changed',
+          from: currentType,
+          to: newType,
+          compatible,
+          incompatible,
+        });
+      } catch {
+        // audit is best-effort
+      }
+
+      return { success: true };
+    } catch (e) {
+      await db.query('ROLLBACK');
       throw e;
     }
   },

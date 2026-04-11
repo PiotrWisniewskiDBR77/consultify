@@ -5,7 +5,7 @@
  * Max 3 suggestions, disappear after 1 is clicked.
  */
 
-import { ChevronRight, Lightbulb, Target, Wrench } from 'lucide-react';
+import { ChevronRight, FileOutput, Lightbulb, Target, Wrench } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,13 +16,14 @@ export interface ChatSuggestion {
   id: string;
   label: string;
   action: NavigateAction;
-  type?: 'initiative' | 'tool' | 'results' | 'generic';
+  type?: 'initiative' | 'tool' | 'results' | 'outputs' | 'generic';
 }
 
 const SUGGESTION_ICONS: Record<string, React.ElementType> = {
   initiative: Target,
   tool: Wrench,
   results: Target,
+  outputs: FileOutput,
   generic: Lightbulb,
 };
 

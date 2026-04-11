@@ -44,12 +44,11 @@ describe('Sidebar menuConfig (L2)', () => {
     expect(partner.viewId).toBe(AppView.PARTNER_LANDING);
   });
 
-  it('builds SuperAdmin menu item with subitems', () => {
+  it('builds SuperAdmin as a launcher into the dedicated shell', () => {
     const superadmin = getSuperAdminMenuItem(t);
     expect(superadmin.id).toBe('SUPERADMIN');
-    expect(Array.isArray(superadmin.subItems)).toBe(true);
-    expect(superadmin.subItems?.length).toBeGreaterThanOrEqual(3);
-    expect(superadmin.subItems?.some((s) => s.viewId === AppView.SUPERADMIN_OVERVIEW)).toBe(true);
+    expect(superadmin.viewId).toBe(AppView.SUPERADMIN_CUSTOMERS);
+    expect(superadmin.subItems).toBeUndefined();
   });
 
   it('maps view IDs to display names (getViewName)', () => {
