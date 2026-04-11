@@ -541,6 +541,7 @@ export const AIContextBuilder = {
       metadata: resolvedContext?.metadata,
       evidence: resolvedContext?.evidence,
       signals: resolvedContext?.signals,
+      trust: resolvedContext?.trust,
       contextConflicts: resolvedContext?.conflicts,
       contextTimeline: resolvedContext?.timeline?.slice(0, 10),
       // Organization Memory: patterns and terminology for AI context

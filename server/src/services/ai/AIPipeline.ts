@@ -1268,15 +1268,51 @@ export class AIPipeline {
   private buildOrganizationSection(org: any): string {
     if (!org) return '';
 
+    const p = org.profile;
+    const s = org.strategic;
+    const sys = org.systems;
+    const ops = org.operations;
+
     const lines = [
       '## ORGANIZACJA',
-      `- Nazwa: ${org.organizationName || 'Nieznana'}`,
-      org.industry ? `- Branża: ${org.industry}` : '',
+      `- Nazwa: ${org.organizationName || p?.companyName || 'Nieznana'}`,
+      p?.organizationType ? `- Typ organizacji: ${p.organizationType}` : '',
+      org.industry || p?.industry ? `- Branża: ${org.industry || p?.industry}${p?.industrySubsector ? ` / ${p.industrySubsector}` : ''}` : '',
+      p?.companySize ? `- Skala: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} pracowników)` : ''}${p.annualRevenue ? `, przychód: ${p.annualRevenue}` : ''}` : '',
+      s?.growthStage ? `- Etap wzrostu: ${s.growthStage}` : '',
+      s?.competitivePosition ? `- Pozycja konkurencyjna: ${s.competitivePosition}` : '',
       `- Aktywne projekty: ${org.activeProjectCount || 0}`,
       `- Poziom dojrzałości PMO: ${org.pmoMaturityLevel || 'BASIC'}`,
     ];
 
-    // Inject organization terminology for consistent language
+    if (s?.priorities?.length > 0) {
+      lines.push(`- Priorytety strategiczne: ${s.priorities.join(', ')}`);
+    }
+    if (s?.mission) {
+      lines.push(`- Misja: ${s.mission}`);
+    }
+    if (sys?.stack?.length > 0) {
+      lines.push(`- Stack technologiczny: ${sys.stack.join(', ')}`);
+    }
+    if (sys?.coreSystems?.length > 0) {
+      lines.push(`- Systemy core: ${sys.coreSystems.join(', ')}`);
+    }
+    if (sys?.cloudAdoption) {
+      lines.push(`- Cloud: ${sys.cloudAdoption}`);
+    }
+    if (ops?.constraints?.length > 0) {
+      lines.push(`- Ograniczenia: ${ops.constraints.slice(0, 5).join(', ')}`);
+    }
+    if (s?.riskAppetite) {
+      lines.push(`- Apetyt na ryzyko: ${s.riskAppetite}`);
+    }
+    if (p?.revenueModel) {
+      lines.push(`- Model przychodowy: ${p.revenueModel}`);
+    }
+    if (ops?.deliveryModel) {
+      lines.push(`- Model dostarczania: ${ops.deliveryModel}`);
+    }
+
     if (org.terminology && Object.keys(org.terminology).length > 0) {
       lines.push('', '### Terminologia organizacji (używaj tych terminów):');
       for (const [term, definition] of Object.entries(org.terminology)) {
@@ -1284,7 +1320,6 @@ export class AIPipeline {
       }
     }
 
-    // Inject org-level best practices / patterns
     if (org.orgPatterns && org.orgPatterns.length > 0) {
       lines.push('', '### Wzorce organizacyjne (learned from past projects):');
       for (const p of org.orgPatterns.slice(0, 3)) {

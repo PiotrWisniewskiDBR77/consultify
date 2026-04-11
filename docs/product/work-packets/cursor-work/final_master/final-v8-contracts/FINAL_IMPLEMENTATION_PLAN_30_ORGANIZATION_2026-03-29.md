@@ -194,6 +194,89 @@ Versioning: bump `ORGANIZATION_CONTEXT_SCHEMA_VERSION` only via packet; downstre
 - Ryzyko: niejawne ownership boundaries (security/regulatory).
 - Decyzje: minimalny zestaw reuse fields i ich stabilność wersji.
 
+---
+
+## 11. P30-D — Organization Profile Evolution (Phase 2)
+
+**Date**: 2026-04-11
+**Status**: in_progress
+**Goal**: Evolve Organization module from manufacturing-centric prototype into a universal, AI-guided organization context workspace that serves any organization type.
+
+### 11.1 Problem statement
+
+1. **Split-brain**: `CompanyProfileModule` persists to localStorage only; canonical `OrganizationProfileForm` persists to P30 SSOT but lives in Admin Settings.
+2. **Manufacturing bias**: Operating Model section assumes factory/production — misfit for services, tech, public, nonprofit.
+3. **Taxonomy divergence**: Three different industry lists and company-size enums across surfaces.
+4. **Missing business clusters**: No revenue model, delivery model, core systems, funding model.
+5. **AI integration broken**: `deepThinkingOrchestrator` reads non-existent paths; `AIPipeline` serializes only name/industry into prompts.
+6. **Teresa absent**: No guided AI flow helps users complete their profile.
+
+### 11.2 New fields added to SSOT
+
+| Field | Claim path | Type | Purpose |
+| --- | --- | --- | --- |
+| `organization_type` | `profile.organizationType` | enum | Drives conditional UI sections and benchmark grouping |
+| `revenue_model` | `profile.revenueModel` | string | Financial analysis, valuation tools |
+| `delivery_model` | `operations.deliveryModel` | string | Project/initiative templates |
+| `core_systems` | `systems.coreSystems` | string[] | Integration suggestions, migration planning |
+| `founding_year` | `profile.foundingYear` | number | Maturity heuristics |
+
+### 11.3 Merged profile architecture
+
+- `CompanyProfileModule` replaced by unified `OrganizationProfileModule` persisting via API to P30 SSOT
+- Shows/hides sections based on `organization_type`
+- Teresa AI guidance bar prompts next-best-action for profile completion
+
+### 11.4 Conditional sections by organization type
+
+| Section | MANUFACTURING | SERVICES | TECHNOLOGY | PUBLIC | NONPROFIT |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| Production archetype / shifts / automation | yes | - | - | - | - |
+| Delivery model (project/managed/platform) | - | yes | yes | yes | - |
+| Revenue / funding model | - | yes | yes | yes | yes |
+| Core systems (ERP/CRM/MES/PLM) | yes | yes | yes | yes | - |
+| Universal (identity, strategy, digital, market, people, constraints) | yes | yes | yes | yes | yes |
+
+### 11.5 Teresa AI guided flow
+
+1. Welcome prompt when profile <30% complete
+2. Document extraction → field proposals (accept/reject per field)
+3. Completeness coaching with downstream value context
+4. Cross-validation warnings after save
+5. Downstream readiness indicators
+
+### 11.6 AI Pipeline enrichment
+
+`buildOrganizationSection` extended to serialize: org type, industry, subsector, scale, strategic priorities, mission, growth stage, competitive position, stack, core systems, cloud adoption, constraints, regulatory environment, risk appetite.
+
+### 11.7 Downstream integration fixes
+
+| Fix | File |
+| --- | --- |
+| `deepThinkingOrchestrator` path alignment | `server/src/services/ai/deepThinkingOrchestrator.ts` |
+| `aiContextBuilder` trust passthrough | `server/src/services/aiContextBuilder.ts` |
+| `AIPipeline` rich org section | `server/src/services/ai/AIPipeline.ts` |
+
+### 11.8 Acceptance checklist (P30-D)
+
+1. Single profile entry point in Organization > Profile
+2. All fields persist via API to P30 SSOT
+3. `organization_type` stored and drives conditional UI
+4. New claim paths registered in `ORGANIZATION_CONTEXT_CLAIM_PATHS`
+5. Teresa guidance bar visible when profile completeness < 80%
+6. `buildOrganizationSection` includes full SSOT profile
+7. `extractOrgContext` correctly maps to `ResolvedOrganizationContext`
+8. Unified taxonomy across all surfaces
+
+### 11.9 Implementation phases
+
+- **Phase 1**: org_type field, merge profiles, fix deepThinking + AIPipeline, Teresa guidance
+- **Phase 2**: Conditional sections, new fields, taxonomy unification
+- **Phase 3**: Document extraction, cross-validation, completeness coaching
+- **Phase 4**: contextPackBuilder org injection, full downstream audit
+
+---
+
 ## 10. Evidence ledger (fill after delivery)
 | Packet ID | Status | PR / commit | Tests (what + result) | Staging proof | Notes / known limits |
 | --- | --- | --- | --- | --- | --- |

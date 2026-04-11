@@ -152,14 +152,14 @@ async function extractOrgContext(
     const resolved = await orgContextService.buildResolvedContext(organizationId);
 
     return {
-      organizationName: resolved.organization.name || resolved.profile.companyName || undefined,
-      industry: resolved.profile.industry || undefined,
-      region: resolved.profile.location || undefined,
-      maturityLevel: resolved.operatingContext.digitalMaturity || undefined,
-      terminology: resolved.systems?.aiMemory?.terminology || undefined,
-      strategicPriorities: resolved.strategic.priorities || [],
-      openGaps: resolved.operatingContext.openGaps || [],
-      keyMetrics: resolved.operatingContext.keyMetrics || [],
+      organizationName: resolved.profile?.companyName || undefined,
+      industry: resolved.profile?.industry || undefined,
+      region: resolved.profile?.location || undefined,
+      maturityLevel: resolved.systems?.cloudAdoption || undefined,
+      terminology: undefined,
+      strategicPriorities: resolved.strategic?.priorities || [],
+      openGaps: (resolved.operations?.gaps || []).map((g: any) => g.description || g.title || JSON.stringify(g)),
+      keyMetrics: (resolved.operations?.keyMetrics || []).map((m: any) => m.name ? `${m.name}: ${m.value ?? ''}` : JSON.stringify(m)),
     };
   } catch (err: any) {
     logger.debug(`[DeepThinking] Org context extraction failed: ${err?.message}`);
