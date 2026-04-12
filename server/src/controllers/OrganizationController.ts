@@ -55,7 +55,14 @@ export class OrganizationController {
       const { getUserOrganizations } = await import('../services/organizationService.js');
       const orgs = await getUserOrganizations(userId);
 
-      res.json(orgs);
+      const currentOrgId = (req as any).organizationId;
+      const enriched = orgs.map((org) => ({
+        ...org,
+        is_current: org.id === currentOrgId,
+        access_type: org.role === 'CONSULTANT' ? 'CONSULTANT' : 'MEMBER',
+      }));
+
+      res.json({ organizations: enriched });
     }
   );
 

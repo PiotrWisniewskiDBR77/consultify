@@ -242,6 +242,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [connectorCatalog, setConnectorCatalog] = useState<ConnectorType[]>(CONNECTOR_CATALOG);
+  const [catalogNotice, setCatalogNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddIntegration, setShowAddIntegration] = useState(false);
   const [showAddWebhook, setShowAddWebhook] = useState(false);
@@ -274,11 +275,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
   const fetchCatalog = useCallback(async () => {
     try {
       const data = await Api.get('/superadmin/integrations/catalog');
-      if (data?.connectors?.length) {
-        setConnectorCatalog(data.connectors);
+      const payload = data?.data ?? data;
+      if (payload?.connectors?.length) {
+        setConnectorCatalog(payload.connectors);
+        setCatalogNotice(null);
       }
-    } catch {
-      // Fall back to hardcoded catalog
+    } catch (error) {
+      console.warn('[EnterpriseIntegrationsHub] Falling back to bundled connector catalog', error);
+      setCatalogNotice('Live connector catalog is unavailable. Showing bundled connector definitions.');
     }
   }, []);
 
@@ -289,7 +293,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       setLoading(false);
     };
     loadData();
-  }, [fetchIntegrations, fetchWebhooks]);
+  }, [fetchCatalog, fetchIntegrations, fetchWebhooks]);
 
   const handleSync = async (provider: string) => {
     try {
@@ -394,6 +398,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {catalogNotice && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {catalogNotice}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">

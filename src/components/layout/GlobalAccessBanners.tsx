@@ -10,14 +10,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import {
-  useIsDemo,
   useIsTrial,
   useIsTrialExpired,
   usePolicySnapshot,
 } from '../../contexts/AccessPolicyContext';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import DemoBanner from './DemoBanner';
 import TrialBanner from './TrialBanner';
 import TrialExpirationModal from './TrialExpirationModal';
 
@@ -33,7 +31,6 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
   onContactSales,
 }) => {
   const { snapshot, loading } = usePolicySnapshot();
-  const isDemo = useIsDemo();
   const isTrial = useIsTrial();
   const isTrialExpired = useIsTrialExpired();
   const isDemoMode = useAppStore((s) => s.isDemoMode);
@@ -49,7 +46,7 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
       !isTrial ||
       isTrialExpired ||
       trialWarningRecordedRef.current ||
-      snapshot.trialDaysLeft > 7
+      snapshot.warningLevel === 'none'
     ) {
       return;
     }
@@ -85,26 +82,58 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
     onContactSales?.();
   };
 
+  const handleBannerAction = () => {
+    const target = snapshot?.upgradeCtas?.urlOrRoute || '/settings?tab=billing';
+    const isManualAction =
+      snapshot?.posture === 'paid_manual_renewal_due' || snapshot?.posture === 'suspended';
+
+    if (isManualAction) {
+      if (onContactSales) {
+        onContactSales();
+        return;
+      }
+      window.location.assign(target);
+      return;
+    }
+
+    if (snapshot?.isDemo) {
+      if (onStartTrial) {
+        onStartTrial();
+        return;
+      }
+      window.location.assign(target);
+      return;
+    }
+
+    if (onUpgrade) {
+      onUpgrade();
+      return;
+    }
+    window.location.assign(target);
+  };
+
   if (loading || !snapshot) {
     return null;
   }
 
-  // PAID orgs see no banners unless user explicitly switched into demo mode.
-  if (snapshot.isPaid && !isDemoMode) {
+  const showPaymentBanner =
+    snapshot.posture === 'paid_past_due' ||
+    snapshot.posture === 'paid_canceling' ||
+    snapshot.posture === 'paid_manual_renewal_due' ||
+    snapshot.posture === 'suspended';
+
+  if (!showPaymentBanner && snapshot.isPaid && !isDemoMode) {
     return null;
   }
 
   return (
     <>
-      {/* Demo Banner — skip when DemoModeBanner already shows (toggle flow) */}
-      {(isDemo || isDemoMode) && <DemoBanner onStartTrialClick={onStartTrial || (() => {})} />}
-
       {/* Trial Banner */}
       {isTrial && !isTrialExpired && (
         <TrialBanner
           daysRemaining={snapshot.trialDaysLeft}
           warningLevel={snapshot.warningLevel}
-          onUpgradeClick={onUpgrade || (() => {})}
+          onUpgradeClick={handleBannerAction}
           usageToday={snapshot.usageToday}
           limits={snapshot.limits ?? undefined}
         />
@@ -115,7 +144,21 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
         <TrialBanner
           daysRemaining={0}
           warningLevel="expired"
-          onUpgradeClick={onUpgrade || (() => {})}
+          onUpgradeClick={handleBannerAction}
+        />
+      )}
+
+      {showPaymentBanner && !isTrial && (
+        <TrialBanner
+          daysRemaining={snapshot.trialDaysLeft}
+          warningLevel={
+            snapshot.posture === 'paid_manual_renewal_due' || snapshot.posture === 'paid_canceling'
+              ? 'warning'
+              : 'expired'
+          }
+          onUpgradeClick={handleBannerAction}
+          bannerText={snapshot.messages.bannerText}
+          actionLabel={snapshot.upgradeCtas?.primaryAction}
         />
       )}
 

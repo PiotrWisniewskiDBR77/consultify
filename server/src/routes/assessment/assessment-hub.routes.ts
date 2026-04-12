@@ -10,6 +10,7 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import logger from '../../utils/Logger.js';
+import { requireRequestOrganizationId } from '../../utils/requestOrganization.js';
 
 const router = Router();
 
@@ -115,7 +116,8 @@ router.use(demoContextMiddleware);
 router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     logger.info(`[AssessmentHub] Fetching assessments for org: ${organizationId}`);
 
@@ -180,7 +182,8 @@ router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { status, projectId } = req.query as { status?: string; projectId?: string };
 
     const assessments = await new Promise<any[]>((resolve, reject) => {
@@ -253,7 +256,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/canonical-index', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     const rows = await new Promise<any[]>((resolve, reject) => {
       db.all(
@@ -292,7 +296,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
     const { id } = req.params;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     const assessment = await new Promise<any>((resolve, reject) => {
       db.get(
@@ -354,7 +359,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { name, description, type } = req.body;
 
     const id = `assessment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -398,7 +404,8 @@ router.put('/:id/status', async (req: AuthRequest, res: Response) => {
     const db = getDatabase();
     const { id } = req.params;
     const { status } = req.body;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     await new Promise<void>((resolve, reject) => {
       db.run(
@@ -427,7 +434,8 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
     const { id } = req.params;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     await new Promise<void>((resolve, reject) => {
       db.run(

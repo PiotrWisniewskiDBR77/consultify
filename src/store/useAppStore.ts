@@ -165,6 +165,8 @@ export const useAppStore = create<AppState>()(
 
         // DemoSlice - persist demo mode state
         isDemoMode: state.isDemoMode,
+        demoSessionOrgId: state.demoSessionOrgId,
+        demoLocale: state.demoLocale,
         demoOrganization: state.demoOrganization,
       }),
     }

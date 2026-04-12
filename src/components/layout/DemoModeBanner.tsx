@@ -76,7 +76,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               <div className="hidden sm:flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
                 <span className="font-medium text-sm">
-                  {demoOrganization?.name || 'Atelier ToolToys'}
+                  {demoOrganization?.name || 'Atelier Toys'}
                 </span>
               </div>
 

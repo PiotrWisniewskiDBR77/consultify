@@ -115,7 +115,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser, o
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await Api.put('/api/settings/preferences/privacy', { preferences });
+      await Api.savePrivacyPreferences(preferences);
       setOriginalPreferences({ ...preferences });
       toast.success(t('settings.privacy.saved', 'Privacy settings saved'));
     } catch (error) {

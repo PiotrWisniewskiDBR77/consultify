@@ -125,7 +125,7 @@ export const CookieConsentBanner: React.FC = () => {
                       We use cookies to enhance your experience, analyze traffic, and personalize
                       content. You can customize your preferences or accept all cookies.{' '}
                       <a
-                        href="/cookies"
+                        href="/legal/cookies"
                         className="text-purple-600 dark:text-purple-400 hover:underline font-medium"
                       >
                         Learn more

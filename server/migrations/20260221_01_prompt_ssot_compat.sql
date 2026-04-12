@@ -36,4 +36,9 @@ BEGIN
     END IF;
 END $$;
 
-CREATE INDEX IF NOT EXISTS idx_prompt_blocks_code ON ai_prompt_blocks(code);
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ai_prompt_blocks') THEN
+        CREATE INDEX IF NOT EXISTS idx_prompt_blocks_code ON ai_prompt_blocks(code);
+    END IF;
+END $$;

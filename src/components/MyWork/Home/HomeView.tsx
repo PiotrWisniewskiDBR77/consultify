@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { useV8 } from '@/providers/V8Provider';
 import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { cn } from '@/lib/utils';
 import { V8ResultsApi } from '@/services/api/v8/results';
@@ -31,27 +32,36 @@ interface HomeViewProps {
 
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
   const { t, i18n } = useTranslation();
+  const { isV8Enabled } = useV8();
   const isPolish = i18n.language === 'pl';
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
   const { screen, blocks, layout, loading, error, refresh } = useHomeData(refreshTrigger);
-  const triageData = useRadarTriageData();
-  const roofSummary = useV8MyWorkRoofSummary();
+  const triageData = useRadarTriageData(undefined, isV8Enabled);
+  const roofSummary = useV8MyWorkRoofSummary(isV8Enabled);
   const [roofMetaOpen, setRoofMetaOpen] = useState(false);
 
   const navigate = useNavigate();
   const [recentInsights, setRecentInsights] = useState<V8InterviewInsight[]>([]);
   useEffect(() => {
+    if (!isV8Enabled) {
+      setRecentInsights([]);
+      return;
+    }
     V8InterviewApi.listInsights({ limit: 5 })
       .then((res) => setRecentInsights(res?.insights ?? []))
       .catch(() => setRecentInsights([]));
-  }, [refreshTrigger]);
+  }, [isV8Enabled, refreshTrigger]);
 
   const [kpiAlerts, setKpiAlerts] = useState<Array<{ signalId: string; kpiId: string; severity: string; description: string; createdAt: string; kpiName?: string }>>([]);
   useEffect(() => {
+    if (!isV8Enabled) {
+      setKpiAlerts([]);
+      return;
+    }
     V8ResultsApi.getWorkflowSignals()
       .then((res) => setKpiAlerts((res?.data ?? []).slice(0, 5)))
       .catch(() => setKpiAlerts([]));
-  }, [refreshTrigger]);
+  }, [isV8Enabled, refreshTrigger]);
 
   const alignedHomeBlocks = useMemo(() => {
     const homeBlocks = roofSummary.data?.homeBlocks;

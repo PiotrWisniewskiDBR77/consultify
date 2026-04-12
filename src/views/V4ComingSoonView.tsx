@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell,
+  Bot,
   Brain,
   Calendar,
   Check,
@@ -9,7 +10,6 @@ import {
   Globe,
   Handshake,
   Link2,
-  Mic,
   Shield,
   ShoppingCart,
   Sparkles,
@@ -66,10 +66,10 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
           'AI analizuje kontekst projektu, wcześniejsze decyzje i otwarte punkty, by wygenerować precyzyjną agendę jeszcze przed rozpoczęciem spotkania.',
       },
       {
-        icon: <Mic size={20} />,
-        title: 'Rejestracja na żywo',
+        icon: <Bot size={20} />,
+        title: 'Teresa — AI moderator spotkań',
         description:
-          'Transkrypcja w czasie rzeczywistym z automatycznym wykrywaniem decyzji, zadań i kluczowych wniosków podczas spotkań.',
+          'Teresa uczestniczy w spotkaniu jako konsultant AI, który zna kontekst Twojej organizacji, projektów i wcześniejszych ustaleń. Moderuje dyskusję, pilnuje agendy i na bieżąco podpowiada kluczowe dane i rekomendacje.',
       },
       {
         icon: <Target size={20} />,
@@ -322,7 +322,7 @@ export const V4ComingSoonView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-5xl px-6 py-8">
         {/* Success toast */}
         <AnimatePresence>
@@ -417,16 +417,10 @@ export const V4ComingSoonView: React.FC = () => {
         </motion.div>
 
         {/* Features Grid */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4"
-        >
-          {copy.features.map((feature, i) => (
-            <motion.div
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {copy.features.map((feature) => (
+            <div
               key={feature.title}
-              variants={fadeUp}
-              custom={i + 6}
               className="group rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 hover:border-slate-300 dark:hover:border-navy-600 transition-all duration-200 hover:shadow-sm"
             >
               <div
@@ -440,18 +434,12 @@ export const V4ComingSoonView: React.FC = () => {
               <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 {feature.description}
               </p>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Bottom Banner */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={11}
-          className="mt-6 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6"
-        >
+        <div className="mt-6 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className={`mt-0.5 shrink-0 ${accent.icon}`}>
@@ -469,7 +457,7 @@ export const V4ComingSoonView: React.FC = () => {
             </div>
             <CTAButton />
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

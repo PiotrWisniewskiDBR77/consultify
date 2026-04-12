@@ -1,23 +1,37 @@
 import {
+  Building2,
+  Check,
   ChevronDown,
+  ChevronUp,
   Cpu,
   CreditCard,
   Eye,
   FlaskConical,
   Languages,
+  Loader2,
   LogOut,
   Monitor,
   Moon,
   Sun,
   UserCircle,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDemo } from '../../hooks/useDemo';
 import { changeLanguage, normalizeLanguageCode, SUPPORTED_LANGUAGES } from '../../i18n';
+import { tokenService } from '../../services/tokenService';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
+
+interface OrgItem {
+  id: string;
+  name: string;
+  role: string;
+  access_type?: string;
+  is_current?: boolean;
+}
 
 interface UserProfileMenuProps {
   className?: string;
@@ -31,9 +45,15 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   const { currentUser, setCurrentView, logout, theme, toggleTheme, sessionMode, setSessionMode } =
     useAppStore();
   const { isDemoMode, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
+  const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
 
   const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [showOrgList, setShowOrgList] = useState(false);
+  const [orgs, setOrgs] = useState<OrgItem[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(false);
+  const [switchingOrgId, setSwitchingOrgId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close on click outside
@@ -41,6 +61,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setShowOrgList(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -49,9 +70,66 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     };
   }, []);
 
+  const fetchOrgs = useCallback(async () => {
+    if (orgsLoading || orgs.length > 0) return;
+    setOrgsLoading(true);
+    try {
+      const token = tokenService.getToken();
+      const res = await fetch('/api/organizations/current', {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const list: OrgItem[] = data.organizations || data || [];
+      setOrgs(list);
+    } catch {
+      // silent
+    } finally {
+      setOrgsLoading(false);
+    }
+  }, [orgsLoading, orgs.length]);
+
+  const handleSwitchOrg = useCallback(async (orgId: string, orgName: string) => {
+    setSwitchingOrgId(orgId);
+    try {
+      const token = tokenService.getToken();
+      const res = await fetch('/api/auth/switch-organization', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ organizationId: orgId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to switch');
+      }
+      const data = await res.json();
+      tokenService.saveTokens(data.token, data.refreshToken);
+      localStorage.setItem('consultify_current_org_id', orgId);
+      setCurrentOrganization({ id: data.organization.id, name: data.organization.name });
+      toast.success(`Switched to ${data.organization.name}`);
+      setTimeout(() => { window.location.href = window.location.pathname; }, 300);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to switch organization');
+      setSwitchingOrgId(null);
+    }
+  }, [setCurrentOrganization]);
+
   const handleNavigate = (view: AppView) => {
     setCurrentView(view);
     setIsOpen(false);
+  };
+
+  const handleLanguageChange = async (lang: string, event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    await changeLanguage(lang);
   };
 
   const handleLogout = () => {
@@ -64,6 +142,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   const initials =
     `${currentUser.firstName?.[0] || ''}${currentUser.lastName?.[0] || ''}`.toUpperCase();
+  const activeOrganizationName =
+    (isDemoMode ? demoOrganization?.name : currentOrganization?.name) || currentUser.companyName || 'Workspace';
+  const roleLabel = currentUser.role?.toLowerCase();
 
   return (
     <div className={`relative ${className}`} ref={menuRef}>
@@ -76,8 +157,10 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
             <div className="text-xs font-semibold text-navy-900 dark:text-white">
               {currentUser.firstName} {currentUser.lastName}
             </div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              {currentUser.companyName || currentUser.role}
+            <div className="flex items-center justify-end gap-1 text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider max-w-[220px]">
+              <span className="truncate">{roleLabel}</span>
+              <span>·</span>
+              <span className="truncate max-w-[140px]">{activeOrganizationName}</span>
             </div>
           </div>
         )}
@@ -127,9 +210,15 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                 <div className="text-xs text-slate-500 dark:text-slate-400 truncate mb-1">
                   {currentUser.email}
                 </div>
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize border border-purple-200 dark:border-purple-500/20">
-                  {currentUser.role?.toLowerCase()}
-                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 capitalize border border-purple-200 dark:border-purple-500/20">
+                    {roleLabel}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 max-w-full">
+                    <Building2 size={11} />
+                    <span className="truncate max-w-[150px]">{activeOrganizationName}</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -189,8 +278,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                   <button
                     key={lang}
                     onClick={(e) => {
-                      e.stopPropagation();
-                      changeLanguage(lang);
+                      void handleLanguageChange(lang, e);
                     }}
                     className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${
                       (normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en') ===
@@ -205,8 +293,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               </div>
             </div>
 
-            {/* Demo Mode Toggle - Only for regular users, NOT for SuperAdmin */}
-            {currentUser.role?.toUpperCase() !== 'SUPERADMIN' && currentUser.isDemo === true && (
+            {/* Demo entry - available for regular workspace users */}
+            {currentUser.role?.toUpperCase() !== 'SUPERADMIN' && (
               <div
                 className={`rounded-lg transition-colors ${isDemoMode ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
               >
@@ -215,7 +303,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     <FlaskConical size={16} className={isDemoMode ? 'text-indigo-500' : ''} />
                     <div>
                       <span className="font-medium">
-                        {t('settings.menu.demoMode', 'Tryb Demo')}
+                        {isDemoMode
+                          ? t('settings.menu.demoModeExit', 'Exit Demo')
+                          : t('settings.menu.demoMode', 'Open Demo')}
                       </span>
                       {isDemoMode && demoOrganization && (
                         <div className="text-[10px] text-indigo-500 dark:text-indigo-400 truncate max-w-[120px]">
@@ -225,9 +315,13 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
-                      toggleDemoMode();
+                      await toggleDemoMode(undefined, { source: 'profile_menu' });
+                      setIsOpen(false);
+                      setTimeout(() => {
+                        window.location.href = window.location.pathname;
+                      }, 450);
                     }}
                     disabled={isDemoLoading}
                     className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-50 ${
@@ -239,11 +333,11 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                       isDemoMode
                         ? t(
                             'settings.menu.demoModeOn',
-                            'Demo Mode włączony - przeglądasz dane Acme Digital Corp'
+                            'Demo mode is on - you are exploring Atelier Toys'
                           )
                         : t(
                             'settings.menu.demoModeOff',
-                            'Włącz Demo Mode aby zobaczyć przykładowe dane'
+                            'Open the Atelier Toys demo workspace'
                           )
                     }
                   >
@@ -260,7 +354,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                 </div>
                 {isDemoMode && (
                   <div className="px-2 pb-1.5 text-[10px] text-indigo-600 dark:text-indigo-400">
-                    ⚡ Dane demo - tylko do odczytu
+                    {t('settings.menu.demoReadOnly', 'Demo data - read only')}
                   </div>
                 )}
               </div>
@@ -290,6 +384,95 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               <Cpu size={16} />
               {t('settings.menu.aiConfig', 'AI Configuration')}
             </button>
+
+            {/* ── Switch Organization ── */}
+            <div className="my-1 border-t border-slate-100 dark:border-navy-700 opacity-50"></div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!showOrgList) fetchOrgs();
+                setShowOrgList(!showOrgList);
+              }}
+              className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between rounded-lg transition-colors ${
+                showOrgList
+                  ? 'bg-purple-50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-300'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Building2 size={16} />
+                {t('settings.menu.switchOrg', 'Switch Organization')}
+              </div>
+              {showOrgList ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+
+            {/* Organization List (inline expand) */}
+            {showOrgList && (
+              <div className="mx-1 mb-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/[0.02] overflow-hidden">
+                {orgsLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 size={16} className="animate-spin text-slate-400" />
+                    <span className="ml-2 text-xs text-slate-400">{t('common.loading', 'Loading...')}</span>
+                  </div>
+                ) : orgs.length === 0 ? (
+                  <div className="py-3 px-3 text-xs text-slate-400 dark:text-slate-500 text-center">
+                    {t('common.noOrganizations', 'No organizations found')}
+                  </div>
+                ) : (
+                  <div className="max-h-52 overflow-y-auto py-1">
+                    {orgs.map((org) => {
+                      const isCurrent = org.is_current || org.id === currentUser?.organizationId;
+                      const isSwitching = switchingOrgId === org.id;
+                      return (
+                        <button
+                          key={org.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isCurrent && !switchingOrgId) {
+                              handleSwitchOrg(org.id, org.name);
+                            }
+                          }}
+                          disabled={!!switchingOrgId}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors
+                            ${isCurrent
+                              ? 'bg-purple-100/60 dark:bg-purple-900/20'
+                              : 'hover:bg-white dark:hover:bg-white/5'}
+                            disabled:opacity-50`}
+                        >
+                          <div className="w-4 shrink-0 flex items-center justify-center">
+                            {isSwitching ? (
+                              <Loader2 size={13} className="animate-spin text-purple-500" />
+                            ) : isCurrent ? (
+                              <Check size={14} className="text-purple-500" />
+                            ) : null}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-sm truncate ${isCurrent ? 'font-semibold text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                              {org.name}
+                            </div>
+                          </div>
+
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 ${
+                              org.role === 'OWNER'
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
+                                : org.role === 'ADMIN'
+                                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
+                                  : org.role === 'CONSULTANT'
+                                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
+                                    : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20'
+                            }`}
+                          >
+                            {org.role}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="my-1 border-t border-slate-100 dark:border-navy-700 opacity-50"></div>
 

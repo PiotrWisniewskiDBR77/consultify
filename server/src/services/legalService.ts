@@ -22,7 +22,10 @@ export type LegalDocType =
   | 'DPA'
   | 'SUBSCRIPTION'
   | 'SLA'
-  | 'REFUNDS';
+  | 'REFUND'
+  | 'SECURITY'
+  | 'CUSTOMER_SECURITY'
+  | 'SUBPROCESSORS';
 
 export const REQUIRED_DOC_TYPES: LegalDocType[] = ['TOS', 'PRIVACY'];
 export const REQUIRED_IF_AI: LegalDocType[] = ['AI_POLICY', 'AUP'];

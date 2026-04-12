@@ -13,6 +13,14 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+const ADMIN_ROLES = new Set([
+  'owner',
+  'admin',
+  'administrator',
+  'superadmin',
+  'super_admin',
+]);
+
 const notConfigured = (res: Response) =>
   res.status(503).json({
     statusCode: 503,
@@ -130,9 +138,27 @@ router.post(
       const { trialId } = req.params;
       const { newOrgName } = req.body;
       const userId = req.user?.id;
+      const requesterOrgId = req.user?.organizationId;
+      const normalizedRole = String(req.user?.role || '')
+        .trim()
+        .toLowerCase();
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (!requesterOrgId || requesterOrgId !== trialId) {
+        return res.status(403).json({
+          error: 'You can only convert the active organization trial.',
+          errorCode: 'TRIAL_SCOPE_MISMATCH',
+        });
+      }
+
+      if (!ADMIN_ROLES.has(normalizedRole)) {
+        return res.status(403).json({
+          error: 'Only organization admins can convert a trial.',
+          errorCode: 'TRIAL_CONVERSION_FORBIDDEN',
+        });
       }
 
       if (!newOrgName) {

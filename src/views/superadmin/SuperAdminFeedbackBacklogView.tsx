@@ -22,6 +22,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<FeedbackBacklogTask[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState<string>('ALL');
 
@@ -29,12 +30,16 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
     let mounted = true;
     (async () => {
       setLoading(true);
+      setError(null);
       try {
         const data = await Api.getFeedbackBacklogTasks(300);
         if (!mounted) return;
         setTasks((data || []) as FeedbackBacklogTask[]);
       } catch (e) {
-        // silent fail for superadmin dashboards
+        if (!mounted) return;
+        console.error('[SuperAdminFeedbackBacklogView] Failed to load backlog tasks', e);
+        setTasks([]);
+        setError('Feedback backlog is temporarily unavailable.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -118,6 +123,12 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
           <option value="low">{t('common.priority.low', 'Low')}</option>
         </select>
       </div>
+
+      {error && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 py-8">

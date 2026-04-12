@@ -137,12 +137,13 @@ export const WhitelabelStudioView: React.FC = () => {
     try {
       // Use the branding list endpoint to get all data at once
       const result = await Api.get('/branding');
+      const payload = result?.data ?? result;
 
       // Get all organizations
       const orgs = await Api.getOrganizations();
 
       // Map branding to organizations
-      const brandingMap = new Map((result.brandings || []).map((b: any) => [b.organizationId, b]));
+      const brandingMap = new Map((payload.brandings || []).map((b: any) => [b.organizationId, b]));
       const orgsWithBranding = orgs.map((org: any) => ({
         ...org,
         hasBranding: brandingMap.has(org.id),
@@ -163,8 +164,9 @@ export const WhitelabelStudioView: React.FC = () => {
   const fetchBranding = async (orgId: string) => {
     try {
       const result = await Api.get(`/branding/${orgId}`);
-      if (result.branding) {
-        setBranding({ ...DEFAULT_BRANDING, ...result.branding, organizationId: orgId });
+      const payload = result?.data ?? result;
+      if (payload.branding) {
+        setBranding({ ...DEFAULT_BRANDING, ...payload.branding, organizationId: orgId });
       } else {
         setBranding({ ...DEFAULT_BRANDING, organizationId: orgId });
       }

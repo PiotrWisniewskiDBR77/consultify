@@ -13,6 +13,7 @@ import { AIProvider } from '../contexts/AIContext';
 import { TeresaVoiceProvider } from '../contexts/TeresaVoiceContext';
 import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
 import { HelpProvider } from '../contexts/HelpContext';
+import { OrgProvider } from '../contexts/OrgContext';
 import { TrialProvider } from '../contexts/TrialContext';
 import { useAppStore } from '../store/useAppStore';
 
@@ -70,13 +71,15 @@ interface AppProvidersProps {
 
 const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <V8Provider>
-    <TrialProvider>
+    <OrgProvider>
       <AccessPolicyProvider>
-        <AIProvider>
-          <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
-        </AIProvider>
+        <TrialProvider>
+          <AIProvider>
+            <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
+          </AIProvider>
+        </TrialProvider>
       </AccessPolicyProvider>
-    </TrialProvider>
+    </OrgProvider>
   </V8Provider>
 );
 
@@ -91,7 +94,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <ThemeSync />
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <FeatureFlagsProvider>
+          <FeatureFlagsProvider showDevTools={false}>
             <AutoSaveProvider>
               <TourProvider>
                 <HelpProvider>

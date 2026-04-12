@@ -1,20 +1,10 @@
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Brain,
-  Briefcase,
-  Building2,
-  Check,
-  User,
-} from 'lucide-react';
+import { AlertCircle, ArrowRight, Building2, Check, Globe2, ShieldCheck, User } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
-import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
@@ -40,7 +30,6 @@ type OrgUserRole = 'EXECUTIVE' | 'DIRECTOR' | 'MANAGER' | 'SPECIALIST' | 'CONSUL
 type CompanySize = '1-10' | '11-50' | '51-200' | '201-1000' | '1000+' | null;
 
 interface OrgSetupState {
-  step: 1 | 2 | 3 | 4;
   orgName: string;
   domain: string;
   country: string;
@@ -108,33 +97,82 @@ const USER_ROLES = [
   },
 ];
 
+const PERSONAL_EMAIL_DOMAINS = new Set([
+  'gmail.com',
+  'googlemail.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'icloud.com',
+  'me.com',
+  'yahoo.com',
+  'proton.me',
+  'protonmail.com',
+  'wp.pl',
+  'o2.pl',
+  'interia.pl',
+]);
+
+function normalizeDomain(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .split('/')[0];
+}
+
+function getBusinessDomain(email?: string | null): string {
+  const domain = normalizeDomain(email?.split('@')[1]);
+  if (!domain || PERSONAL_EMAIL_DOMAINS.has(domain)) return '';
+  return domain;
+}
+
+function humanizeOrgNameFromDomain(domain: string): string {
+  if (!domain) return '';
+  const root = domain.split('.')[0] || '';
+  if (!root) return '';
+  return root
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 export const OrgSetupWizard: React.FC = () => {
   const { setCurrentView, currentUser, currentOrganization } = useAppStore();
+  const suggestedDomain = normalizeDomain(
+    currentOrganization?.name ? '' : getBusinessDomain(currentUser?.email)
+  );
+  const suggestedOrgName =
+    currentOrganization?.name ||
+    currentUser?.companyName ||
+    humanizeOrgNameFromDomain(suggestedDomain);
 
   const handleSkipSetup = async () => {
     try {
       await Api.post('/onboarding/skip', {});
     } catch {
       // Fallback: try direct org update
-      const orgId = (currentOrganization as any)?.id;
+      const orgId = currentOrganization?.id;
       if (orgId) {
-        await Api.put(`/organizations/${orgId}`, { onboardingStatus: 'ORG_SETUP_COMPLETED' }).catch(
-          () => {}
-        );
+        await Api.put(`/organizations/${orgId}`, {
+          onboardingStatus: 'ORG_SETUP_COMPLETED',
+        }).catch(() => undefined);
       }
     }
     setCurrentView(AppView.AI_CHAT);
   };
 
   const [state, setState] = useState<OrgSetupState>({
-    step: 1,
-    orgName: '',
-    domain: '',
-    country: '',
+    orgName: suggestedOrgName,
+    domain: suggestedDomain,
+    country: currentUser?.country || '',
     vatNumber: '',
     userRole: null,
-    userTitle: '',
-    phone: '',
+    userTitle: currentUser?.title || currentUser?.jobTitle || '',
+    phone: currentUser?.phone || '',
     orgType: null,
     industry: '',
     companySize: null,
@@ -146,43 +184,10 @@ export const OrgSetupWizard: React.FC = () => {
     setState((prev) => ({ ...prev, ...updates }));
   };
 
-  const canProceed = (): boolean => {
-    switch (state.step) {
-      case 1:
-        return (
-          state.orgName.trim().length >= 3 &&
-          state.country !== '' &&
-          state.domain.trim().length >= 3
-        );
-      case 2:
-        return (
-          state.userRole !== null &&
-          state.userTitle.trim().length >= 2 &&
-          state.phone.trim().length >= 6
-        );
-      case 3:
-        return state.orgType !== null && state.industry !== '' && state.companySize !== null;
-      case 4:
-        return state.memoryConsent === true;
-      default:
-        return false;
-    }
-  };
-
-  const handleNext = () => {
-    if (state.step < 4 && canProceed()) {
-      updateState({ step: (state.step + 1) as 1 | 2 | 3 | 4 });
-    }
-  };
-
-  const handleBack = () => {
-    if (state.step > 1) {
-      updateState({ step: (state.step - 1) as 1 | 2 | 3 | 4 });
-    }
-  };
+  const canSubmit = state.orgName.trim().length >= 2 && state.memoryConsent;
 
   const handleCreateOrganization = async () => {
-    if (!canProceed()) return;
+    if (!canSubmit) return;
 
     updateState({ isSubmitting: true });
 
@@ -203,23 +208,21 @@ export const OrgSetupWizard: React.FC = () => {
       });
 
       if (org?.id) {
-        // Persist required user profile info for Trial
         try {
-          if (currentUser?.id) {
+          if (currentUser?.id && (state.userTitle.trim() || state.phone.trim())) {
             await Api.put(`/users/${currentUser.id}`, {
-              title: state.userTitle,
-              phone: state.phone,
+              title: state.userTitle.trim() || undefined,
+              phone: state.phone.trim() || undefined,
             });
           }
         } catch {
-          // non-blocking
+          // Non-blocking: organization setup is more important than profile enrichment.
         }
 
-        // Mark org setup completed (used for gating)
         try {
           await Api.put(`/organizations/${org.id}`, { onboardingStatus: 'ORG_SETUP_COMPLETED' });
         } catch {
-          // non-blocking
+          // Non-blocking: the main organization row already exists.
         }
 
         toast.success('Organizacja utworzona. Dane Trial uzupełnione.');
@@ -233,426 +236,291 @@ export const OrgSetupWizard: React.FC = () => {
         });
         setCurrentView(AppView.ONBOARDING_WIZARD); // Move to Phase E
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Nie udało się utworzyć organizacji');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Nie udało się utworzyć organizacji';
+      toast.error(message);
     } finally {
       updateState({ isSubmitting: false });
     }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-xl">
-        {/* Progress Indicator */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center">
-                <div
-                  className={`
-                                    w-10 h-10 rounded-full flex items-center justify-center font-semibold
-                                    ${
-                                      state.step === step
-                                        ? 'bg-purple-600 text-white'
-                                        : state.step > step
-                                          ? 'bg-green-500 text-white'
-                                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                                    }
-                                `}
-                >
-                  {state.step > step ? <Check size={18} /> : step}
-                </div>
-                {step < 4 && (
-                  <div
-                    className={`w-16 h-1 mx-2 ${state.step > step ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}`}
+    <div className="min-h-screen bg-white dark:bg-navy-950 px-6 py-10">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-900/90">
+          <div className="border-b border-slate-200 px-6 py-6 dark:border-navy-700 sm:px-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-300">
+              <Building2 size={14} />
+              Nowa organizacja
+            </div>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 dark:text-white">
+              Utwórz przestrzeń dla swojego zespołu
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+              Zacznij od nazwy. Resztę możesz doprecyzować teraz albo później w ustawieniach
+              organizacji.
+            </p>
+          </div>
+
+          <div className="space-y-6 px-6 py-6 sm:px-8 sm:py-8">
+            <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-700 dark:border-navy-700 dark:bg-navy-950/60 dark:text-slate-300">
+              <div className="flex items-start gap-3">
+                <Check size={16} className="mt-0.5 shrink-0 text-emerald-500" />
+                <span>Tworzysz wspólną przestrzeń dla decyzji, wiedzy i pracy zespołu.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <Globe2 size={16} className="mt-0.5 shrink-0 text-purple-500" />
+                <span>Domena, kraj i branża pomagają ustawić sensowny kontekst od startu.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <User size={16} className="mt-0.5 shrink-0 text-sky-500" />
+                <span>Członków zespołu i dodatkowe ustawienia dodasz później.</span>
+              </div>
+            </div>
+
+            <section className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Nazwa organizacji
+                </label>
+                <input
+                  type="text"
+                  value={state.orgName}
+                  onChange={(e) => updateState({ orgName: e.target.value })}
+                  placeholder='Np. "VTS Group" lub "PMO Europa"'
+                  className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-lg text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  autoFocus
+                />
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  To jedyne pole wymagane na start.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Domena lub strona www
+                  </label>
+                  <input
+                    type="text"
+                    value={state.domain}
+                    onChange={(e) => updateState({ domain: normalizeDomain(e.target.value) })}
+                    placeholder="np. vtsgroup.com"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   />
-                )}
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-            Krok {state.step} z 4
-          </p>
-        </div>
-
-        <OrganizationV8CanonPanel compact className="mb-8" />
-
-        {/* Step 1: Organization Name */}
-        {state.step === 1 && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <Building2 className="w-12 h-12 mx-auto mb-4 text-purple-600" />
-              <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-                Nazwa Twojej organizacji
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400">
-                To jest nazwa przestrzeni decyzyjnej, którą tworzysz. Będzie widoczna dla wszystkich
-                członków zespołu.
-              </p>
-            </div>
-
-            <div>
-              <input
-                type="text"
-                value={state.orgName}
-                onChange={(e) => updateState({ orgName: e.target.value })}
-                placeholder=""
-                className="
-                                    w-full px-4 py-3 text-lg
-                                    border-2 border-slate-200 dark:border-slate-700
-                                    rounded-lg bg-white dark:bg-navy-900
-                                    text-navy-900 dark:text-white
-                                    focus:border-purple-500 focus:outline-none
-                                    transition-colors
-                                "
-                autoFocus
-              />
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                Np. "Acme Corporation" lub "Dział Strategii — Warszawa"
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Country
-                </label>
-                <select
-                  value={state.country}
-                  onChange={(e) => updateState({ country: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
-                >
-                  <option value="">Select…</option>
-                  {COUNTRIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Company domain / website
-                </label>
-                <input
-                  type="text"
-                  value={state.domain}
-                  onChange={(e) => updateState({ domain: e.target.value })}
-                  placeholder="e.g. dbr77.com"
-                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                VAT number (optional)
-              </label>
-              <input
-                type="text"
-                value={state.vatNumber}
-                onChange={(e) => updateState({ vatNumber: e.target.value })}
-                placeholder="e.g. PL1234567890"
-                className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: User Role */}
-        {state.step === 2 && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <User className="w-12 h-12 mx-auto mb-4 text-purple-600" />
-              <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-                Twoja rola w organizacji
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400">
-                To, jak myślisz o decyzjach, wpływa na to, jak system Cię wspiera.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Your title
-                </label>
-                <input
-                  type="text"
-                  value={state.userTitle}
-                  onChange={(e) => updateState({ userTitle: e.target.value })}
-                  placeholder="e.g. PMO Lead"
-                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Phone
-                </label>
-                <input
-                  type="tel"
-                  value={state.phone}
-                  onChange={(e) => updateState({ phone: e.target.value })}
-                  placeholder="+48 123 456 789"
-                  className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {USER_ROLES.map((role) => (
-                <button
-                  key={role.value}
-                  onClick={() => updateState({ userRole: role.value })}
-                  className={`
-                                        w-full p-4 text-left rounded-lg border-2 transition-all
-                                        ${
-                                          state.userRole === role.value
-                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                                        }
-                                    `}
-                >
-                  <div className="font-semibold text-navy-900 dark:text-white">{role.label}</div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {role.description}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Organization Context */}
-        {state.step === 3 && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <Briefcase className="w-12 h-12 mx-auto mb-4 text-purple-600" />
-              <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-                Kontekst organizacji
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400">
-                To pomaga systemowi rozumieć środowisko Twoich decyzji.
-              </p>
-            </div>
-
-            {/* Org Type */}
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Typ organizacji
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => updateState({ orgType: 'OPERATING' })}
-                  className={`
-                                        p-4 text-center rounded-lg border-2 transition-all
-                                        ${
-                                          state.orgType === 'OPERATING'
-                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                            : 'border-slate-200 dark:border-slate-700'
-                                        }
-                                    `}
-                >
-                  <div className="font-semibold text-navy-900 dark:text-white">Firma</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Podejmujemy decyzje dla siebie
-                  </div>
-                </button>
-                <button
-                  onClick={() => updateState({ orgType: 'CONSULTING' })}
-                  className={`
-                                        p-4 text-center rounded-lg border-2 transition-all
-                                        ${
-                                          state.orgType === 'CONSULTING'
-                                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                            : 'border-slate-200 dark:border-slate-700'
-                                        }
-                                    `}
-                >
-                  <div className="font-semibold text-navy-900 dark:text-white">Konsulting</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Pomagamy innym podejmować decyzje
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Industry */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Główna branża
-              </label>
-              <div className="space-y-2">
-                {INDUSTRIES.map((ind) => (
-                  <button
-                    key={ind.value}
-                    onClick={() => updateState({ industry: ind.value })}
-                    className={`
-                                            w-full p-3 text-left rounded-lg border-2 transition-all
-                                            ${
-                                              state.industry === ind.value
-                                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                                : 'border-slate-200 dark:border-slate-700'
-                                            }
-                                        `}
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Kraj
+                  </label>
+                  <select
+                    value={state.country}
+                    onChange={(e) => updateState({ country: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
                   >
-                    <span className="text-navy-900 dark:text-white">{ind.label}</span>
-                  </button>
-                ))}
+                    <option value="">Wybierz lub pomiń</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </div>
+            </section>
 
-            {/* Company size */}
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Wielkość organizacji
-              </label>
-              <select
-                value={state.companySize || ''}
-                onChange={(e) =>
-                  updateState({ companySize: (e.target.value as CompanySize) || null })
-                }
-                className="
-                                    w-full px-4 py-3
-                                    border-2 border-slate-200 dark:border-slate-700
-                                    rounded-lg bg-white dark:bg-navy-900
-                                    text-navy-900 dark:text-white
-                                "
-              >
-                <option value="">Wybierz...</option>
-                {COMPANY_SIZES.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
+            <details className="group rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/30">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900 dark:text-white">
+                Doprecyzuj teraz lub zrób to później
+                <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
+                  rola, branża, skala, VAT
+                </span>
+              </summary>
 
-        {/* Step 4: Memory Activation */}
-        {state.step === 4 && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <Brain className="w-12 h-12 mx-auto mb-4 text-purple-600" />
-              <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-                Aktywacja pamięci systemu
-              </h1>
-            </div>
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Twoje stanowisko
+                  </label>
+                  <input
+                    type="text"
+                    value={state.userTitle}
+                    onChange={(e) => updateState({ userTitle: e.target.value })}
+                    placeholder="np. CFO, PMO Lead"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={state.phone}
+                    onChange={(e) => updateState({ phone: e.target.value })}
+                    placeholder="+48 123 456 789"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Twoja rola
+                  </label>
+                  <select
+                    value={state.userRole || ''}
+                    onChange={(e) =>
+                      updateState({ userRole: (e.target.value as OrgUserRole) || null })
+                    }
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  >
+                    <option value="">Nie teraz</option>
+                    {USER_ROLES.map((role) => (
+                      <option key={role.value} value={role.value || ''}>
+                        {role.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Typ organizacji
+                  </label>
+                  <select
+                    value={state.orgType || ''}
+                    onChange={(e) => updateState({ orgType: (e.target.value as OrgType) || null })}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  >
+                    <option value="">Nie teraz</option>
+                    <option value="OPERATING">Firma operacyjna</option>
+                    <option value="CONSULTING">Konsulting / advisory</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Branża
+                  </label>
+                  <select
+                    value={state.industry}
+                    onChange={(e) => updateState({ industry: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  >
+                    <option value="">Nie teraz</option>
+                    {INDUSTRIES.map((ind) => (
+                      <option key={ind.value} value={ind.value}>
+                        {ind.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Wielkość organizacji
+                  </label>
+                  <select
+                    value={state.companySize || ''}
+                    onChange={(e) =>
+                      updateState({ companySize: (e.target.value as CompanySize) || null })
+                    }
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  >
+                    <option value="">Nie teraz</option>
+                    {COMPANY_SIZES.map((size) => (
+                      <option key={size.value} value={size.value}>
+                        {size.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    NIP / VAT
+                  </label>
+                  <input
+                    type="text"
+                    value={state.vatNumber}
+                    onChange={(e) => updateState({ vatNumber: e.target.value })}
+                    placeholder="np. LU12345678 lub PL1234567890"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-navy-900 outline-none transition-colors focus:border-purple-500 dark:border-navy-700 dark:bg-navy-950 dark:text-white"
+                  />
+                </div>
+              </div>
+            </details>
 
-            <div className="bg-slate-50 dark:bg-navy-900 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-              <p className="text-slate-700 dark:text-slate-300 mb-4">
-                Od tego momentu system będzie pamiętał:
-              </p>
-              <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-                <li className="flex items-start gap-2">
-                  <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
-                  <span>Kontekst Twojej organizacji</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
-                  <span>Decyzje i dyskusje</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
-                  <span>Odkryte wnioski i wzorce</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
-                  <span>Perspektywy i stanowiska zespołu</span>
-                </li>
-              </ul>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-                Tworzy to ciągłość w procesie decyzyjnym. Pamięć należy do organizacji, nie do osób.
-              </p>
-            </div>
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-navy-700 dark:bg-navy-950/60">
+              <div className="flex items-start gap-3">
+                <ShieldCheck
+                  className="mt-0.5 shrink-0 text-purple-600 dark:text-purple-300"
+                  size={20}
+                />
+                <div>
+                  <h2 className="font-semibold text-slate-900 dark:text-white">
+                    Pamięć organizacji
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    System będzie zapamiętywał kontekst organizacji, ustalenia i wnioski zespołu,
+                    żeby kolejne interakcje miały ciągłość.
+                  </p>
+                </div>
+              </div>
 
-            <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="mt-4 flex cursor-pointer items-start gap-3">
                 <input
                   type="checkbox"
                   checked={state.memoryConsent}
                   onChange={(e) => updateState({ memoryConsent: e.target.checked })}
-                  className="mt-1 w-5 h-5 rounded border-slate-300 dark:border-navy-700 text-purple-600 focus:ring-purple-500"
+                  className="mt-1 h-5 w-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-navy-700"
                 />
-                <span className="text-slate-700 dark:text-slate-300">
-                  Rozumiem, że system będzie pamiętał naszą pracę
+                <span className="text-sm text-slate-700 dark:text-slate-300">
+                  Rozumiem i akceptuję, że pamięć pracy należy do organizacji, a nie do pojedynczej
+                  osoby.
                 </span>
               </label>
-            </div>
 
-            {!state.memoryConsent && (
-              <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400 text-sm">
-                <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                <span>Zgoda na pamięć systemu jest wymagana, aby kontynuować.</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-12">
-          {state.step > 1 ? (
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <ArrowLeft size={18} />
-              <span>Wstecz</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleSkipSetup}
-              className="text-sm text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline underline-offset-2 transition-colors"
-            >
-              Pomiń konfigurację
-            </button>
-          )}
-
-          {state.step < 4 ? (
-            <button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className={`
-                                flex items-center gap-2 px-6 py-3 rounded-lg font-semibold
-                                ${
-                                  canProceed()
-                                    ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                }
-                                transition-colors
-                            `}
-            >
-              <span>Dalej</span>
-              <ArrowRight size={18} />
-            </button>
-          ) : (
-            <button
-              onClick={handleCreateOrganization}
-              disabled={!canProceed() || state.isSubmitting}
-              className={`
-                                flex items-center gap-2 px-6 py-3 rounded-lg font-semibold
-                                ${
-                                  canProceed() && !state.isSubmitting
-                                    ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                }
-                                transition-colors
-                            `}
-            >
-              {state.isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Tworzenie...</span>
-                </>
-              ) : (
-                <>
-                  <span>Aktywuj organizację</span>
-                  <Check size={18} />
-                </>
+              {!state.memoryConsent && (
+                <div className="mt-3 flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <span>
+                    Potwierdzenie pamięci organizacji jest wymagane, aby utworzyć workspace.
+                  </span>
+                </div>
               )}
-            </button>
-          )}
+            </section>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-navy-700">
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                Wszystko to zmienisz później w ustawieniach organizacji.
+              </div>
+              <div className="flex items-center justify-between gap-3 sm:justify-end">
+                <button
+                  onClick={handleSkipSetup}
+                  className="text-sm text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                >
+                  Pomiń konfigurację
+                </button>
+                <button
+                  onClick={handleCreateOrganization}
+                  disabled={!canSubmit || state.isSubmitting}
+                  className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 font-semibold transition-colors ${
+                    canSubmit && !state.isSubmitting
+                      ? 'bg-purple-600 text-white hover:bg-purple-500'
+                      : 'cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
+                  }`}
+                >
+                  {state.isSubmitting ? (
+                    <>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span>Tworzenie...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Utwórz organizację</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

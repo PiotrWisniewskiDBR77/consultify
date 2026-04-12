@@ -41,7 +41,8 @@
     "select": "اختر",
     "connected": "متصل",
     "comingSoon": "قريبًا",
-    "root": "الجذر"
+    "root": "الجذر",
+    "noOrganizations": "لم يتم العثور على مؤسسات"
   },
   "contextBadge": {
     "aiSees": "يرى الذكاء الاصطناعي",
@@ -1282,6 +1283,20 @@
     }
   },
   "settings": {
+    "menu": {
+      "preferences": "التفضيلات",
+      "theme": "السمة",
+      "language": "اللغة",
+      "demoMode": "فتح العرض التجريبي",
+      "demoModeExit": "الخروج من العرض التجريبي",
+      "demoModeOn": "وضع العرض التجريبي قيد التشغيل - أنت تستكشف Atelier Toys",
+      "demoModeOff": "افتح مساحة العرض التجريبي لـ Atelier Toys",
+      "demoReadOnly": "بيانات العرض التجريبي - للقراءة فقط",
+      "myProfile": "ملفي الشخصي",
+      "billing": "الفوترة والخطط",
+      "aiConfig": "إعدادات الذكاء الاصطناعي",
+      "switchOrg": "تبديل المؤسسة"
+    },
     "title": "الإعدادات",
     "profile": "الملف الشخصي",
     "billing": "الفواتير",
@@ -1317,8 +1332,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {

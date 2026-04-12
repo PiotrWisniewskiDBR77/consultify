@@ -2,14 +2,14 @@ import { AlertCircle, ArrowRight, ChevronLeft, Lock, Sparkles, X } from 'lucide-
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api, API_URL } from '@/services/api';
+import { ROUTES } from '@/routes/routeConfig';
 import {
   clearAnnaLpCtaContext,
   readAnnaLpCtaContext,
   updateAnnaLpCtaContext,
 } from '@/services/annaLpCtaContext';
+import { Api, API_URL } from '@/services/api';
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
-import { ROUTES } from '@/routes/routeConfig';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
 
@@ -54,6 +54,12 @@ interface AuthViewProps {
   onAuthSuccess: (user: { status?: string; message?: string }) => void;
   onBack: () => void;
 }
+
+type InviteCodeInfo = {
+  code: string;
+  organizationName?: string;
+  role?: string;
+} | null;
 
 /**
  * Hosts where the hidden quick-access PIN panel (Ctrl/Cmd+Shift+K) may appear.
@@ -107,6 +113,26 @@ export function resolveQuickAccessCredentials(
   };
 
   return devStagingCodes[code] ?? null;
+}
+
+function formatInviteRoleLabel(role?: string): string {
+  const normalized = String(role || '')
+    .trim()
+    .toUpperCase();
+
+  switch (normalized) {
+    case 'OWNER':
+      return 'Owner';
+    case 'ADMIN':
+      return 'Admin';
+    case 'GUEST':
+      return 'Guest';
+    case 'MEMBER':
+    case 'USER':
+      return 'Participant';
+    default:
+      return 'Participant';
+  }
 }
 
 export const AuthView: React.FC<AuthViewProps> = ({
@@ -251,8 +277,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
   };
 
   // --- CODE ENTRY STATE ---
-  const [code, setCode] = useState(['', '', '', '', '', '']);
-  const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const storedInviteCode = sessionStorage.getItem('attribution_invite') || '';
+  const [inviteCode, setInviteCode] = useState(storedInviteCode);
+  const [inviteCodeInfo, setInviteCodeInfo] = useState<InviteCodeInfo>(
+    storedInviteCode ? { code: storedInviteCode } : null
+  );
+  const [isVerifyingInviteCode, setIsVerifyingInviteCode] = useState(false);
 
   // --- FORM STATE ---
   const [formData, setFormData] = useState({
@@ -265,30 +295,69 @@ export const AuthView: React.FC<AuthViewProps> = ({
     accessCode: sessionStorage.getItem('attribution_invite') || '',
   });
 
-  const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
+  const applyInviteCode = React.useCallback(
+    (
+      code: string,
+      details?: {
+        organizationName?: string;
+        role?: string;
+      }
+    ) => {
+      const normalizedCode = code.trim().toUpperCase();
+      sessionStorage.setItem('attribution_invite', normalizedCode);
+      setInviteCode(normalizedCode);
+      setInviteCodeInfo({
+        code: normalizedCode,
+        organizationName: details?.organizationName,
+        role: details?.role,
+      });
+      setFormData((current) => ({
+        ...current,
+        accessCode: normalizedCode,
+        companyName: details?.organizationName || current.companyName,
+      }));
+    },
+    []
+  );
 
-    if (value && index < 5) {
-      codeRefs.current[index + 1]?.focus();
+  const clearInviteCode = React.useCallback(() => {
+    sessionStorage.removeItem('attribution_invite');
+    setInviteCode('');
+    setInviteCodeInfo(null);
+    setFormData((current) => ({
+      ...current,
+      accessCode: '',
+    }));
+  }, []);
+
+  const verifyInviteCode = async () => {
+    const normalizedCode = inviteCode.trim().toUpperCase();
+    if (!normalizedCode) {
+      setError('Enter the access code you received from the administrator');
+      return;
     }
-  };
 
-  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
-      codeRefs.current[index - 1]?.focus();
-    }
-  };
+    setError(null);
+    setIsVerifyingInviteCode(true);
 
-  const verifyCode = () => {
-    const fullCode = code.join('');
-    if (fullCode === '123456') {
+    try {
+      const validation = await Api.verifyAccessCode(normalizedCode);
+      if (!validation.valid) {
+        setInviteCodeInfo(null);
+        setError(validation.reason || 'Invalid or expired access code');
+        return;
+      }
+
+      applyInviteCode(normalizedCode, {
+        organizationName: validation.organizationName,
+        role: validation.role,
+      });
       setStep(AuthStep.REGISTER);
-      setError(null);
-    } else {
-      setError('Invalid code');
+    } catch (err: any) {
+      setInviteCodeInfo(null);
+      setError(err?.message || 'Failed to verify access code');
+    } finally {
+      setIsVerifyingInviteCode(false);
     }
   };
 
@@ -416,6 +485,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setError(err.message || 'Registration failed');
     }
   };
+
+  const hasInviteCode = formData.accessCode.trim().length > 0;
 
   const startDemoFlow = () => {
     setFromDemoRedirect(true);
@@ -618,28 +689,38 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <Lock className="text-blue-600 dark:text-blue-400" size={24} />
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {t('auth.unlockFull')}
+          {t('auth.unlockFull', 'Join Workspace')}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
-          {t('auth.enterCode')}
+          {t(
+            'auth.enterCode',
+            'Enter the organization access code to create your participant account.'
+          )}
         </p>
       </div>
 
-      <div className="flex justify-center gap-3 mb-8" dir="ltr">
-        {code.map((digit, idx) => (
-          <input
-            key={idx}
-            ref={(el) => {
-              codeRefs.current[idx] = el;
-            }}
-            type="text"
-            maxLength={1}
-            value={digit}
-            onChange={(e) => handleCodeChange(idx, e.target.value)}
-            onKeyDown={(e) => handleCodeKeyDown(idx, e)}
-            className="w-12 h-16 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-center text-2xl font-bold text-navy-900 dark:text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:bg-slate-50 dark:focus:bg-navy-900 outline-none transition-all shadow-sm dark:shadow-inner"
-          />
-        ))}
+      <div className="space-y-3">
+        <input
+          type="text"
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+          placeholder="WPISZ KOD (np. ABCD1234)"
+          autoComplete="off"
+          className="w-full px-4 py-3 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-center text-sm font-semibold tracking-[0.18em] uppercase text-navy-900 dark:text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:bg-slate-50 dark:focus:bg-navy-900 outline-none transition-all shadow-sm dark:shadow-inner"
+        />
+        {inviteCodeInfo?.code && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <div className="font-semibold">Code accepted</div>
+            <div className="mt-1">
+              {inviteCodeInfo.organizationName
+                ? `Workspace: ${inviteCodeInfo.organizationName}`
+                : 'Workspace will be selected automatically after registration.'}
+            </div>
+            <div className="mt-1">
+              Role after registration: {formatInviteRoleLabel(inviteCodeInfo.role)}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -650,10 +731,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
       )}
 
       <button
-        onClick={verifyCode}
+        onClick={() => void verifyInviteCode()}
+        disabled={isVerifyingInviteCode}
         className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 text-sm"
       >
-        {t('auth.verifyCode')}
+        {isVerifyingInviteCode
+          ? t('auth.verifyingCode', 'Verifying code...')
+          : t('auth.verifyCode', 'Continue')}
       </button>
     </div>
   );
@@ -662,12 +746,47 @@ export const AuthView: React.FC<AuthViewProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {targetMode === SessionMode.FREE ? t('auth.startQuick') : t('auth.setupFull')}
+          {hasInviteCode
+            ? t('auth.joinWorkspaceTitle', 'Create your participant account')
+            : targetMode === SessionMode.FREE
+              ? t('auth.startQuick')
+              : t('auth.setupFull')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">{t('auth.personalize')}</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">
+          {hasInviteCode
+            ? t(
+                'auth.joinWorkspaceDescription',
+                'Complete your personal details and we will connect you to the invited workspace.'
+              )
+            : t('auth.personalize')}
+        </p>
       </div>
 
       <form onSubmit={handleRegister} className="space-y-4">
+        {hasInviteCode && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-xs leading-5 text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+            <div className="font-semibold">
+              {inviteCodeInfo?.organizationName
+                ? `Joining ${inviteCodeInfo.organizationName}`
+                : 'Joining invited workspace'}
+            </div>
+            <div className="mt-1">
+              Access code: <span className="font-mono">{formData.accessCode}</span>
+            </div>
+            <div className="mt-1">Planned role: {formatInviteRoleLabel(inviteCodeInfo?.role)}</div>
+            <button
+              type="button"
+              onClick={() => {
+                clearInviteCode();
+                setStep(AuthStep.CODE_ENTRY);
+              }}
+              className="mt-2 text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+            >
+              Change access code
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -718,17 +837,18 @@ export const AuthView: React.FC<AuthViewProps> = ({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            {t('auth.company')} <span className="text-purple-500 dark:text-purple-400">*</span>
-          </label>
-          <input
-            required
-            value={formData.companyName}
-            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
-          />
-        </div>
+        {!hasInviteCode && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              {t('auth.company')}
+            </label>
+            <input
+              value={formData.companyName}
+              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs"
+            />
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
@@ -739,7 +859,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </label>
           <input
             value={formData.accessCode}
-            onChange={(e) => setFormData({ ...formData, accessCode: e.target.value })}
+            onChange={(e) => {
+              const nextCode = e.target.value.toUpperCase();
+              setFormData({ ...formData, accessCode: nextCode });
+              setInviteCode(nextCode);
+              setInviteCodeInfo(null);
+            }}
             placeholder={t('auth.accessCodePlaceholder')}
             className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:bg-white dark:focus:bg-navy-900 outline-none transition-all text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
@@ -860,6 +985,19 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </button>
         </div>
 
+        {!hasInviteCode && targetMode !== SessionMode.DEMO && (
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {t('auth.haveAccessCodePrompt', 'Have an organization code?')}{' '}
+            <button
+              type="button"
+              onClick={() => setStep(AuthStep.CODE_ENTRY)}
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              {t('auth.enterAccessCodeCta', 'Enter access code')}
+            </button>
+          </div>
+        )}
+
         <div className="pt-2 border-t border-slate-200 dark:border-navy-700">
           <button
             onClick={startDemoFlow}
@@ -977,6 +1115,19 @@ export const AuthView: React.FC<AuthViewProps> = ({
           {t('auth.createOne')}
         </button>
       </div>
+
+      {targetMode !== SessionMode.DEMO && (
+        <div className="text-center -mt-4 text-xs text-slate-500 dark:text-slate-400">
+          {t('auth.haveAccessCodePrompt', 'Have an organization code?')}{' '}
+          <button
+            type="button"
+            onClick={() => setStep(AuthStep.CODE_ENTRY)}
+            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          >
+            {t('auth.enterAccessCodeCta', 'Enter access code')}
+          </button>
+        </div>
+      )}
 
       {/* Privacy Policy Link */}
       <div className="text-center pt-3 border-t border-slate-200 dark:border-navy-700">

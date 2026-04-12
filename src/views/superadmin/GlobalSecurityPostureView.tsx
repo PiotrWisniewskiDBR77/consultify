@@ -26,11 +26,13 @@ export const GlobalSecurityPostureView: React.FC = () => {
     systemHealth: null,
     operatorOverview: null,
   });
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        setNotice(null);
         const [systemHealth, operatorOverview] =
           await Promise.all([
             Api.getSystemHealth(),
@@ -41,8 +43,10 @@ export const GlobalSecurityPostureView: React.FC = () => {
           systemHealth,
           operatorOverview,
         });
-      } catch {
+      } catch (error) {
         if (cancelled) return;
+        console.error('[GlobalSecurityPostureView] Failed to load posture data', error);
+        setNotice('Global security posture data is temporarily unavailable.');
       }
     })();
     return () => {
@@ -73,6 +77,12 @@ export const GlobalSecurityPostureView: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {notice}
+        </div>
+      )}
+
       <div>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
           Global Security Posture

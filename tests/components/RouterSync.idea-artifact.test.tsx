@@ -30,7 +30,11 @@ vi.mock('../../src/routes/routeConfig', () => ({
 }));
 
 vi.mock('../../src/utils/roleGuards', () => ({
-  isSuperAdminRole: () => false,
+  isSuperAdminRole: (role: string | null | undefined) => role === 'SUPERADMIN',
+  getDefaultAuthenticatedRoute: (role: string | null | undefined) =>
+    role === 'MEMBER' ? '/interview' : '/chat',
+  isPilotRestrictedRole: (role: string | null | undefined) =>
+    role === 'MEMBER' || role === 'USER' || role === 'GUEST',
 }));
 
 const appState = {
@@ -80,6 +84,21 @@ describe('RouterSync idea artifact deep links', () => {
     expect(navigateMock).toHaveBeenCalledWith('/my-work?ideaId=idea-42', { replace: true });
   });
 
+  it('blocks idea artifact deep links for pilot participants', async () => {
+    appState.currentUser = {
+      isAuthenticated: true,
+      role: 'MEMBER',
+    };
+
+    render(<RouterSync />);
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/my-work', { replace: true });
+    });
+
+    expect(setMyWorkIntentMock).not.toHaveBeenCalled();
+  });
+
   it('protects /implementation and /rollout routes for unauthenticated users', async () => {
     appState.currentUser = null as any;
     routerState.searchParams = new URLSearchParams();
@@ -117,5 +136,57 @@ describe('RouterSync idea artifact deep links', () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
     });
+  });
+
+  it('maps /trial and /trial/start to the correct auth steps', async () => {
+    appState.currentUser = null as any;
+    routerState.searchParams = new URLSearchParams();
+
+    routerState.pathname = '/trial';
+    render(<RouterSync />);
+
+    await waitFor(() => {
+      expect(setSessionModeMock).toHaveBeenCalledWith('FULL');
+      expect(setAuthInitialStepMock).toHaveBeenCalledWith('CODE_ENTRY');
+    });
+
+    setSessionModeMock.mockReset();
+    setAuthInitialStepMock.mockReset();
+
+    routerState.pathname = '/trial/start';
+    render(<RouterSync />);
+
+    await waitFor(() => {
+      expect(setSessionModeMock).toHaveBeenCalledWith('FULL');
+      expect(setAuthInitialStepMock).toHaveBeenCalledWith('REGISTER');
+    });
+  });
+
+  it('redirects pilot participants away from blocked modules', async () => {
+    appState.currentUser = {
+      isAuthenticated: true,
+      role: 'MEMBER',
+    };
+    routerState.searchParams = new URLSearchParams();
+    routerState.pathname = '/finance';
+
+    render(<RouterSync />);
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/interview', { replace: true });
+    });
+  });
+
+  it('keeps chat available for pilot participants', async () => {
+    appState.currentUser = {
+      isAuthenticated: true,
+      role: 'MEMBER',
+    };
+    routerState.searchParams = new URLSearchParams();
+    routerState.pathname = '/chat';
+
+    render(<RouterSync />);
+
+    expect(navigateMock).not.toHaveBeenCalledWith('/interview', { replace: true });
   });
 });

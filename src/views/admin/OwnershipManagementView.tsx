@@ -33,6 +33,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { InfoButton } from '../../components/shared/InfoButton';
+import { AdminApi } from '../../services/api/admin.api';
 import { useAppStore } from '../../store/useAppStore';
 import { BillingAddress, OrganizationOwnership, OwnershipTransferRequest, User } from '../../types';
 
@@ -67,45 +68,47 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
   const loadOwnershipData = useCallback(async () => {
     setLoading(true);
     try {
-      // Load ownership info
-      const ownershipRes = await fetch(`/api/organizations/${currentOrganization?.id}/ownership`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (ownershipRes.ok) {
-        const data = await ownershipRes.json();
-        setOwnership(data.ownership);
-        setOwnerUser(data.owner);
+      if (!currentOrganization?.id) {
+        setOwnership(null);
+        setOwnerUser(null);
+        setAdmins([]);
+        setPendingTransfer(null);
+        return;
       }
 
-      // Load admins for transfer
-      const adminsRes = await fetch(`/api/organizations/${currentOrganization?.id}/admins`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (adminsRes.ok) {
-        const data = await adminsRes.json();
-        setAdmins(data.filter((a: User) => a.id !== ownership?.ownerUserId));
-      }
+      const [ownershipData, adminsData, transferData] = await Promise.all([
+        AdminApi.getOrganizationOwnership(currentOrganization.id),
+        AdminApi.getOrganizationAdmins(currentOrganization.id),
+        AdminApi.getPendingOwnershipTransfer(currentOrganization.id).catch(() => null),
+      ]);
 
-      // Check pending transfer
-      const transferRes = await fetch(
-        `/api/organizations/${currentOrganization?.id}/ownership/pending-transfer`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
+      const resolvedOwnership = (ownershipData as any)?.ownership || null;
+      const resolvedOwner = (ownershipData as any)?.owner || null;
+      const resolvedAdmins = Array.isArray(adminsData)
+        ? adminsData
+        : Array.isArray((adminsData as any)?.admins)
+          ? (adminsData as any).admins
+          : [];
+
+      setOwnership(resolvedOwnership);
+      setOwnerUser(resolvedOwner);
+      setAdmins(
+        resolvedAdmins.filter(
+          (admin: User) => admin.id !== (resolvedOwnership?.ownerUserId || resolvedOwner?.id)
+        )
       );
-      if (transferRes.ok) {
-        const data = await transferRes.json();
-        setPendingTransfer(data);
-      }
+      setPendingTransfer((transferData as any)?.pendingTransfer || (transferData as any) || null);
     } catch (error) {
       console.error('Failed to load ownership data:', error);
       toast.error('Failed to load ownership information');
-      // Set empty state instead of mock data
       setOwnership(null);
       setOwnerUser(null);
+      setAdmins([]);
+      setPendingTransfer(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [currentOrganization, currentUser, ownership?.ownerUserId]);
+  }, [currentOrganization?.id]);
 
   useEffect(() => {
     if (currentOrganization?.id) {
@@ -121,26 +124,17 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
     setSaving(true);
     try {
-      const res = await fetch(`/api/organizations/${currentOrganization?.id}/ownership/transfer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          toUserId: selectedAdminId,
-          reason: transferReason,
-        }),
-      });
-
-      if (res.ok) {
-        toast.success('Ownership transfer request sent. The new owner must accept the transfer.');
-        setShowTransferModal(false);
-        loadOwnershipData();
-      } else {
-        const data = await res.json();
-        toast.error(data.error || 'Failed to initiate transfer');
+      if (!currentOrganization?.id) {
+        throw new Error('No organization selected');
       }
+
+      await AdminApi.transferOrganizationOwnership(currentOrganization.id, {
+        toUserId: selectedAdminId,
+        reason: transferReason,
+      });
+      toast.success('Ownership transfer request sent. The new owner must accept the transfer.');
+      setShowTransferModal(false);
+      loadOwnershipData();
     } catch (error) {
       toast.error('Failed to initiate ownership transfer');
     }
@@ -149,18 +143,13 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
   const handleCancelTransfer = async () => {
     try {
-      const res = await fetch(
-        `/api/organizations/${currentOrganization?.id}/ownership/cancel-transfer`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
-      );
-
-      if (res.ok) {
-        toast.success('Transfer cancelled');
-        setPendingTransfer(null);
+      if (!currentOrganization?.id) {
+        throw new Error('No organization selected');
       }
+
+      await AdminApi.cancelOrganizationOwnershipTransfer(currentOrganization.id);
+      toast.success('Transfer cancelled');
+      setPendingTransfer(null);
     } catch (error) {
       toast.error('Failed to cancel transfer');
     }
@@ -168,18 +157,13 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
   const handleAcceptTransfer = async () => {
     try {
-      const res = await fetch(
-        `/api/organizations/${currentOrganization?.id}/ownership/accept-transfer`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
-      );
-
-      if (res.ok) {
-        toast.success('You are now the organization owner!');
-        loadOwnershipData();
+      if (!currentOrganization?.id) {
+        throw new Error('No organization selected');
       }
+
+      await AdminApi.acceptOrganizationOwnershipTransfer(currentOrganization.id);
+      toast.success('You are now the organization owner!');
+      loadOwnershipData();
     } catch (error) {
       toast.error('Failed to accept transfer');
     }
@@ -193,21 +177,13 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
     setSaving(true);
     try {
-      const res = await fetch(`/api/organizations/${currentOrganization?.id}/schedule-deletion`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (res.ok) {
-        toast.success('Organization deletion scheduled. You have 30 days to cancel.');
-        setShowDeleteModal(false);
-      } else {
-        const data = await res.json();
-        toast.error(data.error || 'Failed to schedule deletion');
+      if (!currentOrganization?.id) {
+        throw new Error('No organization selected');
       }
+
+      await AdminApi.scheduleOrganizationDeletion(currentOrganization.id);
+      toast.success('Organization deletion scheduled. You have 30 days to cancel.');
+      setShowDeleteModal(false);
     } catch (error) {
       toast.error('Failed to schedule organization deletion');
     }

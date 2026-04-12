@@ -46,9 +46,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  Callout,
-} from '@/components/shared/NModeBlocks';
+import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
@@ -65,6 +63,7 @@ import {
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
+import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
@@ -86,7 +85,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
-import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
+import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import {
   buildReportMarkdown,
@@ -94,10 +93,10 @@ import {
   enrichExecutionReport,
   exportReportPDF,
   RAG_CONFIG,
-  type ReportDef,
   type ReportDataContext,
+  type ReportDef,
 } from './executionReports';
-import { ExecutionManagementView } from './ExecutionManagementView';
+import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ReportDocumentView } from './ReportDocumentView';
 
 // Kanban column status mapping
@@ -381,7 +380,6 @@ interface ExecutionDecision {
   relatedObjectName?: string;
 }
 
-
 type PMOHealthSnapshot = {
   projectId: string;
   projectName: string;
@@ -527,8 +525,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const openChatWithContext = useOpenChatWithContext();
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const { currentProjectId, fullSessionData } = useAppStore();
+  const currentUser = useAppStore((s) => s.currentUser);
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
+  const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
@@ -616,7 +616,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [execSnapshotError, setExecSnapshotError] = useState<string | null>(null);
   const [execSnapshotSource, setExecSnapshotSource] = useState<'server' | 'local' | null>(null);
 
-  const [managerLaneCounts, setManagerLaneCounts] = useState<Record<string, { total: number; critical: number; warning: number }>>({});
+  const [managerLaneCounts, setManagerLaneCounts] = useState<
+    Record<string, { total: number; critical: number; warning: number }>
+  >({});
 
   useEffect(() => {
     setOpenDocuments((prev) =>
@@ -847,11 +849,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         initRetryRef.current = 0;
       } catch (err: any) {
         console.error('[ExecutionHub] Failed to load:', err);
-        const isNetworkError = !err?.status || err?.message?.includes('Failed to fetch') || err?.message?.includes('NetworkError');
+        const isNetworkError =
+          !err?.status ||
+          err?.message?.includes('Failed to fetch') ||
+          err?.message?.includes('NetworkError');
         if (isNetworkError && initRetryRef.current < 3) {
           initRetryRef.current++;
           const delay = Math.min(2000 * Math.pow(2, initRetryRef.current - 1), 8000);
-          console.warn(`[ExecutionHub] Network error, retrying in ${delay}ms (attempt ${initRetryRef.current}/3)`);
+          console.warn(
+            `[ExecutionHub] Network error, retrying in ${delay}ms (attempt ${initRetryRef.current}/3)`
+          );
           setTimeout(loadInitiatives, delay);
           return;
         }
@@ -933,20 +940,29 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           );
         });
         setOverspendSignals(
-          normalizeExecutionArrayEnvelope<typeof overspendSignals[number]>(data, ['signals'])
+          normalizeExecutionArrayEnvelope<(typeof overspendSignals)[number]>(data, ['signals'])
         );
       } catch {
         setOverspendSignals([]);
       }
     };
     setIsLoadingControlSignals(true);
-    void Promise.allSettled([loadRiskSignals(), loadDelaySignals(), loadOverspendSignals()]).finally(
-      () => setIsLoadingControlSignals(false)
-    );
+    void Promise.allSettled([
+      loadRiskSignals(),
+      loadDelaySignals(),
+      loadOverspendSignals(),
+    ]).finally(() => setIsLoadingControlSignals(false));
   }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
-    const LANES = ['action-queue', 'decisions', 'blockers', 'workload', 'risk', 'people-change'] as const;
+    const LANES = [
+      'action-queue',
+      'decisions',
+      'blockers',
+      'workload',
+      'risk',
+      'people-change',
+    ] as const;
     const pid = currentProjectId || undefined;
     Promise.allSettled(
       LANES.map(async (laneId) => {
@@ -968,7 +984,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       const counts: Record<string, { total: number; critical: number; warning: number }> = {};
       for (const r of results) {
         if (r.status === 'fulfilled') {
-          counts[r.value.laneId] = { total: r.value.total, critical: r.value.critical, warning: r.value.warning };
+          counts[r.value.laneId] = {
+            total: r.value.total,
+            critical: r.value.critical,
+            warning: r.value.warning,
+          };
         }
       }
       setManagerLaneCounts(counts);
@@ -1311,13 +1331,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         const deadline = initiative.slaDeadline || initiative.plannedEndDate!;
         const isOverdue = new Date(deadline) < new Date();
         const terminal =
-          initiative.status === InitiativeStatus.DONE || initiative.status === InitiativeStatus.ARCHIVED;
+          initiative.status === InitiativeStatus.DONE ||
+          initiative.status === InitiativeStatus.ARCHIVED;
         return isOverdue && !terminal;
       }
       if (attention === 'overdue_decisions') {
         const related = decisionsByInitiative[initiative.id] || [];
         return related.some(
-          (decision) => String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
+          (decision) =>
+            String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
         );
       }
       const now = Date.now();
@@ -1358,7 +1380,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         result = result.filter((i) =>
           matchesAttentionPreset(
             i,
-            filter.value as 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
+            filter.value as
+              | 'blocked'
+              | 'missing_dates'
+              | 'overdue'
+              | 'overdue_decisions'
+              | 'due_soon_tasks'
           )
         );
       }
@@ -1455,9 +1482,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: 'people_change' as ModuleTab,
         label: t('execution.tabs.peopleChange', 'Manager'),
         icon: <Shield size={16} />,
-        count:
-          (stats.blocked ?? 0) +
-          (actionQueueItems?.length ?? 0),
+        count: (stats.blocked ?? 0) + (actionQueueItems?.length ?? 0),
       },
     ],
     [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions, actionQueueItems]
@@ -1507,6 +1532,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         render: (row) => {
           const meta = STATUS_METADATA[row.status as InitiativeStatus];
           const actions = getStatusActions(row.status as InitiativeStatus);
+          const canMutateStatus = !isPilotParticipant && actions.length > 0;
           return (
             <div className="relative group">
               <div
@@ -1517,7 +1543,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 />
                 {meta?.label || row.status}
               </div>
-              {actions.length > 0 && (
+              {canMutateStatus && (
                 <select
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   value=""
@@ -1773,7 +1799,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
     ],
-    [t, decisionsByInitiative, tasksByInitiative]
+    [decisionsByInitiative, handleInlineStatusChange, isPilotParticipant, t, tasksByInitiative]
   );
 
   const scopeToggle = (
@@ -1856,14 +1882,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {scopeToggle}
       </div>
     );
-  }, [
-    activeTab,
-    currentProjectId,
-    execSnapshotSource,
-    execTopline,
-    scopeToggle,
-    t,
-  ]);
+  }, [activeTab, currentProjectId, execSnapshotSource, execTopline, scopeToggle, t]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -1884,8 +1903,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
       : 100;
 
-    const criticalCapacityAlerts = capacityAlerts.filter((alert) => alert.severity === 'critical').length;
-    const warningCapacityAlerts = capacityAlerts.filter((alert) => alert.severity !== 'critical').length;
+    const criticalCapacityAlerts = capacityAlerts.filter(
+      (alert) => alert.severity === 'critical'
+    ).length;
+    const warningCapacityAlerts = capacityAlerts.filter(
+      (alert) => alert.severity !== 'critical'
+    ).length;
     const capacityHealth =
       capacityAlerts.length === 0
         ? 100
@@ -1896,7 +1919,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? Math.max(0, 100 - Math.round((blockedCount / totalInitiatives) * 100))
       : 100;
 
-    const healthScore = Math.round((avgProgress + decisionHealth + capacityHealth + riskHealth) / 4);
+    const healthScore = Math.round(
+      (avgProgress + decisionHealth + capacityHealth + riskHealth) / 4
+    );
 
     const budgetValues = initiatives
       .map((initiative) => (initiative as any).budget || (initiative as any).costCapex)
@@ -1921,7 +1946,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       isHealthLoading: isLoadingHealth,
     };
   }, [initiatives, decisions, tasks, stats, healthSnapshot, isLoadingHealth, capacityAlerts]);
-
 
   const handleExport = useCallback(() => {
     const headers = ['Name', 'Status', 'Owner', 'Progress', 'Planned Start', 'Planned End'];
@@ -2015,17 +2039,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setIsSidePanelOpen(false);
   }, []);
 
-  const handleRemoveFilter = useCallback((id: string) => {
-    if (activeTab === 'list') {
-      setSummaryFilters((prev) => prev.filter((f) => f.id !== id));
-      return;
-    }
-    if (activeTab === 'reports') {
-      setReportFilters((prev) => prev.filter((f) => f.id !== id));
-      return;
-    }
-    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
-  }, [activeTab]);
+  const handleRemoveFilter = useCallback(
+    (id: string) => {
+      if (activeTab === 'list') {
+        setSummaryFilters((prev) => prev.filter((f) => f.id !== id));
+        return;
+      }
+      if (activeTab === 'reports') {
+        setReportFilters((prev) => prev.filter((f) => f.id !== id));
+        return;
+      }
+      setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+    },
+    [activeTab]
+  );
 
   const handleClearFilters = useCallback(() => {
     if (activeTab === 'list') {
@@ -2073,13 +2100,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   // Handle drag start
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const { active } = event;
-    const taskData = active.data.current;
-    if (taskData?.type === 'task') {
-      setActiveTask(taskData.task);
-    }
-  }, []);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      if (isPilotParticipant) return;
+      const { active } = event;
+      const taskData = active.data.current;
+      if (taskData?.type === 'task') {
+        setActiveTask(taskData.task);
+      }
+    },
+    [isPilotParticipant]
+  );
 
   // Handle drag over (for visual feedback)
   const handleDragOver = useCallback((event: DragOverEvent) => {
@@ -2089,6 +2120,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Handle drag end - update task status
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
+      if (isPilotParticipant) {
+        setActiveTask(null);
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
       const { active, over } = event;
       setActiveTask(null);
 
@@ -2143,7 +2181,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         console.error('Error updating task status:', error);
       }
     },
-    [t, tasks]
+    [isPilotParticipant, t, tasks]
   );
 
   const renderTaskBoard = () => {
@@ -2272,6 +2310,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Handle inline status change from table/grid
   const handleInlineStatusChange = useCallback(
     async (initiativeId: string, newStatus: string) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
       const previous = initiatives.find((i) => i.id === initiativeId);
       try {
         // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
@@ -2295,7 +2339,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         );
       }
     },
-    [activeTab, initiatives, t, viewMode]
+    [activeTab, initiatives, isPilotParticipant, t, viewMode]
   );
 
   const handleViewModeChange = useCallback(
@@ -2312,39 +2356,54 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const handleCreateInitiative = useCallback(() => {
+    if (isPilotParticipant) {
+      dispatchPilotAccessBlocked({
+        href: '/initiatives',
+      });
+      return;
+    }
     navigate(`${ROUTES.INITIATIVES}?new=1`);
-  }, [navigate]);
+  }, [isPilotParticipant, navigate]);
 
   const handleInitiativeUpdate = useCallback((updated: FullInitiative) => {
     setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
     setSelectedInitiative((prev) => (prev?.id === updated.id ? updated : prev));
   }, []);
 
-  const handlePortfolioUpdate = useCallback((updated: PortfolioInitiative) => {
-    setInitiatives((prev) =>
-      prev.map((i) =>
-        i.id === updated.id
-          ? {
-              ...i,
-              name: updated.name,
-              summary: updated.summary ?? i.summary,
-              description: updated.description ?? i.description,
-              status: updated.status,
-              priority: mapPriorityToFull(updated.priority),
-              plannedStartDate: updated.plannedStartDate ?? i.plannedStartDate,
-              plannedEndDate: updated.plannedEndDate ?? i.plannedEndDate,
-            }
-          : i
-      )
-    );
-    setSelectedInitiative((prev) =>
-      prev?.id === updated.id ? { ...prev, status: updated.status } : prev
-    );
-    void refreshExecutionAfterWrite();
-  }, [refreshExecutionAfterWrite]);
+  const handlePortfolioUpdate = useCallback(
+    (updated: PortfolioInitiative) => {
+      setInitiatives((prev) =>
+        prev.map((i) =>
+          i.id === updated.id
+            ? {
+                ...i,
+                name: updated.name,
+                summary: updated.summary ?? i.summary,
+                description: updated.description ?? i.description,
+                status: updated.status,
+                priority: mapPriorityToFull(updated.priority),
+                plannedStartDate: updated.plannedStartDate ?? i.plannedStartDate,
+                plannedEndDate: updated.plannedEndDate ?? i.plannedEndDate,
+              }
+            : i
+        )
+      );
+      setSelectedInitiative((prev) =>
+        prev?.id === updated.id ? { ...prev, status: updated.status } : prev
+      );
+      void refreshExecutionAfterWrite();
+    },
+    [refreshExecutionAfterWrite]
+  );
 
   const handleTimelineUpdate = useCallback(
     async (initiativeId: string, field: string, value: string, reason?: string) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
       try {
         const payload = { initiativeId, field, value, reason } as const;
         const fallbackRequest = () =>
@@ -2441,7 +2500,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         );
       }
     },
-    [refreshExecutionAfterWrite, t]
+    [isPilotParticipant, refreshExecutionAfterWrite, t]
   );
 
   // Handle refresh
@@ -3003,7 +3062,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                     : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
                 }`}
               >
-                {preset.id === 'all' ? <span className="h-2 w-2 rounded-full bg-slate-400" /> : <FileText size={14} className="text-cyan-400" />}
+                {preset.id === 'all' ? (
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                ) : (
+                  <FileText size={14} className="text-cyan-400" />
+                )}
                 <span>{preset.label}</span>
                 <span
                   className={`${badgeBase} ${
@@ -3161,7 +3224,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const reportCatalog = useMemo((): Array<
     Omit<
       ReportDef,
-      'aiExecutiveReadout' | 'aiRecommendedActions' | 'dataQuality' | 'degradedFlags' | 'lastRefreshAt' | 'scenarioNotes'
+      | 'aiExecutiveReadout'
+      | 'aiRecommendedActions'
+      | 'dataQuality'
+      | 'degradedFlags'
+      | 'lastRefreshAt'
+      | 'scenarioNotes'
     >
   > => {
     const blocked = actionCenter.blocked.length;
@@ -3182,9 +3250,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Weekly',
         scope: 'All active initiatives in current execution cycle',
         dataSources: ['Initiatives', 'Tasks', 'Decisions', 'Risk signals', 'Milestones'],
-        sections: ['Progress summary', 'Blockers & escalations', 'Overdue items', 'Next milestones', 'Key decisions needed'],
-        ragLogic: 'GREEN if no blockers and progress on-track; AMBER if overdue items >0 or progress <5% this week; RED if blockers >0',
-        followUpActions: ['Clear blockers', 'Resolve overdue decisions', 'Update missing dates', 'Reassign stale tasks'],
+        sections: [
+          'Progress summary',
+          'Blockers & escalations',
+          'Overdue items',
+          'Next milestones',
+          'Key decisions needed',
+        ],
+        ragLogic:
+          'GREEN if no blockers and progress on-track; AMBER if overdue items >0 or progress <5% this week; RED if blockers >0',
+        followUpActions: [
+          'Clear blockers',
+          'Resolve overdue decisions',
+          'Update missing dates',
+          'Reassign stale tasks',
+        ],
         icon: <CalendarDays size={18} className="text-cyan-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
@@ -3199,13 +3279,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Full portfolio month-over-month trends',
         dataSources: ['Initiatives', 'Budget', 'Milestones', 'Baseline/forecast', 'Capacity'],
-        sections: ['Portfolio trend (MoM)', 'Milestone slippage summary', 'Budget variance', 'Delivery confidence', 'Capacity utilization overview'],
-        ragLogic: 'GREEN if all initiatives on-track; AMBER if >20% initiatives amber; RED if any initiative RED or budget variance >15%',
-        followUpActions: ['Rebaseline slipped initiatives', 'Escalate budget overruns', 'Rebalance overloaded resources'],
+        sections: [
+          'Portfolio trend (MoM)',
+          'Milestone slippage summary',
+          'Budget variance',
+          'Delivery confidence',
+          'Capacity utilization overview',
+        ],
+        ragLogic:
+          'GREEN if all initiatives on-track; AMBER if >20% initiatives amber; RED if any initiative RED or budget variance >15%',
+        followUpActions: [
+          'Rebaseline slipped initiatives',
+          'Escalate budget overruns',
+          'Rebalance overloaded resources',
+        ],
         icon: <TrendingUp size={18} className="text-indigo-500" />,
         highlights: [
           { label: 'Initiatives', value: totalInitiatives },
-          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+          {
+            label: 'Missing dates',
+            value: missingDatesCount,
+            variant: missingDatesCount > 0 ? 'warn' : 'default',
+          },
         ],
       },
       {
@@ -3214,10 +3309,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         audience: 'Steering Committee',
         cadence: 'Bi-weekly',
         scope: 'Per-initiative RAG and aggregate program health',
-        dataSources: ['Initiatives', 'Risk signals', 'Delay signals', 'Priority alerts', 'Exec snapshot'],
-        sections: ['RAG per initiative', 'Priority alerts', 'Confidence score & trend', 'Executive narrative', 'Required governance decisions'],
-        ragLogic: 'GREEN if confidence >70% and no critical alerts; AMBER if confidence 40-70% or critical alerts exist; RED if confidence <40% or multiple critical blockers',
-        followUpActions: ['Review RED initiatives', 'Approve recovery plans', 'Authorize resource reallocation'],
+        dataSources: [
+          'Initiatives',
+          'Risk signals',
+          'Delay signals',
+          'Priority alerts',
+          'Exec snapshot',
+        ],
+        sections: [
+          'RAG per initiative',
+          'Priority alerts',
+          'Confidence score & trend',
+          'Executive narrative',
+          'Required governance decisions',
+        ],
+        ragLogic:
+          'GREEN if confidence >70% and no critical alerts; AMBER if confidence 40-70% or critical alerts exist; RED if confidence <40% or multiple critical blockers',
+        followUpActions: [
+          'Review RED initiatives',
+          'Approve recovery plans',
+          'Authorize resource reallocation',
+        ],
         icon: <Shield size={18} className="text-emerald-500" />,
         highlights: [
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3231,9 +3343,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'On demand',
         scope: 'All blocked initiatives and downstream blast radius',
         dataSources: ['Blocked initiatives', 'Dependencies', 'Tasks', 'Risk register'],
-        sections: ['Active blockers list', 'Blast radius per blocker', 'Owner accountability', 'Recovery actions proposed', 'Dependency chain impact'],
-        ragLogic: 'RED if any blockers; AMBER if blockers existed in last 7 days; GREEN if clear for >7 days',
-        followUpActions: ['Assign blocker owners', 'Remove external dependencies', 'Escalate to governance', 'Replan affected work'],
+        sections: [
+          'Active blockers list',
+          'Blast radius per blocker',
+          'Owner accountability',
+          'Recovery actions proposed',
+          'Dependency chain impact',
+        ],
+        ragLogic:
+          'RED if any blockers; AMBER if blockers existed in last 7 days; GREEN if clear for >7 days',
+        followUpActions: [
+          'Assign blocker owners',
+          'Remove external dependencies',
+          'Escalate to governance',
+          'Replan affected work',
+        ],
         icon: <AlertTriangle size={18} className="text-rose-500" />,
         highlights: [
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3247,12 +3371,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Weekly',
         scope: 'All milestones with baseline vs forecast drift',
         dataSources: ['Milestones', 'Baseline', 'Forecast', 'Delay signals'],
-        sections: ['Slipped milestones', 'Drift by initiative', 'Root cause analysis', 'Forecast accuracy trend', 'Recovery timeline'],
-        ragLogic: 'GREEN if no milestones slipped >3 days; AMBER if 1-2 milestones slipped; RED if >2 milestones slipped or any critical milestone missed',
-        followUpActions: ['Rebaseline slipped milestones', 'Add recovery buffer', 'Escalate critical misses'],
+        sections: [
+          'Slipped milestones',
+          'Drift by initiative',
+          'Root cause analysis',
+          'Forecast accuracy trend',
+          'Recovery timeline',
+        ],
+        ragLogic:
+          'GREEN if no milestones slipped >3 days; AMBER if 1-2 milestones slipped; RED if >2 milestones slipped or any critical milestone missed',
+        followUpActions: [
+          'Rebaseline slipped milestones',
+          'Add recovery buffer',
+          'Escalate critical misses',
+        ],
         icon: <Clock size={18} className="text-amber-500" />,
         highlights: [
-          { label: 'Missing dates', value: missingDatesCount, variant: missingDatesCount > 0 ? 'warn' : 'default' },
+          {
+            label: 'Missing dates',
+            value: missingDatesCount,
+            variant: missingDatesCount > 0 ? 'warn' : 'default',
+          },
         ],
       },
       {
@@ -3262,13 +3401,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Per-person and per-team workload vs capacity',
         dataSources: ['Tasks', 'Assignments', 'Capacity', 'Workload view'],
-        sections: ['Utilization by person', 'Team averages', 'Overload alerts', 'Underutilized resources', 'Capacity horizon (4-week lookahead)'],
-        ragLogic: 'GREEN if all <85% utilized; AMBER if anyone 85-100%; RED if anyone >100% or team average >90%',
-        followUpActions: ['Smooth overloaded assignments', 'Redistribute idle capacity', 'Flag resource gaps to hiring'],
-        icon: <Users size={18} className="text-violet-500" />,
-        highlights: [
-          { label: 'Tasks', value: totalTasks },
+        sections: [
+          'Utilization by person',
+          'Team averages',
+          'Overload alerts',
+          'Underutilized resources',
+          'Capacity horizon (4-week lookahead)',
         ],
+        ragLogic:
+          'GREEN if all <85% utilized; AMBER if anyone 85-100%; RED if anyone >100% or team average >90%',
+        followUpActions: [
+          'Smooth overloaded assignments',
+          'Redistribute idle capacity',
+          'Flag resource gaps to hiring',
+        ],
+        icon: <Users size={18} className="text-violet-500" />,
+        highlights: [{ label: 'Tasks', value: totalTasks }],
       },
       {
         id: 'budget-variance',
@@ -3277,13 +3425,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Planned vs actual budget per initiative',
         dataSources: ['Budget', 'Initiatives', 'Overspend signals'],
-        sections: ['Aggregate budget status', 'Per-initiative variance', 'Forecast overshoot alerts', 'Burn rate trend', 'Cost category breakdown'],
-        ragLogic: 'GREEN if variance <5%; AMBER if 5-15%; RED if >15% overspend or forecast exceeds approved budget',
-        followUpActions: ['Review overspending initiatives', 'Request budget reallocation', 'Freeze discretionary spend'],
-        icon: <TrendingUp size={18} className="text-green-500" />,
-        highlights: [
-          { label: 'Initiatives', value: totalInitiatives },
+        sections: [
+          'Aggregate budget status',
+          'Per-initiative variance',
+          'Forecast overshoot alerts',
+          'Burn rate trend',
+          'Cost category breakdown',
         ],
+        ragLogic:
+          'GREEN if variance <5%; AMBER if 5-15%; RED if >15% overspend or forecast exceeds approved budget',
+        followUpActions: [
+          'Review overspending initiatives',
+          'Request budget reallocation',
+          'Freeze discretionary spend',
+        ],
+        icon: <TrendingUp size={18} className="text-green-500" />,
+        highlights: [{ label: 'Initiatives', value: totalInitiatives }],
       },
       {
         id: 'decision-backlog',
@@ -3292,12 +3449,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Weekly',
         scope: 'All pending decisions and approval age',
         dataSources: ['Decisions', 'Action queue', 'Initiative dependencies'],
-        sections: ['Pending decisions list', 'Aging histogram', 'Decision-latency risk', 'Accountability gaps', 'Downstream blocked work'],
-        ragLogic: 'GREEN if no decisions overdue; AMBER if 1-3 overdue; RED if >3 overdue or any blocking critical path',
-        followUpActions: ['Escalate aged decisions', 'Assign decision owners', 'Unblock dependent work'],
+        sections: [
+          'Pending decisions list',
+          'Aging histogram',
+          'Decision-latency risk',
+          'Accountability gaps',
+          'Downstream blocked work',
+        ],
+        ragLogic:
+          'GREEN if no decisions overdue; AMBER if 1-3 overdue; RED if >3 overdue or any blocking critical path',
+        followUpActions: [
+          'Escalate aged decisions',
+          'Assign decision owners',
+          'Unblock dependent work',
+        ],
         icon: <Scale size={18} className="text-amber-600" />,
         highlights: [
-          { label: 'Overdue', value: overdueDecisionCount, variant: overdueDecisionCount > 0 ? 'warn' : 'default' },
+          {
+            label: 'Overdue',
+            value: overdueDecisionCount,
+            variant: overdueDecisionCount > 0 ? 'warn' : 'default',
+          },
           { label: 'Pending', value: pendingDecisions },
         ],
       },
@@ -3308,13 +3480,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Bi-weekly',
         scope: 'Inter-initiative dependency graph and cascade risk',
         dataSources: ['Dependencies', 'Initiatives', 'Risk signals'],
-        sections: ['Dependency map', 'Critical path', 'Cascade impact analysis', 'Dependency health', 'External dependency risks'],
-        ragLogic: 'GREEN if no dependency conflicts; AMBER if dependencies at risk; RED if broken dependency chain on critical path',
-        followUpActions: ['Resolve dependency conflicts', 'Decouple tightly coupled work', 'Add buffers to critical chains'],
-        icon: <GripVertical size={18} className="text-slate-500" />,
-        highlights: [
-          { label: 'Initiatives', value: totalInitiatives },
+        sections: [
+          'Dependency map',
+          'Critical path',
+          'Cascade impact analysis',
+          'Dependency health',
+          'External dependency risks',
         ],
+        ragLogic:
+          'GREEN if no dependency conflicts; AMBER if dependencies at risk; RED if broken dependency chain on critical path',
+        followUpActions: [
+          'Resolve dependency conflicts',
+          'Decouple tightly coupled work',
+          'Add buffers to critical chains',
+        ],
+        icon: <GripVertical size={18} className="text-slate-500" />,
+        highlights: [{ label: 'Initiatives', value: totalInitiatives }],
       },
       {
         id: 'delivery-confidence',
@@ -3323,9 +3504,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'Monthly',
         scope: 'Risk-adjusted delivery forecast with confidence scoring',
         dataSources: ['Initiatives', 'Risk signals', 'Delay signals', 'Budget', 'Exec snapshot'],
-        sections: ['Confidence per initiative', 'Trend direction', 'Risk-adjusted forecast', 'Sponsor-ready narrative', 'Recommended governance actions'],
-        ragLogic: 'GREEN if aggregate confidence >75%; AMBER if 50-75%; RED if <50% or confidence declining for 2+ periods',
-        followUpActions: ['Investigate declining confidence', 'Approve recovery plans', 'Communicate revised timelines'],
+        sections: [
+          'Confidence per initiative',
+          'Trend direction',
+          'Risk-adjusted forecast',
+          'Sponsor-ready narrative',
+          'Recommended governance actions',
+        ],
+        ragLogic:
+          'GREEN if aggregate confidence >75%; AMBER if 50-75%; RED if <50% or confidence declining for 2+ periods',
+        followUpActions: [
+          'Investigate declining confidence',
+          'Approve recovery plans',
+          'Communicate revised timelines',
+        ],
         icon: <Sparkles size={18} className="text-cyan-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
@@ -3339,86 +3531,114 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         cadence: 'On demand',
         scope: 'Concise executive summary of portfolio state',
         dataSources: ['Exec snapshot', 'Initiatives', 'Risk signals', 'Milestones'],
-        sections: ['Overall progress', 'Top 3 risks', 'Next milestones', 'Decisions required from sponsor', 'Key achievements this period'],
-        ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
-        followUpActions: ['Make requested decisions', 'Remove escalated blockers', 'Approve budget changes'],
-        icon: <FileText size={18} className="text-indigo-500" />,
-        highlights: [
-          { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
+        sections: [
+          'Overall progress',
+          'Top 3 risks',
+          'Next milestones',
+          'Decisions required from sponsor',
+          'Key achievements this period',
         ],
+        ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
+        followUpActions: [
+          'Make requested decisions',
+          'Remove escalated blockers',
+          'Approve budget changes',
+        ],
+        icon: <FileText size={18} className="text-indigo-500" />,
+        highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
       },
     ];
   }, [actionCenter, tasks.length, decisions, dashboardBaseInitiatives.length, execSnapshot]);
 
-  const reportDataContext = useMemo((): ReportDataContext => ({
-    initiatives: dashboardBaseInitiatives.map((i) => ({
-      id: i.id,
-      name: i.name,
-      status: i.status,
-      health: initiativeHealthMap.get(i.id)?.health,
-      progress: (i as any).progressPercent ?? (i as any).progress,
-      owner: (i as any).ownerName || (i as any).owner?.name,
-      targetDate: (i as any).plannedEndDate || (i as any).targetDate || (i as any).endDate,
-      priority: (i as any).priority,
-    })),
-    tasks: tasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      status: t.status,
-      priority: (t as any).priority,
-      dueDate: t.dueDate,
-      assigneeName: (t as any).assigneeName || (t as any).assignee?.name,
-      initiativeId: (t as any).initiativeId,
-      initiativeName: (t as any).initiativeName,
-    })),
-    decisions: decisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      status: d.status,
-      priority: (d as any).priority,
-      dueDate: (d as any).dueDate,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      relatedObjectId: (d as any).relatedObjectId,
-    })),
-    blocked: actionCenter.blocked.map((i) => ({ id: i.id, name: i.name, reason: (i as any).blockedReason })),
-    riskSignals: riskSignals.map((r) => ({
-      id: (r as any).id,
-      title: r.title,
-      initiativeName: r.initiativeName,
-      severity: r.severity,
-      description: r.description,
-      suggestedAction: r.suggestedAction,
-    })),
-    delaySignals: delaySignals.map((d) => ({
-      entityName: d.entityName,
-      deviationType: d.deviationType,
-      daysDeviation: d.daysDeviation,
-      severity: d.severity,
-    })),
-    overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
-      id: d.id,
-      title: d.title,
-      ownerName: (d as any).ownerName || (d as any).owner?.name,
-      dueDate: (d as any).dueDate,
-    })),
-    missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
-    dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      dueDate: (t as any).dueDate,
-      assigneeName: (t as any).assigneeName,
-    })),
-    overspendSignals,
-    nextMilestones: execSnapshot?.overview?.nextMilestones ?? [],
-    priorityAlerts: execSnapshot?.overview?.priorityAlerts ?? [],
-    timelineWarnings,
-    capacityAlerts,
-    capacityTimeline,
-    phaseLabel: execSnapshot?.overview?.phaseLabel,
-    progressPercent: execSnapshot?.overview?.progressPercent ?? null,
-    totalInitiatives: dashboardBaseInitiatives.length,
-    lastRefreshAt: execSnapshot?.generatedAt,
-  }), [dashboardBaseInitiatives, tasks, decisions, actionCenter, riskSignals, delaySignals, overspendSignals, execSnapshot, initiativeHealthMap, timelineWarnings, capacityAlerts, capacityTimeline]);
+  const reportDataContext = useMemo(
+    (): ReportDataContext => ({
+      initiatives: dashboardBaseInitiatives.map((i) => ({
+        id: i.id,
+        name: i.name,
+        status: i.status,
+        health: initiativeHealthMap.get(i.id)?.health,
+        progress: (i as any).progressPercent ?? (i as any).progress,
+        owner: (i as any).ownerName || (i as any).owner?.name,
+        targetDate: (i as any).plannedEndDate || (i as any).targetDate || (i as any).endDate,
+        priority: (i as any).priority,
+      })),
+      tasks: tasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        status: t.status,
+        priority: (t as any).priority,
+        dueDate: t.dueDate,
+        assigneeName: (t as any).assigneeName || (t as any).assignee?.name,
+        initiativeId: (t as any).initiativeId,
+        initiativeName: (t as any).initiativeName,
+      })),
+      decisions: decisions.map((d) => ({
+        id: d.id,
+        title: d.title,
+        status: d.status,
+        priority: (d as any).priority,
+        dueDate: (d as any).dueDate,
+        ownerName: (d as any).ownerName || (d as any).owner?.name,
+        relatedObjectId: (d as any).relatedObjectId,
+      })),
+      blocked: actionCenter.blocked.map((i) => ({
+        id: i.id,
+        name: i.name,
+        reason: (i as any).blockedReason,
+      })),
+      riskSignals: riskSignals.map((r) => ({
+        id: (r as any).id,
+        title: r.title,
+        initiativeName: r.initiativeName,
+        severity: r.severity,
+        description: r.description,
+        suggestedAction: r.suggestedAction,
+      })),
+      delaySignals: delaySignals.map((d) => ({
+        entityName: d.entityName,
+        deviationType: d.deviationType,
+        daysDeviation: d.daysDeviation,
+        severity: d.severity,
+      })),
+      overdueDecisions: actionCenter.overdueDecisions.map((d) => ({
+        id: d.id,
+        title: d.title,
+        ownerName: (d as any).ownerName || (d as any).owner?.name,
+        dueDate: (d as any).dueDate,
+      })),
+      missingDates: actionCenter.missingDates.map((i) => ({ id: i.id, name: i.name })),
+      dueSoonTasks: actionCenter.dueSoonTasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        dueDate: (t as any).dueDate,
+        assigneeName: (t as any).assigneeName,
+      })),
+      overspendSignals,
+      nextMilestones: execSnapshot?.overview?.nextMilestones ?? [],
+      priorityAlerts: execSnapshot?.overview?.priorityAlerts ?? [],
+      timelineWarnings,
+      capacityAlerts,
+      capacityTimeline,
+      phaseLabel: execSnapshot?.overview?.phaseLabel,
+      progressPercent: execSnapshot?.overview?.progressPercent ?? null,
+      totalInitiatives: dashboardBaseInitiatives.length,
+      lastRefreshAt: execSnapshot?.generatedAt,
+    }),
+    [
+      dashboardBaseInitiatives,
+      tasks,
+      decisions,
+      actionCenter,
+      riskSignals,
+      delaySignals,
+      overspendSignals,
+      execSnapshot,
+      initiativeHealthMap,
+      timelineWarnings,
+      capacityAlerts,
+      capacityTimeline,
+    ]
+  );
 
   const enrichedReportCatalog = useMemo(
     () => reportCatalog.map((report) => enrichExecutionReport(report, reportDataContext)),
@@ -3436,7 +3656,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     } else if (reportPreset === 'on-demand') {
       result = result.filter((report) => report.cadence === 'On demand');
     } else if (reportPreset === 'sponsor') {
-      result = result.filter((report) => /sponsor/i.test(report.audience) || /sponsor/i.test(report.title));
+      result = result.filter(
+        (report) => /sponsor/i.test(report.audience) || /sponsor/i.test(report.title)
+      );
     }
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -3465,14 +3687,28 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [actionQueueItems, actionCenter]);
 
   const interventionSuggestions = useMemo(() => {
-    const suggestions: { id: string; action: string; reason: string; expected: string; icon: React.ReactNode; severity: 'high' | 'medium' | 'low' }[] = [];
+    const suggestions: {
+      id: string;
+      action: string;
+      reason: string;
+      expected: string;
+      icon: React.ReactNode;
+      severity: 'high' | 'medium' | 'low';
+    }[] = [];
 
     if (managerMetrics.blockedCount > 0) {
       suggestions.push({
         id: 'unblock',
         action: t('execution.manager.suggestions.unblock', 'Resolve blockers'),
-        reason: t('execution.manager.suggestions.unblockReason', '{{count}} initiative(s) blocked — delivery stalled.', { count: managerMetrics.blockedCount }),
-        expected: t('execution.manager.suggestions.unblockExpected', 'Unblocked initiatives resume delivery.'),
+        reason: t(
+          'execution.manager.suggestions.unblockReason',
+          '{{count}} initiative(s) blocked — delivery stalled.',
+          { count: managerMetrics.blockedCount }
+        ),
+        expected: t(
+          'execution.manager.suggestions.unblockExpected',
+          'Unblocked initiatives resume delivery.'
+        ),
         icon: <AlertTriangle size={14} className="text-rose-500" />,
         severity: 'high',
       });
@@ -3482,8 +3718,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       suggestions.push({
         id: 'escalate-decisions',
         action: t('execution.manager.suggestions.escalate', 'Escalate overdue decisions'),
-        reason: t('execution.manager.suggestions.escalateReason', '{{count}} approval(s) past due — blocking downstream work.', { count: managerMetrics.overdueItems }),
-        expected: t('execution.manager.suggestions.escalateExpected', 'Decision queue clears, dependent tasks unblock.'),
+        reason: t(
+          'execution.manager.suggestions.escalateReason',
+          '{{count}} approval(s) past due — blocking downstream work.',
+          { count: managerMetrics.overdueItems }
+        ),
+        expected: t(
+          'execution.manager.suggestions.escalateExpected',
+          'Decision queue clears, dependent tasks unblock.'
+        ),
         icon: <Scale size={14} className="text-amber-500" />,
         severity: 'high',
       });
@@ -3493,8 +3736,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       suggestions.push({
         id: 'fill-dates',
         action: t('execution.manager.suggestions.replan', 'Fill missing dates'),
-        reason: t('execution.manager.suggestions.replanReason', '{{count}} initiative(s) have no target date — timeline invisible.', { count: managerMetrics.missingDatesCount }),
-        expected: t('execution.manager.suggestions.replanExpected', 'Timeline becomes credible; slippage detection activates.'),
+        reason: t(
+          'execution.manager.suggestions.replanReason',
+          '{{count}} initiative(s) have no target date — timeline invisible.',
+          { count: managerMetrics.missingDatesCount }
+        ),
+        expected: t(
+          'execution.manager.suggestions.replanExpected',
+          'Timeline becomes credible; slippage detection activates.'
+        ),
         icon: <Clock size={14} className="text-cyan-500" />,
         severity: 'medium',
       });
@@ -3503,9 +3753,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (managerMetrics.kpiAlerts > 0) {
       suggestions.push({
         id: 'address-kpi',
-        action: t('execution.manager.suggestions.addressKpi', 'Create recovery plans for KPI deviations'),
-        reason: t('execution.manager.suggestions.addressKpiReason', '{{count}} KPI deviation(s) without a plan.', { count: managerMetrics.kpiAlerts }),
-        expected: t('execution.manager.suggestions.addressKpiExpected', 'Deviations get action plans, confidence improves.'),
+        action: t(
+          'execution.manager.suggestions.addressKpi',
+          'Create recovery plans for KPI deviations'
+        ),
+        reason: t(
+          'execution.manager.suggestions.addressKpiReason',
+          '{{count}} KPI deviation(s) without a plan.',
+          { count: managerMetrics.kpiAlerts }
+        ),
+        expected: t(
+          'execution.manager.suggestions.addressKpiExpected',
+          'Deviations get action plans, confidence improves.'
+        ),
         icon: <Target size={14} className="text-fuchsia-500" />,
         severity: 'medium',
       });
@@ -3515,8 +3775,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       suggestions.push({
         id: 'smooth-workload',
         action: t('execution.manager.suggestions.smooth', 'Rebalance upcoming workload'),
-        reason: t('execution.manager.suggestions.smoothReason', '{{count}} tasks due soon — potential resource crunch.', { count: actionCenter.dueSoonTasks.length }),
-        expected: t('execution.manager.suggestions.smoothExpected', 'Workload spread evenly; no single-point overload.'),
+        reason: t(
+          'execution.manager.suggestions.smoothReason',
+          '{{count}} tasks due soon — potential resource crunch.',
+          { count: actionCenter.dueSoonTasks.length }
+        ),
+        expected: t(
+          'execution.manager.suggestions.smoothExpected',
+          'Workload spread evenly; no single-point overload.'
+        ),
         icon: <Users size={14} className="text-violet-500" />,
         severity: 'low',
       });
@@ -3561,7 +3828,12 @@ Please return:
           },
         });
         await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
-        toast.success(t('execution.reportCatalog.generating', 'Generating "{{title}}"…', { title: report.title }), { duration: 2000 });
+        toast.success(
+          t('execution.reportCatalog.generating', 'Generating "{{title}}"…', {
+            title: report.title,
+          }),
+          { duration: 2000 }
+        );
         if (isChatCollapsed) toggleChatCollapse();
       } catch {
         toast.error(t('execution.reportCatalog.generateError', 'Failed to generate report'));
@@ -3570,73 +3842,79 @@ Please return:
     [actionCenter, openChatWithContext, addChatMessage, t, isChatCollapsed, toggleChatCollapse]
   );
 
-  const reportColumns: TableColumn[] = useMemo(() => [
-    {
-      id: 'title',
-      label: t('execution.reportCatalog.col.title', 'Report'),
-      render: (row: any) => {
-        const r = row as ReportDef;
-        return (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
-              {r.icon}
+  const reportColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'title',
+        label: t('execution.reportCatalog.col.title', 'Report'),
+        render: (row: any) => {
+          const r = row as ReportDef;
+          return (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800">
+                {r.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {r.title}
+                </div>
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                  {r.audience}
+                </div>
+              </div>
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{r.title}</div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{r.audience}</div>
+          );
+        },
+      },
+      {
+        id: 'cadence',
+        label: t('execution.reportCatalog.col.cadence', 'Cadence'),
+        width: '100px',
+        render: (row: any) => (
+          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {(row as ReportDef).cadence}
+          </span>
+        ),
+      },
+      {
+        id: 'highlights',
+        label: t('execution.reportCatalog.col.data', 'Live Data'),
+        width: '200px',
+        render: (row: any) => {
+          const r = row as ReportDef;
+          return (
+            <div className="flex flex-wrap gap-1">
+              {r.highlights.slice(0, 3).map((h) => (
+                <span
+                  key={h.label}
+                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    h.variant === 'critical'
+                      ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                      : h.variant === 'warn'
+                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                        : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  {h.label}: {h.value}
+                </span>
+              ))}
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: 'cadence',
-      label: t('execution.reportCatalog.col.cadence', 'Cadence'),
-      width: '100px',
-      render: (row: any) => (
-        <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {(row as ReportDef).cadence}
-        </span>
-      ),
-    },
-    {
-      id: 'highlights',
-      label: t('execution.reportCatalog.col.data', 'Live Data'),
-      width: '200px',
-      render: (row: any) => {
-        const r = row as ReportDef;
-        return (
-          <div className="flex flex-wrap gap-1">
-            {r.highlights.slice(0, 3).map((h) => (
-              <span
-                key={h.label}
-                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                  h.variant === 'critical'
-                    ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-                    : h.variant === 'warn'
-                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {h.label}: {h.value}
-              </span>
-            ))}
-          </div>
-        );
+      {
+        id: 'sections',
+        label: t('execution.reportCatalog.col.sections', 'Sections'),
+        width: '60px',
+        render: (row: any) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+            {(row as ReportDef).sections.length}
+          </span>
+        ),
       },
-    },
-    {
-      id: 'sections',
-      label: t('execution.reportCatalog.col.sections', 'Sections'),
-      width: '60px',
-      render: (row: any) => (
-        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-          {(row as ReportDef).sections.length}
-        </span>
-      ),
-    },
-  ], [t]);
-
+    ],
+    [t]
+  );
 
   const renderReportPreviewBody = useCallback((report: ReportDef) => {
     const rag = computeRAG(report);
@@ -3647,7 +3925,9 @@ Please return:
         {/* RAG badge + title */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}>
+            <div
+              className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}
+            >
               <RagIcon size={10} className="inline mr-1 -mt-0.5" />
               {ragConf.label}
             </div>
@@ -3660,8 +3940,12 @@ Please return:
               {report.icon}
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">{report.title}</div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500">{report.audience}</div>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                {report.title}
+              </div>
+              <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                {report.audience}
+              </div>
             </div>
           </div>
         </div>
@@ -3688,25 +3972,41 @@ Please return:
 
         {/* Scope */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Scope</div>
-          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{report.scope}</p>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Scope
+          </div>
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+            {report.scope}
+          </p>
         </div>
 
         {/* Data sources */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Data Sources</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Data Sources
+          </div>
           <div className="flex flex-wrap gap-1">
             {report.dataSources.map((ds) => (
-              <span key={ds} className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">{ds}</span>
+              <span
+                key={ds}
+                className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+              >
+                {ds}
+              </span>
             ))}
           </div>
         </div>
 
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">AI Executive Readout</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            AI Executive Readout
+          </div>
           <div className="space-y-1.5">
             {report.aiExecutiveReadout.slice(0, 3).map((line) => (
-              <div key={line} className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300">
+              <div
+                key={line}
+                className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+              >
                 {line}
               </div>
             ))}
@@ -3715,38 +4015,58 @@ Please return:
 
         {/* Mandatory sections */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Mandatory Sections</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Mandatory Sections
+          </div>
           <ol className="space-y-0.5 list-decimal list-inside">
             {report.sections.map((s) => (
-              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">{s}</li>
+              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">
+                {s}
+              </li>
             ))}
           </ol>
         </div>
 
         {/* RAG logic */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">RAG / Confidence Logic</div>
-          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{report.ragLogic}</p>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            RAG / Confidence Logic
+          </div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+            {report.ragLogic}
+          </p>
         </div>
 
         {/* Follow-up actions */}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Expected Follow-up Actions</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Expected Follow-up Actions
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {report.followUpActions.map((a) => (
-              <span key={a} className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300">{a}</span>
+              <span
+                key={a}
+                className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300"
+              >
+                {a}
+              </span>
             ))}
           </div>
         </div>
 
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">Data Quality</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
+            Data Quality
+          </div>
           <div className="flex flex-wrap gap-1.5">
             <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
               {report.dataQuality.confidence}
             </span>
             {report.degradedFlags.map((flag) => (
-              <span key={flag} className="inline-block px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-[10px] text-violet-700 dark:text-violet-300">
+              <span
+                key={flag}
+                className="inline-block px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-[10px] text-violet-700 dark:text-violet-300"
+              >
                 {flag}
               </span>
             ))}
@@ -3763,57 +4083,66 @@ Please return:
     [navigate]
   );
 
-  const renderReportPreviewFooter = useCallback((report: ReportDef) => {
-    const rag = computeRAG(report);
-    return (
-      <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
-        <button
-          type="button"
-          onClick={() => handleGenerateReport(report)}
-          className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
-        >
-          {t('execution.reportPanel.generateAI', 'Generate with AI')}
-        </button>
-        <button
-          type="button"
-          onClick={() => handleGenerateInWordy(report)}
-          className="h-8 px-3 rounded-lg text-xs font-medium border border-brand/40 text-brand hover:bg-brand/5 dark:border-brand/50 dark:text-brand dark:hover:bg-brand/10 transition-colors"
-        >
-          {t('execution.reportPanel.generateInWordy', 'Generate in Wordy')}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            exportReportPDF(report, rag);
-            toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
-          }}
-          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-        >
-          PDF
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            const md = buildReportMarkdown(report, rag);
-            navigator.clipboard.writeText(md).then(
-              () => toast.success(t('execution.reportPanel.copied', 'Copied')),
-              () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
-            );
-          }}
-          className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-        >
-          {t('execution.reportPanel.copy', 'Copy')}
-        </button>
-      </div>
-    );
-  }, [handleGenerateReport, handleGenerateInWordy, t]);
+  const renderReportPreviewFooter = useCallback(
+    (report: ReportDef) => {
+      const rag = computeRAG(report);
+      return (
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
+          <button
+            type="button"
+            onClick={() => handleGenerateReport(report)}
+            className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+          >
+            {t('execution.reportPanel.generateAI', 'Generate with AI')}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleGenerateInWordy(report)}
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-brand/40 text-brand hover:bg-brand/5 dark:border-brand/50 dark:text-brand dark:hover:bg-brand/10 transition-colors"
+          >
+            {t('execution.reportPanel.generateInWordy', 'Generate in Wordy')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              exportReportPDF(report, rag);
+              toast.success(t('execution.reportPanel.pdfExported', 'PDF downloaded'));
+            }}
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
+            PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const md = buildReportMarkdown(report, rag);
+              navigator.clipboard.writeText(md).then(
+                () => toast.success(t('execution.reportPanel.copied', 'Copied')),
+                () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
+              );
+            }}
+            className="h-8 px-3 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
+            {t('execution.reportPanel.copy', 'Copy')}
+          </button>
+        </div>
+      );
+    },
+    [handleGenerateReport, handleGenerateInWordy, t]
+  );
 
   const renderReportsCatalog = () => {
     if (reportDataContext.totalInitiatives === 0) {
       return (
         <div className="p-4">
-          <Callout variant="info" title={t('execution.reportCatalog.noData', 'No execution data yet')}>
-            {t('execution.reportCatalog.noDataDesc', 'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.')}
+          <Callout
+            variant="info"
+            title={t('execution.reportCatalog.noData', 'No execution data yet')}
+          >
+            {t(
+              'execution.reportCatalog.noDataDesc',
+              'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.'
+            )}
           </Callout>
         </div>
       );
@@ -3823,7 +4152,9 @@ Please return:
       type ReportRow = ReportDef & { title: string };
       const selectedReportPreviewId = reportPreviewId;
       const selectedReport = selectedReportPreviewId
-        ? (filteredReportCatalog.find((r) => r.id === selectedReportPreviewId) as ReportRow | undefined) ?? null
+        ? ((filteredReportCatalog.find((r) => r.id === selectedReportPreviewId) as
+            | ReportRow
+            | undefined) ?? null)
         : null;
       const reportIds = filteredReportCatalog.map((r) => r.id);
 
@@ -3834,7 +4165,9 @@ Please return:
             selectedItem={selectedReport}
             onSelect={setReportPreviewId}
             itemIds={reportIds}
-            getItemById={(id) => (filteredReportCatalog.find((r) => r.id === id) as ReportRow) ?? null}
+            getItemById={(id) =>
+              (filteredReportCatalog.find((r) => r.id === id) as ReportRow) ?? null
+            }
             onOpenFull={(id) => {
               const r = filteredReportCatalog.find((x) => x.id === id);
               if (r) handleOpenReport(r);
@@ -3870,7 +4203,10 @@ Please return:
               {t('execution.reportCatalog.heading', 'Execution Reports')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              {t('execution.reportCatalog.subheading', 'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.')}
+              {t(
+                'execution.reportCatalog.subheading',
+                'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.'
+              )}
             </p>
           </div>
           <button
@@ -3912,7 +4248,10 @@ Please return:
                         </div>
                       </div>
                     </div>
-                    <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-cyan-500" />
+                    <ChevronRight
+                      size={14}
+                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-cyan-500"
+                    />
                   </div>
 
                   {report.highlights.length > 0 && (
@@ -3992,7 +4331,7 @@ Please return:
         <InitiativeDocumentView
           initiativeId={activeDocumentId}
           onBack={handleShowList}
-          onStatusChange={() => handleRefresh()}
+          onStatusChange={isPilotParticipant ? undefined : () => handleRefresh()}
           sourceModule="execution"
         />
       );
@@ -4005,10 +4344,13 @@ Please return:
             initiatives={portfolioInitiatives}
             scope={scope}
             onInitiativeClick={(pi) => {
-              const full = summaryInitiatives.find((x) => x.id === pi.id) || filteredInitiatives.find((x) => x.id === pi.id);
+              const full =
+                summaryInitiatives.find((x) => x.id === pi.id) ||
+                filteredInitiatives.find((x) => x.id === pi.id);
               if (full) handleOpenSidePanel(full);
             }}
             onStatusChange={(id, status) => handleInlineStatusChange(id, status)}
+            readOnly={isPilotParticipant}
           />
         );
       }
@@ -4017,11 +4359,15 @@ Please return:
         return (
           <div className="min-h-[420px]">
             <ExecutionTimelineView
-              initiatives={(summaryInitiatives.length ? summaryInitiatives : filteredInitiatives) as FullInitiative[]}
+              initiatives={
+                (summaryInitiatives.length
+                  ? summaryInitiatives
+                  : filteredInitiatives) as FullInitiative[]
+              }
               onInitiativeClick={handleOpenSidePanel}
-              onUpdateInitiative={handleInitiativeUpdate}
-              onTimelineUpdate={handleTimelineUpdate}
-              onDependenciesChanged={handleRefresh}
+              onUpdateInitiative={isPilotParticipant ? undefined : handleInitiativeUpdate}
+              onTimelineUpdate={isPilotParticipant ? undefined : handleTimelineUpdate}
+              onDependenciesChanged={isPilotParticipant ? undefined : handleRefresh}
               riskSignals={riskSignals}
               delaySignals={delaySignals}
               governedTimelineWarnings={timelineWarnings}
@@ -4153,7 +4499,7 @@ Please return:
         }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={handleCreateInitiative}
+        onNewItem={isPilotParticipant ? undefined : handleCreateInitiative}
         newItemLabel={t('initiatives.form.newInitiative', 'New Initiative')}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}

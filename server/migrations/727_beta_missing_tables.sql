@@ -504,7 +504,28 @@ CREATE TABLE IF NOT EXISTS kpi_definitions (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- 26. KPI Measurements
+-- 26. Initiative KPIs
+CREATE TABLE IF NOT EXISTS initiative_kpis (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    initiative_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    target_value REAL,
+    unit TEXT,
+    measurement_frequency TEXT DEFAULT 'MONTHLY',
+    alert_threshold REAL,
+    alert_direction TEXT DEFAULT 'BELOW',
+    is_primary INTEGER DEFAULT 0,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_initiative_kpis_initiative
+    ON initiative_kpis(initiative_id);
+
+-- 27. KPI Measurements
 CREATE TABLE IF NOT EXISTS kpi_measurements (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     kpi_id TEXT NOT NULL,
@@ -518,7 +539,7 @@ CREATE TABLE IF NOT EXISTS kpi_measurements (
     FOREIGN KEY (kpi_id) REFERENCES initiative_kpis(id) ON DELETE CASCADE
 );
 
--- 27. Integration Providers (needed as FK target for integrations)
+-- 28. Integration Providers (needed as FK target for integrations)
 CREATE TABLE IF NOT EXISTS integration_providers (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -535,7 +556,7 @@ CREATE TABLE IF NOT EXISTS integration_providers (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- 28. Integrations
+-- 29. Integrations
 CREATE TABLE IF NOT EXISTS integrations (
     id TEXT PRIMARY KEY,
     organization_id TEXT NOT NULL,

@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -280,7 +280,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);

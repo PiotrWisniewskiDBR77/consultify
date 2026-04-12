@@ -49,10 +49,11 @@ export const NavItem: React.FC<NavItemProps> = ({
   const isCompleted = item.viewId && completedViews.includes(item.viewId);
   const badgeLabel = item.badge === 'soon' ? 'Wkrótce' : item.badge;
 
-  const isLocked =
+  const isLockedByFlow =
     item.requiresView &&
     !completedViews.includes(item.requiresView) &&
     !isAdminOwnerOrSuperAdminRole(currentUserRole);
+  const isLocked = Boolean(item.isLocked || isLockedByFlow);
 
   const isChildActive = (i: MenuItem): boolean => {
     if (i.viewId === currentView) return true;
@@ -62,6 +63,9 @@ export const NavItem: React.FC<NavItemProps> = ({
   const isParentActive = hasSubItems && isChildActive(item);
 
   const getTooltip = () => {
+    if (item.isLocked && item.lockedMessage) {
+      return item.lockedMessage;
+    }
     if (isLocked && item.requiresView) {
       return `${t('common.locked')}: ${t('common.complete')} ${getViewName(item.requiresView)} ${t('common.first')}`;
     }
@@ -89,13 +93,12 @@ export const NavItem: React.FC<NavItemProps> = ({
         type="button"
         data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
         onClick={() => onClick(item)}
-        disabled={isLocked}
-        whileTap={!isLocked ? { scale: 0.98 } : undefined}
+        whileTap={{ scale: 0.98 }}
         className={[
           'w-full flex items-center text-sm transition-all duration-150 ease-out relative group rounded-lg',
           isTouchDevice ? 'py-2.5 min-h-[44px]' : 'py-[7px]',
           showFull ? 'px-2.5 gap-2.5' : 'px-0 justify-center',
-          isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+          isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
           isHighlighted
             ? 'bg-primary-50 dark:bg-white/[0.08] text-primary-700 dark:text-slate-100 font-medium'
             : isParentActive

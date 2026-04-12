@@ -172,7 +172,7 @@ export const ActionPreviewSchema = z.object({
 
 export const ExecutionAgentRunSchema = z.object({
   runId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   contextSnapshotId: z.string().uuid(),
   initiatorUserId: z.string().uuid(),
   state: z.enum(RunStateValues),
@@ -228,7 +228,7 @@ export interface CreateRunParams {
 }
 
 export const CreateRunParamsSchema = z.object({
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   contextSnapshotId: z.string().uuid(),
   initiatorUserId: z.string().uuid(),
   goal: z.string().min(1),

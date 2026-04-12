@@ -623,6 +623,87 @@ describe('settings integrations authority continuity', () => {
   });
 });
 
+describe('settings preferences and advanced flows', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbRun.mockResolvedValue({ success: true });
+    mockDbGet.mockResolvedValue(undefined);
+    mockDbAll.mockResolvedValue([]);
+  });
+
+  it('GET /api/settings/preferences/ai-privacy returns the default persisted contract shape', async () => {
+    const app = express();
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).get('/api/settings/preferences/ai-privacy');
+
+    expect(res.status).toBe(200);
+    expect(res.body.preferences).toEqual(
+      expect.objectContaining({
+        allowProjectData: true,
+        allowClientData: true,
+        optOutTraining: true,
+        dataRetention: '30d',
+        auditLogEnabled: true,
+      })
+    );
+  });
+
+  it('POST /api/settings/templates/:id/apply persists applied template values into user preferences', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).post('/api/settings/templates/power-user/apply').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('INSERT OR REPLACE INTO user_preferences') &&
+          Array.isArray(call[1]) &&
+          (call[1] as unknown[])[0] === 'user-1' &&
+          (call[1] as unknown[])[1] === 'settings:shortcuts'
+      )
+    ).toBe(true);
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('INSERT OR REPLACE INTO user_preferences') &&
+          Array.isArray(call[1]) &&
+          (call[1] as unknown[])[1] === 'settings:aiAutoComplete'
+      )
+    ).toBe(true);
+  });
+
+  it('POST /api/settings/history/restore/:id writes the restored value back to preferences', async () => {
+    mockDbGet.mockResolvedValueOnce({
+      old_value: JSON.stringify({ theme: 'dark', accentColor: '#111827' }),
+      category: 'appearance',
+      setting_key: 'preferences',
+    });
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+
+    const res = await request(app).post('/api/settings/history/restore/entry-1').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.restoredValue).toEqual({ theme: 'dark', accentColor: '#111827' });
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('INSERT OR REPLACE INTO user_preferences') &&
+          Array.isArray(call[1]) &&
+          (call[1] as unknown[])[0] === 'user-1' &&
+          (call[1] as unknown[])[1] === 'settings:appearance'
+      )
+    ).toBe(true);
+  });
+});
+
 describe('legacy settings root hardening', () => {
   it('blocks non-superadmins from reading the legacy global settings root', async () => {
     const app = express();

@@ -88,8 +88,20 @@ function mapRunToSteps(
   effectiveStatus: ArtifactRunRecord['runStatus'] | null,
   hasSnapshot: boolean,
   hasPlan: boolean,
-  contentGenerated: boolean
+  contentGenerated: boolean,
+  isStarting: boolean
 ): TaskStep[] {
+  if (isStarting && !hasPlan && !effectiveStatus) {
+    return [
+      { id: 'snapshot', label: 'Capture context snapshot', status: 'running' },
+      ...PIPELINE_STEPS.slice(1).map((s) => ({
+        id: s.id,
+        label: s.label,
+        status: 'pending' as const,
+      })),
+    ];
+  }
+
   if (!hasSnapshot && !hasPlan && !effectiveStatus) {
     return PIPELINE_STEPS.map((s) => ({ id: s.id, label: s.label, status: 'pending' as const }));
   }
@@ -279,18 +291,22 @@ export interface KimiPipelineState {
   currentRun: ArtifactRunRecord | null;
   isBusy: boolean;
 
-  startGeneration: (goal: string) => Promise<void>;
+  startGeneration: (goal: string, templateArtifactId?: string) => Promise<void>;
   advancePipeline: () => Promise<void>;
   handleReplay: () => void;
   handleRemix: () => void;
   handleDownload: () => Promise<void>;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isUuidLike = (v: unknown): v is string =>
+  typeof v === 'string' && UUID_RE.test(v.trim());
+
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
-  const { activeConversationId } = useConversationStore();
-  const conversationId = activeConversationId;
+  const conversationId = useConversationStore((s) => s.activeConversationId);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
+  const currentUser = useAppStore((s) => s.currentUser);
 
   const outputType: ArtifactPlanOutputType =
     lane === 'wordy' ? 'report' : lane === 'excele' ? 'sheet' : 'presentation';
@@ -314,6 +330,8 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const [preview, setPreview] = useState<ArtifactPreview | null>(null);
   const [contentGenerated, setContentGenerated] = useState(false);
   const [lastGoal, setLastGoal] = useState('');
+  const [isStartingPipeline, setIsStartingPipeline] = useState(false);
+  const [startupError, setStartupError] = useState<string | null>(null);
   const contentGenerationTriggered = useRef(false);
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
@@ -344,17 +362,19 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         effectiveStatus,
         !!latestSnapshot?.snapshotId,
         !!currentPlan,
-        contentGenerated
+        contentGenerated,
+        isStartingPipeline
       ),
-    [effectiveStatus, latestSnapshot?.snapshotId, currentPlan, contentGenerated]
+    [effectiveStatus, latestSnapshot?.snapshotId, currentPlan, contentGenerated, isStartingPipeline]
   );
 
   const completedSteps = taskSteps.filter((s) => s.status === 'completed').length;
   const isGenerating =
+    isStartingPipeline ||
     (!!currentRun && effectiveStatus !== 'completed' && effectiveStatus !== 'failed' && effectiveStatus !== 'cancelled') ||
     (effectiveStatus === 'completed' && !contentGenerated);
   const isCompleted = effectiveStatus === 'completed' && contentGenerated;
-  const isFailed = effectiveStatus === 'failed' || effectiveStatus === 'cancelled';
+  const isFailed = Boolean(startupError) || effectiveStatus === 'failed' || effectiveStatus === 'cancelled';
 
   useEffect(() => {
     if (effectiveStatus !== 'completed' || !currentRun || contentGenerationTriggered.current) {
@@ -372,16 +392,43 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         const deckId = origin.originRecordId;
 
         const generateAndFetch = async () => {
-          try {
-            await Api.post(`/presentations/generate/deck`, {
-              deckId,
-              outline: [],
-              setup: { goal: lastGoal, selectedTemplate: '' },
-            });
-          } catch {
-            // generation may already be done or endpoint may not match — continue to fetch
+          const unwrap = <T = any,>(res: any): T => {
+            const data = res?.data;
+            if (data && typeof data === 'object' && 'data' in data) return data.data as T;
+            return data as T;
+          };
+
+          const initialDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+          const hasGeneratedContent = Boolean(initialDeck?.deck_json || initialDeck?.unified_json);
+
+          if (!hasGeneratedContent) {
+            try {
+              await Api.post(`/presentations/generate/deck`, {
+                deckId,
+                outline: Array.isArray(initialDeck?.outline_json) ? initialDeck.outline_json : [],
+                setup: {
+                  title: initialDeck?.title || title,
+                  templateId:
+                    typeof initialDeck?.template_id === 'string' && initialDeck.template_id.trim()
+                      ? initialDeck.template_id
+                      : undefined,
+                  audience: initialDeck?.audience || 'internal',
+                  goal: initialDeck?.goal || 'inform',
+                  language: initialDeck?.language || 'en',
+                  theme: initialDeck?.theme || 'modern',
+                  confidentiality: initialDeck?.confidentiality || 'internal',
+                  sourceArtifacts: Array.isArray(initialDeck?.source_artifacts)
+                    ? initialDeck.source_artifacts
+                    : [],
+                  sourceType: initialDeck?.source_type || undefined,
+                  sourceId: initialDeck?.source_id || undefined,
+                },
+              });
+            } catch {
+              // generation may already be done or a legacy payload may still be accepted
+            }
           }
-          return Api.get(`/presentations/decks/${deckId}`);
+          return unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
         };
 
         generateAndFetch()
@@ -396,7 +443,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               typeof deckData?.deck_json === 'string'
                 ? JSON.parse(deckData.deck_json)
                 : deckData?.deck_json || deckData?.unified_json;
-            const rawSlides = unifiedJson?.slides || [];
+            const rawSlides =
+              unifiedJson?.slides ||
+              (Array.isArray(deckData?.outline_json)
+                ? deckData.outline_json.map((item: any, index: number) => ({
+                    id: item?.slideId || String(index + 1),
+                    intent: item?.intent || 'content',
+                    title: item?.title || `Slide ${index + 1}`,
+                    blocks: item?.keyMessage ? [{ type: 'text', text: item.keyMessage }] : [],
+                  }))
+                : []);
             for (const s of rawSlides) {
               const blocks = s.blocks || s.content_blocks || [];
               const bulletPoints = blocks
@@ -579,84 +635,101 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
   const startGeneration = useCallback(
     async (goal: string, templateArtifactId?: string) => {
-      if (!conversationId) {
-        toast.error('No active conversation. Start a chat first.');
-        return;
-      }
-
+      setIsStartingPipeline(true);
+      setStartupError(null);
       setLastGoal(goal);
       contentGenerationTriggered.current = false;
       setContentGenerated(false);
+      setCurrentRun(null);
+      setCurrentPlan(null);
+      setPreview(null);
+
+      let activeConvId = conversationId;
+
+      // Auto-create conversation if none exists
+      if (!activeConvId) {
+        try {
+          const laneTitle =
+            lane === 'wordy' ? 'Document' : lane === 'excele' ? 'Spreadsheet' : 'Presentation';
+          await useConversationStore.getState().createConversation({
+            title: `${laneTitle}: ${goal.slice(0, 60)}`,
+          });
+          activeConvId = useConversationStore.getState().activeConversationId;
+        } catch {
+          // ignore — will be caught below
+        }
+        if (!activeConvId) {
+          setStartupError('Could not create a conversation. Please try again.');
+          toast.error('Could not create a conversation. Please try again.');
+          return;
+        }
+      }
 
       try {
         let snapshotId = latestSnapshot?.snapshotId;
         if (!snapshotId) {
-          // Fetch recent user artifacts to include as context refs for AI awareness
-          let artifactRefs: Array<{
-            artifactId: string;
-            artifactType: string;
-            artifactModule: string;
-            relationship: string;
-          }> = [];
-          try {
-            const recentArtifacts = await Api.get('/artifacts', { params: { limit: 5 } });
-            const items = Array.isArray(recentArtifacts)
-              ? recentArtifacts
-              : (recentArtifacts as any)?.data || [];
-            artifactRefs = items.slice(0, 5).map((a: any) => ({
-              artifactId: a.artifactId || a.artifact_id,
-              artifactType: a.outputType || a.output_type || 'report',
-              artifactModule: 'outputs_library',
-              relationship: 'reference' as const,
-            }));
-          } catch {
-            // Non-critical; proceed with empty refs
-          }
+          const orgId = currentOrganization?.id;
+          const resolvedWorkspaceId = isUuidLike(currentProjectId)
+            ? currentProjectId
+            : orgId && orgId.trim().length > 0
+              ? orgId
+              : activeConvId;
 
-          const sourceContextRefs: Array<{
-            sourceId: string;
-            scopeType: string;
-            sourceKind: string;
-            freshnessAt: string | null;
-          }> = [];
-          if (currentOrganization?.id) {
-            sourceContextRefs.push({
-              sourceId: currentOrganization.id,
+          const resolvedProjectId = isUuidLike(currentProjectId) ? currentProjectId : null;
+
+          const resolvedRoleRef =
+            typeof currentUser?.role === 'string' && currentUser.role.trim().length > 0
+              ? currentUser.role.trim().toLowerCase()
+              : 'member';
+
+          const snapshotParams: Record<string, unknown> = {
+            workspaceId: resolvedWorkspaceId,
+            projectId: resolvedProjectId,
+            conversationId: activeConvId,
+            executionRunId: null,
+            artifactRefs: [],
+            effectiveScopeRef: 'workspace',
+            resolvedRoleRef,
+            consumerClass: 'chat',
+            privacyMode: false,
+            sourceContextRefs: [],
+          };
+
+          if (orgId && orgId.trim().length > 0) {
+            (snapshotParams.sourceContextRefs as Array<Record<string, unknown>>).push({
+              sourceId: orgId,
               scopeType: 'organization',
               sourceKind: 'organization_profile',
               freshnessAt: new Date().toISOString(),
             });
           }
-          if (currentProjectId) {
-            sourceContextRefs.push({
-              sourceId: currentProjectId,
-              scopeType: 'organization',
-              sourceKind: 'project',
-              freshnessAt: new Date().toISOString(),
+
+          console.debug('[KIMI Pipeline] captureSnapshot params:', snapshotParams);
+
+          try {
+            const snap = await captureSnapshot.mutateAsync(snapshotParams);
+            snapshotId = (snap as { snapshotId?: string })?.snapshotId;
+          } catch (snapErr: any) {
+            const details = snapErr?.data?.details ?? snapErr?.response?.data?.details;
+            setStartupError(
+              snapErr instanceof Error ? snapErr.message : 'Failed to capture context snapshot.'
+            );
+            console.error('[KIMI Pipeline] Snapshot capture failed:', {
+              error: snapErr?.message,
+              details: JSON.stringify(details, null, 2),
+              params: snapshotParams,
             });
           }
-          const snap = await captureSnapshot.mutateAsync({
-            workspaceId: conversationId,
-            projectId: currentProjectId || null,
-            conversationId,
-            executionRunId: null,
-            artifactRefs,
-            effectiveScopeRef: 'workspace',
-            resolvedRoleRef: 'member',
-            consumerClass: 'chat',
-            privacyMode: false,
-            sourceContextRefs,
-          });
-          snapshotId = (snap as { snapshotId?: string })?.snapshotId;
         }
 
         if (!snapshotId) {
-          toast.error('Failed to capture context snapshot.');
+          setStartupError('Failed to capture context snapshot. Try sending a message first.');
+          toast.error('Failed to capture context snapshot. Try sending a message first.');
           return;
         }
 
         const result = await createRun.mutateAsync({
-          conversationId,
+          conversationId: activeConvId,
           contextSnapshotId: snapshotId,
           goal: goal.trim(),
           requestedArtifactFamily: artifactFamily,
@@ -678,24 +751,70 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           const accepted = await acceptPlan.mutateAsync(result.run.runId);
           setCurrentRun(accepted);
           setCurrentPlan(accepted.plan);
+
+          if (accepted.executionRunId) {
+            try {
+              await submitReview.mutateAsync(accepted.executionRunId);
+            } catch {
+              // fallback to interval-driven advance
+            }
+
+            try {
+              await approveRun.mutateAsync({
+                runId: accepted.executionRunId,
+                reason: 'KIMI auto-approval for governed artifact generation',
+              });
+            } catch {
+              // fallback to interval-driven advance
+            }
+          }
+
+          try {
+            const materialized = await materializeRun.mutateAsync({
+              runId: accepted.runId,
+              params: {
+                title: accepted.plan.titleHint,
+                config:
+                  outputType === 'sheet'
+                    ? { tableName: accepted.plan.titleHint }
+                    : undefined,
+              },
+            });
+            setCurrentRun(materialized);
+            setCurrentPlan(materialized.plan);
+          } catch {
+            // fallback to interval-driven advance
+          }
         } catch {
           // accept failures surface via state
         }
       } catch (error) {
+        setStartupError(
+          error instanceof Error ? error.message : 'Failed to start artifact generation'
+        );
         toast.error(
           error instanceof Error ? error.message : 'Failed to start artifact generation'
         );
+      } finally {
+        setIsStartingPipeline(false);
       }
     },
     [
       conversationId,
+      lane,
       latestSnapshot,
       captureSnapshot,
       createRun,
       preflightRun,
       acceptPlan,
+      submitReview,
+      approveRun,
+      materializeRun,
       artifactFamily,
       outputType,
+      currentOrganization?.id,
+      currentProjectId,
+      currentUser?.role,
     ]
   );
 
@@ -703,15 +822,18 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     if (!currentRun) return;
 
     try {
-      if (effectiveStatus === 'proposal_created') {
-        const accepted = await acceptPlan.mutateAsync(currentRun.runId);
-        setCurrentRun(accepted);
-        setCurrentPlan(accepted.plan);
+      setStartupError(null);
+
+      if (effectiveStatus === 'proposal_created' && currentRun.executionRunId) {
+        await submitReview.mutateAsync(currentRun.executionRunId);
         return;
       }
 
       if (effectiveStatus === 'awaiting_review' && currentRun.executionRunId) {
-        await submitReview.mutateAsync(currentRun.executionRunId);
+        await approveRun.mutateAsync({
+          runId: currentRun.executionRunId,
+          reason: 'KIMI auto-approval for governed artifact generation',
+        });
         return;
       }
 
@@ -723,12 +845,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           runId: currentRun.runId,
           params: {
             title: currentRun.plan.titleHint,
-            config:
-              outputType === 'sheet'
-                ? { tableId: '' }
-                : outputType === 'presentation'
-                  ? { templateId: '' }
-                  : undefined,
+            config: outputType === 'sheet' ? { tableName: currentRun.plan.titleHint } : undefined,
           },
         });
         setCurrentRun(completed);
@@ -736,11 +853,12 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         return;
       }
     } catch (error) {
+      setStartupError(error instanceof Error ? error.message : 'Failed to advance pipeline');
       toast.error(
         error instanceof Error ? error.message : 'Failed to advance pipeline'
       );
     }
-  }, [currentRun, effectiveStatus, acceptPlan, submitReview, materializeRun, outputType]);
+  }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType]);
 
   const handleReplay = useCallback(() => {
     contentGenerationTriggered.current = false;
@@ -748,6 +866,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     setCurrentPlan(null);
     setPreview(null);
     setContentGenerated(false);
+    setStartupError(null);
     if (lastGoal) {
       void startGeneration(lastGoal);
     }
@@ -759,6 +878,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     setCurrentPlan(null);
     setPreview(null);
     setContentGenerated(false);
+    setStartupError(null);
   }, []);
 
   const handleDownload = useCallback(async () => {
@@ -794,7 +914,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, [currentRun, lane]);
 
   const failureReason = isFailed
-    ? (currentRun as any)?.failureReason ?? (currentRun as any)?.failurePackage?.message ?? null
+    ? startupError ??
+      (currentRun as any)?.failureReason ??
+      (currentRun as any)?.failurePackage?.message ??
+      null
     : null;
 
   const myWorkNotified = useRef(false);

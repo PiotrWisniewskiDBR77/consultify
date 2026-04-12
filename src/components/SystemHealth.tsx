@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 
 interface SystemMetrics {
   latency: number;
@@ -17,6 +18,9 @@ interface SystemMetrics {
 
 export const SystemHealth = () => {
   const { t } = useTranslation();
+  const currentUser = useAppStore((s) => s.currentUser);
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
+  const isDemoContext = isDemoMode || currentUser?.isDemo === true;
   const [status, setStatus] = useState<'online' | 'degraded' | 'offline' | 'loading'>('loading');
   const [build, setBuild] = useState<{
     version?: string;
@@ -37,6 +41,18 @@ export const SystemHealth = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const checkHealth = useCallback(async () => {
+    if (isDemoContext) {
+      setStatus('online');
+      setBuild({});
+      setMetrics((prev) => ({
+        ...prev,
+        latency: 0,
+        dbStatus: 'online',
+        dbResponseTime: 0,
+        apiCallsUsed: 0,
+      }));
+      return;
+    }
     try {
       const startTime = performance.now();
       const data = await Api.checkSystemHealth();
@@ -75,7 +91,7 @@ export const SystemHealth = () => {
       setBuild({});
       setMetrics((prev) => ({ ...prev, dbStatus: 'offline' }));
     }
-  }, []);
+  }, [isDemoContext]);
 
   usePageAwarePolling(checkHealth, {
     intervalMs: 90_000,
@@ -93,12 +109,29 @@ export const SystemHealth = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  if (isDemoContext) {
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          disabled
+          title={t('system.demoDataTitle', 'Demo data session')}
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-violet-400/30 bg-violet-500/10 text-violet-700 dark:text-violet-200 cursor-default"
+        >
+          <div className="w-2 h-2 rounded-full bg-violet-500" />
+          <span className="text-xs font-medium">{t('system.demoData', 'Demo Data')}</span>
+          <ChevronDown size={14} className="text-violet-300/80" />
+        </button>
+      </div>
+    );
+  }
+
   if (status === 'loading') {
     return (
       <div className="relative" ref={dropdownRef}>
         <button
           disabled
-          className="inline-flex items-center gap-2 h-9 px-3 rounded-full border transition-colors duration-150 bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] opacity-70 cursor-not-allowed"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 bg-transparent border-slate-200 dark:border-navy-700 opacity-70 cursor-not-allowed"
         >
           <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
           <span className="text-xs font-medium text-navy-900 dark:text-white">
@@ -118,12 +151,12 @@ export const SystemHealth = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center gap-2 h-9 px-3 rounded-full border transition-colors duration-150 ${
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 ${
           status === 'offline'
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
             : status === 'degraded'
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
-              : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+              : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
         }`}
       >
         <div

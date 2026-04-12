@@ -10,13 +10,26 @@ import { Response, Router } from 'express';
 import { getDatabase } from '../database/index.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import legalService from '../services/legalService.js';
+import { ensureUserOnboardingStatusTable } from '../utils/ensureUserOnboardingStatusTable.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
 const db = getDatabase();
 
+function getOrganizationId(req: AuthRequest): string | null {
+  return req.organizationId || req.user?.organizationId || null;
+}
+
 // Apply auth middleware to all routes
 router.use(verifyToken);
+router.use(async (_req, _res, next) => {
+  try {
+    await ensureUserOnboardingStatusTable(db as any);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * GET /api/onboarding/status
@@ -25,6 +38,7 @@ router.use(verifyToken);
 router.get('/status', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    const organizationId = getOrganizationId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -43,7 +57,21 @@ router.get('/status', async (req: AuthRequest, res: Response) => {
       completed: false,
     };
 
-    res.json(status);
+    let organizationOnboardingStatus = 'NOT_STARTED';
+    if (organizationId) {
+      const orgResult = await db.query(
+        `SELECT onboarding_status FROM organizations WHERE id = $1`,
+        [organizationId]
+      );
+      organizationOnboardingStatus = orgResult.rows[0]?.onboarding_status || 'NOT_STARTED';
+    }
+
+    res.json({
+      ...status,
+      organizationId,
+      organizationOnboardingStatus,
+      organizationSetupCompleted: organizationOnboardingStatus === 'ORG_SETUP_COMPLETED',
+    });
   } catch (error) {
     logger.error('Error fetching onboarding status:', error);
     res.status(500).json({ error: 'Failed to fetch onboarding status' });
@@ -86,7 +114,7 @@ router.post('/accept-terms', async (req: AuthRequest, res: Response) => {
       req.socket?.remoteAddress ||
       '';
     const userAgent = (req.headers['user-agent'] as string) || '';
-    const organizationId = req.organizationId || req.user?.organizationId;
+    const organizationId = getOrganizationId(req);
 
     try {
       await legalService.acceptDocuments(
@@ -239,7 +267,7 @@ router.post('/complete', async (req: AuthRequest, res: Response) => {
 router.post('/skip', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const orgId = (req as any).organizationId;
+    const orgId = getOrganizationId(req);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }

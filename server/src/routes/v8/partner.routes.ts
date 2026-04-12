@@ -30,6 +30,7 @@ import PartnerProgramLedgerService from '../../services/partnerProgramLedgerServ
 import PartnerReferralService from '../../services/partnerReferralService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { ensureUserOnboardingStatusTable } from '../../utils/ensureUserOnboardingStatusTable.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -324,6 +325,7 @@ router.get(
 router.get(
   '/onboarding-status',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
     const userId = req.userId || req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -370,6 +372,7 @@ router.get(
 router.post(
   '/onboarding/accept-terms',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
     const userId = req.userId || req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -434,6 +437,7 @@ router.post(
 router.post(
   '/onboarding/select-tier',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
     const userId = req.userId || req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -479,6 +483,7 @@ router.post(
 router.post(
   '/onboarding/complete',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureUserOnboardingStatusTable(getDatabase() as any);
     const userId = req.userId || req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });

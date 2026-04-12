@@ -22,11 +22,22 @@ interface TourStep {
   highlight?: string;
 }
 
+interface DemoScenario {
+  id: string;
+  title: string;
+  duration?: string;
+  audience?: string;
+  persona?: string;
+}
+
 interface DemoWelcomeTourProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void;
   userRole?: 'CEO' | 'CTO' | 'Consultant' | 'Investor' | null;
+  entrySource?: string | null;
+  organizationName?: string;
+  scenarios?: DemoScenario[];
 }
 
 export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
@@ -34,11 +45,20 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
   onClose,
   onComplete,
   userRole: initialRole = null,
+  entrySource = null,
+  organizationName = 'Atelier Toys',
+  scenarios = [],
 }) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedRole, setSelectedRole] = useState<string | null>(initialRole);
-  const [isRoleSelected, setIsRoleSelected] = useState(!!initialRole);
+  const [selectedScenario, setSelectedScenario] = useState<string | null>(scenarios[0]?.id || null);
+  const [isRoleSelected, setIsRoleSelected] = useState(false);
+  const canStartTour = Boolean(selectedRole) && (scenarios.length === 0 || Boolean(selectedScenario));
+  const sourceLabel =
+    entrySource === 'profile_menu'
+      ? t('tour.entrySource.profile', 'Started from your live workspace')
+      : t('tour.entrySource.landing', 'Started from the landing page demo');
 
   const ROLES = [
     {
@@ -122,9 +142,16 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
 
   const handleRoleSelect = (roleId: string) => {
     setSelectedRole(roleId);
-    setIsRoleSelected(true);
     // Track for analytics
     localStorage.setItem('demo_user_role', roleId);
+  };
+
+  const handleStartTour = () => {
+    if (!canStartTour) return;
+    if (selectedScenario) {
+      localStorage.setItem('demo_story_scenario', selectedScenario);
+    }
+    setIsRoleSelected(true);
   };
 
   const handleNext = () => {
@@ -151,6 +178,12 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
       onClose();
     }
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!selectedScenario && scenarios.length > 0) {
+      setSelectedScenario(scenarios[0].id);
+    }
+  }, [scenarios, selectedScenario]);
 
   if (!isOpen) return null;
 
@@ -187,11 +220,17 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                     <Sparkles size={32} className="text-slate-400" />
                   </div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                    {t('tour.welcome.title', 'Welcome to Consultify')}
+                    {t('tour.welcome.title', 'Welcome to the Atelier Toys story')}
                   </h2>
-                  <p className="text-slate-500 dark:text-slate-400">
-                    {t('tour.welcome.subtitle', 'What brings you here today?')}
+                  <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
+                    {t(
+                      'tour.welcome.subtitle',
+                      'Pick the lens and guided scenario you want to explore first.'
+                    )}
                   </p>
+                  <div className="mt-3 inline-flex items-center rounded-full border border-slate-200 dark:border-white/10 px-3 py-1 text-xs text-slate-500 dark:text-slate-400">
+                    {organizationName} • {sourceLabel}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -214,6 +253,54 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                       <p className="text-slate-500 text-xs mt-1">{role.description}</p>
                     </motion.button>
                   ))}
+                </div>
+
+                {scenarios.length > 0 && (
+                  <div className="mt-6">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-3">
+                      {t('tour.scenarios.label', 'Guided scenarios')}
+                    </p>
+                    <div className="grid grid-cols-1 gap-3">
+                      {scenarios.map((scenario) => (
+                        <button
+                          key={scenario.id}
+                          onClick={() => setSelectedScenario(scenario.id)}
+                          className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                            selectedScenario === scenario.id
+                              ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
+                              : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                              {scenario.title}
+                            </span>
+                            {scenario.duration && (
+                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {scenario.duration}
+                              </span>
+                            )}
+                          </div>
+                          {(scenario.persona || scenario.audience) && (
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {[scenario.persona, scenario.audience].filter(Boolean).join(' • ')}
+                            </p>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={handleStartTour}
+                    disabled={!canStartTour}
+                    className="px-6 py-3 bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-150 flex items-center gap-2"
+                  >
+                    {t('tour.startScenario', 'Start guided demo')}
+                    <ArrowRight size={18} />
+                  </button>
                 </div>
               </motion.div>
             )}

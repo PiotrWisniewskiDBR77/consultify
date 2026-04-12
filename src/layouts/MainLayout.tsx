@@ -23,7 +23,6 @@ import { LLMSelector } from '../components/LLMSelector';
 import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
-import { FeatureFlagsDevToolsToggleButton } from '../components/settings/FeatureFlagsDevToolsToggleButton';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
@@ -180,9 +179,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
         <div className="pointer-events-auto">
           <DocumentToggleButton />
-        </div>
-        <div className="pointer-events-auto">
-          <FeatureFlagsDevToolsToggleButton />
         </div>
       </div>
       <HelpDeepLinkListener />

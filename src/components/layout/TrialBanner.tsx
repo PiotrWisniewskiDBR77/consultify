@@ -1,7 +1,6 @@
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import { usePolicySnapshot } from '../../contexts/AccessPolicyContext';
 
@@ -9,6 +8,8 @@ interface TrialBannerProps {
   daysRemaining: number;
   warningLevel: 'none' | 'warning' | 'critical' | 'expired';
   onUpgradeClick: () => void;
+  bannerText?: string | null;
+  actionLabel?: string | null;
   usageToday?: { aiCalls: number; tokensUsed: number; storageMb: number };
   limits?: { maxAICallsPerDay: number; maxTotalTokens: number; maxStorageMb: number };
 }
@@ -21,19 +22,19 @@ const TrialBanner: React.FC<TrialBannerProps> = ({
   daysRemaining,
   warningLevel,
   onUpgradeClick,
+  bannerText,
+  actionLabel,
   usageToday,
   limits,
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { isApproachingLimit } = usePolicySnapshot();
   const approachingAi = isApproachingLimit('aiCalls');
   const approachingTokens = isApproachingLimit('tokens');
   const showLimitWarning = approachingAi || approachingTokens;
 
-  const handleUpgrade = () => {
+  const handleAction = () => {
     onUpgradeClick();
-    navigate('/settings?tab=billing');
   };
 
   // Always show during trial (plan: "constantly" remind user)
@@ -52,6 +53,7 @@ const TrialBanner: React.FC<TrialBannerProps> = ({
   };
 
   const getMessage = () => {
+    if (bannerText) return bannerText;
     if (warningLevel === 'expired') {
       return t('trial.expired', 'Your trial has expired. Upgrade to continue.');
     }
@@ -86,10 +88,10 @@ const TrialBanner: React.FC<TrialBannerProps> = ({
         )}
       </div>
       <button
-        onClick={handleUpgrade}
+        onClick={handleAction}
         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary-500 hover:bg-primary-600 text-white transition-colors flex-shrink-0"
       >
-        {t('trial.upgrade', 'Upgrade')}
+        {actionLabel || t('trial.upgrade', 'Upgrade')}
         <ArrowRight className="w-3.5 h-3.5" />
       </button>
     </div>

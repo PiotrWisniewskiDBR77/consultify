@@ -18,7 +18,7 @@ interface TriageDataState {
   refresh: () => Promise<void>;
 }
 
-export function useRadarTriageData(filters?: TriageFilters): TriageDataState {
+export function useRadarTriageData(filters?: TriageFilters, enabled = true): TriageDataState {
   const { t } = useTranslation();
   const [signals, setSignals] = useState<TriageSignal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +26,13 @@ export function useRadarTriageData(filters?: TriageFilters): TriageDataState {
   const hasLoadedRef = useRef(false);
 
   const refresh = useCallback(async () => {
+    if (!enabled) {
+      setSignals([]);
+      setError(null);
+      setLoading(false);
+      hasLoadedRef.current = false;
+      return;
+    }
     const isInitial = !hasLoadedRef.current;
     if (isInitial) {
       setLoading(true);
@@ -49,7 +56,7 @@ export function useRadarTriageData(filters?: TriageFilters): TriageDataState {
     } finally {
       setLoading(false);
     }
-  }, [filters?.category, filters?.priorityLevel, filters?.triageState, t]);
+  }, [enabled, filters?.category, filters?.priorityLevel, filters?.triageState, t]);
 
   useEffect(() => {
     void refresh();

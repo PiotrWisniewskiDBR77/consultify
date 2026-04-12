@@ -640,6 +640,108 @@ jobs:
           dur=$((end - JOB_START))
           echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
 
+  readiness-paths:
+    name: 🧭 Readiness Smoke Scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run_readiness: ${{ steps.decide.outputs.run_readiness }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect readiness-related changes
+        if: ${{ github.event_name == 'pull_request' }}
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            readiness:
+              - 'src/views/SettingsView.tsx'
+              - 'src/views/settings/**'
+              - 'src/views/admin/**'
+              - 'src/views/superadmin/**'
+              - 'src/components/Admin/**'
+              - 'src/components/Organization/**'
+              - 'src/components/layout/SuperAdminSidebar.tsx'
+              - 'src/routes/**'
+              - 'src/services/api.ts'
+              - 'src/services/api/**'
+              - 'server/src/routes/testSupport.routes.ts'
+              - 'tests/e2e/smoke/admin-settings-superadmin-readiness.spec.ts'
+              - 'tests/e2e/smoke/global-setup.ts'
+              - 'tests/e2e/smoke/global-teardown.ts'
+              - 'playwright.config.ts'
+              - 'playwright.smoke.config.ts'
+              - 'package.json'
+              - '.github/workflows/test-suite.yml'
+
+      - name: Decide readiness smoke scope
+        id: decide
+        env:
+          GH_EVENT: ${{ github.event_name }}
+          GH_REF_NAME: ${{ github.ref_name }}
+          READINESS_CHANGED: ${{ steps.filter.outputs.readiness || 'false' }}
+        run: |
+          if [ "$GH_EVENT" != "pull_request" ]; then
+            echo "run_readiness=true" >> "$GITHUB_OUTPUT"
+            echo "Readiness smoke enabled: non-PR run." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$READINESS_CHANGED" = "true" ]; then
+            echo "run_readiness=true" >> "$GITHUB_OUTPUT"
+            echo "Readiness smoke enabled: relevant files changed in PR." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "run_readiness=false" >> "$GITHUB_OUTPUT"
+            echo "Readiness smoke skipped: PR does not touch settings/admin/superadmin readiness surface." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  readiness-smoke:
+    name: ✅ Readiness Smoke (Settings/Admin/SuperAdmin)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [unit-tests, component-tests, readiness-paths]
+    if: ${{ needs.readiness-paths.outputs.run_readiness == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture job start
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run readiness smoke gate
+        run: npm run test:e2e:readiness
+        env:
+          CI: true
+          NODE_ENV: test
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
+
+      - name: Upload readiness smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readiness-smoke-artifacts
+          path: |
+            e2e-results.xml
+            test-results/
+          retention-days: 30
+
+      - name: Job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          dur=$((end - JOB_START))
+          echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
   # ═══════════════════════════════════════════════════════════════
   # L4 SMOKE (Playwright + started web servers)
   # Small, deterministic UI+API smoke suite for merge gating.
@@ -971,6 +1073,7 @@ jobs:
         security-integrity,
         security-tests,
         e2e-tests,
+        readiness-smoke,
         performance-tests,
         critical-path-coverage,
         patch-coverage,
@@ -1004,6 +1107,7 @@ jobs:
           echo "| Component Tests | ${{ needs.component-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Tests (Tier-0) | ${{ needs.e2e-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Readiness Smoke (Settings/Admin/SuperAdmin) | ${{ needs.readiness-smoke.result == 'success' && '✅' || (needs.readiness-smoke.result == 'skipped' && '⏭️ scoped out' || '❌') }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Patch Coverage (≥80%) | ${{ needs.patch-coverage.result == 'success' && '✅' || (needs.patch-coverage.result == 'skipped' && '⏭️ non-PR' || '❌') }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 

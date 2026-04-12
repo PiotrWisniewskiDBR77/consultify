@@ -41,7 +41,8 @@
     "select": "Seleccionar",
     "connected": "conectado",
     "comingSoon": "Próximamente",
-    "root": "Raíz"
+    "root": "Raíz",
+    "noOrganizations": "No se encontraron organizaciones"
   },
   "contextBadge": {
     "aiSees": "IA ve",
@@ -1282,6 +1283,20 @@
     }
   },
   "settings": {
+    "menu": {
+      "preferences": "Preferencias",
+      "theme": "Tema",
+      "language": "Idioma",
+      "demoMode": "Abrir demo",
+      "demoModeExit": "Salir de la demo",
+      "demoModeOn": "El modo demo está activo - estás explorando Atelier Toys",
+      "demoModeOff": "Abrir el espacio demo de Atelier Toys",
+      "demoReadOnly": "Datos demo - solo lectura",
+      "myProfile": "Mi perfil",
+      "billing": "Facturación y planes",
+      "aiConfig": "Configuración de IA",
+      "switchOrg": "Cambiar organización"
+    },
     "title": "Configuración",
     "profile": "Perfil",
     "billing": "Facturación",
@@ -1317,8 +1332,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {

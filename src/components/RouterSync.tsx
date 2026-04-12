@@ -5,7 +5,19 @@ import { getAppViewFromPath } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
 import { AuthStep, SessionMode } from '../types';
 import { parseArtifactRef } from '../utils/artifactLinks';
-import { isSuperAdminRole } from '../utils/roleGuards';
+import {
+  dispatchPilotAccessBlocked,
+  getPilotBlockedFallbackPath,
+  getPilotDefaultSettingsRoute,
+  isPilotAllowedArtifactType,
+  isPilotAllowedPath,
+  isPilotParticipantRole,
+} from '../utils/pilotAccess';
+import {
+  getDefaultAuthenticatedRoute,
+  isPilotRestrictedRole,
+  isSuperAdminRole,
+} from '../utils/roleGuards';
 
 /**
  * RouterSync
@@ -47,11 +59,29 @@ export const RouterSync: React.FC = () => {
     if (!parsed) return;
 
     const { type, id } = parsed;
+    const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('artifact');
     nextParams.delete('code');
 
+    if (isPilotParticipant && !isPilotAllowedArtifactType(type)) {
+      dispatchPilotAccessBlocked({
+        href: type === 'idea' ? '/my-work' : '/interview',
+      });
+      navigate(getPilotBlockedFallbackPath(type === 'idea' ? '/my-work' : '/interview'), {
+        replace: true,
+      });
+      return;
+    }
+
     if (type === 'task' || type === 'decision' || type === 'idea') {
+      if (isPilotParticipant && type === 'idea') {
+        dispatchPilotAccessBlocked({
+          href: '/my-work',
+        });
+        navigate('/my-work', { replace: true });
+        return;
+      }
       const targetTab = type === 'task' ? 'tasks' : type === 'decision' ? 'decisions' : 'ideas';
       const targetParam =
         type === 'task' ? 'taskId' : type === 'decision' ? 'decisionId' : 'ideaId';
@@ -74,12 +104,21 @@ export const RouterSync: React.FC = () => {
       return;
     }
 
-    if (type === 'report' || type === 'presentation' || type === 'sheet') {
-      const targetTab =
-        type === 'report' ? 'documents' : type === 'presentation' ? 'presentations' : 'sheets';
-      nextParams.set('tab', targetTab);
-      nextParams.set('selectedArtifact', `${type}:${id}`);
-      navigate(`/presentations?${nextParams.toString()}`, { replace: true });
+    if (type === 'report') {
+      nextParams.set('artifactId', id);
+      navigate(`/wordy?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+
+    if (type === 'presentation') {
+      nextParams.set('artifactId', id);
+      navigate(`/prezentacje?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+
+    if (type === 'sheet') {
+      nextParams.set('artifactId', id);
+      navigate(`/excele?${nextParams.toString()}`, { replace: true });
       return;
     }
 
@@ -109,7 +148,7 @@ export const RouterSync: React.FC = () => {
       navigate(`/my-work?${nextParams.toString()}`, { replace: true });
       return;
     }
-  }, [searchParams, navigate, setMyWorkIntent]);
+  }, [currentUser?.role, searchParams, navigate, setMyWorkIntent]);
 
   // 1. Attribution Capture
   useEffect(() => {
@@ -138,6 +177,8 @@ export const RouterSync: React.FC = () => {
     const path = location.pathname;
     const isAuthenticated = currentUser?.isAuthenticated ?? false;
     const userRole = currentUser?.role ?? null;
+    const defaultAuthenticatedRoute = getDefaultAuthenticatedRoute(userRole);
+    const isPilotAllowedRoute = isPilotAllowedPath(path);
 
     // Prevent infinite loops: skip if we're already navigating
     if (isNavigatingRef.current) {
@@ -151,6 +192,10 @@ export const RouterSync: React.FC = () => {
       console.log('[RouterSync] Phase B: Navigating to DEMO');
       setSessionMode(SessionMode.DEMO);
       setAuthInitialStep(AuthStep.REGISTER); // Demo requires light auth
+    } else if (path === '/trial') {
+      console.log('[RouterSync] Navigating to TRIAL ENTRY');
+      setSessionMode(SessionMode.FULL);
+      setAuthInitialStep(AuthStep.CODE_ENTRY);
     } else if (path === '/trial/start') {
       console.log('[RouterSync] Navigating to TRIAL START');
       setSessionMode(SessionMode.FULL); // Trial is FULL mode
@@ -167,10 +212,12 @@ export const RouterSync: React.FC = () => {
     // ---------------------------
     // If user is authenticated, keep them out of auth pages
     if ((path === '/login' || path === '/register' || path === '/auth') && isAuthenticated) {
-      const target = isSuperAdminRole(userRole) ? '/superadmin' : '/chat';
-      console.log('[RouterSync] Authenticated on auth route, redirecting to', target);
+      console.log(
+        '[RouterSync] Authenticated on auth route, redirecting to',
+        defaultAuthenticatedRoute
+      );
       isNavigatingRef.current = true;
-      navigate(target, { replace: true });
+      navigate(defaultAuthenticatedRoute, { replace: true });
       setTimeout(() => {
         isNavigatingRef.current = false;
       }, 50);
@@ -198,7 +245,12 @@ export const RouterSync: React.FC = () => {
       path.startsWith('/assessment') ||
       path.startsWith('/discovery-tools') ||
       path.startsWith('/context') ||
-      path.startsWith('/interview');
+      path.startsWith('/interview') ||
+      path.startsWith('/wordy') ||
+      path.startsWith('/excele') ||
+      path.startsWith('/prezentacje') ||
+      path.startsWith('/meeting') ||
+      path.startsWith('/mcp/');
 
     if (isProtected && !isAuthenticated) {
       console.log('[RouterSync] Not authenticated, redirecting to /login');
@@ -212,10 +264,39 @@ export const RouterSync: React.FC = () => {
 
     // Root route should redirect authenticated users to their home
     if ((path === '/' || path === '') && isAuthenticated) {
-      const target = isSuperAdminRole(userRole) ? '/superadmin' : '/chat';
-      console.log('[RouterSync] Authenticated on /, redirecting to', target);
+      console.log('[RouterSync] Authenticated on /, redirecting to', defaultAuthenticatedRoute);
       isNavigatingRef.current = true;
-      navigate(target, { replace: true });
+      navigate(defaultAuthenticatedRoute, { replace: true });
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 50);
+      return;
+    }
+
+    if (isAuthenticated && isPilotRestrictedRole(userRole) && isProtected && !isPilotAllowedRoute) {
+      const fallbackPath = getPilotBlockedFallbackPath(path);
+      dispatchPilotAccessBlocked({
+        href: fallbackPath,
+      });
+      console.log('[RouterSync] Restricted pilot user redirected to', fallbackPath, 'from', path);
+      isNavigatingRef.current = true;
+      navigate(fallbackPath, { replace: true });
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 50);
+      return;
+    }
+
+    if (
+      isAuthenticated &&
+      isPilotRestrictedRole(userRole) &&
+      path.startsWith('/settings') &&
+      path !== '/settings' &&
+      path !== getPilotDefaultSettingsRoute() &&
+      !path.startsWith(`${getPilotDefaultSettingsRoute()}/`)
+    ) {
+      isNavigatingRef.current = true;
+      navigate(getPilotDefaultSettingsRoute(), { replace: true });
       setTimeout(() => {
         isNavigatingRef.current = false;
       }, 50);

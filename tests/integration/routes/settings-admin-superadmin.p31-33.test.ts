@@ -39,6 +39,15 @@ describe('P31 Settings — taxonomy + preferences', () => {
     expect(content).toContain('settings_audit_log');
   });
 
+  it('settings routes expose persisted AI privacy and prompt library preferences', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/settings.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('/preferences/ai-privacy');
+    expect(content).toContain('/preferences/prompt-library');
+  });
+
   it('settings route supports GDPR export/deletion', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
@@ -64,6 +73,13 @@ describe('P31 Settings — taxonomy + preferences', () => {
     expect(content.length).toBeGreaterThan(500);
   });
 
+  it('legacy api.ts no longer contains settings stub block', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync('src/services/api.ts', 'utf-8');
+    expect(content).not.toContain('SETTINGS API STUBS');
+    expect(content).toContain('SETTINGS API BRIDGE');
+  });
+
   it('AI settings service supports superadmin→org→user merge', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
@@ -79,6 +95,17 @@ describe('P31 Settings — taxonomy + preferences', () => {
     const fs = await import('fs');
     const content = fs.readFileSync('server/src/Gateway.ts', 'utf-8');
     expect(content).toContain('/api/settings');
+  });
+
+  it('settings legacy entry resolver redirects old paths to real mounted sections', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'src/views/settings/syncEntryResolver.ts', 'utf-8'
+    );
+    expect(content).toContain('ROUTES.SETTINGS.BILLING');
+    expect(content).toContain('ROUTES.ORGANIZATION.BILLING');
+    expect(content).toContain('security-dashboard');
+    expect(content).toContain('notifications-overview');
   });
 });
 
@@ -131,6 +158,21 @@ describe('P32 Admin — cockpit + members/roles + security', () => {
       'src/views/admin/AdminView.tsx', 'utf-8'
     );
     expect(content).toContain('Admin');
+  });
+
+  it('active admin completeness flows use shared AdminApi and current organization context', async () => {
+    const fs = await import('fs');
+    const ownershipContent = fs.readFileSync(
+      'src/views/admin/OwnershipManagementView.tsx', 'utf-8'
+    );
+    const orgOpsContent = fs.readFileSync(
+      'src/components/Organization/OrganizationAdminPanel.tsx', 'utf-8'
+    );
+    expect(ownershipContent).toContain('AdminApi.transferOrganizationOwnership');
+    expect(ownershipContent).toContain('AdminApi.getOrganizationOwnership');
+    expect(ownershipContent).not.toContain("localStorage.getItem('token')");
+    expect(orgOpsContent).toContain('currentOrganization');
+    expect(orgOpsContent).toContain('candidate.id === preferredOrgId');
   });
 
   it('AdminSettingsModule defines the enterprise P32 tenant admin shell', async () => {
@@ -223,6 +265,15 @@ describe('P33 Superadmin — root control plane + guardrails', () => {
     expect(content).toContain('requireSuperAdmin');
   });
 
+  it('feature flags route separates user runtime evaluation from superadmin management', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync('server/src/routes/featureFlags.routes.ts', 'utf-8');
+    expect(content).toContain("'/runtime'");
+    expect(content).toContain('verifyToken');
+    expect(content).toContain('router.use(requireSuperAdmin)');
+    expect(content).toContain('evaluateFeatureFlag');
+  });
+
   it('confirmAction middleware exists for destructive ops', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
@@ -248,6 +299,19 @@ describe('P33 Superadmin — root control plane + guardrails', () => {
     expect(content.length).toBeGreaterThan(500);
   });
 
+  it('prompt assistant flows use the shared prompt assistant api client', async () => {
+    const fs = await import('fs');
+    const client = fs.readFileSync(
+      'src/services/api/promptAssistant.api.ts', 'utf-8'
+    );
+    const management = fs.readFileSync(
+      'src/components/Admin/PromptManagementUI.tsx', 'utf-8'
+    );
+    expect(client).toContain('PromptAssistantApi');
+    expect(management).toContain('handleBlockPreview');
+    expect(management).toContain('handlePromptBenchResults');
+  });
+
   it('SuperAdminController handles cross-tenant operations', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
@@ -263,12 +327,34 @@ describe('P33 Superadmin — root control plane + guardrails', () => {
     expect(content).toContain('/api/superadmin');
   });
 
-  it('billing admin routes are guarded by super_admin role', async () => {
+  it('Gateway mounts ai observability under /api/admin/ai-observability', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync('server/src/Gateway.ts', 'utf-8');
+    expect(content).toContain("/api/admin/ai-observability");
+  });
+
+  it('Gateway no longer exposes resource management through the generic /api/admin prefix', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync('server/src/Gateway.ts', 'utf-8');
+    expect(content).not.toContain("app.use('/api/admin', resourceManagementRoutes)");
+  });
+
+  it('billing admin routes are guarded by verifySuperAdmin and billing capability', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync(
       'server/src/routes/billing/billingAdmin.routes.ts', 'utf-8'
     );
-    expect(content).toContain('super_admin');
+    expect(content).toContain('verifySuperAdmin');
+    expect(content).toContain("requireSuperAdminCapability('billing_ops')");
+  });
+
+  it('core docs routes use canonical superadmin authz with ai_ops capability', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync(
+      'server/src/routes/core-docs.routes.ts', 'utf-8'
+    );
+    expect(content).toContain('verifySuperAdmin');
+    expect(content).toContain("requireSuperAdminCapability('ai_ops')");
   });
 
   it('analytics superadmin routes exist', async () => {

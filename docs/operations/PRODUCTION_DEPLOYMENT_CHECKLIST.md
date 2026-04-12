@@ -28,7 +28,7 @@
 
 ## ▶️ Procedura startu produkcyjnego (krok po kroku)
 
-1. Freeze: code-freeze i tag release; potwierdź branch = `feature/ts-error-reduction-execution`.
+1. Freeze: code-freeze i tag release; potwierdź, że release jest promowany z `develop` do `main`.
 2. Sekrety: wgraj `.env` prod (DB, JWT, LLM keys, S3, email, redis) do Secret Manager/Vault; bez kopiowania plików na serwer.
 3. Baza: uruchom wszystkie migracje na Postgres prod; sprawdź `schema_migrations` vs repo.
 4. Build: `npm ci && npm run build` (frontend + backend); artefakty trzymaj w CI.

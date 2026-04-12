@@ -119,8 +119,8 @@ export const AdminLLMView: React.FC = () => {
   const loadLLMStatus = useCallback(async () => {
     setLoadingStatus(true);
     try {
-      const response = await fetch('/api/llm/status');
-      const data = await response.json();
+      const response = await Api.get('/api/llm/status');
+      const data = response?.data ?? response;
       if (data.success) {
         setLLMStatus(data);
       }
@@ -193,8 +193,8 @@ export const AdminLLMView: React.FC = () => {
   const refreshAllHealth = async () => {
     setRefreshingHealth(true);
     try {
-      const response = await fetch('/api/llm/status/refresh', { method: 'POST' });
-      const data = await response.json();
+      const response = await Api.post('/api/llm/status/refresh', {});
+      const data = response?.data ?? response;
       if (data.success) {
         toast.success(`Health check complete: ${data.summary?.healthy || 0} healthy providers`);
         await loadLLMStatus();
@@ -211,8 +211,8 @@ export const AdminLLMView: React.FC = () => {
   const testSingleProvider = async (provider: string) => {
     setTestingProvider(provider);
     try {
-      const response = await fetch(`/api/llm/status/test/${provider}`, { method: 'POST' });
-      const data = await response.json();
+      const response = await Api.post(`/api/llm/status/test/${provider}`, {});
+      const data = response?.data ?? response;
       if (data.success && data.reachable) {
         toast.success(`${provider} is healthy (${data.latency}ms)`);
       } else {

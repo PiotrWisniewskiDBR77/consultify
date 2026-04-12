@@ -529,7 +529,7 @@ export const InfoSections: React.FC = () => {
       q: t('landing.faq.items.4.q', 'Can I try before I buy?'),
       a: t(
         'landing.faq.items.4.a',
-        'Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case.'
+        'Yes! We offer a 7-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case.'
       ),
     },
     {
@@ -655,7 +655,7 @@ export const InfoSections: React.FC = () => {
 
               <div className="pt-4">
                 <a
-                  href="/security"
+                  href="/legal/security"
                   className="inline-block px-8 py-4 bg-white text-navy-950 rounded-full text-sm font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl shadow-white/5 active:scale-95"
                 >
                   {t('landing.trust.cta', 'View Security Overview')}

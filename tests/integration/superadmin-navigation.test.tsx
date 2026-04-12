@@ -38,21 +38,18 @@ describe('SuperAdminSidebar', () => {
   it('renders main navigation items', () => {
     render(
       <SuperAdminSidebar
-        activeSection="overview"
+        activeSection="customers"
         onSectionChange={onSectionChange}
         onLogout={onLogout}
         currentUserEmail="admin@test.com"
       />
     );
 
-    expect(screen.getByText('Overview')).toBeInTheDocument();
-    expect(screen.getByText('Customers')).toBeInTheDocument();
-    expect(screen.getByText('AI Platform')).toBeInTheDocument();
-    expect(screen.getByText('System')).toBeInTheDocument();
-    expect(screen.getByText('Content')).toBeInTheDocument();
-    expect(screen.getByText('Revenue')).toBeInTheDocument();
-    expect(screen.getByText('Security')).toBeInTheDocument();
-    expect(screen.getByText('Configuration')).toBeInTheDocument();
+    expect(screen.getByText('Tenant & User Ops')).toBeInTheDocument();
+    expect(screen.getByText('AI Operations')).toBeInTheDocument();
+    expect(screen.getByText('Connector Ops')).toBeInTheDocument();
+    expect(screen.getByText('Governance & Compliance')).toBeInTheDocument();
+    expect(screen.getByText('Platform Security')).toBeInTheDocument();
   });
 
   it('calls onSectionChange on click', () => {
@@ -65,10 +62,10 @@ describe('SuperAdminSidebar', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('Overview'));
-    expect(onSectionChange).toHaveBeenCalledWith('overview');
+    fireEvent.click(screen.getByText('Tenant & User Ops'));
+    expect(onSectionChange).toHaveBeenCalledWith('customers');
 
-    fireEvent.click(screen.getByText('AI Platform'));
+    fireEvent.click(screen.getByText('AI Operations'));
     expect(onSectionChange).toHaveBeenCalledWith('ai-platform');
   });
 });

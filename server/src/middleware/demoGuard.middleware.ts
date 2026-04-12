@@ -16,6 +16,7 @@ import type { AuthRequest } from './auth.middleware.js';
 
 export const DEMO_ORG_ID = process.env.DEMO_ORG_ID || 'demo-org';
 export const DEMO_ORG_NAME = process.env.DEMO_ORG_NAME || 'Demo Organization';
+export const DEMO_SESSION_ORG_HEADER = 'X-Demo-Session-Org';
 const DEMO_PREF_KEY = 'demo:enabled';
 const DEMO_STARTED_AT_KEY = 'demo:started_at';
 
@@ -56,12 +57,14 @@ type DemoRequest = Request & {
 export const demoContextMiddleware = (req: Request, _res: Response, next: NextFunction): void => {
   const isDemoHeader = String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true';
   if (isDemoHeader) {
-    (req as DemoRequest).demo = { enabled: true, organizationId: DEMO_ORG_ID };
+    const requestedSessionOrgId = String(req.get(DEMO_SESSION_ORG_HEADER) || '').trim();
+    const effectiveOrgId = requestedSessionOrgId || DEMO_ORG_ID;
+    (req as DemoRequest).demo = { enabled: true, organizationId: effectiveOrgId };
     // Legacy compatibility: many routes read org context from req/user.
-    (req as any).organizationId = DEMO_ORG_ID;
+    (req as any).organizationId = effectiveOrgId;
     if ((req as any).user && typeof (req as any).user === 'object') {
-      (req as any).user.organizationId = DEMO_ORG_ID;
-      (req as any).user.organization_id = DEMO_ORG_ID;
+      (req as any).user.organizationId = effectiveOrgId;
+      (req as any).user.organization_id = effectiveOrgId;
     }
   }
   next();
@@ -84,13 +87,15 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
     if (isAllowed) return next();
 
     const isDemoHeader = String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true';
+    const requestedSessionOrgId = String(req.get(DEMO_SESSION_ORG_HEADER) || '').trim();
     const orgId =
       (req as any).organizationId ??
       (req as any).user?.organizationId ??
       (req as any).user?.organization_id;
     const isDemoOrg = orgId === DEMO_ORG_ID;
+    const isInteractiveSession = Boolean(requestedSessionOrgId) && requestedSessionOrgId !== DEMO_ORG_ID;
 
-    if (isDemoHeader || isDemoOrg) {
+    if ((isDemoHeader && !isInteractiveSession) || isDemoOrg) {
       res.status(403).json({
         error: 'Demo mode is read-only',
         code: 'DEMO_READ_ONLY',
@@ -135,17 +140,20 @@ function parseBool(value: unknown): boolean {
 
 async function requireUserPreferencesTable(): Promise<void> {
   await dbRun(
-    `
-      CREATE TABLE IF NOT EXISTS user_preferences (
-        user_id TEXT NOT NULL,
-        key TEXT NOT NULL,
-        value TEXT NOT NULL,
-        updated_at TEXT DEFAULT (datetime('now')),
-        PRIMARY KEY (user_id, key)
-      )
-    `,
+    `CREATE TABLE IF NOT EXISTS user_preferences (
+       user_id TEXT NOT NULL,
+       key TEXT NOT NULL,
+       value TEXT NOT NULL,
+       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+       PRIMARY KEY (user_id, key)
+     )`,
     [],
     { fallback: false }
+  );
+  await dbRun(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_user_prefs_user_key ON user_preferences(user_id, key)`,
+    [],
+    { fallback: true }
   );
 }
 
@@ -185,20 +193,17 @@ export const setUserDemoPreference = async (
     const payload = JSON.stringify(Boolean(enabled));
     const now = new Date().toISOString();
 
-    // Update-first strategy for demo:enabled
-    const updated = await dbRun(
-      `UPDATE user_preferences SET value = ?, updated_at = ? WHERE user_id = ? AND key = ?`,
-      [payload, now, userId, DEMO_PREF_KEY],
+    await dbRun(
+      `DELETE FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, DEMO_PREF_KEY],
+      { fallback: true }
+    );
+    await dbRun(
+      `INSERT INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, ?)`,
+      [userId, DEMO_PREF_KEY, payload, now],
       { fallback: false }
     );
-    if ((updated.changes || 0) === 0) {
-      const inserted = await dbRun(
-        `INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES (?, ?, ?, ?)`,
-        [userId, DEMO_PREF_KEY, payload, now],
-        { fallback: false }
-      );
-      if (!inserted.success) throw new Error(inserted.error || 'Failed to store demo preference');
-    }
 
     if (enabled && options?.setStartedAt !== false) {
       await setDemoStartedAt(userId, now);
@@ -215,18 +220,18 @@ export const setUserDemoPreference = async (
 export const setDemoStartedAt = async (userId: string, isoDate?: string): Promise<void> => {
   const value = isoDate || new Date().toISOString();
   await requireUserPreferencesTable();
-  const updated = await dbRun(
-    `UPDATE user_preferences SET value = ?, updated_at = ? WHERE user_id = ? AND key = ?`,
-    [value, value, userId, DEMO_STARTED_AT_KEY],
+
+  await dbRun(
+    `DELETE FROM user_preferences WHERE user_id = ? AND key = ?`,
+    [userId, DEMO_STARTED_AT_KEY],
+    { fallback: true }
+  );
+  await dbRun(
+    `INSERT INTO user_preferences (user_id, key, value, updated_at)
+     VALUES (?, ?, ?, ?)`,
+    [userId, DEMO_STARTED_AT_KEY, value, value],
     { fallback: false }
   );
-  if ((updated.changes || 0) === 0) {
-    await dbRun(
-      `INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES (?, ?, ?, ?)`,
-      [userId, DEMO_STARTED_AT_KEY, value, value],
-      { fallback: false }
-    );
-  }
 };
 
 /**
@@ -244,11 +249,11 @@ export const getDemoStartedAt = async (userId: string): Promise<string | null> =
 /**
  * Get demo organization
  */
-export const getDemoOrganization = async (): Promise<DemoOrganization> => {
+export const getDemoOrganization = async (organizationId: string = DEMO_ORG_ID): Promise<DemoOrganization> => {
   try {
     const org = await dbGet<{ id: string; name: string }>(
       `SELECT id, name FROM organizations WHERE id = ?`,
-      [DEMO_ORG_ID],
+      [organizationId],
       { fallback: false }
     );
     if (!org?.id) throw new Error('Demo organization not configured');
@@ -269,34 +274,34 @@ export const getDemoOrganization = async (): Promise<DemoOrganization> => {
 /**
  * Get demo statistics
  */
-export const getDemoStats = async (): Promise<DemoStats> => {
+export const getDemoStats = async (organizationId: string = DEMO_ORG_ID): Promise<DemoStats> => {
   try {
     const [projects, initiatives, tasks, decisions, users] = await Promise.all([
       dbGet<{ c: number }>(
         `SELECT COUNT(*) as c FROM projects WHERE organization_id = ?`,
-        [DEMO_ORG_ID],
+        [organizationId],
         { fallback: false }
       ),
       dbGet<{ c: number }>(
         `SELECT COUNT(*) as c FROM initiatives WHERE organization_id = ?`,
-        [DEMO_ORG_ID],
+        [organizationId],
         { fallback: false }
       ),
       dbGet<{ c: number }>(
         `SELECT COUNT(*) as c FROM tasks WHERE organization_id = ?`,
-        [DEMO_ORG_ID],
+        [organizationId],
         {
           fallback: false,
         }
       ),
       dbGet<{ c: number }>(
         `SELECT COUNT(*) as c FROM decisions WHERE organization_id = ?`,
-        [DEMO_ORG_ID],
+        [organizationId],
         { fallback: false }
       ),
       dbGet<{ c: number }>(
         `SELECT COUNT(*) as c FROM users WHERE organization_id = ?`,
-        [DEMO_ORG_ID],
+        [organizationId],
         {
           fallback: false,
         }

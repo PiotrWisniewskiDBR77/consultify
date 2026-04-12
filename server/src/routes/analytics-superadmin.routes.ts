@@ -21,6 +21,19 @@ router.use(verifyToken);
 router.use(verifySuperAdmin);
 router.use(requireSuperAdminCapability('platform_ops'));
 
+function analyticsFailure(
+  res: Response,
+  status: number,
+  error: string,
+  fallback: Record<string, unknown>
+) {
+  return res.status(status).json({
+    error,
+    degraded: true,
+    ...fallback,
+  });
+}
+
 function isSqlReportExecutionEnabled(): boolean {
   return (
     process.env.ENABLE_SUPERADMIN_SQL_REPORTS === 'true' && process.env.NODE_ENV !== 'production'
@@ -192,7 +205,7 @@ router.get(
       return res.json({ dashboards: parsed });
     } catch (error: any) {
       logger.error('[Analytics] Get dashboards error:', error);
-      return res.json({ dashboards: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch dashboards', { dashboards: [] });
     }
   })
 );
@@ -260,7 +273,7 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Analytics] Get dashboard data error:', error);
-      return res.json({ data: {} });
+      return analyticsFailure(res, 500, 'Failed to fetch dashboard data', { data: {} });
     }
   })
 );
@@ -407,7 +420,7 @@ router.get(
       return res.json({ reports: parsed });
     } catch (error: any) {
       logger.error('[Analytics] Get reports error:', error);
-      return res.json({ reports: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch reports', { reports: [] });
     }
   })
 );
@@ -433,7 +446,7 @@ router.get(
       return res.json({ executions: executions || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get report executions error:', error);
-      return res.json({ executions: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch report executions', { executions: [] });
     }
   })
 );
@@ -600,7 +613,7 @@ router.get(
       return res.json({ metrics: metrics || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get metrics error:', error);
-      return res.json({ metrics: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch metrics', { metrics: [] });
     }
   })
 );
@@ -656,7 +669,7 @@ router.get(
       });
     } catch (error: any) {
       logger.error('[Analytics] Get metrics stats error:', error);
-      return res.json({
+      return analyticsFailure(res, 500, 'Failed to fetch metric stats', {
         totalMetrics: 0,
         activeMetrics: 0,
         categories: 0,
@@ -690,7 +703,7 @@ router.get(
       return res.json({ history: history || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get metric history error:', error);
-      return res.json({ history: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch metric history', { history: [] });
     }
   })
 );
@@ -838,7 +851,7 @@ router.get(
       return res.json({ models: parsed });
     } catch (error: any) {
       logger.error('[Analytics] Get models error:', error);
-      return res.json({ models: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch predictive models', { models: [] });
     }
   })
 );
@@ -864,7 +877,9 @@ router.get(
       return res.json({ predictions: predictions || [] });
     } catch (error: any) {
       logger.error('[Analytics] Get predictions error:', error);
-      return res.json({ predictions: [] });
+      return analyticsFailure(res, 500, 'Failed to fetch model predictions', {
+        predictions: [],
+      });
     }
   })
 );

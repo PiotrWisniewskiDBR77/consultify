@@ -7,6 +7,7 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
+import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -240,10 +241,16 @@ const attachUser = async (
   res?: Response
 ): Promise<void> => {
   const { PermissionService } = await getDeps();
+  const requestedDemoSessionOrgId = String(req.get?.(DEMO_SESSION_ORG_HEADER) || '').trim();
+  const isDemoHeader = String(req.get?.('X-Demo-Mode') || '').toLowerCase() === 'true';
+  const resolvedOrganizationId =
+    isDemoHeader && requestedDemoSessionOrgId
+      ? requestedDemoSessionOrgId
+      : decoded.organizationId || (decoded as any).organization_id;
 
   req.userId = decoded.id;
   req.userRole = decoded.role || decoded.userRole;
-  req.organizationId = decoded.organizationId || (decoded as any).organization_id;
+  req.organizationId = resolvedOrganizationId;
 
   // Permanent role fix for selected internal accounts:
   // even if a stale token says ADMIN, treat them as SUPERADMIN for authorization.
@@ -268,7 +275,7 @@ const attachUser = async (
     role: mapRole(req.userRole),
     organizationId: req.organizationId || '',
     isSuperAdmin: decoded.isSuperAdmin || false,
-    isDemo: Boolean(decoded.isDemo),
+    isDemo: Boolean(decoded.isDemo) || isDemoHeader,
     impersonatorId: decoded.impersonatorId || decoded.impersonator_id,
     impersonationSessionId: decoded.impersonationSessionId,
   };
@@ -276,7 +283,9 @@ const attachUser = async (
   req.user = user;
 
   const isImpersonating = Boolean(user.impersonatorId);
-  const isReadOnlyMethod = READ_ONLY_IMPERSONATION_METHODS.has(req.method.toUpperCase());
+  const isReadOnlyMethod = READ_ONLY_IMPERSONATION_METHODS.has(
+    String(req.method || '').toUpperCase()
+  );
   const isAllowedImpersonationWrite = READ_ONLY_IMPERSONATION_PATHS.has(req.path);
   if (isImpersonating && !isReadOnlyMethod && !isAllowedImpersonationWrite) {
     if (res) {
@@ -690,6 +699,65 @@ export const requireOrganization = (req: AuthRequest, res: Response, next: NextF
 
   next();
 };
+
+/**
+ * Validate that the user still has an active membership in the org from their JWT.
+ * Uses in-memory cache (60s TTL) to avoid per-request DB hits.
+ */
+const _membershipCache = new Map<string, { valid: boolean; ts: number }>();
+const MEMBERSHIP_CACHE_TTL_MS = 60_000;
+
+export const validateOrgMembership = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const userId = req.userId || req.user?.id;
+    const orgId = req.organizationId;
+
+    if (!userId || !orgId) {
+      return next();
+    }
+
+    // SuperAdmins bypass membership checks
+    if (req.user?.isSuperAdmin) {
+      return next();
+    }
+
+    const cacheKey = `${userId}:${orgId}`;
+    const cached = _membershipCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < MEMBERSHIP_CACHE_TTL_MS) {
+      if (!cached.valid) {
+        res.status(403).json({
+          error: 'You no longer have access to this organization',
+          code: 'ORG_MEMBERSHIP_REVOKED',
+        });
+        return;
+      }
+      return next();
+    }
+
+    try {
+      const membership = await dbGet<{ status: string }>(
+        `SELECT status FROM organization_members WHERE user_id = ? AND organization_id = ?`,
+        [userId, orgId]
+      );
+
+      const valid = !!membership && membership.status === 'ACTIVE';
+      _membershipCache.set(cacheKey, { valid, ts: Date.now() });
+
+      if (!valid) {
+        res.status(403).json({
+          error: 'You no longer have access to this organization',
+          code: 'ORG_MEMBERSHIP_REVOKED',
+        });
+        return;
+      }
+
+      next();
+    } catch {
+      // On DB error, allow request through (fail-open) to avoid blocking all requests
+      next();
+    }
+  }
+);
 
 /**
  * Require specific permission capability

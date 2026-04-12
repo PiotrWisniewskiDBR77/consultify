@@ -95,41 +95,21 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
         return;
       }
 
-      // Step 2: Accept/Consume Code
-      // If it's a TRIAL code, it will trigger organizational entry or state update
-      const result = await Api.acceptAccessCode(accessCode);
+      sessionStorage.setItem('attribution_invite', accessCode.trim().toUpperCase());
+      toast.success('Dostęp zweryfikowany. Przechodzimy do rejestracji triala.');
 
-      if (result.ok) {
-        toast.success('Dostęp przyznany. Witamy w procesie walidacji.');
-
-        if (ctx && ctx.cta_type === 'trial') {
-          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
-            session_id: ctx.session_id,
-            cta_type: ctx.cta_type,
-            language: ctx.language,
-            channel: ctx.channel,
-            turn_id: ctx.turn_id,
-            source_intent: ctx.source_intent,
-          });
-          updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
-        }
-        onStartTrial();
-      } else {
-        setError(result.error || 'Błąd podczas aktywacji dostępu.');
-        setIsChecking(false);
-
-        if (ctx && ctx.cta_type === 'trial') {
-          void postPublicAnnaFunnelEvent('anna_lp.cta.submit_error', {
-            session_id: ctx.session_id,
-            cta_type: ctx.cta_type,
-            language: ctx.language,
-            channel: ctx.channel,
-            turn_id: ctx.turn_id,
-            source_intent: ctx.source_intent,
-          });
-          updateAnnaLpCtaContext({ last_submit_error_at_ms: Date.now() });
-        }
+      if (ctx && ctx.cta_type === 'trial') {
+        void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
+          session_id: ctx.session_id,
+          cta_type: ctx.cta_type,
+          language: ctx.language,
+          channel: ctx.channel,
+          turn_id: ctx.turn_id,
+          source_intent: ctx.source_intent,
+        });
+        updateAnnaLpCtaContext({ submit_success_at_ms: Date.now() });
       }
+      onStartTrial();
     } catch (err: any) {
       console.error('Access code validation failed:', err);
       setError('System weryfikacji jest chwilowo niedostępny. Spróbuj później.');

@@ -144,7 +144,7 @@ const generateSessionId = (): string => {
 // ============================================================
 
 export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
-  const { currentUser } = useAppStore();
+  const { currentUser, isDemoMode } = useAppStore();
 
   // Demo account identity (single source of truth)
   const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
@@ -152,10 +152,11 @@ export const useDemoSession = (): DemoSessionState & DemoSessionActions => {
   // Determine if user is in demo mode
   const isDemo = useMemo(() => {
     return (
+      isDemoMode === true ||
       currentUser?.isDemo === true ||
       (sessionStorage.getItem('isDemo') === 'true' && currentUser?.email === DEMO_EMAIL)
     );
-  }, [currentUser]);
+  }, [currentUser, isDemoMode]);
 
   // Session state
   const [sessionId, setSessionId] = useState<string>('');

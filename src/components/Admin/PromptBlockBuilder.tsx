@@ -30,6 +30,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PromptAssistantApi } from '../../services/api/promptAssistant.api';
+
 interface Block {
   code: string;
   name: string;
@@ -99,18 +101,9 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
   const loadBlocks = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/prompt-assistant/blocks', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableBlocks(data.data || []);
-        setCategories(data.categories || {});
-      }
+      const data = await PromptAssistantApi.getBlocks();
+      setAvailableBlocks(data.data || []);
+      setCategories(data.categories || {});
     } catch (error) {
       console.error('Failed to load blocks:', error);
     } finally {
@@ -201,10 +194,18 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
 
     setShowPreview(true);
 
-    // Build preview locally from selected blocks
-    const preview = selectedBlockDetails
+    let preview = selectedBlockDetails
       .map((block) => `# ${block.category}: ${block.name}\n${block.semantic}`)
       .join('\n\n---\n\n');
+
+    try {
+      const response = await PromptAssistantApi.previewBlocks(selectedBlocks);
+      if (response?.preview) {
+        preview = response.preview;
+      }
+    } catch (error) {
+      console.error('Failed to generate server preview:', error);
+    }
 
     setPreviewContent(preview);
 

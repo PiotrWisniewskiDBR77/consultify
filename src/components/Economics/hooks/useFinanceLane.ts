@@ -63,6 +63,23 @@ function mapDegradedToAlerts(entries: FinanceDegradedEntry[]): DegradedAlert[] {
 
 const POLL_INTERVAL_MS = 30_000;
 
+function normalizeLaneRun(run: FinanceLaneRun): FinanceLaneRun {
+  return {
+    ...run,
+    currentStep: run?.currentStep || 'import',
+    importOutcome: run?.importOutcome ?? null,
+    analysisCompleted: Boolean(run?.analysisCompleted),
+    mutationOutcome: run?.mutationOutcome ?? null,
+    readbackConfirmed: Boolean(run?.readbackConfirmed),
+    degraded: Array.isArray(run?.degraded) ? run.degraded : [],
+    auditTrail: Array.isArray(run?.auditTrail) ? run.auditTrail : [],
+    versionType: run?.versionType || 'current',
+    kpiLinkageStatus: run?.kpiLinkageStatus || 'unavailable',
+    createdAt: run?.createdAt || new Date(0).toISOString(),
+    updatedAt: run?.updatedAt || new Date(0).toISOString(),
+  };
+}
+
 export function useFinanceLane() {
   const [activeLaneRun, setActiveLaneRun] = useState<FinanceLaneRun | null>(null);
   const [laneHistory, setLaneHistory] = useState<FinanceLaneRun[]>([]);
@@ -77,7 +94,7 @@ export function useFinanceLane() {
   const refreshLane = useCallback(async () => {
     try {
       const res = await V8FinanceApi.getLaneRuns(20);
-      const runs = res?.data || [];
+      const runs = Array.isArray(res?.data) ? res.data.map((run) => normalizeLaneRun(run)) : [];
       setLaneHistory(runs);
 
       const active = runs.find(
@@ -148,7 +165,7 @@ export function useFinanceLane() {
   }, [activeLaneRun]);
 
   const degradedAlerts: DegradedAlert[] = activeLaneRun
-    ? mapDegradedToAlerts(activeLaneRun.degraded)
+    ? mapDegradedToAlerts(activeLaneRun.degraded || [])
     : [];
 
   const isRunInProgress = !!activeLaneRun && (

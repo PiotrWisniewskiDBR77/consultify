@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
+import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
 
 const router = Router();
 
@@ -75,7 +76,8 @@ async function ensureInitiativesTable() {
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const source = req.query?.source ? String(req.query.source) : null;
     const status = req.query?.status ? String(req.query.status) : null;
     const assessmentId = req.query?.assessmentId ? String(req.query.assessmentId) : null;
@@ -122,7 +124,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const row = await dbGet(
       `SELECT 
         id, name, title, description, status, priority, impact, effort, category,
@@ -148,7 +151,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'system';
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -222,7 +226,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'system';
     const now = new Date().toISOString();
 
@@ -298,7 +303,8 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     await ensureInitiativesTable();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     await dbRun('DELETE FROM initiatives WHERE id = ? AND organization_id = ?', [
       req.params.id,
       organizationId,

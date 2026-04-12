@@ -85,34 +85,37 @@ interface CapturedContext {
   scrollPosition: number;
 }
 
-function capturePageContext(): CapturedContext {
+function capturePageContext(
+  translate?: (key: string, defaultValue: string) => string
+): CapturedContext {
   const w = typeof window !== 'undefined' ? window : null;
   const pathname = w?.location.pathname || '/';
+  const tx = (key: string, defaultValue: string) => translate?.(key, defaultValue) ?? defaultValue;
 
   const moduleMap: Record<string, string> = {
-    '/my-work': 'My Work',
-    '/interview': 'Interview',
-    '/tools': 'Discovery Tools',
-    '/initiatives': 'Initiatives',
-    '/execution': 'Execution',
-    '/results': 'Results',
-    '/finance': 'Finance',
-    '/presentations': 'Presentations',
-    '/assessment': 'Assessment',
-    '/dashboard': 'Dashboard',
-    '/reports': 'Reports',
-    '/settings': 'Settings',
-    '/admin': 'Admin',
-    '/superadmin': 'SuperAdmin',
-    '/chat': 'AI Chat',
-    '/economics': 'Economics',
-    '/implementation': 'Implementation',
+    '/my-work': tx('feedback.panelContext.modules.myWork', 'Moja praca'),
+    '/interview': tx('feedback.panelContext.modules.interview', 'Wywiad'),
+    '/tools': tx('feedback.panelContext.modules.tools', 'Narzędzia Discovery'),
+    '/initiatives': tx('feedback.panelContext.modules.initiatives', 'Inicjatywy'),
+    '/execution': tx('feedback.panelContext.modules.execution', 'Realizacja'),
+    '/results': tx('feedback.panelContext.modules.results', 'Rezultaty'),
+    '/finance': tx('feedback.panelContext.modules.finance', 'Finanse'),
+    '/presentations': tx('feedback.panelContext.modules.presentations', 'Prezentacje'),
+    '/assessment': tx('feedback.panelContext.modules.assessment', 'Ocena'),
+    '/dashboard': tx('feedback.panelContext.modules.dashboard', 'Pulpit'),
+    '/reports': tx('feedback.panelContext.modules.reports', 'Raporty'),
+    '/settings': tx('feedback.panelContext.modules.settings', 'Ustawienia'),
+    '/admin': tx('feedback.panelContext.modules.admin', 'Admin'),
+    '/superadmin': tx('feedback.panelContext.modules.superadmin', 'SuperAdmin'),
+    '/chat': tx('feedback.panelContext.modules.chat', 'Czat AI'),
+    '/economics': tx('feedback.panelContext.modules.economics', 'Ekonomia'),
+    '/implementation': tx('feedback.panelContext.modules.implementation', 'Wdrożenie'),
   };
 
   const matchedKey = Object.keys(moduleMap).find((key) => pathname.startsWith(key));
   const moduleName = matchedKey
     ? moduleMap[matchedKey]
-    : pathname.split('/').filter(Boolean)[0] || 'Home';
+    : pathname.split('/').filter(Boolean)[0] || tx('feedback.panelContext.modules.home', 'Start');
 
   const pageTitle = document.title?.replace(/\s*[-|].*$/, '') || moduleName;
 
@@ -186,10 +189,10 @@ export const FeedbackSidePanel: React.FC = () => {
   // Capture context snapshot when panel opens
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
-      setCapturedCtx(capturePageContext());
+      setCapturedCtx(capturePageContext(t));
     }
     wasOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, t]);
 
   const currentContext =
     capturedCtx?.routePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
@@ -251,7 +254,7 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!message.trim()) return;
 
     setIsSubmitting(true);
-    const ctx = capturedCtx || capturePageContext();
+    const ctx = capturedCtx || capturePageContext(t);
     const structuredBlocks: string[] = [];
     if (stepsToReproduce.trim())
       structuredBlocks.push(`Steps to reproduce:\n${stepsToReproduce.trim()}`);
@@ -301,7 +304,7 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const improveReportWithAI = async () => {
     if (!message.trim()) return;
-    const ctx = capturedCtx || capturePageContext();
+    const ctx = capturedCtx || capturePageContext(t);
     setIsComposing(true);
     setAiQuestions([]);
     try {
@@ -357,7 +360,7 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const submitPulse = async (rating: PulseRating, comment?: string) => {
     setIsSubmitting(true);
-    const ctx = capturedCtx || capturePageContext();
+    const ctx = capturedCtx || capturePageContext(t);
     try {
       await Api.submitPulseFeedback({
         userId: currentUser?.id,
@@ -381,7 +384,7 @@ export const FeedbackSidePanel: React.FC = () => {
     if (!featureName.trim() || !featureDescription.trim()) return;
 
     setIsSubmitting(true);
-    const ctx = capturedCtx || capturePageContext();
+    const ctx = capturedCtx || capturePageContext(t);
     try {
       const data = await Api.submitFeatureFeedback({
         userId: currentUser?.id,
@@ -435,6 +438,10 @@ export const FeedbackSidePanel: React.FC = () => {
 
   const renderContextBadge = () => {
     if (!capturedCtx) return null;
+    const deviceLabel = t(
+      `feedback.panelContext.device.${capturedCtx.deviceType}`,
+      capturedCtx.deviceType
+    );
     return (
       <div className="flex items-center gap-2 p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 text-xs">
         <MapPin size={14} className="text-indigo-500 shrink-0" />
@@ -448,7 +455,7 @@ export const FeedbackSidePanel: React.FC = () => {
         </div>
         <div className="flex items-center gap-1.5 text-indigo-400 dark:text-indigo-500 shrink-0">
           <Monitor size={12} />
-          <span>{capturedCtx.deviceType}</span>
+          <span>{deviceLabel}</span>
         </div>
       </div>
     );
@@ -500,22 +507,22 @@ export const FeedbackSidePanel: React.FC = () => {
             {[
               {
                 value: 'LOW',
-                label: 'Low',
+                label: t('feedback.severity.low', 'Niski'),
                 color: 'text-green-500 bg-green-50 dark:bg-green-900/20',
               },
               {
                 value: 'MEDIUM',
-                label: 'Medium',
+                label: t('feedback.severity.medium', 'Średni'),
                 color: 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20',
               },
               {
                 value: 'HIGH',
-                label: 'High',
+                label: t('feedback.severity.high', 'Wysoki'),
                 color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20',
               },
               {
                 value: 'CRITICAL',
-                label: 'Critical',
+                label: t('feedback.severity.critical', 'Krytyczny'),
                 color: 'text-red-500 bg-red-50 dark:bg-red-900/20',
               },
             ].map(({ value, label, color }) => (
@@ -718,9 +725,21 @@ export const FeedbackSidePanel: React.FC = () => {
         </label>
         <div className="grid grid-cols-3 gap-1.5">
           {[
-            { value: 'missing', label: 'Missing', icon: AlertTriangle },
-            { value: 'improvement', label: 'Improve', icon: TrendingUp },
-            { value: 'usability', label: 'UX', icon: Star },
+            {
+              value: 'missing',
+              label: t('feedback.feature.categories.missing', 'Brakująca funkcja'),
+              icon: AlertTriangle,
+            },
+            {
+              value: 'improvement',
+              label: t('feedback.feature.categories.improvement', 'Usprawnienie'),
+              icon: TrendingUp,
+            },
+            {
+              value: 'usability',
+              label: t('feedback.feature.categories.usability', 'UX'),
+              icon: Star,
+            },
           ].map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -778,9 +797,9 @@ export const FeedbackSidePanel: React.FC = () => {
         </label>
         <div className="flex gap-2">
           {[
-            { value: 'low', label: 'Nice to have' },
-            { value: 'medium', label: 'Important' },
-            { value: 'high', label: 'Critical' },
+            { value: 'low', label: t('feedback.feature.impactLevels.low', 'Dobrze mieć') },
+            { value: 'medium', label: t('feedback.feature.impactLevels.medium', 'Ważne') },
+            { value: 'high', label: t('feedback.feature.impactLevels.high', 'Krytyczne') },
           ].map(({ value, label }) => (
             <button
               key={value}
@@ -975,7 +994,8 @@ export const FeedbackSidePanel: React.FC = () => {
         {!showSuccess && (
           <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
             <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
-              {t('feedback.footer', 'Feedback sent as')} <b>{currentUser?.email || 'Anonymous'}</b>
+              {t('feedback.footer', 'Opinia wysyłana jako')}{' '}
+              <b>{currentUser?.email || t('feedback.anonymous', 'Anonimowo')}</b>
             </div>
           </div>
         )}

@@ -79,11 +79,16 @@ export const getSuperAdminCapabilities = (
   explicitCapabilities?: string[]
 ): SuperAdminCapability[] => {
   const normalizedRole = normalizeSuperAdminRole(role);
+  const hasExplicitCapabilityOverride =
+    Array.isArray(explicitCapabilities) && explicitCapabilities.length > 0;
   const normalizedExplicit = Array.isArray(explicitCapabilities)
     ? explicitCapabilities.map(normalizeCapability).filter(Boolean)
     : [];
 
-  if (normalizedExplicit.length > 0) {
+  // Honor explicit capability subsets when they contain at least one valid capability.
+  // Empty or malformed capability arrays should not accidentally strip a real superadmin
+  // down to zero access.
+  if (hasExplicitCapabilityOverride && normalizedExplicit.length > 0) {
     return Array.from(new Set(normalizedExplicit)) as SuperAdminCapability[];
   }
 

@@ -7,6 +7,7 @@ import * as http from 'http';
 import * as https from 'https';
 
 import aiLogger from './logger.js';
+import WhatsAppService from '../WhatsAppService.js';
 
 export const SEVERITY = {
   INFO: 'info',
@@ -65,6 +66,23 @@ type AlertPayload = {
 const alertThrottle = new Map<string, number>();
 const THROTTLE_DURATION = 5 * 60 * 1000;
 
+function getEnvSuffix(): string {
+  return String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
+}
+
+function mapSeverityForSystemAlert(severity: Severity): 'INFO' | 'WARNING' | 'CRITICAL' {
+  if (severity === SEVERITY.CRITICAL || severity === SEVERITY.ERROR) {
+    return 'CRITICAL';
+  }
+  if (severity === SEVERITY.WARNING) {
+    return 'WARNING';
+  }
+  return 'INFO';
+}
+
 export class AlertingService {
   slackWebhook?: string;
   discordWebhook?: string;
@@ -76,7 +94,11 @@ export class AlertingService {
     // - `SLACK_WEBHOOK_URL` is used by product feedback notifications.
     // - AI infra alerting (circuit breakers, provider outages) should NOT spam the same channel by default.
     // Use a dedicated webhook for AI alerting.
-    this.slackWebhook = process.env.AI_SLACK_WEBHOOK_URL;
+    const envSuffix = getEnvSuffix();
+    this.slackWebhook =
+      process.env.AI_SLACK_WEBHOOK_URL ||
+      process.env[`SLACK_WEBHOOK_URL_${envSuffix}`] ||
+      process.env.SLACK_WEBHOOK_URL;
     this.discordWebhook = process.env.DISCORD_WEBHOOK_URL || process.env.AI_DISCORD_WEBHOOK_URL;
     this.genericWebhook = process.env.AI_ALERT_WEBHOOK_URL;
 
@@ -136,6 +158,14 @@ export class AlertingService {
     if (this.genericWebhook) {
       promises.push(this.sendToWebhook(alert));
     }
+    promises.push(
+      WhatsAppService.sendSystemAlert({
+        title: alert.title,
+        message: alert.message,
+        severity: mapSeverityForSystemAlert(alert.severity),
+        source: 'AI/LLM',
+      })
+    );
 
     // Send to Sentry for critical alerts
     if (alert.severity === SEVERITY.CRITICAL || alert.severity === SEVERITY.ERROR) {

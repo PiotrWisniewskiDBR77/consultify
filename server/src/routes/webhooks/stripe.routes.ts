@@ -274,6 +274,29 @@ async function getPlanIdFromStripePriceId(stripePriceId: string | null | undefin
   return row?.id || null;
 }
 
+async function getManualOverrideState(organizationId: string): Promise<{
+  billingRail: string | null;
+  contractStatus: string | null;
+  isManualOverride: boolean;
+}> {
+  const existingBilling = (await dbGet(
+    `SELECT billing_rail, contract_status, is_manual_override FROM organization_billing WHERE organization_id = ?`,
+    [organizationId]
+  )) as {
+    billing_rail?: string | null;
+    contract_status?: string | null;
+    is_manual_override?: number | boolean | null;
+  } | null;
+
+  return {
+    billingRail: existingBilling?.billing_rail || null,
+    contractStatus: existingBilling?.contract_status || null,
+    isManualOverride:
+      String(existingBilling?.billing_rail || '') === 'manual_invoice' &&
+      Boolean(existingBilling?.is_manual_override),
+  };
+}
+
 /**
  * Handle subscription created event
  */
@@ -290,13 +313,7 @@ async function handleSubscriptionCreated(
 
   const stripePriceId = subscription.items?.data?.[0]?.price?.id || null;
   const planId = await getPlanIdFromStripePriceId(stripePriceId);
-  const existingBilling = (await dbGet(
-    `SELECT billing_rail, is_manual_override FROM organization_billing WHERE organization_id = ?`,
-    [orgId]
-  )) as { billing_rail?: string | null; is_manual_override?: number | boolean | null } | null;
-  const isManualOverride =
-    String(existingBilling?.billing_rail || '') === 'manual_invoice' &&
-    Boolean(existingBilling?.is_manual_override);
+  const { isManualOverride } = await getManualOverrideState(orgId);
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
@@ -346,13 +363,7 @@ async function handleSubscriptionUpdated(
 
   const stripePriceId = subscription.items?.data?.[0]?.price?.id || null;
   const planId = await getPlanIdFromStripePriceId(stripePriceId);
-  const existingBilling = (await dbGet(
-    `SELECT billing_rail, is_manual_override FROM organization_billing WHERE organization_id = ?`,
-    [orgId]
-  )) as { billing_rail?: string | null; is_manual_override?: number | boolean | null } | null;
-  const isManualOverride =
-    String(existingBilling?.billing_rail || '') === 'manual_invoice' &&
-    Boolean(existingBilling?.is_manual_override);
+  const { isManualOverride } = await getManualOverrideState(orgId);
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
@@ -390,17 +401,7 @@ async function handleSubscriptionDeleted(
 
   if (!orgId) return null;
 
-  const existingBilling = (await dbGet(
-    `SELECT billing_rail, contract_status, is_manual_override FROM organization_billing WHERE organization_id = ?`,
-    [orgId]
-  )) as {
-    billing_rail?: string | null;
-    contract_status?: string | null;
-    is_manual_override?: number | boolean | null;
-  } | null;
-  const isManualOverride =
-    String(existingBilling?.billing_rail || '') === 'manual_invoice' &&
-    Boolean(existingBilling?.is_manual_override);
+  const { isManualOverride } = await getManualOverrideState(orgId);
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
@@ -408,17 +409,6 @@ async function handleSubscriptionDeleted(
       stripe_subscription_id: null,
       ...(isManualOverride ? {} : { billing_rail: 'stripe_subscription' }),
     });
-  }
-
-  if (!isManualOverride) {
-    try {
-      await dbRun(
-        `UPDATE organizations SET organization_type = 'TRIAL', updated_at = datetime('now') WHERE id = ?`,
-        [orgId]
-      );
-    } catch {
-      // ignore
-    }
   }
 
   logger.info(`Subscription canceled for org ${orgId}`);
@@ -440,14 +430,19 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string |
   const orgId = await getOrgIdFromCustomer(customerId);
 
   if (!orgId) return null;
+  const { isManualOverride, contractStatus } = await getManualOverrideState(orgId);
 
   // Record invoice
   if (billingService?.recordInvoice) {
     await billingService.recordInvoice(orgId, invoice);
   }
 
-  // Update billing status to active
-  if (billingService?.upsertOrganizationBilling) {
+  // Never let Stripe payment recovery overwrite manually managed contracts.
+  if (isManualOverride) {
+    logger.info(
+      `[Stripe Webhook] invoice.paid recorded for manual contract org ${orgId}; preserving manual state (${contractStatus || 'unknown'})`
+    );
+  } else if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
       status: 'active',
     });
@@ -455,15 +450,17 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string |
 
   // T109: Exit dunning on successful payment
   try {
-    const { default: dunningService } = await import('../../services/dunningService.js');
-    if (dunningService?.handlePaymentSucceeded) {
-      const paymentIntentId = invoice.payment_intent as string | undefined;
-      if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-          apiVersion: '2024-11-20.acacia' as StripeTypes.LatestApiVersion,
-        });
-        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        await dunningService.handlePaymentSucceeded(paymentIntent);
+    if (!isManualOverride) {
+      const { default: dunningService } = await import('../../services/dunningService.js');
+      if (dunningService?.handlePaymentSucceeded) {
+        const paymentIntentId = invoice.payment_intent as string | undefined;
+        if (paymentIntentId && process.env.STRIPE_SECRET_KEY) {
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            apiVersion: '2024-11-20.acacia' as StripeTypes.LatestApiVersion,
+          });
+          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+          await dunningService.handlePaymentSucceeded(paymentIntent);
+        }
       }
     }
   } catch (dunningErr) {

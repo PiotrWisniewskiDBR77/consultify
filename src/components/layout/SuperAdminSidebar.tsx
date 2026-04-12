@@ -53,6 +53,7 @@ export const appViewToSection: Record<string, SuperAdminSection> = {
   [AppView.SUPERADMIN_FEEDBACK]: 'customers',
   [AppView.SUPERADMIN_BULK_OPERATIONS]: 'customers',
   [AppView.SUPERADMIN_LLM_MANAGEMENT]: 'ai-platform',
+  [AppView.SUPERADMIN_AI_CONFIG]: 'ai-platform',
   [AppView.SUPERADMIN_AI_INTELLIGENCE]: 'ai-platform',
   [AppView.SUPERADMIN_KNOWLEDGE]: 'ai-platform',
   [AppView.SUPERADMIN_BILLING]: 'customers',
@@ -64,6 +65,7 @@ export const appViewToSection: Record<string, SuperAdminSection> = {
   [AppView.SUPERADMIN_SETTINGS]: 'system',
   [AppView.SUPERADMIN_WHITELABEL]: 'system',
   [AppView.SUPERADMIN_PLAYBOOK_TEMPLATES]: 'customers',
+  [AppView.SUPERADMIN_PLAYBOOK_EDITOR]: 'customers',
 };
 
 interface SuperAdminSidebarProps {
@@ -156,7 +158,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
         const pending = requests.filter((r: any) => r.status === 'pending').length;
         setPendingRequestsCount(pending);
       } catch (err) {
-        // Silently fail - badge is optional
+        console.warn('[SuperAdminSidebar] Failed to fetch pending access requests badge', err);
       }
     };
     fetchPendingCount();

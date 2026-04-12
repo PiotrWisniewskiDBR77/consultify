@@ -13,10 +13,18 @@ import { useDeviceType } from '../../../hooks/useDeviceType';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
-import { AppView, UserRole } from '../../../types';
+import { AppView } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
-import { isAdminOwnerOrSuperAdminRole, isSuperAdminRole } from '../../../utils/roleGuards';
-import { OnboardingChecklist } from '../../Onboarding/OnboardingChecklist';
+import {
+  dispatchPilotAccessBlocked,
+  getPilotLockedAreaDetail,
+  isPilotAllowedMenuId,
+} from '../../../utils/pilotAccess';
+import {
+  isAdminOwnerOrSuperAdminRole,
+  isPilotRestrictedRole,
+  isSuperAdminRole,
+} from '../../../utils/roleGuards';
 import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
 import {
@@ -84,6 +92,33 @@ export const Sidebar: React.FC = () => {
     () => getMenuStructure(t, currentUser?.journeyState),
     [t, currentUser?.journeyState]
   );
+  const visibleMenuStructure = React.useMemo(() => {
+    if (!isPilotRestrictedRole(currentUser?.role)) {
+      return menuStructure;
+    }
+
+    const decoratePilotItem = (item: MenuItem): MenuItem => {
+      const decoratedChildren = item.subItems?.map((subItem) => decoratePilotItem(subItem));
+
+      if (isPilotAllowedMenuId(item.id)) {
+        return {
+          ...item,
+          subItems: decoratedChildren,
+        };
+      }
+
+      const lockedDetail = getPilotLockedAreaDetail(item.id, item.label);
+      return {
+        ...item,
+        subItems: decoratedChildren,
+        isLocked: true,
+        lockedMessage: lockedDetail.message,
+        lockedCtaHref: lockedDetail.href,
+      };
+    };
+
+    return menuStructure.map((item) => decoratePilotItem(item));
+  }, [currentUser?.role, menuStructure]);
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
   const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
@@ -154,6 +189,14 @@ export const Sidebar: React.FC = () => {
           itemId: item.id,
           requiresView: item.requiresView,
           completedViews,
+        });
+        return;
+      }
+
+      if (item.isLocked) {
+        dispatchPilotAccessBlocked({
+          message: item.lockedMessage,
+          href: item.lockedCtaHref,
         });
         return;
       }
@@ -263,8 +306,17 @@ export const Sidebar: React.FC = () => {
   }, []);
 
   const handleFlyoutNavigate = React.useCallback(
-    (viewId: AppView) => {
-      navigateToView(viewId);
+    (item: MenuItem) => {
+      if (item.isLocked) {
+        dispatchPilotAccessBlocked({
+          message: item.lockedMessage,
+          href: item.lockedCtaHref,
+        });
+        setActiveFloating(null);
+        return;
+      }
+      if (!item.viewId) return;
+      navigateToView(item.viewId);
       setActiveFloating(null);
       if (window.innerWidth < 1024) setIsSidebarOpen(false);
     },
@@ -372,12 +424,9 @@ export const Sidebar: React.FC = () => {
             <PhaseIndicator compact={!showFull} />
           </div>
 
-          {/* Onboarding Checklist (for new users) */}
-          {showFull && <OnboardingChecklist />}
-
           {/* Menu Items */}
           <div className={`space-y-0.5 pb-2 ${showFull ? 'pt-4 px-2' : 'pt-4 px-1'}`}>
-            {menuStructure.map(renderNavItem)}
+            {visibleMenuStructure.map(renderNavItem)}
           </div>
         </nav>
 
@@ -387,7 +436,9 @@ export const Sidebar: React.FC = () => {
           onLogout={logout}
           onNavigate={handleFooterNavigate}
           t={t as any}
-          showPartnerPortal={!isSuperAdminRole(currentUser?.role)}
+          showPartnerPortal={
+            !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role)
+          }
         >
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(organizationMenuItem)}
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(adminMenuItem)}
@@ -403,7 +454,7 @@ export const Sidebar: React.FC = () => {
           items={activeFloating.items}
           title={activeFloating.title}
           onClose={() => setActiveFloating(null)}
-          onNavigate={handleFlyoutNavigate}
+          onItemClick={handleFlyoutNavigate}
           currentView={currentView}
           onMouseEnter={handleFlyoutMouseEnter}
           onMouseLeave={handleFlyoutMouseLeave}

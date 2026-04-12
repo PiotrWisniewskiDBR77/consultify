@@ -74,6 +74,7 @@ export const TenantCommandCenterView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
 
   const fetchOverview = useCallback(async () => {
     setLoading(true);
@@ -105,6 +106,7 @@ export const TenantCommandCenterView: React.FC = () => {
     let cancelled = false;
     const fetchTenantDetails = async () => {
       setDetailsLoading(true);
+      setDetailsError(null);
       try {
         const [billingResult, resourceResult] = await Promise.all([
           Api.getOrganizationBillingDetails(selectedOrgId),
@@ -113,10 +115,12 @@ export const TenantCommandCenterView: React.FC = () => {
         if (cancelled) return;
         setBilling(billingResult || null);
         setResources(resourceResult || null);
-      } catch {
+      } catch (error) {
         if (cancelled) return;
+        console.error('[TenantCommandCenterView] Failed to fetch tenant details', error);
         setBilling(null);
         setResources(null);
+        setDetailsError('Detailed tenant billing and resource telemetry is temporarily unavailable.');
       } finally {
         if (!cancelled) setDetailsLoading(false);
       }
@@ -307,6 +311,12 @@ export const TenantCommandCenterView: React.FC = () => {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
+          {detailsError && (
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+              {detailsError}
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">

@@ -84,7 +84,8 @@
     "due": "Termin",
     "loadFailed": "Nie udało się wczytać",
     "periodStart": "Okres od",
-    "periodEnd": "Okres do"
+    "periodEnd": "Okres do",
+    "noOrganizations": "Nie znaleziono organizacji"
   },
   "superadmin": {
     "confirm": {
@@ -2511,6 +2512,20 @@
   },
   "settings": {
     "title": "Ustawienia",
+    "menu": {
+      "preferences": "Preferencje",
+      "theme": "Motyw",
+      "language": "Język",
+      "demoMode": "Otwórz demo",
+      "demoModeExit": "Wyjdź z demo",
+      "demoModeOn": "Tryb demo jest włączony - przeglądasz Atelier Toys",
+      "demoModeOff": "Otwórz demo workspace Atelier Toys",
+      "demoReadOnly": "Dane demo - tylko do odczytu",
+      "myProfile": "Mój profil",
+      "billing": "Billing i plany",
+      "aiConfig": "Konfiguracja AI",
+      "switchOrg": "Przełącz organizację"
+    },
     "connectedAccounts": {
       "title": "Połączone konta",
       "subtitle": "Połącz konta zewnętrzne, aby ułatwić logowanie i korzystać z dodatkowych funkcji",
@@ -3168,8 +3183,8 @@
         },
         "trial": {
           "title": "Darmowy okres próbny",
-          "description": "14 dni pełnego dostępu do wszystkich funkcji. Zacznij transformację już dziś.",
-          "meta": "14 DNI GRATIS",
+          "description": "7 dni pełnego dostępu do wszystkich funkcji. Zacznij transformację już dziś.",
+          "meta": "7 DNI GRATIS",
           "cta": "Rozpocznij okres próbny"
         },
         "video": {
@@ -3620,7 +3635,7 @@
         },
         {
           "q": "Czy mogę przetestować przed zakupem?",
-          "a": "Tak. Oferujemy 14-dniowy darmowy okres próbny z pełnym dostępem do wszystkich funkcji. Bez karty płatniczej. Możesz też poprosić o spersonalizowane demo, aby zobaczyć platformę na własnym przykładzie."
+          "a": "Tak. Oferujemy 7-dniowy darmowy okres próbny z pełnym dostępem do wszystkich funkcji. Bez karty płatniczej. Możesz też poprosić o spersonalizowane demo, aby zobaczyć platformę na własnym przykładzie."
         },
         {
           "q": "Dla jakich branż pracujecie?",
@@ -3835,12 +3850,18 @@
         "reports": "Reporty",
         "podcasts": "Podcasty"
       },
+      "documentation": {
+        "title": "Dokumentacja"
+      },
       "legal": {
         "privacy": "Polityka prywatności",
         "cookies": "Polityka cookies",
         "terms": "Warunki korzystania ze strony",
         "acceptableUse": "Zasady dopuszczalnego użycia",
         "aiPolicy": "Polityka AI",
+        "subscription": "Warunki subskrypcji",
+        "dpa": "DPA",
+        "sla": "SLA",
         "security": "Przegląd bezpieczeństwa",
         "consent": "Zgoda i kontrola"
       }
@@ -6225,7 +6246,7 @@
       "passwordLabel": "Hasło",
       "cta": "Rozpocznij darmowy okres próbny",
       "creating": "Tworzenie Twojego workspace...",
-      "benefit1": "14 dni za darmo, bez karty kredytowej",
+      "benefit1": "7 dni za darmo, bez karty kredytowej",
       "benefit2": "Własny workspace z możliwościami AI",
       "benefit3": "Importuj dane lub zacznij od nowa",
       "benefit4": "Anuluj w dowolnym momencie",
@@ -6245,18 +6266,58 @@
         "finance": "Finanse i ROI — szczegóły"
       }
     },
+    "toast": {
+      "enabled": "Tryb demo włączony. Przeglądasz {{organization}}.",
+      "disabled": "Tryb demo wyłączony. Wracasz do swojego workspace.",
+      "toggleError": "Nie udało się przełączyć trybu demo",
+      "toggleErrorShort": "Błąd przełączania trybu demo"
+    },
+    "loading": {
+      "title": "Przygotowywanie środowiska",
+      "subtitle": "Konfigurujemy Twoje spersonalizowane demo",
+      "steps": {
+        "environment": "Tworzenie środowiska demo",
+        "data": "Ładowanie danych demonstracyjnych",
+        "ai": "Konfiguracja silnika AI",
+        "dashboard": "Przygotowanie pulpitu"
+      }
+    },
+    "tourComplete": {
+      "message": "Gotowy do eksploracji! Ta platforma zazwyczaj oszczędza zespołom 3+ tygodnie pracy konsultingowej."
+    },
+    "banner": {
+      "mode": "Tryb demo",
+      "exit": "Wyjdź z demo",
+      "exitShort": "Wyjdź",
+      "startTrial": "Rozpocznij trial",
+      "restartLocale": "Przeładuj demo w {{locale}}",
+      "projects": "projekty",
+      "initiatives": "inicjatywy",
+      "hints": "Podpowiedzi",
+      "readOnlyTitle": "Tryb tylko do odczytu",
+      "readOnlyDesc": "Zmiany nie są zapisywane",
+      "exploreTitle": "Eksploruj funkcje",
+      "exploreDesc": "Przeglądaj wszystkie moduły",
+      "hintTitle": "Podpowiedź",
+      "defaultHint": "Kliknij w inicjatywy, aby zobaczyć szczegóły",
+      "help": "Pomoc",
+      "partnerProgram": "Program partnerski"
+    },
     "modal": {
       "title": "Poznaj demo Consultify",
-      "subtitle": "Eksploruj przykładowe dane Atelier ToolToys",
+      "subtitle": "Eksploruj guided workspace Atelier Toys",
       "signUp": "Rejestracja",
       "logIn": "Logowanie",
       "loading": "Uruchamianie...",
       "startDemo": "Zarejestruj się i wejdź do demo",
       "logInAndDemo": "Zaloguj się i wejdź do demo",
       "demoMode": "Środowisko demo",
-      "demoDescriptionSigned": "Zarejestruj się lub zaloguj, aby eksplorować przykładowe dane Atelier ToolToys. Skontaktujemy się z Tobą.",
-      "commercialDescription": "Aby korzystać z własnymi danymi i zespołem, skontaktuj się z naszym zespołem sprzedaży.",
-      "contactSales": "Skontaktuj się ze sprzedażą",
+      "demoDescriptionSigned": "Załóż konto albo zaloguj się, aby automatycznie wejść do demo Atelier Toys.",
+      "commercialDescription": "Demo opowiada historię Atelier Toys. Jeśli masz pytania, pogadaj z Anną albo napisz do nas przez formularz.",
+      "contactSales": "Skontaktuj się z nami",
+      "askAnna": "Pogadaj z Anną",
+      "contactUs": "Przejdź do formularza kontaktowego",
+      "atelierLink": "Zobacz markę Atelier Toys, o której jest to demo",
       "footerNote": "Wchodząc do demo, akceptujesz nasze Warunki korzystania i Politykę prywatności."
     }
   },
@@ -6677,14 +6738,141 @@
     "noResults": "Nie znaleziono opinii spełniających kryteria.",
     "backToList": "Wróć do listy",
     "context": "Kontekst i metadane",
+    "contextTitle": "Kontekst i metadane",
     "statusHistory": "Historia statusów",
+    "alertDelivery": "Alerty i eskalacja",
+    "alertDeliveryEmpty": "Brak zapisanych danych o eskalacji dla tego zgłoszenia.",
+    "alertRequestedChannels": "Planowane kanały",
+    "alertAttemptedAt": "Ostatnia próba",
+    "alertRecipientCount": "Odbiorcy",
+    "alertStatus": {
+      "sent": "Wysłano",
+      "failed": "Błąd",
+      "skipped": "Pominięto"
+    },
+    "alertChannel": {
+      "in_app": "In-app",
+      "slack": "Slack",
+      "email": "E-mail",
+      "whatsapp": "WhatsApp"
+    },
     "adminResponse": "Odpowiedź admina",
     "noResponse": "Brak odpowiedzi",
     "responsePlaceholder": "Wpisz swoją odpowiedź...",
     "send": "Wyślij",
     "confirmationId": "Numer zgłoszenia",
     "feedbackSent": "Dziękujemy! Twoja opinia została przesłana.",
-    "feedbackError": "Nie udało się wysłać opinii. Spróbuj ponownie."
+    "feedbackError": "Nie udało się wysłać opinii. Spróbuj ponownie.",
+    "anonymous": "Anonimowo",
+    "footer": "Opinia wysyłana jako",
+    "submit": "Wyślij",
+    "submitting": "Wysyłanie...",
+    "quickPulse": "Szybka opinia",
+    "tabs": {
+      "report": "Zgłoś",
+      "feature": "Funkcja"
+    },
+    "report": {
+      "intro": "Pomóż nam się poprawiać, zgłaszając problemy lub dzieląc się pomysłami."
+    },
+    "type": {
+      "bug": "Błąd",
+      "idea": "Pomysł"
+    },
+    "severity": {
+      "label": "Priorytet",
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki",
+      "critical": "Krytyczny"
+    },
+    "label": {
+      "title": "Tytuł",
+      "bug": "Opis problemu",
+      "idea": "Opis pomysłu",
+      "steps": "Kroki do odtworzenia",
+      "expected": "Oczekiwany efekt",
+      "actual": "Rzeczywisty efekt",
+      "impact": "Wpływ"
+    },
+    "placeholder": {
+      "title": "Krótki, konkretny opis",
+      "bug": "Opisz, co się stało i jak odtworzyć problem...",
+      "idea": "Opisz swój pomysł na usprawnienie...",
+      "steps": "1) ...\n2) ...\n3) ...",
+      "impact": "Kogo to dotyczy / jak duży to problem?"
+    },
+    "success": {
+      "title": "Dziękujemy!",
+      "bugReported": "Błąd został zgłoszony. Zajmiemy się nim jak najszybciej.",
+      "ideaSubmitted": "Dziękujemy za pomysł. Trafił do naszego backlogu.",
+      "pulse": "Dziękujemy za opinię!",
+      "feature": "Prośba o funkcję została wysłana.",
+      "featureWithAI": "Prośba o funkcję została wysłana. AI znalazło podobne zgłoszenia."
+    },
+    "error": {
+      "submit": "Nie udało się wysłać opinii"
+    },
+    "ai": {
+      "improve": "Ulepsz z AI",
+      "questions": "AI ma pytania",
+      "clarify": "Aby zgłoszenie było bardziej konkretne, doprecyzuj",
+      "maybeNotBug": "AI sugeruje, że to może nie być błąd. Sprawdź proszę jeszcze raz.",
+      "failed": "Wsparcie AI nie zadziałało. Spróbuj ponownie.",
+      "insights": "Wnioski AI",
+      "loading": "Ładowanie wniosków AI..."
+    },
+    "pulse": {
+      "tellUs": "Powiedz nam, co poszło nie tak",
+      "context": "Opinia dla:",
+      "commentPlaceholder": "Co możemy poprawić?"
+    },
+    "feature": {
+      "category": "Kategoria",
+      "name": "Nazwa funkcji",
+      "namePlaceholder": "np. Tryb ciemny, eksport do PDF",
+      "description": "Opis",
+      "descPlaceholder": "Opisz funkcję i to, jak miałaby Ci pomóc...",
+      "impact": "Wpływ biznesowy",
+      "submit": "Wyślij prośbę o funkcję",
+      "categories": {
+        "missing": "Brakująca funkcja",
+        "improvement": "Usprawnienie",
+        "usability": "UX"
+      },
+      "impactLevels": {
+        "low": "Dobrze mieć",
+        "medium": "Ważne",
+        "high": "Krytyczne"
+      }
+    },
+    "panelContext": {
+      "modules": {
+        "myWork": "Moja praca",
+        "interview": "Wywiad",
+        "tools": "Narzędzia Discovery",
+        "initiatives": "Inicjatywy",
+        "execution": "Realizacja",
+        "results": "Rezultaty",
+        "finance": "Finanse",
+        "presentations": "Prezentacje",
+        "assessment": "Ocena",
+        "dashboard": "Pulpit",
+        "reports": "Raporty",
+        "settings": "Ustawienia",
+        "admin": "Admin",
+        "superadmin": "SuperAdmin",
+        "chat": "Czat AI",
+        "economics": "Ekonomia",
+        "implementation": "Wdrożenie",
+        "home": "Start"
+      },
+      "device": {
+        "mobile": "telefon",
+        "tablet": "tablet",
+        "desktop": "komputer"
+      }
+    }
   },
   "behaviorIntelligence": {
     "journeyTracked": "Zdarzenie ścieżki zarejestrowane",
@@ -7134,8 +7322,8 @@
       "trial": {
         "name": "Trial",
         "price": "Za darmo",
-        "subtitle": "14 dni",
-        "description": "14 dni na sprawdzenie workflow przed decyzją.",
+        "subtitle": "7 dni",
+        "description": "7 dni na sprawdzenie workflow przed decyzją.",
         "features": [
           "1 sandbox workspace",
           "2 aktywne projekty",

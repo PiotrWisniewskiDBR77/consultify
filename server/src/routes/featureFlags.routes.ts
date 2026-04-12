@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { Response, Router } from 'express';
 
-import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -103,6 +103,136 @@ function rowToFlag(row: FlagRow) {
     updated_at: row.updated_at,
   };
 }
+
+type ResolvedFeatureFlag = ReturnType<typeof rowToFlag>;
+
+interface FeatureEvaluationContext extends Record<string, unknown> {
+  userId?: string;
+  user_id?: string;
+  orgId?: string;
+  org_id?: string;
+  email?: string;
+  role?: string;
+}
+
+interface FeatureEvaluationResult {
+  enabled: boolean;
+  reason: string;
+  variant?: string;
+}
+
+function evaluateFeatureFlag(
+  flag: ResolvedFeatureFlag,
+  context: FeatureEvaluationContext
+): FeatureEvaluationResult {
+  if (!flag.enabled) {
+    return { enabled: false, reason: 'Flag is disabled globally' };
+  }
+
+  if (flag.flag_type === 'boolean') {
+    return { enabled: true, reason: 'Boolean flag enabled' };
+  }
+
+  if (flag.flag_type === 'percentage') {
+    const userId = String(context.userId || context.user_id || '');
+    if (!userId) {
+      return { enabled: false, reason: 'No user context for percentage evaluation' };
+    }
+
+    const bucket = Math.abs(hashCode(userId + flag.flag_key) % 100);
+    const inRollout = bucket < flag.rollout_percentage;
+    return {
+      enabled: inRollout,
+      reason: inRollout
+        ? `User in rollout (${bucket}% < ${flag.rollout_percentage}%)`
+        : `User not in rollout (${bucket}% >= ${flag.rollout_percentage}%)`,
+    };
+  }
+
+  if (flag.flag_type === 'targeting') {
+    const rules = (flag.targeting_rules || []) as any[];
+    for (const rule of rules) {
+      if (!rule.enabled) continue;
+      if (evaluateRule(rule, context)) {
+        return { enabled: true, reason: `Matched rule: ${rule.type}` };
+      }
+    }
+    return { enabled: false, reason: 'No targeting rules matched' };
+  }
+
+  if (flag.flag_type === 'ab_test') {
+    const userId = String(context.userId || context.user_id || '');
+    const variants = (flag.variants || []) as any[];
+    if (!userId || variants.length === 0) {
+      return { enabled: false, reason: 'No user context or variants for A/B evaluation' };
+    }
+
+    const totalWeight = variants.reduce((acc: number, v: any) => acc + (v.weight || 0), 0);
+    if (totalWeight <= 0) {
+      return { enabled: false, reason: 'No weighted variants configured' };
+    }
+
+    let bucket = Math.abs(hashCode(userId + flag.flag_key) % totalWeight);
+    for (const variant of variants) {
+      bucket -= variant.weight || 0;
+      if (bucket < 0) {
+        return {
+          enabled: true,
+          variant: variant.name,
+          reason: `A/B test variant: ${variant.name}`,
+        };
+      }
+    }
+
+    return { enabled: false, reason: 'No variant matched' };
+  }
+
+  return { enabled: false, reason: 'Unknown flag type' };
+}
+
+function buildEvaluationContext(req: AuthRequest): FeatureEvaluationContext {
+  return {
+    userId: req.user?.id || req.userId || '',
+    user_id: req.user?.id || req.userId || '',
+    orgId: req.user?.organizationId || req.organizationId || '',
+    org_id: req.user?.organizationId || req.organizationId || '',
+    email: req.user?.email || '',
+    role: req.user?.role || req.userRole || '',
+  };
+}
+
+router.get(
+  '/runtime',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    await ensureTable();
+
+    const organizationId = req.user?.organizationId || req.organizationId || null;
+    const rows = await dbAll<FlagRow>(
+      `SELECT * FROM feature_flags
+       WHERE environment = ?
+         AND (organization_id IS NULL OR organization_id = ?)
+       ORDER BY updated_at DESC`,
+      ['production', organizationId],
+      { fallback: true }
+    );
+
+    const context = buildEvaluationContext(req);
+    const flags: Record<string, boolean> = {};
+    const variants: Record<string, string> = {};
+
+    for (const row of rows) {
+      const flag = rowToFlag(row);
+      const evaluation = evaluateFeatureFlag(flag, context);
+      flags[flag.flag_key] = evaluation.enabled;
+      if (evaluation.variant) {
+        variants[flag.flag_key] = evaluation.variant;
+      }
+    }
+
+    res.json({ flags, variants });
+  })
+);
 
 router.use(requireSuperAdmin);
 
@@ -461,167 +591,7 @@ router.post(
       return;
     }
 
-    const parsed = rowToFlag(flag);
-
-    if (!parsed.enabled) {
-      res.json({ enabled: false, reason: 'Flag is disabled globally' });
-      return;
-    }
-
-    if (parsed.flag_type === 'boolean') {
-      res.json({ enabled: true, reason: 'Boolean flag enabled' });
-      return;
-    }
-
-    if (parsed.flag_type === 'percentage') {
-      const userId = context?.userId || context?.user_id || '';
-      if (!userId) {
-        res.json({ enabled: false, reason: 'No user context for percentage evaluation' });
-        return;
-      }
-      const hash = hashCode(userId + flag_key);
-      const bucket = Math.abs(hash % 100);
-      const inRollout = bucket < parsed.rollout_percentage;
-      res.json({
-        enabled: inRollout,
-        reason: inRollout
-          ? `User in rollout (${bucket}% < ${parsed.rollout_percentage}%)`
-          : `User not in rollout (${bucket}% >= ${parsed.rollout_percentage}%)`,
-      });
-      return;
-    }
-
-    if (parsed.flag_type === 'targeting') {
-      for (const rule of (parsed.targeting_rules || []) as any[]) {
-        if (!rule.enabled) continue;
-        if (evaluateRule(rule, context || {})) {
-          res.json({ enabled: true, reason: `Matched rule: ${rule.type}` });
-          return;
-        }
-      }
-      res.json({ enabled: false, reason: 'No targeting rules matched' });
-      return;
-    }
-
-    if (parsed.flag_type === 'ab_test' && parsed.variants?.length) {
-      const userId = context?.userId || context?.user_id || '';
-      if (!userId) {
-        res.json({ enabled: false, reason: 'No user context for A/B evaluation' });
-        return;
-      }
-      const hash = hashCode(userId + flag_key);
-      const totalWeight = (parsed.variants as any[]).reduce(
-        (acc: number, v: any) => acc + (v.weight || 0),
-        0
-      );
-      let bucket = Math.abs(hash % totalWeight);
-      for (const variant of parsed.variants as any[]) {
-        bucket -= variant.weight || 0;
-        if (bucket < 0) {
-          res.json({
-            enabled: true,
-            variant: variant.name,
-            reason: `A/B test variant: ${variant.name}`,
-          });
-          return;
-        }
-      }
-    }
-
-    res.json({ enabled: false, reason: 'Unknown flag type' });
-  })
-);
-
-router.post(
-  '/evaluate',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    await ensureTable();
-
-    const { flag_key, context } = req.body;
-
-    if (!flag_key) {
-      res.status(400).json({ error: 'flag_key is required' });
-      return;
-    }
-
-    const row = await dbGet<FlagRow>('SELECT * FROM feature_flags WHERE flag_key = ?', [flag_key], {
-      fallback: false,
-    });
-
-    if (!row) {
-      res.json({ enabled: false, reason: 'Flag not found' });
-      return;
-    }
-
-    const flag = rowToFlag(row);
-
-    if (!flag.enabled) {
-      res.json({ enabled: false, reason: 'Flag is disabled globally' });
-      return;
-    }
-
-    if (flag.flag_type === 'boolean') {
-      res.json({ enabled: true, reason: 'Boolean flag enabled' });
-      return;
-    }
-
-    if (flag.flag_type === 'percentage') {
-      const userId = context?.userId || context?.user_id;
-      if (!userId) {
-        res.json({ enabled: false, reason: 'No user context for percentage evaluation' });
-        return;
-      }
-      const hash = hashCode(userId + flag.flag_key);
-      const bucket = Math.abs(hash % 100);
-      const inRollout = bucket < flag.rollout_percentage;
-      res.json({
-        enabled: inRollout,
-        reason: inRollout
-          ? `User in rollout (${bucket}% < ${flag.rollout_percentage}%)`
-          : `User not in rollout (${bucket}% >= ${flag.rollout_percentage}%)`,
-      });
-      return;
-    }
-
-    if (flag.flag_type === 'targeting') {
-      const rules = (flag.targeting_rules || []) as any[];
-      for (const rule of rules) {
-        if (!rule.enabled) continue;
-        if (evaluateRule(rule, context || {})) {
-          res.json({ enabled: true, reason: `Matched rule: ${rule.type}` });
-          return;
-        }
-      }
-      res.json({ enabled: false, reason: 'No targeting rules matched' });
-      return;
-    }
-
-    if (flag.flag_type === 'ab_test') {
-      const userId = context?.userId || context?.user_id;
-      const variants = (flag.variants || []) as any[];
-      if (!userId || variants.length === 0) {
-        res.json({ enabled: false, reason: 'No user context or variants for A/B evaluation' });
-        return;
-      }
-      const hash = hashCode(userId + flag.flag_key);
-      const totalWeight = variants.reduce((acc: number, v: any) => acc + (v.weight || 0), 0);
-      let bucket = Math.abs(hash % totalWeight);
-      for (const variant of variants) {
-        bucket -= variant.weight || 0;
-        if (bucket < 0) {
-          res.json({
-            enabled: true,
-            variant: variant.name,
-            reason: `A/B test variant: ${variant.name}`,
-          });
-          return;
-        }
-      }
-      res.json({ enabled: false, reason: 'No variant matched' });
-      return;
-    }
-
-    res.json({ enabled: false, reason: 'Unknown flag type' });
+    res.json(evaluateFeatureFlag(rowToFlag(flag), context || {}));
   })
 );
 

@@ -36,6 +36,7 @@ import {
   SettingsToggle,
 } from '../../components/AISettings';
 import { InfoButton } from '../../components/shared/InfoButton';
+import { AdminApi } from '../../services/api/admin.api';
 import { useAppStore } from '../../store/useAppStore';
 import { LLMProvider, OrgAISettings } from '../../types';
 
@@ -85,6 +86,39 @@ const AI_ROLES = [
 
 type SettingsTab = 'policy' | 'limits' | 'features' | 'audit';
 
+const normalizeOrgAISettings = (
+  organizationId: string,
+  raw: Partial<OrgAISettings> | null | undefined
+): OrgAISettings => ({
+  organizationId,
+  policyLevel: raw?.policyLevel || 'ADVISORY',
+  maxPolicyLevel: raw?.maxPolicyLevel || 'AUTOPILOT',
+  defaultProactivityMode: raw?.defaultProactivityMode || 'REACTIVE',
+  activeRoles: Array.isArray(raw?.activeRoles) ? raw!.activeRoles : ['ADVISOR'],
+  defaultRole: raw?.defaultRole || 'ADVISOR',
+  enabledModelIds: Array.isArray(raw?.enabledModelIds) ? raw!.enabledModelIds : [],
+  maxAICallsPerDay: typeof raw?.maxAICallsPerDay === 'number' ? raw.maxAICallsPerDay : 0,
+  maxTokensPerMonth: typeof raw?.maxTokensPerMonth === 'number' ? raw.maxTokensPerMonth : 0,
+  monthlyBudgetUSD: typeof raw?.monthlyBudgetUSD === 'number' ? raw.monthlyBudgetUSD : 0,
+  hardLimitUSD: typeof raw?.hardLimitUSD === 'number' ? raw.hardLimitUSD : 0,
+  freezeOnLimit: Boolean(raw?.freezeOnLimit),
+  webSearchEnabled: Boolean(raw?.webSearchEnabled),
+  artifactsEnabled: Boolean(raw?.artifactsEnabled),
+  thinkingStepsEnabled: Boolean(raw?.thinkingStepsEnabled),
+  focusModesEnabled: Boolean(raw?.focusModesEnabled),
+  voiceEnabled: Boolean(raw?.voiceEnabled),
+  autoTierEnabled: raw?.autoTierEnabled,
+  autoTierDirection: raw?.autoTierDirection,
+  autoTierThreshold: raw?.autoTierThreshold,
+  systemPrompts: Array.isArray(raw?.systemPrompts) ? raw!.systemPrompts : [],
+  defaultSystemPromptId: raw?.defaultSystemPromptId,
+  auditAllRequests: Boolean(raw?.auditAllRequests),
+  auditPolicyChanges: Boolean(raw?.auditPolicyChanges),
+  createdAt: raw?.createdAt || new Date(0).toISOString(),
+  updatedAt: raw?.updatedAt || new Date(0).toISOString(),
+  updatedBy: raw?.updatedBy || null,
+});
+
 export const OrgAISettingsView: React.FC = () => {
   const { currentOrganization } = useAppStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>('policy');
@@ -107,14 +141,10 @@ export const OrgAISettingsView: React.FC = () => {
 
     setLoading(true);
     try {
-      // Load org settings
-      const settingsRes = await fetch(`/api/ai-settings/org/${currentOrganization.id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (settingsRes.ok) {
-        const data = await settingsRes.json();
-        setSettings(data);
-      }
+      const data = await AdminApi.getOrganizationAISettings(currentOrganization.id);
+      setSettings(
+        normalizeOrgAISettings(currentOrganization.id, (data as Partial<OrgAISettings>) || null)
+      );
     } catch (error) {
       console.error('Failed to load settings:', error);
       toast.error('Failed to load organization AI settings');
@@ -128,23 +158,10 @@ export const OrgAISettingsView: React.FC = () => {
 
     setSaving(true);
     try {
-      const res = await fetch(`/api/ai-settings/org/${currentOrganization.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(settings),
-      });
-
-      if (res.ok) {
-        const updated = await res.json();
-        setSettings(updated);
-        setHasChanges(false);
-        toast.success('Organization AI settings saved');
-      } else {
-        throw new Error('Save failed');
-      }
+      const updated = await AdminApi.updateOrganizationAISettings(currentOrganization.id, settings);
+      setSettings(updated as OrgAISettings);
+      setHasChanges(false);
+      toast.success('Organization AI settings saved');
     } catch (error) {
       toast.error('Failed to save settings');
     }

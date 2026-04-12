@@ -9,6 +9,7 @@ import * as cron from 'node-cron';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { sendSystemAlert } from '../services/systemAlertNotifier.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -70,6 +71,14 @@ class HealthCheckJob {
         if (!this.isSystemHealthy) {
           // System just came UP
           logger.info('[HEALTH CHECK] RECOVERED');
+          await sendSystemAlert({
+            title: 'Database connectivity restored',
+            message: 'The Consultify database is responding again.',
+            severity: 'INFO',
+            source: 'Database',
+            throttleKey: 'database_recovered',
+            throttleMs: 60_000,
+          });
           await deps.emailService.sendEmail(
             deps.alertEmail,
             'RESOLVED: System Database Recovered',
@@ -93,6 +102,14 @@ class HealthCheckJob {
         if (this.isSystemHealthy) {
           this.isSystemHealthy = false;
           // System just went DOWN
+          await sendSystemAlert({
+            title: 'Database unreachable',
+            message: `The Consultify database health check failed: ${error.message}`,
+            severity: 'CRITICAL',
+            source: 'Database',
+            throttleKey: 'database_down',
+            throttleMs: 60_000,
+          });
           await deps.emailService.sendEmail(
             deps.alertEmail,
             'CRITICAL ALERT: System Database Down',

@@ -32,6 +32,7 @@ export function useV8ExecutionRun(runId: string | undefined) {
     queryKey: V8_EXECUTION_KEYS.run(runId ?? ''),
     queryFn: () => V8ExecutionApi.getRun(runId!),
     enabled: !!runId,
+    refetchInterval: runId ? 3000 : false,
   });
 }
 

@@ -126,8 +126,13 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
     setCurrentUser({ ...user, hasWorkspace: true } as any);
     setIsDemoModalOpen(false);
     setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
-    if (mode === 'demo') setDemoMode(true);
-    else setDemoMode(false);
+    if (mode === 'demo') {
+      sessionStorage.setItem('demo_entry_source', 'landing_page');
+      setDemoMode(true);
+    } else {
+      sessionStorage.removeItem('demo_entry_source');
+      setDemoMode(false);
+    }
     setCurrentView(AppView.DASHBOARD);
     navigate(ROUTES.AI_CHAT);
   };

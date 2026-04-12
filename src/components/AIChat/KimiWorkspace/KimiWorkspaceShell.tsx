@@ -721,7 +721,8 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   chatSystemPrompt,
 }) => {
   const { t: tShell, i18n } = useTranslation();
-  const { setDisplayMode, setWorkspaceContext } = useConversationStore();
+  const setDisplayMode = useConversationStore((s) => s.setDisplayMode);
+  const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
 
   const workspaceContext = useMemo(() => {

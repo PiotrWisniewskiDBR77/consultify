@@ -3,7 +3,16 @@
  * Enterprise SaaS Architecture - User & System Settings
  */
 
-import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
+import {
+  apiDelete,
+  apiGet,
+  apiPost,
+  apiPut,
+  API_URL,
+  fetchWithRetry,
+  getHeaders,
+  handleResponse,
+} from './baseClient';
 
 export interface Integration {
   id: string;
@@ -23,6 +32,160 @@ export interface Webhook {
   lastTriggeredAt?: string;
 }
 
+type AccessibilityPreferences = {
+  fontSize: 'small' | 'medium' | 'large' | 'extra-large';
+  highContrastMode: boolean;
+  reduceMotion: boolean;
+  screenReaderOptimized: boolean;
+  showKeyboardShortcuts: boolean;
+  focusHighlight: boolean;
+  cursorSize: 'default' | 'large' | 'extra-large';
+  textSpacing: 'default' | 'relaxed' | 'spacious';
+  underlineLinks: boolean;
+  colorBlindMode: 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia';
+  fontFamily: string;
+  lineHeight: 'default' | 'relaxed' | 'loose';
+  letterSpacing: 'default' | 'wide' | 'wider';
+  voiceCommandsEnabled: boolean;
+  textToSpeechEnabled: boolean;
+  speechToTextEnabled: boolean;
+  caretWidth: 'default' | 'thick';
+  focusIndicatorStyle: 'default' | 'high-contrast' | 'animated';
+};
+
+type PrivacyPreferences = {
+  showOnlineStatus: boolean;
+  activityVisibility: 'all' | 'team' | 'private';
+  profileVisibility: 'public' | 'organization' | 'private';
+  allowMentions: boolean;
+  showInDirectory: boolean;
+  shareActivityWithAI: boolean;
+};
+
+type KeyboardShortcutsPreferences = {
+  preset: 'default' | 'vscode' | 'sublime' | 'vim' | 'custom';
+  enabled: boolean;
+  showHints: boolean;
+  customShortcuts: Record<string, string>;
+  disabledShortcuts: string[];
+};
+
+type AppearancePreferences = {
+  theme: 'light' | 'dark' | 'system';
+  accentColor: string;
+  density: 'compact' | 'comfortable' | 'spacious';
+};
+
+type VoicePreferences = {
+  ttsEnabled: boolean;
+  sttEnabled: boolean;
+  voice: string;
+  speed: number;
+  autoPlay: boolean;
+};
+
+type AIPrivacyPreferences = {
+  allowProjectData: boolean;
+  allowClientData: boolean;
+  allowFinancialData: boolean;
+  allowPersonalNotes: boolean;
+  optOutTraining: boolean;
+  dataRetention: 'session' | '7d' | '30d' | '90d' | 'unlimited';
+  auditLogEnabled: boolean;
+  anonymizeExports: boolean;
+};
+
+export interface PromptLibraryItem {
+  id: string;
+  name: string;
+  category: 'interview' | 'analysis' | 'report' | 'general';
+  prompt: string;
+  createdAt: string;
+}
+
+const normalizeAccessibilityPreferences = (
+  preferences: Record<string, unknown> = {}
+): AccessibilityPreferences => ({
+  fontSize: (preferences.fontSize as AccessibilityPreferences['fontSize']) || 'medium',
+  highContrastMode: Boolean(preferences.highContrastMode),
+  reduceMotion: Boolean(preferences.reduceMotion),
+  screenReaderOptimized: Boolean(preferences.screenReaderOptimized),
+  showKeyboardShortcuts: Boolean(
+    preferences.showKeyboardShortcuts ?? preferences.showShortcuts ?? true
+  ),
+  focusHighlight: Boolean(preferences.focusHighlight ?? true),
+  cursorSize: (preferences.cursorSize as AccessibilityPreferences['cursorSize']) || 'default',
+  textSpacing: (preferences.textSpacing as AccessibilityPreferences['textSpacing']) || 'default',
+  underlineLinks: Boolean(preferences.underlineLinks),
+  colorBlindMode:
+    (preferences.colorBlindMode as AccessibilityPreferences['colorBlindMode']) || 'none',
+  fontFamily: (preferences.fontFamily as string) || 'system',
+  lineHeight: (preferences.lineHeight as AccessibilityPreferences['lineHeight']) || 'default',
+  letterSpacing:
+    (preferences.letterSpacing as AccessibilityPreferences['letterSpacing']) || 'default',
+  voiceCommandsEnabled: Boolean(preferences.voiceCommandsEnabled ?? preferences.voiceCommands),
+  textToSpeechEnabled: Boolean(preferences.textToSpeechEnabled ?? preferences.textToSpeech),
+  speechToTextEnabled: Boolean(preferences.speechToTextEnabled ?? preferences.speechToText),
+  caretWidth:
+    (preferences.caretWidth as AccessibilityPreferences['caretWidth']) ||
+    ((preferences.textCursorWidth as AccessibilityPreferences['caretWidth']) ?? 'default'),
+  focusIndicatorStyle:
+    (preferences.focusIndicatorStyle as AccessibilityPreferences['focusIndicatorStyle']) ||
+    ((preferences.focusIndicator as AccessibilityPreferences['focusIndicatorStyle']) ?? 'default'),
+});
+
+const serializeAccessibilityPreferences = (
+  preferences: AccessibilityPreferences
+): Record<string, unknown> => ({
+  fontSize: preferences.fontSize,
+  highContrastMode: preferences.highContrastMode,
+  reduceMotion: preferences.reduceMotion,
+  screenReaderOptimized: preferences.screenReaderOptimized,
+  showShortcuts: preferences.showKeyboardShortcuts,
+  focusHighlight: preferences.focusHighlight,
+  cursorSize: preferences.cursorSize,
+  textSpacing: preferences.textSpacing,
+  underlineLinks: preferences.underlineLinks,
+  colorBlindMode: preferences.colorBlindMode,
+  fontFamily: preferences.fontFamily,
+  lineHeight: preferences.lineHeight,
+  letterSpacing: preferences.letterSpacing,
+  voiceCommands: preferences.voiceCommandsEnabled,
+  textToSpeech: preferences.textToSpeechEnabled,
+  speechToText: preferences.speechToTextEnabled,
+  textCursorWidth: preferences.caretWidth,
+  focusIndicator: preferences.focusIndicatorStyle,
+});
+
+const normalizeAppearancePreferences = (
+  preferences: Record<string, unknown> = {}
+): AppearancePreferences => ({
+  theme: (preferences.theme as AppearancePreferences['theme']) || 'system',
+  accentColor: (preferences.accentColor as string) || '#6366f1',
+  density:
+    (preferences.density as AppearancePreferences['density']) ||
+    ((preferences.uiDensity as AppearancePreferences['density']) ?? 'comfortable'),
+});
+
+const serializeAppearancePreferences = (
+  preferences: AppearancePreferences
+): Record<string, unknown> => ({
+  theme: preferences.theme,
+  accentColor: preferences.accentColor,
+  uiDensity: preferences.density,
+});
+
+const normalizePromptLibrary = (items: unknown): PromptLibraryItem[] => {
+  if (!Array.isArray(items)) return [];
+  return items.map((item) => ({
+    id: String((item as any).id),
+    name: String((item as any).name || ''),
+    category: ((item as any).category || 'general') as PromptLibraryItem['category'],
+    prompt: String((item as any).prompt || ''),
+    createdAt: String((item as any).createdAt || new Date().toISOString().split('T')[0]),
+  }));
+};
+
 export const SettingsApi = {
   // ==========================================
   // SYSTEM SETTINGS
@@ -41,6 +204,243 @@ export const SettingsApi = {
       body: JSON.stringify({ key, value }),
     });
     if (!res.ok) throw new Error('Failed to save setting');
+  },
+
+  // ==========================================
+  // USER PREFERENCES
+  // ==========================================
+
+  getAccessibilityPreferences: async (): Promise<{ preferences: AccessibilityPreferences }> => {
+    const data = await apiGet<{ preferences?: Record<string, unknown> }>(
+      '/settings/preferences/accessibility',
+      'Failed to fetch accessibility preferences'
+    );
+    return {
+      preferences: normalizeAccessibilityPreferences(data?.preferences || {}),
+    };
+  },
+
+  updateAccessibilityPreferences: async (
+    preferences: AccessibilityPreferences
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/accessibility',
+      { preferences: serializeAccessibilityPreferences(preferences) },
+      'Failed to save accessibility preferences'
+    );
+  },
+
+  getShortcutsPreferences: async (): Promise<{ preferences: KeyboardShortcutsPreferences }> => {
+    const data = await apiGet<{ preferences?: Partial<KeyboardShortcutsPreferences> }>(
+      '/settings/preferences/shortcuts',
+      'Failed to fetch shortcut preferences'
+    );
+    return {
+      preferences: {
+        preset: 'default',
+        enabled: true,
+        showHints: true,
+        customShortcuts: {},
+        disabledShortcuts: [],
+        ...(data?.preferences || {}),
+      },
+    };
+  },
+
+  updateShortcutsPreferences: async (
+    preferences: KeyboardShortcutsPreferences
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/shortcuts',
+      preferences,
+      'Failed to save shortcut preferences'
+    );
+  },
+
+  getPrivacyPreferences: async (): Promise<{ preferences: PrivacyPreferences }> => {
+    return apiGet<{ preferences: PrivacyPreferences }>(
+      '/settings/preferences/privacy',
+      'Failed to fetch privacy preferences'
+    );
+  },
+
+  updatePrivacyPreferences: async (
+    preferences: PrivacyPreferences
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/privacy',
+      { preferences },
+      'Failed to save privacy preferences'
+    );
+  },
+
+  getAppearancePreferences: async (): Promise<{ preferences: AppearancePreferences }> => {
+    const data = await apiGet<{ preferences?: Record<string, unknown> }>(
+      '/settings/preferences/appearance',
+      'Failed to fetch appearance preferences'
+    );
+    return {
+      preferences: normalizeAppearancePreferences(data?.preferences || {}),
+    };
+  },
+
+  updateAppearancePreferences: async (
+    preferences: AppearancePreferences
+  ): Promise<{ success: boolean; preferences: Record<string, unknown> }> => {
+    return apiPut<{ success: boolean; preferences: Record<string, unknown> }>(
+      '/settings/preferences/appearance',
+      serializeAppearancePreferences(preferences),
+      'Failed to save appearance preferences'
+    );
+  },
+
+  getAIVoicePreferences: async (): Promise<{ preferences: VoicePreferences }> => {
+    return apiGet<{ preferences: VoicePreferences }>(
+      '/settings/preferences/ai-voice',
+      'Failed to fetch AI voice preferences'
+    );
+  },
+
+  updateAIVoicePreferences: async (
+    preferences: VoicePreferences
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/ai-voice',
+      { preferences },
+      'Failed to save AI voice preferences'
+    );
+  },
+
+  getAIPrivacyPreferences: async (): Promise<{ preferences: AIPrivacyPreferences }> => {
+    return apiGet<{ preferences: AIPrivacyPreferences }>(
+      '/settings/preferences/ai-privacy',
+      'Failed to fetch AI privacy preferences'
+    );
+  },
+
+  updateAIPrivacyPreferences: async (
+    preferences: AIPrivacyPreferences
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/ai-privacy',
+      { preferences },
+      'Failed to save AI privacy preferences'
+    );
+  },
+
+  getPromptLibrary: async (): Promise<{ prompts: PromptLibraryItem[] }> => {
+    const data = await apiGet<{ prompts?: unknown }>(
+      '/settings/preferences/prompt-library',
+      'Failed to fetch prompt library'
+    );
+    return { prompts: normalizePromptLibrary(data?.prompts) };
+  },
+
+  savePromptLibrary: async (prompts: PromptLibraryItem[]): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/prompt-library',
+      { prompts },
+      'Failed to save prompt library'
+    );
+  },
+
+  getDeveloperSettings: async (): Promise<{ settings: Record<string, unknown> }> => {
+    return apiGet<{ settings: Record<string, unknown> }>(
+      '/settings/developer',
+      'Failed to fetch developer settings'
+    );
+  },
+
+  saveDeveloperSettings: async (
+    settings: Record<string, unknown>
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/developer',
+      settings,
+      'Failed to save developer settings'
+    );
+  },
+
+  exportSettings: async (categories?: string[]): Promise<{ data: unknown; filename?: string }> => {
+    return apiPost<{ data: unknown; filename?: string }>(
+      '/settings/export',
+      { categories: categories || [] },
+      'Failed to export settings'
+    );
+  },
+
+  importSettings: async (
+    data: Record<string, unknown>,
+    overwrite = true
+  ): Promise<{ success: boolean; imported: unknown }> => {
+    return apiPost<{ success: boolean; imported: unknown }>(
+      '/settings/import',
+      { data, overwrite },
+      'Failed to import settings'
+    );
+  },
+
+  getSettingsHistory: async (
+    category?: string,
+    days?: number
+  ): Promise<{ entries: unknown[]; stats?: unknown }> => {
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    if (days) params.set('days', String(days));
+    return apiGet<{ entries: unknown[]; stats?: unknown }>(
+      `/settings/history${params.toString() ? `?${params.toString()}` : ''}`,
+      'Failed to fetch settings history'
+    );
+  },
+
+  restoreSettingsHistoryEntry: async (entryId: string): Promise<{ success: boolean }> => {
+    return apiPost<{ success: boolean }>(
+      `/settings/history/restore/${entryId}`,
+      {},
+      'Failed to restore settings history entry'
+    );
+  },
+
+  getSettingsTemplates: async (): Promise<{ templates: unknown[] }> => {
+    return apiGet<{ templates: unknown[] }>('/settings/templates', 'Failed to fetch settings templates');
+  },
+
+  createSettingsTemplate: async (
+    data: Record<string, unknown>
+  ): Promise<{ success: boolean; template: Record<string, unknown> }> => {
+    return apiPost<{ success: boolean; template: Record<string, unknown> }>(
+      '/settings/templates',
+      data,
+      'Failed to create settings template'
+    );
+  },
+
+  updateSettingsTemplate: async (
+    templateId: string,
+    data: Record<string, unknown>
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      `/settings/templates/${templateId}`,
+      data,
+      'Failed to update settings template'
+    );
+  },
+
+  deleteSettingsTemplate: async (templateId: string): Promise<{ success: boolean }> => {
+    return apiDelete<{ success: boolean }>(
+      `/settings/templates/${templateId}`,
+      'Failed to delete settings template'
+    );
+  },
+
+  applySettingsTemplate: async (
+    templateId: string
+  ): Promise<{ success: boolean; applied?: Record<string, unknown> }> => {
+    return apiPost<{ success: boolean; applied?: Record<string, unknown> }>(
+      `/settings/templates/${templateId}/apply`,
+      {},
+      'Failed to apply settings template'
+    );
   },
 
   // ==========================================

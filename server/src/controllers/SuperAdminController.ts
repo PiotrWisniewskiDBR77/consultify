@@ -966,8 +966,9 @@ const getOrgAttribution = catchAsync(async (req, res, next) => {
  */
 const exportAttribution = catchAsync(async (req, res, next) => {
   const { startDate, endDate, partnerCode, sourceType } = req.query;
+  const AttributionService = await getAttributionService();
 
-  const data = await deps.AttributionService.exportAttribution({
+  const data = await AttributionService.exportAttribution({
     startDate,
     endDate,
     partnerCode,
@@ -986,7 +987,8 @@ const exportAttribution = catchAsync(async (req, res, next) => {
  */
 const getPartnerSummary = catchAsync(async (req, res, next) => {
   const { startDate, endDate } = req.query;
-  const summary = await deps.AttributionService.getPartnerSummary(startDate, endDate);
+  const AttributionService = await getAttributionService();
+  const summary = await AttributionService.getPartnerSummary(startDate, endDate);
 
   res.json({
     period: { startDate: startDate || 'all-time', endDate: endDate || 'now' },
@@ -3249,8 +3251,8 @@ const getUserSessions = catchAsync(async (req, res, next) => {
 });
 
 const revokeUserSession = catchAsync(async (req, res, next) => {
-  const { sessionId } = req.params;
-  await deps.UserSessionService.endSession(sessionId, 'revoked');
+  const { id, sessionId } = req.params;
+  await deps.UserSessionService.endSession(id, sessionId, 'revoked');
   res.json({ message: 'Session revoked' });
 });
 

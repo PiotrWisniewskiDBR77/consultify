@@ -46,6 +46,8 @@ export interface DemoTour {
 export interface DemoSlice {
   // State
   isDemoMode: boolean;
+  demoSessionOrgId: string | null;
+  demoLocale: 'en' | 'pl' | null;
   demoOrganization: DemoOrganization | null;
   demoStats: DemoStats | null;
   demoHints: string[];
@@ -56,6 +58,8 @@ export interface DemoSlice {
 
   // Actions
   setDemoMode: (enabled: boolean) => void;
+  setDemoSessionOrgId: (organizationId: string | null) => void;
+  setDemoLocale: (locale: 'en' | 'pl' | null) => void;
   setDemoOrganization: (org: DemoOrganization | null) => void;
   setDemoStats: (stats: DemoStats | null) => void;
   setDemoHints: (hints: string[]) => void;
@@ -74,6 +78,8 @@ export interface DemoSlice {
 
 const initialDemoState = {
   isDemoMode: false,
+  demoSessionOrgId: null,
+  demoLocale: null,
   demoOrganization: null,
   demoStats: null,
   demoHints: [],
@@ -91,6 +97,10 @@ export const createDemoSlice: StateCreator<AppState, [], [], DemoSlice> = (set) 
   ...initialDemoState,
 
   setDemoMode: (enabled) => set({ isDemoMode: enabled }),
+
+  setDemoSessionOrgId: (organizationId) => set({ demoSessionOrgId: organizationId }),
+
+  setDemoLocale: (locale) => set({ demoLocale: locale }),
 
   setDemoOrganization: (org) => set({ demoOrganization: org }),
 

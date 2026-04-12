@@ -32,8 +32,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {
@@ -482,7 +482,7 @@
         },
         {
           "q": "Can I try before I buy?",
-          "a": "Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
+          "a": "Yes! We offer a 7-day free trial with full access to all features. No credit card required. You can also request a personalized demo with our team to see the platform in action with your specific use case."
         },
         {
           "q": "What industries do you serve?",
@@ -690,14 +690,20 @@
         "reports": "Reports",
         "podcasts": "Podcasts"
       },
+      "documentation": {
+        "title": "Documentation"
+      },
       "legal": {
         "privacy": "Privacy Policy",
         "cookies": "Cookie Policy",
         "terms": "Terms of Service",
         "acceptableUse": "Acceptable Use Policy",
         "aiPolicy": "AI Policy",
+        "subscription": "Subscription Terms",
+        "dpa": "DPA",
+        "sla": "SLA",
         "security": "Security Overview",
-        "consent": "Consent & Control"
+        "consent": "Consent & Controls"
       }
     },
     "docs": {
@@ -1061,7 +1067,8 @@
     "due": "Due",
     "loadFailed": "Load failed",
     "periodStart": "Period start",
-    "periodEnd": "Period end"
+    "periodEnd": "Period end",
+    "noOrganizations": "No organizations found"
   },
   "superadmin": {
     "confirm": {
@@ -3091,6 +3098,20 @@
   },
   "settings": {
     "title": "Settings",
+    "menu": {
+      "preferences": "Preferences",
+      "theme": "Theme",
+      "language": "Language",
+      "demoMode": "Open Demo",
+      "demoModeExit": "Exit Demo",
+      "demoModeOn": "Demo mode is on - you are exploring Atelier Toys",
+      "demoModeOff": "Open the Atelier Toys demo workspace",
+      "demoReadOnly": "Demo data - read only",
+      "myProfile": "My Profile",
+      "billing": "Billing & Plans",
+      "aiConfig": "AI Configuration",
+      "switchOrg": "Switch Organization"
+    },
     "connectedAccounts": {
       "title": "Connected Accounts",
       "subtitle": "Connect external accounts for easier sign-in and enhanced features",
@@ -5763,7 +5784,7 @@
       "passwordLabel": "Password",
       "cta": "Start Free Trial",
       "creating": "Creating your workspace...",
-      "benefit1": "14-day free trial, no credit card",
+      "benefit1": "7-day free trial, no credit card",
       "benefit2": "Your own workspace with AI capabilities",
       "benefit3": "Import your data or start fresh",
       "benefit4": "Cancel anytime, no commitment",
@@ -6183,14 +6204,58 @@
     "noResults": "No feedback found matching your criteria.",
     "backToList": "Back to list",
     "context": "Context & Metadata",
+    "contextTitle": "Context & Metadata",
     "statusHistory": "Status History",
+    "alertDelivery": "Alerts & Escalation",
+    "alertDeliveryEmpty": "No escalation data has been recorded for this item yet.",
+    "alertRequestedChannels": "Planned channels",
+    "alertAttemptedAt": "Last attempt",
+    "alertRecipientCount": "Recipients",
+    "alertStatus": {
+      "sent": "Sent",
+      "failed": "Failed",
+      "skipped": "Skipped"
+    },
+    "alertChannel": {
+      "in_app": "In-app",
+      "slack": "Slack",
+      "email": "Email",
+      "whatsapp": "WhatsApp"
+    },
     "adminResponse": "Admin Response",
     "noResponse": "No response yet",
     "responsePlaceholder": "Type your response...",
     "send": "Send",
     "confirmationId": "Confirmation ID",
     "feedbackSent": "Thank you! Your feedback has been submitted.",
-    "feedbackError": "Failed to submit feedback. Please try again."
+    "feedbackError": "Failed to submit feedback. Please try again.",
+    "panelContext": {
+      "modules": {
+        "myWork": "My work",
+        "interview": "Interview",
+        "tools": "Discovery tools",
+        "initiatives": "Initiatives",
+        "execution": "Execution",
+        "results": "Results",
+        "finance": "Finance",
+        "presentations": "Presentations",
+        "assessment": "Assessment",
+        "dashboard": "Dashboard",
+        "reports": "Reports",
+        "settings": "Settings",
+        "admin": "Admin",
+        "superadmin": "SuperAdmin",
+        "chat": "AI chat",
+        "economics": "Economics",
+        "implementation": "Implementation",
+        "home": "Home"
+      },
+      "device": {
+        "mobile": "mobile",
+        "tablet": "tablet",
+        "desktop": "desktop"
+      }
+    }
   },
   "behaviorIntelligence": {
     "journeyTracked": "Journey event tracked",
@@ -6640,8 +6705,8 @@
       "trial": {
         "name": "Trial",
         "price": "Free",
-        "subtitle": "14 days",
-        "description": "14 days to validate the workflow before you commit.",
+        "subtitle": "7 days",
+        "description": "7 days to validate the workflow before you commit.",
         "features": [
           "1 workspace sandbox",
           "2 active projects",

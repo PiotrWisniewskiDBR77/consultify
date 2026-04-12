@@ -35,6 +35,7 @@ const TAB_HELP_CARDS: Record<string, string> = {
 
 export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'overview');
+  const [overviewNotice, setOverviewNotice] = useState<string | null>(null);
   const [overview, setOverview] = useState<{
     audit: any;
     approvals: any;
@@ -73,6 +74,7 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
 
     (async () => {
       try {
+        setOverviewNotice(null);
         const [operatorOverview, operatorTimeline] = await Promise.all([
           Api.getSuperAdminOperatorOverview(),
           Api.getSuperAdminOperatorTimeline(8),
@@ -87,6 +89,7 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
         });
       } catch {
         if (cancelled) return;
+        setOverviewNotice('Operator overview is temporarily unavailable. Showing an empty degraded state.');
         setOverview({
           audit: null,
           approvals: null,
@@ -113,6 +116,12 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
 
   const renderOverview = () => (
     <div className="p-6 space-y-6">
+      {overviewNotice && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {overviewNotice}
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="text-xs uppercase tracking-wide text-slate-500">Audit backlog</div>

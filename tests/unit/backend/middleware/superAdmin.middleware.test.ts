@@ -136,6 +136,16 @@ describe('superadmin capabilities', () => {
     ]);
   });
 
+  it('does not strip canonical superadmin access for an empty explicit capability list', () => {
+    expect(getSuperAdminCapabilities('SUPERADMIN', [])).toEqual([
+      'platform_ops',
+      'security_ops',
+      'billing_ops',
+      'support_ops',
+      'ai_ops',
+    ]);
+  });
+
   it('allows requests that have the required capability', () => {
     const middleware = requireSuperAdminCapability('billing_ops');
     const req = mockReq({

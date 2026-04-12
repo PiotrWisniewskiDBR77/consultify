@@ -38,6 +38,10 @@ interface OrgUserRow {
   role: string;
 }
 
+interface OrgMemberRoleRow {
+  role: string | null;
+}
+
 interface NotificationService {
   send: (input: {
     userId: string;
@@ -64,6 +68,8 @@ interface AuditService {
 
 let notificationService: NotificationService | null = null;
 let auditService: AuditService | null = null;
+
+const ADMIN_MEMBER_ROLES = new Set(['owner', 'admin', 'administrator']);
 
 async function getNotificationService(): Promise<NotificationService | null> {
   if (notificationService) return notificationService;
@@ -115,6 +121,23 @@ class TrialServiceImpl {
 
     if (!org) {
       throw new Error('Organization not found');
+    }
+
+    const member = await DbPromise.get<OrgMemberRoleRow>(
+      this.db,
+      `SELECT role
+       FROM organization_members
+       WHERE organization_id = ? AND user_id = ?
+       LIMIT 1`,
+      [trialId, userId],
+      { fallback: false }
+    );
+
+    const normalizedMemberRole = String(member?.role || '')
+      .trim()
+      .toLowerCase();
+    if (!ADMIN_MEMBER_ROLES.has(normalizedMemberRole)) {
+      throw new Error('Only organization owners or admins can convert a trial');
     }
 
     if (org.organization_type === ORG_TYPES.PAID) {

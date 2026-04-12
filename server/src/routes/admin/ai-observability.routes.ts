@@ -9,23 +9,14 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { verifySuperAdmin } from '../../middleware/superAdmin.middleware.js';
 import { aiObservabilityService } from '../../services/ai/aiObservabilityService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import logger from '../../utils/Logger.js';
 
 const router = Router();
 
 router.use(verifyToken);
-
-const requireSuperAdmin = asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
-  const userRole = req.user?.role;
-  if (userRole !== 'super_admin' && userRole !== 'administrator' && userRole !== 'owner') {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  next();
-});
-
-router.use(requireSuperAdmin);
+router.use(verifySuperAdmin);
 
 /**
  * GET /api/admin/ai-observability/metrics

@@ -222,7 +222,11 @@ async function safeDbGet<T>(query: string, params: any[] = [], fallback: T): Pro
   try {
     const result = await dbGet<T>(query, params);
     return (result as T) || fallback;
-  } catch {
+  } catch (error) {
+    logger.warn('[SuperAdmin] safeDbGet fallback applied', {
+      query: query.slice(0, 160),
+      error: error instanceof Error ? error.message : String(error),
+    });
     return fallback;
   }
 }
@@ -231,7 +235,11 @@ async function safeDbAll<T>(query: string, params: any[] = [], fallback: T[] = [
   try {
     const result = await dbAll<T>(query, params);
     return result || fallback;
-  } catch {
+  } catch (error) {
+    logger.warn('[SuperAdmin] safeDbAll fallback applied', {
+      query: query.slice(0, 160),
+      error: error instanceof Error ? error.message : String(error),
+    });
     return fallback;
   }
 }

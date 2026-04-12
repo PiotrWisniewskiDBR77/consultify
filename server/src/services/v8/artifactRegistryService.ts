@@ -1234,7 +1234,7 @@ async function backfillPresentationsForOrg(organizationId: string): Promise<numb
   const rows = await dbAll<PresentationBackfillRow>(
     `SELECT d.id, d.title, d.status, d.deck_type, d.presentation_mode, d.slide_count,
             d.export_format, d.created_at, d.updated_at, d.source_id,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS source_refs_json
+            COALESCE(d.source_artifacts, '[]') AS source_refs_json
      FROM presentation_decks d
      LEFT JOIN v8_artifact_origin_links l
        ON l.organization_id = d.organization_id
@@ -1618,7 +1618,7 @@ async function getArtifactListItemRow(
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -1671,7 +1671,7 @@ export async function listArtifactsForUser(params: {
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
             d.export_format AS presentation_export_format,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -1748,7 +1748,7 @@ export async function listArtifactsForUserByExecutionRunId(params: {
             d.status AS presentation_status,
             d.slide_count,
             d.export_format,
-            COALESCE(d.source_artifacts, d.source_refs_json) AS presentation_source_refs_json,
+            COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
             p.reviewers AS publish_reviewers,
             (
@@ -2715,6 +2715,12 @@ export async function materializeArtifactRun(
         presentationParams.setup as any,
         validated.organizationId
       );
+      await presentationGeneratorService.generateDeck(
+        outlined.deckId,
+        outlined.outline,
+        presentationParams.setup as any,
+        validated.organizationId
+      );
       await registerArtifactOrigin({
         organizationId: validated.organizationId,
         outputType: 'presentation',
@@ -2724,7 +2730,7 @@ export async function materializeArtifactRun(
         titleSnapshot: presentationParams.title,
         ownerUserId: validated.actorUserId,
         createdBy: validated.actorUserId,
-        deliveryState: mapPresentationStatusToDeliveryState('draft'),
+        deliveryState: mapPresentationStatusToDeliveryState('ready'),
         visibilityScope: current.plan.visibilityScope,
         contextSnapshotId: current.contextSnapshotId,
         executionRunId: current.executionRunId,

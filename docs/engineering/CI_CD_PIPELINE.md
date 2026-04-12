@@ -1,67 +1,37 @@
 # CI/CD Pipeline Documentation
 
+> This document reflects the active GitHub Actions and Railway deployment model as of 2026-04-12.
+> Deprecated references to `monorepo-ci.yml` and `blue-green-deploy.yml` have been replaced by the
+> current workflow set.
+
 ## Overview
 
-The monorepo uses a comprehensive CI/CD pipeline that supports:
+The active CI/CD model uses:
 
-- **Multiple Applications**: consultinity and new-app
-- **Shared Modules**: packages/shared
-- **Efficient Builds**: Nx affected for incremental builds
-- **Zero-Downtime Deployments**: Blue-green and canary strategies
+- `test-suite.yml` as the quality gate on `main` and `develop`
+- `railway-deploy.yml` as the deployment workflow
+- `develop` as the staging deployment branch
+- `main` as the production deployment branch
 
 ## Pipeline Structure
 
-### 1. Monorepo CI Pipeline (`.github/workflows/monorepo-ci.yml`)
+### 1. Quality Gate (`.github/workflows/test-suite.yml`)
 
-#### Stage 0: Detect Changes
+The active quality gate runs:
 
-- Uses Nx affected to detect which projects changed
-- Only builds/test what's necessary
-- Supports manual triggers for specific apps
+- lint and type-check
+- unit, integration, component, performance, security, and E2E layers
+- coverage and patch-coverage gates
+- summary reporting
 
-#### Stage 1: Shared Modules Pipeline
+### 2. Railway Deployment (`.github/workflows/railway-deploy.yml`)
 
-- Builds `packages/shared` first
-- Runs tests for shared code
-- Publishes to npm if version changed (on main branch with `[release]` commit)
+Deployment policy:
 
-#### Stage 2: Consultinity App Pipeline
-
-- **Lint & Type Check**: ESLint and TypeScript validation
-- **Tests**: Matrix strategy for unit/integration/e2e tests
-- **Build**: Frontend and backend builds
-
-#### Stage 3: New-App Pipeline
-
-- Same structure as Consultinity
-- Independent testing and building
-
-#### Stage 4: Summary
-
-- Generates summary of all pipeline results
-
-### 2. Blue-Green Deployment (`.github/workflows/blue-green-deploy.yml`)
-
-#### Deployment Strategies
-
-**Blue-Green Deployment**
-
-1. Deploy to inactive environment (green if blue is active)
-2. Wait for health checks
-3. Run smoke tests
-4. Switch traffic to new environment
-5. Monitor for 5 minutes
-6. Rollback on failure
-
-**Canary Deployment**
-
-1. Deploy to canary environment (10% traffic)
-2. Monitor metrics for 15 minutes
-3. Promote to 100% if healthy
-
-**Immediate Deployment**
-
-- Direct deployment without staging
+- push to `develop` triggers staging deploy
+- manual dispatch is required for production deploy
+- backend and frontend are deployed to their dedicated Railway services
+- post-deploy health verification runs against configured URLs
 
 ## Usage
 
@@ -69,7 +39,7 @@ The monorepo uses a comprehensive CI/CD pipeline that supports:
 
 **Automatic Triggers:**
 
-- Push to `main`, `develop`, or `staging` branches
+- Push to `main`, `develop`, or `Londyn` branches for quality checks
 - Pull requests to `main` or `develop`
 
 **Manual Trigger:**
@@ -84,17 +54,17 @@ The monorepo uses a comprehensive CI/CD pipeline that supports:
 
 ### Triggering Deployment
 
-**Manual Deployment:**
+**Staging deployment:**
 
 ```bash
-# Via GitHub Actions UI:
-# - Go to Actions tab
-# - Select "Blue-Green Deployment"
-# - Click "Run workflow"
-# - Choose:
-#   - App: consultinity or new-app
-#   - Environment: staging or production
-#   - Strategy: blue-green, canary, or immediate
+git push origin develop
+```
+
+**Production deployment:**
+
+```bash
+# Merge approved release PR into main, then:
+# GitHub Actions -> Railway Deploy -> environment=production
 ```
 
 ## Environment Variables
@@ -103,8 +73,8 @@ The monorepo uses a comprehensive CI/CD pipeline that supports:
 
 **Railway Tokens:**
 
-- `RAILWAY_STAGING_TOKEN` - For staging deployments
-- `RAILWAY_PRODUCTION_TOKEN` - For production deployments
+- `RAILWAY_STAGING_TOKEN`
+- `RAILWAY_PRODUCTION_TOKEN`
 
 **Sentry:**
 
@@ -117,25 +87,30 @@ The monorepo uses a comprehensive CI/CD pipeline that supports:
 
 ### Required Variables
 
-**API URLs:**
+**Target selection:**
 
-- `STAGING_API_URL` - Staging API endpoint
-- `PRODUCTION_API_URL` - Production API endpoint
+- `RAILWAY_STAGING_PROJECT_ID`
+- `RAILWAY_STAGING_ENVIRONMENT`
+- `RAILWAY_STAGING_BACKEND_SERVICE`
+- `RAILWAY_STAGING_FRONTEND_SERVICE`
+- `RAILWAY_PRODUCTION_PROJECT_ID`
+- `RAILWAY_PRODUCTION_ENVIRONMENT`
+- `RAILWAY_PRODUCTION_BACKEND_SERVICE`
+- `RAILWAY_PRODUCTION_FRONTEND_SERVICE`
 
-## Nx Affected Detection
+**Health and verification URLs:**
 
-The pipeline uses Nx to detect which projects are affected by changes:
+- `STAGING_API_HEALTH_URL`
+- `STAGING_FRONTEND_URL`
+- `PRODUCTION_API_HEALTH_URL`
+- `PRODUCTION_FRONTEND_URL`
 
-```bash
-# Only changed projects are built/tested
-nx show projects --affected --base=origin/main --head=HEAD
-```
+## Branch Strategy
 
-**Benefits:**
-
-- Faster CI runs (only test what changed)
-- Reduced resource usage
-- Parallel execution of independent projects
+- `feature/*` -> merge to `develop`
+- `develop` -> auto-deploy to staging
+- `develop -> main` -> release promotion
+- `main` -> manual production deployment
 
 ## Testing Strategy
 
@@ -171,22 +146,22 @@ Test results are uploaded as artifacts:
 
 ## Deployment Process
 
-### Blue-Green Deployment Flow
-
 ```
-1. Build Application
+1. Merge feature work into develop
    ↓
-2. Deploy to Green Environment
+2. CI passes on develop
    ↓
-3. Health Check (30 retries, 10s interval)
+3. Staging deploy runs automatically
    ↓
-4. Smoke Tests
+4. Staging smoke and business validation
    ↓
-5. Switch Traffic to Green
+5. PR develop -> main
    ↓
-6. Monitor (5 minutes)
+6. CI passes on main
    ↓
-7. Success or Rollback
+7. Manual production deploy
+   ↓
+8. Production verification
 ```
 
 ### Health Checks
@@ -245,12 +220,12 @@ feat(consultinity): Add new feature
 fix(new-app): Fix critical bug
 ```
 
-### Branch Strategy
+## Related Documents
 
-- `main` - Production-ready code
-- `develop` - Integration branch
-- `staging/*` - Staging deployments
-- Feature branches - Development
+- `docs/operations/STAGING_PRODUCTION_OPERATING_MODEL.md`
+- `docs/deployment/RAILWAY_ENV_MATRIX.md`
+- `docs/operations/LOCAL_TO_STAGING_RUNBOOK.md`
+- `docs/operations/STAGING_TO_PRODUCTION_RUNBOOK.md`
 
 ### Deployment Windows
 

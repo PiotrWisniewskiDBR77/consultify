@@ -12,6 +12,7 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as _dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { requireRequestOrganizationId } from '../../utils/requestOrganization.js';
 
 const router = Router();
 
@@ -193,7 +194,8 @@ router.get(
   '/:projectId/assessment-overview',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     // Fetch assessments from database
     const assessments = await dbAll<{

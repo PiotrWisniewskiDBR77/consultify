@@ -6,6 +6,7 @@ import { Request, Response, Router } from 'express';
 
 import { getDatabase } from '../../database/index.js';
 import logger from '../../utils/Logger.js';
+import { requireRequestOrganizationId } from '../../utils/requestOrganization.js';
 
 const router = Router();
 
@@ -24,7 +25,8 @@ interface AuthRequest extends Request {
 router.get('/my-assessments', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     logger.info(`[Assessments] Fetching assessments for org: ${organizationId}`);
 
@@ -78,7 +80,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
     const { id } = req.params;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     const assessment = await new Promise<any>((resolve, reject) => {
       db.get(
@@ -120,7 +123,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { name, description, type } = req.body;
 
     const id = `assessment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -164,7 +168,8 @@ router.put('/:id/status', async (req: AuthRequest, res: Response) => {
     const db = getDatabase();
     const { id } = req.params;
     const { status } = req.body;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     await new Promise<void>((resolve, reject) => {
       db.run(
@@ -193,7 +198,8 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const db = getDatabase();
     const { id } = req.params;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     await new Promise<void>((resolve, reject) => {
       db.run(
@@ -224,7 +230,8 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
 router.post('/:id/complete', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
 
     const assessmentInitiativeService = (
       await import('../../services/assessmentInitiativeService.js')
@@ -251,7 +258,8 @@ router.post('/:id/generate-initiatives', async (req: AuthRequest, res: Response)
   try {
     const { id } = req.params;
     const { projectId } = req.body;
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'system';
     const db = getDatabase();
 

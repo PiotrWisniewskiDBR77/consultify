@@ -142,6 +142,20 @@ async function main() {
     return { id };
   };
 
+  const ensureOrgMembership = async (userId: string, memberOrgId: string, role: string) => {
+    const memberRole = role === 'SUPERADMIN' ? 'OWNER' : role === 'ADMIN' ? 'ADMIN' : role;
+    try {
+      await db.run(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+         VALUES ($1, $2, $3, $4, 'ACTIVE', $5)
+         ON CONFLICT(organization_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = 'ACTIVE'`,
+        [crypto.randomUUID(), memberOrgId, userId, memberRole, nowIso()]
+      );
+    } catch (e: any) {
+      logger.warn('[dev-ensure-admin] org_members upsert failed (continuing):', e?.message || e);
+    }
+  };
+
   // 1) SUPERADMIN for quick access 7776
   const superAdmin = await ensureUser({
     email: superAdminEmail,
@@ -151,6 +165,7 @@ async function main() {
     lastName: 'DBR77',
     stableIdPrefix: 'dev_superadmin',
   });
+  await ensureOrgMembership(superAdmin.id, orgId, 'OWNER');
 
   // 2) OWNER for quick access 7777
   const owner = await ensureUser({
@@ -161,14 +176,14 @@ async function main() {
     lastName: 'Wiśniewski',
     stableIdPrefix: 'dev_owner',
   });
+  await ensureOrgMembership(owner.id, orgId, 'OWNER');
 
   // 3) Ensure default DBR77 admins (all password=123456 unless overridden)
   const adminPassword = String(process.env.DEV_ADMIN_PASSWORD || '123456').trim();
   for (const u of DEFAULT_DBR77_ADMINS) {
-    // Do not accidentally overwrite the two special accounts if they appear in the roster.
     const normalized = String(u.email || '').trim().toLowerCase();
     if (normalized === superAdminEmail || normalized === ownerEmail) continue;
-    await ensureUser({
+    const adminUser = await ensureUser({
       email: normalized,
       password: adminPassword,
       role: 'ADMIN',
@@ -176,6 +191,7 @@ async function main() {
       lastName: u.lastName,
       stableIdPrefix: 'dev_admin',
     });
+    await ensureOrgMembership(adminUser.id, orgId, 'ADMIN');
   }
 
   // Optional: create legacy access_control access code (not required for the UI quick-access backdoor)

@@ -15,11 +15,17 @@ import { getDatabase } from '../../database/index.js';
 import { activityService } from '../../services/ActivityService.js';
 import adminSessionService from '../../services/adminSessionService.js';
 import complianceService from '../../services/complianceService.js';
+import feedbackService from '../../services/feedbackService.js';
 import integrationService from '../../services/integrationService.js';
+import invitationService from '../../services/invitationService.js';
 import legalService from '../../services/legalService.js';
+import organizationMetadataService from '../../services/organizationMetadataService.js';
 import permissionsMatrixService from '../../services/permissionsMatrixService.js';
+import refreshTokenService from '../../services/RefreshTokenService.js';
 import securityIncidentService from '../../services/securityIncidentService.js';
 import threatIntelligenceService from '../../services/threatIntelligenceService.js';
+import userActivityService from '../../services/userActivityService.js';
+import userAdoptionService from '../../services/userAdoptionService.js';
 import usageService from '../../services/usageService.js';
 import webhookService from '../../services/WebhookService.js';
 import { AppError, asyncHandler as catchAsync } from '../../utils/ErrorHandler.js';
@@ -49,6 +55,21 @@ export interface UserRow {
   created_at: string;
   password?: string;
 }
+
+const notConfiguredError = (feature: string) =>
+  new AppError(`${feature} is not configured for this environment`, 501);
+
+const asyncNotConfigured =
+  (feature: string) =>
+  async (..._args: any[]) => {
+    throw notConfiguredError(feature);
+  };
+
+const syncNotConfigured = (feature: string) => () => ({
+  status: 'degraded',
+  degraded: true,
+  message: `${feature} is not configured for this environment`,
+});
 
 export const deps: {
   db: ReturnType<typeof getDatabase>;
@@ -103,12 +124,18 @@ export const deps: {
   ActivityService: activityService,
   BillingService: null,
   UsageService: usageService,
-  RealtimeService: { getGlobalStats: () => ({}) } as any,
+  RealtimeService: {
+    getGlobalStats: syncNotConfigured('Realtime telemetry'),
+  } as any,
   StorageService: {
-    storeFile: async () => '',
-    getGlobalUsage: async () => ({ breakdown: [] }),
+    storeFile: asyncNotConfigured('Storage management'),
+    getGlobalUsage: async () => ({
+      breakdown: [],
+      degraded: true,
+      message: 'Storage management is not configured for this environment',
+    }),
     listFiles: async () => [],
-    deleteFile: async () => true,
+    deleteFile: asyncNotConfigured('Storage management'),
   } as any,
   LegalService: legalService as any,
   LegalEventLogger: {
@@ -121,16 +148,13 @@ export const deps: {
   bcrypt: bcrypt,
   config: config,
   uuid: uuid,
-  InvitationService: { createOrgInvitation: async () => ({ token: '' }) } as any,
-  RefreshTokenService: null as any,
-  OrganizationMetadataService: {
-    getMetadata: async () => [],
-    setMetadata: async () => ({}),
-  } as any,
+  InvitationService: invitationService as any,
+  RefreshTokenService: refreshTokenService as any,
+  OrganizationMetadataService: organizationMetadataService as any,
   OrganizationTagService: {
     getTags: async () => [],
-    addTag: async () => ({}),
-    removeTag: async () => ({}),
+    addTag: asyncNotConfigured('Organization tags'),
+    removeTag: asyncNotConfigured('Organization tags'),
   } as any,
   OrganizationHealthService: {
     calculateHealthScore: async (orgId: string) => {
@@ -145,8 +169,12 @@ export const deps: {
   OrganizationRelationshipService: { getRelationships: async () => [] } as any,
   OrganizationSegmentService: { getSegments: async () => [] } as any,
   OrganizationAnalyticsService: { getAnalytics: async () => ({}) } as any,
-  UserActivityService: null as any,
-  UserSessionService: null as any,
+  UserActivityService: userActivityService as any,
+  UserSessionService: {
+    getActiveSessions: (userId: string) => refreshTokenService.getActiveSessions(userId),
+    endSession: (userId: string, sessionId: string, _reason?: string) =>
+      refreshTokenService.revokeSession(userId, sessionId),
+  } as any,
   UserGroupService: { getGroups: async () => [] } as any,
   UserLicenseService: { getLicenses: async () => [] } as any,
   IPWhitelistService: { getWhitelist: async () => [], addIP: async () => ({}) } as any,
@@ -158,8 +186,8 @@ export const deps: {
     createTicket: async () => ({ ticketNumber: 'T-123' }),
   } as any,
   CustomerSuccessService: { getNotes: async () => [] } as any,
-  FeedbackService: null as any,
-  UserAdoptionService: null as any,
+  FeedbackService: feedbackService as any,
+  UserAdoptionService: userAdoptionService as any,
   DataRetentionService: { getPolicy: async () => ({}) } as any,
   ConsentManagementService: { getConsents: async () => [] } as any,
   AutomationEngineService: { getRules: async () => [] } as any,

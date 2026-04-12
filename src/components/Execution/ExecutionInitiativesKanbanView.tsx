@@ -37,6 +37,7 @@ interface ExecutionInitiativesKanbanViewProps {
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
   onStatusChange: (id: string, status: InitiativeStatus) => void;
   scope: ExecutionKanbanScope;
+  readOnly?: boolean;
 }
 
 const ACTIVE: InitiativeStatus[] = ['SCHEDULED', 'EXECUTING', 'BLOCKED'] as InitiativeStatus[];
@@ -134,9 +135,11 @@ const KanbanCard: React.FC<{
 const SortableCard: React.FC<{
   initiative: PortfolioInitiative;
   onClick: () => void;
-}> = ({ initiative, onClick }) => {
+  draggable?: boolean;
+}> = ({ initiative, onClick, draggable = true }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: initiative.id,
+    disabled: !draggable,
   });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -144,7 +147,12 @@ const SortableCard: React.FC<{
     opacity: isDragging ? 0.5 : 1,
   };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...(draggable ? attributes : {})}
+      {...(draggable ? listeners : {})}
+    >
       <KanbanCard initiative={initiative} onClick={onClick} isDragging={isDragging} />
     </div>
   );
@@ -156,7 +164,8 @@ const KanbanColumn: React.FC<{
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
   isCompact: boolean;
-}> = ({ id, label, initiatives, onInitiativeClick, isCompact }) => {
+  draggable?: boolean;
+}> = ({ id, label, initiatives, onInitiativeClick, isCompact, draggable = true }) => {
   const { setNodeRef, isOver } = useDroppable({ id });
   const statusStyle = getStatusStyle(id);
   const columnWidth = isCompact ? 'min-w-[240px] max-w-[240px]' : 'min-w-[280px] max-w-[280px]';
@@ -193,6 +202,7 @@ const KanbanColumn: React.FC<{
               key={initiative.id}
               initiative={initiative}
               onClick={() => onInitiativeClick(initiative)}
+              draggable={draggable}
             />
           ))}
         </SortableContext>
@@ -211,6 +221,7 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
   onInitiativeClick,
   onStatusChange,
   scope,
+  readOnly = false,
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const columns = useMemo(() => getColumns(scope), [scope]);
@@ -237,8 +248,15 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
     return initiatives.find((i) => i.id === activeId) || null;
   }, [activeId, initiatives]);
 
-  const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string);
+  const handleDragStart = (event: DragStartEvent) => {
+    if (readOnly) return;
+    setActiveId(event.active.id as string);
+  };
   const handleDragEnd = (event: DragEndEvent) => {
+    if (readOnly) {
+      setActiveId(null);
+      return;
+    }
     const { active, over } = event;
     setActiveId(null);
     if (!over) return;
@@ -268,6 +286,7 @@ export const ExecutionInitiativesKanbanView: React.FC<ExecutionInitiativesKanban
               initiatives={columnData[c.id] || []}
               onInitiativeClick={onInitiativeClick}
               isCompact={isCompact}
+              draggable={!readOnly}
             />
           ))}
         </div>

@@ -59,8 +59,12 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       const response = await Api.getSettingsTemplates();
 
       if (response?.templates) {
-        const systemTemplates = response.templates.filter((t: Template) => t.type === 'system');
-        const customTpls = response.templates.filter((t: Template) => t.type === 'custom');
+        const normalizedTemplates = response.templates.map((template: Template) => ({
+          ...template,
+          categories: Array.isArray(template.categories) ? template.categories : ['All'],
+        }));
+        const systemTemplates = normalizedTemplates.filter((t: Template) => t.type === 'system');
+        const customTpls = normalizedTemplates.filter((t: Template) => t.type === 'custom');
         setTemplates(systemTemplates);
         setCustomTemplates(customTpls);
       }

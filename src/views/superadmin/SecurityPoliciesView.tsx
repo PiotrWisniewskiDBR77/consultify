@@ -154,7 +154,8 @@ export const SecurityPoliciesView: React.FC = () => {
       try {
         const { policies } = await Api.getOrgPolicies();
         setDataGovPolicies(policies || []);
-      } catch (_) {
+      } catch (error) {
+        console.warn('[SecurityPoliciesView] Failed to fetch org data governance policies', error);
         setDataGovPolicies([]);
       }
     } catch (error) {

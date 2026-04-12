@@ -36,6 +36,22 @@ interface StatusHistoryEntry {
   created_at: string;
 }
 
+type AlertChannel = 'in_app' | 'slack' | 'email' | 'whatsapp';
+
+interface AlertDispatchChannelResult {
+  status: 'sent' | 'failed' | 'skipped';
+  attemptedAt?: string;
+  detail?: string;
+  recipientCount?: number;
+}
+
+interface AlertDispatchSummary {
+  attemptedAt?: string;
+  appEnv?: string;
+  requestedChannels?: AlertChannel[];
+  results?: Partial<Record<AlertChannel, AlertDispatchChannelResult>>;
+}
+
 interface FeedbackItem {
   id: string;
   user_id: string;
@@ -109,6 +125,28 @@ const SEVERITY_CONFIG: Record<string, { color: string; icon: React.ReactNode }> 
   HIGH: { color: 'text-orange-700 dark:text-orange-400', icon: <AlertTriangle size={12} /> },
   MEDIUM: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   LOW: { color: 'text-slate-600 dark:text-slate-500', icon: null },
+};
+
+const ALERT_CHANNEL_ORDER: AlertChannel[] = ['in_app', 'slack', 'email', 'whatsapp'];
+const ALERT_STATUS_CONFIG: Record<
+  AlertDispatchChannelResult['status'],
+  { badge: string; text: string }
+> = {
+  sent: {
+    badge:
+      'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800',
+    text: 'text-green-700 dark:text-green-300',
+  },
+  failed: {
+    badge:
+      'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+    text: 'text-red-700 dark:text-red-300',
+  },
+  skipped: {
+    badge:
+      'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800',
+    text: 'text-amber-800 dark:text-amber-300',
+  },
 };
 
 export const SuperAdminFeedbackView: React.FC = () => {
@@ -230,9 +268,39 @@ export const SuperAdminFeedbackView: React.FC = () => {
       return {};
     }
   };
+  const parseAlertDispatch = (meta: Record<string, unknown>): AlertDispatchSummary | null => {
+    const raw = meta.alertDispatch;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    return raw as AlertDispatchSummary;
+  };
 
   if (selectedItem) {
     const meta = parseMetadata(selectedItem.metadata);
+    const alertDispatch = parseAlertDispatch(meta);
+    const alertResults = alertDispatch?.results || {};
+    const contextMetaEntries = Object.entries(meta).filter(
+      ([k]) =>
+        ![
+          'userEmail',
+          'userName',
+          'type',
+          'severity',
+          'title',
+          'feedbackType',
+          'linkedTaskId',
+          'alertDispatch',
+        ].includes(k)
+    );
+    const alertChannels = Array.from(
+      new Set([
+        ...((alertDispatch?.requestedChannels || []) as AlertChannel[]),
+        ...(Object.keys(alertResults) as AlertChannel[]),
+      ])
+    ).sort(
+      (a, b) =>
+        ALERT_CHANNEL_ORDER.indexOf(a as AlertChannel) -
+        ALERT_CHANNEL_ORDER.indexOf(b as AlertChannel)
+    );
     const statusHist = selectedItem.statusHistory || [];
     const sConf = STATUS_CONFIG[selectedItem.status] || STATUS_CONFIG.NEW;
     const nextStatuses = STATUS_ORDER.filter((s) => s !== selectedItem.status);
@@ -329,10 +397,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
           </div>
         </div>
 
-        {(selectedItem.route_path || selectedItem.device_type || Object.keys(meta).length > 0) && (
+        {(selectedItem.route_path || selectedItem.device_type || contextMetaEntries.length > 0) && (
           <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
-              {t('feedback.context', 'Context & Metadata')}
+              {t('feedback.contextTitle', 'Context & Metadata')}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
               {selectedItem.route_path && (
@@ -368,28 +436,93 @@ export const SuperAdminFeedbackView: React.FC = () => {
                   </span>
                 </div>
               )}
-              {Object.entries(meta)
-                .filter(
-                  ([k]) =>
-                    ![
-                      'userEmail',
-                      'userName',
-                      'type',
-                      'severity',
-                      'title',
-                      'feedbackType',
-                      'linkedTaskId',
-                    ].includes(k)
-                )
-                .map(([k, v]) => (
-                  <div key={k} className="text-slate-600 dark:text-slate-400">
-                    <span className="text-slate-500">{k}:</span>{' '}
-                    <span className="text-slate-800 dark:text-slate-300">{String(v)}</span>
-                  </div>
-                ))}
+              {contextMetaEntries.map(([k, v]) => (
+                <div key={k} className="text-slate-600 dark:text-slate-400">
+                  <span className="text-slate-500">{k}:</span>{' '}
+                  <span className="text-slate-800 dark:text-slate-300">{String(v)}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
+
+        <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
+            {t('feedback.alertDelivery', 'Alerts & Escalation')}
+          </h3>
+          {alertDispatch && alertChannels.length > 0 ? (
+            <>
+              <div className="flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
+                <span>
+                  <span className="text-slate-500">
+                    {t('feedback.alertRequestedChannels', 'Planned channels')}:
+                  </span>{' '}
+                  {(alertDispatch.requestedChannels || [])
+                    .map((channel) =>
+                      t(`feedback.alertChannel.${channel}`, channel.replace('_', ' ').toUpperCase())
+                    )
+                    .join(', ')}
+                </span>
+                {alertDispatch.attemptedAt && (
+                  <span>
+                    <span className="text-slate-500">
+                      {t('feedback.alertAttemptedAt', 'Last attempt')}:
+                    </span>{' '}
+                    {formatDate(alertDispatch.attemptedAt)}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {alertChannels.map((channel) => {
+                  const result = alertResults[channel];
+                  const status = result?.status || 'skipped';
+                  const statusConfig = ALERT_STATUS_CONFIG[status];
+                  return (
+                    <div
+                      key={channel}
+                      className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900/40 p-3 space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                          {t(
+                            `feedback.alertChannel.${channel}`,
+                            channel.replace('_', ' ').toUpperCase()
+                          )}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md border text-xs font-semibold ${statusConfig.badge}`}
+                        >
+                          {t(`feedback.alertStatus.${status}`, status)}
+                        </span>
+                      </div>
+                      {result?.detail && (
+                        <p className={`text-xs ${statusConfig.text}`}>{result.detail}</p>
+                      )}
+                      {(typeof result?.recipientCount === 'number' || result?.attemptedAt) && (
+                        <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          {typeof result?.recipientCount === 'number' && (
+                            <span>
+                              {t('feedback.alertRecipientCount', 'Recipients')}:{' '}
+                              {result.recipientCount}
+                            </span>
+                          )}
+                          {result?.attemptedAt && <span>{formatDate(result.attemptedAt)}</span>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-slate-500 italic">
+              {t(
+                'feedback.alertDeliveryEmpty',
+                'No escalation data has been recorded for this item yet.'
+              )}
+            </p>
+          )}
+        </div>
 
         {statusHist.length > 0 && (
           <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">

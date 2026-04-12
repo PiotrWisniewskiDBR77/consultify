@@ -1,4 +1,4 @@
-import { Crown, Loader2, Shield, Trash2, UserPlus, Users } from 'lucide-react';
+import { Copy, Crown, KeyRound, Loader2, Shield, Trash2, UserPlus, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -49,6 +49,10 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<RoleOption>('MEMBER');
   const [inviting, setInviting] = useState(false);
+  const [generatedInviteCode, setGeneratedInviteCode] = useState<string | null>(null);
+  const [generatedInviteRole, setGeneratedInviteRole] = useState<RoleOption>('MEMBER');
+  const [generatedInviteMaxUses, setGeneratedInviteMaxUses] = useState(50);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
   const orgId = currentOrganization?.id;
   const viewerMembership = useMemo(
@@ -121,6 +125,45 @@ export const AdminMembersRolesPanel: React.FC = () => {
       toast.error(error?.message || 'Failed to remove member');
     } finally {
       setSavingMemberId(null);
+    }
+  };
+
+  const handleGenerateInviteCode = async () => {
+    if (!orgId) return;
+
+    try {
+      setIsGeneratingCode(true);
+      const response = await Api.post('/access-control/codes', {
+        organizationId: orgId,
+        role: generatedInviteRole,
+        maxUses: generatedInviteMaxUses,
+        expiresInDays: 7,
+      });
+
+      const code = response?.code?.code;
+      if (!code) {
+        throw new Error('Code was not returned by the server');
+      }
+
+      setGeneratedInviteCode(code);
+      toast.success('Access code generated');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to generate access code');
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+
+  const registrationLink = generatedInviteCode
+    ? `${window.location.origin}/register?invite=${encodeURIComponent(generatedInviteCode)}`
+    : '';
+
+  const copyValue = async (value: string, message: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(message);
+    } catch {
+      toast.error('Failed to copy to clipboard');
     }
   };
 
@@ -276,6 +319,101 @@ export const AdminMembersRolesPanel: React.FC = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Pilot Access Code
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Generate one shared code for tomorrow's VTS onboarding. The default limit is set to
+              50 participants and you can copy the ready registration link below.
+            </p>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Participants register with email and password after opening the invite link. Phone
+              number is optional.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-[160px,120px,auto]">
+            <select
+              value={generatedInviteRole}
+              onChange={(event) => setGeneratedInviteRole(event.target.value as RoleOption)}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+            >
+              <option value="MEMBER">Participant</option>
+              <option value="GUEST">Guest</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={generatedInviteMaxUses}
+              aria-label="Maximum participant registrations"
+              onChange={(event) =>
+                setGeneratedInviteMaxUses(Math.min(500, Math.max(1, Number(event.target.value || 1))))
+              }
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+            />
+            <button
+              onClick={() => void handleGenerateInviteCode()}
+              disabled={isGeneratingCode}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {isGeneratingCode ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <KeyRound className="h-4 w-4" />
+              )}
+              Generate code
+            </button>
+          </div>
+        </div>
+
+        {generatedInviteCode && (
+          <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+            <div className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+              Ready for tomorrow
+            </div>
+            <div className="mt-2 flex flex-col gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Access code</div>
+                  <div className="font-mono text-lg font-semibold text-slate-900 dark:text-white">
+                    {generatedInviteCode}
+                  </div>
+                </div>
+                <button
+                  onClick={() => void copyValue(generatedInviteCode, 'Access code copied')}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-navy-900 dark:text-slate-300"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy code
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    Registration link
+                  </div>
+                  <div className="truncate text-sm text-slate-900 dark:text-white">
+                    {registrationLink}
+                  </div>
+                </div>
+                <button
+                  onClick={() => void copyValue(registrationLink, 'Registration link copied')}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-navy-900 dark:text-slate-300"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy link
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <OwnershipManagementView />

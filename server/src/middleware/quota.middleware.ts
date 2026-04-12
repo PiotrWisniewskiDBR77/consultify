@@ -70,8 +70,9 @@ async function getAccessPolicyService() {
     const mod = await import('../services/accessPolicyService.js');
     accessPolicyService = mod.default || mod;
     return accessPolicyService;
-  } catch {
-    return null;
+  } catch (error) {
+    logger.error('[QuotaMiddleware] Failed to load AccessPolicyService:', error);
+    throw error;
   }
 }
 
@@ -97,27 +98,31 @@ export async function enforceTokenQuota(
       return;
     }
 
-    const aps = await getAccessPolicyService();
-    if (aps) {
-      try {
-        const accessResult = await aps.checkAccess(orgId, 'ai_call');
-        if (!accessResult.allowed) {
-          res.status(429).json({
-            error: accessResult.reason,
-            errorCode: accessResult.errorCode,
-            code: accessResult.errorCode,
-            message: accessResult.reason,
-            upgradeUrl: '/settings?tab=billing',
-            upgradeCta:
-              accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
-                ? 'Add payment method'
-                : 'Upgrade plan',
-          });
-          return;
-        }
-      } catch (policyErr) {
-        logger.warn('[QuotaMiddleware] Access policy check failed, falling through:', policyErr);
+    try {
+      const aps = await getAccessPolicyService();
+      const accessResult = await aps.checkAccess(orgId, 'ai_call');
+      if (!accessResult.allowed) {
+        res.status(429).json({
+          error: accessResult.reason,
+          errorCode: accessResult.errorCode,
+          code: accessResult.errorCode,
+          message: accessResult.reason,
+          upgradeUrl: '/settings?tab=billing',
+          upgradeCta:
+            accessResult.errorCode === 'AI_TOKEN_BUDGET_EXCEEDED'
+              ? 'Add payment method'
+              : 'Upgrade plan',
+        });
+        return;
       }
+    } catch (policyErr) {
+      logger.error('[QuotaMiddleware] Access policy check failed:', policyErr);
+      res.status(503).json({
+        error: 'Access policy is temporarily unavailable',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+        code: 'ACCESS_POLICY_UNAVAILABLE',
+      });
+      return;
     }
 
     const quota = await usageService.checkQuota(orgId, 'token');
@@ -148,7 +153,11 @@ export async function enforceTokenQuota(
     next();
   } catch (error: unknown) {
     logger.error('Quota check error:', error);
-    next();
+    res.status(503).json({
+      error: 'Token quota service unavailable',
+      errorCode: 'QUOTA_CHECK_UNAVAILABLE',
+      code: 'QUOTA_CHECK_UNAVAILABLE',
+    });
   }
 }
 
@@ -170,23 +179,27 @@ export async function enforceStorageQuota(
       return;
     }
 
-    const aps = await getAccessPolicyService();
-    if (aps) {
-      try {
-        const accessResult = await aps.checkAccess(orgId, 'upload');
-        if (!accessResult.allowed) {
-          res.status(429).json({
-            error: accessResult.reason,
-            errorCode: accessResult.errorCode,
-            code: accessResult.errorCode,
-            message: accessResult.reason,
-            upgradeUrl: '/settings?tab=billing',
-          });
-          return;
-        }
-      } catch {
-        // fall through to usageService check
+    try {
+      const aps = await getAccessPolicyService();
+      const accessResult = await aps.checkAccess(orgId, 'upload');
+      if (!accessResult.allowed) {
+        res.status(429).json({
+          error: accessResult.reason,
+          errorCode: accessResult.errorCode,
+          code: accessResult.errorCode,
+          message: accessResult.reason,
+          upgradeUrl: '/settings?tab=billing',
+        });
+        return;
       }
+    } catch (policyErr) {
+      logger.error('[QuotaMiddleware] Storage access policy check failed:', policyErr);
+      res.status(503).json({
+        error: 'Access policy is temporarily unavailable',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+        code: 'ACCESS_POLICY_UNAVAILABLE',
+      });
+      return;
     }
 
     const quota = await usageService.checkQuota(orgId, 'storage');
@@ -212,7 +225,11 @@ export async function enforceStorageQuota(
     next();
   } catch (error: unknown) {
     logger.error('Storage quota check error:', error);
-    next();
+    res.status(503).json({
+      error: 'Storage quota service unavailable',
+      errorCode: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+      code: 'STORAGE_QUOTA_CHECK_UNAVAILABLE',
+    });
   }
 }
 

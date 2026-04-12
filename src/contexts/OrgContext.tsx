@@ -4,10 +4,14 @@
  * Provides:
  * - currentOrg: Currently selected organization
  * - availableOrgs: List of orgs user has access to
- * - switchOrg: Function to change current org
- * - isLoading: Loading state
+ * - switchOrg: Function to change current org (token exchange + full state reset)
+ * - isLoading / isSwitching: Loading states
  *
- * Persists selection to localStorage.
+ * Integrates with:
+ * - POST /api/auth/switch-organization (token exchange)
+ * - GET /api/organizations/current (list user orgs)
+ * - Zustand authSlice (currentOrganization)
+ * - tokenService (token persistence)
  */
 
 import React, {
@@ -16,23 +20,30 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
+import toast from 'react-hot-toast';
 
-// Types
+import { tokenService } from '@/services/tokenService';
+import { useAppStore } from '@/store/useAppStore';
+
 export interface Organization {
   id: string;
   name: string;
   role: string;
   access_type: 'MEMBER' | 'CONSULTANT';
+  billing_status?: string;
+  is_current?: boolean;
 }
 
 interface OrgContextValue {
   currentOrg: Organization | null;
   availableOrgs: Organization[];
   isLoading: boolean;
+  isSwitching: boolean;
   error: string | null;
-  switchOrg: (orgId: string) => void;
+  switchOrg: (orgId: string) => Promise<void>;
   refreshOrgs: () => Promise<void>;
 }
 
@@ -42,27 +53,33 @@ const STORAGE_KEY = 'consultify_current_org_id';
 
 interface OrgProviderProps {
   children: ReactNode;
-  userId?: string;
 }
 
-export const OrgProvider: React.FC<OrgProviderProps> = ({ children, userId }) => {
+export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
+  const currentUser = useAppStore((s) => s.currentUser);
+  const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
+  const isDemoMode = useAppStore((s) => s.isDemoMode);
+
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [availableOrgs, setAvailableOrgs] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSwitching, setIsSwitching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fetchedRef = useRef(false);
 
-  // Fetch available organizations
   const fetchOrganizations = useCallback(async () => {
-    if (!userId) {
+    if (!currentUser?.id) {
       setIsLoading(false);
       return;
     }
 
     try {
       setIsLoading(true);
-      const response = await fetch('/api/users/me/organizations', {
+      const token = tokenService.getToken();
+      const response = await fetch('/api/organizations/current', {
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'include',
       });
@@ -72,18 +89,18 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children, userId }) =>
       }
 
       const data = await response.json();
-      const orgs: Organization[] = data.organizations || [];
+      const orgs: Organization[] = data.organizations || data || [];
       setAvailableOrgs(orgs);
 
-      // Restore from localStorage or use first org
       const savedOrgId = localStorage.getItem(STORAGE_KEY);
+      const currentFromToken = orgs.find((o) => o.is_current);
       const savedOrg = orgs.find((o) => o.id === savedOrgId);
 
-      if (savedOrg) {
-        setCurrentOrg(savedOrg);
-      } else if (orgs.length > 0) {
-        setCurrentOrg(orgs[0]);
-        localStorage.setItem(STORAGE_KEY, orgs[0].id);
+      const resolved = savedOrg || currentFromToken || orgs[0] || null;
+      if (resolved) {
+        setCurrentOrg(resolved);
+        localStorage.setItem(STORAGE_KEY, resolved.id);
+        setCurrentOrganization({ id: resolved.id, name: resolved.name });
       }
 
       setError(null);
@@ -93,37 +110,102 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children, userId }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [currentUser?.id, setCurrentOrganization]);
 
-  // Switch organization
   const switchOrg = useCallback(
-    (orgId: string) => {
-      const org = availableOrgs.find((o) => o.id === orgId);
-      if (org) {
-        setCurrentOrg(org);
-        localStorage.setItem(STORAGE_KEY, orgId);
+    async (orgId: string) => {
+      if (!currentUser?.id || isDemoMode) return;
+      if (orgId === currentOrg?.id) return;
 
-        // Optionally notify backend of org switch
-        fetch('/api/users/me/current-org', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+      const targetOrg = availableOrgs.find((o) => o.id === orgId);
+      if (!targetOrg) return;
+
+      try {
+        setIsSwitching(true);
+        setError(null);
+
+        const token = tokenService.getToken();
+        const response = await fetch('/api/auth/switch-organization', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           credentials: 'include',
           body: JSON.stringify({ organizationId: orgId }),
-        }).catch((err) => console.warn('[OrgContext] Failed to update backend org:', err));
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to switch organization');
+        }
+
+        const data = await response.json();
+
+        tokenService.saveTokens(data.token, data.refreshToken);
+        localStorage.setItem(STORAGE_KEY, orgId);
+
+        setCurrentOrg({ ...targetOrg, is_current: true });
+        setCurrentOrganization({
+          id: data.organization.id,
+          name: data.organization.name,
+        });
+
+        toast.success(`Switched to ${data.organization.name}`);
+
+        // Broadcast to other tabs
+        try {
+          const bc = new BroadcastChannel('org-switch');
+          bc.postMessage({ orgId, orgName: data.organization.name });
+          bc.close();
+        } catch {
+          // BroadcastChannel not supported
+        }
+
+        // Hard reload to reset all cached data
+        setTimeout(() => {
+          window.location.href = window.location.pathname;
+        }, 300);
+      } catch (err) {
+        console.error('[OrgContext] Switch org error:', err);
+        const message = err instanceof Error ? err.message : 'Failed to switch organization';
+        setError(message);
+        toast.error(message);
+      } finally {
+        setIsSwitching(false);
       }
     },
-    [availableOrgs]
+    [currentUser?.id, currentOrg?.id, availableOrgs, isDemoMode, setCurrentOrganization]
   );
 
-  // Initial load
   useEffect(() => {
-    fetchOrganizations();
-  }, [fetchOrganizations]);
+    if (currentUser?.id && !fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchOrganizations();
+    }
+    if (!currentUser?.id) {
+      fetchedRef.current = false;
+      setAvailableOrgs([]);
+      setCurrentOrg(null);
+    }
+  }, [currentUser?.id, fetchOrganizations]);
+
+  // Listen for cross-tab org switches
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue && e.newValue !== currentOrg?.id) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [currentOrg?.id]);
 
   const value: OrgContextValue = {
     currentOrg,
     availableOrgs,
     isLoading,
+    isSwitching,
     error,
     switchOrg,
     refreshOrgs: fetchOrganizations,
@@ -132,7 +214,6 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children, userId }) =>
   return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;
 };
 
-// Hook
 export const useOrgContext = (): OrgContextValue => {
   const context = useContext(OrgContext);
   if (!context) {
@@ -141,7 +222,6 @@ export const useOrgContext = (): OrgContextValue => {
   return context;
 };
 
-// Optional: Hook for just the current org (simpler API)
 export const useCurrentOrg = (): Organization | null => {
   const { currentOrg } = useOrgContext();
   return currentOrg;

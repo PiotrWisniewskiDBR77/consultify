@@ -46,6 +46,13 @@ interface Subscription {
   status: 'active' | 'trialing' | 'past_due' | 'cancelled';
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  billingRail?: 'stripe_subscription' | 'manual_invoice' | 'hybrid_usage_invoice';
+  contractStatus?: 'draft' | 'active' | 'renewal_due' | 'grace' | 'suspended' | 'expired' | 'canceled' | null;
+  renewalAt?: string | null;
+  graceUntil?: string | null;
+  accessExpiresAt?: string | null;
+  managedByUserId?: string | null;
+  isManualBilling?: boolean;
 }
 
 interface UsageStats {
@@ -60,7 +67,9 @@ interface Invoice {
   date: string;
   amount: number;
   status: string;
-  downloadUrl: string;
+  downloadUrl?: string | null;
+  source?: string | null;
+  currency?: string | null;
 }
 
 interface PaymentMethod {
@@ -102,11 +111,29 @@ const normalizePlan = (plan: any): BillingPlanOption => ({
   popular: Boolean(plan?.is_popular),
 });
 
+const normalizeInvoice = (invoice: any): Invoice => ({
+  id: String(invoice?.id || invoice?.stripe_invoice_id || ''),
+  date: String(invoice?.paid_at || invoice?.due_date || invoice?.created_at || new Date().toISOString()),
+  amount: Number(
+    invoice?.amount_paid ??
+      invoice?.amount_due ??
+      invoice?.amount ??
+      0
+  ),
+  status: String(invoice?.status || 'open'),
+  downloadUrl: invoice?.pdf_url || invoice?.downloadUrl || null,
+  source: invoice?.source || (invoice?.stripe_invoice_id ? 'stripe' : null),
+  currency: invoice?.currency || 'USD',
+});
+
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
   trialing: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
   past_due: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+  canceling: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400',
+  renewal_due: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
+  suspended: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
 };
 
 export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps> = ({
@@ -157,8 +184,14 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       if (usageRes.data) setUsage(usageRes.data);
       else setUsage(null);
 
-      if (invoicesRes.data) setInvoices(invoicesRes.data);
-      else setInvoices([]);
+      const invoiceRows = Array.isArray(invoicesRes?.data?.invoices)
+        ? invoicesRes.data.invoices
+        : Array.isArray(invoicesRes?.invoices)
+          ? invoicesRes.invoices
+          : Array.isArray(invoicesRes?.data)
+            ? invoicesRes.data
+            : [];
+      setInvoices(invoiceRows.map(normalizeInvoice));
 
       if (paymentRes.data) setPaymentMethods(paymentRes.data);
       else setPaymentMethods([]);
@@ -305,6 +338,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
   const currentPlan = availablePlans.find((p) => p.id === subscription?.plan);
   const effectiveStatus = subscriptionStatus || subscription?.status || 'trialing';
+  const isManualBilling = Boolean(snapshot?.isManualBilling || subscription?.isManualBilling);
+  const manualStatus = snapshot?.contractStatus || subscription?.contractStatus || null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
@@ -379,11 +414,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             {t('access.upgrade.subtitle')}
           </p>
         </div>
-        {effectiveStatus && (
+        {(isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) && (
           <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[effectiveStatus] || STATUS_COLORS.trialing}`}
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              STATUS_COLORS[(isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) as string] ||
+              STATUS_COLORS.trialing
+            }`}
           >
-            {t(`access.upgrade.subscription.${effectiveStatus}`, effectiveStatus)}
+            {t(
+              `access.upgrade.subscription.${isManualBilling ? manualStatus || effectiveStatus : effectiveStatus}`,
+              isManualBilling ? manualStatus || effectiveStatus : effectiveStatus
+            )}
           </span>
         )}
       </div>
@@ -394,7 +435,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           { id: 'overview', label: 'Overview', icon: Crown },
           { id: 'usage', label: 'Usage', icon: BarChart3 },
           { id: 'invoices', label: 'Invoices', icon: FileText },
-          { id: 'payment', label: 'Payment', icon: CreditCard },
+          ...(!isManualBilling ? [{ id: 'payment', label: 'Payment', icon: CreditCard }] : []),
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -468,9 +509,20 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 <h3 className="text-3xl font-bold mt-1">
                   {currentPlan?.name || (snapshot?.isTrial ? 'Trial' : 'Free')}
                 </h3>
+                {isManualBilling && (
+                  <p className="text-emerald-100 mt-2">
+                    Managed by account team
+                    {manualStatus ? ` • ${manualStatus.replace('_', ' ')}` : ''}
+                  </p>
+                )}
                 {subscription?.currentPeriodEnd && (
                   <p className="text-emerald-100 mt-2">
                     Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  </p>
+                )}
+                {subscription?.renewalAt && (
+                  <p className="text-emerald-100 mt-2">
+                    Contract renewal {new Date(subscription.renewalAt).toLocaleDateString()}
                   </p>
                 )}
                 {snapshot?.isTrial && snapshot.trialExpiresAt && (
@@ -523,7 +575,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     </li>
                   ))}
                 </ul>
-                {plan.id !== subscription?.plan && plan.price !== null && (
+                {plan.id !== subscription?.plan && plan.price !== null && !isManualBilling && (
                   <button
                     onClick={() => handleSelectPlan(plan.id)}
                     className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors"
@@ -550,7 +602,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           )}
 
           {/* Cancel */}
-          {subscription?.status === 'active' && (
+          {subscription?.status === 'active' && !isManualBilling && (
             <div className="text-center">
               <button
                 onClick={handleCancelSubscription}
@@ -558,6 +610,12 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               >
                 Cancel Subscription
               </button>
+            </div>
+          )}
+          {isManualBilling && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300">
+              This subscription is managed manually outside Stripe. Contract renewals, invoice status,
+              and access changes are handled by your account team.
             </div>
           )}
         </>
@@ -666,11 +724,21 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
                         {new Date(invoice.date).toLocaleDateString()}
                       </p>
+                      {invoice.source && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-1">
+                          {invoice.source === 'manual' || invoice.source === 'manual_invoice'
+                            ? 'Manual invoice'
+                            : 'Stripe invoice'}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-slate-900 dark:text-white font-medium">
-                      ${invoice.amount}
+                      {new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: invoice.currency || 'USD',
+                      }).format(invoice.amount)}
                     </span>
                     <span
                       className={`px-2 py-0.5 text-xs rounded-full ${
@@ -681,7 +749,11 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     >
                       {invoice.status}
                     </span>
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg">
+                    <button
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg disabled:opacity-40"
+                      disabled={!invoice.downloadUrl}
+                      onClick={() => invoice.downloadUrl && window.open(invoice.downloadUrl, '_blank')}
+                    >
                       <Download size={16} className="text-slate-500 dark:text-slate-400" />
                     </button>
                   </div>

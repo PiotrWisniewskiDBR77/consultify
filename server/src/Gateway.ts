@@ -9,6 +9,7 @@ import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js'
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
+import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
@@ -380,6 +381,7 @@ export class ApiGateway {
       app.use('/api/public/contact', publicContactRoutes); // Public contact form intake (LP)
       app.use('/api/public/partner-applications', publicPartnerApplicationsRoutes); // Public partner qualification form
       app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes); // Public V8 KB preview/featured
+      app.use('/api/legal', legalRoutes); // Legal documents (public GET + auth'd POST)
 
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
@@ -446,10 +448,10 @@ export class ApiGateway {
       // Admin routes
       app.use('/api/superadmin', superAdminRoutes);
       app.use('/api/superadmin', resourceManagementRoutes);
+      app.use('/api/admin/ai-observability', aiObservabilityAdminRoutes);
 
       // Test support (hard-gated: NODE_ENV=test + ENABLE_TEST_SUPPORT=true + secret key)
       app.use('/api/test-support', testSupportRoutes);
-      app.use('/api/admin', resourceManagementRoutes);
       mountStub('/api/audit-logs', auditLogRoutes, 'auditLogRoutes');
       app.use('/api/feature-flags', featureFlagsRoutes);
       mountStub('/api/integrations', integrationsRoutes, 'integrationsRoutes');
@@ -693,7 +695,6 @@ export class ApiGateway {
       // Chaos engineering endpoints (development only) - disabled
 
       // Other routes
-      app.use('/api/legal', legalRoutes);
       app.use('/api/demo', demoRoutes);
       mountStub('/api/promo', promoRoutes, 'promoRoutes');
       app.use('/api/partners', deprecationHeader('/api/v8/partner'), partnerRoutes);

@@ -41,7 +41,8 @@
     "select": "選択",
     "connected": "接続済み",
     "comingSoon": "近日公開",
-    "root": "ルート"
+    "root": "ルート",
+    "noOrganizations": "組織が見つかりません"
   },
   "contextBadge": {
     "aiSees": "AIが見ているもの",
@@ -1272,6 +1273,20 @@
     }
   },
   "settings": {
+    "menu": {
+      "preferences": "設定",
+      "theme": "テーマ",
+      "language": "言語",
+      "demoMode": "デモを開く",
+      "demoModeExit": "デモを終了",
+      "demoModeOn": "デモモードが有効です - Atelier Toys を閲覧中です",
+      "demoModeOff": "Atelier Toys のデモワークスペースを開く",
+      "demoReadOnly": "デモデータ - 読み取り専用",
+      "myProfile": "マイプロフィール",
+      "billing": "請求とプラン",
+      "aiConfig": "AI 設定",
+      "switchOrg": "組織を切り替え"
+    },
     "title": "設定",
     "profile": "プロフィール",
     "billing": "請求",
@@ -1307,8 +1322,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {

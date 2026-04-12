@@ -1,0 +1,114 @@
+name: Railway Deploy
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'src/**'
+      - 'server/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Dockerfile*'
+      - 'railway*.json'
+      - 'infrastructure/**'
+      - 'scripts/deploy-gate.sh'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+      confirm_production:
+        description: 'Type yes to allow production deployment'
+        required: false
+        default: 'no'
+        type: string
+
+concurrency:
+  group: railway-deploy-${{ github.event_name == 'push' && 'staging' || github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    name: Deploy Staging
+    if: github.event_name == 'push' || github.event.inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    environment: staging
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+      PROJECT_ID: ${{ vars.RAILWAY_STAGING_PROJECT_ID }}
+      TARGET_ENVIRONMENT: ${{ vars.RAILWAY_STAGING_ENVIRONMENT }}
+      BACKEND_SERVICE: ${{ vars.RAILWAY_STAGING_BACKEND_SERVICE }}
+      FRONTEND_SERVICE: ${{ vars.RAILWAY_STAGING_FRONTEND_SERVICE }}
+      API_HEALTH_URL: ${{ vars.STAGING_API_HEALTH_URL }}
+      FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate staging configuration
+        run: |
+          test -n "$RAILWAY_TOKEN"
+          test -n "$PROJECT_ID"
+          test -n "$TARGET_ENVIRONMENT"
+          test -n "$BACKEND_SERVICE"
+          test -n "$FRONTEND_SERVICE"
+
+      - name: Deploy backend to staging
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$BACKEND_SERVICE" --detach -m "staging backend ${GITHUB_SHA}"
+
+      - name: Deploy frontend to staging
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$FRONTEND_SERVICE" --detach -m "staging frontend ${GITHUB_SHA}"
+
+      - name: Verify staging deployment
+        run: |
+          if [ -n "${API_HEALTH_URL:-}" ]; then
+            curl -fsSL "$API_HEALTH_URL" >/dev/null
+          fi
+          if [ -n "${FRONTEND_URL:-}" ]; then
+            curl -fsSL "$FRONTEND_URL" >/dev/null
+          fi
+
+  deploy-production:
+    name: Deploy Production
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' && github.event.inputs.confirm_production == 'yes'
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    environment: production
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
+      PROJECT_ID: ${{ vars.RAILWAY_PRODUCTION_PROJECT_ID }}
+      TARGET_ENVIRONMENT: ${{ vars.RAILWAY_PRODUCTION_ENVIRONMENT }}
+      BACKEND_SERVICE: ${{ vars.RAILWAY_PRODUCTION_BACKEND_SERVICE }}
+      FRONTEND_SERVICE: ${{ vars.RAILWAY_PRODUCTION_FRONTEND_SERVICE }}
+      API_HEALTH_URL: ${{ vars.PRODUCTION_API_HEALTH_URL }}
+      FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate production configuration
+        run: |
+          test -n "$RAILWAY_TOKEN"
+          test -n "$PROJECT_ID"
+          test -n "$TARGET_ENVIRONMENT"
+          test -n "$BACKEND_SERVICE"
+          test -n "$FRONTEND_SERVICE"
+
+      - name: Deploy backend to production
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$BACKEND_SERVICE" --detach -m "production backend ${GITHUB_SHA}"
+
+      - name: Deploy frontend to production
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$FRONTEND_SERVICE" --detach -m "production frontend ${GITHUB_SHA}"
+
+      - name: Verify production deployment
+        run: |
+          if [ -n "${API_HEALTH_URL:-}" ]; then
+            curl -fsSL "$API_HEALTH_URL" >/dev/null
+          fi
+          if [ -n "${FRONTEND_URL:-}" ]; then
+            curl -fsSL "$FRONTEND_URL" >/dev/null
+          fi

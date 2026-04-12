@@ -22,6 +22,7 @@ import { mapReportBuilderStatusToAssessmentReportStatus } from '../services/asse
 import ReportBuilderService from '../services/reportBuilderService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { requireRequestOrganizationId } from '../utils/requestOrganization.js';
 
 const router = Router();
 const notConfigured = (res: Response, details?: Record<string, unknown>) =>
@@ -549,7 +550,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const assessmentId = req.query?.assessmentId ? String(req.query.assessmentId) : null;
     const projectId = req.query?.projectId ? String(req.query.projectId) : null;
     const statusRaw = req.query?.status ? String(req.query.status) : null;
@@ -633,7 +635,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/templates', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const sourceType = String(req.query?.sourceType || 'ASSESSMENT').toUpperCase();
     if (sourceType !== 'ASSESSMENT') {
       return res.status(400).json({ error: 'Unsupported sourceType', sourceType });
@@ -776,7 +779,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { assessmentId, name, templateId } = req.body || {};
 
@@ -873,7 +877,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const reportRow = await get<any>(
@@ -956,7 +961,8 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
 router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
     const { templateId, language } = req.body || {};
@@ -1169,7 +1175,8 @@ Requirements:
 router.get('/:reportId/sections', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const reportRow = await get<any>(
@@ -1209,7 +1216,8 @@ router.get('/:reportId/sections', async (req: AuthRequest, res: Response) => {
 router.post('/:reportId/sections', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
     const { sectionType, axisId, areaId, title, content, orderIndex } = req.body || {};
@@ -1267,7 +1275,8 @@ router.post('/:reportId/sections', async (req: AuthRequest, res: Response) => {
 router.put('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId, sectionId } = req.params;
     const { content, title, saveHistory } = req.body || {};
@@ -1327,7 +1336,8 @@ router.put('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Respo
 router.delete('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId, sectionId } = req.params;
 
     const reportRow = await get<any>(
@@ -1351,7 +1361,8 @@ router.delete('/:reportId/sections/:sectionId', async (req: AuthRequest, res: Re
 router.put('/:reportId/sections/reorder', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
     const { sectionOrder } = req.body || {};
@@ -1385,7 +1396,8 @@ router.put('/:reportId/sections/reorder', async (req: AuthRequest, res: Response
 router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId, sectionId } = req.params;
     const { action, language, customPrompt } = req.body || {};
@@ -1512,7 +1524,8 @@ router.post('/:reportId/sections/:sectionId/ai', async (req: AuthRequest, res: R
 router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId, sectionId } = req.params;
 
     const reportRow = await get<any>(
@@ -1539,7 +1552,8 @@ router.get('/:reportId/sections/:sectionId/history', async (req: AuthRequest, re
 router.post('/:reportId/ai-edit', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'system';
     const { reportId } = req.params;
     const { sectionId, instruction, content } = req.body || {};
@@ -1625,7 +1639,8 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -1680,7 +1695,8 @@ router.put('/:reportId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
     const { name, content } = req.body || {};
 
@@ -1724,7 +1740,8 @@ router.put('/:reportId', async (req: AuthRequest, res: Response) => {
 router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
 
     const row = await get<any>(
@@ -1770,7 +1787,8 @@ router.post('/:reportId/finalize', async (req: AuthRequest, res: Response) => {
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const userId = req.user?.id || 'user-default';
     const { reportId } = req.params;
 
@@ -2069,7 +2087,8 @@ router.get('/:reportId/export/pdf', async (_req: AuthRequest, res: Response) => 
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(_req, res);
+    if (!organizationId) return;
     const { reportId } = _req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -2106,7 +2125,8 @@ router.get('/:reportId/export/pptx', async (_req: AuthRequest, res: Response) =>
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(_req, res);
+    if (!organizationId) return;
     const { reportId } = _req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -2146,7 +2166,8 @@ router.get('/:reportId/export/excel', async (_req: AuthRequest, res: Response) =
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = _req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(_req, res);
+    if (!organizationId) return;
     const { reportId } = _req.params;
 
     const report = await new Promise<any>((resolve, reject) => {
@@ -2206,7 +2227,8 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
   try {
     await ensureAssessmentReportsSchema();
     const db = getDatabase();
-    const organizationId = req.user?.organizationId || 'org-dbr77-system';
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
     const { reportId } = req.params;
     const language = (req.query?.language as string) === 'pl' ? 'pl' : 'en';
 

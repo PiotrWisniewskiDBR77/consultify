@@ -30,7 +30,6 @@ import {
   SuperAdminSidebar,
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
-import { FeatureFlagsDevToolsToggleButton } from '../../components/settings/FeatureFlagsDevToolsToggleButton';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
 import { getRouteFromAppView } from '../../routes/routeConfig';
@@ -46,6 +45,9 @@ const CustomersModule = React.lazy(() =>
 );
 const GovernanceModule = React.lazy(() =>
   import('./GovernanceModule').then((m) => ({ default: m.GovernanceModule }))
+);
+const ConfigurationModule = React.lazy(() =>
+  import('./ConfigurationModule').then((m) => ({ default: m.ConfigurationModule }))
 );
 const SecurityModule = React.lazy(() =>
   import('./SecurityModule').then((m) => ({ default: m.SecurityModule }))
@@ -134,14 +136,10 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               return <SecurityModule />;
 
             case AppView.SUPERADMIN_CONFIGURATION:
+              return <ConfigurationModule />;
+
             case AppView.SUPERADMIN_ANALYTICS:
-              return (
-                <SystemModule
-                  initialTab={
-                    currentView === AppView.SUPERADMIN_ANALYTICS ? 'analytics' : 'configuration'
-                  }
-                />
-              );
+              return <SystemModule initialTab="analytics" />;
 
             case AppView.SUPERADMIN_REVENUE:
               return <CustomersModule initialTab="commercial" initialCommercialTab="usage" />;
@@ -210,13 +208,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case AppView.SUPERADMIN_SSO:
             case AppView.SUPERADMIN_SECURITY_POLICIES:
               return (
-                <SecurityModule
-                  initialTab={
-                    currentView === AppView.SUPERADMIN_SSO
-                      ? 'sso'
-                      : 'policies'
-                  }
-                />
+                <SecurityModule initialTab={currentView === AppView.SUPERADMIN_SSO ? 'sso' : 'policies'} />
               );
 
             case AppView.SUPERADMIN_COMPLIANCE:
@@ -224,7 +216,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
             case AppView.SUPERADMIN_SETTINGS:
             case AppView.SUPERADMIN_WHITELABEL:
-              return <SystemModule initialTab="configuration" />;
+              return (
+                <ConfigurationModule
+                  initialTab={
+                    currentView === AppView.SUPERADMIN_WHITELABEL ? 'whitelabel' : 'settings'
+                  }
+                />
+              );
 
             case AppView.SUPERADMIN_PLAYBOOK_TEMPLATES:
             case AppView.SUPERADMIN_PLAYBOOK_EDITOR:
@@ -288,9 +286,6 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </div>
         <div className="pointer-events-auto">
           <DocumentToggleButton />
-        </div>
-        <div className="pointer-events-auto">
-          <FeatureFlagsDevToolsToggleButton />
         </div>
       </div>
       <HelpSidePanel />

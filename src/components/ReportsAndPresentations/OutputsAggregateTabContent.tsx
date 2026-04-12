@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
 import {
@@ -146,7 +146,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   const openChatWithContext = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const deepLinkConsumed = useRef(false);

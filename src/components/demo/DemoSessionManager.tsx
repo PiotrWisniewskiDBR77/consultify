@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { trackTourCompleted, trackUpgradeClick } from '../../services/demoAnalyticsService';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { DemoConversionCTA, type ValueMomentType } from './DemoConversionCTA';
 import { DemoLoadingOverlay } from './DemoLoadingOverlay';
@@ -27,7 +28,6 @@ import { DemoTrialButton } from './DemoTrialButton';
 import { DemoUpgradePrompt } from './DemoUpgradePrompt';
 import { DemoWelcomeTour } from './DemoWelcomeTour';
 import { ExitIntentModal } from './ExitIntentModal';
-import { SmartDemoBanner } from './SmartDemoBanner';
 import { useExitIntent } from './useExitIntent';
 
 // ============================================================
@@ -55,7 +55,7 @@ const CONFIG = {
 
 export const DemoSessionManager: React.FC = () => {
   const { t } = useTranslation();
-  const { currentUser } = useAppStore();
+  const { currentUser, isDemoMode, isDemoLoading } = useAppStore();
   const {
     isDemo,
     sessionStartTime,
@@ -83,6 +83,11 @@ export const DemoSessionManager: React.FC = () => {
   const [upgradePromptFeature, setUpgradePromptFeature] = useState<string>('');
   const [showSessionWarning, setShowSessionWarning] = useState(false);
   const [sessionWarningType, setSessionWarningType] = useState<'1h' | '5min' | 'expired'>('1h');
+  const [entrySource, setEntrySource] = useState<string | null>(null);
+  const [demoOrgName, setDemoOrgName] = useState('Atelier Toys');
+  const [demoScenarios, setDemoScenarios] = useState<
+    Array<{ id: string; title: string; duration?: string; audience?: string; persona?: string }>
+  >([]);
 
   // T090: Conversion flow state
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -95,6 +100,47 @@ export const DemoSessionManager: React.FC = () => {
     delayMs: 10000, // Wait 10 seconds before enabling
     triggerOnce: true,
   });
+
+  useEffect(() => {
+    if (!isDemo) return;
+
+    const source =
+      sessionStorage.getItem('demo_entry_source') ||
+      (isDemoMode ? 'profile_menu' : currentUser?.isDemo ? 'landing_page' : 'demo_session');
+    setEntrySource(source);
+
+    let active = true;
+    Api.getDemoOrganization()
+      .then((response) => {
+        if (!active || !response?.success) return;
+        setDemoOrgName(response.organization?.name || 'Atelier Toys');
+        setDemoScenarios(Array.isArray(response.scenarios) ? response.scenarios : []);
+      })
+      .catch(() => {
+        if (!active) return;
+        setDemoOrgName('Atelier Toys');
+        setDemoScenarios([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentUser?.isDemo, isDemo, isDemoMode]);
+
+  useEffect(() => {
+    if (!isDemo || !sessionId) return;
+
+    const dedupeKey = `demo_started_tracked:${sessionId}`;
+    if (sessionStorage.getItem(dedupeKey) === 'true') return;
+
+    sessionStorage.setItem(dedupeKey, 'true');
+    trackFunnelEvent('demo_started', {
+      source: entrySource || 'demo_session',
+      isDemoMode,
+      organization: demoOrgName,
+      scenarioCount: demoScenarios.length,
+    });
+  }, [demoOrgName, demoScenarios.length, entrySource, isDemo, isDemoMode, sessionId]);
 
   // --------------------------------------------------------
   // TOUR TRIGGER
@@ -282,21 +328,17 @@ export const DemoSessionManager: React.FC = () => {
 
   return (
     <>
-      {/* Smart Demo Banner - Always visible in demo */}
-      <SmartDemoBanner
-        sessionStartTime={sessionStartTime || new Date()}
-        onUpgradeClick={() => handleContactSales('banner_upgrade')}
-        onContactSales={() => handleContactSales('banner_contact')}
-        demoEmail={currentUser?.email || 'piotr.wisniewski@demo.com'}
-        aiInteractionsRemaining={aiInteractionsRemaining}
-        aiInteractionsLimit={aiInteractionsLimit}
-      />
+      {/* Loading overlay while demo environment is being prepared */}
+      <DemoLoadingOverlay isVisible={isDemoLoading} />
 
       {/* Welcome Tour - First visit only */}
       <DemoWelcomeTour
         isOpen={showTour}
         onClose={handleTourClose}
         onComplete={handleTourComplete}
+        entrySource={entrySource}
+        organizationName={demoOrgName}
+        scenarios={demoScenarios}
       />
 
       {/* Upgrade Prompt - Strategic moments */}

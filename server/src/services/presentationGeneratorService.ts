@@ -620,6 +620,7 @@ export async function generateOutline(
   organizationId: string
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
+  const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
 
   if (setup.templateId) {
     const template = await dbGet(
@@ -633,7 +634,7 @@ export async function generateOutline(
         keyMessage: o.keyMessage,
         enabled: true,
       }));
-      outline = generateOutlineFromTemplate(templateOutline, setup.sourceArtifacts);
+      outline = generateOutlineFromTemplate(templateOutline, sourceArtifacts);
     } else {
       outline = generateDefaultOutline(setup);
     }
@@ -643,8 +644,8 @@ export async function generateOutline(
 
   const deckId = uuidv4().replace(/-/g, '');
   const resolvedSourceType =
-    setup.sourceType || (setup.sourceArtifacts?.[0]?.type === 'tool_session' ? 'tool' : 'manual');
-  const resolvedSourceId = setup.sourceId || setup.sourceArtifacts?.[0]?.id || null;
+    setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
+  const resolvedSourceId = setup.sourceId || sourceArtifacts[0]?.id || null;
   await dbRun(
     `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
@@ -652,7 +653,7 @@ export async function generateOutline(
       deckId,
       organizationId,
       setup.title,
-      setup.templateId || null,
+      setup.templateId || '',
       'custom',
       setup.audience,
       setup.goal,
@@ -660,7 +661,7 @@ export async function generateOutline(
       setup.confidentiality,
       setup.theme,
       null,
-      JSON.stringify(setup.sourceArtifacts),
+      JSON.stringify(sourceArtifacts),
       JSON.stringify(outline),
       null,
       resolvedSourceType,
@@ -686,7 +687,7 @@ export async function generateOutline(
       originSummary: {
         sourceType: resolvedSourceType,
         sourceId: resolvedSourceId,
-        sourceArtifacts: setup.sourceArtifacts,
+        sourceArtifacts,
         nativeStatus: 'draft',
         sourceTable: 'presentation_decks',
       },
@@ -736,7 +737,8 @@ export async function generateDeck(
 
   try {
     // Build structured ContextPack for AI consumption
-    const sourceRefs = setup.sourceArtifacts.map((sa) => ({
+    const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
+    const sourceRefs = sourceArtifacts.map((sa) => ({
       artifact_id: sa.id || '',
       artifact_type: sa.type,
       artifact_name: sa.label,
@@ -747,7 +749,7 @@ export async function generateDeck(
       `[PresentationGen] ContextPack built: ${contextPack.key_points.length} key points, ${contextPack.data_points.length} data points, confidence=${contextPack.metadata.confidence_score.toFixed(2)}`
     );
 
-    const artifactData = await loadArtifactData(setup.sourceArtifacts, organizationId);
+    const artifactData = await loadArtifactData(sourceArtifacts, organizationId);
     // Enrich artifact data with ContextPack extracted data
     if (contextPack.key_points.length > 0 && !artifactData._keyFindings) {
       artifactData._keyFindings = contextPack.key_points.slice(0, 5);

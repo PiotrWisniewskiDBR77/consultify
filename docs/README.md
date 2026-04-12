@@ -124,7 +124,10 @@ Historical parallel trees are preserved, but they are not the default source of 
 **Critical for Enterprise:**
 
 - [SLA/SLO](operations/SLA_SLO.md) - **99.9% uptime target** ⭐
-- [Deployment Guide](operations/DEPLOYMENT_GUIDE.md) - Deployment procedures / release process
+- [Staging and Production Operating Model](operations/STAGING_PRODUCTION_OPERATING_MODEL.md) - Canonical branch and release policy
+- [Deployment Guide](operations/DEPLOYMENT_GUIDE.md) - Legacy deployment notes and historical examples
+- [Local to Staging Runbook](operations/LOCAL_TO_STAGING_RUNBOOK.md) - Safe local work against staging
+- [Staging to Production Runbook](operations/STAGING_TO_PRODUCTION_RUNBOOK.md) - Release promotion flow
 - [Production Deployment Checklist](operations/PRODUCTION_DEPLOYMENT_CHECKLIST.md) - Go-live checklist
 - [Monitoring Dashboard](operations/MONITORING_DASHBOARD.md) - Monitoring & observability entry point
 - [Incident Response Playbook](operations/INCIDENT_RESPONSE_PLAYBOOK.md) - Incident response
@@ -191,8 +194,9 @@ Historical parallel trees are preserved, but they are not the default source of 
 ### For Operations/SRE
 
 1. [SLA/SLO](operations/SLA_SLO.md)
-2. [Production Deployment Checklist](operations/PRODUCTION_DEPLOYMENT_CHECKLIST.md)
-3. [Incident Response Playbook](operations/INCIDENT_RESPONSE_PLAYBOOK.md)
+2. [Staging and Production Operating Model](operations/STAGING_PRODUCTION_OPERATING_MODEL.md)
+3. [Production Deployment Checklist](operations/PRODUCTION_DEPLOYMENT_CHECKLIST.md)
+4. [Incident Response Playbook](operations/INCIDENT_RESPONSE_PLAYBOOK.md)
 
 ### For Security/Compliance
 

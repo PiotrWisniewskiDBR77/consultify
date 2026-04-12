@@ -1518,7 +1518,7 @@ export const FinanceHub: React.FC = () => {
       {
         label: t('finance.v8.ingestion', 'V8 Ingestion'),
         value:
-          v8Dashboard == null ? '—' : String(v8Dashboard.ingestionPipeline.totalCount ?? '—'),
+          v8Dashboard == null ? '—' : String(v8Dashboard.ingestionPipeline?.totalCount ?? '—'),
         dotClassName: 'bg-violet-400',
       },
       {
@@ -1530,7 +1530,7 @@ export const FinanceHub: React.FC = () => {
       {
         label: t('finance.v8.linkages', 'Linkages'),
         value:
-          v8Dashboard == null ? '—' : String(v8Dashboard.linkageHealth.totalLinkages ?? '—'),
+          v8Dashboard == null ? '—' : String(v8Dashboard.linkageHealth?.totalLinkages ?? '—'),
         dotClassName: 'bg-violet-400',
       },
       {
@@ -1610,7 +1610,7 @@ export const FinanceHub: React.FC = () => {
               <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
               <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
               <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-                {v8Dashboard.linkageHealth.unlinkedInitiativesCount ?? 0}
+                {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
               </span>
             </div>
             <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">

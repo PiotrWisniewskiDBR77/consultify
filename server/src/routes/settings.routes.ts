@@ -3197,6 +3197,52 @@ const defaultAIVoice = {
   autoPlay: false,
 };
 
+const defaultAIPrivacyPreferences = {
+  allowProjectData: true,
+  allowClientData: true,
+  allowFinancialData: false,
+  allowPersonalNotes: false,
+  optOutTraining: true,
+  dataRetention: '30d',
+  auditLogEnabled: true,
+  anonymizeExports: false,
+};
+
+const defaultPromptLibrary = [
+  {
+    id: 'builtin-professional',
+    name: 'Professional',
+    category: 'general',
+    prompt:
+      'I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology.',
+    createdAt: '2024-01-01',
+  },
+  {
+    id: 'builtin-interview-prep',
+    name: 'Interview Preparation',
+    category: 'interview',
+    prompt:
+      'Help me prepare structured interview questions. Focus on behavioral and competency-based questions. Suggest follow-ups for each main question.',
+    createdAt: '2024-01-01',
+  },
+  {
+    id: 'builtin-analysis',
+    name: 'Data Analysis',
+    category: 'analysis',
+    prompt:
+      'Analyze data thoroughly. Present findings with clear structure: key metrics, trends, anomalies, and actionable recommendations. Use tables when helpful.',
+    createdAt: '2024-01-01',
+  },
+  {
+    id: 'builtin-report',
+    name: 'Executive Report',
+    category: 'report',
+    prompt:
+      'Write in executive summary style. Lead with conclusions, then supporting evidence. Keep paragraphs short. Use bullet points for key takeaways.',
+    createdAt: '2024-01-01',
+  },
+];
+
 /**
  * GET /api/settings/preferences/ai-instructions
  */
@@ -3613,6 +3659,118 @@ router.put(
 );
 
 /**
+ * GET /api/settings/preferences/ai-privacy
+ */
+router.get(
+  '/preferences/ai-privacy',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('ai-privacy')],
+      { fallback: false }
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ preferences: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+
+    return res.json({ preferences: defaultAIPrivacyPreferences });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-privacy
+ */
+router.put(
+  '/preferences/ai-privacy',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { preferences } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!preferences || typeof preferences !== 'object') {
+      return res.status(400).json({ error: 'Invalid preferences payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('ai-privacy'), JSON.stringify(preferences)],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save preference');
+
+    logger.info(`[settings] AI privacy preferences updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
+ * GET /api/settings/preferences/prompt-library
+ */
+router.get(
+  '/preferences/prompt-library',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+
+    await ensureUserPreferencesTable();
+    const row = await dbGet<{ preferences_data: string }>(
+      `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [userId, preferencesKey('prompt-library')],
+      { fallback: false }
+    );
+    if (row?.preferences_data) {
+      try {
+        return res.json({ prompts: JSON.parse(row.preferences_data) });
+      } catch {
+        // fallthrough
+      }
+    }
+
+    return res.json({ prompts: defaultPromptLibrary });
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/prompt-library
+ */
+router.put(
+  '/preferences/prompt-library',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    const { prompts } = req.body || {};
+    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (!Array.isArray(prompts)) {
+      return res.status(400).json({ error: 'Invalid prompt library payload' });
+    }
+
+    await ensureUserPreferencesTable();
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey('prompt-library'), JSON.stringify(prompts)],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || 'Failed to save prompt library');
+
+    logger.info(`[settings] Prompt library updated for user ${userId}`);
+    return res.json({ success: true });
+  })
+);
+
+/**
  * GET /api/settings/ai-usage
  * Get AI usage statistics for the user
  */
@@ -3885,7 +4043,7 @@ router.post(
     };
 
     if (systemSettings[id]) {
-      // Apply system template (would update user_preferences)
+      await applySettingsPayload(userId, systemSettings[id]);
       logger.info(`[settings] Applied system template ${id} for user ${userId}`);
       return res.json({ success: true, applied: systemSettings[id] });
     }
@@ -3898,8 +4056,11 @@ router.post(
 
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
+    const applied = JSON.parse(template.settings_data);
+    await applySettingsPayload(userId, applied);
+
     logger.info(`[settings] Applied custom template ${id} for user ${userId}`);
-    return res.json({ success: true, applied: JSON.parse(template.settings_data) });
+    return res.json({ success: true, applied });
   })
 );
 
@@ -3999,6 +4160,9 @@ router.post(
       return res.status(404).json({ error: 'History entry not found or cannot be restored' });
     }
 
+    const restoredValue = JSON.parse(entry.old_value);
+    await restoreSettingsValue(userId, entry.category, restoredValue);
+
     // Log the restore action
     const { v4: uuidv4 } = await import('uuid');
     await dbRun(
@@ -4008,7 +4172,7 @@ router.post(
     );
 
     logger.info(`[settings] Restored setting ${entry.setting_key} for user ${userId}`);
-    return res.json({ success: true, restoredValue: JSON.parse(entry.old_value) });
+    return res.json({ success: true, restoredValue });
   })
 );
 
@@ -4956,6 +5120,50 @@ async function logSettingsChange(
   } catch (err) {
     logger.warn(`[settings] Failed to log settings change: ${err}`);
   }
+}
+
+async function applySettingsPayload(userId: string, settings: Record<string, unknown>) {
+  await ensureUserPreferencesTable();
+
+  for (const [type, value] of Object.entries(settings || {})) {
+    const result = await dbRun(
+      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
+       VALUES (?, ?, ?, datetime('now'))`,
+      [userId, preferencesKey(type), JSON.stringify(value)],
+      { fallback: false }
+    );
+    if (!result.success) throw new Error(result.error || `Failed to apply setting ${type}`);
+  }
+}
+
+async function restoreSettingsValue(userId: string, category: string, value: Record<string, unknown>) {
+  if (category === 'developer') {
+    await ensureDeveloperSettingsTable();
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM developer_settings WHERE user_id = ?`,
+      [userId]
+    );
+    const { v4: uuidv4 } = await import('uuid');
+    const id = existing?.id || uuidv4();
+
+    await dbRun(
+      `INSERT OR REPLACE INTO developer_settings
+         (id, user_id, developer_mode, api_logging, verbose_errors, show_debug_info, beta_features, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [
+        id,
+        userId,
+        value?.developerMode ? 1 : 0,
+        value?.apiLogging ? 1 : 0,
+        value?.verboseErrors ? 1 : 0,
+        value?.showDebugInfo ? 1 : 0,
+        JSON.stringify(value?.betaFeatures || []),
+      ]
+    );
+    return;
+  }
+
+  await applySettingsPayload(userId, { [category]: value });
 }
 
 // ==========================================

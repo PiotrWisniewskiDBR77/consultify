@@ -90,7 +90,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
       : []),
   ];
 
-  const DEMO_ORG_NAME = 'Atelier ToolToys';
+  const DEMO_ORG_NAME = 'Atelier Toys';
 
   if (isMinimized) {
     return (
@@ -175,7 +175,13 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
 
               {/* Upgrade Button */}
               <button
-                onClick={handleContactSales}
+                onClick={() => {
+                  if (onUpgradeClick) {
+                    onUpgradeClick();
+                    return;
+                  }
+                  handleContactSales();
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-navy-900 text-purple-700 text-xs font-semibold rounded-lg hover:bg-white/90 transition-colors"
               >
                 <Calendar size={12} />
@@ -225,10 +231,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                 <div className="text-xs text-slate-400">
                   {t('demo.banner.readyForMore', 'Ready for your own data?')}{' '}
                   <button
-                    onClick={() => {
-                      onUpgradeClick?.();
-                      handleContactSales();
-                    }}
+                    onClick={() => onUpgradeClick?.()}
                     className="text-primary-400 hover:text-primary-300 font-medium"
                   >
                     {t('demo.banner.startTrial', 'Start your 7-day trial')}

@@ -271,10 +271,10 @@ export const PublicLandingPage: React.FC = () => {
             <a href="/docs" className="hover:text-brand-400 transition-colors">
               {t('pages.public.footer.docs', 'Documentation')}
             </a>
-            <a href="/privacy" className="hover:text-brand-400 transition-colors">
+            <a href="/legal/privacy" className="hover:text-brand-400 transition-colors">
               {t('pages.public.footer.privacy', 'Privacy')}
             </a>
-            <a href="/terms" className="hover:text-brand-400 transition-colors">
+            <a href="/legal/terms" className="hover:text-brand-400 transition-colors">
               {t('pages.public.footer.terms', 'Terms')}
             </a>
             <a href="/docs/security" className="hover:text-brand-400 transition-colors">

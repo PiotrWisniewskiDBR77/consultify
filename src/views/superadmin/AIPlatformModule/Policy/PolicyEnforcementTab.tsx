@@ -16,21 +16,25 @@ export const PolicyEnforcementTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<EnforcementRow[]>([]);
   const [health, setHealth] = useState<any>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
+        setNotice(null);
         const enforcement = await Api.getSuperAdminPolicyEnforcement();
 
         if (cancelled) return;
         setRows(Array.isArray(enforcement?.rows) ? enforcement.rows : []);
         setHealth(enforcement?.health || null);
-      } catch {
+      } catch (error) {
         if (cancelled) return;
+        console.error('[PolicyEnforcementTab] Failed to fetch policy enforcement state', error);
         setRows([]);
         setHealth(null);
+        setNotice('Policy enforcement telemetry is temporarily unavailable.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -45,6 +49,12 @@ export const PolicyEnforcementTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+          {notice}
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">

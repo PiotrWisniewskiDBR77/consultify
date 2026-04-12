@@ -41,7 +41,8 @@
     "select": "Auswählen",
     "connected": "verbunden",
     "comingSoon": "Kommt bald",
-    "root": "Root"
+    "root": "Root",
+    "noOrganizations": "Keine Organisationen gefunden"
   },
   "contextBadge": {
     "aiSees": "KI sieht",
@@ -1163,7 +1164,22 @@
       "whatComesNext": "Was als Nächstes kommt",
       "askAi": "KI fragen",
       "quickGuides": "Schnellanleitungen",
-      "watchVideo": "Video ansehen"
+      "watchVideo": "Video ansehen",
+      "modules": {
+        "welcome": "Willkommen",
+        "dashboard": "Dashboard",
+        "assessment": "Hub fuer lizenzierte Tools",
+        "initiatives": "Initiativen",
+        "roadmap": "Roadmap",
+        "reports": "Berichte",
+        "settings": "Einstellungen",
+        "admin": "Administration",
+        "superadmin": "Super Admin",
+        "superadmin_ai_infrastructure": "KI-Infrastruktur",
+        "superadmin_ai_development": "KI-Entwicklung",
+        "superadmin_ai_operations": "KI-Betrieb",
+        "billing": "Abrechnung & Abonnement"
+      }
     },
     "search": {
       "placeholder": "Hilfe suchen... (Cmd+K)",
@@ -1194,7 +1210,10 @@
         "card": "Karte",
         "faq": "FAQ",
         "video": "Video"
-      }
+      },
+      "suggestionsTitle": "Versuchen Sie zu suchen nach:",
+      "browseTitle": "Oder durchsuchen:",
+      "helpOverviewLink": "Hilfe-Uebersicht oeffnen"
     },
     "article": {
       "tableOfContents": "Table of Contents",
@@ -1266,6 +1285,7 @@
       "label": "Hilfe",
       "header": "Hilfezentrum",
       "searchPlaceholder": "Hilfe suchen...",
+      "noResults": "Keine Ergebnisse fuer \"{{query}}\"",
       "docs": "Dokumentation",
       "contact": "Kontakt"
     },
@@ -1357,6 +1377,20 @@
     }
   },
   "settings": {
+    "menu": {
+      "preferences": "Einstellungen",
+      "theme": "Design",
+      "language": "Sprache",
+      "demoMode": "Demo öffnen",
+      "demoModeExit": "Demo beenden",
+      "demoModeOn": "Der Demo-Modus ist aktiv - du erkundest Atelier Toys",
+      "demoModeOff": "Den Atelier-Toys-Demo-Workspace öffnen",
+      "demoReadOnly": "Demo-Daten - nur lesen",
+      "myProfile": "Mein Profil",
+      "billing": "Abrechnung & Pläne",
+      "aiConfig": "KI-Konfiguration",
+      "switchOrg": "Organisation wechseln"
+    },
     "title": "Einstellungen",
     "profile": "Profil",
     "billing": "Abrechnung",
@@ -1392,8 +1426,8 @@
         },
         "trial": {
           "title": "Free Trial",
-          "description": "14-day full access to all features. Start your transformation today.",
-          "meta": "14 DAYS FREE",
+          "description": "7-day full access to all features. Start your transformation today.",
+          "meta": "7 DAYS FREE",
           "cta": "Start Free Trial"
         },
         "video": {

@@ -38,6 +38,7 @@ import {
   Lightbulb,
   List,
   Loader2,
+  Lock,
   Plus,
   Rocket,
   Scale,
@@ -59,20 +60,26 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
 import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
 } from '@/components/shared/WorkspacePanelStrip';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
-import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import {
+  dispatchPilotAccessBlocked,
+  getPilotLockedAreaDetail,
+  isPilotAllowedMyWorkTab,
+  isPilotParticipantRole,
+} from '@/utils/pilotAccess';
 import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
@@ -91,10 +98,10 @@ import type { CanvasToolType } from './ideaSelectionTypes';
 import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import {
   createDefaultIdeaWorkspaceState,
+  type IdeaWorkspaceHubState,
   moveIdeaWorkspaceState,
   patchIdeaWorkspaceState,
   removeIdeaWorkspaceState,
-  type IdeaWorkspaceHubState,
 } from './ideaWorkspaceState';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
@@ -361,8 +368,12 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
   }
 }
 
-function getInitialMyWorkTab(searchParams: URLSearchParams, _canViewManager: boolean): ModuleTab {
-  if (searchParams.get('ideaId') || searchParams.get('idea')) return 'ideas';
+function getInitialMyWorkTab(
+  searchParams: URLSearchParams,
+  _canViewManager: boolean,
+  allowIdeas = true
+): ModuleTab {
+  if (allowIdeas && (searchParams.get('ideaId') || searchParams.get('idea'))) return 'ideas';
   if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
   if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
 
@@ -557,6 +568,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Role-based access – Manager tab restricted to admin/manager/superadmin
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewManager = isAdmin || isManager || isSuperAdmin;
+  const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
 
   const restoredDocumentState = useMemo(() => readStoredMyWorkDocuments(), []);
   // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
@@ -568,7 +580,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       : null;
     return restoredActiveDoc
       ? getDocumentTab(restoredActiveDoc.type)
-      : getInitialMyWorkTab(searchParams, canViewManager);
+      : getInitialMyWorkTab(searchParams, canViewManager, !isPilotParticipant);
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -713,6 +725,29 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     documentId: string;
     keys: string[];
   } | null>(null);
+
+  useEffect(() => {
+    if (!isPilotParticipant) return;
+    if (isPilotAllowedMyWorkTab(activeTab)) return;
+    setActiveDocumentId((current) => {
+      if (!current) return current;
+      const activeDoc = openDocuments.find((doc) => doc.id === current);
+      return activeDoc?.type === 'idea' ? null : current;
+    });
+    setActiveTab('home');
+    if (
+      location.pathname.startsWith('/my-work/ideas') ||
+      searchParams.get('ideaId') ||
+      searchParams.get('idea')
+    ) {
+      const detail = getPilotLockedAreaDetail('IDEAS_TAB', 'Ideas');
+      dispatchPilotAccessBlocked({
+        message: detail.message,
+        href: detail.href,
+      });
+      navigate('/my-work', { replace: true });
+    }
+  }, [activeTab, isPilotParticipant, location.pathname, navigate, openDocuments, searchParams]);
   useEffect(() => {
     try {
       window.sessionStorage.setItem(
@@ -977,7 +1012,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           ? 'Stage: spark (not yet accepted)'
           : 'Stage: active (accepted)'
       );
-      if (activeIdeaWorkspaceState?.selection.type && activeIdeaWorkspaceState.selection.type !== 'none') {
+      if (
+        activeIdeaWorkspaceState?.selection.type &&
+        activeIdeaWorkspaceState.selection.type !== 'none'
+      ) {
         wsCtx.push(
           `Selection: ${activeIdeaWorkspaceState.selection.count} ${activeIdeaWorkspaceState.selection.type}(s) selected`
         );
@@ -1107,7 +1145,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // F3: Handle mywork-open-item custom event (dispatched by KnowledgePulse, detail views, etc.)
   const navigate = useNavigate();
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   useEffect(() => {
     const handler = (e: Event) => {
       const { type, id, name } = (e as CustomEvent).detail || {};
@@ -1279,6 +1317,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.ideas,
         color: 'bg-amber-500',
         requiresManagerAccess: false,
+        isLocked: isPilotParticipant,
       },
       {
         id: 'notebook' as ModuleTab,
@@ -1330,8 +1369,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       },
     ];
 
-    return allTabs.filter((tab) => !tab.requiresManagerAccess || canViewManager);
-  }, [isPolish, tabCounts, canViewManager]);
+    return allTabs.filter((tab) => {
+      if (tab.requiresManagerAccess && !canViewManager) return false;
+      return true;
+    });
+  }, [isPilotParticipant, isPolish, tabCounts, canViewManager]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -3104,15 +3146,25 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   <button
                     key={tab.id}
                     onClick={() => {
+                      if (tab.isLocked) {
+                        const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
+                        dispatchPilotAccessBlocked({
+                          message: detail.message,
+                          href: detail.href,
+                        });
+                        return;
+                      }
                       setActiveTab(tab.id);
                       // Close document when switching tabs to show list view
                       setActiveDocumentId(null);
                     }}
                     className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
                     data-testid={`mywork-tab-${tab.id}`}
+                    title={tab.isLocked ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message : undefined}
                   >
                     {tab.icon}
                     <span>{tab.label}</span>
+                    {tab.isLocked && <Lock size={14} className="opacity-70" />}
                   </button>
                 );
               })}

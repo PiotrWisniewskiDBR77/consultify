@@ -5,8 +5,10 @@
 import { type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
-import { requireRole } from '../../middleware/rbac.middleware.js';
-import { requireSuperAdminCapability } from '../../middleware/superAdmin.middleware.js';
+import {
+  requireSuperAdminCapability,
+  verifySuperAdmin,
+} from '../../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
@@ -16,7 +18,7 @@ const router = Router();
 router.get(
   '/overview/:orgId',
   verifyToken,
-  requireRole('superadmin'),
+  verifySuperAdmin,
   requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
@@ -29,7 +31,7 @@ router.get(
 router.post(
   '/change-plan',
   verifyToken,
-  requireRole('superadmin'),
+  verifySuperAdmin,
   requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, newPlanId, reason } = req.body;
@@ -54,7 +56,7 @@ router.post(
 router.post(
   '/grace-period',
   verifyToken,
-  requireRole('superadmin'),
+  verifySuperAdmin,
   requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, days, reason } = req.body;
@@ -78,7 +80,7 @@ router.post(
 router.get(
   '/contracts',
   verifyToken,
-  requireRole('superadmin'),
+  verifySuperAdmin,
   requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const { listManagedContracts } = await import('../../services/billing/billingAdminOps.js');
@@ -90,7 +92,7 @@ router.get(
 router.post(
   '/manual-contract',
   verifyToken,
-  requireRole('superadmin'),
+  verifySuperAdmin,
   requireSuperAdminCapability('billing_ops'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const {
@@ -107,6 +109,7 @@ router.post(
       externalInvoiceRef,
       notes,
       managedByUserId,
+      limitsOverride,
       reason,
     } = req.body || {};
     if (!organizationId || !subscriptionPlanId || !reason) {
@@ -130,6 +133,7 @@ router.post(
         externalInvoiceRef,
         notes,
         managedByUserId,
+        limitsOverride,
       },
       req.user?.id || 'unknown',
       reason

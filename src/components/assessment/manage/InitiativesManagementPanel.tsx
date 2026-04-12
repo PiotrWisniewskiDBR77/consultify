@@ -39,7 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
 import { cn } from '@/utils/cn';
@@ -716,7 +716,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlagsContext();
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [batches, setBatches] = useState<InitiativeBatch[]>([]);

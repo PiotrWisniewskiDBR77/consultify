@@ -173,7 +173,7 @@ export const PricingView: React.FC = () => {
     },
     {
       q: 'Is there a free trial?',
-      a: 'Yes! All plans include a 14-day free trial with full access to Scale features, 2,000 AI Credits, and 5 seats. No credit card required.',
+      a: 'Yes! All plans include a 7-day free trial with full access to Scale features, 2,000 AI Credits, and 5 seats. No credit card required.',
     },
     {
       q: "What's the difference between Managed AI and BYOK?",
@@ -223,7 +223,7 @@ export const PricingView: React.FC = () => {
             </h1>
 
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
-              Replace expensive consultants with AI-powered strategic guidance. 14-day free trial.
+              Replace expensive consultants with AI-powered strategic guidance. 7-day free trial.
               No credit card required.
             </p>
 
@@ -630,7 +630,7 @@ export const PricingView: React.FC = () => {
             Ready to transform your organization?
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-xl mx-auto">
-            Start your 14-day free trial today. Full Scale features, 2,000 AI Credits, 5 seats. No
+            Start your 7-day free trial today. Full Scale features, 2,000 AI Credits, 5 seats. No
             credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

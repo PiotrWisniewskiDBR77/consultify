@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Loader2, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
@@ -19,6 +20,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
   mode,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'signup' | 'login'>('signup');
@@ -30,6 +32,16 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
     companyName: '',
   });
 
+  const openAnna = () => {
+    window.dispatchEvent(new CustomEvent('anna:open', { detail: { source: 'demo_modal' } }));
+    onClose();
+  };
+
+  const openContactForm = () => {
+    navigate('/contact?topic=demo');
+    onClose();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -37,12 +49,28 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
     try {
       if (mode === 'demo') {
         if (tab === 'signup') {
-          const { user } = await Api.registerDemo({
-            email: form.email,
-            password: form.password,
-            firstName: form.firstName || undefined,
-          });
-          onSuccess({ ...user, hasWorkspace: true }, 'demo');
+          try {
+            const { user } = await Api.registerDemo({
+              email: form.email,
+              password: form.password,
+              firstName: form.firstName || undefined,
+              acceptedLegalDocs: ['TOS', 'PRIVACY'],
+              legalConsentAt: new Date().toISOString(),
+            });
+            onSuccess({ ...user, hasWorkspace: true }, 'demo');
+          } catch (signupErr: any) {
+            const message = String(signupErr?.message || '');
+            const emailAlreadyExists =
+              signupErr?.code === 'EMAIL_IN_USE' || message.toLowerCase().includes('already in use');
+
+            if (!emailAlreadyExists) {
+              throw signupErr;
+            }
+
+            const user = await Api.login(form.email, form.password);
+            await Api.enterDemo();
+            onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
+          }
         } else {
           const user = await Api.login(form.email, form.password);
           await Api.enterDemo();
@@ -110,7 +138,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
               </h2>
               <p className="text-slate-500 text-xs">
                 {mode === 'demo'
-                  ? t('demo.modal.subtitle', 'Explore Atelier ToolToys sample data')
+                  ? t('demo.modal.subtitle', 'Explore the Atelier Toys guided workspace')
                   : t('trial.modal.subtitle', 'Your own workspace, 7 days free')}
               </p>
             </div>
@@ -225,7 +253,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   <input
                     type="password"
                     required
-                    minLength={8}
+                    minLength={tab === 'signup' ? 8 : undefined}
                     value={form.password}
                     onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                     className="w-full px-3 py-2 text-sm rounded-lg bg-navy-800/80 border border-white/5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-colors"
@@ -268,7 +296,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     <p className="text-xs text-slate-500 leading-relaxed">
                       {t(
                         'demo.modal.demoDescriptionSigned',
-                        "Sign up or log in to explore Atelier ToolToys sample data. We'll follow up with you."
+                        'Create an account or log in to enter the Atelier Toys demo automatically.'
                       )}
                     </p>
                   </div>
@@ -288,20 +316,37 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 <p className="text-xs text-slate-600 mt-3 pt-3 border-t border-white/5">
                   {t(
                     'demo.modal.commercialDescription',
-                    'For production use with your own data and team, contact our sales team.'
+                    'This demo is based on the Atelier Toys story. If you have questions, talk to Anna or contact us directly.'
                   )}
                 </p>
               </div>
 
-              {/* Contact Sales — purple CTA */}
-              <a
-                href="https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full py-2.5 px-4 text-sm bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors text-center"
-              >
-                {t('demo.modal.contactSales', 'Contact Sales')}
-              </a>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={openAnna}
+                  className="block w-full py-2.5 px-4 text-sm bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors text-center"
+                >
+                  {t('demo.modal.askAnna', 'Talk to Anna')}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openContactForm}
+                  className="block w-full py-2.5 px-4 text-sm bg-navy-800/80 border border-white/10 hover:bg-navy-800 text-slate-100 font-medium rounded-lg transition-colors text-center"
+                >
+                  {t('demo.modal.contactUs', 'Contact Us')}
+                </button>
+
+                <a
+                  href="https://ateliertoys.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-2.5 px-4 text-sm bg-transparent border border-primary-500/40 hover:bg-primary-500/10 text-primary-300 font-medium rounded-lg transition-colors text-center"
+                >
+                  {t('demo.modal.atelierLink', 'See the Atelier Toys brand this demo is based on')}
+                </a>
+              </div>
 
               {/* Footer Note */}
               <p className="text-[11px] text-center text-slate-600 mt-3 leading-relaxed">

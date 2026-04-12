@@ -29,20 +29,21 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import {
-  createInitiativeWriteTruth,
-  getInitiativeStatusPreflightTruth,
-  quickUpdateInitiativeWriteTruth,
-  updateInitiativeStatusWriteTruth,
-} from '@/services/initiativeWriteTruth';
-import {
   V8PlanningApi,
   type V8PlanningDecisionChain,
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import {
+  createInitiativeWriteTruth,
+  getInitiativeStatusPreflightTruth,
+  quickUpdateInitiativeWriteTruth,
+  updateInitiativeStatusWriteTruth,
+} from '@/services/initiativeWriteTruth';
 import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
+import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
@@ -55,13 +56,7 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
-import {
-  FilterChip,
-  ModuleHub,
-  ModuleTab,
-  OpenDocument,
-  ViewMode,
-} from '../shared/ModuleHub';
+import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
@@ -150,6 +145,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentProjectId, currentUser } = useAppStore();
+  const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const [searchParams, setSearchParams] = useSearchParams();
   const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
   const [handledDeepLinkNew, setHandledDeepLinkNew] = useState(false);
@@ -171,7 +167,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Analysis sub-view state (lifted so chips render in Menu 3 via commandRowContent)
   const [analysisSubview, setAnalysisSubview] = useState<AnalysisSubview>('resources');
   const [analysisActionButtons, setAnalysisActionButtons] = useState<React.ReactNode>(null);
-  const registerAnalysisActions = useCallback((node: React.ReactNode) => setAnalysisActionButtons(node), []);
+  const registerAnalysisActions = useCallback(
+    (node: React.ReactNode) => setAnalysisActionButtons(node),
+    []
+  );
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -361,11 +360,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
-        const isNetworkError = !error?.status || error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError');
+        const isNetworkError =
+          !error?.status ||
+          error?.message?.includes('Failed to fetch') ||
+          error?.message?.includes('NetworkError');
         if (isNetworkError && fetchRetryRef.current < 3) {
           fetchRetryRef.current++;
           const delay = Math.min(2000 * Math.pow(2, fetchRetryRef.current - 1), 8000);
-          console.warn(`[InitiativesHub] Network error, retrying in ${delay}ms (attempt ${fetchRetryRef.current}/3)`);
+          console.warn(
+            `[InitiativesHub] Network error, retrying in ${delay}ms (attempt ${fetchRetryRef.current}/3)`
+          );
           setTimeout(() => fetchData(), delay);
           return;
         }
@@ -492,13 +496,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   const filterActions = useMemo(() => {
+    const actions = PRIORITY_OPTIONS.map((p) => ({
+      id: `priority-${p}`,
+      label: t(`initiatives.priority.${p.toLowerCase()}`, p),
+      badge: filters.priority?.includes(p) ? 1 : 0,
+      onClick: () => togglePriorityFilter(p),
+    }));
+
+    if (isPilotParticipant) {
+      return actions;
+    }
+
     return [
-      ...PRIORITY_OPTIONS.map((p) => ({
-        id: `priority-${p}`,
-        label: t(`initiatives.priority.${p.toLowerCase()}`, p),
-        badge: filters.priority?.includes(p) ? 1 : 0,
-        onClick: () => togglePriorityFilter(p),
-      })),
+      ...actions,
       {
         id: 'bulk-edit',
         label: t('initiatives.bulkEdit.title'),
@@ -513,7 +523,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         },
       },
     ];
-  }, [selectedIds.size, filters.priority, togglePriorityFilter, t]);
+  }, [isPilotParticipant, selectedIds.size, filters.priority, togglePriorityFilter, t]);
 
   // ============================================
   // HANDLERS
@@ -706,17 +716,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (handledDeepLinkNew) return;
     const isNew = searchParams.get('new') === '1';
     if (isNew) {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/initiatives',
+        });
+        const next = new URLSearchParams(searchParams);
+        next.delete('new');
+        setSearchParams(next, { replace: true });
+        setHandledDeepLinkNew(true);
+        return;
+      }
       setShowNewModal(true);
       const next = new URLSearchParams(searchParams);
       next.delete('new');
       setSearchParams(next, { replace: true });
     }
     setHandledDeepLinkNew(true);
-  }, [handledDeepLinkNew, searchParams, setSearchParams]);
+  }, [handledDeepLinkNew, isPilotParticipant, searchParams, setSearchParams]);
 
   // D3.1: Status change with approval validation
   const handleStatusChange = useCallback(
     async (initiativeId: string, newStatus: InitiativeStatus) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/initiatives',
+        });
+        return;
+      }
       // Preflight via backend gate-readiness-check (source of truth).
       // This avoids local heuristics drifting from canonical gate DoD rules.
       if (isShowcaseInitiativeId(initiativeId)) {
@@ -806,11 +832,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       }
     },
-    [fetchData, setOpenDocuments, t]
+    [fetchData, isPilotParticipant, setOpenDocuments, t]
   );
 
   const handleQuickUpdate = useCallback(
     async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/initiatives',
+        });
+        return;
+      }
       // D1.2: Block level downgrade
       if ((updates as any).level) {
         const LEVEL_ORDER: Record<string, number> = {
@@ -846,7 +878,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return;
       }
       try {
-        const truth = await quickUpdateInitiativeWriteTruth(initiativeId, updates as Record<string, unknown>);
+        const truth = await quickUpdateInitiativeWriteTruth(
+          initiativeId,
+          updates as Record<string, unknown>
+        );
         const refreshed = truth.initiative;
         setInitiatives((prev) =>
           prev.map((initiative) =>
@@ -877,7 +912,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         toast.error(t('initiatives.toast.updateFailed', 'Nie udało się zaktualizować'));
       }
     },
-    [setOpenDocuments, t]
+    [isPilotParticipant, setOpenDocuments, t]
   );
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -916,6 +951,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   const handleBulkApply = useCallback(async () => {
+    if (isPilotParticipant) {
+      dispatchPilotAccessBlocked({
+        href: '/initiatives',
+      });
+      return;
+    }
     if (selectedIds.size === 0) return;
 
     const ids = Array.from(selectedIds);
@@ -953,7 +994,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     setBulkOwnerBusinessId('');
     setBulkOwnerExecutionId('');
     fetchData(true);
-  }, [bulkOwnerBusinessId, bulkOwnerExecutionId, bulkPriority, bulkStatus, fetchData, selectedIds]);
+  }, [
+    bulkOwnerBusinessId,
+    bulkOwnerExecutionId,
+    bulkPriority,
+    bulkStatus,
+    fetchData,
+    isPilotParticipant,
+    selectedIds,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!isPilotParticipant) return;
+    if (showNewModal) setShowNewModal(false);
+    if (showBulkModal) setShowBulkModal(false);
+  }, [isPilotParticipant, showBulkModal, showNewModal]);
 
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
@@ -969,9 +1025,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             const init = initiatives.find((i) => i.id === id);
             if (init) handlePreviewSelection(init.id);
           }}
-          onQuickUpdate={async (initiativeId, updates) => {
-            await handleQuickUpdate(initiativeId, updates as Partial<PortfolioInitiative>);
-          }}
+          onQuickUpdate={
+            isPilotParticipant
+              ? undefined
+              : async (initiativeId, updates) => {
+                  await handleQuickUpdate(initiativeId, updates as Partial<PortfolioInitiative>);
+                }
+          }
           users={users}
           projectId={currentProjectId || undefined}
           subview={analysisSubview}
@@ -1052,13 +1112,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
               {t('initiatives.empty.description')}
             </p>
-            <button
-              onClick={() => setShowNewModal(true)}
-              className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
-            >
-              <Plus size={14} className="inline mr-2" />
-              {t('initiatives.form.newInitiative')}
-            </button>
+            {!isPilotParticipant && (
+              <button
+                onClick={() => setShowNewModal(true)}
+                className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-slate-900 dark:text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
+              >
+                <Plus size={14} className="inline mr-2" />
+                {t('initiatives.form.newInitiative')}
+              </button>
+            )}
           </div>
         </div>
       );
@@ -1344,11 +1406,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       : 0;
 
   const ANALYSIS_SUBVIEWS: { id: AnalysisSubview; labelKey: string; icon: React.ReactNode }[] = [
-    { id: 'resources', labelKey: 'initiatives.analysis.resources.title', icon: <Users size={14} className="text-violet-400" /> },
-    { id: 'feasibility', labelKey: 'initiatives.analysis.feasibility.title', icon: <Target size={14} className="text-amber-400" /> },
-    { id: 'logic', labelKey: 'initiatives.analysis.logic.title', icon: <GitBranch size={14} className="text-cyan-400" /> },
-    { id: 'timeline', labelKey: 'initiatives.analysis.timeline.title', icon: <BarChart3 size={14} className="text-emerald-400" /> },
-    { id: 'completeness', labelKey: 'initiatives.analysis.completeness.title', icon: <CheckCircle2 size={14} className="text-rose-400" /> },
+    {
+      id: 'resources',
+      labelKey: 'initiatives.analysis.resources.title',
+      icon: <Users size={14} className="text-violet-400" />,
+    },
+    {
+      id: 'feasibility',
+      labelKey: 'initiatives.analysis.feasibility.title',
+      icon: <Target size={14} className="text-amber-400" />,
+    },
+    {
+      id: 'logic',
+      labelKey: 'initiatives.analysis.logic.title',
+      icon: <GitBranch size={14} className="text-cyan-400" />,
+    },
+    {
+      id: 'timeline',
+      labelKey: 'initiatives.analysis.timeline.title',
+      icon: <BarChart3 size={14} className="text-emerald-400" />,
+    },
+    {
+      id: 'completeness',
+      labelKey: 'initiatives.analysis.completeness.title',
+      icon: <CheckCircle2 size={14} className="text-rose-400" />,
+    },
   ];
 
   const analysisCommandRow = (
@@ -1372,9 +1454,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         ))}
       </div>
       {analysisActionButtons && (
-        <div className="flex items-center gap-1.5 shrink-0">
-          {analysisActionButtons}
-        </div>
+        <div className="flex items-center gap-1.5 shrink-0">{analysisActionButtons}</div>
       )}
     </div>
   );
@@ -1518,8 +1598,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={() => setShowNewModal(true)}
-        newItemLabel={t('initiatives.form.newInitiative')}
+        onNewItem={isPilotParticipant ? undefined : () => setShowNewModal(true)}
+        newItemLabel={isPilotParticipant ? undefined : t('initiatives.form.newInitiative')}
         filterActions={filterActions}
         rightControls={rightControls}
         commandRowContent={activeTab === 'analysis' ? analysisCommandRow : commandRowContent}
@@ -1680,7 +1760,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setNewLevel('standard');
                   if (createdId) {
                     try {
-                      const full = truth.initiative || (await V8PlanningApi.getInitiative(createdId));
+                      const full =
+                        truth.initiative || (await V8PlanningApi.getInitiative(createdId));
                       const normalized = normalizeInitiativeForPortfolio(
                         full as Record<string, any>,
                         createdId

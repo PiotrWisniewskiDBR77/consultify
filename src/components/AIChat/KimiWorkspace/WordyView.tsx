@@ -35,7 +35,7 @@ Format your final output as a well-structured document with proper headings, par
 
 export const WordyView: React.FC = () => {
   const pipeline = useKimiArtifactPipeline('wordy');
-  const { activeMessages } = useConversationStore();
+  const activeMessages = useConversationStore((s) => s.activeMessages);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
 
   const systemPrompt = useMemo(() => {
@@ -46,9 +46,10 @@ export const WordyView: React.FC = () => {
   const [searchParams] = useSearchParams();
   const artifactId = searchParams.get('artifactId');
   const templateArtifactId = searchParams.get('templateArtifactId');
+  const templatePrompt = searchParams.get('templatePrompt');
   const viewParam = searchParams.get('view');
 
-  const showHome = !artifactId && !templateArtifactId && viewParam !== 'new' && !pipeline.currentRun && !pipeline.isGenerating;
+  const showHome = !artifactId && !templateArtifactId && !templatePrompt && viewParam !== 'new' && !pipeline.currentRun && !pipeline.isGenerating;
 
   const advanceRef = useRef(pipeline.advancePipeline);
   advanceRef.current = pipeline.advancePipeline;
@@ -60,11 +61,21 @@ export const WordyView: React.FC = () => {
   const [reopenReportId, setReopenReportId] = useState<string | null>(null);
   const reopenLoaded = useRef(false);
 
-  // Auto-trigger from template
+  // Auto-trigger from builtin template prompt
+  const promptTriggered = useRef(false);
+  useEffect(() => {
+    if (!templatePrompt || promptTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    promptTriggered.current = true;
+    autoTriggered.current = true;
+    void startRef.current(templatePrompt);
+  }, [templatePrompt, pipeline.currentRun, pipeline.isGenerating]);
+
+  // Auto-trigger from API template
   const templateTriggered = useRef(false);
   useEffect(() => {
     if (!templateArtifactId || templateTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
     templateTriggered.current = true;
+    autoTriggered.current = true;
     Api.get(`/artifacts/${templateArtifactId}`)
       .then((tmpl: any) => {
         const desc = tmpl?.originSummary?.template?.description || tmpl?.title || 'Document from template';
@@ -111,18 +122,36 @@ export const WordyView: React.FC = () => {
   }, [pipeline.isGenerating, pipeline.isBusy]);
 
   useEffect(() => {
-    if (autoTriggered.current || pipeline.currentRun || pipeline.isGenerating || reopenReportId)
+    if (
+      autoTriggered.current ||
+      templatePrompt ||
+      templateArtifactId ||
+      artifactId ||
+      viewParam === 'new' ||
+      pipeline.currentRun ||
+      pipeline.isGenerating ||
+      reopenReportId
+    )
       return;
     const userMessages = activeMessages.filter((m) => m.role === 'user');
     const aiMessages = activeMessages.filter((m) => m.role === 'ai');
     if (userMessages.length >= 1 && aiMessages.length >= 1) {
-      const firstUserMsg = userMessages[0].content;
-      if (firstUserMsg && firstUserMsg.trim().length > 5) {
+      const lastUserMsg = userMessages[userMessages.length - 1]?.content;
+      if (lastUserMsg && lastUserMsg.trim().length > 5) {
         autoTriggered.current = true;
-        void startRef.current(firstUserMsg.trim());
+        void startRef.current(lastUserMsg.trim());
       }
     }
-  }, [activeMessages, pipeline.currentRun, pipeline.isGenerating, reopenReportId]);
+  }, [
+    activeMessages,
+    artifactId,
+    templateArtifactId,
+    templatePrompt,
+    viewParam,
+    pipeline.currentRun,
+    pipeline.isGenerating,
+    reopenReportId,
+  ]);
 
   const effectivePreview = pipeline.preview || reopenPreview;
   const effectiveReportId =

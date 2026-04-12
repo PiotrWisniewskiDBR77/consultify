@@ -18,16 +18,13 @@ type AccessBlockedDetail = {
   accessContext?: any;
 };
 
-const SALES_CALL_URL =
-  'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
-
 const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   ORG_NOT_FOUND: { labelKey: 'access.cta.goToBilling', href: '/auth?mode=login' },
   ORG_INACTIVE: { labelKey: 'access.cta.goToBilling', href: '/auth?mode=login' },
   TRIAL_PROFILE_INCOMPLETE: { labelKey: 'access.cta.completeSetup', href: ROUTES.ORG_SETUP },
-  DEMO_TIME_EXPIRED: { labelKey: 'access.cta.startTrial', href: '/auth?mode=register' },
-  DEMO_AI_SESSION_LIMIT_REACHED: { labelKey: 'access.cta.startTrial', href: '/auth?mode=register' },
-  DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/auth?mode=register' },
+  DEMO_TIME_EXPIRED: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
+  DEMO_AI_SESSION_LIMIT_REACHED: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
+  DEMO_READ_ONLY: { labelKey: 'access.cta.startTrial', href: '/trial/start' },
   TRIAL_EXPIRED: { labelKey: 'access.cta.upgradeNow', href: '/settings?tab=billing' },
   AI_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
   AI_TOKEN_BUDGET_EXCEEDED: {
@@ -138,26 +135,6 @@ export const AccessBlockedModal: React.FC = () => {
         )}
 
         <div className="mt-6 flex flex-wrap gap-2 justify-end">
-          {resolved.isDemoBlock && (
-            <button
-              onClick={() => {
-                try {
-                  trackFunnelEvent('upgrade_cta_clicked', {
-                    reason: resolved.code,
-                    location: 'blocked_modal',
-                    action: 'book_call',
-                  });
-                } catch {
-                  // ignore
-                }
-                window.open(SALES_CALL_URL, '_blank');
-              }}
-              className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 text-navy-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-            >
-              {t('access.modal.bookCall')}
-            </button>
-          )}
-
           <button
             onClick={() => setOpen(false)}
             className="px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"

@@ -137,7 +137,7 @@ export const ChatActionProposalSchema = z.object({
   conversationId: z.string().uuid(),
   messageId: z.string().uuid(),
   underlyingProposalId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   displaySummary: z.string().min(1),
   renderingHints: RenderingHintsSchema,
   createdAt: z.string().min(1),
@@ -157,7 +157,7 @@ export const ChatExecutionHandoffSchema = z.object({
   conversationId: z.string().uuid(),
   contextSnapshotId: z.string().uuid(),
   executionRunId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   initiatorUserId: z.string().uuid(),
   intentClassification: IntentClassificationSchema,
   goal: z.string().min(1),
@@ -177,7 +177,7 @@ export interface ClassifyIntentParams {
 export const ClassifyIntentParamsSchema = z.object({
   message: z.string().min(1),
   contextSnapshotId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
 });
 
 export interface InitiateHandoffParams {
@@ -192,7 +192,7 @@ export const InitiateHandoffParamsSchema = z.object({
   conversationId: z.string().uuid(),
   contextSnapshotId: z.string().uuid(),
   userId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   goal: z.string().min(1),
 });
 
@@ -209,7 +209,7 @@ export const CreateChatActionProposalParamsSchema = z.object({
   conversationId: z.string().uuid(),
   messageId: z.string().uuid(),
   underlyingProposalId: z.string().uuid(),
-  organizationId: z.string().uuid(),
+  organizationId: z.string().min(1),
   displaySummary: z.string().min(1),
   renderingHints: RenderingHintsSchema,
 });

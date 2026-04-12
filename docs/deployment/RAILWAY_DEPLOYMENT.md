@@ -1,5 +1,8 @@
 # Railway Deployment Guide - Quick Start
 
+> Canonical branch and release policy lives in [../operations/STAGING_PRODUCTION_OPERATING_MODEL.md](../operations/STAGING_PRODUCTION_OPERATING_MODEL.md).
+> Use this guide for Railway-specific setup only.
+
 ## Prerequisites
 
 - GitHub account
@@ -190,7 +193,10 @@ Visit your Railway URL:
 
 ## Updating Your Application
 
-Railway auto-deploys on git push to your main branch.
+Recommended release policy:
+
+- `develop` auto-deploys to the staging Railway target
+- `main` deploys to production only through the manual GitHub Actions workflow
 
 To manually trigger deployment:
 
@@ -234,17 +240,24 @@ Railway automatically backs up PostgreSQL databases:
 
 ### Staging Environment
 
-1. Create new Railway project
-2. Deploy from same repo
-3. Use different branch (e.g., `staging`)
+1. Create a dedicated staging Railway target
+2. Deploy from the same repository
+3. Use `develop` as the staging source branch
 4. Set `NODE_ENV=staging`
+5. Use separate DB, secrets, Stripe test keys, and staging domains
 
 ### Production Environment
 
-- Use main/master branch
+- Use `main`
 - Set `NODE_ENV=production`
 - Use production API keys
 - Enable all monitoring
+
+See also:
+
+- [Railway Environment Matrix](./RAILWAY_ENV_MATRIX.md)
+- [Local to Staging Runbook](../operations/LOCAL_TO_STAGING_RUNBOOK.md)
+- [Staging to Production Runbook](../operations/STAGING_TO_PRODUCTION_RUNBOOK.md)
 
 ## Security Best Practices
 
@@ -260,7 +273,7 @@ Railway automatically backs up PostgreSQL databases:
 
 1. Set up monitoring (Sentry, LogRocket)
 2. Configure custom domain
-3. Set up CI/CD (optional, Railway auto-deploys)
+3. Configure `railway-deploy.yml` repository variables and secrets
 4. Configure database backups
 5. Set up usage alerts
 6. Consider CDN for static assets (Cloudflare)

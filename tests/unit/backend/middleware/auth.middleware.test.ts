@@ -104,6 +104,24 @@ describe('AuthMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('should route demo requests to the interactive session tenant', async () => {
+      mockReq.headers!['authorization'] = 'Bearer valid-token';
+      mockReq.headers!['x-demo-mode'] = 'true';
+      mockReq.headers!['x-demo-session-org'] = 'demo-org-session-user123';
+      mockReq.get = vi.fn((header: string) => mockReq.headers?.[header.toLowerCase()] || null) as any;
+      mockJwt.verify.mockImplementation((_token, _secret, callback) => {
+        callback(null, { id: 'user-123', role: 'ADMIN', organizationId: 'real-org-id' });
+      });
+      mockDbGet.mockResolvedValue(null);
+
+      await verifyToken(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockReq.organizationId).toBe('demo-org-session-user123');
+      expect(mockReq.user?.organizationId).toBe('demo-org-session-user123');
+      expect(mockReq.user?.isDemo).toBe(true);
+      expect(mockNext).toHaveBeenCalled();
+    });
+
     it('should treat non-Bearer authorization header as token', async () => {
       mockReq.headers!['authorization'] = 'raw-token';
       mockJwt.verify.mockImplementation((_token, _secret, callback) => {

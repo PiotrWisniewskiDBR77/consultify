@@ -107,7 +107,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
     {
       title: t('landing.footer.caseStudies.title', 'Case Studies'),
       links: [
-        { label: t('landing.footer.caseStudies.businessCases', 'Business Cases'), href: dbr77Url('/case-studies', lang), external: true },
+        { label: t('landing.footer.caseStudies.businessCases', 'Business Cases'), href: ROUTES.CASE_STUDIES },
         { label: 'Atelier Toys', href: 'https://ateliertoys.com', external: true },
       ],
     },
@@ -115,10 +115,9 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
       title: t('landing.footer.documentation.title', 'Documentation'),
       links: [
         { label: t('pricing.badge', 'Pricing'), href: ROUTES.PRICING },
-        { label: 'Subscription Terms', href: ROUTES.LEGAL.SUBSCRIPTION },
-        { label: 'Data Processing (DPA)', href: ROUTES.LEGAL.DPA },
-        { label: 'Service Levels (SLA)', href: ROUTES.LEGAL.SLA },
-        { label: 'Sub-processors', href: ROUTES.LEGAL.SUBPROCESSORS },
+        { label: t('landing.footer.legal.subscription', 'Subscription Terms'), href: ROUTES.LEGAL.SUBSCRIPTION },
+        { label: t('landing.footer.legal.dpa', 'Data Processing (DPA)'), href: ROUTES.LEGAL.DPA },
+        { label: t('landing.footer.legal.sla', 'Service Levels (SLA)'), href: ROUTES.LEGAL.SLA },
         { label: t('legal.centerTitle', 'Legal Center'), href: ROUTES.LEGAL.CENTER },
       ],
     },
@@ -145,9 +144,9 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
     <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0B0A23]/95">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-12">
-          {/* Brand Column - Spans 2 on large */}
-          <div className="col-span-2 space-y-6">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[1.45fr_repeat(5,minmax(0,0.9fr))] lg:gap-8 xl:gap-10">
+          {/* Brand Column */}
+          <div className="max-w-[280px] space-y-5">
             {/* Logo */}
             <div className="flex items-center">
               <img
@@ -163,33 +162,33 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
             </div>
 
             {/* Offices */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
                 {t('landing.footer.offices', 'Offices')}
               </h4>
 
-              <div className="rounded-xl bg-slate-100 p-4 dark:bg-white/[0.04]">
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-base dark:bg-white/[0.08]" aria-hidden="true">🇺🇸</span>
+              <div className="rounded-xl bg-slate-100 px-3.5 py-3 dark:bg-white/[0.04]">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-sm dark:bg-white/[0.08]" aria-hidden="true">🇺🇸</span>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    <p className="text-[13px] font-semibold text-slate-800 dark:text-white">
                       {COMPANY.usa.name}
                     </p>
-                    <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
                       {COMPANY.usa.address}<br />{COMPANY.usa.city}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-xl bg-slate-100 p-4 dark:bg-white/[0.04]">
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-base dark:bg-white/[0.08]" aria-hidden="true">🇩🇪</span>
+              <div className="rounded-xl bg-slate-100 px-3.5 py-3 dark:bg-white/[0.04]">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-sm dark:bg-white/[0.08]" aria-hidden="true">🇩🇪</span>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    <p className="text-[13px] font-semibold text-slate-800 dark:text-white">
                       {COMPANY.germany.name}
                     </p>
-                    <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
                       {COMPANY.germany.address}<br />{COMPANY.germany.city}
                     </p>
                   </div>
@@ -200,7 +199,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
 
           {/* Navigation Columns */}
           {sections.map((section, idx) => (
-            <div key={idx} className="space-y-4">
+            <div key={idx} className="space-y-4 min-w-0">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
                 {section.title}
               </h4>
@@ -306,14 +305,14 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
           {/* Legal Links Strip */}
           <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2">
             {[
-              { label: t('landing.footer.legal.terms', 'Terms of Service'), href: ROUTES.LEGAL.TERMS },
-              { label: t('landing.footer.legal.privacy', 'Privacy Policy'), href: ROUTES.LEGAL.PRIVACY },
-              { label: t('landing.footer.legal.cookies', 'Cookie Policy'), href: ROUTES.LEGAL.COOKIES },
-              { label: 'Subscription Terms', href: ROUTES.LEGAL.SUBSCRIPTION },
-              { label: 'DPA', href: ROUTES.LEGAL.DPA },
-              { label: 'SLA', href: ROUTES.LEGAL.SLA },
-              { label: t('landing.footer.legal.security', 'Security Overview'), href: ROUTES.LEGAL.SECURITY },
-              { label: t('landing.footer.legal.consent', 'Legal Center'), href: ROUTES.LEGAL.CENTER },
+              { label: t('landing.footer.legal.terms', 'Terms of Service'), href: '/legal/terms' },
+              { label: t('landing.footer.legal.privacy', 'Privacy Policy'), href: '/legal/privacy' },
+              { label: t('landing.footer.legal.cookies', 'Cookie Policy'), href: '/legal/cookies' },
+              { label: t('landing.footer.legal.subscription', 'Subscription Terms'), href: ROUTES.LEGAL.SUBSCRIPTION },
+              { label: t('landing.footer.legal.dpa', 'DPA'), href: ROUTES.LEGAL.DPA },
+              { label: t('landing.footer.legal.sla', 'SLA'), href: ROUTES.LEGAL.SLA },
+              { label: t('landing.footer.legal.security', 'Security Overview'), href: '/legal/security' },
+              { label: t('landing.footer.legal.consent', 'Consent & Controls'), href: ROUTES.LEGAL.CENTER },
             ].map((link, idx) => (
               <a
                 key={idx}

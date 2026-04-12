@@ -89,7 +89,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
         }).length;
         setPendingFeedbackCount(pending);
       } catch (err) {
-        // Silently fail
+        console.warn('[CustomersModule] Failed to fetch feedback count', err);
       }
     };
 

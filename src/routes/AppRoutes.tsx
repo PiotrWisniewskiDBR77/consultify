@@ -278,18 +278,7 @@ const AboutView = React.lazy(() =>
 const ContactView = React.lazy(() =>
   import('@/views/legal/ContactView').then((m) => ({ default: m.ContactView }))
 );
-const TermsOfServiceView = React.lazy(() =>
-  import('@/views/legal/TermsOfServiceView').then((m) => ({ default: m.TermsOfServiceView }))
-);
-const PrivacyPolicyView = React.lazy(() =>
-  import('@/views/legal/PrivacyPolicyView').then((m) => ({ default: m.PrivacyPolicyView }))
-);
-const CookiePolicyView = React.lazy(() =>
-  import('@/views/legal/CookiePolicyView').then((m) => ({ default: m.CookiePolicyView }))
-);
-const SecurityView = React.lazy(() =>
-  import('@/views/legal/SecurityView').then((m) => ({ default: m.SecurityView }))
-);
+// Standalone legal views removed — all legal documents served via LegalDocumentView (/legal/:docSlug)
 const VectorPage = React.lazy(() =>
   import('../views/VectorPage').then((m) => ({ default: m.VectorPage }))
 );
@@ -324,6 +313,9 @@ const AppPricingView = React.lazy(() =>
 );
 const ExecutiveView = React.lazy(() =>
   import('@/views/ExecutiveView').then((m) => ({ default: m.ExecutiveView }))
+);
+const BusinessCasesPage = React.lazy(() =>
+  import('@/views/BusinessCasesPage').then((m) => ({ default: m.BusinessCasesPage }))
 );
 
 // Documentation Portal (Public)
@@ -533,7 +525,7 @@ export const AppRoutes: React.FC = () => {
       setCurrentView(AppView.AUTH);
     } else {
       navigate('/trial/start');
-      setAuthInitialStep(AuthStep.CODE_ENTRY);
+      setAuthInitialStep(AuthStep.REGISTER);
       setCurrentView(AppView.AUTH);
     }
   };
@@ -619,6 +611,11 @@ export const AppRoutes: React.FC = () => {
       isAuthenticated: true,
     };
     setCurrentUser(authenticatedUser);
+    try {
+      sessionStorage.removeItem('attribution_invite');
+    } catch {
+      // ignore storage errors
+    }
 
     if (validUser.organizationId) {
       setCurrentOrganization({
@@ -794,6 +791,14 @@ export const AppRoutes: React.FC = () => {
 
         {/* Pricing marketing page (Public) */}
         <Route
+          path={ROUTES.CASE_STUDIES}
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading business cases..." />}>
+              <BusinessCasesPage />
+            </Suspense>
+          }
+        />
+        <Route
           path="/pricing"
           element={
             <Suspense fallback={<LoadingScreen message="Loading pricing..." />}>
@@ -894,7 +899,7 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Trial Start - stable key prevents remount during auth initialization */}
+        {/* Trial Start - self-serve trial registration */}
         <Route
           path="/trial/start"
           element={
@@ -904,7 +909,7 @@ export const AppRoutes: React.FC = () => {
               <AuthLayout>
                 <AuthView
                   key="trial-form-stable"
-                  initialStep={AuthStep.CODE_ENTRY}
+                  initialStep={AuthStep.REGISTER}
                   targetMode={SessionMode.FULL}
                   onAuthSuccess={handleAuthSuccess}
                   onBack={() => navigate('/')}
@@ -1770,8 +1775,10 @@ export const AppRoutes: React.FC = () => {
             <AnimationWrapper variant="slideUp">
               <TrialEntryView
                 onStartTrial={() => {
-                  setCurrentView(AppView.AI_CHAT);
-                  navigate('/chat');
+                  setSessionMode(SessionMode.FULL);
+                  setAuthInitialStep(AuthStep.REGISTER);
+                  setCurrentView(AppView.AUTH);
+                  navigate('/trial/start');
                 }}
               />
             </AnimationWrapper>
@@ -1807,38 +1814,11 @@ export const AppRoutes: React.FC = () => {
             </AnimationWrapper>
           }
         />
-        <Route
-          path={ROUTES.LEGAL.TERMS}
-          element={
-            <AnimationWrapper variant="fade">
-              <TermsOfServiceView />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.LEGAL.PRIVACY}
-          element={
-            <AnimationWrapper variant="fade">
-              <PrivacyPolicyView />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.LEGAL.COOKIES}
-          element={
-            <AnimationWrapper variant="fade">
-              <CookiePolicyView />
-            </AnimationWrapper>
-          }
-        />
-        <Route
-          path={ROUTES.LEGAL.SECURITY}
-          element={
-            <AnimationWrapper variant="fade">
-              <SecurityView />
-            </AnimationWrapper>
-          }
-        />
+        {/* Legacy standalone legal routes → redirect to database-backed /legal/:slug */}
+        <Route path="/terms" element={<Navigate to="/legal/terms" replace />} />
+        <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
+        <Route path="/cookies" element={<Navigate to="/legal/cookies" replace />} />
+        <Route path="/security" element={<Navigate to="/legal/security" replace />} />
         <Route
           path={ROUTES.VECTOR}
           element={

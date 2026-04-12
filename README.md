@@ -170,7 +170,12 @@ docker-compose up --build                               # Start application
 
 ### Option 2: Railway
 
-See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) and [RAILWAY_SETUP.md](RAILWAY_SETUP.md) for configuration details.
+Use the current deployment documents:
+
+- [Staging and Production Operating Model](docs/operations/STAGING_PRODUCTION_OPERATING_MODEL.md)
+- [Railway Deployment Guide](docs/deployment/RAILWAY_DEPLOYMENT.md)
+- [Railway Setup Guide](docs/deployment/RAILWAY_SETUP.md)
+- [Railway Environment Matrix](docs/deployment/RAILWAY_ENV_MATRIX.md)
 
 Configure Railway environment variables from `.env.production.example`.
 

@@ -98,8 +98,12 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
     navigate(`${meta.route}?view=new`);
   };
 
-  const handleTemplateClick = (templateId: string) => {
-    navigate(`${meta.route}?templateArtifactId=${encodeURIComponent(templateId)}`);
+  const handleTemplateClick = (templateId: string, promptOverride?: string) => {
+    if (promptOverride) {
+      navigate(`${meta.route}?view=new&templatePrompt=${encodeURIComponent(promptOverride)}`);
+    } else {
+      navigate(`${meta.route}?templateArtifactId=${encodeURIComponent(templateId)}`);
+    }
   };
 
   const handleArtifactClick = (artifactId: string) => {
@@ -196,7 +200,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
 interface TemplatesGridProps {
   templates: Array<{ id: string; title: string; description?: string; category?: string }>;
   loading: boolean;
-  onTemplateClick: (id: string) => void;
+  onTemplateClick: (id: string, promptOverride?: string) => void;
   isPolish: boolean;
   lane: KimiLane;
 }
@@ -242,13 +246,17 @@ function TemplatesGrid({ templates, loading, onTemplateClick, isPolish, lane }: 
       id: t.id,
       title: t.title,
       desc: t.description || '',
-      isApi: true,
+      isBuiltin: false,
+      builtinPrompt: '',
     }));
     const builtin = builtinCards.map((b) => ({
       id: b.id,
       title: isPolish ? b.titlePl : b.title,
       desc: isPolish ? b.descPl : b.desc,
-      isApi: false,
+      isBuiltin: true,
+      builtinPrompt: isPolish
+        ? `Stwórz: ${b.titlePl}. ${b.descPl}`
+        : `Create: ${b.title}. ${b.desc}`,
     }));
     const apiIds = new Set(apiCards.map((c) => c.id));
     return [...apiCards, ...builtin.filter((b) => !apiIds.has(b.id))];
@@ -267,7 +275,7 @@ function TemplatesGrid({ templates, loading, onTemplateClick, isPolish, lane }: 
       {allCards.map((card) => (
         <button
           key={card.id}
-          onClick={() => onTemplateClick(card.id)}
+          onClick={() => onTemplateClick(card.id, card.isBuiltin ? card.builtinPrompt : undefined)}
           className="group text-left p-4 rounded-xl border border-slate-200/70 dark:border-white/5 bg-white dark:bg-navy-900 hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
         >
           <p className="text-sm font-medium text-slate-800 dark:text-slate-200 group-hover:text-brand transition-colors line-clamp-1">

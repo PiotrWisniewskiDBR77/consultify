@@ -110,7 +110,8 @@ function resolveOrgTypeFromBilling(
   billingRail: BillingRail = null,
   contractStatus: ContractStatus = null,
   graceUntil?: string | null,
-  accessExpiresAt?: string | null
+  accessExpiresAt?: string | null,
+  hasBillingRecord: boolean = false
 ) {
   if (orgType === ORG_TYPES.DEMO) return ORG_TYPES.DEMO;
   if (hasManualBillingAccess(billingRail, contractStatus, graceUntil, accessExpiresAt)) {
@@ -123,6 +124,9 @@ function resolveOrgTypeFromBilling(
     subscriptionStatus === SUBSCRIPTION_STATUSES.PAST_DUE
   ) {
     return ORG_TYPES.PAID;
+  }
+  if (orgType === ORG_TYPES.PAID && hasBillingRecord) {
+    return ORG_TYPES.TRIAL;
   }
   return orgType;
 }
@@ -323,7 +327,8 @@ class AccessPolicyServiceClass {
         billingRail,
         contractStatus,
         (billingRow as any)?.grace_until,
-        (billingRow as any)?.access_expires_at
+        (billingRow as any)?.access_expires_at,
+        Boolean(billingRow)
       );
 
       // Dunning / past-due restrictions (Stripe is SSOT).
@@ -397,8 +402,13 @@ class AccessPolicyServiceClass {
               errorCode: 'TRIAL_PROFILE_INCOMPLETE',
             };
           }
-        } catch {
-          // fail open if schema mismatch
+        } catch (onboardingError) {
+          logger.error('[AccessPolicyService] Failed to verify onboarding status:', onboardingError);
+          return {
+            allowed: false,
+            reason: 'We could not verify your trial onboarding status. Please try again shortly.',
+            errorCode: 'TRIAL_ONBOARDING_STATUS_UNAVAILABLE',
+          };
         }
       }
 
@@ -491,8 +501,11 @@ class AccessPolicyServiceClass {
       return { allowed: true };
     } catch (error: unknown) {
       logger.error('[AccessPolicyService] Error checking access:', error);
-      // Fail open for system errors to avoid blocking legitimate users
-      return { allowed: true };
+      return {
+        allowed: false,
+        reason: 'Access policy is temporarily unavailable. Please try again in a moment.',
+        errorCode: 'ACCESS_POLICY_UNAVAILABLE',
+      };
     }
   }
 
@@ -536,7 +549,8 @@ class AccessPolicyServiceClass {
       billingRail,
       contractStatus,
       (billingRow as any)?.grace_until,
-      (billingRow as any)?.access_expires_at
+      (billingRow as any)?.access_expires_at,
+      Boolean(billingRow)
     );
     return {
       organizationType: effectiveOrgType,
@@ -598,7 +612,8 @@ class AccessPolicyServiceClass {
       billingRail,
       contractStatus,
       graceUntil,
-      accessExpiresAt
+      accessExpiresAt,
+      Boolean(billingRow)
     );
 
     const isDemo = effectiveOrgType === ORG_TYPES.DEMO;
@@ -676,6 +691,15 @@ class AccessPolicyServiceClass {
     let resolvedLimits: OrganizationLimits | null = limits;
     if (subscribedPlanId) {
       try {
+        const orgLimitRow = await DbPromise.get<{
+          max_storage_mb?: number | null;
+          max_total_tokens?: number | null;
+        }>(
+          this.deps.db,
+          `SELECT max_storage_mb, max_total_tokens FROM organization_limits WHERE organization_id = ?`,
+          [organizationId],
+          { fallback: true }
+        );
         const planRow = await DbPromise.get<{
           limits?: string | null;
           token_limit?: number | null;
@@ -687,18 +711,24 @@ class AccessPolicyServiceClass {
           { fallback: true }
         );
         const planLimits = planRow?.limits ? JSON.parse(planRow.limits) : {};
-        const tokens =
+        const orgTokenOverride =
+          typeof orgLimitRow?.max_total_tokens === 'number' ? orgLimitRow.max_total_tokens : undefined;
+        const orgStorageOverride =
+          typeof orgLimitRow?.max_storage_mb === 'number' ? orgLimitRow.max_storage_mb : undefined;
+        const planTokenLimit =
           typeof (planLimits as any)?.tokens === 'number'
             ? (planLimits as any).tokens
             : typeof planRow?.token_limit === 'number'
               ? planRow.token_limit
               : undefined;
-        const storageMb =
+        const planStorageMb =
           typeof (planLimits as any)?.storage_gb === 'number'
             ? Math.round((planLimits as any).storage_gb * 1024)
             : typeof planRow?.storage_limit_gb === 'number'
               ? Math.round(planRow.storage_limit_gb * 1024)
               : undefined;
+        const tokens = orgTokenOverride ?? planTokenLimit;
+        const storageMb = orgStorageOverride ?? planStorageMb;
 
         if (!resolvedLimits) {
           resolvedLimits = {
@@ -770,6 +800,7 @@ class AccessPolicyServiceClass {
     let primaryAction = 'Upgrade Plan';
     let primaryActionKey = 'access.cta.upgradePlan';
     let ctaReason: string | undefined;
+    let ctaUrlOrRoute = '/settings?tab=billing';
 
     if (isDemo) {
       bannerText = isDemoView
@@ -779,6 +810,7 @@ class AccessPolicyServiceClass {
       primaryAction = 'Start Trial';
       primaryActionKey = 'access.cta.startTrial';
       ctaReason = 'demo_mode';
+      ctaUrlOrRoute = '/trial/start';
     } else if (posture === ACCESS_POSTURES.PAID_PAST_DUE) {
       bannerText =
         'Payment failed. Please update your payment method to avoid service interruption.';
@@ -786,18 +818,28 @@ class AccessPolicyServiceClass {
       primaryAction = 'Fix Payment';
       primaryActionKey = 'access.cta.fixPayment';
       ctaReason = 'payment_failed';
+      ctaUrlOrRoute = '/settings?tab=billing';
+    } else if (posture === ACCESS_POSTURES.PAID_CANCELING) {
+      bannerText = 'Your subscription will end at the close of the current billing period.';
+      bannerTextKey = 'access.banner.canceling';
+      primaryAction = 'Renew Subscription';
+      primaryActionKey = 'access.cta.renewSubscription';
+      ctaReason = 'subscription_canceling';
+      ctaUrlOrRoute = '/settings?tab=billing';
     } else if (posture === ACCESS_POSTURES.SUSPENDED) {
       bannerText = 'Your contract is suspended. Contact your account team to restore access.';
       bannerTextKey = 'access.banner.contractSuspended';
       primaryAction = 'Contact Account Team';
       primaryActionKey = 'access.cta.contactAccountTeam';
       ctaReason = 'contract_suspended';
+      ctaUrlOrRoute = '/legal/contact?topic=billing&reason=contract_suspended';
     } else if (posture === ACCESS_POSTURES.PAID_MANUAL_RENEWAL_DUE) {
       bannerText = 'Your contract is nearing renewal. Coordinate the next term with your account team.';
       bannerTextKey = 'access.banner.contractRenewalDue';
       primaryAction = 'Renew Contract';
       primaryActionKey = 'access.cta.renewContract';
       ctaReason = 'contract_renewal_due';
+      ctaUrlOrRoute = '/legal/contact?topic=billing&reason=contract_renewal_due';
     } else if (isTrial && trialStatus.expired) {
       bannerText = 'Your trial has expired. Upgrade to continue.';
       bannerTextKey = 'access.banner.trialExpired';
@@ -807,6 +849,7 @@ class AccessPolicyServiceClass {
       primaryAction = 'Upgrade Now';
       primaryActionKey = 'access.cta.upgradeNow';
       ctaReason = 'trial_expired';
+      ctaUrlOrRoute = '/settings?tab=billing';
     } else if (isTrial && trialStatus.warningLevel === 'critical') {
       bannerText = `Trial expires in ${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''}. Upgrade now to keep full access.`;
       bannerTextKey = 'access.banner.trialCritical';
@@ -835,6 +878,7 @@ class AccessPolicyServiceClass {
       primaryAction = 'Add Payment Method';
       primaryActionKey = 'access.cta.addPaymentMethod';
       ctaReason = 'token_budget_exceeded';
+      ctaUrlOrRoute = '/settings?tab=billing';
     }
 
     return {
@@ -889,11 +933,7 @@ class AccessPolicyServiceClass {
       upgradeCtas: {
         primaryAction,
         primaryActionKey,
-        urlOrRoute:
-          posture === ACCESS_POSTURES.PAID_MANUAL_RENEWAL_DUE ||
-          posture === ACCESS_POSTURES.SUSPENDED
-            ? '/settings?tab=billing'
-            : '/settings?tab=billing',
+        urlOrRoute: ctaUrlOrRoute,
         reason: ctaReason,
       },
       messages: {
@@ -920,9 +960,25 @@ class AccessPolicyServiceClass {
     ]);
 
     if (!orgInfo) return { allowed: false, reasonCode: 'ORG_NOT_FOUND' };
-    if (orgInfo.organizationType === ORG_TYPES.DEMO)
+    const billingRow = await DbPromise.get<BillingStateRow>(
+      this.deps.db,
+      `SELECT status, billing_rail, contract_status, grace_until, access_expires_at
+       FROM organization_billing WHERE organization_id = ?`,
+      [organizationId],
+      { fallback: true }
+    );
+    const effectiveOrgType = resolveOrgTypeFromBilling(
+      orgInfo.organizationType,
+      normalizeSubscriptionStatus((billingRow as any)?.status),
+      normalizeBillingRail((billingRow as any)?.billing_rail),
+      normalizeContractStatus((billingRow as any)?.contract_status),
+      (billingRow as any)?.grace_until,
+      (billingRow as any)?.access_expires_at,
+      Boolean(billingRow)
+    );
+    if (effectiveOrgType === ORG_TYPES.DEMO)
       return { allowed: false, reasonCode: 'DEMO_READ_ONLY' };
-    if (trialStatus.expired && orgInfo.organizationType !== ORG_TYPES.PAID)
+    if (trialStatus.expired && effectiveOrgType !== ORG_TYPES.PAID)
       return { allowed: false, reasonCode: 'TRIAL_EXPIRED' };
 
     try {

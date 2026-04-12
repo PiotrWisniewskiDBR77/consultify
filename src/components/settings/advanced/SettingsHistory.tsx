@@ -49,7 +49,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
 
   useEffect(() => {
     loadData();
-  }, [currentUser.id, dateRange]);
+  }, [currentUser.id, dateRange, selectedCategory]);
 
   const loadData = async () => {
     try {

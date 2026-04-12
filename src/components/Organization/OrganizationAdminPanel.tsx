@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { useAppStore } from '../../store/useAppStore';
 import { CompetencyCatalog } from './CompetencyCatalog';
 import type { OrganizationSection } from './OrganizationSidebar';
 
@@ -30,6 +31,7 @@ interface OrganizationAdminPanelProps {
 
 export const OrganizationAdminPanel: React.FC<OrganizationAdminPanelProps> = ({ section }) => {
   const { t } = useTranslation();
+  const { currentOrganization } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [orgData, setOrgData] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
@@ -38,20 +40,28 @@ export const OrganizationAdminPanel: React.FC<OrganizationAdminPanelProps> = ({ 
     try {
       setLoading(true);
       const orgs = await Api.getUserOrganizations();
-      if (orgs.length > 0) {
-        const org = orgs[0];
+      const preferredOrgId = currentOrganization?.id;
+      const org = Array.isArray(orgs)
+        ? orgs.find((candidate: any) => candidate.id === preferredOrgId) || orgs[0]
+        : null;
+      if (org) {
         setOrgData(org);
         if (section === 'members') {
           const m = await Api.getOrganizationMembers(org.id);
           setMembers(m || []);
         }
+      } else {
+        setOrgData(null);
+        setMembers([]);
       }
-    } catch (_err) {
-      // silently fail
+    } catch (error) {
+      toast.error(t('organization.admin.loadFailed', 'Failed to load organization admin data'));
+      setOrgData(null);
+      setMembers([]);
     } finally {
       setLoading(false);
     }
-  }, [section]);
+  }, [currentOrganization?.id, section, t]);
 
   useEffect(() => {
     fetchOrgData();

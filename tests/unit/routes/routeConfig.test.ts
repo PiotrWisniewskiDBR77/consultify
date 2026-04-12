@@ -92,4 +92,14 @@ describe('routeConfig helpers', () => {
   it('getRouteFromAppView: uses /finance as the canonical economics route', () => {
     expect(getRouteFromAppView(AppView.ECONOMICS)).toBe(ROUTES.FINANCE);
   });
+
+  it('getRouteFromAppView: maps settings entrypoints to mounted settings sections', () => {
+    expect(getRouteFromAppView(AppView.SETTINGS_AI)).toBe('/settings/ai-behavior');
+    expect(getRouteFromAppView(AppView.SETTINGS_NOTIFICATIONS)).toBe(
+      '/settings/notifications-overview',
+    );
+    expect(getRouteFromAppView(AppView.SETTINGS_SECURITY)).toBe('/settings/security-dashboard');
+    expect(getRouteFromAppView(AppView.SETTINGS_API_KEYS)).toBe('/settings/api-keys');
+    expect(getRouteFromAppView(AppView.SETTINGS_PRIVACY)).toBe('/settings/privacy');
+  });
 });

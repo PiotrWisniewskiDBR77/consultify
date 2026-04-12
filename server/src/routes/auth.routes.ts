@@ -413,6 +413,126 @@ router.get(
   })
 );
 
+// SWITCH ORGANIZATION — Exchange current token for one scoped to a different org
+router.post(
+  '/switch-organization',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.id;
+    const { organizationId } = req.body;
+
+    if (!organizationId || typeof organizationId !== 'string') {
+      return res.status(400).json({
+        error: 'organizationId is required',
+        code: 'MISSING_ORGANIZATION_ID',
+      });
+    }
+
+    if (organizationId === req.organizationId) {
+      return res.status(200).json({
+        success: true,
+        message: 'Already in this organization',
+        organization: { id: organizationId },
+      });
+    }
+
+    try {
+      const membership = await dbGet<{
+        role: string;
+        status: string;
+        org_name: string;
+        org_status: string;
+        org_plan: string;
+        organization_type: string | null;
+      }>(
+        `SELECT m.role, m.status, o.name AS org_name, o.status AS org_status, o.plan AS org_plan,
+                o.organization_type
+         FROM organization_members m
+         JOIN organizations o ON o.id = m.organization_id
+         WHERE m.user_id = ? AND m.organization_id = ?`,
+        [userId, organizationId]
+      );
+
+      if (!membership || membership.status !== 'ACTIVE') {
+        return res.status(403).json({
+          error: 'You do not have access to this organization',
+          code: 'ORG_ACCESS_DENIED',
+        });
+      }
+
+      if (membership.org_status !== 'active') {
+        return res.status(403).json({
+          error: 'This organization is not active',
+          code: 'ORG_NOT_ACTIVE',
+          orgStatus: membership.org_status,
+        });
+      }
+
+      const orgType = String(membership.organization_type || '').trim().toUpperCase();
+      const isDemo = orgType === ORG_TYPES.DEMO;
+
+      // Update users.organization_id so token refresh stays consistent
+      await dbRun('UPDATE users SET organization_id = ? WHERE id = ?', [organizationId, userId]);
+
+      const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
+      const tokenPair = await refreshTokenService.generateTokenPair(
+        {
+          id: userId,
+          email: req.user!.email || '',
+          role: membership.role,
+          organization_id: organizationId,
+          isDemo,
+        },
+        { deviceInfo, ip: req.ip, userAgent: req.get('user-agent') }
+      );
+
+      try {
+        setAuthCookies(res, tokenPair.accessToken, tokenPair.refreshToken);
+      } catch {
+        // Non-fatal
+      }
+
+      // Fire-and-forget: log the org switch
+      const previousOrgId = req.organizationId;
+      void Promise.resolve().then(async () => {
+        ActivityService.log({
+          organizationId,
+          userId,
+          action: 'organization_switch',
+          entityType: 'organization',
+          entityId: organizationId,
+          entityName: membership.org_name,
+        });
+        try {
+          await dbRun(
+            `INSERT INTO organization_switch_log (id, user_id, from_organization_id, to_organization_id, ip_address, user_agent)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [uuidv4(), userId, previousOrgId || null, organizationId, req.ip || null, req.get('user-agent') || null]
+          );
+        } catch {
+          // Non-critical audit logging
+        }
+      });
+
+      return res.json({
+        success: true,
+        organization: {
+          id: organizationId,
+          name: membership.org_name,
+          role: membership.role,
+          plan: membership.org_plan,
+        },
+        token: tokenPair.accessToken,
+        refreshToken: tokenPair.refreshToken,
+        expiresIn: tokenPair.expiresIn,
+      });
+    } catch (error: unknown) {
+      logger.error('[Auth] Switch organization error:', error);
+      return res.status(500).json({ error: 'Failed to switch organization' });
+    }
+  })
+);
+
 // LOGOUT - Revokes the current token
 router.post(
   '/logout',
@@ -630,7 +750,7 @@ router.post(
       `INSERT INTO organizations (id, name, plan, status, organization_type)
        VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(id) DO NOTHING`,
-      [demoOrgId, process.env.DEMO_ORG_NAME || 'Atelier ToolToys', 'enterprise', 'active', 'DEMO'],
+      [demoOrgId, process.env.DEMO_ORG_NAME || 'Atelier Toys', 'enterprise', 'active', 'DEMO'],
       { fallback: true }
     );
 
@@ -646,6 +766,14 @@ router.post(
       logger.error('[Auth] Register demo user failed:', userResult.error);
       return res.status(500).json({ error: 'Failed to create account' });
     }
+
+    // Ensure organization_members row exists for multi-org support
+    await dbRun(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+       VALUES (?, ?, ?, 'ADMIN', 'ACTIVE', datetime('now'))
+       ON CONFLICT(organization_id, user_id) DO NOTHING`,
+      [uuidv4(), demoOrgId, userId]
+    );
 
     if (Array.isArray(acceptedLegalDocs) && acceptedLegalDocs.length > 0) {
       try {
@@ -723,7 +851,7 @@ router.post(
       role: user.role,
       status: 'active',
       organizationId: user.organization_id,
-      companyName: org?.name || 'Atelier ToolToys',
+      companyName: org?.name || 'Atelier Toys',
       isDemo: true,
       hasWorkspace: true,
       isAuthenticated: true,
@@ -1035,59 +1163,90 @@ router.post(
       return;
     }
 
-    const orgId = uuidv4();
+    let orgId = uuidv4();
     const userId = uuidv4();
     const hashedPassword = bcrypt.hashSync(password, 8);
+    let joiningExistingOrg = false;
+    let accessCodeRole = 'MEMBER';
 
     const proceedWithRegistration = async (finalStatus: string, finalPlan: string) => {
       try {
-        // Create organization (trial-aware, with backward-compatible fallback)
-        const trialStartedAt = new Date().toISOString();
-        const trialExpiresAt = new Date(
-          Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
-        ).toISOString();
+        let trialStartedAt: string | null = null;
+        let trialExpiresAt: string | null = null;
 
-        let orgResult = await dbRun(
-          `INSERT INTO organizations (
-             id, name, plan, status, organization_type, trial_started_at, trial_expires_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            orgId,
-            companyName || 'My Company',
-            finalPlan,
-            finalStatus,
-            ORG_TYPES.TRIAL,
-            trialStartedAt,
-            trialExpiresAt,
-          ]
-        );
+        if (!joiningExistingOrg) {
+          // Create self-serve trial organization with explicit trial metadata.
+          trialStartedAt = new Date().toISOString();
+          trialExpiresAt = new Date(
+            Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
+          ).toISOString();
 
-        if (!orgResult.success) {
-          orgResult = await dbRun(
-            `INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
-            [orgId, companyName || 'My Company', finalPlan, finalStatus]
+          const orgResult = await dbRun(
+            `INSERT INTO organizations (
+               id, name, plan, status, organization_type, trial_started_at, trial_expires_at,
+               onboarding_status, is_active
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              orgId,
+              companyName || 'My Company',
+              finalPlan,
+              finalStatus,
+              ORG_TYPES.TRIAL,
+              trialStartedAt,
+              trialExpiresAt,
+              'NOT_STARTED',
+              1,
+            ]
           );
+
+          if (!orgResult.success) {
+            if (process.env.NODE_ENV !== 'production')
+              logger.error('Register Org Error:', orgResult.error);
+            return res.status(500).json({
+              error: 'Failed to create a fully configured trial organization',
+            });
+          }
+
+          try {
+            const accessPolicyModule = (await import('../services/accessPolicyService.js')) as any;
+            const accessPolicyService = accessPolicyModule.default || accessPolicyModule;
+            await accessPolicyService.createDefaultLimits(orgId, ORG_TYPES.TRIAL);
+          } catch (limitErr) {
+            logger.error('[Auth] Failed to initialize default trial limits:', limitErr);
+            await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]);
+            return res.status(500).json({ error: 'Failed to initialize trial limits' });
+          }
         }
 
-        if (!orgResult.success) {
-          if (process.env.NODE_ENV !== 'production')
-            logger.error('Register Org Error:', orgResult.error);
-          return res.status(500).json({ error: 'Failed to create organization' });
-          return;
-        }
+        const userRole = joiningExistingOrg ? accessCodeRole : 'ADMIN';
 
         // Create user
         const userResult = await dbRun(
           `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [userId, orgId, email, hashedPassword, firstName, lastName, 'ADMIN']
+          [userId, orgId, email, hashedPassword, firstName, lastName, userRole]
         );
 
         if (!userResult.success) {
           if (process.env.NODE_ENV !== 'production')
             logger.error('Register User Error:', userResult.error);
+          if (!joiningExistingOrg) {
+            await dbRun(`DELETE FROM organization_limits WHERE organization_id = ?`, [orgId]).catch(
+              () => undefined
+            );
+            await dbRun(`DELETE FROM organizations WHERE id = ?`, [orgId]).catch(() => undefined);
+          }
           return res.status(500).json({ error: 'Failed to create user' });
-          return;
         }
+
+        const memberRole = joiningExistingOrg ? accessCodeRole : 'OWNER';
+
+        // Ensure organization_members row exists for multi-org support
+        await dbRun(
+          `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+           VALUES (?, ?, ?, ?, 'ACTIVE', datetime('now'))
+           ON CONFLICT(organization_id, user_id) DO NOTHING`,
+          [uuidv4(), orgId, userId, memberRole]
+        );
 
         if (Array.isArray(acceptedLegalDocs) && acceptedLegalDocs.length > 0) {
           try {
@@ -1108,20 +1267,23 @@ router.post(
           }
         }
 
-        await recordDemoTrialEvent({
-          eventType: DEMO_TRIAL_EVENT_TYPES.TRIAL_STARTED,
-          organizationId: orgId,
-          userId,
-          source: isDemo ? 'demo' : 'landing',
-          language: String(req.get('Accept-Language') || '')
-            .split(',')[0]
-            ?.split('-')[0]
-            ?.toLowerCase(),
-          metadata: {
-            trialDurationDays: TRIAL_DURATION_DAYS,
-            trialExpiresAt,
-          },
-        });
+        if (!joiningExistingOrg && trialExpiresAt) {
+          await recordDemoTrialEvent({
+            eventType: DEMO_TRIAL_EVENT_TYPES.TRIAL_STARTED,
+            organizationId: orgId,
+            userId,
+            source: isDemo ? 'demo' : 'landing',
+            language: String(req.get('Accept-Language') || '')
+              .split(',')[0]
+              ?.split('-')[0]
+              ?.toLowerCase(),
+            metadata: {
+              trialDurationDays: TRIAL_DURATION_DAYS,
+              trialExpiresAt,
+              trialStartedAt,
+            },
+          });
+        }
 
         try {
           await AttributionService.recordAttribution({
@@ -1244,29 +1406,13 @@ router.post(
           }
         }
 
-        if (finalStatus === 'pending') {
-          const requestResult = await dbRun(
-            `INSERT INTO access_requests (id, email, first_name, last_name, organization_id, organization_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), email, firstName, lastName, orgId, companyName || 'My Company', 'pending']
-          );
-
-          if (!requestResult.success) {
-            logger.error('Error logging access request:', requestResult.error);
-          }
-
-          return res.json({
-            status: 'pending',
-            message: 'Registration successful. Waiting for approval.',
-          });
-          return;
-        }
-
         const jti = uuidv4();
+        const effectiveRole = joiningExistingOrg ? accessCodeRole : 'ADMIN';
         const token = jwt.sign(
           {
             id: userId,
             email: email,
-            role: 'ADMIN',
+            role: effectiveRole,
             organizationId: orgId,
             jti: jti,
           },
@@ -1280,7 +1426,7 @@ router.post(
           action: 'registered',
           entityType: 'organization',
           entityId: orgId,
-          entityName: companyName,
+          entityName: joiningExistingOrg ? undefined : companyName,
         });
 
         // GAP-AUTH-001: Send email verification
@@ -1325,12 +1471,13 @@ router.post(
             email,
             firstName,
             lastName,
-            role: 'ADMIN',
-            companyName: companyName,
+            role: effectiveRole,
+            companyName: joiningExistingOrg ? undefined : companyName,
             organizationId: orgId,
             emailVerified: false,
           },
           token,
+          joiningExistingOrg,
           promoApplied: promoCode
             ? {
                 code: promoCode,
@@ -1353,19 +1500,37 @@ router.post(
     if (accessCode) {
       const codeRow = await dbGet<{
         id: string;
+        organization_id: string;
+        role: string;
         expires_at: string | null;
         max_uses: number;
         current_uses: number;
       }>('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode]);
 
       if (!codeRow) {
-        return await proceedWithRegistration('pending', 'free');
+        return res.status(400).json({ error: 'Invalid access code', errorCode: 'INVALID_ACCESS_CODE' });
       } else {
         if (codeRow.expires_at && new Date(codeRow.expires_at) < new Date()) {
-          return await proceedWithRegistration('pending', 'free');
+          return res.status(400).json({ error: 'Access code has expired', errorCode: 'ACCESS_CODE_EXPIRED' });
         } else if (codeRow.max_uses > 0 && codeRow.current_uses >= codeRow.max_uses) {
-          return await proceedWithRegistration('pending', 'free');
+          return res.status(400).json({
+            error: 'Access code usage limit reached',
+            errorCode: 'ACCESS_CODE_EXHAUSTED',
+          });
         } else {
+          // Join existing organization instead of creating a new one
+          if (codeRow.organization_id) {
+            const existingOrg = await dbGet<{ id: string; plan: string }>(
+              'SELECT id, plan FROM organizations WHERE id = ?',
+              [codeRow.organization_id]
+            );
+            if (existingOrg) {
+              orgId = existingOrg.id;
+              joiningExistingOrg = true;
+              accessCodeRole = codeRow.role || 'MEMBER';
+            }
+          }
+
           await dbRun('UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?', [
             codeRow.id,
           ]);
@@ -1374,12 +1539,15 @@ router.post(
             codeRow.id,
             userId,
           ]);
-          return await proceedWithRegistration('active', 'pro');
+          return await proceedWithRegistration(
+            'active',
+            joiningExistingOrg ? 'enterprise' : 'trial'
+          );
         }
       }
-    } else {
-      return await proceedWithRegistration('pending', 'free');
     }
+
+    return await proceedWithRegistration('active', 'trial');
   })
 );
 
