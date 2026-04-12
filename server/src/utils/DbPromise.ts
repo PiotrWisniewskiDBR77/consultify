@@ -11,6 +11,7 @@
 
 import dbProxy from '../database/Database.js';
 import logger from './Logger.js';
+import { recordQueryPerformance } from './queryHelpers.js';
 
 // ==========================================
 // TYPES
@@ -173,10 +174,12 @@ export function all<T = any>(
 
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
   sql = translatePlaceholders(sql);
+  const startedAt = Date.now();
 
   return new Promise<T[]>((resolve, reject) => {
     // Timeout protection
     const timeoutId = setTimeout(() => {
+      recordQueryPerformance('all', Date.now() - startedAt);
       dbLogger.warn('Query timeout', { sql: sql.substring(0, 100), timeout });
       if (fallback) {
         resolve([]);
@@ -188,6 +191,7 @@ export function all<T = any>(
     try {
       db.all(sql, params, (err: Error | null, rows: unknown[]) => {
         clearTimeout(timeoutId);
+        recordQueryPerformance('all', Date.now() - startedAt);
 
         if (err) {
           // Don't log errors when fallback is true and it's a "table doesn't exist" type error
@@ -217,6 +221,7 @@ export function all<T = any>(
       });
     } catch (error: unknown) {
       clearTimeout(timeoutId);
+      recordQueryPerformance('all', Date.now() - startedAt);
       const err = error as Error;
 
       // Don't log errors when fallback is true and it's a "table doesn't exist" type error
@@ -282,9 +287,11 @@ export function get<T = any>(
 
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
   sql = translatePlaceholders(sql);
+  const startedAt = Date.now();
 
   return new Promise<T | null>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
+      recordQueryPerformance('get', Date.now() - startedAt);
       dbLogger.warn('Query timeout', { sql: sql.substring(0, 100), timeout });
       if (fallback) {
         resolve(null);
@@ -296,6 +303,7 @@ export function get<T = any>(
     try {
       db.get(sql, params, (err: Error | null, row: unknown) => {
         clearTimeout(timeoutId);
+        recordQueryPerformance('get', Date.now() - startedAt);
 
         if (err) {
           dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100), params });
@@ -311,6 +319,7 @@ export function get<T = any>(
       });
     } catch (error: unknown) {
       clearTimeout(timeoutId);
+      recordQueryPerformance('get', Date.now() - startedAt);
       const err = error as Error;
       dbLogger.error('Query exception', {
         error: err.message,
@@ -361,9 +370,11 @@ export function run(
 
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
   sql = translatePlaceholders(sql);
+  const startedAt = Date.now();
 
   return new Promise<RunResult>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
+      recordQueryPerformance('run', Date.now() - startedAt);
       dbLogger.warn('Statement timeout', { sql: sql.substring(0, 100), timeout });
       if (fallback) {
         resolve({ success: false, error: 'timeout' });
@@ -373,6 +384,7 @@ export function run(
     try {
       db.run(sql, params, function (this: { lastID?: number; changes: number }, err: Error | null) {
         clearTimeout(timeoutId);
+        recordQueryPerformance('run', Date.now() - startedAt);
 
         if (err) {
           dbLogger.warn('Statement error', {
@@ -395,6 +407,7 @@ export function run(
       });
     } catch (error: unknown) {
       clearTimeout(timeoutId);
+      recordQueryPerformance('run', Date.now() - startedAt);
       const err = error as Error;
       dbLogger.error('Statement exception', {
         error: err.message,
@@ -473,9 +486,11 @@ export async function columnExists(tableName: string, columnName: string): Promi
  */
 export async function exec(sql: string): Promise<ExecResult> {
   const db = getDb();
+  const startedAt = Date.now();
 
   return new Promise<ExecResult>((resolve) => {
     db.exec(sql, (err: Error | null) => {
+      recordQueryPerformance('exec', Date.now() - startedAt);
       if (err) {
         dbLogger.error('Exec failed', { error: err.message });
         resolve({ success: false, error: err.message });

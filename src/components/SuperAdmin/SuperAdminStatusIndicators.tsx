@@ -25,7 +25,9 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 
 import { Api } from '../../services/api';
 
@@ -268,71 +270,66 @@ export const SuperAdminStatusIndicators: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch all data
-  useEffect(() => {
-    const fetchData = async () => {
-      const [statsRes, sysRes, llmRes] = await Promise.allSettled([
-        Api.getSuperAdminPlatformStats(),
-        Api.getSystemHealth(),
-        Api.getLLMHealthDetailed(),
-      ]);
+  const fetchData = useCallback(async () => {
+    const [statsRes, sysRes, llmRes] = await Promise.allSettled([
+      Api.getSuperAdminPlatformStats(),
+      Api.getSystemHealth(),
+      Api.getLLMHealthDetailed(),
+    ]);
 
-      // Platform stats
-      if (statsRes.status === 'fulfilled') {
-        setStats(statsRes.value as any);
-      }
+    if (statsRes.status === 'fulfilled') {
+      setStats(statsRes.value as any);
+    }
 
-      // DB Health
-      if (sysRes.status === 'fulfilled') {
-        const data: any = sysRes.value;
-        const connected =
-          typeof data?.database?.connected === 'boolean'
-            ? data.database.connected
-            : String(data?.database?.status || '').toLowerCase() === 'healthy';
+    if (sysRes.status === 'fulfilled') {
+      const data: any = sysRes.value;
+      const connected =
+        typeof data?.database?.connected === 'boolean'
+          ? data.database.connected
+          : String(data?.database?.status || '').toLowerCase() === 'healthy';
 
-        const latency =
-          data?.database?.latency ??
-          data?.database?.latencyMs ??
-          data?.database?.responseTime ??
-          data?.latency ??
-          undefined;
+      const latency =
+        data?.database?.latency ??
+        data?.database?.latencyMs ??
+        data?.database?.responseTime ??
+        data?.latency ??
+        undefined;
 
-        setDbHealth({
-          status: connected ? 'online' : 'offline',
-          latency: typeof latency === 'number' ? latency : undefined,
-        });
-      } else {
-        setDbHealth({ status: 'offline' });
-      }
+      setDbHealth({
+        status: connected ? 'online' : 'offline',
+        latency: typeof latency === 'number' ? latency : undefined,
+      });
+    } else {
+      setDbHealth({ status: 'offline' });
+    }
 
-      // LLM Health
-      if (llmRes.status === 'fulfilled') {
-        const data: any = llmRes.value;
-        const summary = data?.summary || {};
-        const healthy = summary.healthy || 0;
-        const total = summary.total || 0;
-        setLlmHealth({
-          status:
-            total === 0
-              ? 'offline'
-              : healthy === total
-                ? 'online'
-                : healthy > 0
-                  ? 'degraded'
-                  : 'offline',
-          healthy,
-          total,
-          providers: data?.providers,
-        });
-      }
+    if (llmRes.status === 'fulfilled') {
+      const data: any = llmRes.value;
+      const providers = Array.isArray(data?.providers) ? data.providers : [];
+      const healthy = providers.filter((provider: any) => provider?.status === 'healthy').length;
+      const total = providers.filter((provider: any) => provider?.status !== 'unconfigured').length;
+      setLlmHealth({
+        status:
+          total === 0
+            ? 'offline'
+            : healthy === total
+              ? 'online'
+              : healthy > 0
+                ? 'degraded'
+                : 'offline',
+        healthy,
+        total,
+        providers,
+      });
+    }
 
-      setLoading(false);
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 120_000);
-    return () => clearInterval(interval);
+    setLoading(false);
   }, []);
+
+  usePageAwarePolling(fetchData, {
+    intervalMs: 180_000,
+    runImmediately: true,
+  });
 
   const togglePanel = (panel: string) => {
     setOpenPanel(openPanel === panel ? null : panel);

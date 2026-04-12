@@ -157,6 +157,61 @@ export const apiGet = async <T = unknown>(
   return handleResponse<T>(res, defaultError);
 };
 
+type CachedGetEntry = {
+  expiresAt: number;
+  value?: unknown;
+  inflight?: Promise<unknown>;
+};
+
+const cachedGetStore = new Map<string, CachedGetEntry>();
+
+export const invalidateApiCacheByPrefix = (prefix: string): void => {
+  for (const key of cachedGetStore.keys()) {
+    if (key.startsWith(prefix)) {
+      cachedGetStore.delete(key);
+    }
+  }
+};
+
+export const apiGetCached = async <T = unknown>(
+  endpoint: string,
+  ttlMs: number,
+  defaultError = 'Request failed'
+): Promise<T> => {
+  const key = `${API_URL}${endpoint}`;
+  const now = Date.now();
+  const cached = cachedGetStore.get(key);
+
+  if (cached?.value !== undefined && cached.expiresAt > now) {
+    return cached.value as T;
+  }
+
+  if (cached?.inflight) {
+    return cached.inflight as Promise<T>;
+  }
+
+  const inflight = (async () => {
+    const res = await fetchWithRetry(key);
+    const value = await handleResponse<T>(res, defaultError);
+    cachedGetStore.set(key, {
+      value,
+      expiresAt: Date.now() + Math.max(0, ttlMs),
+    });
+    return value;
+  })().catch((error) => {
+    cachedGetStore.delete(key);
+    throw error;
+  });
+
+  cachedGetStore.set(key, {
+    value: cached?.value,
+    expiresAt: cached?.expiresAt || 0,
+    inflight,
+  });
+
+  return inflight;
+};
+
 export const apiPost = async <T = unknown>(
   endpoint: string,
   body: unknown,

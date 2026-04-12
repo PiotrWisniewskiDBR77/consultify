@@ -1,7 +1,8 @@
 import { ChevronDown, Clock, Cpu, Database, HardDrive } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 import { Api } from '@/services/api';
 
 interface SystemMetrics {
@@ -35,54 +36,51 @@ export const SystemHealth = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const startTime = performance.now();
-        const data = await Api.checkSystemHealth();
-        const endTime = performance.now();
-        const measuredLatency = Math.round(endTime - startTime);
+  const checkHealth = useCallback(async () => {
+    try {
+      const startTime = performance.now();
+      const data = await Api.checkSystemHealth();
+      const endTime = performance.now();
+      const measuredLatency = Math.round(endTime - startTime);
 
-        const dbRaw = String((data as any)?.database || '').toLowerCase();
-        const isDbConnected = dbRaw === 'connected';
+      const dbRaw = String((data as any)?.database || '').toLowerCase();
+      const isDbConnected = dbRaw === 'connected';
 
-        setStatus(isDbConnected ? 'online' : 'degraded');
-        setBuild({
-          version: (data as any)?.version,
-          environment: (data as any)?.environment,
-          gitSha: (data as any)?.gitSha,
-          gitBranch: (data as any)?.gitBranch,
-        });
-        setMetrics((prev) => ({
-          ...prev,
-          latency: data.latency ?? measuredLatency,
-          dbStatus: isDbConnected ? 'online' : 'offline',
-          dbResponseTime: data.dbResponseTime ?? measuredLatency,
-          storageUsed: data.storageUsed ?? prev.storageUsed,
-          storageLimit: data.storageLimit ?? prev.storageLimit,
-          apiCallsUsed: data.apiCallsUsed ?? prev.apiCallsUsed,
-          apiCallsLimit: data.apiCallsLimit ?? prev.apiCallsLimit,
-        }));
-      } catch (err: any) {
-        // IMPORTANT: 401/403 here is usually an auth/session problem, not "offline".
-        // Avoid showing a misleading Offline badge; auth recovery/logout will handle it.
-        const statusCode = err?.status;
-        if (statusCode === 401 || statusCode === 403) return;
-        if (statusCode === 429 || statusCode === 503) {
-          setStatus('degraded');
-          return;
-        }
-
-        setStatus('offline');
-        setBuild({});
-        setMetrics((prev) => ({ ...prev, dbStatus: 'offline' }));
+      setStatus(isDbConnected ? 'online' : 'degraded');
+      setBuild({
+        version: (data as any)?.version,
+        environment: (data as any)?.environment,
+        gitSha: (data as any)?.gitSha,
+        gitBranch: (data as any)?.gitBranch,
+      });
+      setMetrics((prev) => ({
+        ...prev,
+        latency: data.latency ?? measuredLatency,
+        dbStatus: isDbConnected ? 'online' : 'offline',
+        dbResponseTime: data.dbResponseTime ?? measuredLatency,
+        storageUsed: data.storageUsed ?? prev.storageUsed,
+        storageLimit: data.storageLimit ?? prev.storageLimit,
+        apiCallsUsed: data.apiCallsUsed ?? prev.apiCallsUsed,
+        apiCallsLimit: data.apiCallsLimit ?? prev.apiCallsLimit,
+      }));
+    } catch (err: any) {
+      const statusCode = err?.status;
+      if (statusCode === 401 || statusCode === 403) return;
+      if (statusCode === 429 || statusCode === 503) {
+        setStatus('degraded');
+        return;
       }
-    };
 
-    checkHealth();
-    const interval = setInterval(checkHealth, 30000);
-    return () => clearInterval(interval);
+      setStatus('offline');
+      setBuild({});
+      setMetrics((prev) => ({ ...prev, dbStatus: 'offline' }));
+    }
   }, []);
+
+  usePageAwarePolling(checkHealth, {
+    intervalMs: 90_000,
+    runImmediately: true,
+  });
 
   // Close dropdown when clicking outside
   useEffect(() => {

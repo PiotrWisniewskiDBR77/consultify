@@ -87,7 +87,6 @@ import systemHealthRoutes from './routes/system-health.routes.js';
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
 
-
 // Test route to verify server is working
 app.get('/test-frontend-path', (req: Request, res: Response) => {
   const testPaths = [
@@ -328,39 +327,61 @@ const databaseInitPromise: Promise<void> =
 // SCHEDULER & HEALTH CHECKS INITIALIZATION
 // ============================================================
 
+const deferredStartupDelayMs = Number(process.env.DEFER_NONCRITICAL_STARTUP_MS || 0);
+const llmConfigStartupDelayMs = Number(
+  process.env.DEFER_LLM_CONFIG_INIT_MS || deferredStartupDelayMs
+);
+
+const scheduleStartupTask = (
+  task: () => Promise<void>,
+  delayMs: number = deferredStartupDelayMs
+): void => {
+  const timer = setTimeout(
+    () => {
+      void task();
+    },
+    Math.max(0, delayMs)
+  );
+  timer.unref?.();
+};
+
 if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   // Init Scheduler (ES modules) - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       await Scheduler.init();
     } catch (err: any) {
       const error = err as Error;
       logger.error('[Server] Scheduler initialization failed:', error.message);
     }
-  })();
+  });
 
   // Init Health Check Monitor (ES modules) - non-blocking
-  (async () => {
-    try {
-      startHealthCheck();
-    } catch (err: any) {
-      const error = err as Error;
-      logger.error('[Server] Health Check initialization failed:', error.message);
-    }
-  })();
+  if (process.env.DISABLE_STARTUP_HEALTH_MONITOR !== 'true') {
+    scheduleStartupTask(async () => {
+      try {
+        startHealthCheck();
+      } catch (err: any) {
+        const error = err as Error;
+        logger.error('[Server] Health Check initialization failed:', error.message);
+      }
+    });
+  } else {
+    logger.info('[Server] Health Check monitor skipped via DISABLE_STARTUP_HEALTH_MONITOR');
+  }
 
   // Init CQRS - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { registerCQRSHandlers } = await import('./services/cqrs/registry.js');
       registerCQRSHandlers();
     } catch (err: any) {
       logger.error('[Server] CQRS initialization failed:', { error: err });
     }
-  })();
+  });
 
   // V4-TASK-05: Init Automation Rules Engine - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { initAutomationRulesEngine } = await import('./services/automationRulesEngine.js');
       initAutomationRulesEngine();
@@ -368,10 +389,10 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     } catch (err: any) {
       logger.error('[Server] Automation Rules Engine initialization failed:', err?.message);
     }
-  })();
+  });
 
   // Scheduled Automations Executor (cron-based) - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { scheduledAutomationExecutor } =
         await import('./services/tablePlatform/ScheduledAutomationExecutor.js');
@@ -380,25 +401,24 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     } catch (err: any) {
       logger.error('[Server] Scheduled Automation Executor failed:', err?.message);
     }
-  })();
+  });
 
   // Results enterprise runtime executor - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
-      const { resultsEnterpriseRuntimeExecutor } = await import(
-        './services/results/ResultsEnterpriseRuntimeExecutor.js'
-      );
+      const { resultsEnterpriseRuntimeExecutor } =
+        await import('./services/results/ResultsEnterpriseRuntimeExecutor.js');
       resultsEnterpriseRuntimeExecutor.start(60_000);
       logger.info('[Server] ✅ Results Enterprise Runtime Executor started (60s interval)');
     } catch (err: any) {
       logger.error('[Server] Results Enterprise Runtime Executor failed:', err?.message);
     }
-  })();
+  });
 
   // ============================================================
   // LLM CONFIG INITIALIZATION - Create tables & sync providers
   // ============================================================
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       const { llmConfigService } = await import('./services/ai/llmConfigService.js');
       await llmConfigService.initialize();
@@ -407,14 +427,14 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       const error = err as Error;
       logger.error('[Server] LLM Config initialization failed:', error.message);
     }
-  })();
+  }, llmConfigStartupDelayMs);
 
   // ============================================================
   // LLM STARTUP VALIDATION - Single Source of Truth
   // ============================================================
   // Validate LLM configuration
   if (!process.env.SKIP_STARTUP_VALIDATOR) {
-    (async () => {
+    scheduleStartupTask(async () => {
       try {
         const startupValidatorModule = await import('./services/ai/startupValidator.js');
         // Handle both named exports and default export wrapping (CJS/ESM interop)
@@ -455,7 +475,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         const error = err as Error;
         logger.error('[Server] LLM Startup Validation failed:', error.message);
       }
-    })();
+    }, llmConfigStartupDelayMs);
   } else {
     logger.info('[Server] Startup validation skipped via SKIP_STARTUP_VALIDATOR');
   }
@@ -475,43 +495,42 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   }
 
   // Init AI Health Monitor (Self-Healing System) - non-blocking
-  (async () => {
-    try {
-      const healthMonitorModule = await import('./services/ai/healthMonitor.js');
-      // Debug: Log imported module keys
-      logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
-      // The module exports a Promise as default (from lazy service loader)
-      // We need to await it to get the actual healthMonitor service
-      let healthMonitor: any = null;
+  if (process.env.DISABLE_AI_HEALTH_MONITOR !== 'true') {
+    scheduleStartupTask(async () => {
+      try {
+        const healthMonitorModule = await import('./services/ai/healthMonitor.js');
+        logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
+        let healthMonitor: any = null;
 
-      // Handle case where default export is a Promise (lazy loaded service)
-      if (healthMonitorModule.default instanceof Promise) {
-        healthMonitor = await healthMonitorModule.default;
-      } else if (healthMonitorModule.default) {
-        // Direct default export
-        healthMonitor = healthMonitorModule.default;
+        if (healthMonitorModule.default instanceof Promise) {
+          healthMonitor = await healthMonitorModule.default;
+        } else if (healthMonitorModule.default) {
+          healthMonitor = healthMonitorModule.default;
+        }
+
+        if (healthMonitor) {
+          healthMonitor.start(60000);
+
+          healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
+            logger.error('[AI Health] CRITICAL ALERT:', alert.message);
+            logger.error('[AI Health] Failed checks:', alert.checks?.join(', '));
+          });
+
+          logger.info('[Server] AI Health Monitor started (self-healing enabled)');
+        } else {
+          logger.warn('[Server] AI Health Monitor not available (export not found)');
+        }
+      } catch (err: any) {
+        const error = err as Error;
+        logger.warn('[Server] AI Health Monitor not available:', error.message);
       }
-
-      if (healthMonitor) {
-        healthMonitor.start(60000);
-
-        healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
-          logger.error('[AI Health] CRITICAL ALERT:', alert.message);
-          logger.error('[AI Health] Failed checks:', alert.checks?.join(', '));
-        });
-
-        logger.info('[Server] AI Health Monitor started (self-healing enabled)');
-      } else {
-        logger.warn('[Server] AI Health Monitor not available (export not found)');
-      }
-    } catch (err: any) {
-      const error = err as Error;
-      logger.warn('[Server] AI Health Monitor not available:', error.message);
-    }
-  })();
+    }, llmConfigStartupDelayMs);
+  } else {
+    logger.info('[Server] AI Health Monitor skipped via DISABLE_AI_HEALTH_MONITOR');
+  }
 
   // Init AI Provider Sentinel (continuous provider diagnostics) - non-blocking
-  (async () => {
+  scheduleStartupTask(async () => {
     try {
       if (process.env.DISABLE_AI_PROVIDER_SENTINEL === 'true') return;
       const { default: providerSentinel } = await import('./services/ai/providerSentinel.js');
@@ -522,7 +541,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       const error = err as Error;
       logger.warn('[Server] AI Provider Sentinel not available:', error.message);
     }
-  })();
+  }, llmConfigStartupDelayMs);
 }
 
 // ============================================================

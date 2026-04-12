@@ -34,6 +34,14 @@ type HistogramSummary = {
   buckets: Array<{ le: number; count: number }>;
 };
 
+const SLI_BUDGETS_MS = {
+  loginP95: 1500,
+  notificationsP95: 300,
+  unreadCountP95: 200,
+  organizationProfileP95: 400,
+  llmProviderSnapshotP95: 200,
+} as const;
+
 async function summarizeHistogram(metric: any): Promise<HistogramSummary> {
   const raw = await metric?.get?.();
   const values: Array<{ labels?: Record<string, unknown>; value?: number; metricName?: string }> =
@@ -136,6 +144,7 @@ router.get('/metrics', async (_req: Request, res: Response) => {
 
     const response = {
       timestamp: new Date().toISOString(),
+      sliBudgetsMs: SLI_BUDGETS_MS,
       latency,
       throughput,
       errors,

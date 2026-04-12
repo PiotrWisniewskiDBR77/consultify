@@ -10,6 +10,7 @@ import { Client, Pool, type PoolClient, type PoolConfig } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
+import { recordQueryPerformance } from '../utils/queryHelpers.js';
 import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
@@ -277,6 +278,7 @@ async function executeWithLogging<T>(
     const res = await pool.query(sql, safeParams);
 
     const duration = Date.now() - start;
+    recordQueryPerformance(method.toLowerCase(), duration);
     if (duration > SLOW_QUERY_THRESHOLD_MS) {
       logger.warn(`[Postgres] SLOW QUERY (${duration}ms) [${method}]: ${sql.substring(0, 200)}...`);
     }
@@ -296,10 +298,12 @@ async function executeWithLogging<T>(
       const retryPool = poolFn();
       if (initDbPromise) await initDbPromise;
       const res = await retryPool.query(sql, safeParams);
+      recordQueryPerformance(method.toLowerCase(), Date.now() - start);
       return { rows: res.rows as T[], rowCount: res.rowCount };
     }
 
     // Log query error with context
+    recordQueryPerformance(method.toLowerCase(), Date.now() - start);
     logger.error(`[Postgres] Query Error [${method}]:`, (err as Error).message);
     logger.error(`[Postgres] Failed SQL: ${sql.substring(0, 500)}`);
     throw err;
@@ -2311,16 +2315,26 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
         )`);
-    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS billing_rail TEXT DEFAULT 'stripe_subscription'`);
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS billing_rail TEXT DEFAULT 'stripe_subscription'`
+    );
     await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS contract_status TEXT`);
     await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS contract_type TEXT`);
     await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS renewal_at TIMESTAMP`);
     await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS grace_until TIMESTAMP`);
-    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMP`);
-    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS external_invoice_ref TEXT`);
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMP`
+    );
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS external_invoice_ref TEXT`
+    );
     await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS notes TEXT`);
-    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS managed_by_user_id TEXT`);
-    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS is_manual_override INTEGER DEFAULT 0`);
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS managed_by_user_id TEXT`
+    );
+    await query(
+      `ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS is_manual_override INTEGER DEFAULT 0`
+    );
 
     // Usage Records
     await query(`CREATE TABLE IF NOT EXISTS usage_records(

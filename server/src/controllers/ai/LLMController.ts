@@ -20,6 +20,11 @@ export class LLMController {
     string,
     { until: number; error: string; status: 'auth_failed' | 'rate_limited' }
   >();
+  private static providerHealthSnapshot: {
+    payload: Record<string, unknown>;
+    expiresAt: number;
+  } | null = null;
+  private static providerHealthRefreshPromise: Promise<Record<string, unknown>> | null = null;
   private static selectCoreProviders<T extends { isDefault?: boolean; provider?: string }>(
     providers: T[]
   ): T[] {
@@ -1234,219 +1239,276 @@ export class LLMController {
    */
   static async getProvidersHealth(req: Request, res: Response) {
     try {
-      // This endpoint is polled by the UI (top bar + settings). It must be fast.
-      // Older versions performed live connectivity checks for every active model row, which could take 20s+.
-      // We now:
-      // - test only distinct providers (openai/google/ollama/...) via LLMConfigService
-      // - enforce a hard timeout per provider
-      // - include circuit breaker states for debugging
-
-      // Default must be fast: this endpoint is polled by UI and should not block rendering.
-      // Default increased: 1200ms was too aggressive for OpenAI in many networks.
+      const live = String((req.query.live as string) || '').toLowerCase() === 'true';
       const timeoutMsRaw = Number((req.query.timeoutMs as string) || 4000);
       const timeoutMs = Number.isFinite(timeoutMsRaw)
         ? Math.min(8000, Math.max(300, timeoutMsRaw))
         : 4000;
+      const ttlMsRaw = Number(
+        (req.query.ttlMs as string) || process.env.LLM_PROVIDER_SNAPSHOT_TTL_MS || 90_000
+      );
+      const ttlMs = Number.isFinite(ttlMsRaw)
+        ? Math.min(300_000, Math.max(15_000, ttlMsRaw))
+        : 90_000;
+      const currentSnapshot = LLMController.providerHealthSnapshot;
 
-      const providers = (await llmConfigService.getAllProviders(true)) as any[];
+      if (!live && currentSnapshot && currentSnapshot.expiresAt > Date.now()) {
+        return res.json({
+          ...currentSnapshot.payload,
+          cached: true,
+          mode: 'snapshot',
+          ttlMs,
+        });
+      }
 
-      const withTimeout = async <T>(p: Promise<T>, ms: number): Promise<T> => {
-        let timer: NodeJS.Timeout | null = null;
-        try {
-          return await Promise.race<T>([
-            p,
-            new Promise<T>((_resolve, reject) => {
-              timer = setTimeout(
-                () => reject(new Error(`Health check timed out after ${ms}ms`)),
-                ms
-              );
-            }),
-          ]);
-        } finally {
-          if (timer) clearTimeout(timer);
+      if (!live && LLMController.providerHealthRefreshPromise) {
+        if (currentSnapshot) {
+          return res.json({
+            ...currentSnapshot.payload,
+            cached: true,
+            stale: true,
+            mode: 'snapshot',
+            ttlMs,
+          });
         }
+        const pendingPayload = await LLMController.providerHealthRefreshPromise;
+        return res.json({
+          ...pendingPayload,
+          cached: true,
+          mode: 'snapshot',
+          ttlMs,
+        });
+      }
+
+      const computePayload = async (): Promise<Record<string, unknown>> => {
+        const providers = (await llmConfigService.getAllProviders(true)) as any[];
+
+        const withTimeout = async <T>(p: Promise<T>, ms: number): Promise<T> => {
+          let timer: NodeJS.Timeout | null = null;
+          try {
+            return await Promise.race<T>([
+              p,
+              new Promise<T>((_resolve, reject) => {
+                timer = setTimeout(
+                  () => reject(new Error(`Health check timed out after ${ms}ms`)),
+                  ms
+                );
+              }),
+            ]);
+          } finally {
+            if (timer) clearTimeout(timer);
+          }
+        };
+
+        const nowIso = new Date().toISOString();
+        const healthResults = await Promise.all(
+          (providers || []).map(async (provider: any) => {
+            const providerId = String(provider.provider || '').toLowerCase();
+            const cooldownKey = `${providerId}:${String(provider.id || provider.model_id || provider.provider || '')}`;
+            const rawKey = typeof provider.api_key === 'string' ? provider.api_key.trim() : '';
+            const hasKey =
+              !!rawKey &&
+              !rawKey.toLowerCase().includes('placeholder') &&
+              !rawKey.startsWith('sk-demo-') &&
+              rawKey !== 'YOUR_GEMINI_API_KEY_HERE' &&
+              rawKey !== 'YOUR_OPENAI_API_KEY_HERE';
+            const isLocal = providerId === 'ollama';
+
+            if (!hasKey && !isLocal) {
+              return {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: 'unconfigured',
+                available: false,
+                lastCheck: nowIso,
+              };
+            }
+
+            const cooldown = LLMController.providerHealthCooldowns.get(cooldownKey);
+            if (cooldown && cooldown.until > Date.now()) {
+              return {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: 'unhealthy',
+                available: false,
+                error: cooldown.error,
+                lastCheck: nowIso,
+                cooldownUntil: new Date(cooldown.until).toISOString(),
+              };
+            }
+
+            try {
+              const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
+              const result = await withTimeout(
+                llmService.testConnection({
+                  provider: provider.provider,
+                  apiKey: provider.api_key,
+                  api_key: provider.api_key,
+                  endpoint: provider.endpoint,
+                  id: provider.model_id,
+                  timeoutMs: providerTimeoutMs,
+                }),
+                providerTimeoutMs
+              );
+
+              const ok = !!(result as any)?.success;
+              const resultError = String((result as any)?.error || '');
+              const httpStatus = Number((result as any)?.httpStatus || 0) || null;
+              if (!ok && LLMController.isAuthLikeProviderError(resultError, httpStatus)) {
+                LLMController.providerHealthCooldowns.set(cooldownKey, {
+                  until: Date.now() + 30 * 60_000,
+                  error: resultError || 'Invalid provider credentials',
+                  status: 'auth_failed',
+                });
+              } else if (ok) {
+                LLMController.providerHealthCooldowns.delete(cooldownKey);
+              }
+              const row = {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: ok ? 'healthy' : 'unhealthy',
+                available: ok,
+                latency: (result as any)?.latency || 0,
+                lastCheck: nowIso,
+              };
+              try {
+                const providerKey = String(provider.provider || '').toLowerCase();
+                const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+                if (Date.now() - lastAt > 60_000) {
+                  LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                  void dbRun(
+                    `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                      uuidv4(),
+                      providerKey,
+                      provider.model_id || null,
+                      row.status,
+                      row.available ? 1 : 0,
+                      row.latency || 0,
+                      ok ? null : String((result as any)?.error || 'Unhealthy'),
+                      nowIso,
+                    ]
+                  ).catch(() => {
+                    /* ignore */
+                  });
+                }
+              } catch {
+                /* ignore */
+              }
+              return row;
+            } catch (e: any) {
+              if (LLMController.isAuthLikeProviderError(e, null)) {
+                LLMController.providerHealthCooldowns.set(cooldownKey, {
+                  until: Date.now() + 5 * 60_000,
+                  error: e?.message || String(e),
+                  status: 'auth_failed',
+                });
+              }
+              const row = {
+                id: provider.id || provider.model_id || provider.provider,
+                name: provider.name || provider.provider,
+                provider: provider.provider,
+                status: 'unhealthy',
+                available: false,
+                error: e?.message || String(e),
+                lastCheck: nowIso,
+              };
+              try {
+                const providerKey = String(provider.provider || '').toLowerCase();
+                const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
+                if (Date.now() - lastAt > 60_000) {
+                  LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
+                  void dbRun(
+                    `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                      uuidv4(),
+                      providerKey,
+                      provider.model_id || null,
+                      'unhealthy',
+                      0,
+                      0,
+                      String(row.error || 'Unhealthy'),
+                      nowIso,
+                    ]
+                  ).catch(() => {
+                    /* ignore */
+                  });
+                }
+              } catch {
+                /* ignore */
+              }
+              return row;
+            }
+          })
+        );
+
+        const configuredProviders = healthResults.filter((p) => p.status !== 'unconfigured');
+        const coreProviders = LLMController.selectCoreProviders(configuredProviders);
+        const healthyCount = coreProviders.filter((p) => p.status === 'healthy').length;
+        const overall =
+          coreProviders.length === 0
+            ? 'unhealthy'
+            : healthyCount === 0
+              ? 'unhealthy'
+              : healthyCount === coreProviders.length
+                ? 'healthy'
+                : 'degraded';
+
+        const breakerStatuses = (circuitBreaker as any)?.getStatus?.() || {};
+        const circuitBreakers = Object.entries(breakerStatuses).map(([name, raw]: any) => ({
+          name,
+          state: raw?.state || raw?.status || raw?.currentState || 'unknown',
+          failures: raw?.failures ?? raw?.failureCount ?? raw?.consecutiveFailures ?? 0,
+        }));
+
+        return {
+          success: true,
+          providers: healthResults,
+          circuitBreakers,
+          overall,
+          lastCheck: Date.now(),
+          timeoutMs,
+        };
       };
 
-      const nowIso = new Date().toISOString();
-      const healthResults = await Promise.all(
-        (providers || []).map(async (provider: any) => {
-          const providerId = String(provider.provider || '').toLowerCase();
-          const cooldownKey = `${providerId}:${String(provider.id || provider.model_id || provider.provider || '')}`;
-          const rawKey = typeof provider.api_key === 'string' ? provider.api_key.trim() : '';
-          const hasKey =
-            !!rawKey &&
-            !rawKey.toLowerCase().includes('placeholder') &&
-            !rawKey.startsWith('sk-demo-') &&
-            rawKey !== 'YOUR_GEMINI_API_KEY_HERE' &&
-            rawKey !== 'YOUR_OPENAI_API_KEY_HERE';
-          const isLocal = providerId === 'ollama';
+      const payloadPromise = computePayload();
+      if (!live) {
+        LLMController.providerHealthRefreshPromise = payloadPromise;
+      }
 
-          if (!hasKey && !isLocal) {
-            const row = {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: 'unconfigured',
-              available: false,
-              lastCheck: nowIso,
-            };
-            return row;
-          }
+      const payload = await payloadPromise;
 
-          const cooldown = LLMController.providerHealthCooldowns.get(cooldownKey);
-          if (cooldown && cooldown.until > Date.now()) {
-            return {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: 'unhealthy',
-              available: false,
-              error: cooldown.error,
-              lastCheck: nowIso,
-              cooldownUntil: new Date(cooldown.until).toISOString(),
-            };
-          }
-
-          try {
-            // Local providers can hang when the daemon isn't running; keep them extra-fast by default.
-            const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
-            const result = await withTimeout(
-              llmService.testConnection({
-                provider: provider.provider,
-                apiKey: provider.api_key,
-                api_key: provider.api_key,
-                endpoint: provider.endpoint,
-                id: provider.model_id,
-                timeoutMs: providerTimeoutMs,
-              }),
-              providerTimeoutMs
-            );
-
-            const ok = !!(result as any)?.success;
-            const resultError = String((result as any)?.error || '');
-            const httpStatus = Number((result as any)?.httpStatus || 0) || null;
-            if (!ok && LLMController.isAuthLikeProviderError(resultError, httpStatus)) {
-              LLMController.providerHealthCooldowns.set(cooldownKey, {
-                until: Date.now() + 30 * 60_000,
-                error: resultError || 'Invalid provider credentials',
-                status: 'auth_failed',
-              });
-            } else if (ok) {
-              LLMController.providerHealthCooldowns.delete(cooldownKey);
-            }
-            const row = {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: ok ? 'healthy' : 'unhealthy',
-              available: ok,
-              latency: (result as any)?.latency || 0,
-              lastCheck: nowIso,
-            };
-            // Best-effort: persist health events (throttled ~60s/provider)
-            try {
-              const providerKey = String(provider.provider || '').toLowerCase();
-              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
-              if (Date.now() - lastAt > 60_000) {
-                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
-                void dbRun(
-                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                  [
-                    uuidv4(),
-                    providerKey,
-                    provider.model_id || null,
-                    row.status,
-                    row.available ? 1 : 0,
-                    row.latency || 0,
-                    ok ? null : String((result as any)?.error || 'Unhealthy'),
-                    nowIso,
-                  ]
-                ).catch(() => {
-                  /* ignore */
-                });
-              }
-            } catch {
-              /* ignore */
-            }
-            return row;
-          } catch (e: any) {
-            if (LLMController.isAuthLikeProviderError(e, null)) {
-              LLMController.providerHealthCooldowns.set(cooldownKey, {
-                until: Date.now() + 5 * 60_000,
-                error: e?.message || String(e),
-                status: 'auth_failed',
-              });
-            }
-            const row = {
-              id: provider.id || provider.model_id || provider.provider,
-              name: provider.name || provider.provider,
-              provider: provider.provider,
-              status: 'unhealthy',
-              available: false,
-              error: e?.message || String(e),
-              lastCheck: nowIso,
-            };
-            try {
-              const providerKey = String(provider.provider || '').toLowerCase();
-              const lastAt = LLMController.lastHealthEventWriteAt.get(providerKey) || 0;
-              if (Date.now() - lastAt > 60_000) {
-                LLMController.lastHealthEventWriteAt.set(providerKey, Date.now());
-                void dbRun(
-                  `INSERT INTO llm_health_events (id, provider, model, status, available, latency_ms, error_message, timestamp)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                  [
-                    uuidv4(),
-                    providerKey,
-                    provider.model_id || null,
-                    'unhealthy',
-                    0,
-                    0,
-                    String(row.error || 'Unhealthy'),
-                    nowIso,
-                  ]
-                ).catch(() => {
-                  /* ignore */
-                });
-              }
-            } catch {
-              /* ignore */
-            }
-            return row;
-          }
-        })
-      );
-
-      const configuredProviders = healthResults.filter((p) => p.status !== 'unconfigured');
-      const coreProviders = LLMController.selectCoreProviders(configuredProviders);
-      const healthyCount = coreProviders.filter((p) => p.status === 'healthy').length;
-      const overall =
-        coreProviders.length === 0
-          ? 'unhealthy'
-          : healthyCount === 0
-            ? 'unhealthy'
-            : healthyCount === coreProviders.length
-              ? 'healthy'
-              : 'degraded';
-
-      const breakerStatuses = (circuitBreaker as any)?.getStatus?.() || {};
-      const circuitBreakers = Object.entries(breakerStatuses).map(([name, raw]: any) => ({
-        name,
-        state: raw?.state || raw?.status || raw?.currentState || 'unknown',
-        failures: raw?.failures ?? raw?.failureCount ?? raw?.consecutiveFailures ?? 0,
-      }));
+      if (!live) {
+        LLMController.providerHealthSnapshot = {
+          payload,
+          expiresAt: Date.now() + ttlMs,
+        };
+      }
 
       return res.json({
-        success: true,
-        providers: healthResults,
-        circuitBreakers,
-        overall,
-        lastCheck: Date.now(),
-        timeoutMs,
+        ...payload,
+        cached: false,
+        mode: live ? 'live' : 'snapshot',
+        ttlMs,
       });
     } catch (error: any) {
+      if (LLMController.providerHealthSnapshot) {
+        return res.json({
+          ...LLMController.providerHealthSnapshot.payload,
+          cached: true,
+          stale: true,
+          mode: 'snapshot',
+        });
+      }
       logger.error('[LLMController] Error getting providers health:', error);
       return res.status(500).json({ error: error.message });
+    } finally {
+      LLMController.providerHealthRefreshPromise = null;
     }
   }
 

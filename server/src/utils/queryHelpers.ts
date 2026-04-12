@@ -7,6 +7,7 @@
 
 import { getDatabase } from '../database/Database.js';
 import logger from './Logger.js';
+import { getCorrelationId } from './RequestStore.js';
 
 interface Database {
   all: (
@@ -227,18 +228,38 @@ export function transformRow(
  * Enable performance tracking for database queries
  */
 let trackingCallback: ((type: string, duration: number) => void) | null = null;
+const requestTrackingCallbacks = new Map<string, (type: string, duration: number) => void>();
 
 export function enablePerformanceTracking(
   callback: (type: string, duration: number) => void
 ): void {
+  const correlationId = getCorrelationId();
+  if (correlationId) {
+    requestTrackingCallbacks.set(correlationId, callback);
+    return;
+  }
   trackingCallback = callback;
 }
 
 export function disablePerformanceTracking(): void {
+  const correlationId = getCorrelationId();
+  if (correlationId) {
+    requestTrackingCallbacks.delete(correlationId);
+    return;
+  }
   trackingCallback = null;
 }
 
 export function recordQueryPerformance(type: string, duration: number): void {
+  const correlationId = getCorrelationId();
+  if (correlationId) {
+    const callback = requestTrackingCallbacks.get(correlationId);
+    if (callback) {
+      callback(type, duration);
+      return;
+    }
+  }
+
   if (trackingCallback) {
     trackingCallback(type, duration);
   }

@@ -20,12 +20,13 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { buildNotificationContent } from '@/components/Notifications/notificationContent';
 import { type SnoozePreset, useNotificationSnooze } from '@/hooks/useNotificationSnooze';
+import { usePageAwarePolling } from '@/hooks/usePageAwarePolling';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -50,7 +51,7 @@ export const NotificationDropdown = () => {
   const [showSnoozeMenu, setShowSnoozeMenu] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const [data, count] = await Promise.all([
@@ -66,17 +67,13 @@ export const NotificationDropdown = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    // Defer initial fetch to avoid competing with critical post-login API calls
-    const timeout = setTimeout(fetchNotifications, 2000);
-    const interval = setInterval(fetchNotifications, 60_000);
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(interval);
-    };
   }, []);
+
+  usePageAwarePolling(fetchNotifications, {
+    intervalMs: 120_000,
+    initialDelayMs: 2_000,
+    runImmediately: true,
+  });
 
   // Refresh immediately when session mute changes
   useEffect(() => {

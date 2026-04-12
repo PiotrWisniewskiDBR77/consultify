@@ -13,8 +13,8 @@ import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
 import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
-import adminIntegrationsRoutes from './routes/adminIntegrations.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
+import adminIntegrationsRoutes from './routes/adminIntegrations.routes.js';
 import adminP32Routes from './routes/adminP32.routes.js';
 import agentsRoutes from './routes/agents.routes.js';
 import aiRoutes from './routes/ai.routes.js';
@@ -41,7 +41,6 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
-import publicApiV1Routes from './routes/publicApiV1.routes.js';
 import artifactRunsRoutes from './routes/artifact-runs.routes.js';
 import artifactsRoutes from './routes/artifacts.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
@@ -141,6 +140,7 @@ import megatrendRoutes from './routes/megatrend.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
+import moduleInterestRoutes from './routes/module-interest.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
@@ -194,8 +194,9 @@ import promptAssistantRoutes from './routes/prompt-assistant.routes.js';
 import publicAnnaRoutes from './routes/public-anna.routes.js';
 import publicContactRoutes from './routes/public-contact.routes.js';
 import publicMiniAssessmentRoutes from './routes/public-mini-assessment.routes.js';
-import publicPartnerApplicationsRoutes from './routes/public-partner-applications.routes.js';
 import publicOutreachRoutes from './routes/public-outreach.routes.js';
+import publicPartnerApplicationsRoutes from './routes/public-partner-applications.routes.js';
+import publicApiV1Routes from './routes/publicApiV1.routes.js';
 import raidRoutes from './routes/raid.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import realtimePlatformRoutes from './routes/realtime-platform.routes.js';
@@ -226,7 +227,6 @@ import statusRoutes from './routes/status.routes.js';
 import statusReportsRoutes from './routes/status-reports.routes.js';
 import studioRoutes from './routes/studio.routes.js';
 import superAdminRoutes from './routes/superadmin.routes.js';
-import moduleInterestRoutes from './routes/module-interest.routes.js';
 import syncHubRoutes from './routes/syncHub.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
@@ -237,7 +237,6 @@ import toolEnterpriseRoutes from './routes/tool-enterprise.routes.js';
 import toolAssetsRoutes from './routes/toolAssets.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
 import trialRoutes from './routes/trial.routes.js';
-import workbookRoutes from './routes/workbook.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
 import preferencesRoutes from './routes/user/preferences.routes.js';
 import sessionsRoutes from './routes/user/sessions.routes.js';
@@ -261,6 +260,7 @@ import voiceRoutes from './routes/voice.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
+import workbookRoutes from './routes/workbook.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
@@ -300,6 +300,10 @@ export class ApiGateway {
     };
 
     try {
+      // T113: API request logging (no PII) must wrap the whole gateway,
+      // otherwise early-mounted high-traffic routes bypass logging entirely.
+      app.use(apiLoggingMiddleware);
+
       // TypeScript routes (migrated)
       logger.info('[ApiGateway] Mounting /api/auth');
       app.use('/api/auth', authRoutes);
@@ -339,9 +343,6 @@ export class ApiGateway {
       app.use('/api/admin-data', adminDataRoutes);
       app.use('/api/admin', adminBulkRoutes);
       app.use('/api/admin', adminP32Routes);
-
-      // T113: API request logging (no PII)
-      app.use(apiLoggingMiddleware);
 
       // Demo Mode middleware - switches context and protects against writes
       app.use(demoContextMiddleware);
@@ -730,11 +731,19 @@ export class ApiGateway {
       mountStub('/api/audit', auditRoutes, 'auditRoutes');
       app.use('/api/mfa', mfaRoutes);
       app.use('/api/raid', raidRoutes);
-      app.use('/api/execution-control', deprecationHeader('/api/v8/execution-control'), executionControlRoutes);
+      app.use(
+        '/api/execution-control',
+        deprecationHeader('/api/v8/execution-control'),
+        executionControlRoutes
+      );
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       app.use('/api/budget', budgetRoutes);
       app.use('/api/benefits', benefitsRoutes);
-      app.use('/api/finance-statements', deprecationHeader('/api/v8/finance'), financeStatementsRoutes);
+      app.use(
+        '/api/finance-statements',
+        deprecationHeader('/api/v8/finance'),
+        financeStatementsRoutes
+      );
       app.use('/api/financial-modeling', financialModelingRoutes);
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);

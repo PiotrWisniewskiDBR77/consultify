@@ -411,6 +411,60 @@ const handleResponse = async (res: Response, defaultError: string) => {
   throw err;
 };
 
+type CachedApiEntry = {
+  expiresAt: number;
+  value?: unknown;
+  inflight?: Promise<unknown>;
+};
+
+const cachedApiGets = new Map<string, CachedApiEntry>();
+
+const invalidateCachedApiByPrefix = (prefix: string): void => {
+  for (const key of cachedApiGets.keys()) {
+    if (key.startsWith(prefix)) {
+      cachedApiGets.delete(key);
+    }
+  }
+};
+
+const getCachedJson = async <T = any>(
+  url: string,
+  ttlMs: number,
+  defaultError: string
+): Promise<T> => {
+  const now = Date.now();
+  const cached = cachedApiGets.get(url);
+
+  if (cached?.value !== undefined && cached.expiresAt > now) {
+    return cached.value as T;
+  }
+
+  if (cached?.inflight) {
+    return cached.inflight as Promise<T>;
+  }
+
+  const inflight = (async () => {
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    const value = await handleResponse(res, defaultError);
+    cachedApiGets.set(url, {
+      value,
+      expiresAt: Date.now() + Math.max(0, ttlMs),
+    });
+    return value as T;
+  })().catch((error) => {
+    cachedApiGets.delete(url);
+    throw error;
+  });
+
+  cachedApiGets.set(url, {
+    value: cached?.value,
+    expiresAt: cached?.expiresAt || 0,
+    inflight,
+  });
+
+  return inflight;
+};
+
 /**
  * Axios-compat wrapper for fetch-based helpers.
  *
@@ -805,10 +859,7 @@ export const Api = {
     apiCallsUsed?: number;
     apiCallsLimit?: number;
   }> => {
-    // Use the same robust request path as the rest of the API layer.
-    // This avoids false "Offline" when a proxy returns non-JSON errors, etc.
-    const res = await fetchWithRetry(`${API_URL}/health`, { headers: getHeaders() });
-    return handleResponse(res, 'Health check failed');
+    return getCachedJson(`${API_URL}/health`, 30_000, 'Health check failed');
   },
 
   // --- ANALYTICS (Leadership Dashboard) ---
@@ -840,6 +891,7 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to mark notification as read');
+    invalidateCachedApiByPrefix(`${API_URL}/notifications`);
   },
 
   markAllNotificationsRead: async (): Promise<void> => {
@@ -849,6 +901,7 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to mark all notifications as read');
+    invalidateCachedApiByPrefix(`${API_URL}/notifications`);
   },
 
   deleteNotification: async (id: string): Promise<void> => {
@@ -857,6 +910,7 @@ export const Api = {
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to delete notification');
+    invalidateCachedApiByPrefix(`${API_URL}/notifications`);
   },
 
   dismissNotification: async (id: string): Promise<void> => {
@@ -1939,10 +1993,11 @@ export const Api = {
   },
 
   getSuperAdminPlatformStats: async (): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/superadmin/platform-stats`, {
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to fetch super admin platform stats');
+    return getCachedJson(
+      `${API_URL}/superadmin/platform-stats`,
+      45_000,
+      'Failed to fetch super admin platform stats'
+    );
   },
 
   getActivities: async (limit: number = 50): Promise<any[]> => {
@@ -2358,8 +2413,7 @@ export const Api = {
   },
 
   getLLMHealthDetailed: async (): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/llm/health/detailed`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch LLM health');
+    return getCachedJson(`${API_URL}/llm/health/detailed`, 60_000, 'Failed to fetch LLM health');
   },
 
   getLLMControlUsage: async (): Promise<any> => {
@@ -2871,9 +2925,11 @@ export const Api = {
   },
 
   getPublicLLMProviders: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/llm/providers/public`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch public LLM providers');
-    return res.json();
+    return getCachedJson(
+      `${API_URL}/llm/providers/public`,
+      5 * 60_000,
+      'Failed to fetch public LLM providers'
+    );
   },
 
   getLLMAuditStats: async (): Promise<any> => {
@@ -3069,9 +3125,7 @@ export const Api = {
     tokensLimit: number;
     recentUsage?: Array<{ date: string; tokens: number; requests: number }>;
   }> => {
-    const res = await fetch(`${API_URL}/llm/user/usage`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch user AI usage');
-    return res.json();
+    return getCachedJson(`${API_URL}/llm/user/usage`, 60_000, 'Failed to fetch user AI usage');
   },
 
   // Get user's currently active AI model
@@ -3563,10 +3617,9 @@ export const Api = {
   },
 
   exportMindmapJSON: async (mindmapId: string): Promise<any> => {
-    const res = await fetch(
-      `${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/export/json`,
-      { headers: getHeaders() }
-    );
+    const res = await fetch(`${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/export/json`, {
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to export mindmap JSON');
   },
 
@@ -3579,10 +3632,9 @@ export const Api = {
   },
 
   getMindmapHealth: async (mindmapId: string): Promise<any> => {
-    const res = await fetch(
-      `${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/health`,
-      { headers: getHeaders() }
-    );
+    const res = await fetch(`${API_URL}/v8/mindmap/${encodeURIComponent(mindmapId)}/health`, {
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to get mindmap health');
   },
 
@@ -4087,17 +4139,19 @@ export const Api = {
     const params = new URLSearchParams();
     if (unreadOnly) params.append('unreadOnly', 'true');
     params.append('limit', limit.toString());
-    const res = await fetch(`${API_URL}/notifications?${params.toString()}`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to fetch notifications');
-    return res.json();
+    return getCachedJson(
+      `${API_URL}/notifications?${params.toString()}`,
+      15_000,
+      'Failed to fetch notifications'
+    );
   },
 
   getUnreadNotificationCount: async (): Promise<number> => {
-    const res = await fetch(`${API_URL}/notifications/unread-count`, { headers: getHeaders() });
-    if (!res.ok) return 0;
-    const data = await res.json();
+    const data = await getCachedJson<{ count: number }>(
+      `${API_URL}/notifications/unread-count`,
+      10_000,
+      'Failed to fetch unread notification count'
+    ).catch(() => ({ count: 0 }));
     return data.count;
   },
 
@@ -6151,6 +6205,26 @@ export const Api = {
     return json;
   },
 
+  getManagedContracts: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/superadmin/billing/contracts`, {
+      headers: getHeaders(),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any).error || 'Failed to fetch managed contracts');
+    return Array.isArray((json as any).data) ? (json as any).data : [];
+  },
+
+  upsertManualContract: async (payload: any): Promise<any> => {
+    const res = await fetch(`${API_URL}/superadmin/billing/manual-contract`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any).error || 'Failed to save manual contract');
+    return json;
+  },
+
   // Cancel subscription
   cancelSubscription: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/billing/cancel`, {
@@ -6694,10 +6768,13 @@ export const Api = {
   },
 
   deleteAdminIAMAssignment: async (assignmentId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/admin/iam/assignments/${encodeURIComponent(assignmentId)}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/admin/iam/assignments/${encodeURIComponent(assignmentId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to delete admin IAM assignment');
   },
 
@@ -6724,10 +6801,13 @@ export const Api = {
   },
 
   removeAdminBillingPaymentMethod: async (paymentMethodId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/admin/billing/payment-methods/${encodeURIComponent(paymentMethodId)}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/admin/billing/payment-methods/${encodeURIComponent(paymentMethodId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to remove admin billing payment method');
   },
 
@@ -6798,10 +6878,13 @@ export const Api = {
   },
 
   deleteAdminScimToken: async (tokenId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/admin/identity/scim/tokens/${encodeURIComponent(tokenId)}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/admin/identity/scim/tokens/${encodeURIComponent(tokenId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to delete admin SCIM token');
   },
 
@@ -8783,8 +8866,9 @@ export const Api = {
       const data = await res.json();
       const integrations = data?.data?.integrations || data?.integrations || [];
       const calendarIds = ['google_calendar', 'outlook_calendar', 'apple_calendar'];
-      const calendarProviders = (data?.data?.providers || data?.providers || [])
-        .filter((p: any) => calendarIds.includes(p.id));
+      const calendarProviders = (data?.data?.providers || data?.providers || []).filter((p: any) =>
+        calendarIds.includes(p.id)
+      );
 
       const ICONS: Record<string, string> = {
         google_calendar: '📅',
@@ -8805,13 +8889,15 @@ export const Api = {
           name: NAMES[cid] || cid,
           icon: ICONS[cid] || '📅',
           connected: provider?.isConnected || integration?.status === 'active',
-          connection: integration ? {
-            externalEmail: integration.externalEmail || integration.externalAccountName || '',
-            calendarName: integration.providerName || NAMES[cid] || cid,
-            lastSyncAt: integration.lastSyncAt || null,
-            syncTasks: true,
-            syncMeetings: true,
-          } : null,
+          connection: integration
+            ? {
+                externalEmail: integration.externalEmail || integration.externalAccountName || '',
+                calendarName: integration.providerName || NAMES[cid] || cid,
+                lastSyncAt: integration.lastSyncAt || null,
+                syncTasks: true,
+                syncMeetings: true,
+              }
+            : null,
         };
       });
       return result;
@@ -8949,8 +9035,7 @@ export const Api = {
   },
   // System
   getSystemHealth: async () => {
-    const res = await fetchWithRetry(`${API_URL}/system-health`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch system health');
+    return getCachedJson(`${API_URL}/system-health`, 30_000, 'Failed to fetch system health');
   },
   getRecognitionSchedule: async (id: string) => {
     const res = await fetchWithRetry(`${API_URL}/revenue/revenue-recognition/${id}/schedule`, {
@@ -12085,10 +12170,7 @@ export const Api = {
           | 'friendly'
           | 'casual'
           | 'academic',
-        formality: (userSettings?.formality || 'balanced') as
-          | 'formal'
-          | 'balanced'
-          | 'informal',
+        formality: (userSettings?.formality || 'balanced') as 'formal' | 'balanced' | 'informal',
         verbosity: (userSettings?.verbosity || 'concise') as
           | 'minimal'
           | 'concise'

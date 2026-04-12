@@ -86,6 +86,15 @@ const metricsStore: MetricsStore = {
 };
 
 const MAX_ENTRIES = 1000;
+const SLOW_REQUEST_THRESHOLD_MS = Number(process.env.SLOW_REQUEST_THRESHOLD_MS || 1000);
+
+function getRouteLabel(req: Request): string {
+  const routePath = (req.route as any)?.path;
+  if (typeof routePath === 'string') {
+    return `${req.baseUrl || ''}${routePath}` || req.path;
+  }
+  return req.baseUrl || req.path || req.originalUrl || 'unknown';
+}
 
 // ==========================================
 // MIDDLEWARE
@@ -128,6 +137,7 @@ export function performanceMetricsMiddleware(
   // Track response finish
   res.on('finish', () => {
     const responseTime = Date.now() - startTime;
+    const routeLabel = getRouteLabel(req);
     const endMemory = process.memoryUsage();
     const memoryDelta = {
       heapUsed: endMemory.heapUsed - startMemory.heapUsed,
@@ -149,6 +159,8 @@ export function performanceMetricsMiddleware(
       organizationId: req.user?.organizationId || null,
     };
 
+    metricsService.recordHttpRequest(req.method, routeLabel, res.statusCode, responseTime / 1000);
+
     // Store metric
     metricsStore.requests.push(metric);
     if (metricsStore.requests.length > MAX_ENTRIES) {
@@ -156,10 +168,11 @@ export function performanceMetricsMiddleware(
     }
 
     // Log slow requests (>1s) or errors
-    if (responseTime > 1000 || res.statusCode >= 400) {
+    if (responseTime > SLOW_REQUEST_THRESHOLD_MS || res.statusCode >= 400) {
       logger.warn('Performance metric', {
         ...metric,
-        isSlow: responseTime > 1000,
+        route: routeLabel,
+        isSlow: responseTime > SLOW_REQUEST_THRESHOLD_MS,
         isError: res.statusCode >= 400,
       });
     }

@@ -13,18 +13,35 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
-const SKIP_PATHS = ['/api/health', '/favicon.ico', '/api/analytics/journey'];
+const SKIP_PATH_PREFIXES = [
+  '/api/health',
+  '/api/system-health',
+  '/api/llm/health',
+  '/api/llm/providers/health',
+  '/api/notifications',
+  '/api/cloud/sources',
+  '/favicon.ico',
+  '/api/analytics/journey',
+];
+
+function shouldSkipApiLog(pathname: string): boolean {
+  return SKIP_PATH_PREFIXES.some((p) => pathname.startsWith(p));
+}
 
 // Disable DB logging when DISABLE_API_LOGGING=true (avoids slow INSERT on remote DB)
 const DB_LOGGING_DISABLED = process.env.DISABLE_API_LOGGING === 'true';
 
 export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunction): void {
   const start = Date.now();
-  const correlationId = uuidv4();
+  const correlationId = String(
+    (req as any).correlationId || req.get('X-Correlation-ID') || uuidv4()
+  );
   (req as any).correlationId = correlationId;
-  res.setHeader('X-Correlation-Id', correlationId);
+  if (!res.getHeader('X-Correlation-ID')) {
+    res.setHeader('X-Correlation-ID', correlationId);
+  }
 
-  if (DB_LOGGING_DISABLED || SKIP_PATHS.some((p) => req.path.startsWith(p))) {
+  if (DB_LOGGING_DISABLED || shouldSkipApiLog(req.path)) {
     next();
     return;
   }
@@ -32,6 +49,12 @@ export function apiLoggingMiddleware(req: Request, res: Response, next: NextFunc
   const originalEnd = res.end;
   res.end = function (this: Response, ...args: any[]) {
     const responseTime = Date.now() - start;
+    const shouldPersist = req.method !== 'GET' || res.statusCode >= 400 || responseTime >= 500;
+
+    if (!shouldPersist) {
+      return originalEnd.apply(this, args as any);
+    }
+
     const authReq = req as AuthRequest;
     dbRun(
       `INSERT INTO api_logs (id, endpoint, method, status_code, response_time_ms, user_id, organization_id, correlation_id, error_message, created_at)

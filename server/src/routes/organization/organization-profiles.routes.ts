@@ -15,6 +15,32 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+const PROFILE_CACHE_TTL_MS = Number(process.env.ORG_PROFILE_CACHE_TTL_MS || 60_000);
+const profileResponseCache = new Map<
+  string,
+  { expiresAt: number; payload: Record<string, unknown> }
+>();
+
+const readCachedProfile = (orgId: string): Record<string, unknown> | null => {
+  const cached = profileResponseCache.get(orgId);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    profileResponseCache.delete(orgId);
+    return null;
+  }
+  return cached.payload;
+};
+
+const writeCachedProfile = (orgId: string, payload: Record<string, unknown>): void => {
+  profileResponseCache.set(orgId, {
+    payload,
+    expiresAt: Date.now() + PROFILE_CACHE_TTL_MS,
+  });
+};
+
+const invalidateProfileCache = (orgId: string): void => {
+  profileResponseCache.delete(orgId);
+};
 const notConfigured = (res: Response) =>
   res.status(503).json({
     statusCode: 503,
@@ -117,7 +143,9 @@ async function syncLegacyBrandingMirror(orgId: string, branding: CanonicalBrandi
           branding.brandColor || null,
           branding.accentColor || null,
           branding.customDomain || null,
-          branding.customDomainVerified === undefined ? null : Number(branding.customDomainVerified),
+          branding.customDomainVerified === undefined
+            ? null
+            : Number(branding.customDomainVerified),
           orgId,
         ]
       );
@@ -163,6 +191,11 @@ router.get(
     }
 
     try {
+      const cached = readCachedProfile(orgId);
+      if (cached) {
+        return res.json({ ...cached, cached: true });
+      }
+
       const resolvedContext = await organizationContextService
         .buildResolvedContext(orgId)
         .catch(() => null);
@@ -205,7 +238,7 @@ router.get(
         Boolean(resolvedContext?.profile.industry) ||
         Boolean(resolvedContext?.profile.description);
 
-      return res.json({
+      const payload = {
         exists: !!profile || hasResolvedProfile,
         profile: {
           // Basic info
@@ -257,13 +290,9 @@ router.get(
 
           // Branding
           brandColor:
-            resolvedContext?.profile.brandColor ||
-            brandingSettings.brandColor ||
-            '#8B5CF6',
+            resolvedContext?.profile.brandColor || brandingSettings.brandColor || '#8B5CF6',
           accentColor:
-            resolvedContext?.profile.accentColor ||
-            brandingSettings.accentColor ||
-            '#10B981',
+            resolvedContext?.profile.accentColor || brandingSettings.accentColor || '#10B981',
           faviconUrl: brandingSettings.faviconUrl || '',
 
           // Regional
@@ -290,10 +319,13 @@ router.get(
           twitterUrl: resolvedContext?.profile.twitterUrl || brandingSettings.twitterUrl || '',
 
           // P30-D new fields
-          organization_type: resolvedContext?.profile.organizationType || profile?.organization_type || '',
+          organization_type:
+            resolvedContext?.profile.organizationType || profile?.organization_type || '',
           revenue_model: resolvedContext?.profile.revenueModel || profile?.revenue_model || '',
-          delivery_model: resolvedContext?.operations?.deliveryModel || profile?.delivery_model || '',
-          core_systems: resolvedContext?.systems?.coreSystems || safeParseArray(profile?.core_systems),
+          delivery_model:
+            resolvedContext?.operations?.deliveryModel || profile?.delivery_model || '',
+          core_systems:
+            resolvedContext?.systems?.coreSystems || safeParseArray(profile?.core_systems),
           founding_year: resolvedContext?.profile.foundingYear || profile?.founding_year || null,
           digital_maturity_overall: profile?.digital_maturity_overall || null,
           digital_budget_percent: profile?.digital_budget_percent || null,
@@ -306,15 +338,23 @@ router.get(
           budget_constraints: profile?.budget_constraints || '',
           timeline_constraints: profile?.timeline_constraints || '',
           industry_code: resolvedContext?.profile.industryCode || profile?.industry_code || '',
-          industry_subsector: resolvedContext?.profile.industrySubsector || profile?.industry_subsector || '',
-          communication_style: resolvedContext?.profile?.communicationStyle || profile?.communication_style || '',
-          industry_jargon_level: resolvedContext?.profile?.industryJargonLevel || profile?.industry_jargon_level || '',
-          production_archetype: resolvedContext?.operations?.productionArchetype || profile?.production_archetype || '',
+          industry_subsector:
+            resolvedContext?.profile.industrySubsector || profile?.industry_subsector || '',
+          communication_style:
+            resolvedContext?.profile?.communicationStyle || profile?.communication_style || '',
+          industry_jargon_level:
+            resolvedContext?.profile?.industryJargonLevel || profile?.industry_jargon_level || '',
+          production_archetype:
+            resolvedContext?.operations?.productionArchetype || profile?.production_archetype || '',
           shift_pattern: resolvedContext?.operations?.shiftPattern || profile?.shift_pattern || '',
-          automation_level: resolvedContext?.operations?.automationLevel || profile?.automation_level || '',
+          automation_level:
+            resolvedContext?.operations?.automationLevel || profile?.automation_level || '',
         },
         completeness,
-      });
+      };
+
+      writeCachedProfile(orgId, payload);
+      return res.json({ ...payload, cached: false });
     } catch (error: any) {
       logger.error('[organization-profiles] Error fetching profile:', error);
       return res.status(500).json({ error: 'Failed to fetch organization profile' });
@@ -399,6 +439,8 @@ router.put(
     } = req.body;
 
     try {
+      invalidateProfileCache(orgId);
+
       // Update organizations table directly for core fields (timezone and language only)
       await dbRun(
         `UPDATE organizations SET 
@@ -427,7 +469,9 @@ router.put(
         employee_count,
         annual_revenue,
         headquarters_country,
-        strategic_priorities: strategic_priorities ? JSON.stringify(strategic_priorities) : undefined,
+        strategic_priorities: strategic_priorities
+          ? JSON.stringify(strategic_priorities)
+          : undefined,
         competitive_position,
         growth_stage,
         mission_statement,
@@ -440,7 +484,9 @@ router.put(
         customer_segments: customer_segments ? JSON.stringify(customer_segments) : undefined,
         key_competitors: key_competitors ? JSON.stringify(key_competitors) : undefined,
         market_share_estimate,
-        regulatory_environment: regulatory_environment ? JSON.stringify(regulatory_environment) : undefined,
+        regulatory_environment: regulatory_environment
+          ? JSON.stringify(regulatory_environment)
+          : undefined,
         risk_appetite,
         budget_constraints,
         timeline_constraints,
@@ -465,7 +511,13 @@ router.put(
           );
         }
       } else {
-        const cols = ['id', 'organization_id', ...definedFields.map(([k]) => k), 'created_by', 'updated_by'];
+        const cols = [
+          'id',
+          'organization_id',
+          ...definedFields.map(([k]) => k),
+          'created_by',
+          'updated_by',
+        ];
         const placeholders = cols.map(() => '?').join(', ');
         await dbRun(
           `INSERT INTO organization_profiles (${cols.join(', ')}) VALUES (${placeholders})`,
@@ -652,7 +704,8 @@ router.put(
     return res.status(403).json({
       error: 'Trust settings are managed by Admin',
       code: 'OWNERSHIP_BOUNDARY_VIOLATION',
-      guidance: 'MFA, SSO, and security policies are managed through the Admin panel (P32). Use PUT /api/admin/security/:orgId instead.',
+      guidance:
+        'MFA, SSO, and security policies are managed through the Admin panel (P32). Use PUT /api/admin/security/:orgId instead.',
       ownerSurface: 'admin',
     });
   })
@@ -768,11 +821,20 @@ router.get(
         _contract: {
           version: `P30-B/${ORGANIZATION_CONTEXT_SCHEMA_VERSION}`,
           stableFields: [
-            'profile.companyName', 'profile.industry', 'profile.companySize',
-            'profile.defaultLanguage', 'profile.defaultTimezone', 'profile.currency',
-            'profile.brandColor', 'profile.accentColor', 'profile.website',
-            'strategic.mission', 'strategic.vision', 'strategic.priorities',
-            'trust.mfa.required', 'trust.sso.configured',
+            'profile.companyName',
+            'profile.industry',
+            'profile.companySize',
+            'profile.defaultLanguage',
+            'profile.defaultTimezone',
+            'profile.currency',
+            'profile.brandColor',
+            'profile.accentColor',
+            'profile.website',
+            'strategic.mission',
+            'strategic.vision',
+            'strategic.priorities',
+            'trust.mfa.required',
+            'trust.sso.configured',
           ],
           ownershipBoundaries: {
             identity: 'organization (P30)',
