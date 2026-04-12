@@ -309,8 +309,8 @@ export const VectorPage: React.FC = () => {
                     </span>
                     <Icon size={18} className="text-slate-400 dark:text-slate-500" />
                   </div>
-                  <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">{step.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{step.body}</p>
+                  <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">{t(`vector.pipeline.steps.${step.num}.title`, step.title)}</h3>
+                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{t(`vector.pipeline.steps.${step.num}.body`, step.body)}</p>
                 </motion.div>
               );
             })}
@@ -369,9 +369,9 @@ export const VectorPage: React.FC = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-100 dark:bg-white/[0.04]">
-                  <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">Dimension</th>
-                  <th className="text-left px-6 py-4 font-bold text-violet-600 dark:text-violet-400">DBR77 Vector</th>
-                  <th className="text-left px-6 py-4 font-bold text-slate-500">Generic LLM</th>
+                  <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">{t('vector.comparison.dimensionHeader', 'Dimension')}</th>
+                  <th className="text-left px-6 py-4 font-bold text-violet-600 dark:text-violet-400">{t('vector.comparison.vectorHeader', 'DBR77 Vector')}</th>
+                  <th className="text-left px-6 py-4 font-bold text-slate-500">{t('vector.comparison.genericHeader', 'Generic LLM')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -380,9 +380,9 @@ export const VectorPage: React.FC = () => {
                     key={row.dimension}
                     className={idx % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-slate-50/50 dark:bg-white/[0.02]'}
                   >
-                    <td className="px-6 py-4 font-semibold text-navy-950 dark:text-white whitespace-nowrap">{row.dimension}</td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{row.vector}</td>
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-500">{row.generic}</td>
+                    <td className="px-6 py-4 font-semibold text-navy-950 dark:text-white whitespace-nowrap">{t(`vector.comparison.rows.${idx}.dimension`, row.dimension)}</td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{t(`vector.comparison.rows.${idx}.vector`, row.vector)}</td>
+                    <td className="px-6 py-4 text-slate-500 dark:text-slate-500">{t(`vector.comparison.rows.${idx}.generic`, row.generic)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -429,12 +429,12 @@ export const VectorPage: React.FC = () => {
                         : 'bg-slate-100 dark:bg-white/[0.04] text-slate-500'
                   }`}
                 >
-                  Stage {stage.stage}
-                  {stage.status === 'current' && ' — Now'}
-                  {stage.status === 'done' && ' — Done'}
+                  {t(`vector.roadmap.stages.${stage.stage}.label`, `Stage ${stage.stage}`)}
+                  {stage.status === 'current' && ` — ${t('vector.roadmap.now', 'Now')}`}
+                  {stage.status === 'done' && ` — ${t('vector.roadmap.done', 'Done')}`}
                 </span>
-                <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">{stage.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{stage.body}</p>
+                <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">{t(`vector.roadmap.stages.${stage.stage}.title`, stage.title)}</h3>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{t(`vector.roadmap.stages.${stage.stage}.body`, stage.body)}</p>
               </motion.div>
             ))}
           </div>
@@ -481,9 +481,9 @@ export const VectorPage: React.FC = () => {
                     <Icon size={22} className={isVector ? 'text-white' : 'text-white/50'} />
                   </div>
                   <p className={`text-sm font-black ${isVector ? 'text-violet-300' : 'text-white/70'}`}>
-                    {layer.label}
+                    {t(`vector.ecosystem.layers.${idx}.label`, layer.label)}
                   </p>
-                  <p className="text-xs text-white/35 mt-1">{layer.sub}</p>
+                  <p className="text-xs text-white/35 mt-1">{t(`vector.ecosystem.layers.${idx}.sub`, layer.sub)}</p>
                   {idx < ECOSYSTEM_LAYERS.length - 1 && (
                     <div className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2">
                       <ArrowRight size={14} className="text-white/20" />

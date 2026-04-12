@@ -179,6 +179,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const fetchRetryRef = useRef(0);
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
   );
@@ -360,6 +361,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
+        const isNetworkError = !error?.status || error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError');
+        if (isNetworkError && fetchRetryRef.current < 3) {
+          fetchRetryRef.current++;
+          const delay = Math.min(2000 * Math.pow(2, fetchRetryRef.current - 1), 8000);
+          console.warn(`[InitiativesHub] Network error, retrying in ${delay}ms (attempt ${fetchRetryRef.current}/3)`);
+          setTimeout(() => fetchData(), delay);
+          return;
+        }
         setInitiatives([]);
         setAllInitiatives([]);
         setLoadError(
@@ -387,6 +396,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   useEffect(() => {
+    fetchRetryRef.current = 0;
     fetchData();
   }, [fetchData]);
 

@@ -24,6 +24,8 @@ import {
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import { ROUTES } from '../routes/routeConfig';
+
 interface LegalDocumentCard {
   slug: string;
   title: string;
@@ -251,8 +253,26 @@ export const LegalIndexView: React.FC = () => {
           </div>
           <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
             Transparency is fundamental to our relationship with you. Here you'll find all the legal
-            documents that govern the use of Consultify and how we handle your data.
+            documents that govern the use of Consultify, how we handle your data, and which
+            commercial terms support procurement, pricing, and enterprise review.
           </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to={ROUTES.PRICING}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+            >
+              <Receipt className="w-4 h-4" />
+              Pricing overview
+            </Link>
+            <Link
+              to={ROUTES.LEGAL.SUBSCRIPTION}
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              <FileText className="w-4 h-4" />
+              Subscription terms
+            </Link>
+          </div>
 
           {/* Company Info Badges */}
           <div className="mt-10 flex flex-wrap gap-4">
@@ -296,8 +316,8 @@ export const LegalIndexView: React.FC = () => {
         {/* Business Documents */}
         <section className="mb-16">
           <SectionHeader
-            title="Business & Billing"
-            description="Additional terms for business customers and paid subscriptions."
+            title="Commercial, Billing & Procurement"
+            description="Commercial terms for pricing, subscriptions, enterprise procurement, and paid plans."
             icon={<CreditCard className="w-6 h-6" />}
             gradient="from-emerald-500 to-teal-600"
           />

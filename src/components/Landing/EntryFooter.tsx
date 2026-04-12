@@ -74,22 +74,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
       ],
     },
     {
-      title: t('landing.footer.company.title', 'Company'),
-      links: [
-        { label: t('landing.footer.company.about', 'About'), href: '/about' },
-        { label: t('landing.footer.company.news', 'News'), href: dbr77Url('/news', lang), external: true },
-        { label: t('landing.footer.company.events', 'Events'), href: dbr77Url('/events', lang), external: true },
-        { label: t('landing.footer.company.contact', 'Contact'), href: '/contact' },
-      ],
-    },
-    {
-      title: t('landing.footer.caseStudies.title', 'Case Studies'),
-      links: [
-        { label: t('landing.footer.caseStudies.businessCases', 'Business Cases'), href: dbr77Url('/case-studies', lang), external: true },
-        { label: 'Atelier Toys', href: 'https://ateliertoys.com', external: true },
-      ],
-    },
-    {
       title: t('landing.footer.knowledge.title', 'Knowledge'),
       links: [
         {
@@ -118,6 +102,41 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
           href: 'https://masterclass.dbr77.com/?utm_source=Consultify&utm_medium=Footer&utm_campaign=landing_footer',
           external: true,
         },
+      ],
+    },
+    {
+      title: t('landing.footer.caseStudies.title', 'Case Studies'),
+      links: [
+        { label: t('landing.footer.caseStudies.businessCases', 'Business Cases'), href: dbr77Url('/case-studies', lang), external: true },
+        { label: 'Atelier Toys', href: 'https://ateliertoys.com', external: true },
+      ],
+    },
+    {
+      title: t('landing.footer.documentation.title', 'Documentation'),
+      links: [
+        { label: t('pricing.badge', 'Pricing'), href: ROUTES.PRICING },
+        { label: 'Subscription Terms', href: ROUTES.LEGAL.SUBSCRIPTION },
+        { label: 'Data Processing (DPA)', href: ROUTES.LEGAL.DPA },
+        { label: 'Service Levels (SLA)', href: ROUTES.LEGAL.SLA },
+        { label: 'Sub-processors', href: ROUTES.LEGAL.SUBPROCESSORS },
+        { label: t('legal.centerTitle', 'Legal Center'), href: ROUTES.LEGAL.CENTER },
+      ],
+    },
+    {
+      title: t('landing.footer.company.title', 'Company'),
+      links: [
+        { label: t('landing.footer.company.about', 'About'), href: ROUTES.LEGAL.ABOUT },
+        {
+          label: t('landing.footer.company.news', 'News'),
+          href: dbr77Url('/news', lang),
+          external: true,
+        },
+        {
+          label: t('landing.footer.company.events', 'Events'),
+          href: dbr77Url('/events', lang),
+          external: true,
+        },
+        { label: t('landing.footer.company.contact', 'Contact'), href: ROUTES.LEGAL.CONTACT },
       ],
     },
   ], [t, lang]);
@@ -287,13 +306,14 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
           {/* Legal Links Strip */}
           <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2">
             {[
+              { label: t('landing.footer.legal.terms', 'Terms of Service'), href: ROUTES.LEGAL.TERMS },
               { label: t('landing.footer.legal.privacy', 'Privacy Policy'), href: ROUTES.LEGAL.PRIVACY },
               { label: t('landing.footer.legal.cookies', 'Cookie Policy'), href: ROUTES.LEGAL.COOKIES },
-              { label: t('landing.footer.legal.terms', 'Terms of Service'), href: ROUTES.LEGAL.TERMS },
-              { label: t('landing.footer.legal.acceptableUse', 'Acceptable Use Policy'), href: '/legal/acceptable-use' },
-              { label: t('landing.footer.legal.aiPolicy', 'AI Policy'), href: '/legal/ai-policy' },
-              { label: t('landing.footer.legal.security', 'Security Overview'), href: '/security' },
-              { label: t('landing.footer.legal.consent', 'Consent & Control'), href: ROUTES.LEGAL.CENTER },
+              { label: 'Subscription Terms', href: ROUTES.LEGAL.SUBSCRIPTION },
+              { label: 'DPA', href: ROUTES.LEGAL.DPA },
+              { label: 'SLA', href: ROUTES.LEGAL.SLA },
+              { label: t('landing.footer.legal.security', 'Security Overview'), href: ROUTES.LEGAL.SECURITY },
+              { label: t('landing.footer.legal.consent', 'Legal Center'), href: ROUTES.LEGAL.CENTER },
             ].map((link, idx) => (
               <a
                 key={idx}

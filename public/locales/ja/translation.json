@@ -1616,5 +1616,23 @@
       "subtitle": "お問い合わせありがとうございます。1営業日以内にご返信いたします。",
       "another": "別のメッセージを送信"
     }
+  },
+  "moduleHome": {
+    "new": "新規",
+    "recent": "最近",
+    "saved": "保存済み",
+    "templates": "テンプレート",
+    "heroDoc": "レポート、ブリーフ、分析、記事、ビジネス文書",
+    "heroSheet": "予算、財務モデル、タイムライン、リスクマトリックス",
+    "heroDeck": "経営デッキ、ピッチ、ステータス更新、ワークショッププレゼンテーション",
+    "startNew": "新規作成",
+    "fromTemplate": "テンプレートから",
+    "viewAll": "すべて表示"
+  },
+  "chatOutputTool": {
+    "auto": "自動",
+    "documents": "ドキュメント",
+    "tables": "テーブル",
+    "presentations": "プレゼンテーション"
   }
 }

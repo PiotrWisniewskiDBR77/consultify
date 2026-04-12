@@ -1307,7 +1307,8 @@ router.get(
       }
 
       const billing = await dbGet(
-        `SELECT subscription_plan_id, status, current_period_end
+        `SELECT subscription_plan_id, status, current_period_end, billing_rail, contract_status,
+                renewal_at, grace_until, access_expires_at, managed_by_user_id, is_manual_override
          FROM organization_billing
          WHERE organization_id = ?
          LIMIT 1`,
@@ -1330,6 +1331,13 @@ router.get(
           plan: (billing as any).subscription_plan_id,
           planName: (plan as any)?.name ?? null,
           status: (billing as any).status || 'trialing',
+          billingRail: (billing as any).billing_rail || 'stripe_subscription',
+          contractStatus: (billing as any).contract_status || null,
+          renewalAt: (billing as any).renewal_at || null,
+          graceUntil: (billing as any).grace_until || null,
+          accessExpiresAt: (billing as any).access_expires_at || null,
+          managedByUserId: (billing as any).managed_by_user_id || null,
+          isManualBilling: Boolean((billing as any).is_manual_override),
           currentPeriodEnd: (billing as any).current_period_end,
           cancelAtPeriodEnd: (billing as any).status === 'canceling',
           priceMonthly: (plan as any)?.price_monthly ?? null,

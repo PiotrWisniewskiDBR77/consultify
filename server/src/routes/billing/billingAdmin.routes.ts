@@ -75,4 +75,70 @@ router.post(
   })
 );
 
+router.get(
+  '/contracts',
+  verifyToken,
+  requireRole('superadmin'),
+  requireSuperAdminCapability('billing_ops'),
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const { listManagedContracts } = await import('../../services/billing/billingAdminOps.js');
+    const data = await listManagedContracts();
+    res.json({ success: true, data });
+  })
+);
+
+router.post(
+  '/manual-contract',
+  verifyToken,
+  requireRole('superadmin'),
+  requireSuperAdminCapability('billing_ops'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const {
+      organizationId,
+      subscriptionPlanId,
+      contractType,
+      billingRail,
+      contractStatus,
+      startAt,
+      renewalAt,
+      graceUntil,
+      accessExpiresAt,
+      billingEmail,
+      externalInvoiceRef,
+      notes,
+      managedByUserId,
+      reason,
+    } = req.body || {};
+    if (!organizationId || !subscriptionPlanId || !reason) {
+      return res
+        .status(400)
+        .json({ error: 'organizationId, subscriptionPlanId, and reason are required' });
+    }
+    const { upsertManualContract } = await import('../../services/billing/billingAdminOps.js');
+    const result = await upsertManualContract(
+      {
+        organizationId,
+        subscriptionPlanId,
+        contractType,
+        billingRail,
+        contractStatus,
+        startAt,
+        renewalAt,
+        graceUntil,
+        accessExpiresAt,
+        billingEmail,
+        externalInvoiceRef,
+        notes,
+        managedByUserId,
+      },
+      req.user?.id || 'unknown',
+      reason
+    );
+    if (!result.success) {
+      return res.status(400).json({ success: false, error: result.message });
+    }
+    res.json(result);
+  })
+);
+
 export default router;

@@ -319,7 +319,7 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
     try {
       const { activityColumn, hasIsActive } = await getUserSessionCompatibility();
       const activeFilter = hasIsActive
-        ? `AND COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')`
+        ? `AND is_active = true`
         : '';
       const session = await dbGet<{ id: string; is_active?: boolean | number | null }>(
         `SELECT id${hasIsActive ? ', is_active' : ''}
@@ -334,7 +334,7 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
         if (hasIsActive && session.is_active !== true && session.is_active !== 1) return;
         res.setHeader('X-Session-Id', session.id);
         if (activityColumn !== 'created_at') {
-          await dbRun(`UPDATE user_sessions SET ${activityColumn} = datetime('now') WHERE id = ?`, [
+          await dbRun(`UPDATE user_sessions SET ${activityColumn} = NOW() WHERE id = ?`, [
             session.id,
           ]);
         }
@@ -348,9 +348,13 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
 // In-memory cache for revoked-token lookups to avoid hitting slow DB on every request.
 // Entries expire after REVOKE_CACHE_TTL_MS. On token revocation the server restarts
 // or the cache naturally expires, so the window is acceptably short.
-const REVOKE_CACHE_TTL_MS = 30_000;
+const REVOKE_CACHE_TTL_MS = 60_000;
 const _revokeCache = new Map<string, { revoked: boolean; ts: number }>();
 const _revokeAllCache = new Map<string, { jti: string | null; ts: number }>();
+
+// In-flight dedup: prevents N concurrent DB hits for the same lookup during request bursts
+const _revokeInflight = new Map<string, Promise<boolean>>();
+const _revokeAllInflight = new Map<string, Promise<{ jti: string | null }>>();
 
 function getCachedRevoke(jti: string): boolean | undefined {
   const entry = _revokeCache.get(jti);
@@ -373,7 +377,9 @@ function getCachedRevokeAll(userId: string): { jti: string | null } | undefined 
 }
 
 /**
- * Check if token has been revoked
+ * Check if token has been revoked.
+ * Uses in-flight dedup so concurrent requests for the same token/user
+ * share a single DB query instead of each hitting the database.
  */
 const checkTokenRevocation = async (
   decoded: JWTPayload,
@@ -389,15 +395,26 @@ const checkTokenRevocation = async (
   }
 
   try {
-    // Check if specific token is revoked (with cache)
+    // Check if specific token is revoked (with cache + in-flight dedup)
     let isRevoked = getCachedRevoke(decoded.jti);
     if (isRevoked === undefined) {
-      const revokedToken = await dbGet<{ jti: string }>(
-        'SELECT jti FROM revoked_tokens WHERE jti = ?',
-        [decoded.jti]
-      );
-      isRevoked = !!revokedToken;
-      _revokeCache.set(decoded.jti, { revoked: isRevoked, ts: Date.now() });
+      let inflight = _revokeInflight.get(decoded.jti);
+      if (!inflight) {
+        inflight = dbGet<{ jti: string }>(
+          'SELECT jti FROM revoked_tokens WHERE jti = ?',
+          [decoded.jti]
+        ).then((row) => {
+          const revoked = !!row;
+          _revokeCache.set(decoded.jti!, { revoked, ts: Date.now() });
+          _revokeInflight.delete(decoded.jti!);
+          return revoked;
+        }).catch((err) => {
+          _revokeInflight.delete(decoded.jti!);
+          throw err;
+        });
+        _revokeInflight.set(decoded.jti, inflight);
+      }
+      isRevoked = await inflight;
     }
 
     if (isRevoked) {
@@ -405,15 +422,26 @@ const checkTokenRevocation = async (
       return;
     }
 
-    // Check for "revoke-all" marker for this user (with cache)
+    // Check for "revoke-all" marker for this user (with cache + in-flight dedup)
     let revokeAllEntry = getCachedRevokeAll(decoded.id);
     if (revokeAllEntry === undefined) {
-      const revokeAllRow = await dbGet<{ jti: string }>(
-        "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > datetime('now')",
-        [decoded.id]
-      );
-      revokeAllEntry = { jti: revokeAllRow?.jti ?? null };
-      _revokeAllCache.set(decoded.id, { jti: revokeAllEntry.jti, ts: Date.now() });
+      let inflight = _revokeAllInflight.get(decoded.id);
+      if (!inflight) {
+        inflight = dbGet<{ jti: string }>(
+          "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > NOW()",
+          [decoded.id]
+        ).then((row) => {
+          const entry = { jti: row?.jti ?? null };
+          _revokeAllCache.set(decoded.id, { jti: entry.jti, ts: Date.now() });
+          _revokeAllInflight.delete(decoded.id);
+          return entry;
+        }).catch((err) => {
+          _revokeAllInflight.delete(decoded.id);
+          throw err;
+        });
+        _revokeAllInflight.set(decoded.id, inflight);
+      }
+      revokeAllEntry = await inflight;
     }
 
     if (revokeAllEntry.jti) {
@@ -547,7 +575,7 @@ export const verifyToken = asyncHandler(
         );
       }
 
-      logger.info(
+      logger.debug(
         `[AuthMiddleware] Verifying token: ${token.substring(0, 10)}... with secret length: ${jwtSecret?.length}`
       );
 

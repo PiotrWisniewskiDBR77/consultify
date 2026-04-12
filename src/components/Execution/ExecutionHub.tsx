@@ -554,6 +554,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   >('all');
 
   // Data state
+  const initRetryRef = React.useRef(0);
   const [initiatives, setInitiatives] = useState<FullInitiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -831,22 +832,29 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   // Fetch initiatives in execution phase
   useEffect(() => {
+    initRetryRef.current = 0;
     const loadInitiatives = async () => {
       setIsLoading(true);
       try {
-        // Get initiatives that are in execution phase
         const response = await Api.getInitiatives(currentProjectId || undefined);
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
 
-        // Filter to execution-relevant statuses
         const executionInitiatives = data.filter((i: FullInitiative) =>
           EXECUTION_STATUSES.includes(i.status)
         );
 
         setInitiatives(executionInitiatives);
-      } catch (err) {
+        initRetryRef.current = 0;
+      } catch (err: any) {
         console.error('[ExecutionHub] Failed to load:', err);
-        // Fallback to session data
+        const isNetworkError = !err?.status || err?.message?.includes('Failed to fetch') || err?.message?.includes('NetworkError');
+        if (isNetworkError && initRetryRef.current < 3) {
+          initRetryRef.current++;
+          const delay = Math.min(2000 * Math.pow(2, initRetryRef.current - 1), 8000);
+          console.warn(`[ExecutionHub] Network error, retrying in ${delay}ms (attempt ${initRetryRef.current}/3)`);
+          setTimeout(loadInitiatives, delay);
+          return;
+        }
         const executionInitiatives = (fullSessionData?.initiatives || []).filter(
           (i: FullInitiative) => EXECUTION_STATUSES.includes(i.status)
         );

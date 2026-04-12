@@ -10,21 +10,21 @@ export const TrustStrip: React.FC = () => {
     {
       icon: ShieldCheck,
       label: t('landing.compliance.badges.gdpr', 'GDPR compliant'),
-      color: 'text-emerald-400',
+      color: 'text-emerald-600 dark:text-emerald-400',
       glowColor: 'rgba(16,185,129,0.22)',
       borderColor: 'rgba(16,185,129,0.22)',
     },
     {
       icon: Lock,
       label: t('landing.compliance.badges.encryption', 'AES-256 encryption'),
-      color: 'text-cyan-400',
+      color: 'text-cyan-600 dark:text-cyan-400',
       glowColor: 'rgba(34,211,238,0.20)',
       borderColor: 'rgba(34,211,238,0.20)',
     },
     {
       icon: Globe,
       label: t('landing.compliance.badges.euData', 'Your region, your data'),
-      color: 'text-blue-400',
+      color: 'text-blue-600 dark:text-blue-400',
       glowColor: 'rgba(96,165,250,0.20)',
       borderColor: 'rgba(96,165,250,0.20)',
     },
@@ -34,21 +34,21 @@ export const TrustStrip: React.FC = () => {
     {
       icon: Cloud,
       label: t('landing.compliance.badges.sharedCloud', 'Shared cloud'),
-      color: 'text-sky-400',
+      color: 'text-sky-600 dark:text-sky-400',
       glowColor: 'rgba(56,189,248,0.16)',
       borderColor: 'rgba(56,189,248,0.16)',
     },
     {
       icon: Server,
       label: t('landing.compliance.badges.dedicated', 'Dedicated API'),
-      color: 'text-violet-400',
+      color: 'text-violet-600 dark:text-violet-400',
       glowColor: 'rgba(168,85,247,0.18)',
       borderColor: 'rgba(168,85,247,0.18)',
     },
     {
       icon: Building2,
       label: t('landing.compliance.badges.onPrem', 'On-premise'),
-      color: 'text-amber-400',
+      color: 'text-amber-600 dark:text-amber-400',
       glowColor: 'rgba(251,191,36,0.16)',
       borderColor: 'rgba(251,191,36,0.16)',
     },
@@ -82,9 +82,8 @@ export const TrustStrip: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: idx * 0.08 }}
                     viewport={{ once: true }}
-                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default"
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default bg-slate-50 dark:bg-white/[0.03]"
                     style={{
-                      background: 'rgba(255,255,255,0.03)',
                       border: `1px solid ${badge.borderColor}`,
                       boxShadow: `0 0 20px -8px ${badge.glowColor}`,
                     }}
@@ -114,9 +113,8 @@ export const TrustStrip: React.FC = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.24 + idx * 0.08 }}
                     viewport={{ once: true }}
-                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default"
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 cursor-default bg-slate-50 dark:bg-white/[0.03]"
                     style={{
-                      background: 'rgba(255,255,255,0.03)',
                       border: `1px solid ${badge.borderColor}`,
                       boxShadow: `0 0 20px -8px ${badge.glowColor}`,
                     }}
@@ -141,11 +139,7 @@ export const TrustStrip: React.FC = () => {
           className="mt-8 flex flex-col items-center gap-2"
         >
           <div
-            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.10)',
-            }}
+            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10"
           >
             <span className="flex items-center gap-1.5">
               <span className="text-sm">🇪🇺</span>

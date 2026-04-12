@@ -106,7 +106,7 @@ export const BecomePartnerView: React.FC = () => {
 
               <button
                 onClick={handleLearnMoreClick}
-                className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all duration-300"
+                className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-white/10 transition-all duration-300"
               >
                 {t('pages.partner.hero.learnMore', 'Odkrywaj program')}
                 <ArrowRight size={18} />
@@ -114,7 +114,7 @@ export const BecomePartnerView: React.FC = () => {
 
               <button
                 onClick={() => navigate('/login')}
-                className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-all duration-300"
+                className="inline-flex items-center gap-2 text-white/60 hover:text-white font-medium text-lg px-6 py-4 rounded-xl hover:bg-white/10 transition-all duration-300"
               >
                 <Shield size={18} className="text-violet-400" />
                 {t('pages.partner.hero.existingPartner', 'Zaloguj się jako partner')}

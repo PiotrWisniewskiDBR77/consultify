@@ -9,6 +9,7 @@ import {
   updateAnnaLpCtaContext,
 } from '@/services/annaLpCtaContext';
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
+import { ROUTES } from '@/routes/routeConfig';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
 
@@ -121,6 +122,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [showDemoRedirect, setShowDemoRedirect] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [fromDemoRedirect, setFromDemoRedirect] = useState(false);
+  const [hasAcceptedLegal, setHasAcceptedLegal] = useState(false);
   const quickAccessEnabled = isQuickAccessShortcutHost(window.location.hostname);
 
   useEffect(() => {
@@ -156,6 +158,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setFromDemoRedirect(false);
     setShowQuickAccess(false);
     setQuickCode('');
+    setHasAcceptedLegal(false);
   }, [initialStep, targetMode]);
 
   // Quick access should never leak into normal auth flow.
@@ -291,6 +294,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!hasAcceptedLegal) {
+      setError(
+        t(
+          'auth.legalConsentRequired',
+          'Please confirm that you accept the Terms of Service and Privacy Policy to continue.'
+        )
+      );
+      return;
+    }
 
     // Demo mode or from demo redirect: use register-demo (minimal signup, demo org, track contact)
     if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
@@ -314,6 +328,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           email: formData.email,
           password: formData.password,
           firstName: formData.firstName || undefined,
+          acceptedLegalDocs: ['TOS', 'PRIVACY'],
+          legalConsentAt: new Date().toISOString(),
         });
 
         if (ctx && ctx.cta_type === 'demo') {
@@ -381,6 +397,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
         accessLevel: targetMode === SessionMode.FULL ? 'full' : 'free',
         partner_code: sessionStorage.getItem('attribution_ref') || undefined,
         utm_medium: 'web_app_flow',
+        acceptedLegalDocs: ['TOS', 'PRIVACY'],
+        legalConsentAt: new Date().toISOString(),
       });
 
       // Check if the user status or a specific message implies pending
@@ -748,6 +766,51 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
 
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs leading-5 text-slate-600 dark:border-navy-700 dark:bg-navy-950/50 dark:text-slate-400">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={hasAcceptedLegal}
+              onChange={(e) => setHasAcceptedLegal(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+            />
+            <span>
+              {t('auth.legalConsentPrefix', 'I agree to the')}{' '}
+              <a
+                href={ROUTES.LEGAL.TERMS}
+                className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+              >
+                {t('auth.termsLink', 'Terms of Service')}
+              </a>{' '}
+              {t('auth.legalConsentAnd', 'and')}{' '}
+              <a
+                href={ROUTES.LEGAL.PRIVACY}
+                className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+              >
+                {t('auth.privacyLink', 'Privacy Policy')}
+              </a>
+              .
+            </span>
+          </label>
+          <p className="mt-2 pl-7 text-[11px] text-slate-500 dark:text-slate-500">
+            {t('auth.legalReviewNote', 'Review pricing and legal materials in')}{' '}
+            <a
+              href={ROUTES.LEGAL.SUBSCRIPTION}
+              className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+            >
+              {t('auth.subscriptionLink', 'Subscription Terms')}
+            </a>{' '}
+            {t('auth.legalReviewDivider', 'or visit the')}{' '}
+            <a
+              href={ROUTES.LEGAL.CENTER}
+              className="font-medium text-purple-600 hover:underline dark:text-purple-400"
+            >
+              {t('auth.legalCenterLink', 'Legal Center')}
+            </a>
+            .
+          </p>
+        </div>
+
         <button className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-purple-500/20 dark:shadow-purple-900/20 group text-sm">
           {t('auth.createStart')}
           <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -918,17 +981,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
       {/* Privacy Policy Link */}
       <div className="text-center pt-3 border-t border-slate-200 dark:border-navy-700">
         <a
-          href="/privacy"
+          href={ROUTES.LEGAL.PRIVACY}
           className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           {t('auth.privacyLink', 'Polityka prywatności')}
         </a>
         <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
         <a
-          href="/terms"
+          href={ROUTES.LEGAL.TERMS}
           className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           {t('auth.termsLink', 'Regulamin')}
+        </a>
+        <span className="text-slate-300 dark:text-slate-600 mx-2">•</span>
+        <a
+          href={ROUTES.LEGAL.CENTER}
+          className="text-xs text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+        >
+          {t('auth.legalCenterLink', 'Legal Center')}
         </a>
       </div>
     </div>

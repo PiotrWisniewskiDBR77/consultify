@@ -19,8 +19,6 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
   mode,
 }) => {
   const { t } = useTranslation();
-  // Modal always in English — avoids mixed-language when browser is e.g. Spanish
-  const tEn = (key: string, fallback: string) => t(key, { lng: 'en', defaultValue: fallback });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'signup' | 'login'>('signup');
@@ -107,13 +105,13 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
 
               <h2 className="text-lg font-semibold text-slate-100 mb-0.5">
                 {mode === 'demo'
-                  ? tEn('demo.modal.title', 'Experience Consultify Demo')
-                  : tEn('trial.modal.title', 'Start Your 7-Day Trial')}
+                  ? t('demo.modal.title', 'Experience Consultify Demo')
+                  : t('trial.modal.title', 'Start Your 7-Day Trial')}
               </h2>
               <p className="text-slate-500 text-xs">
                 {mode === 'demo'
-                  ? tEn('demo.modal.subtitle', 'Explore Atelier ToolToys sample data')
-                  : tEn('trial.modal.subtitle', 'Your own workspace, 7 days free')}
+                  ? t('demo.modal.subtitle', 'Explore Atelier ToolToys sample data')
+                  : t('trial.modal.subtitle', 'Your own workspace, 7 days free')}
               </p>
             </div>
 
@@ -133,7 +131,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                       : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
-                  {tEn('demo.modal.signUp', 'Sign up')}
+                  {t('demo.modal.signUp', 'Sign up')}
                 </button>
                 <button
                   type="button"
@@ -147,7 +145,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                       : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
-                  {tEn('demo.modal.logIn', 'Log in')}
+                  {t('demo.modal.logIn', 'Log in')}
                 </button>
               </div>
 
@@ -155,7 +153,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
               <form onSubmit={handleSubmit} className="space-y-3 mb-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    {tEn('auth.email', 'Email')}
+                    {t('auth.email', 'Email')}
                   </label>
                   <input
                     type="email"
@@ -170,11 +168,11 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   <>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                        {tEn('auth.firstName', 'First name')}
+                        {t('auth.firstName', 'First name')}
                         {mode === 'demo' && (
                           <span className="normal-case text-slate-600">
                             {' '}
-                            ({tEn('common.optional', 'optional')})
+                            ({t('common.optional', 'optional')})
                           </span>
                         )}
                       </label>
@@ -191,7 +189,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                       <>
                         <div>
                           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                            {tEn('auth.lastName', 'Last name')}
+                            {t('auth.lastName', 'Last name')}
                           </label>
                           <input
                             type="text"
@@ -204,7 +202,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                            {tEn('auth.companyName', 'Company name')}
+                            {t('auth.companyName', 'Company name')}
                           </label>
                           <input
                             type="text"
@@ -222,7 +220,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 )}
                 <div>
                   <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                    {tEn('auth.password', 'Password')}
+                    {t('auth.password', 'Password')}
                   </label>
                   <input
                     type="password"
@@ -243,17 +241,17 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   {isLoading ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      {tEn('demo.modal.loading', 'Starting...')}
+                      {t('demo.modal.loading', 'Starting...')}
                     </>
                   ) : (
                     <>
                       {mode === 'demo'
                         ? tab === 'signup'
-                          ? tEn('demo.modal.startDemo', 'Sign up & Enter Demo')
-                          : tEn('demo.modal.logInAndDemo', 'Log in & Enter Demo')
+                          ? t('demo.modal.startDemo', 'Sign up & Enter Demo')
+                          : t('demo.modal.logInAndDemo', 'Log in & Enter Demo')
                         : tab === 'signup'
-                          ? tEn('trial.modal.startTrial', 'Sign up & Start Trial')
-                          : tEn('trial.modal.logInAndTrial', 'Log in & Continue')}
+                          ? t('trial.modal.startTrial', 'Sign up & Start Trial')
+                          : t('trial.modal.logInAndTrial', 'Log in & Continue')}
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -265,10 +263,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 {mode === 'demo' ? (
                   <div>
                     <h3 className="text-sm font-medium text-slate-200 mb-0.5">
-                      {tEn('demo.modal.demoMode', 'Demo Environment')}
+                      {t('demo.modal.demoMode', 'Demo Environment')}
                     </h3>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      {tEn(
+                      {t(
                         'demo.modal.demoDescriptionSigned',
                         "Sign up or log in to explore Atelier ToolToys sample data. We'll follow up with you."
                       )}
@@ -277,10 +275,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 ) : (
                   <div>
                     <h3 className="text-sm font-medium text-slate-200 mb-0.5">
-                      {tEn('trial.modal.ownWorkspace', 'Your Own Workspace')}
+                      {t('trial.modal.ownWorkspace', 'Your Own Workspace')}
                     </h3>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      {tEn(
+                      {t(
                         'trial.modal.ownWorkspaceDesc',
                         '7 days with your own organization, projects, and data. Full access to all features.'
                       )}
@@ -288,7 +286,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   </div>
                 )}
                 <p className="text-xs text-slate-600 mt-3 pt-3 border-t border-white/5">
-                  {tEn(
+                  {t(
                     'demo.modal.commercialDescription',
                     'For production use with your own data and team, contact our sales team.'
                   )}
@@ -302,12 +300,12 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 rel="noopener noreferrer"
                 className="block w-full py-2.5 px-4 text-sm bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors text-center"
               >
-                {tEn('demo.modal.contactSales', 'Contact Sales')}
+                {t('demo.modal.contactSales', 'Contact Sales')}
               </a>
 
               {/* Footer Note */}
               <p className="text-[11px] text-center text-slate-600 mt-3 leading-relaxed">
-                {tEn(
+                {t(
                   'demo.modal.footerNote',
                   'By entering the demo, you agree to our Terms of Service and Privacy Policy.'
                 )}

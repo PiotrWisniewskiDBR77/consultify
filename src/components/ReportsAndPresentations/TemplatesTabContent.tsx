@@ -4,7 +4,7 @@
  * Canonical source: /api/artifacts?artifactFamily=template (P24 Outputs artifacts)
  */
 
-import { BookTemplate, Copy, Edit, FileText, Loader2, MessageSquare, Play, Presentation } from 'lucide-react';
+import { BookTemplate, Copy, Edit, FileSpreadsheet, FileText, Loader2, MessageSquare, Play, Presentation } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -84,6 +84,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           <div className="flex items-center gap-2 min-w-0">
             {row.type === 'report' ? (
               <FileText size={14} className="text-blue-400 shrink-0" />
+            ) : row.type === 'sheet' ? (
+              <FileSpreadsheet size={14} className="text-emerald-400 shrink-0" />
             ) : (
               <Presentation size={14} className="text-purple-400 shrink-0" />
             )}
@@ -100,6 +102,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'report', label: isPolish ? 'Raport' : 'Report', color: 'bg-blue-400' },
+          { value: 'sheet', label: isPolish ? 'Tabela' : 'Sheet', color: 'bg-emerald-400' },
           {
             value: 'presentation',
             label: isPolish ? 'Prezentacja' : 'Presentation',
@@ -391,7 +394,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       type: isPolish
         ? TEMPLATE_TYPE_META[item.type].labelPl
         : TEMPLATE_TYPE_META[item.type].label,
-      typeColor: item.type === 'report' ? 'operational' : 'digital',
+      typeColor: item.type === 'report' ? 'operational' : item.type === 'sheet' ? 'financial' : 'digital',
       status: gridStatusMap[item.status] || 'DRAFT',
       progress: 0,
       updatedAt: item.updatedAt,

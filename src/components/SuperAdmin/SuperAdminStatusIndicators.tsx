@@ -330,7 +330,7 @@ export const SuperAdminStatusIndicators: React.FC = () => {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 120_000);
     return () => clearInterval(interval);
   }, []);
 

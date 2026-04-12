@@ -6,6 +6,7 @@
 
 import {
   BarChart3,
+  Bell,
   BookOpen,
   Building2,
   Command,
@@ -47,6 +48,7 @@ import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
 import { SuperAdminUserManagement } from './SuperAdminUserManagement';
 import { TenantCommandCenterView } from './TenantCommandCenterView';
 import { SupportModuleView } from './support/SupportModuleView';
+import { ModuleWaitlistView } from './ModuleWaitlistView';
 
 interface CustomersModuleProps {
   initialTab?: string;
@@ -114,6 +116,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
       automation: 'superadmin_customers_automation',
       communication: 'superadmin_customers_communication',
       'bulk-ops': 'superadmin_customers_bulk_ops',
+      waitlist: 'superadmin_customers_waitlist',
     };
     setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_customers');
     return () => setHelpDocumentIdOverride(null);
@@ -142,6 +145,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
     { id: 'automation', label: 'Automation', icon: <Zap size={16} /> },
     { id: 'communication', label: 'Communication', icon: <Mail size={16} /> },
     { id: 'bulk-ops', label: 'Bulk Ops', icon: <Upload size={16} /> },
+    { id: 'waitlist', label: 'Module Waitlist', icon: <Bell size={16} /> },
   ];
 
   const renderContent = () => {
@@ -220,6 +224,8 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
             <BulkOperationsView />
           </div>
         );
+      case 'waitlist':
+        return <ModuleWaitlistView />;
       default:
         return null;
     }

@@ -43,8 +43,8 @@ export const DEFAULT_PAID_LIMITS = {
 export const TRIAL_DURATION_DAYS = 7;
 
 export const TRIAL_WARNING_DAYS = {
-  WARNING: 7,
-  CRITICAL: 3,
+  WARNING: 3,
+  CRITICAL: 1,
 } as const;
 
 // Subscription statuses used across policy snapshots and banners.
@@ -60,6 +60,42 @@ export const SUBSCRIPTION_STATUSES = {
 export type SubscriptionStatus =
   | (typeof SUBSCRIPTION_STATUSES)[keyof typeof SUBSCRIPTION_STATUSES]
   | null;
+
+export const BILLING_RAILS = {
+  STRIPE_SUBSCRIPTION: 'stripe_subscription',
+  MANUAL_INVOICE: 'manual_invoice',
+  HYBRID_USAGE_INVOICE: 'hybrid_usage_invoice',
+} as const;
+
+export type BillingRail = (typeof BILLING_RAILS)[keyof typeof BILLING_RAILS] | null;
+
+export const CONTRACT_STATUSES = {
+  DRAFT: 'draft',
+  ACTIVE: 'active',
+  RENEWAL_DUE: 'renewal_due',
+  GRACE: 'grace',
+  SUSPENDED: 'suspended',
+  EXPIRED: 'expired',
+  CANCELED: 'canceled',
+} as const;
+
+export type ContractStatus = (typeof CONTRACT_STATUSES)[keyof typeof CONTRACT_STATUSES] | null;
+
+export const ACCESS_POSTURES = {
+  DEMO_ORG: 'demo_org',
+  DEMO_VIEW: 'demo_view',
+  TRIAL_ACTIVE: 'trial_active',
+  TRIAL_EXPIRING: 'trial_expiring',
+  TRIAL_EXPIRED: 'trial_expired',
+  PAID_ACTIVE: 'paid_active',
+  PAID_PAST_DUE: 'paid_past_due',
+  PAID_CANCELING: 'paid_canceling',
+  PAID_MANUAL_ACTIVE: 'paid_manual_active',
+  PAID_MANUAL_RENEWAL_DUE: 'paid_manual_renewal_due',
+  SUSPENDED: 'suspended',
+} as const;
+
+export type AccessPosture = (typeof ACCESS_POSTURES)[keyof typeof ACCESS_POSTURES];
 
 // Percent thresholds for usage banners/meters.
 export const USAGE_THRESHOLD_PERCENT = {
@@ -149,15 +185,25 @@ export interface AIAccessContext {
 
 export interface PolicySnapshot {
   orgType: OrgType;
+  posture: AccessPosture;
   isDemo: boolean;
+  isDemoView: boolean;
   isTrial: boolean;
   isPaid: boolean;
+  billingRail: BillingRail;
+  contractStatus: ContractStatus;
   subscriptionStatus: SubscriptionStatus | null;
+  sourceOfTruth: 'trial_clock' | 'demo_mode' | 'stripe' | 'manual_contract';
   trialStartedAt?: string | null;
   trialExpiresAt?: string | null;
   trialDaysLeft: number;
   isTrialExpired: boolean;
   warningLevel: 'none' | 'warning' | 'critical' | 'expired';
+  renewalAt?: string | null;
+  graceUntil?: string | null;
+  accessExpiresAt?: string | null;
+  managedByUserId?: string | null;
+  isManualBilling: boolean;
   limits: {
     maxProjects: number;
     maxUsers: number;
@@ -237,6 +283,18 @@ export interface UsageCountersRow {
 
 export interface CountRow {
   count: number;
+}
+
+export interface BillingStateRow {
+  status?: string | null;
+  subscription_plan_id?: string | null;
+  billing_rail?: string | null;
+  contract_status?: string | null;
+  renewal_at?: string | null;
+  grace_until?: string | null;
+  access_expires_at?: string | null;
+  managed_by_user_id?: string | null;
+  is_manual_override?: number | boolean | null;
 }
 
 export interface CanInviteUsersResult {

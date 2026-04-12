@@ -89,17 +89,17 @@ export const ProblemPlatformSection: React.FC = () => {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 backdrop-blur-xl"
+            className="flex flex-col rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shrink-0" style={{ boxShadow: '0 4px 20px -4px rgba(245,158,11,0.30)' }}>
                 <LockKeyhole size={18} className="text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 mb-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 mb-1">
                   {t('landing.problemPlatform.problem.badge', 'The market problem')}
                 </p>
-                <h3 className="text-lg font-bold text-white leading-snug">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
                   {t(
                     'landing.problemPlatform.problem.title',
                     'Business intelligence is still inaccessible, generic, and unsafe.'
@@ -108,7 +108,7 @@ export const ProblemPlatformSection: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-sm text-white/45 leading-relaxed mb-6">
+            <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-6">
               {t(
                 'landing.problemPlatform.problem.body',
                 'The market still has not turned AI and digital tools into a scalable layer for tactical and strategic business execution.'
@@ -119,14 +119,14 @@ export const ProblemPlatformSection: React.FC = () => {
               {problemPoints.map((point) => (
                 <div
                   key={point}
-                  className="flex h-full items-start gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3"
+                  className="flex h-full items-start gap-3 rounded-xl border border-slate-200 dark:border-white/[0.05] bg-slate-100 dark:bg-white/[0.02] px-4 py-3"
                 >
-                  <Lightbulb size={14} className="text-amber-400 mt-0.5 shrink-0" />
-                  <span className="text-sm text-white/60 leading-relaxed">{point}</span>
+                  <Lightbulb size={14} className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0" />
+                  <span className="text-sm text-slate-600 dark:text-white/60 leading-relaxed">{point}</span>
                 </div>
               ))}
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
-                <p className="text-sm font-semibold text-amber-300">
+              <div className="rounded-xl border border-amber-500/25 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/[0.06] px-4 py-3">
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                   {t('landing.problemPlatform.problem.solve', 'That is exactly the gap Consultify closes.')}
                 </p>
               </div>
@@ -139,17 +139,17 @@ export const ProblemPlatformSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 backdrop-blur-xl"
+            className="flex flex-col rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shrink-0" style={{ boxShadow: '0 4px 20px -4px rgba(6,182,212,0.30)' }}>
                 <Globe2 size={18} className="text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 mb-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400 mb-1">
                   {t('landing.problemPlatform.pattern.badge', 'The category shift')}
                 </p>
-                <h3 className="text-lg font-bold text-white leading-snug">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
                   {t(
                     'landing.problemPlatform.pattern.title',
                     'What Spotify did for music: access, quality, and trust at scale.'
@@ -158,7 +158,7 @@ export const ProblemPlatformSection: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-sm text-white/45 leading-relaxed mb-6">
+            <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-6">
               {t(
                 'landing.problemPlatform.pattern.body',
                 'Spotify did not create more music. It made great music instantly accessible, reliable, and easy to use. Consultify applies the same shift to business intelligence.'
@@ -169,14 +169,14 @@ export const ProblemPlatformSection: React.FC = () => {
               {patternExamples.map((item) => (
                 <div
                   key={item}
-                  className="flex h-full items-start rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3 text-sm text-white/60 leading-relaxed"
+                  className="flex h-full items-start rounded-xl border border-slate-200 dark:border-white/[0.05] bg-slate-100 dark:bg-white/[0.02] px-4 py-3 text-sm text-slate-600 dark:text-white/60 leading-relaxed"
                 >
                   {item}
                 </div>
               ))}
 
-              <div className="rounded-xl border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3">
-                <p className="text-sm font-semibold text-violet-300">
+              <div className="rounded-xl border border-violet-500/25 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-500/[0.06] px-4 py-3">
+                <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">
                   {t(
                     'landing.problemPlatform.pattern.summary',
                     'Access. Quality. Trust. That is the shift.'

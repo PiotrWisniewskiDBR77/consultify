@@ -69,11 +69,11 @@ export const NotificationDropdown = () => {
   };
 
   useEffect(() => {
-    fetchNotifications();
-
-    // Optional: Poll for new notifications every 60s
-    const interval = setInterval(fetchNotifications, 60000);
+    // Defer initial fetch to avoid competing with critical post-login API calls
+    const timeout = setTimeout(fetchNotifications, 2000);
+    const interval = setInterval(fetchNotifications, 60_000);
     return () => {
+      clearTimeout(timeout);
       clearInterval(interval);
     };
   }, []);

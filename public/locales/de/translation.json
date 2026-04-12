@@ -2141,5 +2141,23 @@
       "subtitle": "Vielen Dank für Ihre Kontaktaufnahme. Wir melden uns innerhalb von 1 Werktag.",
       "another": "Weitere Nachricht senden"
     }
+  },
+  "moduleHome": {
+    "new": "Neu",
+    "recent": "Letzte",
+    "saved": "Gespeichert",
+    "templates": "Vorlagen",
+    "heroDoc": "Berichte, Briefings, Analysen, Artikel und Geschäftsdokumente",
+    "heroSheet": "Budgets, Finanzmodelle, Zeitpläne, Risikomatrizen",
+    "heroDeck": "Management-Decks, Pitch, Status-Updates, Workshop-Präsentationen",
+    "startNew": "Neu starten",
+    "fromTemplate": "Aus Vorlage",
+    "viewAll": "Alle anzeigen"
+  },
+  "chatOutputTool": {
+    "auto": "Auto",
+    "documents": "Dokumente",
+    "tables": "Tabellen",
+    "presentations": "Präsentationen"
   }
 }

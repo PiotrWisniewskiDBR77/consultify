@@ -122,7 +122,7 @@ export const ValueJourneySection: React.FC = () => {
                 <Lightbulb size={20} className="text-violet-400" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-400">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-400">
                   {t('landing.valueJourney.layersBadge', 'Value layers')}
                 </p>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
@@ -164,7 +164,7 @@ export const ValueJourneySection: React.FC = () => {
                 <ArrowRight size={20} className="text-cyan-400" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-400">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-400">
                   {t('landing.valueJourney.journeyBadge', 'Consulting journey')}
                 </p>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">

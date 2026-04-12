@@ -2029,5 +2029,23 @@
       "subtitle": "Gracias por contactarnos. Te responderemos en 1 día hábil.",
       "another": "Enviar otro mensaje"
     }
+  },
+  "moduleHome": {
+    "new": "Nuevo",
+    "recent": "Recientes",
+    "saved": "Guardados",
+    "templates": "Plantillas",
+    "heroDoc": "Informes, briefings, análisis, artículos y documentos empresariales",
+    "heroSheet": "Presupuestos, modelos financieros, cronogramas, matrices de riesgo",
+    "heroDeck": "Decks ejecutivos, pitch, actualizaciones de estado, presentaciones de taller",
+    "startNew": "Comenzar nuevo",
+    "fromTemplate": "Desde plantilla",
+    "viewAll": "Ver todo"
+  },
+  "chatOutputTool": {
+    "auto": "Auto",
+    "documents": "Documentos",
+    "tables": "Tablas",
+    "presentations": "Presentaciones"
   }
 }

@@ -1196,7 +1196,7 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
   const outputType = String(raw?.outputType || '').toLowerCase();
   const resolvedTitle = String(raw?.resolvedTitle || raw?.titleSnapshot || raw?.title || '').trim();
 
-  if (outputType !== 'report' && outputType !== 'presentation') return null;
+  if (outputType !== 'report' && outputType !== 'presentation' && outputType !== 'sheet') return null;
   if (!resolvedTitle) return null;
 
   const metadata = template?.metadata && typeof template.metadata === 'object' ? template.metadata : {};
@@ -1219,7 +1219,7 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
     id: String(raw.artifactId),
     title: resolvedTitle,
     description: String(template?.description || '').trim(),
-    type: outputType === 'report' ? 'report' : 'presentation',
+    type: outputType === 'report' ? 'report' : outputType === 'sheet' ? 'sheet' : 'presentation',
     category:
       outputType === 'report'
         ? coerceTemplateCategory(template?.reportType || template?.outputType || raw?.reportType)
@@ -1245,11 +1245,14 @@ export function useTemplates() {
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
     try {
-      const [rptRes, presRes] = await Promise.all([
+      const [rptRes, presRes, sheetRes] = await Promise.all([
         fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=report`, {
           headers: getHeaders(),
         }),
         fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=presentation`, {
+          headers: getHeaders(),
+        }),
+        fetch(`${API_URL}/artifacts?limit=200&artifactFamily=template&outputType=sheet`, {
           headers: getHeaders(),
         }),
       ]);
@@ -1276,7 +1279,17 @@ export function useTemplates() {
         );
       }
 
-      if (!rptRes.ok && !presRes.ok) {
+      if (sheetRes.ok) {
+        const sheetData = await sheetRes.json();
+        const sheetList = sheetData.data || sheetData.templates || [];
+        merged.push(
+          ...sheetList
+            .map(mapCanonicalTemplateArtifact)
+            .filter((x: TemplateItem | null): x is TemplateItem => Boolean(x))
+        );
+      }
+
+      if (!rptRes.ok && !presRes.ok && !sheetRes.ok) {
         setTemplates([]);
         setError('Canonical artifact registry failed to load templates.');
         return;

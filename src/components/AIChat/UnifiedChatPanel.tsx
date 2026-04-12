@@ -79,6 +79,7 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
+import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
@@ -1470,12 +1471,93 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content:
             uiLang === 'pl'
-              ? 'Otwieram Excele \u2014 zaraz przygotuję Twój skoroszyt.'
-              : "Opening Excele \u2014 I'll prepare your workbook.",
+              ? 'Otwieram Tabele \u2014 zaraz przygotuję Twój skoroszyt.'
+              : "Opening Tables \u2014 I'll prepare your workbook.",
           timestamp: new Date(),
         });
 
+        useAppStore.getState().setChatKickoffMessage(text);
         navigateToRoute('/excele');
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Dokumenty: intercept document/report creation intents
+      if (detectDocumentIntent(text)) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+
+        const uiLangDoc = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `doc-redirect-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLangDoc === 'pl'
+              ? 'Otwieram Dokumenty \u2014 zaraz zaczynam pracę nad dokumentem.'
+              : "Opening Documents \u2014 I'll start working on your document.",
+          timestamp: new Date(),
+        });
+
+        useAppStore.getState().setChatKickoffMessage(text);
+        navigateToRoute('/wordy');
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Prezentacje: intercept presentation/deck creation intents
+      if (detectPresentationIntent(text)) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+
+        const uiLangPrez = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `prez-redirect-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLangPrez === 'pl'
+              ? 'Otwieram Prezentacje \u2014 zaraz przygotuję deck.'
+              : "Opening Presentations \u2014 I'll prepare your deck.",
+          timestamp: new Date(),
+        });
+
+        useAppStore.getState().setChatKickoffMessage(text);
+        navigateToRoute('/prezentacje');
         onMessageSent?.(content);
         return;
       }

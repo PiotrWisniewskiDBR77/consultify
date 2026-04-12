@@ -41,7 +41,10 @@ export class BillingQueryService {
   async getOrganizationBilling(orgId: string): Promise<OrganizationBilling | null> {
     const deps = this.deps();
     const row = await (deps.db.get<OrganizationBilling>(
-      'SELECT * FROM organization_billing WHERE organization_id = ?',
+      `SELECT ob.*, sp.name as plan_name, sp.price_monthly, sp.token_limit, sp.storage_limit_gb
+       FROM organization_billing ob
+       LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
+       WHERE ob.organization_id = ?`,
       [orgId]
     ) as Promise<OrganizationBilling | null>);
     return row || null;
@@ -117,16 +120,25 @@ export class BillingQueryService {
     const row = await (deps.db.get<{
       billing_model: string | null;
       plan_billing_model: string | null;
+      billing_rail: string | null;
     }>(
-      `SELECT os.billing_model, sp.billing_model as plan_billing_model
+      `SELECT os.billing_model, sp.billing_model as plan_billing_model, ob.billing_rail
              FROM organization_seats os
              LEFT JOIN organization_billing ob ON os.organization_id = ob.organization_id
              LEFT JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
              WHERE os.organization_id = ?`,
       [orgId]
-    ) as Promise<{ billing_model: string | null; plan_billing_model: string | null } | null>);
+    ) as Promise<{
+      billing_model: string | null;
+      plan_billing_model: string | null;
+      billing_rail: string | null;
+    } | null>);
     return {
-      billingModel: row?.billing_model || row?.plan_billing_model || 'subscription',
+      billingModel:
+        row?.billing_rail ||
+        row?.billing_model ||
+        row?.plan_billing_model ||
+        'subscription',
     };
   }
 

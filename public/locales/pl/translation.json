@@ -6,6 +6,7 @@
     }
   },
   "common": {
+    "optional": "opcjonalnie",
     "save": "Zapisz",
     "cancel": "Anuluj",
     "delete": "Usuń",
@@ -2386,6 +2387,7 @@
     "personalize": "Spersonalizujmy Twoją przestrzeń",
     "firstName": "Imię",
     "lastName": "Nazwisko",
+    "companyName": "Nazwa firmy",
     "phone": "Telefon",
     "company": "Firma",
     "accessCode": "Kod dostępu",
@@ -3261,50 +3263,50 @@
       "heading": "Consultify zamienia konsultingową inteligencję w uporządkowaną drogę od insightu do wyniku.",
       "sub": "To architektura wartości i ścieżka operacyjna stojąca za tą kategorią: pięć warstw wartości i pełna podróż konsultingowa w jednym środowisku pracy.",
       "layersBadge": "Warstwy wartości",
-      "layersTitle": "Pięć warstw wartości: Inspiration -> Knowledge -> Frameworks -> Guidance -> Execution.",
+      "layersTitle": "Pięć warstw wartości: Inspiracja -> Wiedza -> Frameworki -> Prowadzenie -> Realizacja.",
       "journeyBadge": "Podróż konsultingowa",
-      "journeyTitle": "Jedna platforma dla całej podróży konsultingowej: understanding -> diagnosis -> design -> execution -> results.",
+      "journeyTitle": "Jedna platforma dla całej podróży konsultingowej: zrozumienie -> diagnoza -> projektowanie -> realizacja -> wyniki.",
       "layers": [
         {
-          "title": "Inspiration",
+          "title": "Inspiracja",
           "description": "Pokazuje użytkownikom nowe idee, kierunki i możliwości."
         },
         {
-          "title": "Knowledge",
+          "title": "Wiedza",
           "description": "Daje dostęp do wiedzy konsultingowej, którą normalnie trudno zdobyć."
         },
         {
-          "title": "Frameworks",
+          "title": "Frameworki",
           "description": "Dostarcza strategiczne i analityczne narzędzia do uporządkowanego myślenia."
         },
         {
-          "title": "Guidance",
+          "title": "Prowadzenie",
           "description": "Prowadzi użytkownika przez proces budowania i ulepszania biznesu."
         },
         {
-          "title": "Execution",
+          "title": "Realizacja",
           "description": "Zamienia myślenie w wdrożenie, pomiar i realne efekty."
         }
       ],
       "journey": [
         {
-          "title": "Understanding",
+          "title": "Zrozumienie",
           "description": "Wywiad, zbieranie kontekstu i zrozumienie organizacji."
         },
         {
-          "title": "Diagnosis",
+          "title": "Diagnoza",
           "description": "Frameworki, assessmenty i analiza oparta na dowodach."
         },
         {
-          "title": "Designing initiatives",
+          "title": "Projektowanie inicjatyw",
           "description": "Projekt programu transformacji, priorytety i roadmapa."
         },
         {
-          "title": "Execution",
+          "title": "Realizacja",
           "description": "Delivery, governance i operacyjne dowiezienie zmian."
         },
         {
-          "title": "Results",
+          "title": "Wyniki",
           "description": "Śledzenie KPI, value capture, ROI i dowód wpływu."
         }
       ]
@@ -3315,7 +3317,7 @@
       "sub": "Platforma nie kończy się na logice doradczej. Przenosi pracę strategiczną do financial intelligence, executive-ready outputów i workspace'u operacyjnego, w którym zespół kontynuuje pracę.",
       "items": [
         {
-          "title": "Financial Intelligence",
+          "title": "Inteligencja finansowa",
           "description": "Consultify rozszerza klasyczny consulting o modele finansowe, analizy, wycenę i forecasting.",
           "bullets": [
             "Modele finansowe",
@@ -3325,7 +3327,7 @@
           ]
         },
         {
-          "title": "Reports & Presentations",
+          "title": "Raporty i prezentacje",
           "description": "Consultify zamienia bieżącą pracę w raporty, prezentacje executive i consulting deliverables.",
           "bullets": [
             "Raporty",
@@ -3334,7 +3336,7 @@
           ]
         },
         {
-          "title": "My Work",
+          "title": "Moja praca",
           "description": "Consultify daje zespołom osobisty i współdzielony workspace do dowożenia pracy po rozpoczęciu działań strategicznych.",
           "bullets": [
             "Taski",
@@ -3597,6 +3599,8 @@
       "heading": "Pytania? Odpowiedzi.",
       "more": "Masz więcej pytań?",
       "contact": "Skontaktuj się z nami",
+      "ctaPrimary": "Uruchom darmowy trial",
+      "ctaSecondary": "Przeglądaj zasoby",
       "items": [
         {
           "q": "Czym jest Consultify?",
@@ -3771,11 +3775,17 @@
     },
     "compliance": {
       "label": "Bezpieczeństwo i zgodność klasy enterprise",
+      "securityLabel": "Bezpieczeństwo i zgodność",
+      "deployLabel": "Opcje wdrożenia",
       "badges": {
         "iso27001": "ISO 27001",
         "soc2": "SOC2 Type II",
-        "gdpr": "GDPR",
-        "encryption": "AES-256"
+        "gdpr": "Zgodność z GDPR",
+        "encryption": "Szyfrowanie AES-256",
+        "euData": "Twój region, Twoje dane",
+        "sharedCloud": "Współdzielony cloud",
+        "dedicated": "Dedykowane API",
+        "onPrem": "On-premise"
       },
       "dataResidency": "Opcje rezydencji danych:",
       "regions": {
@@ -3784,7 +3794,8 @@
         "gcc": "Bliski Wschód",
         "jp": "Japonia"
       },
-      "dataNote": "Twoje dane zostają w wybranym regionie • Brak trenowania AI na Twoich danych • Pełna zgodność regulacyjna"
+      "dataNote": "Twoje dane zostają w wybranym regionie • Brak trenowania AI na Twoich danych • Pełna zgodność regulacyjna",
+      "euNote": "Twoje dane pozostają w wybranym regionie — UE, USA lub APAC. Ty wybierasz, my egzekwujemy."
     },
     "trust": {
       "carouselTagline": "AI analizuje. Ty dowodzisz.",
@@ -3853,6 +3864,93 @@
       "resources": "Zasoby",
       "resourcesDesc": "Case studies, whitepapers, webinary i informacje o aktualizacjach produktu.",
       "explore": "Poznaj"
+    },
+    "aiOs": {
+      "badge": "System operacyjny AI",
+      "heading": "Jeden system AI dla asystentów, promptów, agentów, wiedzy i natywnych artefaktów.",
+      "sub": "Consultify łączy silną architekturę AI w widoczne środowisko operacyjne: prowadzeni asystenci, zarządzane prompty, wieloetapowi agenci, wiedza zgodna z politykami i outputy wykraczające poza czat.",
+      "items": [
+        {
+          "badge": "Asystenci",
+          "title": "Anna i Teresa to prowadzone punkty wejścia do tego samego zarządzanego systemu.",
+          "description": "Anna obsługuje publiczne wsparcie produktowe, a Teresa pracę w tenantach, ale obie należą do jednego środowiska operacyjnego Consultify AI."
+        },
+        {
+          "badge": "Prompt OS",
+          "title": "Zachowanie promptów jest zarządzane jako zdolność platformy.",
+          "description": "Consultify nie opiera się na ukrytych fragmentach promptów. Polityka promptów, wydania i zachowanie runtime tworzą jeden kontrolowany system."
+        },
+        {
+          "badge": "Agenci",
+          "title": "Agenci planują, proponują i koordynują pracę zamiast działać jak odizolowane triki.",
+          "description": "Model pracy AI podąża za zarządzanym cyklem życia od zapytania do planu, zatwierdzenia, zastosowania i audytu."
+        },
+        {
+          "badge": "Wiedza",
+          "title": "Wiedza jest zgodna z politykami, śledzona i powiązana z kontekstem pracy.",
+          "description": "Wyszukiwanie i pamięć są zarządzane przez zakres, prywatność i pochodzenie, dzięki czemu użytkownicy mogą ufać temu, co system wykorzystuje."
+        },
+        {
+          "badge": "Outputy",
+          "title": "Praca AI kontynuuje się w artefaktach, deliverables i dowodach realizacji.",
+          "description": "System przenosi kontekst do raportów, prezentacji, arkuszy i gotowych do wdrożenia outputów zamiast kończyć na odpowiedziach czatu."
+        }
+      ],
+      "footer": "Nie chodzi o więcej powierzchni AI. Chodzi o jedno spójne, zarządzane środowisko operacyjne AI obejmujące czat, realizację, wiedzę i outputy."
+    },
+    "narrativeCta": {
+      "badge": "Wybierz swoją ścieżkę",
+      "heading": "Przejdź od zrozumienia kategorii do pierwszego momentu wartości.",
+      "sub": "Zacznij od Anny, jeśli chcesz orientację, wypróbuj demo, jeśli chcesz poznać platformę, lub uruchom trial, gdy jesteś gotowy zastosować konsultingową inteligencję w swojej organizacji.",
+      "askAnna": "Zapytaj najpierw Annę",
+      "tryDemo": "Wypróbuj demo",
+      "startTrial": "Rozpocznij trial",
+      "points": [
+        "Anna wyjaśni dopasowanie, pricing i bezpieczeństwo, zanim zdecydujesz się na ścieżkę.",
+        "Demo pokazuje Consulting Intelligence Platform na przykładowych danych tylko do odczytu.",
+        "Trial uruchamia Twój własny prowadzony workflow konsultingowy, od kontekstu do realizacji."
+      ],
+      "footer": "Jedna narracja, trzy bezpieczne ścieżki wejścia: orientacja, eksploracja produktu lub bezpośredni onboarding trial."
+    },
+    "modelDeployment": {
+      "badge": "Własny model AI i deployment",
+      "title": "Twoja rzeczywistość governance. Twój model wdrożenia.",
+      "subtitle": "Consultify działa na autorskiej warstwie modelu DBR77, zbudowanej do logiki konsultingowej i outputów executive-grade. Wybierz jak i gdzie to działa.",
+      "points": {
+        "model": {
+          "title": "Autorski model AI",
+          "body": "Zbudowany dla konsultingu: struktury decyzyjne, ramowanie ryzyk i outputy gotowe dla zarządu."
+        },
+        "control": {
+          "title": "Wybór wdrożenia",
+          "body": "Dopasuj wymogi procurement, integracji i bezpieczeństwa bez wymuszania jednej ścieżki."
+        },
+        "security": {
+          "title": "Bezpieczeństwo z założenia",
+          "body": "Zgodność z GDPR, szyfrowanie AES-256 i rezydencja danych w UE dostępne domyślnie."
+        },
+        "sales": {
+          "title": "Prowadzona ewaluacja",
+          "body": "Anna przeprowadzi Cię przez dopasowanie, pricing i deployment, zanim zdecydujesz się na trial lub umowę enterprise."
+        }
+      },
+      "options": {
+        "shared": {
+          "title": "Współdzielony Consultify Cloud",
+          "body": "Szybki start z zarządzaną infrastrukturą, automatycznymi aktualizacjami i współdzielonym governance. Idealny dla zespołów oceniających lub skalujących workflow konsultingowy AI.",
+          "tag": "Najszybszy start"
+        },
+        "dedicated": {
+          "title": "Dedykowane API",
+          "body": "Izolowane środowisko uruchomieniowe z własną granicą API. Silniejsza separacja danych, własne reguły integracji i dedykowane zasoby obliczeniowe dla zespołów enterprise.",
+          "tag": "Izolacja enterprise"
+        },
+        "onPrem": {
+          "title": "On-premise",
+          "body": "Pełna kontrola nad infrastrukturą i danymi. Wdrożenie w Twoim środowisku, gdy governance, procurement lub compliance wymagają zerowej ekspozycji zewnętrznej.",
+          "tag": "Pełna kontrola"
+        }
+      }
     }
   },
   "partner": {
@@ -6146,6 +6244,30 @@
         "initiatives": "Inicjatywy i realizacja — szczegóły",
         "finance": "Finanse i ROI — szczegóły"
       }
+    },
+    "modal": {
+      "title": "Poznaj demo Consultify",
+      "subtitle": "Eksploruj przykładowe dane Atelier ToolToys",
+      "signUp": "Rejestracja",
+      "logIn": "Logowanie",
+      "loading": "Uruchamianie...",
+      "startDemo": "Zarejestruj się i wejdź do demo",
+      "logInAndDemo": "Zaloguj się i wejdź do demo",
+      "demoMode": "Środowisko demo",
+      "demoDescriptionSigned": "Zarejestruj się lub zaloguj, aby eksplorować przykładowe dane Atelier ToolToys. Skontaktujemy się z Tobą.",
+      "commercialDescription": "Aby korzystać z własnymi danymi i zespołem, skontaktuj się z naszym zespołem sprzedaży.",
+      "contactSales": "Skontaktuj się ze sprzedażą",
+      "footerNote": "Wchodząc do demo, akceptujesz nasze Warunki korzystania i Politykę prywatności."
+    }
+  },
+  "trial": {
+    "modal": {
+      "title": "Rozpocznij 7-dniowy trial",
+      "subtitle": "Twój własny workspace, 7 dni za darmo",
+      "startTrial": "Zarejestruj się i rozpocznij trial",
+      "logInAndTrial": "Zaloguj się i kontynuuj",
+      "ownWorkspace": "Twój własny workspace",
+      "ownWorkspaceDesc": "7 dni z własną organizacją, projektami i danymi. Pełny dostęp do wszystkich funkcji."
     }
   },
   "ui": {
@@ -6154,6 +6276,14 @@
       "nMode": "Widok strony",
       "cMode": "Widok tabeli"
     }
+  },
+  "nav": {
+    "product": "Produkt",
+    "knowledgeBase": "Baza wiedzy",
+    "pricing": "Cennik",
+    "partners": "Partnerzy",
+    "vector": "Vector AI",
+    "security": "Bezpieczeństwo"
   },
   "navigation": {
     "sidebar": {
@@ -6993,6 +7123,7 @@
     "heading": "Proste plany.",
     "headingAccent": "Jasne limity użycia.",
     "sub": "Wybierz pakiet dopasowany do rzeczywistego użycia, wielkości zespołu i etapu wdrożenia.",
+    "trialPill": "Zacznij tutaj",
     "monthly": "Miesięcznie",
     "annual": "Rocznie",
     "mostPopular": "Najpopularniejszy",
@@ -7002,6 +7133,8 @@
     "plans": {
       "trial": {
         "name": "Trial",
+        "price": "Za darmo",
+        "subtitle": "14 dni",
         "description": "14 dni na sprawdzenie workflow przed decyzją.",
         "features": [
           "1 sandbox workspace",
@@ -7014,6 +7147,8 @@
       },
       "user": {
         "name": "User",
+        "price": "EUR 29",
+        "subtitle": "za stanowisko / miesiąc",
         "description": "Dla samodzielnych konsultantów i operatorów potrzebujących stałego miesięcznego użycia.",
         "features": [
           "1 stanowisko",
@@ -7026,7 +7161,9 @@
         "cta": "Wybierz User"
       },
       "manager": {
-        "name": "Manager",
+        "name": "Admin",
+        "price": "EUR 49",
+        "subtitle": "za stanowisko / miesiąc",
         "description": "Dla liderów zespołów prowadzących wiele inicjatyw ze wspólną widocznością.",
         "features": [
           "3 stanowiska w zestawie",
@@ -7036,10 +7173,12 @@
           "Eksporty gotowe do prezentacji",
           "Priorytetowe wsparcie"
         ],
-        "cta": "Wybierz Manager"
+        "cta": "Wybierz Admin"
       },
       "enterprise": {
         "name": "Enterprise",
+        "price": "Indywidualnie",
+        "subtitle": "custom setup",
         "description": "Dla firm konsultingowych i zespołów enterprise z wymaganiami bezpieczeństwa i wdrożeniowymi.",
         "features": [
           "Własne stanowiska i pakiety użycia",
@@ -7051,6 +7190,51 @@
         ],
         "cta": "Skontaktuj się"
       }
+    },
+    "enterpriseNote": {
+      "badge": "Szczegóły enterprise",
+      "title": "Własne wdrożenie, governance i model komercyjny",
+      "body": "Plany enterprise są dla organizacji, które potrzebują więcej niż standardowego pakietu: wdrożenia on-premise lub dedykowanego, niestandardowej ścieżki prawnej, wsparcia procurement, rolloutu partnerskiego, pakietów licencjonowanych narzędzi lub negocjowanej struktury budżetu AI.",
+      "ctaEnterprise": "Porozmawiaj o wdrożeniu enterprise",
+      "ctaTrial": "Najpierw rozpocznij trial"
+    },
+    "budget": {
+      "badge": "Wspólny budżet AI",
+      "heading": "Użycie jest poolowane dla całej organizacji",
+      "shared": {
+        "title": "Wspólny budżet AI dla organizacji",
+        "body": "Użycie AI jest poolowane na poziomie organizacji zamiast fragmentowania per użytkownik, co odpowiada temu, jak naprawdę pracują zespoły konsultingowe."
+      },
+      "topUp": {
+        "title": "Miesięczne pakiety doładowań",
+        "body": "Organizacje mogą kupić dodatkowe miesięczne pakiety budżetu AI. Niewykorzystane saldo przenosi się i kumuluje zamiast znikać."
+      },
+      "payg": {
+        "title": "Automatyczny fallback pay-as-you-go",
+        "body": "Gdy budżet się wyczerpie, użycie AI może kontynuować przez pay-as-you-go lub przejście na większy pakiet."
+      }
+    },
+    "overLimit": {
+      "badge": "Zachowanie po wyczerpaniu limitu",
+      "heading": "Workspace działa dalej, nawet gdy AI się zatrzyma",
+      "items": [
+        "Po wyczerpaniu budżetu AI użytkownicy zachowują dostęp do istniejących danych, workspace'ów i wcześniejszych outputów.",
+        "Co się zatrzymuje, to asystent AI: generowanie, wsparcie prowadzone przez AI i akcje zużywające tokeny.",
+        "Zespoły mogą kontynuować przez pay-as-you-go, upgrade pakietu lub kontakt ze sprzedażą w sprawie większej umowy komercyjnej."
+      ]
+    },
+    "licensedTools": {
+      "badge": "Licencjonowane narzędzia i frameworki",
+      "heading": "Specjalistyczne moduły pozostają poza ceną bazowego stanowiska",
+      "items": [
+        "Wybrane assessmenty i frameworki, takie jak SIR lub DRD, mogą wymagać osobnej licencji.",
+        "Licencjonowane narzędzia są sprzedawane jako dodatki lub wyceniane na zapytanie, nie mieszane z ceną bazowego stanowiska.",
+        "To utrzymuje czytelność platformy bazowej, zachowując przestrzeń dla specjalistycznych konfiguracji enterprise."
+      ]
+    },
+    "salesNote": {
+      "badge": "Nota sprzedażowa",
+      "body": "Budżet AI jest sprzedawany jako budżet, a nie jako publiczna obietnica stawki za token, ponieważ różne akcje zużywają różne zasoby modelu. Anna i Teresa mogą pomóc wyjaśnić, który pakiet i kształt budżetu pasują do obciążenia przed zakupem."
     }
   },
   "pages": {
@@ -7302,6 +7486,384 @@
       "title": "Wiadomość wysłana",
       "subtitle": "Dziękujemy za kontakt. Odpowiemy w ciągu 1 dnia roboczego.",
       "another": "Wyślij kolejną wiadomość"
+    }
+  },
+  "moduleHome": {
+    "new": "Nowe",
+    "recent": "Ostatnie",
+    "saved": "Zapisane",
+    "templates": "Wzorce",
+    "heroDoc": "Raporty, briefy, analizy, artykuły i dokumenty biznesowe",
+    "heroSheet": "Budżety, modele finansowe, harmonogramy, matryce ryzyk",
+    "heroDeck": "Decki zarządcze, pitch, status update, prezentacje warsztatowe",
+    "startNew": "Zacznij nowy",
+    "fromTemplate": "Z wzorca",
+    "viewAll": "Zobacz wszystko"
+  },
+  "chatOutputTool": {
+    "auto": "Auto",
+    "documents": "Dokumenty",
+    "tables": "Tabele",
+    "presentations": "Prezentacje"
+  },
+  "vector": {
+    "hero": {
+      "badge": "Przemysłowy silnik rozumowania",
+      "title": "Pierwsza na świecie AI, która",
+      "titleHighlight": "rozumuje jak inżynier przemysłowy.",
+      "subtitle": "DBR77 Vector 1.0 przekształca surowe dane fabryczne w ustrukturyzowane, wykonalne decyzje biznesowe w mniej niż 120 sekund — osiągając 94% zgodności z seniorami konsultantami w podwójnie ślepych benchmarkach.",
+      "downloadCta": "Pobierz whitepaper",
+      "demoCta": "Umów demo"
+    },
+    "beyond": {
+      "title": "Poza AI generatywnym",
+      "subtitle": "Produkcja stoi przed paradoksem \u201Ebogata w dane, uboga w decyzje\u201D. Vector wypełnia lukę, której generyczne AI nie jest w stanie zamknąć.",
+      "problem": {
+        "title": "Problem",
+        "body": "Fabryki generują eksaskalowe dane telemetryczne, ale optymalizacja wciąż zależy od powolnej analizy ludzkiej. Wąskim gardłem nie są już dane — to brak systemów decyzyjnych."
+      },
+      "generic": {
+        "title": "Generyczne LLM-y",
+        "body": "GPT i inne LLM-y są \u201Eprzemysłowo ślepe\u201D. Nie mają podstaw w fizyce fabrycznej, analizie ruchu MTM i ograniczeniach operacyjnych. Ich odpowiedzi są płynne językowo, ale operacyjnie nieistotne."
+      },
+      "vector": {
+        "title": "DBR77 Vector",
+        "body": "Pierwszy przemysłowy silnik rozumowania. Trenowany na 1400+ uwierzytelnionych przypadkach transformacji. Konstruuje ustrukturyzowane decyzje — nie tekst. Osadza MTM, Lean i ISO 22400-2 jako prymitywy rozumowania."
+      }
+    },
+    "pipeline": {
+      "badge": "Architektura decyzyjna",
+      "title": "Jak myśli Vector",
+      "subtitle": "Sześcioetapowy pipeline rozumowania przekształcający surowy kontekst przemysłowy w ustrukturyzowane, wykonalne decyzje.",
+      "steps": {
+        "01": {
+          "title": "Konstrukcja kontekstu",
+          "body": "Surowa telemetria z ERP, WMS i systemów IoT jest normalizowana do ustrukturyzowanej reprezentacji operacyjnej z przepływami procesów, ograniczeniami i metrykami bazowymi."
+        },
+        "02": {
+          "title": "Kwantyzacja bazowa",
+          "body": "Wskaźniki operacyjne wyprowadzone z ISO 22400-2 ustalają rygorystyczny stan \u201EAs-Is\u201D — czasy cykli, alokacje FTE, bazowe OEE."
+        },
+        "03": {
+          "title": "Przyczynowa analiza strukturalna",
+          "body": "Silnik identyfikuje ukryte przyczyny źródłowe nieefektywności i ich współzależności poprzez zautomatyzowaną logikę planowania — nie powierzchowne dopasowywanie wzorców."
+        },
+        "04": {
+          "title": "Konstrukcja planu działania",
+          "body": "Interwencje są sekwencjonowane pod kątem maksymalnej wykonalności, z uwzględnieniem dostępności zasobów, zależności technicznych i ograniczeń operacyjnych."
+        },
+        "05": {
+          "title": "Ewaluacja finansowa na poziomie zarządu",
+          "body": "Każda interwencja techniczna jest tłumaczona na wpływ bilansowy — projekcje ROI, trajektorie CAPEX/OPEX, szacunki okresu zwrotu."
+        },
+        "06": {
+          "title": "Ustrukturyzowany artefakt decyzyjny",
+          "body": "Output to nie proza — to kompletny, obronny business case z podsumowaniem diagnostycznym, priorytetyzowanym planem działania i projekcjami finansowymi."
+        }
+      }
+    },
+    "numbers": {
+      "title": "Liczby",
+      "parity": "Zgodność z seniorami konsultantami",
+      "speed": "Czas analizy",
+      "speedSub": "vs tygodnie pracy manualnej",
+      "cases": "Uwierzytelnione studia przypadków",
+      "casesSub": "Autorski korpus treningowy",
+      "params": "Parametry modelu",
+      "paramsSub": "+ adapter domenowy QLoRA"
+    },
+    "comparison": {
+      "title": "Vector vs. generyczne LLM-y",
+      "subtitle": "Celowo zbudowane rozumowanie przemysłowe vs. generowanie języka ogólnego przeznaczenia.",
+      "dimensionHeader": "Wymiar",
+      "vectorHeader": "DBR77 Vector",
+      "genericHeader": "Generyczny LLM",
+      "rows": [
+        {
+          "dimension": "Dane treningowe",
+          "vector": "1400+ uwierzytelnionych przemysłowych studiów przypadków + syntetyczne dane Digital Twin",
+          "generic": "Korpusy tekstowe skali internetowej bez podstaw przemysłowych"
+        },
+        {
+          "dimension": "Logika rozumowania",
+          "vector": "MTM, Lean, ISO 22400-2 osadzone jako prymitywy rozumowania",
+          "generic": "Heurystyki lingwistyczne — brak świadomości fizyki fabrycznej"
+        },
+        {
+          "dimension": "Typ outputu",
+          "vector": "Ustrukturyzowany obiekt decyzyjny — diagnoza + plan działania + finanse",
+          "generic": "Swobodne odpowiedzi tekstowe"
+        },
+        {
+          "dimension": "Walidacja",
+          "vector": "Warstwa walidacji po inferencji z mitygacją halucynacji",
+          "generic": "Brak wbudowanej walidacji przemysłowej"
+        },
+        {
+          "dimension": "Użycie danych klienta",
+          "vector": "Nigdy nie używane do treningu — zapytania nie są przechowywane po sesji",
+          "generic": "Mogą być używane do ulepszania modelu, chyba że zrezygnujesz"
+        },
+        {
+          "dimension": "Wdrożenie",
+          "vector": "On-premise, prywatne API lub współdzielone — klient wybiera",
+          "generic": "Tylko chmura dostawcy — ograniczona kontrola rezydencji"
+        }
+      ]
+    },
+    "roadmap": {
+      "title": "Od wsparcia decyzji do autonomii",
+      "subtitle": "Czteroetapowa trajektoria ewolucyjna w kierunku w pełni autonomicznych systemów przemysłowych.",
+      "now": "Teraz",
+      "done": "Zrobione",
+      "stages": {
+        "1": {
+          "label": "Etap 1",
+          "title": "Systemy analityczne",
+          "body": "Cyfryzacja telemetrii. Decyzje ludzkie pozostają dominujące."
+        },
+        "2": {
+          "label": "Etap 2",
+          "title": "Wsparcie decyzji",
+          "body": "Ustrukturyzowane rekomendacje generowane przez AI, walidowane przez ekspertów. Vector 1.0 działa tutaj."
+        },
+        "3": {
+          "label": "Etap 3",
+          "title": "Ograniczona automatyzacja",
+          "body": "AI autonomicznie wykonuje predefiniowane interwencje niskiego ryzyka w ramach kontrolowanych parametrów."
+        },
+        "4": {
+          "label": "Etap 4",
+          "title": "Autonomiczne systemy decyzyjne",
+          "body": "W pełni zamknięte środowisko z informacją zwrotną w czasie rzeczywistym i iteracyjnym uczeniem."
+        }
+      }
+    },
+    "ecosystem": {
+      "title": "Część kompletnego ekosystemu przemysłowego",
+      "subtitle": "Vector nie jest samodzielnym narzędziem. Jest jądrem poznawczym przemysłowego systemu operacyjnego AI DBR77.",
+      "layers": [
+        { "label": "Industrial IoT", "sub": "Warstwa danych" },
+        { "label": "Digital Twin", "sub": "Warstwa symulacji" },
+        { "label": "DBR77 Vector", "sub": "Warstwa decyzyjna" },
+        { "label": "IRIS", "sub": "System operacyjny" },
+        { "label": "Marketplace", "sub": "Warstwa wykonawcza" }
+      ]
+    },
+    "cta": {
+      "title": "Gotowy zobaczyć rozumowanie przemysłowe w akcji?",
+      "subtitle": "Pobierz pełny whitepaper po szczegóły techniczne lub umów demo na żywo, aby zobaczyć jak Vector analizuje realny scenariusz przemysłowy.",
+      "download": "Pobierz whitepaper (PDF)",
+      "demo": "Umów demo na żywo"
+    }
+  },
+  "security": {
+    "hero": {
+      "badge": "Bezpieczeństwo enterprise",
+      "titlePre": "Bezpieczeństwo gwarantowane przez",
+      "titleHighlight": "architekturę,",
+      "titlePost": "nie marketingowe obietnice.",
+      "subtitle": "Consultify i DBR77 Vector dostarczają AI klasy enterprise poprzez rozwiązania techniczne — od szyfrowania i suwerenności danych po dedykowane modele wdrożeniowe i zgodność z ISO 27001."
+    },
+    "infra": {
+      "title": "Infrastruktura bezpieczeństwa",
+      "features": [
+        {
+          "title": "Szyfrowanie",
+          "description": "Szyfrowanie AES-256 w spoczynku, TLS 1.3 w tranzycie. Kontrole szyfrowania są stosowane zgodnie z modelem wdrożenia — nigdy jako ogólne deklaracje marketingowe."
+        },
+        {
+          "title": "Opcje wdrożenia",
+          "description": "Współdzielona chmura, dedykowane API/runtime lub w pełni on-premise. Każda ścieżka zapewnia izolację sesji i konteneryzowaną inferencję Docker."
+        },
+        {
+          "title": "Przegląd governance",
+          "description": "Postawy bezpieczeństwa są przeglądane z klientem — nie ukrywane za ogólnymi odznaczeniami. RBAC, ścieżki audytu i punkty kontrolne governance są wbudowane."
+        },
+        {
+          "title": "Kontrola dostępu",
+          "description": "Kontrola dostępu oparta na rolach (RBAC) z uprawnieniami administracyjnymi dostosowanymi do środowisk klienta. Zarządzanie kluczami API i kontrole sesji w zestawie."
+        },
+        {
+          "title": "Śledzenie",
+          "description": "Aktywność w workspace, wygenerowane outputy i punkty kontrolne governance mogą być przeglądane wewnątrz środowiska operacyjnego. Pełna ścieżka audytu dla każdej interakcji AI."
+        },
+        {
+          "title": "Ocena dopasowania klienta",
+          "description": "Szczegóły bezpieczeństwa i prawne są dostosowywane do docelowego środowiska klienta. Żadnego uniwersalnego języka certyfikacji — tylko to, co dotyczy Twojego wdrożenia."
+        }
+      ]
+    },
+    "pillars": {
+      "badge": "Architektura bezpieczeństwa AI",
+      "title": "Sześć filarów bezpieczeństwa przemysłowego AI",
+      "subtitle": "Każdy aspekt DBR77 Vector — od danych treningowych po wdrożenie i inferencję — jest zaprojektowany dla środowisk, w których suwerenność danych i audytowalność są bezdyskusyjne.",
+      "items": [
+        {
+          "title": "Brak trenowania na danych klienta",
+          "body": "DBR77 Vector jest trenowany wyłącznie na zanonimizowanych historycznych studiach przypadków. Żadne dane produkcyjne klienta, dokumenty ani zapytania nie są używane do treningu. Zapytania i outputy nie są przechowywane po zakończeniu sesji."
+        },
+        {
+          "title": "Izolacja wdrożenia z założenia",
+          "body": "Każdy model wdrożenia — on-premise, prywatne API lub współdzielone — jest zaprojektowany z izolacją jako domyślną. On-premise: zero danych opuszcza sieć. Prywatne API: dedykowane obliczenia, brak multi-tenancy."
+        },
+        {
+          "title": "Człowiek w pętli zatwierdzania",
+          "body": "Vector to warstwa inteligencji dla decyzji, nie autonomiczny autorytet. Każda rekomendacja znajduje się wewnątrz ludzkiej pętli decyzyjnej ze śledzalną logiką rozumowania."
+        },
+        {
+          "title": "Zgodność z governance enterprise",
+          "body": "SOC2, GDPR, ISO 27001 i zgodność rezydencji danych. Outputy przyjazne audytowi ze śledzeniem źródeł. Dostęp oparty na rolach i szyfrowanie w spoczynku i tranzycie."
+        },
+        {
+          "title": "Zanonimizowane uczenie",
+          "body": "Ciągłe doskonalenie opiera się na zanonimizowanych wzorcach przemysłowych, nie danych konkretnego klienta. Żadnych identyfikatorów klienta, rysunków ani zastrzeżonych danych w bazie treningowej."
+        },
+        {
+          "title": "Gotowość na konwergencję OT/IT",
+          "body": "Kompatybilny z sieciami air-gapped i ograniczonymi środowiskami. Brak obowiązkowych zewnętrznych wywołań API podczas inferencji. Zaprojektowany dla środowisk, w których czas działania i bezpieczeństwo są bezdyskusyjne."
+        }
+      ]
+    },
+    "deployment": {
+      "title": "Wybierz swój model wdrożenia",
+      "subtitle": "Ta sama inteligencja Vector, ta sama głębokość domenowa. Różnica polega na tym, gdzie działa i kto zarządza infrastrukturą.",
+      "models": [
+        {
+          "title": "On-Premise",
+          "tag": "Pełna kontrola",
+          "body": "Uruchom DBR77 Vector w pełni na własnych serwerach. Dane produkcyjne, plany transformacji i rozumowanie AI nigdy nie opuszczają Twojego perymetru bezpieczeństwa. Najlepsze dla branż regulowanych, wrażliwego IP i środowisk zarządzanych przez OT.",
+          "bullets": [
+            "Pełna kontrola nad runtime modelu, danymi i dostępem",
+            "Brak zewnętrznej zależności sieciowej dla inferencji",
+            "Najsilniejsza zgodność prawna, OT i procurement"
+          ]
+        },
+        {
+          "title": "Prywatne dedykowane API",
+          "tag": "Izolacja enterprise",
+          "body": "Izolowane hostowane środowisko wyłącznie dla jednego klienta. Pełna izolacja, przewidywalna wydajność i brak współdzielonej infrastruktury — bez zarządzania systemami bazowymi.",
+          "bullets": [
+            "Dedykowane obliczenia i storage — brak multi-tenancy",
+            "Kontrole dostępu i szyfrowanie specyficzne dla klienta",
+            "Zarządzane aktualizacje i skalowanie bez obciążenia wewnętrznego DevOps"
+          ]
+        },
+        {
+          "title": "Współdzielone API",
+          "tag": "Najszybszy start",
+          "body": "Ścieżka wejścia o niższym tarciu dla pilotów, warsztatów i szybkich eksperymentów. Polityki bezpieczeństwa enterprise nadal obowiązują. Łatwa ścieżka upgrade do prywatnego lub on-premise, gdy będziesz gotowy.",
+          "bullets": [
+            "Najszybszy czas do pierwszej wartości",
+            "Polityki bezpieczeństwa enterprise nadal obowiązują",
+            "Izolacja sesji bez trwałego przechowywania"
+          ]
+        }
+      ]
+    },
+    "sovereignty": {
+      "title": "Suwerenność i rezydencja danych",
+      "regionTitle": "Twój region, Twoje zasady",
+      "dataTitle": "Zero trenowania na danych klienta",
+      "p1": "Wybierz rezydencję danych: UE, USA lub APAC",
+      "p2": "Wdrożenie on-premise: dane nigdy nie opuszczają Twojej sieci",
+      "p3": "Prywatne API: dedykowane obliczenia w wybranym regionie",
+      "p4": "Pełna zgodność z GDPR z Umowami o przetwarzanie danych",
+      "d1": "Żadne dane produkcyjne klienta nie są używane do treningu lub dostrajania modelu",
+      "d2": "Zapytania i outputy nie są przechowywane po sesji inferencji",
+      "d3": "Pełna separacja między pipeline'ami inferencji i treningu",
+      "d4": "Transparentna metodologia dostępna do przeglądu bezpieczeństwa"
+    },
+    "techControls": {
+      "title": "Szyfrowanie i kontrole techniczne",
+      "items": [
+        { "label": "AES-256", "sub": "Szyfrowanie w spoczynku" },
+        { "label": "TLS 1.3", "sub": "Szyfrowanie w tranzycie" },
+        { "label": "RBAC", "sub": "Kontrola dostępu oparta na rolach" },
+        { "label": "Izolacja Docker", "sub": "Konteneryzowana inferencja" },
+        { "label": "Izolacja sesji", "sub": "Brak trwałego przechowywania" },
+        { "label": "Pipeline CI/CD", "sub": "Wersjonowany i audytowalny" }
+      ]
+    },
+    "compliance": {
+      "title": "Zgodność i standardy",
+      "subtitle": "Zaprojektowane, aby przejść przeglądy procurement, prawne i bezpieczeństwa IT enterprise.",
+      "standards": [
+        { "label": "ISO 27001", "sub": "Zarządzanie bezpieczeństwem informacji", "status": "Zgodne" },
+        { "label": "SOC2", "sub": "Kontrola organizacji usługowej", "status": "Zgodne" },
+        { "label": "GDPR", "sub": "Ogólne rozporządzenie o ochronie danych", "status": "Zgodne" },
+        { "label": "NIST AI RMF", "sub": "Framework zarządzania ryzykiem AI", "status": "Zgodne" },
+        { "label": "ISO 23247", "sub": "Standardy bezpieczeństwa Digital Twin", "status": "Zgodne" },
+        { "label": "ISO 22400-2", "sub": "Framework KPI przemysłowych", "status": "Zintegrowane" }
+      ]
+    },
+    "comparison": {
+      "title": "DBR77 Vector vs. publiczne LLM-y",
+      "subtitle": "Bezpieczeństwo obok siebie — jak Vector wypada w wymiarach, które mają największe znaczenie.",
+      "dimensionHeader": "Wymiar",
+      "vectorHeader": "DBR77 Vector",
+      "llmHeader": "Publiczny LLM",
+      "rows": [
+        {
+          "dimension": "Dane używane do treningu",
+          "vector": "Tylko zanonimizowane historyczne przypadki. Żadne dane klienta nie są używane do treningu.",
+          "generic": "Trenowany na danych internetowych. Może używać danych użytkownika do ulepszania, chyba że zrezygnujesz."
+        },
+        {
+          "dimension": "Rezydencja danych",
+          "vector": "On-premise, prywatna chmura lub hosting specyficzny dla regionu. Klient wybiera.",
+          "generic": "Dane przetwarzane w infrastrukturze chmurowej dostawcy. Ograniczona kontrola rezydencji."
+        },
+        {
+          "dimension": "Przechowywanie zapytań i outputów",
+          "vector": "Brak trwałego przechowywania po sesji. Klient kontroluje retencję.",
+          "generic": "Zapytania mogą być logowane, przechowywane i przeglądane przez dostawcę."
+        },
+        {
+          "dimension": "Zależność sieciowa",
+          "vector": "On-premise działa w pełni offline. Prywatne API wymaga tylko sieci wewnętrznej.",
+          "generic": "Wymaga połączenia internetowego z serwerami dostawcy dla każdego zapytania."
+        },
+        {
+          "dimension": "Multi-tenancy",
+          "vector": "On-premise i prywatne API są single-tenant. Współdzielone API używa izolacji sesji.",
+          "generic": "Infrastruktura multi-tenant współdzielona między wszystkimi użytkownikami."
+        },
+        {
+          "dimension": "Procurement i zgodność",
+          "vector": "Zaprojektowany, aby przejść przeglądy bezpieczeństwa enterprise, prawne i OT.",
+          "generic": "Często blokowany lub ograniczany przez polityki bezpieczeństwa enterprise."
+        }
+      ]
+    },
+    "pipeline": {
+      "title": "Audytowalny od kodu do inferencji",
+      "subtitle": "Każdy krok w pipeline wdrożeniowym jest wersjonowany, zautomatyzowany i śledzalny. Brak kroków manualnych. Brak nieśledzonych zmian.",
+      "steps": [
+        { "label": "Kontrola źródeł", "sub": "Repozytoria z kontrolą wersji" },
+        { "label": "CI/CD", "sub": "GitHub Actions" },
+        { "label": "Build Docker", "sub": "Konteneryzowany model" },
+        { "label": "Wdrożenie", "sub": "RunPod / On-prem" },
+        { "label": "Izolowana inferencja", "sub": "Brak współdzielonego stanu" },
+        { "label": "Brak przechowywania outputu", "sub": "Dane tylko na czas sesji" }
+      ]
+    },
+    "disclosure": {
+      "title": "Odpowiedzialne zgłaszanie",
+      "intro": "Poważnie traktujemy luki w zabezpieczeniach. Jeśli odkryjesz problem bezpieczeństwa, prosimy o odpowiedzialne zgłoszenie. Zobowiązujemy się do:",
+      "items": [
+        "Potwierdzenie otrzymania w ciągu 24 godzin",
+        "Regularne aktualizacje o postępie naszego dochodzenia",
+        "Uhonorowanie badaczy stosujących odpowiedzialne zgłaszanie",
+        "Niepodejmowanie działań prawnych wobec badaczy działających w dobrej wierze"
+      ],
+      "report": "Zgłoś problemy bezpieczeństwa na:"
+    },
+    "cta": {
+      "title": "Gotowy na przegląd bezpieczeństwa enterprise?",
+      "subtitle": "Po szczegóły bezpieczeństwa specyficzne dla wdrożenia, przegląd prawny lub walkthrough architektury — skontaktuj się z nami przed procurement lub rolloutem.",
+      "review": "Umów przegląd bezpieczeństwa",
+      "walkthrough": "Zaplanuj walkthrough architektury"
     }
   }
 }

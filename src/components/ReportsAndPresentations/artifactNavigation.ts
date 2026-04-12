@@ -23,10 +23,13 @@ export function resolveArtifactOpenPath(params: {
 }
 
 export function resolveTemplateUsePath(templateId: string, templateType: TemplateType): string {
-  if (templateType === 'presentation') {
-    return `/presentations/wizard?templateArtifactId=${encodeURIComponent(templateId)}`;
-  }
-  return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateId)}`;
+  const routeMap: Record<TemplateType, string> = {
+    report: '/wordy',
+    sheet: '/excele',
+    presentation: '/prezentacje',
+  };
+  const base = routeMap[templateType] || '/wordy';
+  return `${base}?templateArtifactId=${encodeURIComponent(templateId)}`;
 }
 
 export function resolveTemplateEditPath(templateId: string, templateType: TemplateType): string {

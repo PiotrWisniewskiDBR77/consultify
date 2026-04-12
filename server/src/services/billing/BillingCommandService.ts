@@ -35,6 +35,15 @@ export class BillingCommandService {
     return this.getDeps();
   }
 
+  private normalizeDateInput(
+    value: Date | string | null | undefined
+  ): Date | string | null | undefined {
+    if (value == null) return value;
+    if (value instanceof Date) return value;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value : parsed;
+  }
+
   async createPlan(planData: CreatePlanData): Promise<BillingPlan> {
     const deps = this.deps();
     const id = `plan-${deps.uuidv4()}`;
@@ -166,25 +175,59 @@ export class BillingCommandService {
   ): Promise<OrganizationBilling> {
     const deps = this.deps();
     const id = `billing-${deps.uuidv4()}`;
+    const normalizedCurrentPeriodStart = this.normalizeDateInput(billingData.current_period_start);
+    const normalizedCurrentPeriodEnd = this.normalizeDateInput(billingData.current_period_end);
+    const normalizedRenewalAt = this.normalizeDateInput(billingData.renewal_at);
+    const normalizedGraceUntil = this.normalizeDateInput(billingData.grace_until);
+    const normalizedAccessExpiresAt = this.normalizeDateInput(billingData.access_expires_at);
 
     await (deps.db.run(
-      `INSERT INTO organization_billing (id, organization_id, subscription_plan_id, stripe_customer_id, stripe_subscription_id, billing_email, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO organization_billing (
+             id, organization_id, subscription_plan_id, billing_rail, contract_status, contract_type,
+             renewal_at, grace_until, access_expires_at, external_invoice_ref, notes,
+             managed_by_user_id, is_manual_override, stripe_customer_id, stripe_subscription_id,
+             billing_email, status, current_period_start, current_period_end
+           )
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(organization_id) DO UPDATE SET
              subscription_plan_id = excluded.subscription_plan_id,
+             billing_rail = COALESCE(excluded.billing_rail, organization_billing.billing_rail),
+             contract_status = COALESCE(excluded.contract_status, organization_billing.contract_status),
+             contract_type = COALESCE(excluded.contract_type, organization_billing.contract_type),
+             renewal_at = COALESCE(excluded.renewal_at, organization_billing.renewal_at),
+             grace_until = COALESCE(excluded.grace_until, organization_billing.grace_until),
+             access_expires_at = COALESCE(excluded.access_expires_at, organization_billing.access_expires_at),
+             external_invoice_ref = COALESCE(excluded.external_invoice_ref, organization_billing.external_invoice_ref),
+             notes = COALESCE(excluded.notes, organization_billing.notes),
+             managed_by_user_id = COALESCE(excluded.managed_by_user_id, organization_billing.managed_by_user_id),
+             is_manual_override = COALESCE(excluded.is_manual_override, organization_billing.is_manual_override),
              stripe_customer_id = COALESCE(excluded.stripe_customer_id, stripe_customer_id),
              stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, stripe_subscription_id),
              billing_email = COALESCE(excluded.billing_email, billing_email),
              status = COALESCE(excluded.status, status),
+             current_period_start = COALESCE(excluded.current_period_start, organization_billing.current_period_start),
+             current_period_end = COALESCE(excluded.current_period_end, organization_billing.current_period_end),
              updated_at = CURRENT_TIMESTAMP`,
       [
         id,
         orgId,
         billingData.subscription_plan_id ?? null,
+        billingData.billing_rail ?? null,
+        billingData.contract_status ?? null,
+        billingData.contract_type ?? null,
+        normalizedRenewalAt ?? null,
+        normalizedGraceUntil ?? null,
+        normalizedAccessExpiresAt ?? null,
+        billingData.external_invoice_ref ?? null,
+        billingData.notes ?? null,
+        billingData.managed_by_user_id ?? null,
+        billingData.is_manual_override == null ? null : Number(Boolean(billingData.is_manual_override)),
         billingData.stripe_customer_id ?? null,
         billingData.stripe_subscription_id ?? null,
         billingData.billing_email ?? null,
         billingData.status || 'active',
+        normalizedCurrentPeriodStart ?? null,
+        normalizedCurrentPeriodEnd ?? null,
       ]
     ) as Promise<any>);
 
@@ -385,8 +428,19 @@ export class BillingCommandService {
       throw new Error('Invalid plan');
     }
 
+    const billing = await this.queryService.getOrganizationBilling(orgId);
+    if (billing?.billing_rail === 'manual_invoice' && billing?.is_manual_override) {
+      throw new Error('Organization is managed manually. Update the contract from admin billing.');
+    }
+
     if (!deps.stripe) {
-      await this.upsertOrgBilling(orgId, { subscription_plan_id: planId, status: 'active' });
+      await this.upsertOrgBilling(orgId, {
+        subscription_plan_id: planId,
+        billing_rail: 'stripe_subscription',
+        status: 'active',
+        contract_status: null,
+        is_manual_override: false,
+      });
       return { id: `mock_sub_${orgId}`, status: 'active', plan };
     }
 
@@ -436,8 +490,11 @@ export class BillingCommandService {
 
     await this.upsertOrgBilling(orgId, {
       subscription_plan_id: planId,
+      billing_rail: 'stripe_subscription',
       stripe_subscription_id: subscription.id,
       status: subscription.status,
+      contract_status: null,
+      is_manual_override: false,
       current_period_start: (subscription as any).current_period_start
         ? new Date((subscription as any).current_period_start * 1000)
         : undefined,
@@ -458,6 +515,19 @@ export class BillingCommandService {
   ): Promise<StripeTypes.Subscription | { status: string; accessUntil?: string }> {
     const deps = this.deps();
     const billing = await this.queryService.getOrganizationBilling(orgId);
+    if (billing?.billing_rail === 'manual_invoice' && billing?.is_manual_override) {
+      const accessUntil = billing.access_expires_at
+        ? new Date(billing.access_expires_at).toISOString()
+        : billing.current_period_end
+          ? new Date(billing.current_period_end).toISOString()
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      await this.upsertOrgBilling(orgId, {
+        status: 'canceling',
+        contract_status: 'renewal_due',
+        access_expires_at: accessUntil,
+      });
+      return { status: 'canceling', accessUntil };
+    }
     if (!billing?.stripe_subscription_id) {
       throw new Error('No active subscription');
     }
@@ -468,7 +538,11 @@ export class BillingCommandService {
         ? new Date(billing.current_period_end).toISOString()
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      await this.upsertOrgBilling(orgId, { status: 'canceling' });
+      await this.upsertOrgBilling(orgId, {
+        billing_rail: 'stripe_subscription',
+        status: 'canceling',
+        access_expires_at: accessUntil,
+      });
 
       // GAP-BILLING-003: Send cancellation email with grace period info
       await this.sendCancellationEmail(orgId, new Date(accessUntil));
@@ -484,7 +558,11 @@ export class BillingCommandService {
     const periodEnd = (subscription as any).current_period_end;
     const accessUntil = periodEnd ? new Date(periodEnd * 1000).toISOString() : undefined;
 
-    await this.upsertOrgBilling(orgId, { status: 'canceling' });
+    await this.upsertOrgBilling(orgId, {
+      billing_rail: 'stripe_subscription',
+      status: 'canceling',
+      access_expires_at: accessUntil,
+    });
     this.eventService.emitEvent('billing.subscription.canceling', {
       orgId,
       subscriptionId: subscription.id,
@@ -527,8 +605,8 @@ export class BillingCommandService {
       } catch (err) {
         logger.warn('[BillingCommandService] Error fetching subscription:', err);
       }
-    } else if (billing.current_period_end) {
-      accessUntil = new Date(billing.current_period_end as string);
+    } else if (billing.access_expires_at || billing.current_period_end) {
+      accessUntil = new Date((billing.access_expires_at || billing.current_period_end) as string);
     }
 
     if (!accessUntil) {
@@ -561,7 +639,11 @@ export class BillingCommandService {
     }
 
     if (!deps.stripe || !billing.stripe_subscription_id) {
-      await this.upsertOrgBilling(orgId, { status: 'active' });
+      await this.upsertOrgBilling(orgId, {
+        status: 'active',
+        contract_status: billing.billing_rail === 'manual_invoice' ? 'active' : billing.contract_status,
+        access_expires_at: null,
+      });
       return { success: true };
     }
 
@@ -570,7 +652,10 @@ export class BillingCommandService {
         cancel_at_period_end: false,
       });
 
-      await this.upsertOrgBilling(orgId, { status: 'active' });
+      await this.upsertOrgBilling(orgId, {
+        status: 'active',
+        access_expires_at: null,
+      });
       this.eventService.emitEvent('billing.subscription.reactivated', { orgId });
 
       return { success: true };
@@ -709,8 +794,20 @@ export class BillingCommandService {
       throw new Error('Invalid plan');
     }
 
+    if (billing?.billing_rail === 'manual_invoice' && billing?.is_manual_override) {
+      await this.upsertOrgBilling(orgId, {
+        subscription_plan_id: newPlanId,
+        status: 'active',
+      });
+      await this.sendPlanChangeEmail(orgId, oldPlan, newPlan);
+      return { status: 'updated', plan: newPlan };
+    }
+
     if (!deps.stripe || !billing?.stripe_subscription_id) {
-      await this.upsertOrgBilling(orgId, { subscription_plan_id: newPlanId });
+      await this.upsertOrgBilling(orgId, {
+        subscription_plan_id: newPlanId,
+        billing_rail: 'stripe_subscription',
+      });
       // GAP-BILLING-001: Send plan change email
       await this.sendPlanChangeEmail(orgId, oldPlan, newPlan);
       return { status: 'updated', plan: newPlan };
@@ -882,11 +979,12 @@ export class BillingCommandService {
     const id = `inv-${deps.uuidv4()}`;
 
     await (deps.db.run(
-      `INSERT OR REPLACE INTO invoices (id, organization_id, stripe_invoice_id, amount_due, amount_paid, currency, status, period_start, period_end, pdf_url)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT OR REPLACE INTO invoices (id, organization_id, source, stripe_invoice_id, amount_due, amount_paid, currency, status, period_start, period_end, pdf_url)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         orgId,
+        'stripe',
         stripeInvoice.id,
         stripeInvoice.amount_due ? stripeInvoice.amount_due / 100 : 0,
         stripeInvoice.amount_paid ? stripeInvoice.amount_paid / 100 : 0,
@@ -899,6 +997,54 @@ export class BillingCommandService {
     ) as Promise<any>);
 
     this.eventService.emitEvent('billing.invoice.recorded', { invoiceId: id, orgId });
+    return { id };
+  }
+
+  async recordManualInvoice(
+    orgId: string,
+    input: {
+      invoiceNumber?: string | null;
+      amountDue: number;
+      amountPaid?: number;
+      currency?: string;
+      status?: string;
+      dueDate?: Date | string | null;
+      periodStart?: Date | string | null;
+      periodEnd?: Date | string | null;
+      externalInvoiceRef?: string | null;
+      lineItems?: unknown[];
+      metadata?: Record<string, unknown>;
+    }
+  ): Promise<{ id: string }> {
+    const deps = this.deps();
+    const id = `inv-${deps.uuidv4()}`;
+    await (deps.db.run(
+      `INSERT INTO invoices (
+         id, organization_id, source, stripe_invoice_id, invoice_number, amount_due, amount_paid,
+         currency, status, due_date, period_start, period_end, line_items, metadata
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        orgId,
+        'manual',
+        null,
+        input.invoiceNumber || null,
+        input.amountDue,
+        input.amountPaid || 0,
+        input.currency || 'usd',
+        input.status || 'open',
+        this.normalizeDateInput(input.dueDate) || null,
+        this.normalizeDateInput(input.periodStart) || null,
+        this.normalizeDateInput(input.periodEnd) || null,
+        JSON.stringify(input.lineItems || []),
+        JSON.stringify({
+          ...(input.metadata || {}),
+          externalInvoiceRef: input.externalInvoiceRef || null,
+        }),
+      ]
+    ) as Promise<any>);
+    this.eventService.emitEvent('billing.invoice.recorded', { invoiceId: id, orgId, source: 'manual' });
     return { id };
   }
 

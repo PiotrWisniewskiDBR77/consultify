@@ -134,6 +134,14 @@ class BillingServiceClass {
     return this.#commandService.recordInvoice(orgId, stripeInvoice);
   }
 
+  async recordManualInvoice(
+    orgId: string,
+    input: Parameters<BillingCommandService['recordManualInvoice']>[1]
+  ) {
+    await this.#ensureInitialized();
+    return this.#commandService.recordManualInvoice(orgId, input);
+  }
+
   async getRevenueStats() {
     await this.#ensureInitialized();
     return this.#queryService.getRevenueStats();
@@ -266,6 +274,10 @@ export const changePlan = (orgId: string, newPlanId: string) =>
 export const getInvoices = (orgId: string) => billingServiceInstance.getInvoices(orgId);
 export const recordInvoice = (orgId: string, stripeInvoice: StripeTypes.Invoice) =>
   billingServiceInstance.recordInvoice(orgId, stripeInvoice);
+export const recordManualInvoice = (
+  orgId: string,
+  input: Parameters<BillingCommandService['recordManualInvoice']>[1]
+) => billingServiceInstance.recordManualInvoice(orgId, input);
 export const getRevenueStats = () => billingServiceInstance.getRevenueStats();
 export const getPaymentMethods = (orgId: string) => billingServiceInstance.getPaymentMethods(orgId);
 export const getPaymentMethod = (paymentMethodId: string) =>

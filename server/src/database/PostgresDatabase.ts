@@ -188,7 +188,7 @@ function getPool(): Pool {
     });
 
     pool.on('connect', (client: PoolClient) => {
-      logger.info('[Postgres] Client connected');
+      logger.debug('[Postgres] Client connected');
       client.query('SET search_path TO public, v8').catch((err: Error) => {
         logger.warn('[Postgres] Failed to set search_path:', err.message);
       });
@@ -2158,6 +2158,7 @@ export async function initDb(): Promise<void> {
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             price_monthly REAL NOT NULL,
+            billing_model TEXT DEFAULT 'subscription',
             token_limit INTEGER,
             storage_limit_gb REAL,
             memory_limit_mb INTEGER,
@@ -2184,6 +2185,7 @@ export async function initDb(): Promise<void> {
       };
 
       await ensurePlanCol('token_limit', 'token_limit INTEGER');
+      await ensurePlanCol('billing_model', `billing_model TEXT DEFAULT 'subscription'`);
       await ensurePlanCol('storage_limit_gb', 'storage_limit_gb REAL');
       await ensurePlanCol('memory_limit_mb', 'memory_limit_mb INTEGER');
       await ensurePlanCol('cpu_quota_percent', 'cpu_quota_percent REAL');
@@ -2285,6 +2287,16 @@ export async function initDb(): Promise<void> {
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL UNIQUE,
             subscription_plan_id TEXT,
+            billing_rail TEXT DEFAULT 'stripe_subscription',
+            contract_status TEXT,
+            contract_type TEXT,
+            renewal_at TIMESTAMP,
+            grace_until TIMESTAMP,
+            access_expires_at TIMESTAMP,
+            external_invoice_ref TEXT,
+            notes TEXT,
+            managed_by_user_id TEXT,
+            is_manual_override INTEGER DEFAULT 0,
             stripe_customer_id TEXT,
             stripe_subscription_id TEXT,
             billing_email TEXT,
@@ -2299,6 +2311,16 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
         )`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS billing_rail TEXT DEFAULT 'stripe_subscription'`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS contract_status TEXT`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS contract_type TEXT`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS renewal_at TIMESTAMP`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS grace_until TIMESTAMP`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS access_expires_at TIMESTAMP`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS external_invoice_ref TEXT`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS notes TEXT`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS managed_by_user_id TEXT`);
+    await query(`ALTER TABLE organization_billing ADD COLUMN IF NOT EXISTS is_manual_override INTEGER DEFAULT 0`);
 
     // Usage Records
     await query(`CREATE TABLE IF NOT EXISTS usage_records(
@@ -2337,6 +2359,7 @@ export async function initDb(): Promise<void> {
     await query(`CREATE TABLE IF NOT EXISTS invoices(
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
+            source TEXT DEFAULT 'stripe',
             stripe_invoice_id TEXT UNIQUE,
             invoice_number TEXT,
             subtotal REAL,
@@ -2360,6 +2383,7 @@ export async function initDb(): Promise<void> {
 
     // Ensure newer invoice fields exist even when table pre-dates them
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_number TEXT`);
+    await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'stripe'`);
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS subtotal REAL`);
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_amount REAL`);
     await query(`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS total REAL`);

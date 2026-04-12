@@ -209,6 +209,14 @@ export const ROUTES = {
     SECURITY: '/security',
     CENTER: '/legal',
     DOCUMENT: '/legal/:docSlug',
+    ACCEPTABLE_USE: '/legal/acceptable-use',
+    AI_POLICY: '/legal/ai-policy',
+    SUBSCRIPTION: '/legal/subscription',
+    DPA: '/legal/dpa',
+    SLA: '/legal/sla',
+    REFUNDS: '/legal/refunds',
+    CUSTOMER_SECURITY: '/legal/customer-security',
+    SUBPROCESSORS: '/legal/subprocessors',
   },
 
   // Status & Changelog

@@ -290,10 +290,18 @@ async function handleSubscriptionCreated(
 
   const stripePriceId = subscription.items?.data?.[0]?.price?.id || null;
   const planId = await getPlanIdFromStripePriceId(stripePriceId);
+  const existingBilling = (await dbGet(
+    `SELECT billing_rail, is_manual_override FROM organization_billing WHERE organization_id = ?`,
+    [orgId]
+  )) as { billing_rail?: string | null; is_manual_override?: number | boolean | null } | null;
+  const isManualOverride =
+    String(existingBilling?.billing_rail || '') === 'manual_invoice' &&
+    Boolean(existingBilling?.is_manual_override);
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
       ...(planId ? { subscription_plan_id: planId } : {}),
+      ...(isManualOverride ? {} : { billing_rail: 'stripe_subscription', contract_status: null }),
       stripe_subscription_id: subscription.id,
       status: subscription.status,
       current_period_start: new Date((subscription as any).current_period_start * 1000),
@@ -302,13 +310,15 @@ async function handleSubscriptionCreated(
   }
 
   // Keep org type aligned with billing (Stripe is SSOT).
-  try {
-    await dbRun(
-      `UPDATE organizations SET organization_type = 'PAID', updated_at = datetime('now') WHERE id = ?`,
-      [orgId]
-    );
-  } catch {
-    // ignore schema drift
+  if (!isManualOverride) {
+    try {
+      await dbRun(
+        `UPDATE organizations SET organization_type = 'PAID', updated_at = datetime('now') WHERE id = ?`,
+        [orgId]
+      );
+    } catch {
+      // ignore schema drift
+    }
   }
 
   logger.info(`Subscription created for org ${orgId}`);
@@ -336,17 +346,25 @@ async function handleSubscriptionUpdated(
 
   const stripePriceId = subscription.items?.data?.[0]?.price?.id || null;
   const planId = await getPlanIdFromStripePriceId(stripePriceId);
+  const existingBilling = (await dbGet(
+    `SELECT billing_rail, is_manual_override FROM organization_billing WHERE organization_id = ?`,
+    [orgId]
+  )) as { billing_rail?: string | null; is_manual_override?: number | boolean | null } | null;
+  const isManualOverride =
+    String(existingBilling?.billing_rail || '') === 'manual_invoice' &&
+    Boolean(existingBilling?.is_manual_override);
 
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
       ...(planId ? { subscription_plan_id: planId } : {}),
+      ...(isManualOverride ? {} : { billing_rail: 'stripe_subscription', contract_status: null }),
       status: subscription.status,
       current_period_start: new Date((subscription as any).current_period_start * 1000),
       current_period_end: new Date((subscription as any).current_period_end * 1000),
     });
   }
 
-  if (subscription.status === 'active' || subscription.status === 'trialing') {
+  if (!isManualOverride && (subscription.status === 'active' || subscription.status === 'trialing')) {
     try {
       await dbRun(
         `UPDATE organizations SET organization_type = 'PAID', updated_at = datetime('now') WHERE id = ?`,
@@ -372,20 +390,35 @@ async function handleSubscriptionDeleted(
 
   if (!orgId) return null;
 
+  const existingBilling = (await dbGet(
+    `SELECT billing_rail, contract_status, is_manual_override FROM organization_billing WHERE organization_id = ?`,
+    [orgId]
+  )) as {
+    billing_rail?: string | null;
+    contract_status?: string | null;
+    is_manual_override?: number | boolean | null;
+  } | null;
+  const isManualOverride =
+    String(existingBilling?.billing_rail || '') === 'manual_invoice' &&
+    Boolean(existingBilling?.is_manual_override);
+
   if (billingService?.upsertOrganizationBilling) {
     await billingService.upsertOrganizationBilling(orgId, {
       status: 'canceled',
       stripe_subscription_id: null,
+      ...(isManualOverride ? {} : { billing_rail: 'stripe_subscription' }),
     });
   }
 
-  try {
-    await dbRun(
-      `UPDATE organizations SET organization_type = 'TRIAL', updated_at = datetime('now') WHERE id = ?`,
-      [orgId]
-    );
-  } catch {
-    // ignore
+  if (!isManualOverride) {
+    try {
+      await dbRun(
+        `UPDATE organizations SET organization_type = 'TRIAL', updated_at = datetime('now') WHERE id = ?`,
+        [orgId]
+      );
+    } catch {
+      // ignore
+    }
   }
 
   logger.info(`Subscription canceled for org ${orgId}`);

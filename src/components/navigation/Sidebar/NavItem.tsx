@@ -47,7 +47,7 @@ export const NavItem: React.FC<NavItemProps> = ({
   const hasSubItems = item.subItems && item.subItems.length > 0;
   const isActive = item.viewId === currentView;
   const isCompleted = item.viewId && completedViews.includes(item.viewId);
-  const badgeLabel = item.badge === 'soon' ? 'Coming soon' : item.badge;
+  const badgeLabel = item.badge === 'soon' ? 'Wkrótce' : item.badge;
 
   const isLocked =
     item.requiresView &&

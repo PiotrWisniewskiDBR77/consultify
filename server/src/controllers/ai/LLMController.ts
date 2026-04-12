@@ -1327,7 +1327,7 @@ export class LLMController {
             const httpStatus = Number((result as any)?.httpStatus || 0) || null;
             if (!ok && LLMController.isAuthLikeProviderError(resultError, httpStatus)) {
               LLMController.providerHealthCooldowns.set(cooldownKey, {
-                until: Date.now() + 5 * 60_000,
+                until: Date.now() + 30 * 60_000,
                 error: resultError || 'Invalid provider credentials',
                 status: 'auth_failed',
               });

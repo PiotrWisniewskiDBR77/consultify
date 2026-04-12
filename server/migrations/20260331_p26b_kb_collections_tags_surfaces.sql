@@ -157,10 +157,10 @@ ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS callouts JSONB DEFAULT '[]';
 -- ============================================================
 INSERT INTO kb_collections (id, slug, visibility, featured, sort_order, created_at)
 SELECT c.id, c.slug,
-       CASE WHEN c.is_public THEN 'public' ELSE 'in-app' END,
+       CASE WHEN c.is_public = 1 THEN 'public' ELSE 'in-app' END,
        FALSE, c.sort_order, c.created_at
 FROM kb_categories c
-WHERE c.is_active = TRUE
+WHERE c.is_active = 1
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO kb_collection_translations (collection_id, language, title, description)
@@ -181,7 +181,7 @@ ON CONFLICT (article_id, collection_id) DO NOTHING;
 INSERT INTO kb_surface_bindings (article_id, surface)
 SELECT a.id, 'public_docs'
 FROM kb_articles a
-WHERE a.status = 'published' AND a.is_public = TRUE
+WHERE a.status = 'published' AND a.is_public = 1
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
 INSERT INTO kb_surface_bindings (article_id, surface)

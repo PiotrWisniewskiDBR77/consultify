@@ -86,7 +86,9 @@ router.get(
         return notConfigured(res);
       }
 
-      const snapshot = await AccessPolicyService.buildPolicySnapshot(orgId);
+      const snapshot = await AccessPolicyService.buildPolicySnapshot(orgId, {
+        isDemoView: String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true',
+      });
       if (!snapshot) {
         return res.status(404).json({ error: 'Organization not found' });
       }

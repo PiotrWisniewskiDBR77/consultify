@@ -30,7 +30,7 @@ export interface UnifiedOutputRow {
   governance?: ArtifactGovernanceSummary;
 }
 
-export type TemplateType = 'report' | 'presentation';
+export type TemplateType = 'report' | 'presentation' | 'sheet';
 export type TemplateCategory =
   | 'R1'
   | 'R2'
@@ -264,6 +264,7 @@ export const TEMPLATE_TYPE_META: Record<
   { label: string; labelPl: string; dotColor: string }
 > = {
   report: { label: 'Report', labelPl: 'Raport', dotColor: 'bg-blue-400' },
+  sheet: { label: 'Sheet', labelPl: 'Tabela', dotColor: 'bg-emerald-400' },
   presentation: { label: 'Presentation', labelPl: 'Prezentacja', dotColor: 'bg-purple-400' },
 };
 

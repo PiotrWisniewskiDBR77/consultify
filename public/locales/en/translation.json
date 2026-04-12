@@ -6629,6 +6629,7 @@
     "heading": "Simple plans.",
     "headingAccent": "Clear usage limits.",
     "sub": "Choose the package that matches your actual usage, team size, and rollout stage.",
+    "trialPill": "Start here",
     "monthly": "Monthly",
     "annual": "Annual",
     "mostPopular": "Most popular",
@@ -6638,6 +6639,8 @@
     "plans": {
       "trial": {
         "name": "Trial",
+        "price": "Free",
+        "subtitle": "14 days",
         "description": "14 days to validate the workflow before you commit.",
         "features": [
           "1 workspace sandbox",
@@ -6650,6 +6653,8 @@
       },
       "user": {
         "name": "User",
+        "price": "EUR 29",
+        "subtitle": "per seat / month",
         "description": "For solo consultants and operators who need steady monthly usage.",
         "features": [
           "1 user seat",
@@ -6662,7 +6667,9 @@
         "cta": "Choose User"
       },
       "manager": {
-        "name": "Manager",
+        "name": "Admin",
+        "price": "EUR 49",
+        "subtitle": "per seat / month",
         "description": "For team leads running multiple initiatives with shared visibility.",
         "features": [
           "3 user seats included",
@@ -6672,10 +6679,12 @@
           "Presentation-ready exports",
           "Priority support"
         ],
-        "cta": "Choose Manager"
+        "cta": "Choose Admin"
       },
       "enterprise": {
         "name": "Enterprise",
+        "price": "Custom",
+        "subtitle": "custom setup",
         "description": "For consulting firms and enterprise teams with security and rollout needs.",
         "features": [
           "Custom seats and usage packs",
@@ -6687,6 +6696,11 @@
         ],
         "cta": "Contact sales"
       }
+    },
+    "enterpriseNote": {
+      "badge": "Enterprise details",
+      "title": "Custom deployment, governance, and commercial setup",
+      "body": "Enterprise plans are for organizations that need more than standard packaging: on-premise or dedicated deployment, custom legal flow, procurement support, partner-heavy rollout, licensed tool bundles, or negotiated AI budget structures."
     }
   },
   "pages": {
@@ -6939,5 +6953,23 @@
       "subtitle": "Thank you for reaching out. We'll get back to you within 1 business day.",
       "another": "Send another message"
     }
+  },
+  "moduleHome": {
+    "new": "New",
+    "recent": "Recent",
+    "saved": "Saved",
+    "templates": "Templates",
+    "heroDoc": "Reports, briefs, analyses, articles and business documents",
+    "heroSheet": "Budgets, financial models, timelines, risk matrices",
+    "heroDeck": "Executive decks, pitch, status updates, workshop presentations",
+    "startNew": "Start new",
+    "fromTemplate": "From template",
+    "viewAll": "View all"
+  },
+  "chatOutputTool": {
+    "auto": "Auto",
+    "documents": "Documents",
+    "tables": "Tables",
+    "presentations": "Presentations"
   }
 }

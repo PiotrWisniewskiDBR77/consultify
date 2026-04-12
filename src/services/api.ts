@@ -519,6 +519,8 @@ export const Api = {
     email: string;
     password: string;
     firstName?: string;
+    acceptedLegalDocs?: string[];
+    legalConsentAt?: string;
   }): Promise<{ user: User; token: string; refreshToken: string; isDemo: boolean }> => {
     let res: Response;
     try {
@@ -529,6 +531,8 @@ export const Api = {
           email: params.email,
           password: params.password,
           firstName: params.firstName,
+          acceptedLegalDocs: params.acceptedLegalDocs,
+          legalConsentAt: params.legalConsentAt,
         }),
       });
     } catch (e: any) {
@@ -2980,7 +2984,7 @@ export const Api = {
     overall?: string;
   }> => {
     // Keep it fast in UI polls (local providers like Ollama can hang if not running).
-    const res = await fetchWithRetry(`${API_URL}/llm/providers/health?timeoutMs=1200`, {
+    const res = await fetchWithRetry(`${API_URL}/llm/providers/health?timeoutMs=4000`, {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Health check failed');

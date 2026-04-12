@@ -38,8 +38,22 @@ export const fetchWithRetry = async (
   const headers = skipDefaultHeaders
     ? { ...((requestOptions.headers as Record<string, string>) || {}) }
     : { ...getHeaders(), ...((requestOptions.headers as Record<string, string>) || {}) };
-  // Ensure cookie-based sessions work even when API is cross-origin.
-  let res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+
+  const doFetch = () => fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+
+  let res: Response;
+  try {
+    res = await doFetch();
+  } catch (networkError: any) {
+    // Retry once on network errors (e.g., proxy down, ECONNREFUSED)
+    if (networkError?.name === 'TypeError' || networkError?.message?.includes('Failed to fetch')) {
+      await new Promise((r) => setTimeout(r, 1500));
+      res = await doFetch();
+    } else {
+      throw networkError;
+    }
+  }
+
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
   // If 401, try to refresh token and retry once
@@ -50,7 +64,6 @@ export const fetchWithRetry = async (
       headers['Authorization'] = `Bearer ${newToken}`;
       res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
     } else {
-      // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
     }
   }

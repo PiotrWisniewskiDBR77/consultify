@@ -37,6 +37,7 @@ import {
   SessionIdParamSchema,
   VerifyEmailRequestSchema,
 } from '../validators/auth.validators.js';
+import legalService from '../services/legalService.js';
 
 const router = Router();
 import crypto from 'crypto';
@@ -602,7 +603,7 @@ router.post(
   '/register-demo',
   validateBody(RegisterDemoRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { email, password, firstName } = req.body;
+    const { email, password, firstName, acceptedLegalDocs } = req.body;
 
     const existingUser = await dbGet<{ id: string; organization_id: string }>(
       'SELECT id, organization_id FROM users WHERE email = ?',
@@ -644,6 +645,25 @@ router.post(
     if (!userResult.success) {
       logger.error('[Auth] Register demo user failed:', userResult.error);
       return res.status(500).json({ error: 'Failed to create account' });
+    }
+
+    if (Array.isArray(acceptedLegalDocs) && acceptedLegalDocs.length > 0) {
+      try {
+        const ipAddress =
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+          req.socket?.remoteAddress ||
+          '';
+        await legalService.acceptDocuments(
+          userId,
+          acceptedLegalDocs,
+          'USER',
+          ipAddress,
+          req.get('user-agent') || '',
+          demoOrgId
+        );
+      } catch (legalErr) {
+        logger.warn('[Auth] Demo signup legal acceptance recording failed:', legalErr);
+      }
     }
 
     try {
@@ -982,6 +1002,7 @@ router.post(
       utm_campaign,
       utm_medium,
       partner_code,
+      acceptedLegalDocs,
     } = req.body;
 
     const { default: PromoCodeService } = (await import('../services/promoCodeService.js')) as any;
@@ -1066,6 +1087,25 @@ router.post(
             logger.error('Register User Error:', userResult.error);
           return res.status(500).json({ error: 'Failed to create user' });
           return;
+        }
+
+        if (Array.isArray(acceptedLegalDocs) && acceptedLegalDocs.length > 0) {
+          try {
+            const ipAddress =
+              (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+              req.socket?.remoteAddress ||
+              '';
+            await legalService.acceptDocuments(
+              userId,
+              acceptedLegalDocs,
+              'USER',
+              ipAddress,
+              req.get('user-agent') || '',
+              orgId
+            );
+          } catch (legalErr) {
+            logger.warn('[Auth] Registration legal acceptance recording failed:', legalErr);
+          }
         }
 
         await recordDemoTrialEvent({

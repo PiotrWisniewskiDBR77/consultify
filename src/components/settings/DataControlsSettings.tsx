@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { cn } from '../../lib/utils';
+import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { SettingsDivider, SettingsSection, SettingsToggle } from './shared';
@@ -131,10 +132,62 @@ const RETENTION_OPTIONS = [
 ];
 
 const LEGAL_DOCS = [
-  { to: '/privacy', icon: Shield, titleKey: 'settings.data.privacyPolicy', titleDefault: 'Privacy Policy', desc: 'How we handle your data' },
-  { to: '/cookies', icon: Globe, titleKey: 'settings.data.cookiePolicy', titleDefault: 'Cookie Policy', desc: 'Cookies & tracking' },
-  { to: '/legal/dpa', icon: Database, titleKey: 'settings.data.dpa', titleDefault: 'Data Processing', desc: 'GDPR DPA terms' },
-  { to: '/legal/subprocessors', icon: Lock, titleKey: 'settings.data.subprocessors', titleDefault: 'Sub-processors', desc: 'Third-party services' },
+  {
+    to: ROUTES.LEGAL.PRIVACY,
+    icon: Shield,
+    titleKey: 'settings.data.privacyPolicy',
+    titleDefault: 'Privacy Policy',
+    desc: 'How we handle your data',
+  },
+  {
+    to: ROUTES.LEGAL.TERMS,
+    icon: FileText,
+    titleKey: 'settings.data.terms',
+    titleDefault: 'Terms of Service',
+    desc: 'Core product and account terms',
+  },
+  {
+    to: ROUTES.LEGAL.SUBSCRIPTION,
+    icon: Globe,
+    titleKey: 'settings.data.subscription',
+    titleDefault: 'Subscription & Pricing',
+    desc: 'Plans, billing, seats, and AI budget',
+  },
+  {
+    to: ROUTES.LEGAL.DPA,
+    icon: Database,
+    titleKey: 'settings.data.dpa',
+    titleDefault: 'Data Processing',
+    desc: 'GDPR DPA terms',
+  },
+  {
+    to: ROUTES.LEGAL.SLA,
+    icon: Clock,
+    titleKey: 'settings.data.sla',
+    titleDefault: 'Service Levels',
+    desc: 'Support response and service commitments',
+  },
+  {
+    to: ROUTES.LEGAL.SECURITY,
+    icon: Lock,
+    titleKey: 'settings.data.security',
+    titleDefault: 'Security Overview',
+    desc: 'Security controls and review information',
+  },
+  {
+    to: ROUTES.LEGAL.SUBPROCESSORS,
+    icon: Share2,
+    titleKey: 'settings.data.subprocessors',
+    titleDefault: 'Sub-processors',
+    desc: 'Third-party services and data flow',
+  },
+  {
+    to: ROUTES.LEGAL.CENTER,
+    icon: ExternalLink,
+    titleKey: 'settings.data.legalCenter',
+    titleDefault: 'Legal Center',
+    desc: 'All legal and compliance documents',
+  },
 ];
 
 export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
@@ -495,7 +548,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
             <FileText size={14} className="text-violet-400" />
             {t('settings.data.relatedDocs', 'Legal Documents')}
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
             {LEGAL_DOCS.map((doc) => {
               const Icon = doc.icon;
               return (

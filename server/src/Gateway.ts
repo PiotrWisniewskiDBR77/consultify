@@ -226,6 +226,7 @@ import statusRoutes from './routes/status.routes.js';
 import statusReportsRoutes from './routes/status-reports.routes.js';
 import studioRoutes from './routes/studio.routes.js';
 import superAdminRoutes from './routes/superadmin.routes.js';
+import moduleInterestRoutes from './routes/module-interest.routes.js';
 import syncHubRoutes from './routes/syncHub.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
@@ -437,6 +438,9 @@ export class ApiGateway {
       );
       mountStub('/api/integrations/automation', automationRoutes, 'automationRoutes');
       mountStub('/api/mcp', mcpRoutes, 'mcpRoutes');
+
+      // Module interest / waitlist
+      app.use('/api/module-interest', moduleInterestRoutes);
 
       // Admin routes
       app.use('/api/superadmin', superAdminRoutes);
