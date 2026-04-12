@@ -6,6 +6,7 @@
  */
 
 export type CanvasToolType = 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
+export type CanvasBgPattern = 'dots' | 'grid' | 'lines' | 'blank';
 export type MindMapInteractionMode = 'select' | 'pan' | 'connect';
 export type MapStructureType =
   | 'mindmap'

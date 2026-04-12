@@ -40,6 +40,7 @@ import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
   type AIProposalBatch,
+  type CanvasBgPattern,
   type CanvasToolType,
   EMPTY_SELECTION,
   IDEA_WORKSPACE_INSERT_EVENT,
@@ -47,6 +48,8 @@ import {
   type IdeaWorkspaceInsertDetail,
   type IdeaWorkspaceSelection,
 } from './ideaSelectionTypes';
+
+export type { CanvasBgPattern } from './ideaSelectionTypes';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
@@ -90,8 +93,6 @@ const nodeTypes = whiteboardNodeTypes;
 const edgeTypes = whiteboardEdgeTypes;
 
 // ── Inner canvas (needs useReactFlow context) ────────────────────────────────
-
-export type CanvasBgPattern = 'dots' | 'grid' | 'lines' | 'blank';
 
 interface WhiteboardCanvasProps {
   nodes: Node[];

@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 
 import { ChatMessage } from '../../types';
-import { AppState } from '../useAppStore';
+import type { AppState } from '../useAppStore';
 
 export interface ChatSlice {
   activeChatMessages: ChatMessage[];
