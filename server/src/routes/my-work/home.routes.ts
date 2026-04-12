@@ -44,6 +44,23 @@ type HomeV2IndustryPreset = {
   peerCaseImplication: string;
 };
 
+type HomeV2ResponsePayload = {
+  timeMode: 'morning' | 'liveDay' | 'eveningWrap';
+  updatedAt: string;
+  pulseLabel: string;
+  blocks: any[];
+};
+
+const HOME_V2_CACHE_TTL_MS = Number(process.env.HOME_V2_CACHE_TTL_MS || 15_000);
+const homeV2ResponseCache = new Map<
+  string,
+  {
+    expiresAt: number;
+    payload: HomeV2ResponsePayload;
+  }
+>();
+const homeV2Inflight = new Map<string, Promise<HomeV2ResponsePayload>>();
+
 const DEFAULT_HOME_V2_PRESET: HomeV2IndustryPreset = {
   industryLabel: 'Transformation',
   marketSignalTitle: 'Transformation funding is moving toward cross-functional value pools',
@@ -145,6 +162,10 @@ router.get(
     const db = req.db;
     const userId = req.userId!;
     const orgId = req.organizationId!;
+    const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
+    const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
+    const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
+    const cacheKey = `${orgId}:${userId}:${String(req.user?.role || '')}:${isPolish ? 'pl' : 'en'}`;
 
     if (!db) {
       return res.status(503).json({ error: 'Database not ready', cards: [], meta: {} });
@@ -154,50 +175,56 @@ router.get(
       const now = new Date();
       const signalWindowStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const timeMode = inferHomeV2TimeMode(now);
-      const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
-      const langRaw = Array.isArray(appLanguage)
-        ? appLanguage.join(',')
-        : String(appLanguage || '');
-      const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
+      const cached = homeV2ResponseCache.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return res.json(cached.payload);
+      }
+      const inflight = homeV2Inflight.get(cacheKey);
+      if (inflight) {
+        return res.json(await inflight);
+      }
       const L = (en: string, pl: string) => (isPolish ? pl : en);
 
-      const roleLens = inferRoleLens(req.user?.role, isPolish);
-      const orgContext = await organizationContextService.buildResolvedContext(orgId).catch((err) => {
-        logger.warn('[home-v2] buildResolvedContext failed, using fallback', { error: err?.message });
-        return {
-          organizationId: orgId,
-          schemaVersion: 1,
-          snapshotUpdatedAt: null,
-          counts: { items: 0, claims: 0, conflicts: 0 },
-          profile: { companyName: null, description: null, industry: null, industryCode: null, industrySubsector: null, companySize: null, location: null, employeeCount: null, annualRevenue: null, website: null, defaultLanguage: null, defaultTimezone: null, currency: null, linkedinUrl: null, twitterUrl: null, customDomain: null, brandColor: null, accentColor: null },
-          strategic: { goals: [], priorities: [], mission: null, vision: null, values: [], competitiveAdvantage: null, targetMarket: null },
-          operations: { constraints: [], techStack: [], tools: [], processes: [], kpis: [] },
-          culture: { style: null, communicationPreferences: [], decisionMaking: null },
-          metadata: [],
-          timeline: [],
-          claims: [],
-        } as any;
-      });
-      const preset = selectHomeV2Preset(orgContext.profile.industry);
+      const payloadPromise = (async (): Promise<HomeV2ResponsePayload> => {
+        const roleLens = inferRoleLens(req.user?.role, isPolish);
+        const orgContext = await organizationContextService.buildResolvedContext(orgId).catch((err) => {
+          logger.warn('[home-v2] buildResolvedContext failed, using fallback', {
+            error: err?.message,
+          });
+          return {
+            organizationId: orgId,
+            schemaVersion: 1,
+            snapshotUpdatedAt: null,
+            counts: { items: 0, claims: 0, conflicts: 0 },
+            profile: { companyName: null, description: null, industry: null, industryCode: null, industrySubsector: null, companySize: null, location: null, employeeCount: null, annualRevenue: null, website: null, defaultLanguage: null, defaultTimezone: null, currency: null, linkedinUrl: null, twitterUrl: null, customDomain: null, brandColor: null, accentColor: null },
+            strategic: { goals: [], priorities: [], mission: null, vision: null, values: [], competitiveAdvantage: null, targetMarket: null },
+            operations: { constraints: [], techStack: [], tools: [], processes: [], kpis: [] },
+            culture: { style: null, communicationPreferences: [], decisionMaking: null },
+            metadata: [],
+            timeline: [],
+            claims: [],
+          } as any;
+        });
+        const preset = selectHomeV2Preset(orgContext.profile.industry);
 
-      const safeHomeV2Query = async <T = any>(
-        label: string,
-        attempts: Array<{ sql: string; params: unknown[] }>
-      ): Promise<T[]> => {
-        for (const attempt of attempts) {
-          try {
-            const rows = await db.query(attempt.sql, attempt.params);
-            return Array.isArray(rows) ? (rows as T[]) : [];
-          } catch (err: any) {
-            logger.warn(`[home-v2] ${label} query fallback`, {
-              message: err?.message,
-            });
+        const safeHomeV2Query = async <T = any>(
+          label: string,
+          attempts: Array<{ sql: string; params: unknown[] }>
+        ): Promise<T[]> => {
+          for (const attempt of attempts) {
+            try {
+              const rows = await db.query(attempt.sql, attempt.params);
+              return Array.isArray(rows) ? (rows as T[]) : [];
+            } catch (err: any) {
+              logger.warn(`[home-v2] ${label} query fallback`, {
+                message: err?.message,
+              });
+            }
           }
-        }
-        return [];
-      };
+          return [];
+        };
 
-      const [
+        const [
         tasks,
         decisions,
         ideas,
@@ -211,7 +238,7 @@ router.get(
         executionSignalRollup,
         activeRooms,
         pendingDecisionChains,
-      ] = await Promise.all([
+        ] = await Promise.all([
         safeHomeV2Query('tasks', [
           {
             sql: `SELECT id, title, description, status, priority, due_date, updated_at
@@ -377,7 +404,7 @@ router.get(
         getPendingDecisions(orgId).catch(() => []),
       ]);
 
-      const roomHealths = await Promise.all(
+        const roomHealths = await Promise.all(
         (activeRooms || [])
           .slice(0, 6)
           .map((room) => getRoomHealth(room.roomId, orgId).catch(() => null))
@@ -672,7 +699,7 @@ router.get(
       const executionPriority = computePriorityWeight(68, 62, tasksDueSoon.length > 0 ? 4 : 0);
       const teamPriority = computePriorityWeight(64, 58, blockedCount > 1 ? 4 : 0);
 
-      const blocks = [
+        const blocks = [
         {
           id: 'aiPulseCore',
           title: L('AI Pulse Core', 'AI Pulse Core'),
@@ -1301,21 +1328,32 @@ router.get(
         },
       ];
 
-      res.json({
-        timeMode,
-        updatedAt: now.toISOString(),
-        pulseLabel:
-          pendingDecisions.length > 0
-            ? L(
-                'Transformation pressure is rising in the right places',
-                'Presja transformacji rośnie we właściwych miejscach'
-              )
-            : L('Transformation momentum is building', 'Momentum transformacji się buduje'),
-        blocks,
+        return {
+          timeMode,
+          updatedAt: now.toISOString(),
+          pulseLabel:
+            pendingDecisions.length > 0
+              ? L(
+                  'Transformation pressure is rising in the right places',
+                  'Presja transformacji rośnie we właściwych miejscach'
+                )
+              : L('Transformation momentum is building', 'Momentum transformacji się buduje'),
+          blocks,
+        };
+      })();
+
+      homeV2Inflight.set(cacheKey, payloadPromise);
+      const payload = await payloadPromise;
+      homeV2ResponseCache.set(cacheKey, {
+        payload,
+        expiresAt: Date.now() + Math.max(1_000, HOME_V2_CACHE_TTL_MS),
       });
+      return res.json(payload);
     } catch (err: any) {
       logger.error('[home-v2]', err);
       res.status(500).json({ error: 'Failed to build Home V2' });
+    } finally {
+      homeV2Inflight.delete(cacheKey);
     }
   })
 );

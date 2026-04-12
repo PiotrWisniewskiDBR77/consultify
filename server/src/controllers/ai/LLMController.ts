@@ -1251,8 +1251,9 @@ export class LLMController {
         ? Math.min(300_000, Math.max(15_000, ttlMsRaw))
         : 90_000;
       const currentSnapshot = LLMController.providerHealthSnapshot;
+      const now = Date.now();
 
-      if (!live && currentSnapshot && currentSnapshot.expiresAt > Date.now()) {
+      if (!live && currentSnapshot && currentSnapshot.expiresAt > now) {
         return res.json({
           ...currentSnapshot.payload,
           cached: true,
@@ -1476,23 +1477,46 @@ export class LLMController {
         };
       };
 
-      const payloadPromise = computePayload();
-      if (!live) {
-        LLMController.providerHealthRefreshPromise = payloadPromise;
+      const startSnapshotRefresh = (): Promise<Record<string, unknown>> => {
+        if (!LLMController.providerHealthRefreshPromise) {
+          LLMController.providerHealthRefreshPromise = computePayload()
+            .then((payload) => {
+              LLMController.providerHealthSnapshot = {
+                payload,
+                expiresAt: Date.now() + ttlMs,
+              };
+              return payload;
+            })
+            .finally(() => {
+              LLMController.providerHealthRefreshPromise = null;
+            });
+        }
+
+        return LLMController.providerHealthRefreshPromise;
+      };
+
+      if (!live && currentSnapshot) {
+        void startSnapshotRefresh().catch((error: any) => {
+          logger.warn('[LLMController] Background provider health refresh failed', {
+            error: error?.message || String(error),
+          });
+        });
+
+        return res.json({
+          ...currentSnapshot.payload,
+          cached: true,
+          stale: true,
+          mode: 'snapshot',
+          ttlMs,
+        });
       }
 
+      const payloadPromise = live ? computePayload() : startSnapshotRefresh();
       const payload = await payloadPromise;
-
-      if (!live) {
-        LLMController.providerHealthSnapshot = {
-          payload,
-          expiresAt: Date.now() + ttlMs,
-        };
-      }
 
       return res.json({
         ...payload,
-        cached: false,
+        cached: !live && Boolean(currentSnapshot),
         mode: live ? 'live' : 'snapshot',
         ttlMs,
       });
@@ -1507,8 +1531,6 @@ export class LLMController {
       }
       logger.error('[LLMController] Error getting providers health:', error);
       return res.status(500).json({ error: error.message });
-    } finally {
-      LLMController.providerHealthRefreshPromise = null;
     }
   }
 

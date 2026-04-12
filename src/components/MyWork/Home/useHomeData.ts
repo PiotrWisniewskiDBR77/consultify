@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Api from '@/services/api';
+import { apiGetCached } from '@/services/api/baseClient';
 
 import type {
   HomeBlock,
@@ -669,8 +670,8 @@ export function useHomeData(refreshTrigger?: number): HomeData {
       setError(null);
     }
     const [screenRes, prefsRes] = await Promise.allSettled([
-      Api.get('/my-work/home/v2'),
-      Api.get('/preferences').catch(() => null),
+      apiGetCached('/my-work/home/v2', 15_000, 'Failed to fetch Home V2'),
+      apiGetCached('/preferences', 15_000, 'Failed to fetch preferences').catch(() => null),
     ]);
 
     const screenData =
