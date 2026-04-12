@@ -203,7 +203,7 @@ export function all<T = any>(
               sql: sql.substring(0, 100),
               params,
             });
-            console.error(`[DB:Promise] Error: ${err.message}`, { sql, params });
+            logger.error(`[DB:Promise] Error: ${err.message}`, { sql, params });
           }
 
           if (fallback) {
@@ -299,7 +299,7 @@ export function get<T = any>(
 
         if (err) {
           dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100), params });
-          console.error(`[DB:Promise] Error: ${err.message}`, { sql, params });
+          logger.error(`[DB:Promise] Error: ${err.message}`, { sql, params });
           if (fallback) {
             resolve(null);
           } else {

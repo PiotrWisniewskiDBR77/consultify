@@ -13,6 +13,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../utils/Logger.js';
+
 import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
@@ -332,7 +334,7 @@ const MCPServer = {
         ],
       };
     } catch (error) {
-      console.error(`[MCP] Tool ${toolName} error:`, error);
+      logger.error(`[MCP] Tool ${toolName} error:`, error);
       throw error;
     }
   },
@@ -840,7 +842,7 @@ const MCPServer = {
           data.latency || null,
         ],
         (err) => {
-          if (err) console.error('[MCP] Audit log error:', err);
+          if (err) logger.error('[MCP] Audit log error:', err);
           resolve();
         }
       );

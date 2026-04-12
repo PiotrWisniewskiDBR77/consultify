@@ -15,6 +15,7 @@ import {
   tableExists,
 } from './superadmin/shared.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import logger from '../utils/Logger.js';
 
 // Domain controllers extracted from this monolith. Namespace imports provide
 // local bindings that the default export object can reference via spread.
@@ -95,7 +96,7 @@ const getOrganizations = catchAsync(async (req, res, next) => {
 
   deps.db.all(sql, [], (err, rows) => {
     if (err) {
-      console.error('[SuperAdmin] Organizations query error:', err);
+      logger.error('[SuperAdmin] Organizations query error:', err);
       return next(new AppError('Failed to fetch organizations', 500));
     }
     res.json(rows || []);
@@ -117,7 +118,7 @@ const getActivities = catchAsync(async (req, res, next) => {
 const getDashboardStats = catchAsync(async (req, res, next) => {
   const [activityStats, aiStats, activities] = await Promise.all([
     deps.ActivityService.getStats().catch((err) => {
-      console.error('[SuperAdmin] Activity Stats Error:', err);
+      logger.error('[SuperAdmin] Activity Stats Error:', err);
       return { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
     }),
     new Promise((resolve) => {
@@ -144,7 +145,7 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
         [],
         (err, row) => {
           if (err) {
-            console.warn('[SuperAdmin] AI Stats query fallback:', err.message);
+            logger.warn('[SuperAdmin] AI Stats query fallback:', err.message);
             resolve({
               total_ai_calls: 0,
               total_tokens: 0,
@@ -159,7 +160,7 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
       );
     }),
     deps.ActivityService.getRecent(15).catch((err) => {
-      console.error('[SuperAdmin] Activities Error:', err);
+      logger.error('[SuperAdmin] Activities Error:', err);
       return [];
     }),
   ]);
@@ -179,7 +180,7 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
       [],
       (err, row) => {
         if (err) {
-          console.warn('[SuperAdmin] Counts query error:', err.message);
+          logger.warn('[SuperAdmin] Counts query error:', err.message);
           resolve({
             total_users: 0,
             total_orgs: 0,
@@ -509,7 +510,7 @@ const approveAccessRequest = catchAsync(async (req, res, next) => {
           `UPDATE access_requests SET status = 'approved', reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ? `,
           [req.user.id, id],
           (err) => {
-            if (err) console.error('Error updating request status', err);
+            if (err) logger.error('Error updating request status', err);
             res.json({ message: 'Access approved successfully' });
           }
         );
@@ -1082,7 +1083,7 @@ const getInvoices = catchAsync(async (req, res, next) => {
 
   deps.db.all(query, [], (err, rows) => {
     if (err) {
-      console.error('Invoice query error:', err);
+      logger.error('Invoice query error:', err);
       // Return empty array on error
       return res.json({ invoices: [], total: 0 });
     }
@@ -1126,7 +1127,7 @@ const getInvoiceStats = catchAsync(async (req, res, next) => {
 
   deps.db.get(query, [], (err, row) => {
     if (err) {
-      console.error('Invoice stats error:', err);
+      logger.error('Invoice stats error:', err);
       return res.json({
         totalRevenue: 0,
         paidInvoices: 0,
@@ -1227,7 +1228,7 @@ const getSecurityEvents = catchAsync(async (req, res, next) => {
 
   deps.db.all(query, params, (err, rows) => {
     if (err) {
-      console.error('[SuperAdmin] Security events query error:', err);
+      logger.error('[SuperAdmin] Security events query error:', err);
       return next(new AppError('Failed to fetch security events', 500));
     }
     res.json({ events: rows || [] });
@@ -1250,7 +1251,7 @@ const resolveSecurityEvent = catchAsync(async (req, res, next) => {
 
   deps.db.run(`UPDATE security_events SET resolved = 1 WHERE id = ?`, [id], function (err) {
     if (err) {
-      console.error('[SuperAdmin] Resolve security event error:', err);
+      logger.error('[SuperAdmin] Resolve security event error:', err);
       return next(new AppError('Failed to resolve security event', 500));
     }
     if (this.changes === 0) {
@@ -1276,7 +1277,7 @@ const remindInvoice = catchAsync(async (req, res, next) => {
         res.json({ success: true, message: 'Reminder sent' });
       });
     } else {
-      console.log(
+      logger.info(
         `[SuperAdmin] Invoice ${id} not found in invoices table, may be in token_transactions`
       );
       res.json({ success: true, message: 'Reminder sent' });
@@ -1563,7 +1564,7 @@ const getApiKeys = catchAsync(async (req, res, next) => {
     });
     res.json(keys);
   } catch (error) {
-    console.error('[SuperAdmin] Get API keys error:', error);
+    logger.error('[SuperAdmin] Get API keys error:', error);
     res.status(500).json({ error: 'Failed to get API keys' });
   }
 });
@@ -1663,7 +1664,7 @@ const createApiKey = catchAsync(async (req, res, next) => {
       warning: 'Save this API key now. It cannot be shown again.',
     });
   } catch (error) {
-    console.error('[SuperAdmin] Create API key error:', error);
+    logger.error('[SuperAdmin] Create API key error:', error);
     return res.status(500).json({ error: 'Failed to create API key' });
   }
 });
@@ -1698,7 +1699,7 @@ const deleteApiKey = catchAsync(async (req, res, next) => {
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('[SuperAdmin] Delete API key error:', error);
+    logger.error('[SuperAdmin] Delete API key error:', error);
     res.status(500).json({ error: 'Failed to delete API key' });
   }
 });
@@ -1806,7 +1807,7 @@ const getApiKeyUsage = catchAsync(async (req, res, next) => {
       endpoints,
     });
   } catch (error) {
-    console.error('[SuperAdmin] Get API key usage error:', error);
+    logger.error('[SuperAdmin] Get API key usage error:', error);
     res.status(500).json({ error: 'Failed to get API key usage' });
   }
 });
@@ -2071,7 +2072,7 @@ const getComplianceFrameworks = catchAsync(async (req, res, next) => {
     [],
     (err: any, rows: any[]) => {
       if (err) {
-        console.error('[SuperAdmin] Compliance frameworks query error:', err);
+        logger.error('[SuperAdmin] Compliance frameworks query error:', err);
         return next(new AppError('Failed to fetch compliance frameworks', 500));
       }
       const frameworks =
@@ -2245,7 +2246,7 @@ const getDsarRequests = catchAsync(async (req, res, next) => {
     });
     res.json(requests);
   } catch (error) {
-    console.error('[SuperAdmin] Get DSAR requests error:', error);
+    logger.error('[SuperAdmin] Get DSAR requests error:', error);
     res.status(500).json({ error: 'Failed to fetch DSAR requests' });
   }
 });
@@ -2286,7 +2287,7 @@ const getComplianceAudits = catchAsync(async (req, res, next) => {
     });
     res.json({ audits });
   } catch (error) {
-    console.error('[SuperAdmin] Get compliance audits error:', error);
+    logger.error('[SuperAdmin] Get compliance audits error:', error);
     res.status(500).json({ error: 'Failed to fetch compliance audits' });
   }
 });
@@ -2720,7 +2721,7 @@ const getComplianceSummary = catchAsync(async (_req, res, next) => {
 
     deps.db.all(query, [], (err, rows) => {
       if (err) {
-        console.error('[SuperAdmin] Compliance summary error:', err);
+        logger.error('[SuperAdmin] Compliance summary error:', err);
         return next(new AppError('Failed to fetch compliance summary', 500));
       }
 
@@ -2748,7 +2749,7 @@ const getComplianceSummary = catchAsync(async (_req, res, next) => {
       res.json({ items });
     });
   } catch (error) {
-    console.error('[SuperAdmin] Compliance summary error:', error);
+    logger.error('[SuperAdmin] Compliance summary error:', error);
     res.status(500).json({ error: 'Failed to fetch compliance summary' });
   }
 });

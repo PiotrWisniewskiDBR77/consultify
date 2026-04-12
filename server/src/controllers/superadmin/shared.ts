@@ -186,8 +186,8 @@ export const getAttributionService = async () => {
 
 export const getBillingService = async () => {
   if (!deps.BillingService) {
-    const billingService = (await import('../../services/BillingService.js')).default;
-    deps.BillingService = billingService;
+    const billingModule = await import('../../services/BillingService.js');
+    deps.BillingService = (billingModule as any).default || billingModule;
   }
   return deps.BillingService;
 };

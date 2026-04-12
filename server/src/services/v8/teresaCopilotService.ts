@@ -15,8 +15,13 @@
 
 import { randomUUID } from 'node:crypto';
 
+import type { OperationContract } from '../../types/operationContract.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import {
+  buildProposalOperationContract,
+  updateOperationContractLinks,
+} from './operationContractService.js';
 import {
   type ActionEnvelopeState,
   type HandoffTargetModule,
@@ -51,6 +56,7 @@ export interface ProposalRecord {
   created_at: string;
   updated_at: string;
   audit_trail: AuditEntry[];
+  operation_contract: OperationContract;
 }
 
 export interface AuditEntry {
@@ -95,6 +101,7 @@ export interface TeresaChatProposalEnvelope {
   auditCount: number;
   resultRef: string | null;
   degraded: string | null;
+  operationContract: OperationContract;
 }
 
 export class TeresaCopilotError extends Error {
@@ -280,7 +287,7 @@ interface AuditRow {
 }
 
 function rowToProposal(row: ProposalRow, auditRows: AuditRow[] = []): ProposalRecord {
-  return {
+  const proposal = {
     id: row.id,
     organization_id: row.organization_id,
     user_id: row.user_id,
@@ -292,6 +299,11 @@ function rowToProposal(row: ProposalRow, auditRows: AuditRow[] = []): ProposalRe
     created_at: row.created_at,
     updated_at: row.updated_at,
     audit_trail: auditRows.map(rowToAuditEntry),
+  } satisfies Omit<ProposalRecord, 'operation_contract'>;
+
+  return {
+    ...proposal,
+    operation_contract: buildTeresaOperationContract(proposal),
   };
 }
 
@@ -361,7 +373,10 @@ function extractResultRef(detail: Record<string, unknown> | null | undefined): s
   return null;
 }
 
-function buildPreviewLines(proposal: ProposalRecord, execution?: HandoffResult | null): string[] {
+function buildPreviewLines(
+  proposal: ProposalRecord | Omit<ProposalRecord, 'operation_contract'>,
+  execution?: HandoffResult | null
+): string[] {
   const lines: string[] = [];
   const payload = proposal.target_payload || {};
   const target = proposal.target_module;
@@ -399,11 +414,85 @@ function buildPreviewLines(proposal: ProposalRecord, execution?: HandoffResult |
   return lines.filter(Boolean).slice(0, 3);
 }
 
+function mapEnvelopeStateToOperationStage(state: ActionEnvelopeState): OperationContract['stage'] {
+  switch (state) {
+    case 'proposal':
+      return 'proposal_ready';
+    case 'pending_approval':
+      return 'pending_review';
+    case 'approved':
+      return 'approved';
+    case 'executing':
+      return 'executing';
+    case 'completed':
+      return 'completed';
+    case 'rejected':
+      return 'rejected';
+    default:
+      return 'proposal_ready';
+  }
+}
+
+function buildTeresaOperationContract(
+  proposal: Omit<ProposalRecord, 'operation_contract'>,
+  execution?: HandoffResult | null
+): OperationContract {
+  const runtimeBinding = proposal.handoff_context.runtime_binding || {};
+  const latestAudit = proposal.audit_trail[proposal.audit_trail.length - 1] || null;
+  const targetPayload = (proposal.target_payload || {}) as Record<string, unknown>;
+  const existingId = proposal.handoff_context.operation_contract_ref || null;
+  const baseContract = buildProposalOperationContract({
+    contractId: existingId || proposal.id,
+    kind: 'teresa_handoff',
+    stage: mapEnvelopeStateToOperationStage(proposal.state),
+    createdAt: proposal.created_at,
+    updatedAt: proposal.updated_at,
+    organizationId: proposal.organization_id,
+    userId: proposal.user_id,
+    sessionId: proposal.session_id,
+    conversationId:
+      typeof runtimeBinding.conversation_id === 'string' ? runtimeBinding.conversation_id : null,
+    contextSnapshotId:
+      typeof runtimeBinding.context_snapshot_id === 'string'
+        ? runtimeBinding.context_snapshot_id
+        : null,
+    executionRunId:
+      typeof runtimeBinding.execution_run_id === 'string' ? runtimeBinding.execution_run_id : null,
+    artifactRunId:
+      typeof runtimeBinding.artifact_run_id === 'string' ? runtimeBinding.artifact_run_id : null,
+    toolInvocationId:
+      typeof runtimeBinding.tool_invocation_id === 'string'
+        ? runtimeBinding.tool_invocation_id
+        : null,
+    teresaProposalId: proposal.id,
+    targetModule: proposal.target_module,
+    title: deriveProposalTitle(proposal.handoff_context.user_intent, proposal.target_module),
+    summary: trimPreview(
+      proposal.handoff_context.proposed_next_action?.handoff_intent ||
+        proposal.handoff_context.user_intent,
+      160
+    ),
+    intent: proposal.handoff_context.user_intent,
+    previewLines: buildPreviewLines(proposal, execution),
+  });
+
+  const resultRef = extractResultRef(latestAudit?.detail) || execution?.audit_entry_id || null;
+  if (!resultRef) return baseContract;
+
+  return updateOperationContractLinks(baseContract, {
+    artifactId:
+      typeof targetPayload.artifact_id === 'string'
+        ? targetPayload.artifact_id
+        : baseContract.links.artifactId,
+  });
+}
+
 export function toChatProposalEnvelope(
   proposal: ProposalRecord,
   execution?: HandoffResult | null
 ): TeresaChatProposalEnvelope {
   const latestAudit = proposal.audit_trail[proposal.audit_trail.length - 1] || null;
+  const operationContract = buildTeresaOperationContract(proposal, execution);
   return {
     proposalId: proposal.id,
     contractId: P08_COPILOT_CONTRACT,
@@ -423,6 +512,7 @@ export function toChatProposalEnvelope(
     auditCount: proposal.audit_trail.length,
     resultRef: extractResultRef(latestAudit?.detail) || execution?.audit_entry_id || null,
     degraded: execution?.degraded || null,
+    operationContract,
   };
 }
 
@@ -635,6 +725,12 @@ export async function createChatProposal(params: {
   const context = (params.context || {}) as Record<string, unknown>;
   const intent = await inferTargetModuleFromChat(userMessage, context);
   if (!intent) return null;
+  const contextSnapshotId =
+    typeof context.contextSnapshotId === 'string'
+      ? context.contextSnapshotId
+      : typeof context.snapshotId === 'string'
+        ? context.snapshotId
+        : null;
 
   const handoffContext: TeresaHandoffContext = {
     origin: 'teresa',
@@ -646,6 +742,12 @@ export async function createChatProposal(params: {
       80
     ),
     org_context_ref: `org:${organizationId}`,
+    operation_contract_ref: null,
+    runtime_binding: {
+      conversation_id: sessionId,
+      session_id: sessionId,
+      context_snapshot_id: contextSnapshotId,
+    },
     bounded_context_pack: buildBoundedContextPack(context),
     constraints: ['proposal_first', 'no_silent_writes'],
     assumptions: [],
@@ -662,7 +764,7 @@ export async function createChatProposal(params: {
       : [],
     proposed_next_action: {
       target_module: intent.targetModule,
-      handoff_intent: intent.handoffIntent,
+      handoff_intent: intent.handoffIntent as 'open' | 'create' | 'append',
       requires_approval: true,
     },
     audit_stub: {
@@ -811,6 +913,18 @@ export async function createProposal(params: {
 
   const proposalId = idempotencyKey ?? randomUUID();
   const now = new Date().toISOString();
+  const persistedHandoffContext: TeresaHandoffContext = {
+    ...handoffContext,
+    operation_contract_ref: handoffContext.operation_contract_ref || proposalId,
+    runtime_binding: {
+      conversation_id: handoffContext.runtime_binding?.conversation_id || sessionId,
+      session_id: handoffContext.runtime_binding?.session_id || sessionId,
+      context_snapshot_id: handoffContext.runtime_binding?.context_snapshot_id || null,
+      execution_run_id: handoffContext.runtime_binding?.execution_run_id || null,
+      artifact_run_id: handoffContext.runtime_binding?.artifact_run_id || null,
+      tool_invocation_id: handoffContext.runtime_binding?.tool_invocation_id || null,
+    },
+  };
 
   await dbRun(
     `INSERT INTO teresa_proposals
@@ -821,7 +935,7 @@ export async function createProposal(params: {
       organizationId,
       userId,
       sessionId,
-      JSON.stringify(handoffContext),
+      JSON.stringify(persistedHandoffContext),
       targetModule,
       JSON.stringify(targetPayload),
       now,
@@ -833,10 +947,10 @@ export async function createProposal(params: {
   const auditEntry = await writeAuditEntry({
     proposalId,
     action: 'proposal_created',
-    actor: handoffContext.audit_stub.actor,
+    actor: persistedHandoffContext.audit_stub.actor,
     fromState: null,
     toState: 'proposal',
-    detail: { target_module: targetModule, user_intent: handoffContext.user_intent },
+    detail: { target_module: targetModule, user_intent: persistedHandoffContext.user_intent },
   });
 
   logger.info(`${LOG_PREFIX} Proposal created: ${proposalId} → ${targetModule}`);

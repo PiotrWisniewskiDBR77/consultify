@@ -8,6 +8,7 @@
  */
 
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
 const db = getDatabase();
 
 const AIPlaybookRoutingEngine = {
@@ -47,7 +48,7 @@ const AIPlaybookRoutingEngine = {
     const { mode = 'first_match', rules = [], else_goto } = branchRules;
 
     if (mode !== 'first_match') {
-      console.warn(
+      logger.warn(
         `[AIPlaybookRoutingEngine] Unsupported mode: ${mode}, defaulting to first_match`
       );
     }
@@ -239,14 +240,14 @@ const AIPlaybookRoutingEngine = {
 
         default:
           // Unknown condition type - fail safely
-          console.warn(`[AIPlaybookRoutingEngine] Unknown condition type: ${condType}`);
+          logger.warn(`[AIPlaybookRoutingEngine] Unknown condition type: ${condType}`);
           return {
             matched: false,
             reason: `Unknown condition type: ${condType} (fail-safe)`,
           };
       }
     } catch (err) {
-      console.error(`[AIPlaybookRoutingEngine] Error evaluating condition:`, err);
+      logger.error(`[AIPlaybookRoutingEngine] Error evaluating condition:`, err);
       return {
         matched: false,
         reason: `Evaluation error: ${err.message}`,
@@ -357,7 +358,7 @@ const AIPlaybookRoutingEngine = {
         context.metrics.help_adoption = 0;
       }
     } catch (err) {
-      console.error('[AIPlaybookRoutingEngine] Error building context:', err);
+      logger.error('[AIPlaybookRoutingEngine] Error building context:', err);
     }
 
     return context;

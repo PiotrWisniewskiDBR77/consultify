@@ -4,7 +4,7 @@ export const getLifecycleStages = catchAsync(async (req, res, next) => {
   const stages = await deps.db.all(
     'SELECT * FROM customer_lifecycle_stages ORDER BY order_index ASC'
   );
-  res.json(stages.map((s) => ({ ...s, isActive: s.is_active === 1 })));
+  res.json(stages.map((s: any) => ({ ...s, isActive: s.is_active === 1 })));
 });
 
 export const createLifecycleStage = catchAsync(async (req, res, next) => {
@@ -44,7 +44,7 @@ export const transitionOrganization = catchAsync(async (req, res, next) => {
   await deps.db.run(
     `INSERT INTO customer_lifecycle_transitions (id, organization_id, from_stage_id, to_stage_id, transitioned_by, notes)
          VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, organizationId, fromStageId, toStageId, req.user.id, notes]
+    [id, organizationId, fromStageId, toStageId, (req as AuthenticatedRequest).user!.id, notes]
   );
 
   res.json({ id, organizationId, fromStageId, toStageId });
@@ -72,7 +72,7 @@ export const getLifecycleTransitions = catchAsync(async (req, res, next) => {
   }
 
   sql += ' ORDER BY t.transitioned_at DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(String(limit)));
 
   const transitions = await deps.db.all(sql, params);
   res.json(transitions);
@@ -98,7 +98,7 @@ export const getLifecycleStats = catchAsync(async (req, res, next) => {
     'SELECT COUNT(*) as count FROM customer_lifecycle_transitions'
   );
 
-  res.json({ stageStats, totalTransitions: totalTransitions?.count || 0 });
+  res.json({ stageStats, totalTransitions: (totalTransitions as any)?.count || 0 });
 });
 
 export const getSuccessPlaybooks = catchAsync(async (req, res, next) => {
@@ -116,7 +116,7 @@ export const getSuccessPlaybooks = catchAsync(async (req, res, next) => {
   const playbooks = await deps.db.all(sql, params);
 
   res.json(
-    playbooks.map((p) => ({
+    playbooks.map((p: any) => ({
       ...p,
       triggerConditions: JSON.parse(p.trigger_conditions_json || '{}'),
       actions: JSON.parse(p.actions_json || '[]'),
@@ -138,7 +138,7 @@ export const createSuccessPlaybook = catchAsync(async (req, res, next) => {
       description,
       JSON.stringify(triggerConditions || {}),
       JSON.stringify(actions || []),
-      req.user.id,
+      (req as AuthenticatedRequest).user!.id,
     ]
   );
 
@@ -180,7 +180,7 @@ export const executeSuccessPlaybook = catchAsync(async (req, res, next) => {
     return next(new AppError('Playbook not found', 404));
   }
 
-  const actions = JSON.parse(playbook.actions_json || '[]');
+  const actions = JSON.parse((playbook as any).actions_json || '[]');
   const actionId = deps.uuid.v4();
 
   // Record action
@@ -219,10 +219,10 @@ export const getSuccessActions = catchAsync(async (req, res, next) => {
   }
 
   sql += ' ORDER BY a.created_at DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(String(limit)));
 
   const actions = await deps.db.all(sql, params);
-  res.json(actions.map((a) => ({ ...a, result: JSON.parse(a.result_json || '{}') })));
+  res.json(actions.map((a: any) => ({ ...a, result: JSON.parse(a.result_json || '{}') })));
 });
 
 export const getPlaybookStats = catchAsync(async (req, res, next) => {
@@ -257,10 +257,10 @@ export const getCustomerContracts = catchAsync(async (req, res, next) => {
   }
 
   sql += ' ORDER BY c.start_date DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(String(limit)));
 
   const contracts = await deps.db.all(sql, params);
-  res.json(contracts.map((c) => ({ ...c, terms: JSON.parse(c.terms_json || '{}') })));
+  res.json(contracts.map((c: any) => ({ ...c, terms: JSON.parse(c.terms_json || '{}') })));
 });
 
 export const createCustomerContract = catchAsync(async (req, res, next) => {
@@ -324,7 +324,7 @@ export const createContractAmendment = catchAsync(async (req, res, next) => {
   await deps.db.run(
     `INSERT INTO contract_amendments (id, contract_id, amendment_type, amendment_date, changes_json, approved_by, approved_at)
          VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-    [amendmentId, id, amendmentType, amendmentDate, JSON.stringify(changes || {}), req.user.id]
+    [amendmentId, id, amendmentType, amendmentDate, JSON.stringify(changes || {}), (req as AuthenticatedRequest).user!.id]
   );
 
   res.json({ id: amendmentId, contractId: id, amendmentType, amendmentDate, changes });
@@ -341,7 +341,7 @@ export const getContractAmendments = catchAsync(async (req, res, next) => {
     [id]
   );
 
-  res.json(amendments.map((a) => ({ ...a, changes: JSON.parse(a.changes_json || '{}') })));
+  res.json(amendments.map((a: any) => ({ ...a, changes: JSON.parse(a.changes_json || '{}') })));
 });
 
 export const getUpcomingRenewals = catchAsync(async (req, res, next) => {
@@ -354,10 +354,10 @@ export const getUpcomingRenewals = catchAsync(async (req, res, next) => {
          WHERE c.renewal_date BETWEEN date('now') AND date('now', '+' || ? || ' days')
          AND c.status = 'active'
          ORDER BY c.renewal_date ASC`,
-    [parseInt(daysAhead)]
+    [parseInt(String(daysAhead))]
   );
 
-  res.json(renewals.map((r) => ({ ...r, terms: JSON.parse(r.terms_json || '{}') })));
+  res.json(renewals.map((r: any) => ({ ...r, terms: JSON.parse(r.terms_json || '{}') })));
 });
 
 export const getContractStats = catchAsync(async (req, res, next) => {

@@ -2,6 +2,7 @@
 import { Worker } from 'bullmq';
 
 import redisConfig from '../config/QueueConfig.js';
+import logger from '../utils/Logger.js';
 import AsyncJobProcessor from './asyncJobProcessor.js';
 
 const workerName = 'ai-tasks-worker';
@@ -13,7 +14,7 @@ const getAiService = async () => {
     try {
       AiService = await import('../services/aiService.js');
     } catch (error) {
-      console.error(`[${workerName}] Failed to load AiService:`, error);
+      logger.error(`[${workerName}] Failed to load AiService:`, error);
       throw new Error(
         `Failed to load AiService: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -23,7 +24,7 @@ const getAiService = async () => {
 };
 
 const processor = async (job) => {
-  console.log(`[${workerName}] Processing job ${job.id} of type ${job.name}`);
+  logger.info(`[${workerName}] Processing job ${job.id} of type ${job.name}`);
   const { taskType, payload, userId } = job.data;
 
   try {
@@ -56,21 +57,43 @@ const processor = async (job) => {
       case 'ADVANCE_PLAYBOOK_STEP':
         result = await AsyncJobProcessor.processPlaybookAdvance(job);
         break;
+      case 'RUN_EVAL_SUITE': {
+        const { runEvalHarness } = await import('../services/ai/evalHarnessService.js');
+        const { organizationId, datasetId, evalTypes, purpose, regressionBaseline, runBy } =
+          payload;
+        result = await runEvalHarness(organizationId, {
+          datasetId,
+          evalTypes: evalTypes || [
+            'response_quality',
+            'citation_coverage',
+            'policy_compliance',
+            'latency',
+          ],
+          purpose: purpose || 'chat',
+          regressionBaseline,
+        }, runBy);
+        break;
+      }
+      case 'AGENT_BACKGROUND_TASK': {
+        const { agentPlannerService } = await import('../services/ai/agentPlannerService.js');
+        result = await agentPlannerService.executeBackgroundPlan(payload);
+        break;
+      }
       default:
         throw new Error(`Unknown task type: ${taskType}`);
     }
 
-    console.log(`[${workerName}] Job ${job.id} completed`);
+    logger.info(`[${workerName}] Job ${job.id} completed`);
     return result;
   } catch (error) {
-    console.error(`[${workerName}] Job ${job.id} failed:`, error);
+    logger.error(`[${workerName}] Job ${job.id} failed:`, error);
     throw error;
   }
 };
 
 const initWorker = () => {
   if (process.env.MOCK_REDIS === 'true') {
-    console.log(`[BullMQ] MOCK_REDIS=true, skipping worker initialization.`);
+    logger.info(`[BullMQ] MOCK_REDIS=true, skipping worker initialization.`);
     return null;
   }
 
@@ -79,17 +102,17 @@ const initWorker = () => {
 
     worker.on('completed', (job) => {
       // Optional: Notify user via WebSocket or update DB status
-      console.log(`[BullMQ] Job ${job.id} completed successfully.`);
+      logger.info(`[BullMQ] Job ${job.id} completed successfully.`);
     });
 
     worker.on('failed', (job, err) => {
-      console.log(`[BullMQ] Job ${job.id} failed: ${err.message}`);
+      logger.info(`[BullMQ] Job ${job.id} failed: ${err.message}`);
     });
 
-    console.log(`[BullMQ] Worker initialized for 'ai-tasks'`);
+    logger.info(`[BullMQ] Worker initialized for 'ai-tasks'`);
     return worker;
   } catch (err) {
-    console.error('[BullMQ] Failed to initialize worker:', err.message);
+    logger.error('[BullMQ] Failed to initialize worker:', err.message);
     return null;
   }
 };

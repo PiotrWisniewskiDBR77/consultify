@@ -47,7 +47,7 @@ export const NavItem: React.FC<NavItemProps> = ({
   const hasSubItems = item.subItems && item.subItems.length > 0;
   const isActive = item.viewId === currentView;
   const isCompleted = item.viewId && completedViews.includes(item.viewId);
-  const badgeLabel = item.badge === 'soon' ? 'In development' : item.badge;
+  const badgeLabel = item.badge === 'soon' ? 'Coming soon' : item.badge;
 
   const isLocked =
     item.requiresView &&
@@ -143,7 +143,7 @@ export const NavItem: React.FC<NavItemProps> = ({
                     ? 'bg-amber-500/10 text-amber-400'
                     : item.badge === 'new'
                       ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-amber-400/10 text-amber-400',
+                      : 'bg-purple-500/10 text-purple-400',
                 ].join(' ')}
               >
                 {badgeLabel}

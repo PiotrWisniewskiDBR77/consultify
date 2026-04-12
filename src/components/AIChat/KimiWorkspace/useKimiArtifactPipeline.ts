@@ -578,7 +578,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, [effectiveStatus, currentRun, lane, lastGoal]);
 
   const startGeneration = useCallback(
-    async (goal: string) => {
+    async (goal: string, templateArtifactId?: string) => {
       if (!conversationId) {
         toast.error('No active conversation. Start a chat first.');
         return;
@@ -661,6 +661,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           goal: goal.trim(),
           requestedArtifactFamily: artifactFamily,
           requestedOutputType: outputType,
+          ...(templateArtifactId ? { templateArtifactId } : {}),
         });
         setCurrentRun(result.run);
         setCurrentPlan(result.artifactPlan);

@@ -8,6 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 class InitiativeGovernanceService {
@@ -400,7 +401,7 @@ class InitiativeGovernanceService {
     } catch (auditErr) {
       auditWritten = false;
       const msg = auditErr instanceof Error ? auditErr.message : String(auditErr);
-      console.warn(`[P11] audit trail write failed for blueprint ${blueprintId}: ${msg}`);
+      logger.warn(`[P11] audit trail write failed for blueprint ${blueprintId}: ${msg}`);
     }
 
     return {

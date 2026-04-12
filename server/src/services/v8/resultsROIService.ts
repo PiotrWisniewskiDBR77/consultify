@@ -614,7 +614,7 @@ export async function initiateReconciliation(
         entityType: 'kpi',
         entityId: reconciliation.kpiId,
         actionUrl: `/benefits?tab=results_kpi&mode=queue`,
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.warn('[ResultsROI] reconciliation notification failed', err));
     }
   } catch {
     // non-blocking
@@ -2111,7 +2111,7 @@ export async function createKpiSignal(params: {
         type: 'KPI_SIGNAL_DETECTED',
         title: `KPI Signal: ${kpiRow.name || params.kpiId}`,
         body: params.description || `${params.signalType} signal detected (${params.severity})`,
-        severity: params.severity === 'RED' ? 'CRITICAL' : 'WARNING',
+        severity: params.severity === 'critical' ? 'CRITICAL' : 'WARNING',
         entityType: 'kpi',
         entityId: params.kpiId,
         actionUrl: `/benefits?tab=results_kpi&mode=queue`,
@@ -2313,7 +2313,8 @@ export async function completeKpiNextAction(actionId: string, organizationId: st
 }
 
 export { KPI_WORKFLOW_DEGRADED_REASONS as KpiWorkflowDegradedReasonValues } from './kpiWorkflowCanon.js';
-export type { KpiWorkflowDegradedReason } from './kpiWorkflowCanon.js';
+import type { KpiWorkflowDegradedReason } from './kpiWorkflowCanon.js';
+export type { KpiWorkflowDegradedReason };
 
 export interface KpiWorkflowStatus {
   kpiId: string;

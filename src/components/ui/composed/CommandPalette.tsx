@@ -22,6 +22,7 @@ import {
   BookOpen,
   Brain,
   Briefcase,
+  Calculator,
   CheckCircle,
   Clock,
   Command,
@@ -192,6 +193,18 @@ const getDefaultCommands = (onNavigate: (view: AppView) => void): CommandItem[] 
     category: 'navigation',
     keywords: ['studio', 'visual', 'design', 'workspace'],
     onSelect: () => onNavigate(AppView.STUDIO),
+  },
+  {
+    id: 'nav-finance',
+    label: 'Finance',
+    description: 'Financial statements, models, analysis & valuations',
+    icon: <Calculator size={18} />,
+    category: 'navigation',
+    keywords: [
+      'finance', 'finanse', 'economics', 'ekonomia', 'statements', 'model',
+      'valuation', 'wycena', 'budget', 'prediction', 'analysis', 'lane',
+    ],
+    onSelect: () => onNavigate(AppView.ECONOMICS),
   },
   // Settings
   {

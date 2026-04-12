@@ -118,7 +118,7 @@ async function checkOrgQuota(req: Request, res: Response, next: NextFunction) {
       WHERE b.organization_id = $1
     `, [orgId]);
 
-    const recordCount = parseInt(usage.rows[0]?.record_count || '0', 10);
+    const recordCount = parseInt((usage.rows[0] as any)?.record_count || '0', 10);
 
     let maxRecords = 100000;
     try {
@@ -126,7 +126,7 @@ async function checkOrgQuota(req: Request, res: Response, next: NextFunction) {
         'SELECT plan_config FROM organizations WHERE id = $1',
         [orgId]
       );
-      const config = orgPlan.rows[0]?.plan_config;
+      const config = (orgPlan.rows[0] as any)?.plan_config;
       if (config?.maxTableRecords) {
         maxRecords = config.maxTableRecords;
       }

@@ -1,4 +1,5 @@
 import { type AuthenticatedRequest, catchAsync, deps, tableExists } from './shared.js';
+import logger from '../../utils/Logger.js';
 
 // =========================================
 // INTEGRATIONS & WEBHOOKS
@@ -31,7 +32,7 @@ export const getIntegrations = catchAsync(async (req, res, next) => {
 
     res.json({ integrations: [] });
   } catch (error) {
-    console.error('getIntegrations error:', error);
+    logger.error('getIntegrations error:', error);
     res.status(500).json({ error: 'Failed to fetch integrations' });
   }
 });
@@ -65,11 +66,11 @@ export const disconnectIntegration = catchAsync(async (req, res, next) => {
      LIMIT 1`,
     [provider]
   );
-  if (!row?.id) {
+  if (!(row as any)?.id) {
     res.json({ success: true, deleted: false });
     return;
   }
-  const success = await deps.IntegrationService.deleteIntegration(row.id);
+  const success = await deps.IntegrationService.deleteIntegration((row as any).id);
   res.json({ success, deleted: true });
 });
 
@@ -128,7 +129,7 @@ export const getWebhooks = catchAsync(async (req, res, next) => {
 
     res.json({ webhooks: [] });
   } catch (error) {
-    console.error('getWebhooks error:', error);
+    logger.error('getWebhooks error:', error);
     res.status(500).json({ error: 'Failed to fetch webhooks' });
   }
 });

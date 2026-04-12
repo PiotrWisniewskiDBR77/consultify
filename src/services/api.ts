@@ -1,4 +1,15 @@
 // @ts-nocheck
+/**
+ * @deprecated This monolithic API client (16k+ lines) is being migrated to typed
+ * modules under ./api/ (e.g. api/tasks.api.ts, api/v8/client.ts).
+ *
+ * For NEW code, import from:
+ *   import { someApi } from '@/services/api/moduleName.api';
+ *   import { v8Client } from '@/services/api/v8/client';
+ *
+ * Migration tracker: ~1000 files still import from this file.
+ * Target: remove @ts-nocheck once all methods are migrated to typed modules.
+ */
 import i18n from '@/i18n';
 
 import { FullSession, LLMProvider, SessionMode, User } from '../types';

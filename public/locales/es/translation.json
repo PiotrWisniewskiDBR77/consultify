@@ -1364,6 +1364,52 @@
         "title": "Human Governance",
         "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
       }
+    },
+    "problemPlatform": {
+      "heading": "Lo que Spotify hizo por la música,",
+      "headingAccent": "nosotros lo hacemos por la consultoría.",
+      "problem": {
+        "badge": "El problema del mercado",
+        "title": "La inteligencia de negocio sigue siendo inaccesible, genérica e insegura.",
+        "body": "El mercado aún no ha convertido la IA y las herramientas digitales en una capa escalable para la ejecución táctica y estratégica del negocio.",
+        "points": [
+          "La consultoría sigue siendo inaccesible para la mayoría de las empresas.",
+          "Los modelos de lenguaje grandes no son especialistas y no entienden el contexto de la empresa.",
+          "La mayoría de las soluciones de IA no son lo bastante seguras para el trabajo empresarial real."
+        ],
+        "solve": "Ese es exactamente el vacío que cierra Consultify."
+      },
+      "pattern": {
+        "badge": "El cambio de categoría",
+        "title": "Lo que Spotify hizo por la música: acceso, calidad y confianza a escala.",
+        "body": "Spotify no creó más música. Hizo que la gran música fuera instantáneamente accesible, fiable y fácil de usar. Consultify aplica ese mismo cambio a la inteligencia de negocio.",
+        "examples": [
+          "Acceso directo al conocimiento de negocio de Harvard.",
+          "Inteligencia que trabaja en el contexto completo de tu empresa, no en prompts aislados.",
+          "Confianza y seguridad mediante tecnología adaptada a los requisitos individuales de tu empresa."
+        ],
+        "summary": "Acceso. Calidad. Confianza. Ese es el cambio."
+      }
+    },
+    "docs": {
+      "badge": "Ayuda y evaluacion",
+      "title": "Todo lo que necesitas para evaluar Consultify",
+      "subtitle": "Usa conocimiento, seguridad, precios y materiales de socios para decidir si Consultify encaja en tu despliegue.",
+      "searchPlaceholder": "Buscar en la base de conocimiento...",
+      "searchBtn": "Buscar",
+      "knowledgeBase": "Base de conocimiento",
+      "knowledgeBaseDesc": "Guias expertas sobre transformacion, gobernanza, defensa de ROI y disciplina de ejecucion.",
+      "security": "Seguridad y cumplimiento",
+      "securityDesc": "AES-256, GDPR, residencia de datos y opciones de despliegue enterprise explicadas.",
+      "pricing": "Precios",
+      "pricingDesc": "Paquetes de licencias, presupuesto AI compartido, herramientas licenciadas y planes enterprise.",
+      "partnerProgram": "Programa de socios",
+      "partnerProgramDesc": "Reparto de ingresos, certificaciones, acceso a la academia y proceso de solicitud.",
+      "legalCenter": "Centro legal",
+      "legalCenterDesc": "Terminos de servicio, politica de privacidad, acuerdos de procesamiento de datos y documentos de cumplimiento.",
+      "resources": "Recursos",
+      "resourcesDesc": "Casos de estudio, whitepapers, webinars y anuncios de actualizaciones del producto.",
+      "explore": "Explorar"
     }
   },
   "partner": {
@@ -1940,6 +1986,48 @@
       "executeFailed": "No se pudo ejecutar la intervención.",
       "rejected": "Intervención rechazada.",
       "rejectFailed": "No se pudo rechazar la intervención."
+    }
+  },
+  "contact": {
+    "badge": "Contáctanos",
+    "hero": {
+      "title1": "Hablemos de",
+      "title2": "tu próximo paso",
+      "subtitle": "¿Necesitas una demo, quieres hablar sobre despliegue enterprise o tienes una pregunta? Estamos aquí para ayudarte."
+    },
+    "offices": "Oficinas",
+    "email": "Correo electrónico",
+    "emailGeneral": "General",
+    "emailSales": "Ventas",
+    "emailSupport": "Soporte",
+    "bookDemo": "Reserva una llamada de 30 min",
+    "bookDemoSub": "Consulta gratuita. Descubre Consultify en acción.",
+    "sla": "Respondemos en 1 día hábil. Los clientes actuales obtienen resolución más rápida a través del soporte en la aplicación.",
+    "types": {
+      "general": "Consulta general",
+      "sales": "Ventas / Solicitud de demo",
+      "support": "Soporte técnico",
+      "partnership": "Colaboración",
+      "security": "Seguridad y cumplimiento",
+      "press": "Prensa y medios"
+    },
+    "form": {
+      "title": "Envíanos un mensaje",
+      "subtitle": "Los campos marcados con * son obligatorios",
+      "name": "Tu nombre",
+      "email": "Correo electrónico",
+      "company": "Empresa",
+      "inquiryType": "Tipo de consulta",
+      "message": "Mensaje",
+      "messagePlaceholder": "¿Cómo podemos ayudarte?",
+      "securityNote": "Tus datos están cifrados y se procesan de acuerdo con nuestra Política de Privacidad.",
+      "send": "Enviar mensaje",
+      "sending": "Enviando..."
+    },
+    "success": {
+      "title": "Mensaje enviado",
+      "subtitle": "Gracias por contactarnos. Te responderemos en 1 día hábil.",
+      "another": "Enviar otro mensaje"
     }
   }
 }

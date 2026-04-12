@@ -33,6 +33,10 @@ import * as chatExecutionService from './chatExecutionService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
 import { isV8Enabled } from './featureFlagService.js';
+import {
+  buildProposalOperationContract,
+  updateOperationContractLinks,
+} from './operationContractService.js';
 import * as publishReviewService from './publishReviewService.js';
 import type { RunState } from '../../types/executionSpine.js';
 
@@ -397,6 +401,21 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
         } as const)
       : null;
 
+  const operationStage =
+    row.run_status === 'planned' || row.run_status === 'proposal_created'
+      ? 'proposal_ready'
+      : row.run_status === 'awaiting_review'
+        ? 'pending_review'
+        : row.run_status === 'approved_for_apply'
+          ? 'approved'
+          : row.run_status === 'applying'
+            ? 'executing'
+            : row.run_status === 'completed'
+              ? 'completed'
+              : row.run_status === 'rejected' || row.run_status === 'cancelled'
+                ? 'rejected'
+                : 'failed';
+
   return {
     runId: row.run_id,
     artifactId: row.artifact_id,
@@ -419,6 +438,31 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
     completedAt: row.completed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    operationContract: buildProposalOperationContract({
+      kind: 'artifact_runtime',
+      contractId: row.run_id,
+      stage: operationStage,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      organizationId: row.organization_id,
+      userId: row.requested_by_user_id,
+      conversationId: row.source_context_type === 'conversation' ? row.source_context_id : null,
+      contextSnapshotId: row.context_snapshot_id,
+      executionRunId: row.execution_run_id,
+      governedProposalId: row.proposal_id,
+      artifactRunId: row.run_id,
+      artifactId: row.artifact_id,
+      targetModule: 'artifact_runtime',
+      title: parsedPlan.titleHint,
+      summary: `Prepare ${parsedPlan.outputType} via governed artifact runtime`,
+      intent: parsedPlan.titleHint,
+      previewLines: [
+        `Output: ${parsedPlan.outputType}`,
+        `Family: ${parsedPlan.artifactFamily}`,
+        `Visibility: ${parsedPlan.visibilityScope}`,
+      ],
+      riskLabel: row.proposal_id ? 'safe_update' : 'safe_additive',
+    }),
   };
 }
 
@@ -756,12 +800,32 @@ async function cleanupGhostOutputsByOrigin(params: {
 async function mapArtifactRunRowWithEffectiveStatus(row: ArtifactRunRow): Promise<ArtifactRunRecord> {
   const mapped = mapArtifactRunRow(row);
   const spineRun = await executionSpineService.getRun(mapped.executionRunId, mapped.organizationId);
+  const effectiveStatus = deriveArtifactRunStatusFromExecutionState({
+    persistedStatus: mapped.runStatus,
+    executionState: spineRun?.state,
+  });
   return {
     ...mapped,
-    runStatus: deriveArtifactRunStatusFromExecutionState({
-      persistedStatus: mapped.runStatus,
-      executionState: spineRun?.state,
-    }),
+    runStatus: effectiveStatus,
+    operationContract: mapped.operationContract
+      ? updateOperationContractLinks(
+          mapped.operationContract,
+          {},
+          effectiveStatus === 'awaiting_review'
+            ? 'pending_review'
+            : effectiveStatus === 'approved_for_apply'
+              ? 'approved'
+              : effectiveStatus === 'applying'
+                ? 'executing'
+                : effectiveStatus === 'completed'
+                  ? 'completed'
+                  : effectiveStatus === 'rejected' || effectiveStatus === 'cancelled'
+                    ? 'rejected'
+                    : effectiveStatus === 'failed'
+                      ? 'failed'
+                      : 'proposal_ready'
+        )
+      : undefined,
   };
 }
 
@@ -1848,13 +1912,13 @@ function inferArtifactPlan(
   ) {
     const isPresentation = goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
     return {
-      artifactFamily: 'template' as any,
+      artifactFamily: 'template',
       outputType: isPresentation ? 'presentation' : 'report',
       titleHint: 'Template-based output',
       governancePath: 'execution_spine',
       visibilityScope: 'organization',
-      templateHint: true as any,
-    };
+      templateHint: true,
+    } as any;
   }
 
   if (

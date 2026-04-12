@@ -19,6 +19,7 @@ import AssessmentWorkbenchService, {
 } from '../../services/assessment/AssessmentWorkbenchService.js';
 import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
+import logger from '../../utils/Logger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
@@ -335,7 +336,7 @@ router.post(
       [uuidv4(), id, userId, now]
     );
 
-    assessmentAuditLogger.logCreation(req, id, assessmentType).catch(() => {});
+    assessmentAuditLogger.logCreation(req, id, assessmentType).catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
     return res.status(201).json({
       data: {
@@ -530,7 +531,7 @@ router.put(
         hasAnswers: req.body?.answers !== undefined,
         hasContextSnapshot: req.body?.contextSnapshot !== undefined,
       })
-      .catch(() => {});
+      .catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
     return res.json({
       data: { id: assessmentId, updatedAt: now },

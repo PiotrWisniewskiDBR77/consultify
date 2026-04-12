@@ -2734,7 +2734,7 @@ router.post(
       ) {
         try {
           const nbSearchMod = await import('../services/v8/notebookSearchService.js');
-          const nbSearch = (nbSearchMod.default || nbSearchMod) as any;
+          const nbSearch = ((nbSearchMod as any).default || nbSearchMod) as any;
           const searchFn = nbSearch.searchNotebook || nbSearch.default?.searchNotebook;
           if (searchFn) {
             const results = await searchFn(
@@ -3449,7 +3449,7 @@ router.post(
                   // Fire and forget — don't block the stream
                   kgService
                     .processConversation(req.organizationId, message, accumulatedContent)
-                    .catch(() => {});
+                    .catch((err: unknown) => logger.warn('[AI] knowledge graph processing failed', err));
                 }
               }
             } catch {
@@ -4229,7 +4229,7 @@ router.post(
         }
       );
 
-      console.log('[AI Routes] Chat result:', JSON.stringify(result, null, 2));
+      logger.info('[AI Routes] Chat result:', JSON.stringify(result, null, 2));
 
       await AIAuditLogger.logSuggestion(
         req.userId!,
@@ -4278,7 +4278,7 @@ router.get(
       const info = await (AIPolicyEngine as any).getPolicySummary(req.organizationId as string);
       return res.json(info);
     } catch (err: any) {
-      console.error('[AI Routes] Policy GET error:', err);
+      logger.error('[AI Routes] Policy GET error:', err);
       return res.status(500).json({ error: (err as Error).message });
     }
   })
@@ -4298,7 +4298,7 @@ router.patch(
       const result = await AIPolicyEngine.updatePolicy(req.organizationId!, req.body);
       return res.json(result);
     } catch (err: any) {
-      console.error('[AI Routes] Policy PATCH error:', err);
+      logger.error('[AI Routes] Policy PATCH error:', err);
       return res.status(500).json({ error: (err as Error).message });
     }
   })

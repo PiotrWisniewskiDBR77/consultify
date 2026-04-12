@@ -6,6 +6,7 @@
  */
 
 import type { Response } from 'express';
+import logger from '../utils/Logger.js';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -106,7 +107,7 @@ export class InvitationController {
           invitation,
         });
       } catch (error: any) {
-        console.error(`[InvitationController] Create failed: ${error.message}`);
+        logger.error(`[InvitationController] Create failed: ${error.message}`);
         const status =
           error.message.includes('exists') ||
           error.message.includes('already a member') ||

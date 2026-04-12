@@ -38,6 +38,7 @@ import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
+import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
@@ -2164,6 +2165,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 </div>
               </div>
             )}
+            <OutputToolSelector />
             <EnhancedChatInput
               onSend={handleSend}
               onStopGenerating={abortStream}

@@ -681,9 +681,9 @@
     "partnerPortal": "Portal Partnerski",
     "tasks": "Zadania",
     "toolsLibrary": "Biblioteka",
-    "wordy": "Wordy",
-    "excele": "Excele",
-    "prezentacje": "Generator prezentacji"
+    "wordy": "Dokumenty",
+    "excele": "Tabele",
+    "prezentacje": "Prezentacje"
   },
   "widgets": {
     "help": {
@@ -3230,28 +3230,30 @@
     },
     "problemPlatform": {
       "badge": "Dlaczego ta kategoria ma znaczenie",
-      "heading": "Konsultingowa inteligencja powinna być dostępna, a nie zamknięta za elitarnym dostępem.",
-      "sub": "To brakująca warstwa narracyjna między obietnicą hero a powierzchnią produktu: dlaczego dostęp ma znaczenie i dlaczego wzorce platformowe wygrywają.",
+      "heading": "Co Spotify zrobił dla muzyki,",
+      "headingAccent": "my robimy dla consultingu.",
+      "sub": "Wiedza konsultingowa powinna być dostępna, a nie zamknięta za elitarnym dostępem.",
       "problem": {
-        "badge": "Problem",
-        "title": "Wiedza biznesowa jest cenna, ale dostęp do niej nadal jest ograniczony.",
-        "body": "Przez dekady najlepsze metody konsultingowe, frameworki decyzyjne i guidance transformacyjne były praktycznie zarezerwowane dla firm, które mogły pozwolić sobie na elitarne doradztwo.",
+        "badge": "Problem rynku",
+        "title": "Biznesowa inteligencja jest nadal niedostępna, generyczna i niebezpieczna.",
+        "body": "Rynek nadal nie zamienił AI i narzędzi cyfrowych w skalowalną warstwę dla taktycznej i strategicznej realizacji procesów biznesowych.",
         "points": [
-          "Światowej klasy wiedza konsultingowa wciąż jest droga, rozproszona i nierówno dostępna.",
-          "Większość zespołów nigdy nie dostaje uporządkowanego dostępu do metod używanych przez topowe firmy doradcze.",
-          "To sprawia, że krytyczne decyzje biznesowe nadal opierają się na domysłach, slajdach i jednorazowych poradach."
-        ]
+          "Consulting pozostaje niedostępny dla większości firm.",
+          "Duże modele językowe nie są specjalistami i nie rozumieją kontekstu firmy.",
+          "Większość rozwiązań AI nie jest wystarczająco bezpieczna do realnej pracy biznesowej."
+        ],
+        "solve": "To jest dokładnie luka, którą zamyka Consultify."
       },
       "pattern": {
-        "badge": "Wzorzec platformowy",
-        "title": "Najlepsze platformy wygrywają przez transformację dostępu, a nie tylko przez dodanie software'u.",
-        "body": "Najsilniejsze platformy kategorii sprawiły, że rzadkie i wartościowe zasoby stały się proste do osiągnięcia. Consultify stosuje ten sam wzorzec do konsultingowej inteligencji.",
+        "badge": "Zmiana kategorii",
+        "title": "To, co Spotify zrobił dla muzyki: dostęp, jakość i zaufanie w skali.",
+        "body": "Spotify nie stworzył więcej muzyki. Sprawił, że świetna muzyka stała się natychmiast dostępna, niezawodna i łatwa w użyciu. Consultify robi ten sam ruch dla biznesowej inteligencji.",
         "examples": [
-          "Spotify uprościł dostęp do muzyki.",
-          "Uber uprościł dostęp do transportu.",
-          "Consultify upraszcza dostęp do konsultingowej inteligencji."
+          "Bezpośredni dostęp do wiedzy biznesowej z Harvardu.",
+          "Inteligencja, która pracuje w pełnym kontekście Twojej firmy, a nie w oderwanych promptach.",
+          "Zaufanie i bezpieczeństwo dzięki technologii dopasowanej do indywidualnych wymagań firmy."
         ],
-        "summary": "Consultify to platforma konsultingowej inteligencji: Spotify dla wiedzy konsultingowej, dostarczone jako ustrukturyzowany workflow konsultingowy."
+        "summary": "Dostęp. Jakość. Zaufanie. Na tym polega ta zmiana."
       }
     },
     "valueJourney": {
@@ -3345,15 +3347,15 @@
     },
     "profitHero": {
       "h1": {
-        "line1": "Consultify daje zespołom",
-        "line2": "konsultingową inteligencję",
-        "line3": "którą da się realnie wdrażać."
+        "line1": "Consultify AI.",
+        "line2": "Cała biznesowa wiedza świata.",
+        "line3": "Zamieniona w Twoje zyski."
       },
       "sub": "Dla konsultantów, zespołów transformacyjnych i operatorów, którzy chcą przejść od diagnozy do planu, realizacji i mierzalnych wyników w jednym workflow.",
       "billboard": "Zrobiliśmy dla konsultingu to, co Spotify zrobił dla muzyki: nielimitowany dostęp — tylko zamiast playlist masz zysk.",
       "billboardShort": "Jeden workflow od diagnozy do realizacji i mierzalnych wyników.",
       "ctaPrimary": "Rozpocznij trial",
-      "ctaSecondary": "Zobacz demo",
+      "ctaSecondary": "Wypróbuj demo",
       "ctaNote": "Teasery są publiczne. Pełne filmy odblokujesz po zalogowaniu.",
       "panel": {
         "title": "Od czatu → do artefaktów → do zysku",
@@ -3833,27 +3835,24 @@
       }
     },
     "docs": {
-      "badge": "Dokumentacja",
-      "title": "Stworzona z myślą o transparentności",
-      "subtitle": "Wszystko, czego potrzebujesz, aby ocenić, zintegrować i zaufać naszej platformie.",
-      "searchPlaceholder": "Szukaj w dokumentacji...",
+      "badge": "Pomoc i ocena",
+      "title": "Wszystko, czego potrzebujesz, aby ocenić Consultify",
+      "subtitle": "Wykorzystaj wiedzę, bezpieczeństwo, cennik i materiały partnerskie, aby zdecydować, czy Consultify pasuje do Twojego wdrożenia.",
+      "searchPlaceholder": "Szukaj w bazie wiedzy...",
       "searchBtn": "Szukaj",
-      "gettingStarted": "Pierwsze kroki",
-      "gettingStartedDesc": "Szybkie poradniki: konfiguracja workspace, pierwszy assessment i budowanie roadmapy transformacji.",
+      "knowledgeBase": "Baza wiedzy",
+      "knowledgeBaseDesc": "Eksperckie przewodniki o transformacji, governance, obronie ROI i dyscyplinie realizacji.",
       "security": "Bezpieczeństwo i zgodność",
-      "securityDesc": "Architektura bezpieczeństwa, certyfikaty, polityki przetwarzania danych i ramy zgodności.",
-      "apiReference": "Dokumentacja API",
-      "apiReferenceDesc": "Dokumentacja RESTful API: integracje, webhooki i programistyczny dostęp do danych platformy.",
-      "changelog": "Historia zmian",
-      "changelogDesc": "Informacje o wersjach, aktualizacjach i ulepszeniach. Bądź na bieżąco z najnowszymi zmianami.",
+      "securityDesc": "AES-256, GDPR, rezydencja danych i opcje wdrożenia enterprise.",
+      "pricing": "Cennik",
+      "pricingDesc": "Pakiety stanowisk, wspólny budżet AI, licencjonowane narzędzia i plany enterprise.",
+      "partnerProgram": "Program partnerski",
+      "partnerProgramDesc": "Podział przychodów, certyfikacje, akademia i proces aplikowania.",
       "legalCenter": "Centrum prawne",
-      "legalCenterDesc": "Regulamin, polityka prywatności, umowy o przetwarzanie danych i dokumenty regulacyjne.",
-      "integrations": "Integracje",
-      "integrationsDesc": "Łącz się z Jira, Azure DevOps, SAP i innymi systemami. Importuj i synchronizuj dane.",
-      "explore": "Poznaj",
-      "lastUpdated": "Ostatnia aktualizacja",
-      "lastUpdatedDate": "Luty 2026",
-      "whatsNew": "Zobacz co nowego"
+      "legalCenterDesc": "Regulamin, polityka prywatności, umowy o przetwarzanie danych i dokumenty zgodności.",
+      "resources": "Zasoby",
+      "resourcesDesc": "Case studies, whitepapers, webinary i informacje o aktualizacjach produktu.",
+      "explore": "Poznaj"
     }
   },
   "partner": {
@@ -7250,8 +7249,8 @@
     "generationFailed": "Generowanie nie powiodło się",
     "retry": "Spróbuj ponownie",
     "workspace": "Przestrzeń robocza",
-    "laneWordy": "Wordy",
-    "laneExcele": "Excele",
+    "laneWordy": "Dokumenty",
+    "laneExcele": "Tabele",
     "lanePrezentacje": "Prezentacje",
     "stepSnapshot": "Przechwytywanie kontekstu",
     "stepPlan": "Tworzenie planu artefaktu",
@@ -7262,5 +7261,47 @@
     "stepMaterialize": "Materializacja artefaktu",
     "stepGenerate": "Generowanie treści",
     "sheetReady": "Arkusz gotowy — użyj Podglądu pliku lub Pobierz"
+  },
+  "contact": {
+    "badge": "Skontaktuj się",
+    "hero": {
+      "title1": "Porozmawiajmy o",
+      "title2": "Twoim kolejnym kroku",
+      "subtitle": "Potrzebujesz demo, chcesz omówić wdrożenie enterprise lub masz pytanie — jesteśmy tu, aby pomóc."
+    },
+    "offices": "Biura",
+    "email": "Email",
+    "emailGeneral": "Ogólny",
+    "emailSales": "Sprzedaż",
+    "emailSupport": "Wsparcie",
+    "bookDemo": "Umów 30-min rozmowę",
+    "bookDemoSub": "Bezpłatna konsultacja. Zobacz Consultify w akcji.",
+    "sla": "Odpowiadamy w ciągu 1 dnia roboczego. Obecni klienci uzyskują szybszą pomoc przez wsparcie w aplikacji.",
+    "types": {
+      "general": "Zapytanie ogólne",
+      "sales": "Sprzedaż / Prośba o demo",
+      "support": "Wsparcie techniczne",
+      "partnership": "Partnerstwo",
+      "security": "Bezpieczeństwo i zgodność",
+      "press": "Prasa i media"
+    },
+    "form": {
+      "title": "Wyślij nam wiadomość",
+      "subtitle": "Pola oznaczone * są wymagane",
+      "name": "Twoje imię",
+      "email": "Adres email",
+      "company": "Firma",
+      "inquiryType": "Typ zapytania",
+      "message": "Wiadomość",
+      "messagePlaceholder": "Jak możemy Ci pomóc?",
+      "securityNote": "Twoje dane są szyfrowane i przetwarzane zgodnie z naszą Polityką Prywatności.",
+      "send": "Wyślij wiadomość",
+      "sending": "Wysyłanie..."
+    },
+    "success": {
+      "title": "Wiadomość wysłana",
+      "subtitle": "Dziękujemy za kontakt. Odpowiemy w ciągu 1 dnia roboczego.",
+      "another": "Wyślij kolejną wiadomość"
+    }
   }
 }

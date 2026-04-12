@@ -4,6 +4,7 @@
  */
 
 import { Response, Router } from 'express';
+import logger from '../../utils/Logger.js';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { EscalationService } from '../../services/escalationService.js';
@@ -28,7 +29,7 @@ if (!verifyToken || typeof verifyToken !== 'function') {
     `verifyToken middleware is not properly exported from auth.middleware.js. ` +
       `Type: ${typeof verifyToken}, Value: ${verifyToken}`
   );
-  console.error('[NotificationsRoutes] Critical error:', error);
+  logger.error('[NotificationsRoutes] Critical error:', error);
   throw error;
 }
 
@@ -57,7 +58,7 @@ router.get(
       });
       return res.json(notifications);
     } catch (err: any) {
-      console.error('[NotificationsRoute] Error:', err);
+      logger.error('[NotificationsRoute] Error:', err);
       return res.status(500).json({ error: err.message, stack: err.stack });
     }
   })

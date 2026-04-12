@@ -2051,7 +2051,7 @@ router.get(
           `SELECT * FROM integration_sync_runs WHERE organization_id = ? AND integration_id = ? ORDER BY started_at DESC LIMIT 1`,
           [organizationId, int.id]
         );
-        const isPaused = (int as Record<string, unknown>).is_paused === 1 || (int as Record<string, unknown>).is_paused === true;
+        const isPaused = (int as unknown as Record<string, unknown>).is_paused === 1 || (int as unknown as Record<string, unknown>).is_paused === true;
 
         let lifecycleState: string;
         if (isPaused) lifecycleState = 'blocked';
@@ -2063,12 +2063,12 @@ router.get(
 
         return {
           integrationId: int.id,
-          connectorId: (int as Record<string, unknown>).connector_id,
-          providerFamily: (int as Record<string, unknown>).category || (int as Record<string, unknown>).connector_id,
-          name: (int as Record<string, unknown>).name || (int as Record<string, unknown>).connector_id,
+          connectorId: (int as unknown as Record<string, unknown>).connector_id,
+          providerFamily: (int as unknown as Record<string, unknown>).category || (int as unknown as Record<string, unknown>).connector_id,
+          name: (int as unknown as Record<string, unknown>).name || (int as unknown as Record<string, unknown>).connector_id,
           healthStatus: health.status,
           lifecycleState,
-          reason: (int as Record<string, unknown>).last_error || null,
+          reason: (int as unknown as Record<string, unknown>).last_error || null,
           nextAction: lifecycleState === 'requires_action' ? 'reauth_or_fix_config' :
                       lifecycleState === 'degraded' ? 'monitor_or_retry' :
                       lifecycleState === 'blocked' ? 'resume_or_unblock' : 'none',
@@ -2225,8 +2225,7 @@ router.post(
         const config = integration[0].config ? JSON.parse(String(integration[0].config)) : {};
         const result = await syncIntegration(
           String(orig.integration_id),
-          config,
-          {}
+          config
         );
         await dbRun(
           `UPDATE integration_sync_runs

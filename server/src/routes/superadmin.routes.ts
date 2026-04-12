@@ -30,6 +30,7 @@ import {
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
   CreateAccessCodeSchema,
@@ -2773,7 +2774,7 @@ router.put(
 // ADMIN IAM MODULE
 // ==========================================
 
-console.log(
+logger.info(
   '[SuperAdminRoutes] SuperAdminController keys:',
   Object.keys(SuperAdminController || {})
 );
@@ -3064,7 +3065,7 @@ router.get(
         },
       });
     } catch (error: any) {
-      console.error('[SuperAdmin] Platform stats error:', error);
+      logger.error('[SuperAdmin] Platform stats error:', error);
       return res.status(500).json({ error: error?.message });
     }
   })
@@ -3189,7 +3190,7 @@ router.get(
 
       return res.json(signals || []);
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching signals:', err);
+      logger.error('[SuperAdmin] Error fetching signals:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3214,7 +3215,7 @@ router.get(
             `);
       return res.json(stages || []);
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching lifecycle stages:', err);
+      logger.error('[SuperAdmin] Error fetching lifecycle stages:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3239,7 +3240,7 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error creating lifecycle stage:', err);
+      logger.error('[SuperAdmin] Error creating lifecycle stage:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3265,7 +3266,7 @@ router.put(
 
       return res.json({ success: true });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error updating lifecycle stage:', err);
+      logger.error('[SuperAdmin] Error updating lifecycle stage:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3283,7 +3284,7 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error deleting lifecycle stage:', err);
+      logger.error('[SuperAdmin] Error deleting lifecycle stage:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3311,7 +3312,7 @@ router.get(
             `);
       return res.json(transitions || []);
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching lifecycle transitions:', err);
+      logger.error('[SuperAdmin] Error fetching lifecycle transitions:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3346,7 +3347,7 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error creating lifecycle transition:', err);
+      logger.error('[SuperAdmin] Error creating lifecycle transition:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3378,7 +3379,7 @@ router.get(
         totalTransitions: totalTransitions?.total || 0,
       });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching lifecycle stats:', err);
+      logger.error('[SuperAdmin] Error fetching lifecycle stats:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3400,7 +3401,7 @@ router.get(
             `);
       return res.json(playbooks || []);
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching playbooks:', err);
+      logger.error('[SuperAdmin] Error fetching playbooks:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3424,7 +3425,7 @@ router.get(
             `);
       return res.json(actions || []);
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching playbook actions:', err);
+      logger.error('[SuperAdmin] Error fetching playbook actions:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3449,7 +3450,7 @@ router.get(
         stats || { total_playbooks: 0, active_playbooks: 0, total_actions: 0, completed_actions: 0 }
       );
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching playbook stats:', err);
+      logger.error('[SuperAdmin] Error fetching playbook stats:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3480,7 +3481,7 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error creating playbook:', err);
+      logger.error('[SuperAdmin] Error creating playbook:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3498,7 +3499,7 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error deleting playbook:', err);
+      logger.error('[SuperAdmin] Error deleting playbook:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3536,7 +3537,7 @@ router.post(
 
       return res.json({ success: true, actionsExecuted: actions.length });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error executing playbook:', err);
+      logger.error('[SuperAdmin] Error executing playbook:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3570,7 +3571,7 @@ router.get(
       const contracts = await dbAll(query, params);
       return res.json(contracts || []);
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching contracts:', err);
+      logger.error('[SuperAdmin] Error fetching contracts:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3596,7 +3597,7 @@ router.get(
         stats || { total_contracts: 0, active_contracts: 0, total_value: 0, renewals_30d: 0 }
       );
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching contract stats:', err);
+      logger.error('[SuperAdmin] Error fetching contract stats:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3625,7 +3626,7 @@ router.get(
 
       return res.json(renewals || []);
     } catch (err: any) {
-      console.error('[SuperAdmin] Error fetching renewals:', err);
+      logger.error('[SuperAdmin] Error fetching renewals:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3671,7 +3672,7 @@ router.post(
 
       return res.json({ success: true, id });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error creating contract:', err);
+      logger.error('[SuperAdmin] Error creating contract:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3689,7 +3690,7 @@ router.delete(
 
       return res.json({ success: true });
     } catch (err: any) {
-      console.error('[SuperAdmin] Error deleting contract:', err);
+      logger.error('[SuperAdmin] Error deleting contract:', err);
       return res.status(500).json({ error: err.message });
     }
   })

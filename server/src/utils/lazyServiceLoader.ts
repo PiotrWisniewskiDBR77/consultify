@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import logger from './Logger.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const SRC_ROOT = path.resolve(__dirname, '..');
@@ -9,7 +11,7 @@ const IN_FLIGHT_IMPORTS = new Set<string>();
 
 // Debug: Log SRC_ROOT in development to verify it's correct
 if (process.env.NODE_ENV !== 'production') {
-  console.debug(`[LazyServiceLoader] SRC_ROOT: ${SRC_ROOT}, __dirname: ${__dirname}`);
+  logger.info(`[LazyServiceLoader] SRC_ROOT: ${SRC_ROOT}, __dirname: ${__dirname}`);
 }
 
 export async function createLazyService<T = unknown>(servicePath: string): Promise<T> {
@@ -86,7 +88,7 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
   // Check if we are trying to load the same file that is currently executing
   // This prevents infinite recursion/hangs in wrappers
   if (absolutePath === fileURLToPath(import.meta.url)) {
-    console.error(
+    logger.error(
       `[LazyServiceLoader] Circular load detected for: ${absolutePath} (from ${servicePath}).`
     );
     return createUnavailableProxy(servicePath, absolutePath) as T;
@@ -101,21 +103,21 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
     !finalNormalizedPath.startsWith(expectedServicesPath) &&
     !finalNormalizedPath.includes('node_modules')
   ) {
-    console.warn(
+    logger.warn(
       `[LazyServiceLoader] Path resolution issue detected: ${servicePath} resolved to ${finalNormalizedPath}, expected under ${expectedServicesPath}. SRC_ROOT=${SRC_ROOT}, __dirname=${__dirname}`
     );
     // Try one more time with absolute path from services/
     const fallbackPath = path.resolve(SRC_ROOT, 'services', servicePath.replace(/^(\.\.\/)+/, ''));
     if (fs.existsSync(fallbackPath) || fs.existsSync(fallbackPath.replace('.js', '.ts'))) {
       absolutePath = fallbackPath;
-      console.log(`[LazyServiceLoader] Using fallback path: ${absolutePath}`);
+      logger.info(`[LazyServiceLoader] Using fallback path: ${absolutePath}`);
     }
   }
 
-  console.log(`[LazyServiceLoader] Loading: ${servicePath} -> ${absolutePath}`);
+  logger.info(`[LazyServiceLoader] Loading: ${servicePath} -> ${absolutePath}`);
   try {
     if (IN_FLIGHT_IMPORTS.has(absolutePath)) {
-      console.error(
+      logger.error(
         `[LazyServiceLoader] Re-entrant import detected (possible self-loading wrapper): ${absolutePath}`
       );
       return createUnavailableProxy(servicePath, absolutePath) as T;
@@ -140,8 +142,8 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
     const err = error as Error & { code?: string };
     const isModuleNotFound =
       err.code === 'ERR_MODULE_NOT_FOUND' || err.message.includes('Cannot find module');
-    console.error(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
-    console.error(`[LazyServiceLoader] Error:`, error);
+    logger.error(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
+    logger.error(`[LazyServiceLoader] Error:`, error);
 
     if (isModuleNotFound) {
       return createUnavailableProxy(servicePath, absolutePath) as T;

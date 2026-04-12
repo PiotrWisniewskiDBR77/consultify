@@ -8,7 +8,7 @@ export class AIAnalyticsController {
    * GET /api/analytics/ai/dashboard
    */
   static async getDashboard(req: AuthRequest, res: Response) {
-    console.log('[AIAnalyticsController] getDashboard hit');
+    logger.info('[AIAnalyticsController] getDashboard hit');
     try {
       const { from, to } = req.query;
 

@@ -305,7 +305,7 @@ router.post('/:assessmentId/duplicate', async (req, res) => {
 
     res.json({ id: newId, name: newName, status: 'DRAFT' });
   } catch (err: any) {
-    console.error('[assessment-workflow] duplicate error:', err?.message);
+    logger.error('[assessment-workflow] duplicate error:', err?.message);
     res.status(500).json({ error: 'Failed to duplicate assessment' });
   }
 });
@@ -846,7 +846,7 @@ router.post('/:assessmentId/roles', validateBody(AssignAssessmentRoleSchema), as
         ipAddress: req.ip,
         userAgent: req.get('user-agent') || undefined,
       })
-      .catch(() => {});
+      .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
 
     return res.status(201).json({ role: record });
   } catch (err: any) {
@@ -894,7 +894,7 @@ router.put(
           ipAddress: req.ip,
           userAgent: req.get('user-agent') || undefined,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
 
       return res.json({ role: record });
     } catch (err: any) {
@@ -936,7 +936,7 @@ router.delete('/:assessmentId/roles/:userId', async (req, res) => {
           ipAddress: req.ip,
           userAgent: req.get('user-agent') || undefined,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[AssessmentWorkflow] audit logging failed', err));
     }
 
     return res.json({ ok: true });

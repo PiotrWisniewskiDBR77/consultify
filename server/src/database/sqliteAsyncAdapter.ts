@@ -7,6 +7,7 @@
 
 import { getDatabaseType } from '../config/DatabaseConfig.js';
 import type { IDatabase, RunResult } from './IDatabase.js';
+import logger from '../utils/Logger.js';
 
 /**
  * Execute a SQL statement that modifies data
@@ -73,7 +74,7 @@ export async function withTransaction<T>(db: IDatabase, fn: () => Promise<T>): P
     try {
       await db.run('ROLLBACK');
     } catch (rollbackErr) {
-      console.error('[sqliteAsyncAdapter] Rollback failed:', rollbackErr);
+      logger.error('[sqliteAsyncAdapter] Rollback failed:', rollbackErr);
     }
     throw e;
   }

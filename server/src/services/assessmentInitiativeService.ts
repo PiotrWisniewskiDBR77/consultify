@@ -12,6 +12,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 // Types
@@ -282,7 +283,7 @@ class AssessmentInitiativeService {
         return this.normalizeInitiatives(aiInitiatives, assessment.assessment_type, methodology);
       }
     } catch (error) {
-      console.error('[AssessmentInitiativeService] AI generation failed:', error);
+      logger.error('[AssessmentInitiativeService] AI generation failed:', error);
       // Fall through to fallback
     }
 

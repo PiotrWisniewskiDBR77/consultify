@@ -8,6 +8,7 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/assessments.js');
 const assessmentsRoutesJS = module.default || module;
@@ -28,6 +29,6 @@ if (typeof assessmentsRoutesJS === 'function') {
   router.use(assessmentsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('assessments.js did not export a valid router');
+  logger.error('assessments.js did not export a valid router');
 }
 export default router;

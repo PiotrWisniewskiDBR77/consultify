@@ -66,7 +66,7 @@ export class InterfaceService {
   async updateLayout(interfaceId: string, layout: InterfaceLayout): Promise<any> {
     const db = getDatabase();
     const lockRow = await db.query('SELECT locked, locked_by FROM tp_interfaces WHERE id = $1', [interfaceId]);
-    if (lockRow.rows[0]?.locked) {
+    if ((lockRow.rows[0] as any)?.locked) {
       const lockedBy = (lockRow.rows[0] as { locked_by?: string }).locked_by;
       throw new PermissionError(`Interface is locked${lockedBy ? ` by user ${lockedBy}` : ''}. Unlock it before editing.`);
     }

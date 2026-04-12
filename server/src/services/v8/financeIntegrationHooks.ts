@@ -63,7 +63,7 @@ export async function captureFinanceContextSnapshot(params: {
         artifactId: params.runId,
         artifactType: 'finance_lane_run',
         artifactModule: 'finance',
-        relationship: 'produced' as const,
+        relationship: 'produced' as any,
       },
     ];
     if (params.snapshotId) {
@@ -71,7 +71,7 @@ export async function captureFinanceContextSnapshot(params: {
         artifactId: params.snapshotId,
         artifactType: 'finance_version_snapshot',
         artifactModule: 'finance',
-        relationship: 'produced' as const,
+        relationship: 'produced' as any,
       });
     }
     await captureSnapshot({
@@ -210,7 +210,7 @@ export async function pushDegradedToRadar(params: {
       await createTriageSignal({
         organizationId: params.organizationId,
         category: 'finance_kpi',
-        bands: { urgency: 2, impact: 2, confidence: 2 },
+        bands: { urgency: 2, impact: 2, confidence: 2 } as any,
         whyNow: {
           primaryDriver: 'variance' as const,
           timeWindow: 'this_week' as const,
@@ -219,7 +219,7 @@ export async function pushDegradedToRadar(params: {
         evidence: {
           sources: [`finance_lane_run:${params.runId}`],
           dataPoints: [{ label: 'degraded_reason', value: reason }],
-        },
+        } as any,
         handoffPayload: { runId: params.runId, reason },
       });
     }

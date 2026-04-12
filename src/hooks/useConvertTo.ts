@@ -35,6 +35,21 @@ export interface UseConvertToReturn {
   sources: MyWorkDerivedSource[];
 }
 
+function navigateToOutput(navigate: ReturnType<typeof useNavigate>, targetType: string, outputId: string) {
+  const id = encodeURIComponent(outputId);
+  const routes: Record<string, string> = {
+    initiative: `/initiatives?open=${id}&mode=doc`,
+    report: `/reports/builder/${id}`,
+    presentation: `/presentations?deck=${id}`,
+    financial_model: `/finance/models/${id}`,
+    budget: `/economics?tab=prediction&open=${id}`,
+    valuation: `/economics?tab=valuation&open=${id}`,
+    analysis: `/finance/analyses/${id}`,
+  };
+  const route = routes[targetType];
+  if (route) navigate(route);
+}
+
 export function useConvertTo({
   sourceType,
   sourceId,
@@ -67,13 +82,7 @@ export function useConvertTo({
             sourceTitle,
             sessionId: result.sessionId,
             onOpenOutput: () => {
-              if (targetType === 'initiative') {
-                navigate(`/initiatives?open=${encodeURIComponent(result.outputId)}&mode=doc`);
-              } else if (targetType === 'report') {
-                navigate(`/reports/builder/${encodeURIComponent(result.outputId)}`);
-              } else if (targetType === 'presentation') {
-                navigate(`/presentations?deck=${encodeURIComponent(result.outputId)}`);
-              }
+              navigateToOutput(navigate, targetType, result.outputId);
               onConvertComplete?.(targetType, result.outputId);
             },
             onOpenSession: () => {
@@ -113,13 +122,7 @@ export function useConvertTo({
             sourceTitle,
             sessionId: result.sessionId,
             onOpenOutput: () => {
-              if (targetType === 'initiative') {
-                navigate(`/initiatives?open=${encodeURIComponent(result.outputId)}&mode=doc`);
-              } else if (targetType === 'report') {
-                navigate(`/reports/builder/${encodeURIComponent(result.outputId)}`);
-              } else if (targetType === 'presentation') {
-                navigate(`/presentations?deck=${encodeURIComponent(result.outputId)}`);
-              }
+              navigateToOutput(navigate, targetType, result.outputId);
               onConvertComplete?.(targetType, result.outputId);
             },
             onOpenSession: () => {

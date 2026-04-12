@@ -170,6 +170,7 @@ export const ROUTES = {
   PARTNER: {
     LANDING: '/partner',
     ONBOARDING: '/partner/onboarding',
+    PUBLIC_APPLY: '/become-partner/apply',
     PRICING: '/partner/pricing',
     DASHBOARD: '/partner/dashboard',
     CLIENTS: '/partner/clients',
@@ -194,6 +195,9 @@ export const ROUTES = {
 
   // AI Actions
   AI_ACTIONS: '/ai-actions',
+
+  // Vector
+  VECTOR: '/vector',
 
   // Legal
   LEGAL: {
@@ -523,6 +527,14 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE_PUBLIC)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.KNOWLEDGE_BASE)) return AppView.KNOWLEDGE_BASE;
   if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
+  if (normalized.startsWith(ROUTES.INITIATIVES)) return AppView.FULL_STEP2_INITIATIVES;
+  if (normalized.startsWith(ROUTES.PORTFOLIO) || normalized.startsWith(ROUTES.ROADMAP)) {
+    return AppView.PORTFOLIO_ROADMAP;
+  }
+  if (normalized.startsWith(ROUTES.IMPLEMENTATION)) return AppView.IMPLEMENTATION;
+  if (normalized.startsWith(ROUTES.EXECUTION)) return AppView.FULL_STEP5_EXECUTION;
+  if (normalized.startsWith(ROUTES.ROLLOUT)) return AppView.FULL_ROLLOUT;
+  if (normalized.startsWith(ROUTES.BENEFITS)) return AppView.BENEFITS_REALIZATION;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
   if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;

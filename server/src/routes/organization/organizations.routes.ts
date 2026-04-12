@@ -13,6 +13,7 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import adminAuditService from '../../services/adminAuditService.js';
+import logger from '../../utils/Logger.js';
 import {
   AddMemberSchema,
   CreateOrganizationSchema,
@@ -83,7 +84,7 @@ router.post('/:orgId/members', validateBody(AddMemberSchema), async (req, res, n
         adminId: (req as any).userId || (req as any).user?.id || 'unknown',
         actionType: 'add_member',
         details: { orgId: req.params.orgId, member: req.body, isSensitive: true },
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
     }
     return originalJson(body);
   } as any;
@@ -105,7 +106,7 @@ router.patch(
           adminId: (req as any).userId || (req as any).user?.id || 'unknown',
           actionType: 'update_member_role',
           details: { orgId: req.params.orgId, memberId: req.params.memberId, role: req.body, isSensitive: true },
-        }).catch(() => {});
+        }).catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
       }
       return originalJson(body);
     } as any;
@@ -125,7 +126,7 @@ router.delete('/:orgId/members/:memberId', async (req, res, next) => {
         adminId: (req as any).userId || (req as any).user?.id || 'unknown',
         actionType: 'remove_member',
         details: { orgId: req.params.orgId, memberId: req.params.memberId, isSensitive: true },
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
     }
     return originalJson(body);
   } as any;

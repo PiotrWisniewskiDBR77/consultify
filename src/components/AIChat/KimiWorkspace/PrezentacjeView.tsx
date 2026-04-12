@@ -17,6 +17,7 @@ import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
 import { deriveDeckLifecycleBadge } from '@/utils/deckLifecycleBadge';
 
+import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
@@ -67,6 +68,11 @@ export const PrezentacjeView: React.FC = () => {
   const { activeMessages } = useConversationStore();
   const [searchParams] = useSearchParams();
   const artifactId = searchParams.get('artifactId');
+  const templateArtifactId = searchParams.get('templateArtifactId');
+  const viewParam = searchParams.get('view');
+
+  const showHome = !artifactId && !templateArtifactId && viewParam !== 'new' && !pipeline.currentRun && !pipeline.isGenerating;
+
   const advanceRef = useRef(pipeline.advancePipeline);
   advanceRef.current = pipeline.advancePipeline;
   const autoTriggered = useRef(false);
@@ -76,6 +82,21 @@ export const PrezentacjeView: React.FC = () => {
   const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
   const [reopenDeckId, setReopenDeckId] = useState<string | null>(null);
   const reopenLoaded = useRef(false);
+
+  // Auto-trigger from template
+  const templateTriggered = useRef(false);
+  useEffect(() => {
+    if (!templateArtifactId || templateTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    templateTriggered.current = true;
+    Api.get(`/artifacts/${templateArtifactId}`)
+      .then((tmpl: any) => {
+        const desc = tmpl?.originSummary?.template?.description || tmpl?.title || 'Presentation from template';
+        void startRef.current(desc, templateArtifactId);
+      })
+      .catch(() => {
+        void startRef.current('Create presentation from template', templateArtifactId);
+      });
+  }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating]);
 
   useEffect(() => {
     if (!artifactId || reopenLoaded.current) return;
@@ -269,6 +290,10 @@ export const PrezentacjeView: React.FC = () => {
       window.open(`/api/presentations/decks/${effectiveDeckId}/export/pdf`, '_blank');
     }
   }, [effectiveDeckId]);
+
+  if (showHome) {
+    return <ArtifactModuleHome lane="prezentacje" />;
+  }
 
   return (
     <KimiWorkspaceShell

@@ -6,6 +6,7 @@
  * Exceptions from RecurrenceModel.exceptions[] override/cancel specific instances.
  */
 
+// @ts-ignore — optional dependency, may not have type declarations
 import { RRule, RRuleSet, rrulestr } from 'rrule';
 
 import type { RecurrenceModel } from './calendarInteropService.js';

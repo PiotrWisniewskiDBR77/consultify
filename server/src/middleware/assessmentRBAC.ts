@@ -6,6 +6,7 @@
  */
 
 import { FrameworkRBACService } from '../services/frameworkRBACService.js';
+import logger from '../utils/Logger.js';
 
 // Base permissions for general roles
 const hasPermission = (user, action, resource) => {
@@ -112,7 +113,7 @@ const multiFrameworkRBAC = (action) => {
 
       next();
     } catch (error) {
-      console.error('[MultiFrameworkRBAC] Error:', error.message);
+      logger.error('[MultiFrameworkRBAC] Error:', error.message);
       // Fall back to general permissions on error
       if (!hasPermission(req.user, action, 'assessment')) {
         return res.status(403).json({
@@ -151,7 +152,7 @@ const requireFrameworkApprover = (framework) => {
 
       next();
     } catch (error) {
-      console.error('[RequireFrameworkApprover] Error:', error.message);
+      logger.error('[RequireFrameworkApprover] Error:', error.message);
       return res.status(500).json({ error: 'Permission check failed' });
     }
   };
@@ -182,7 +183,7 @@ const requireFrameworkCertifier = (framework) => {
 
       next();
     } catch (error) {
-      console.error('[RequireFrameworkCertifier] Error:', error.message);
+      logger.error('[RequireFrameworkCertifier] Error:', error.message);
       return res.status(500).json({ error: 'Permission check failed' });
     }
   };
@@ -223,7 +224,7 @@ const validateWorkflowTransition = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('[ValidateWorkflowTransition] Error:', error.message);
+    logger.error('[ValidateWorkflowTransition] Error:', error.message);
     return res.status(500).json({ error: 'Workflow validation failed' });
   }
 };

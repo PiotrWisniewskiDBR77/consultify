@@ -22,6 +22,7 @@ import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { assessmentAuditLogger } from '../utils/AssessmentAuditLogger.js';
+import logger from '../utils/Logger.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -753,7 +754,7 @@ export class AssessmentController {
       );
 
       // Log activity (non-blocking)
-      assessmentAuditLogger.logCreation(req, id, assessmentType).catch(() => {});
+      assessmentAuditLogger.logCreation(req, id, assessmentType).catch((err: unknown) => logger.warn('[Assessment] audit logCreation failed', err));
 
       res.json({ id, status: 'DRAFT' });
     }
@@ -796,7 +797,7 @@ export class AssessmentController {
             [assessmentId]
           )
           .catch((err) => {
-            console.warn('[AssessmentController] Failed to load initiatives:', err);
+            logger.warn('[AssessmentController] Failed to load initiatives:', err);
             return [];
           });
 
@@ -810,7 +811,7 @@ export class AssessmentController {
             [assessmentId]
           )
           .catch((err) => {
-            console.warn('[AssessmentController] Failed to load decisions:', err);
+            logger.warn('[AssessmentController] Failed to load decisions:', err);
             return [];
           });
 
@@ -823,7 +824,7 @@ export class AssessmentController {
             [assessmentId]
           )
           .catch((err) => {
-            console.warn('[AssessmentController] Failed to load report:', err);
+            logger.warn('[AssessmentController] Failed to load report:', err);
             return null;
           });
 
@@ -852,7 +853,7 @@ export class AssessmentController {
           try {
             return JSON.parse(jsonString);
           } catch (e) {
-            console.error(
+            logger.error(
               '[AssessmentController] Failed to parse JSON:',
               e,
               'Raw:',
@@ -881,7 +882,7 @@ export class AssessmentController {
           permissions,
         });
       } catch (error: any) {
-        console.error('[AssessmentController] Error in getAssessment:', {
+        logger.error('[AssessmentController] Error in getAssessment:', {
           assessmentId,
           organizationId: user.organizationId,
           error: error?.message,
@@ -1015,7 +1016,7 @@ export class AssessmentController {
           hasAnswers: !!answers,
           hasContextSnapshot: !!contextSnapshot,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
       res.json({ id: assessmentId, updatedAt: now });
     }
@@ -1102,7 +1103,7 @@ export class AssessmentController {
         body: `Assessment "${assessment.name}" was submitted for review.`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'approvers',
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
       res.json({ id: assessmentId, status: 'REVIEW', backendStatus: 'IN_REVIEW' });
     }
@@ -1211,7 +1212,7 @@ export class AssessmentController {
         body: `Report for assessment "${assessment.name}" was approved.`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'team',
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
       res.json({
         id: assessmentId,
@@ -1310,7 +1311,7 @@ export class AssessmentController {
         body: `Assessment "${assessment.name}" has been approved.`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'team',
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
       res.json({ id: assessmentId, status: 'APPROVED', backendStatus: 'APPROVED' });
     }
@@ -1398,7 +1399,7 @@ export class AssessmentController {
         body: `Assessment "${assessment.name}" was sent back to draft. Comment: ${String(comment)}`,
         actionUrl: `/assessment/${String(assessment.assessment_type || 'drd').toLowerCase()}/${assessmentId}`,
         audience: 'team',
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
 
       res.json({ id: assessmentId, status: 'DRAFT', backendStatus: 'DRAFT' });
     }
@@ -1735,7 +1736,7 @@ export class AssessmentController {
       // Log activity for timeline (non-blocking)
       assessmentAuditLogger
         .logInitiativesGenerated(req, assessmentId, initiatives.length)
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[Assessment] audit logInitiativesGenerated failed', err));
 
       res.json({ batchId, initiatives: created });
     }

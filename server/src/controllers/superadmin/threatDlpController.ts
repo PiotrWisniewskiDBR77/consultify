@@ -19,8 +19,8 @@ export const getThreats = catchAsync(async (req, res, next) => {
     isBlocked: isBlocked === 'true' ? true : isBlocked === 'false' ? false : undefined,
     ipAddress,
     domain,
-    limit: parseInt(limit),
-    offset: parseInt(offset),
+    limit: parseInt(String(limit)),
+    offset: parseInt(String(offset)),
   });
   res.json(threats);
 });
@@ -240,7 +240,7 @@ export const createDLPPolicy = catchAsync(async (req, res, next) => {
     policyType,
     rules,
     enforcementAction,
-    createdBy: req.user.id,
+    createdBy: (req as AuthenticatedRequest).user!.id,
   });
 
   res.status(201).json(policy);
@@ -333,7 +333,7 @@ export const getDLPViolationById = catchAsync(async (req, res, next) => {
 export const resolveDLPViolation = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
-  const resolved = await deps.DLPService.resolveViolation(id, req.user.id);
+  const resolved = await deps.DLPService.resolveViolation(id, (req as AuthenticatedRequest).user!.id);
 
   if (!resolved) {
     return next(new AppError('DLP Violation not found', 404));

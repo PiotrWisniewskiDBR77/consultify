@@ -5,6 +5,7 @@
  */
 
 import { NextFunction, Request, Response, Router } from 'express';
+import logger from '../utils/Logger.js';
 
 import { verifyToken as authenticateToken } from '../middleware/auth.middleware.js';
 import { scheduledReportService } from '../services/scheduledReportService.js';
@@ -485,7 +486,7 @@ router.post(
           });
           result.executionId = execution.id;
         } catch (err) {
-          console.error(`[TriggerEval] Failed to execute schedule ${result.scheduleId}:`, err);
+          logger.error(`[TriggerEval] Failed to execute schedule ${result.scheduleId}:`, err);
         }
       }
 

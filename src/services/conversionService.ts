@@ -10,7 +10,14 @@ import { materializeMyWorkSession } from '@/services/traceabilityService';
 import type { MyWorkDerivedSource } from '@/types/domain/traceability';
 
 export type ConversionSourceType = 'idea' | 'notebook' | 'task' | 'decision';
-export type ConversionTargetType = 'initiative' | 'report' | 'presentation';
+export type ConversionTargetType =
+  | 'initiative'
+  | 'report'
+  | 'presentation'
+  | 'financial_model'
+  | 'budget'
+  | 'valuation'
+  | 'analysis';
 
 export interface ConversionResult {
   success: boolean;
@@ -105,6 +112,45 @@ async function createTargetOutput(
     });
     const data = response?.data ?? response;
     return { outputId: String(data?.deckId ?? '') };
+  }
+  if (targetType === 'financial_model') {
+    const response = await Api.post('/financial-modeling/models', {
+      name: sourceTitle.slice(0, 255),
+      description: `Converted from MyWork session`,
+      startDate: new Date().toISOString().slice(0, 10),
+      sourceType: 'tool_session',
+      sourceId: sessionId,
+    });
+    return { outputId: String(response?.model?.id ?? response?.id ?? '') };
+  }
+  if (targetType === 'analysis') {
+    const response = await Api.post('/economics/analyses', {
+      name: sourceTitle.slice(0, 255),
+      description: `Converted from MyWork session`,
+      analysisType: 'financial',
+      sourceType: 'tool_session',
+      sourceId: sessionId,
+    });
+    return { outputId: String(response?.id ?? '') };
+  }
+  if (targetType === 'valuation') {
+    const response = await Api.post('/economics/valuations', {
+      title: sourceTitle.slice(0, 255),
+      description: `Converted from MyWork session`,
+      sourceType: 'tool_session',
+      sourceId: sessionId,
+    });
+    return { outputId: String(response?.id ?? '') };
+  }
+  if (targetType === 'budget') {
+    const response = await Api.post('/economics/budgets', {
+      name: sourceTitle.slice(0, 255),
+      description: `Converted from MyWork session`,
+      sourceType: 'tool_session',
+      sourceId: sessionId,
+    });
+    const budget = response?.budget ?? response;
+    return { outputId: String(budget?.id ?? '') };
   }
   throw new Error(`Unknown target type: ${targetType}`);
 }

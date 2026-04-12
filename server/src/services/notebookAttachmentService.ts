@@ -396,7 +396,7 @@ export async function addNotebookAttachmentsToPage(params: {
           }
           const classified = classifyAttachmentError(
             error instanceof Error ? error : new Error(String(error)),
-            file
+            { ...file, size: file.buffer.length }
           );
           throw new AttachmentLifecycleError({
             status: 500,

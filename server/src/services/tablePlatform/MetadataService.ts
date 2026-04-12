@@ -283,7 +283,7 @@ const metadataService = {
             actionType: 'deleteTable',
             tableId,
           })
-          .catch(() => {});
+          .catch((err: unknown) => logger.warn('[MetadataService] event dispatch failed', err));
       }
       return true;
     } catch (e) {
@@ -389,7 +389,7 @@ const metadataService = {
               tableId,
               fieldId,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[MetadataService] event dispatch failed', err));
         }
       }
       return true;
@@ -480,7 +480,7 @@ const metadataService = {
           actionType: 'createTable',
           tableId,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[MetadataService] event dispatch failed', err));
 
       return table;
     } catch (e) {
@@ -559,7 +559,7 @@ const metadataService = {
             tableId,
             fieldId: id,
           })
-          .catch(() => {});
+          .catch((err: unknown) => logger.warn('[MetadataService] event dispatch failed', err));
       }
       return (field ?? null) as Record<string, unknown> | null;
     } catch (e) {
@@ -613,7 +613,7 @@ const metadataService = {
               tableId,
               fieldId,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[MetadataService] event dispatch failed', err));
         }
       }
       return (after ?? null) as Record<string, unknown> | null;
@@ -704,7 +704,7 @@ const metadataService = {
     const db = getDatabase();
     try {
       const viewLockRow = await db.query('SELECT locked, locked_by FROM tp_views WHERE id = $1', [viewId]);
-      if (viewLockRow.rows[0]?.locked) {
+      if ((viewLockRow.rows[0] as any)?.locked) {
         const lockedBy = (viewLockRow.rows[0] as { locked_by?: string }).locked_by;
         throw new PermissionError(`View is locked${lockedBy ? ` by user ${lockedBy}` : ''}. Unlock it before editing.`);
       }

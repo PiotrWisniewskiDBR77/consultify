@@ -17,6 +17,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
 import { downloadSheetArtifactXlsx, resolveTablePlatformWorkspaceIdForTable } from '@/utils/sheetArtifactOpen';
 
+import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
@@ -46,6 +47,11 @@ export const ExceleView: React.FC = () => {
   const { activeMessages } = useConversationStore();
   const [searchParams] = useSearchParams();
   const artifactId = searchParams.get('artifactId');
+  const templateArtifactId = searchParams.get('templateArtifactId');
+  const viewParam = searchParams.get('view');
+
+  const showHome = !artifactId && !templateArtifactId && viewParam !== 'new' && !pipeline.currentRun && !pipeline.isGenerating;
+
   const advanceRef = useRef(pipeline.advancePipeline);
   advanceRef.current = pipeline.advancePipeline;
   const autoTriggered = useRef(false);
@@ -55,6 +61,21 @@ export const ExceleView: React.FC = () => {
   const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
   const [reopenWorkbookId, setReopenWorkbookId] = useState<string | null>(null);
   const reopenLoaded = useRef(false);
+
+  // Auto-trigger from template
+  const templateTriggered = useRef(false);
+  useEffect(() => {
+    if (!templateArtifactId || templateTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    templateTriggered.current = true;
+    Api.get(`/artifacts/${templateArtifactId}`)
+      .then((tmpl: any) => {
+        const desc = tmpl?.originSummary?.template?.description || tmpl?.title || 'Spreadsheet from template';
+        void startRef.current(desc, templateArtifactId);
+      })
+      .catch(() => {
+        void startRef.current('Create spreadsheet from template', templateArtifactId);
+      });
+  }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating]);
 
   useEffect(() => {
     if (!artifactId || reopenLoaded.current) return;
@@ -144,6 +165,10 @@ export const ExceleView: React.FC = () => {
   const handleAllFiles = useCallback(() => {
     window.open('/presentations?tab=sheets', '_blank');
   }, []);
+
+  if (showHome) {
+    return <ArtifactModuleHome lane="excele" />;
+  }
 
   return (
     <KimiWorkspaceShell

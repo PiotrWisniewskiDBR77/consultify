@@ -37,6 +37,7 @@ import {
   P08_WRITE_OWNERSHIP,
 } from '../../services/v8/teresaCopilotCanon.js';
 import * as teresaService from '../../services/v8/teresaCopilotService.js';
+import * as teresaToolOperatorService from '../../services/v8/teresaToolOperatorService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -88,6 +89,102 @@ router.post(
         data: teresaService.toChatProposalEnvelope(proposal),
         meta: teresaMeta({ action: 'proposal_created' }),
       });
+    } catch (err) {
+      if (err instanceof teresaService.TeresaCopilotError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /operators/initiative-draft
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/operators/initiative-draft',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await teresaToolOperatorService.proposeInitiativeDraftOperator({
+        organizationId,
+        userId,
+        sessionId: String(req.body?.sessionId || req.body?.conversationId || `initiative-${userId}`),
+        conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
+        contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
+        sourceSurface: 'initiatives',
+        title: String(req.body?.title || ''),
+        description: String(req.body?.description || ''),
+        category: req.body?.category ? String(req.body.category) : null,
+        estimatedRoi:
+          typeof req.body?.estimatedRoi === 'number' ? req.body.estimatedRoi : undefined,
+        priority: req.body?.priority ? String(req.body.priority) : null,
+        timelineWeeks:
+          typeof req.body?.timelineWeeks === 'number' ? req.body.timelineWeeks : undefined,
+      });
+      return res.status(201).json({ data, meta: teresaMeta({ action: 'initiative_operator' }) });
+    } catch (err) {
+      if (err instanceof teresaService.TeresaCopilotError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /operators/notebook-entry
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/operators/notebook-entry',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await teresaToolOperatorService.proposeNotebookEntryOperator({
+        organizationId,
+        userId,
+        sessionId: String(req.body?.sessionId || req.body?.conversationId || `notebook-${userId}`),
+        conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
+        contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
+        sourceSurface: 'notebook',
+        title: String(req.body?.title || ''),
+        content: String(req.body?.content || ''),
+        entryType: req.body?.entryType ? String(req.body.entryType) : null,
+        tags: Array.isArray(req.body?.tags) ? req.body.tags.map((tag: unknown) => String(tag)) : [],
+      });
+      return res.status(201).json({ data, meta: teresaMeta({ action: 'notebook_operator' }) });
+    } catch (err) {
+      if (err instanceof teresaService.TeresaCopilotError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /operators/structured-query
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/operators/structured-query',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await teresaToolOperatorService.runStructuredQueryOperator({
+        organizationId,
+        userId,
+        sessionId: String(req.body?.sessionId || req.body?.conversationId || `tables-${userId}`),
+        conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
+        contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
+        sourceSurface: 'tables',
+        question: String(req.body?.question || ''),
+        dataDomain: req.body?.dataDomain ? String(req.body.dataDomain) : null,
+        limit: typeof req.body?.limit === 'number' ? req.body.limit : undefined,
+      });
+      return res.json({ data, meta: teresaMeta({ action: 'structured_query_operator' }) });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {
         return res.status(err.statusCode).json({ error: err.message, code: err.code });

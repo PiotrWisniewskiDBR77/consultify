@@ -5,6 +5,7 @@
  * and generates contextual suggestions via LLM structured output.
  */
 
+import logger from '../utils/Logger.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 interface CompanyContext {
@@ -279,7 +280,7 @@ Generate 6-10 diverse suggestions. Prioritize suggestions grounded in company da
 
     return { suggestions, companyContextUsed: hasCompanyData };
   } catch (err: any) {
-    console.error('[ideaAISuggestionsService] LLM error:', err?.message);
+    logger.error('[ideaAISuggestionsService] LLM error:', err?.message);
     return {
       suggestions: generateFallbackSuggestions(context, companyCtx, isPl),
       companyContextUsed: hasCompanyData,

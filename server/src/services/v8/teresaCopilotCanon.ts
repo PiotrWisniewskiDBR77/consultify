@@ -30,6 +30,15 @@ export interface TeresaHandoffContext {
   user_intent: string;
   active_surface: string;
   org_context_ref: string;
+  operation_contract_ref?: string | null;
+  runtime_binding?: {
+    conversation_id?: string | null;
+    session_id?: string | null;
+    context_snapshot_id?: string | null;
+    execution_run_id?: string | null;
+    artifact_run_id?: string | null;
+    tool_invocation_id?: string | null;
+  };
   bounded_context_pack: Array<{
     ref: string;
     type: string;
@@ -476,7 +485,7 @@ export function validateTargetPayload(
   target: HandoffTargetModule,
   payload: Record<string, unknown>,
 ): { valid: boolean; missing: string[] } {
-  const targetDef = P08_HANDOFF_TARGETS[target];
+  const targetDef = (P08_HANDOFF_TARGETS as any)[target];
   const missing: string[] = [];
   for (const field of targetDef.required_extra_fields) {
     if (payload[field] === undefined || payload[field] === null) {

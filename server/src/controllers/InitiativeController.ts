@@ -920,7 +920,7 @@ export class InitiativeController {
                   priority: 'high',
                   metadata: { initiativeName },
                 })
-                .catch(() => {});
+                .catch((err: unknown) => logger.warn('[Initiative] notification failed', err));
             }
           }
 

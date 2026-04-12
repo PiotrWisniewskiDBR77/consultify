@@ -3,11 +3,12 @@ import { Router } from 'express';
 import { AIAnalyticsController } from '../../controllers/ai/AIAnalyticsController.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
 router.use((req, res, next) => {
-  console.log(`[aiAnalytics.routes] Request: ${req.method} ${req.url}`);
+  logger.info(`[aiAnalytics.routes] Request: ${req.method} ${req.url}`);
   next();
 });
 

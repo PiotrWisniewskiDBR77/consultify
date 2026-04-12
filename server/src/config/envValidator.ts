@@ -5,6 +5,7 @@
  * Usage: Call validateEnv() at application startup
  */
 
+import logger from '../utils/Logger.js';
 import { validateDemoPolicy } from './demoPolicy.js';
 
 interface EnvValidationRule {
@@ -254,20 +255,20 @@ export function validateEnvOrThrow(): void {
   const result = validateEnv();
 
   if (result.warnings.length > 0) {
-    console.warn('\n⚠️  Environment Variable Warnings:');
-    result.warnings.forEach((w) => console.warn(`  - ${w}`));
-    console.warn('');
+    logger.warn('\n⚠️  Environment Variable Warnings:');
+    result.warnings.forEach((w) => logger.warn(`  - ${w}`));
+    logger.warn('');
   }
 
   if (result.errors.length > 0) {
-    console.error('\n❌ Environment Variable Validation Failed:\n');
-    result.errors.forEach((e) => console.error(`  - ${e}`));
-    console.error('\nPlease fix the above errors before starting the application.\n');
+    logger.error('\n❌ Environment Variable Validation Failed:\n');
+    result.errors.forEach((e) => logger.error(`  - ${e}`));
+    logger.error('\nPlease fix the above errors before starting the application.\n');
     process.exit(1);
   }
 
   if (result.valid) {
-    console.log('✅ Environment variables validated successfully');
+    logger.info('✅ Environment variables validated successfully');
   }
 }
 

@@ -73,6 +73,11 @@ export interface KbArticle extends KbArticleListItem {
 const API_BASE = '/api/kb';
 const PUBLIC_V8_KB_BASE = '/api/public/kb-v8';
 
+function withSite(path: string): string {
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}site=${encodeURIComponent(KNOWLEDGE_BASE_SITE.key)}`;
+}
+
 function normalizeKbLang(raw: string | undefined | null): string {
   return resolveKnowledgeLanguage(raw);
 }
@@ -401,7 +406,7 @@ async function fetchCollections(lang: string, params: { parentId?: string; featu
   const searchParams = new URLSearchParams({ lang });
   if (params.parentId) searchParams.append('parent', params.parentId);
   if (params.featured) searchParams.append('featured', 'true');
-  const res = await fetch(`${PUBLIC_V8_KB_BASE}/collections?${searchParams}`);
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}${withSite(`/collections?${searchParams}`)}`);
   if (!res.ok) return [];
   const data = await res.json();
   return (data.data?.collections || []) as KbCollection[];
@@ -414,7 +419,7 @@ async function fetchCollectionArticles(
   offset = 0
 ): Promise<{ articles: KbArticleListItem[]; total: number; collection: KbCollection | null }> {
   const res = await fetch(
-    `${PUBLIC_V8_KB_BASE}/collections/${collectionSlug}/articles?lang=${lang}&limit=${limit}&offset=${offset}`
+    `${PUBLIC_V8_KB_BASE}${withSite(`/collections/${collectionSlug}/articles?lang=${lang}&limit=${limit}&offset=${offset}`)}`
   );
   if (!res.ok) return { articles: [], total: 0, collection: null };
   const data = await res.json();
@@ -428,7 +433,7 @@ async function fetchCollectionArticles(
 async function fetchTags(lang: string, kind?: string): Promise<KbTag[]> {
   const searchParams = new URLSearchParams({ lang });
   if (kind) searchParams.append('kind', kind);
-  const res = await fetch(`${PUBLIC_V8_KB_BASE}/tags?${searchParams}`);
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}${withSite(`/tags?${searchParams}`)}`);
   if (!res.ok) return [];
   const data = await res.json();
   return (data.data?.tags || []) as KbTag[];
@@ -459,7 +464,7 @@ async function searchWithFacets(
   if (params.tagSlugs?.length) searchParams.append('tags', params.tagSlugs.join(','));
   if (params.surface) searchParams.append('surface', params.surface);
   if (params.limit) searchParams.append('limit', String(params.limit));
-  const res = await fetch(`${PUBLIC_V8_KB_BASE}/search/faceted?${searchParams}`);
+  const res = await fetch(`${PUBLIC_V8_KB_BASE}${withSite(`/search/faceted?${searchParams}`)}`);
   if (!res.ok) throw new Error(`Faceted search failed: ${res.status}`);
   const data = await res.json();
   return data.data || { articles: [], facets: { collections: [], tags: [] }, total: 0 };

@@ -1354,6 +1354,52 @@
         "title": "Human Governance",
         "desc": "Every strategic decision requires human approval. Full accountability and control remain with your leadership."
       }
+    },
+    "problemPlatform": {
+      "heading": "Spotifyが音楽にしたことを、",
+      "headingAccent": "私たちはコンサルティングで実現します。",
+      "problem": {
+        "badge": "市場の問題",
+        "title": "ビジネスインテリジェンスは、いまなお手の届かない、汎用的で、安全性に欠けるものです。",
+        "body": "市場は依然として、AIとデジタルツールを戦術的・戦略的な業務遂行のためのスケーラブルな基盤へと変えられていません。",
+        "points": [
+          "コンサルティングは依然として大多数の企業にとって手の届かないものです。",
+          "大規模言語モデルは専門家ではなく、企業の文脈を理解しません。",
+          "多くのAIソリューションは、実際のビジネス業務に使うには十分安全ではありません。"
+        ],
+        "solve": "まさにこのギャップをConsultifyが埋めます。"
+      },
+      "pattern": {
+        "badge": "カテゴリーシフト",
+        "title": "Spotifyが音楽にしたこと: 大規模なアクセス、品質、信頼。",
+        "body": "Spotifyは音楽そのものを増やしたのではありません。優れた音楽を、すぐに使えて、信頼でき、簡単に楽しめるものにしました。Consultifyは同じ変化をビジネスインテリジェンスにもたらします。",
+        "examples": [
+          "ハーバードのビジネス知識へ直接アクセス。",
+          "孤立したプロンプトではなく、企業全体の文脈で機能するインテリジェンス。",
+          "企業ごとの要件に合わせて設計されたテクノロジーによる信頼性とセキュリティ。"
+        ],
+        "summary": "アクセス。品質。信頼。それがこの変化です。"
+      }
+    },
+    "docs": {
+      "badge": "ヘルプと評価",
+      "title": "Consultifyの評価に必要なすべて",
+      "subtitle": "ナレッジ、セキュリティ、価格、パートナー資料を活用して、Consultifyがお客様の展開に適しているかをご判断ください。",
+      "searchPlaceholder": "ナレッジベースを検索...",
+      "searchBtn": "検索",
+      "knowledgeBase": "ナレッジベース",
+      "knowledgeBaseDesc": "変革、ガバナンス、ROI防御、実行規律に関する専門ガイド。",
+      "security": "セキュリティとコンプライアンス",
+      "securityDesc": "AES-256、GDPR、データ居住地、エンタープライズ導入オプションの説明。",
+      "pricing": "価格",
+      "pricingDesc": "シートパッケージ、共有AIバジェット、ライセンスツール、エンタープライズプラン。",
+      "partnerProgram": "パートナープログラム",
+      "partnerProgramDesc": "収益シェア、認定資格、アカデミーアクセス、パートナー申請プロセス。",
+      "legalCenter": "法務センター",
+      "legalCenterDesc": "利用規約、プライバシーポリシー、データ処理契約、コンプライアンス文書。",
+      "resources": "リソース",
+      "resourcesDesc": "ケーススタディ、ホワイトペーパー、ウェビナー、製品アップデート情報。",
+      "explore": "探索"
     }
   },
   "partner": {
@@ -1930,6 +1976,48 @@
       "executeFailed": "介入の実行に失敗しました。",
       "rejected": "介入が却下されました。",
       "rejectFailed": "介入の却下に失敗しました。"
+    }
+  },
+  "contact": {
+    "badge": "お問い合わせ",
+    "hero": {
+      "title1": "次のステップについて",
+      "title2": "お話ししましょう",
+      "subtitle": "デモのご依頼、エンタープライズ導入のご相談、ご質問など — お気軽にお問い合わせください。"
+    },
+    "offices": "オフィス",
+    "email": "メール",
+    "emailGeneral": "一般",
+    "emailSales": "営業",
+    "emailSupport": "サポート",
+    "bookDemo": "30分の通話を予約",
+    "bookDemoSub": "無料相談。Consultifyの実際の動作をご覧ください。",
+    "sla": "1営業日以内にご返信いたします。既存のお客様はアプリ内サポートでより迅速な対応が可能です。",
+    "types": {
+      "general": "一般的なお問い合わせ",
+      "sales": "営業 / デモリクエスト",
+      "support": "テクニカルサポート",
+      "partnership": "パートナーシップ",
+      "security": "セキュリティとコンプライアンス",
+      "press": "プレス・メディア"
+    },
+    "form": {
+      "title": "メッセージを送信",
+      "subtitle": "* の付いた項目は必須です",
+      "name": "お名前",
+      "email": "メールアドレス",
+      "company": "会社名",
+      "inquiryType": "お問い合わせ種別",
+      "message": "メッセージ",
+      "messagePlaceholder": "どのようにお手伝いできますか？",
+      "securityNote": "お客様のデータは暗号化され、プライバシーポリシーに従って処理されます。",
+      "send": "メッセージを送信",
+      "sending": "送信中..."
+    },
+    "success": {
+      "title": "メッセージ送信完了",
+      "subtitle": "お問い合わせありがとうございます。1営業日以内にご返信いたします。",
+      "another": "別のメッセージを送信"
     }
   }
 }

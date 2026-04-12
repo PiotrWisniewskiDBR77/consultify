@@ -1,8 +1,20 @@
-import { Handshake, Key, Lock, Server, ShieldCheck } from 'lucide-react';
-import React from 'react';
+import { Handshake } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ROUTES } from '../../routes/routeConfig';
+
+const DBR77_SUPPORTED_LANGS = new Set(['en', 'pl', 'de']);
+
+function resolveDbr77Lang(currentLang: string): string {
+  const base = currentLang.split('-')[0].toLowerCase();
+  return DBR77_SUPPORTED_LANGS.has(base) ? base : 'en';
+}
+
+function dbr77Url(path: string, lang: string): string {
+  const l = resolveDbr77Lang(lang);
+  return `https://dbr77.com/${l}${path}`;
+}
 
 // Company data - DBR77 official details
 const COMPANY = {
@@ -46,9 +58,10 @@ interface EntryFooterProps {
 }
 
 export const EntryFooter: React.FC<EntryFooterProps> = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
 
-  const sections = [
+  const sections = useMemo(() => [
     {
       title: t('landing.footer.products.title', 'Products'),
       links: [
@@ -56,6 +69,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
         { label: 'Digital Twin', href: 'https://dt.dbr77.com', external: true },
         { label: 'IRIS', href: 'https://iris.dbr77.com', external: true },
         { label: 'Marketplace', href: 'https://marketplace.dbr77.com/marketplace', external: true },
+        { label: 'DBR77 Vector', href: 'https://vector.dbr77.com', external: true },
         { label: 'Consultify', href: '/' },
       ],
     },
@@ -63,31 +77,35 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
       title: t('landing.footer.company.title', 'Company'),
       links: [
         { label: t('landing.footer.company.about', 'About'), href: '/about' },
-        { label: t('landing.footer.company.news', 'News'), href: 'https://dbr77.com/news', external: true },
-        { label: t('landing.footer.company.events', 'Events'), href: 'https://dbr77.com/events', external: true },
+        { label: t('landing.footer.company.news', 'News'), href: dbr77Url('/news', lang), external: true },
+        { label: t('landing.footer.company.events', 'Events'), href: dbr77Url('/events', lang), external: true },
         { label: t('landing.footer.company.contact', 'Contact'), href: '/contact' },
       ],
     },
     {
       title: t('landing.footer.caseStudies.title', 'Case Studies'),
       links: [
-        { label: t('landing.footer.caseStudies.businessCases', 'Business Cases'), href: 'https://dbr77.com/case-studies', external: true },
-        { label: 'Atelier Tools', href: 'https://dbr77.com/atelier-tools', external: true },
+        { label: t('landing.footer.caseStudies.businessCases', 'Business Cases'), href: dbr77Url('/case-studies', lang), external: true },
+        { label: 'Atelier Toys', href: 'https://ateliertoys.com', external: true },
       ],
     },
     {
       title: t('landing.footer.knowledge.title', 'Knowledge'),
       links: [
         {
-          label: t('landing.footer.knowledge.blog', 'Blog'),
-          href: 'https://dbr77.com/blog/',
+          label: t('landing.footer.knowledge.blogDbr77', 'Blog DBR77'),
+          href: dbr77Url('/blog', lang),
           external: true,
         },
-        { label: 'DBR77 na ITM', href: 'https://dbr77.com/itm', external: true },
-        { label: 'DBR77 Conference', href: 'https://dbr77.com/conference', external: true },
+        {
+          label: t('landing.footer.knowledge.blogConsultify', 'Blog Consultify'),
+          href: '/knowledge-base',
+        },
+        { label: 'DBR77 at ITM', href: dbr77Url('/itm', lang), external: true },
+        { label: 'DBR77 Conference', href: dbr77Url('/conference', lang), external: true },
         {
           label: t('landing.footer.knowledge.reports', 'Reports'),
-          href: 'https://dbr77.com/reports',
+          href: dbr77Url('/reports', lang),
           external: true,
         },
         {
@@ -95,7 +113,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
           href: 'https://open.spotify.com/show/7MJjs0AJ79hfRaCrcFbs4B',
           external: true,
         },
-        { label: 'DBR77 Vector', href: 'https://dbr77.com/vector', external: true },
         {
           label: 'DBR77 Masterclass',
           href: 'https://masterclass.dbr77.com/?utm_source=Consultify&utm_medium=Footer&utm_campaign=landing_footer',
@@ -103,7 +120,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
         },
       ],
     },
-  ];
+  ], [t, lang]);
 
   return (
     <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0B0A23]/95">
@@ -126,56 +143,38 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               />
             </div>
 
-            {/* Tagline */}
-            <p className="max-w-xs text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              {t(
-                'landing.footer.tagline',
-                'Consultify is the Consulting Intelligence Platform: accessible world-class knowledge, structured guidance, and execution in one working environment.'
-              )}
-            </p>
+            {/* Offices */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">
+                {t('landing.footer.offices', 'Offices')}
+              </h4>
 
-            {/* Trust Badges */}
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <ShieldCheck size={14} className="text-green-500" />
-                <span>GDPR</span>
+              <div className="rounded-xl bg-slate-100 p-4 dark:bg-white/[0.04]">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-base dark:bg-white/[0.08]" aria-hidden="true">🇺🇸</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                      {COMPANY.usa.name}
+                    </p>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      {COMPANY.usa.address}<br />{COMPANY.usa.city}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <Lock size={14} className="text-blue-500" />
-                <span>SOC2</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <Server size={14} className="text-purple-500" />
-                <span>{t('landing.footer.trust.euData', 'EU Data')}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                <Key size={14} className="text-amber-500" />
-                <span>AES-256</span>
-              </div>
-            </div>
 
-            {/* Company Info */}
-            <div className="space-y-2 pt-2 text-[10px] text-slate-500 dark:text-slate-400">
-              {/* HQ - Poland */}
-              <div>
-                <p className="font-semibold text-slate-700 dark:text-slate-200">
-                  {COMPANY.headquarters.name}
-                </p>
-                <p>
-                  {COMPANY.headquarters.address}, {COMPANY.headquarters.city}
-                </p>
-                <p className="text-slate-400 dark:text-slate-500">
-                  NIP: {COMPANY.headquarters.nip} | KRS: {COMPANY.headquarters.krs}
-                </p>
-              </div>
-              {/* USA & Germany - compact */}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-400 dark:text-slate-500">
-                <span>
-                  {COMPANY.usa.name} · {COMPANY.usa.city}
-                </span>
-                <span>
-                  {COMPANY.germany.name} · {COMPANY.germany.city}
-                </span>
+              <div className="rounded-xl bg-slate-100 p-4 dark:bg-white/[0.04]">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-base dark:bg-white/[0.08]" aria-hidden="true">🇩🇪</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                      {COMPANY.germany.name}
+                    </p>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      {COMPANY.germany.address}<br />{COMPANY.germany.city}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -200,15 +199,9 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
                     ) : (
                       <a
                         href={link.href}
-                        {...((link as any).external
-                          ? { target: '_blank', rel: 'noopener noreferrer' }
-                          : {})}
                         className="text-sm text-slate-600 transition-colors hover:text-purple-600 dark:text-slate-300 dark:hover:text-purple-400"
                       >
                         {link.label}
-                        {(link as any).external && (
-                          <span className="ml-1 text-[10px] opacity-50">↗</span>
-                        )}
                       </a>
                     )}
                   </li>
@@ -219,7 +212,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
         </div>
 
         {/* Become Partner CTA */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-200/90 pt-10 sm:flex-row dark:border-white/[0.08]">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-200/90 py-8 sm:flex-row dark:border-white/[0.08]">
           <div>
             <p className="text-sm font-black text-slate-900 dark:text-white mb-0.5">
               {t('partner.footerCta.title', 'Become a Consultify Partner')}
@@ -242,12 +235,10 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
         </div>
 
         {/* Social Links Row */}
-        <div className="mt-10 border-t border-slate-200/80 pt-8 dark:border-white/[0.08]">
-          <div className="flex justify-center items-center gap-4 mb-8">
+        <div className="border-t border-slate-200/80 pt-8 dark:border-white/[0.08]">
+          <div className="flex justify-center items-center gap-5">
               <a
                 href={SOCIAL_LINKS.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="w-8 h-8 bg-[#0077B5] hover:bg-[#0077B5]/80 rounded-md flex items-center justify-center transition-colors"
                 title="LinkedIn"
               >
@@ -257,8 +248,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               </a>
               <a
                 href={SOCIAL_LINKS.youtube}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="w-8 h-8 bg-[#FF0000] hover:bg-[#FF0000]/80 rounded-md flex items-center justify-center transition-colors"
                 title="YouTube"
               >
@@ -268,8 +257,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               </a>
               <a
                 href={SOCIAL_LINKS.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="w-8 h-8 bg-[#1877F2] hover:bg-[#1877F2]/80 rounded-md flex items-center justify-center transition-colors"
                 title="Facebook"
               >
@@ -279,8 +266,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               </a>
               <a
                 href={SOCIAL_LINKS.spotify}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="w-8 h-8 bg-[#1DB954] hover:bg-[#1DB954]/80 rounded-md flex items-center justify-center transition-colors"
                 title="Spotify Podcast"
               >
@@ -290,8 +275,6 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
               </a>
               <a
                 href={SOCIAL_LINKS.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="w-8 h-8 bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] hover:opacity-80 rounded-md flex items-center justify-center transition-opacity"
                 title="Instagram"
               >
@@ -302,20 +285,20 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
             </div>
 
           {/* Legal Links Strip */}
-          <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2">
             {[
-              { label: t('landing.footer.legal.privacy', 'Privacy Policy'), href: '/privacy' },
-              { label: t('landing.footer.legal.cookies', 'Cookie Policy'), href: '/cookies' },
-              { label: t('landing.footer.legal.terms', 'Terms of Service'), href: '/terms' },
-              { label: t('landing.footer.legal.acceptableUse', 'Acceptable Use Policy'), href: '/legal' },
-              { label: t('landing.footer.legal.aiPolicy', 'AI Policy'), href: '/legal' },
+              { label: t('landing.footer.legal.privacy', 'Privacy Policy'), href: ROUTES.LEGAL.PRIVACY },
+              { label: t('landing.footer.legal.cookies', 'Cookie Policy'), href: ROUTES.LEGAL.COOKIES },
+              { label: t('landing.footer.legal.terms', 'Terms of Service'), href: ROUTES.LEGAL.TERMS },
+              { label: t('landing.footer.legal.acceptableUse', 'Acceptable Use Policy'), href: '/legal/acceptable-use' },
+              { label: t('landing.footer.legal.aiPolicy', 'AI Policy'), href: '/legal/ai-policy' },
               { label: t('landing.footer.legal.security', 'Security Overview'), href: '/security' },
-              { label: t('landing.footer.legal.consent', 'Consent & Control'), href: '/legal' },
+              { label: t('landing.footer.legal.consent', 'Consent & Control'), href: ROUTES.LEGAL.CENTER },
             ].map((link, idx) => (
               <a
                 key={idx}
                 href={link.href}
-                className="text-[10px] text-slate-400 hover:text-purple-500 transition-colors dark:text-slate-500 dark:hover:text-purple-400"
+                className="text-[11px] text-slate-400 hover:text-purple-500 transition-colors dark:text-slate-500 dark:hover:text-purple-400"
               >
                 {link.label}
               </a>
@@ -323,7 +306,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
           </div>
 
           {/* Copyright */}
-          <p className="mt-6 text-center text-[10px] font-medium text-slate-400 dark:text-slate-500">
+          <p className="mt-4 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500">
             © 2026 DBR77 Robotics Sp. z o.o. {t('landing.footer.copyright', 'All rights reserved.')}
           </p>
         </div>

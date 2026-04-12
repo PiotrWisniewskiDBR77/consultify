@@ -10,6 +10,7 @@ import { z } from 'zod';
 
 import type { V8ArtifactRef } from './contextSnapshot.js';
 import { V8ArtifactRefSchema } from './contextSnapshot.js';
+import type { OperationContract } from './operationContract.js';
 
 // ==========================================
 // ENUMS / LITERALS
@@ -134,6 +135,7 @@ export interface ActionProposal {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+  operationContract?: OperationContract;
 }
 
 export interface RunStateTransition {

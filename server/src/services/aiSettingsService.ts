@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 
 // Helper: safe JSON parse
 const parseJSON = <T>(value: any, fallback: T): T => {
@@ -161,7 +162,7 @@ class AISettingsService {
         data_residency: row.data_residency || null,
       };
     } catch (err) {
-      console.error('[AISettingsService] Error in getSuperAdminSettings:', err);
+      logger.error('[AISettingsService] Error in getSuperAdminSettings:', err);
       return DEFAULT_SUPERADMIN;
     }
   }
@@ -249,7 +250,7 @@ class AISettingsService {
         audit_policy_changes: !!row.audit_policy_changes,
       };
     } catch (err) {
-      console.error('[AISettingsService] Error in getOrgSettings:', err);
+      logger.error('[AISettingsService] Error in getOrgSettings:', err);
       return { ...DEFAULT_ORG, organization_id: orgId };
     }
   }
@@ -359,7 +360,7 @@ class AISettingsService {
         auto_suggestions: !!row.auto_suggestions,
       };
     } catch (err) {
-      console.error('[AISettingsService] Error in getUserSettings:', err);
+      logger.error('[AISettingsService] Error in getUserSettings:', err);
       return { ...DEFAULT_USER, user_id: userId };
     }
   }
@@ -459,7 +460,7 @@ class AISettingsService {
       };
       return { ...effective, superadmin, org, user };
     } catch (err) {
-      console.error('[AISettingsService] Error in getEffectiveSettings:', err);
+      logger.error('[AISettingsService] Error in getEffectiveSettings:', err);
       const superadmin = DEFAULT_SUPERADMIN;
       const org = { ...DEFAULT_ORG, organization_id: orgId };
       const user = { ...DEFAULT_USER, user_id: userId };
@@ -480,7 +481,7 @@ class AISettingsService {
       }
       return providers || [];
     } catch (err) {
-      console.error('[AISettingsService] Error in getAvailableModels:', err);
+      logger.error('[AISettingsService] Error in getAvailableModels:', err);
       throw new AppError('Available models are not available', 503, 'FEATURE_UNAVAILABLE', {
         reason: err instanceof Error ? err.message : String(err),
       });

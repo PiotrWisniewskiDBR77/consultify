@@ -20,6 +20,7 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 import {
   CreateWebhookBodySchema,
   GetDeliveriesQuerySchema,
@@ -318,7 +319,7 @@ router.post(
     const type = event.type;
     const data = event.data?.object;
 
-    console.log(`[Webhook] Received Stripe event: ${type}`);
+    logger.info(`[Webhook] Received Stripe event: ${type}`);
 
     if (!process.env.STRIPE_SECRET_KEY) {
       notConfigured(res);
@@ -376,13 +377,13 @@ router.post(
         }
 
         case 'customer.subscription.deleted':
-          console.log(`[Webhook] Subscription canceled: ${data.id}`);
+          logger.info(`[Webhook] Subscription canceled: ${data.id}`);
           break;
       }
 
       res.json({ received: true });
     } catch (error: unknown) {
-      console.error('[Webhook] Error processing event:', error);
+      logger.error('[Webhook] Error processing event:', error);
       res.status(500).json({ error: 'Webhook processing failed' });
     }
   })

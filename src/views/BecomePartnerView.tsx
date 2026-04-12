@@ -33,7 +33,7 @@ export const BecomePartnerView: React.FC = () => {
   const navigate = useNavigate();
 
   const handleApplyClick = () => {
-    navigate(ROUTES.PARTNER.ONBOARDING);
+    navigate(ROUTES.PARTNER.PUBLIC_APPLY);
   };
 
   const handleLearnMoreClick = () => {

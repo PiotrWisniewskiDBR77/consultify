@@ -28,6 +28,11 @@ import {
 } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import {
+  buildActionPreviewLines,
+  buildProposalOperationContract,
+  mapProposalStatusToOperationStage,
+} from './operationContractService.js';
 
 // ==========================================
 // HELPERS
@@ -299,6 +304,11 @@ export async function transitionRunState(
  */
 export async function createProposal(params: CreateProposalParams): Promise<ActionProposal> {
   const validated = CreateProposalParamsSchema.parse(params);
+  const runRow = await dbGet<RunRow>(
+    `SELECT * FROM v8_execution_runs WHERE run_id = ?`,
+    [validated.executionRunId],
+    { fallback: true }
+  );
 
   const proposalId = uuidv4();
   const now = new Date().toISOString();
@@ -320,6 +330,28 @@ export async function createProposal(params: CreateProposalParams): Promise<Acti
     createdAt: now,
     resolvedAt: null,
     resolvedBy: null,
+    operationContract: runRow
+      ? buildProposalOperationContract({
+          kind: 'governed_execution',
+          contractId: proposalId,
+          stage: mapProposalStatusToOperationStage('draft'),
+          createdAt: now,
+          updatedAt: now,
+          organizationId: runRow.organization_id,
+          userId: runRow.initiator_user_id,
+          conversationId: null,
+          contextSnapshotId: validated.contextSnapshotRef,
+          executionRunId: validated.executionRunId,
+          governedProposalId: proposalId,
+          targetModule: validated.targetRef.artifactModule,
+          targetRef: validated.targetRef,
+          title: validated.summary,
+          summary: validated.reason,
+          intent: validated.summary,
+          previewLines: buildActionPreviewLines(validated.previewPayload ?? null),
+          riskLabel: validated.riskClass,
+        })
+      : undefined,
   };
 
   await dbRun(

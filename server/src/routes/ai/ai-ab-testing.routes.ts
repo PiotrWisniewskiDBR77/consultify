@@ -11,6 +11,7 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -60,7 +61,7 @@ try {
   const module = abTestingModule.default || abTestingModule;
   abTestingService = (module.abTestingService || module) as ABTestingServiceInterface;
 } catch {
-  console.warn('[AI AB Testing Routes] abTestingService not available');
+  logger.warn('[AI AB Testing Routes] abTestingService not available');
 }
 
 /**
@@ -92,7 +93,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error listing experiments:', error);
+      logger.error('[AB Testing API] Error listing experiments:', error);
       return res.status(500).json({
         error: 'Failed to list experiments',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -127,7 +128,7 @@ router.post(
 
       return res.status(201).json({ success: true, data: result });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error creating experiment:', error);
+      logger.error('[AB Testing API] Error creating experiment:', error);
       return res.status(500).json({
         error: 'Failed to create experiment',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -153,7 +154,7 @@ router.get(
       const stats = await abTestingService.getExperimentStats(req.params.id);
       return res.json({ success: true, data: stats });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error getting experiment:', error);
+      logger.error('[AB Testing API] Error getting experiment:', error);
       return res.status(500).json({
         error: 'Failed to get experiment',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -184,7 +185,7 @@ router.post(
       const result = await abTestingService.startExperiment(req.params.id, userId);
       return res.json({ success: true, data: result });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error starting experiment:', error);
+      logger.error('[AB Testing API] Error starting experiment:', error);
       return res.status(500).json({
         error: 'Failed to start experiment',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -211,7 +212,7 @@ router.post(
       const result = await abTestingService.stopExperiment(req.params.id, reason);
       return res.json({ success: true, data: result });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error stopping experiment:', error);
+      logger.error('[AB Testing API] Error stopping experiment:', error);
       return res.status(500).json({
         error: 'Failed to stop experiment',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -237,7 +238,7 @@ router.post(
       const result = await abTestingService.pauseExperiment(req.params.id);
       return res.json({ success: true, data: result });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error pausing experiment:', error);
+      logger.error('[AB Testing API] Error pausing experiment:', error);
       return res.status(500).json({
         error: 'Failed to pause experiment',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -263,7 +264,7 @@ router.post(
       const result = await abTestingService.resumeExperiment(req.params.id);
       return res.json({ success: true, data: result });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error resuming experiment:', error);
+      logger.error('[AB Testing API] Error resuming experiment:', error);
       return res.status(500).json({
         error: 'Failed to resume experiment',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -289,7 +290,7 @@ router.post(
       const result = await abTestingService.archiveExperiment(req.params.id);
       return res.json({ success: true, data: result });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error archiving experiment:', error);
+      logger.error('[AB Testing API] Error archiving experiment:', error);
       return res.status(500).json({
         error: 'Failed to archive experiment',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -323,7 +324,7 @@ router.post(
       );
       return res.json({ success: true, data: result, winner: winningVariantId });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error declaring winner:', error);
+      logger.error('[AB Testing API] Error declaring winner:', error);
       return res.status(500).json({
         error: 'Failed to declare winner',
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -359,7 +360,7 @@ router.post(
       await abTestingService.recordOutcome(experimentId, userId, metric, value);
       return res.json({ success: true });
     } catch (error: unknown) {
-      console.error('[AB Testing API] Error recording outcome:', error);
+      logger.error('[AB Testing API] Error recording outcome:', error);
       return res.status(500).json({
         error: 'Failed to record outcome',
         details: error instanceof Error ? error.message : 'Unknown error',

@@ -704,7 +704,7 @@ class KnowledgeBaseService {
 
   async getCollections(
     language: string = 'en',
-    params: { parentId?: string; visibility?: string; featured?: boolean } = {}
+    params: { parentId?: string; visibility?: string; featured?: boolean; slugPrefix?: string } = {}
   ): Promise<any[]> {
     try {
       const conditions = ['c.status = ?'];
@@ -724,6 +724,11 @@ class KnowledgeBaseService {
 
       if (params.featured) {
         conditions.push('c.featured = TRUE');
+      }
+
+      if (params.slugPrefix) {
+        conditions.push('c.slug LIKE ?');
+        queryParams.push(params.slugPrefix + '%');
       }
 
       const sql = `
@@ -819,7 +824,7 @@ class KnowledgeBaseService {
 
   async getTags(
     language: string = 'en',
-    params: { kind?: string; articleId?: string } = {}
+    params: { kind?: string; articleId?: string; sitePrefix?: string } = {}
   ): Promise<any[]> {
     try {
       const conditions = ['tg.status = ?'];
@@ -837,11 +842,30 @@ class KnowledgeBaseService {
         queryParams.push(params.articleId);
       }
 
+      if (params.sitePrefix) {
+        joinClause += `
+          JOIN kb_article_tags at_site ON tg.id = at_site.tag_id
+          JOIN kb_articles a_site ON at_site.article_id = a_site.id AND a_site.status = 'published'
+          JOIN kb_categories c_site ON a_site.category_id = c_site.id AND c_site.slug LIKE ?`;
+        queryParams.push(params.sitePrefix + '%');
+      }
+
+      const articleCountSubquery = params.sitePrefix
+        ? `(SELECT COUNT(DISTINCT at3.article_id) FROM kb_article_tags at3
+            JOIN kb_articles a3 ON at3.article_id = a3.id AND a3.status = 'published'
+            JOIN kb_categories c3 ON a3.category_id = c3.id AND c3.slug LIKE ?
+            WHERE at3.tag_id = tg.id)`
+        : '(SELECT COUNT(*) FROM kb_article_tags at3 WHERE at3.tag_id = tg.id)';
+
+      if (params.sitePrefix) {
+        queryParams.push(params.sitePrefix + '%');
+      }
+
       const sql = `
-        SELECT tg.id, tg.slug, tg.kind, tg.synonyms, tg.visibility,
+        SELECT DISTINCT tg.id, tg.slug, tg.kind, tg.synonyms, tg.visibility,
                COALESCE(tt.label, tte.label) as label,
                COALESCE(tt.description, tte.description) as description,
-               (SELECT COUNT(*) FROM kb_article_tags at3 WHERE at3.tag_id = tg.id) as article_count
+               ${articleCountSubquery} as article_count
         FROM kb_tags tg
         ${joinClause}
         LEFT JOIN kb_tag_translations tt ON tg.id = tt.tag_id AND tt.language = ?

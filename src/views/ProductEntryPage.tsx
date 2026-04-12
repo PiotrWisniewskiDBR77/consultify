@@ -17,6 +17,7 @@ import { InfoSections } from '../components/Landing/InfoSections';
 import { KnowledgePreviewSection } from '../components/Landing/KnowledgePreviewSection';
 import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
 import { LandingNarrativeCtaBand } from '../components/Landing/LandingNarrativeCtaBand';
+import { ModelDeploymentSection } from '../components/Landing/ModelDeploymentSection';
 import { ProblemPlatformSection } from '../components/Landing/ProblemPlatformSection';
 import { ProfitHeroSection } from '../components/Landing/ProfitHeroSection';
 import { TrustStrip } from '../components/Landing/TrustStrip';
@@ -194,6 +195,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
         <ExtendedScopeSection />
 
         <ForWhomSection />
+
+        <ModelDeploymentSection />
 
         <LandingNarrativeCtaBand
           onAnnaClick={handleAnnaClick}

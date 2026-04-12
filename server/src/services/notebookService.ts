@@ -1164,7 +1164,4 @@ export {
   NotebookService,
   notebookService,
   createNote as createNotebookNote,
-  type BlockProvenance,
-  type NotebookContextSnapshot,
-  buildNotebookContextSnapshot,
 };

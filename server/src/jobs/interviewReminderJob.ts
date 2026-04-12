@@ -109,11 +109,11 @@ const isMainModule = typeof require !== 'undefined' && require.main === module;
 if (isMainModule) {
   runJob()
     .then((result) => {
-      console.log('[InterviewReminderJob] Result:', JSON.stringify(result, null, 2));
+      logger.info('[InterviewReminderJob] Result:', JSON.stringify(result, null, 2));
       process.exit(result.success ? 0 : 1);
     })
     .catch((err) => {
-      console.error('[InterviewReminderJob] Fatal error:', err);
+      logger.error('[InterviewReminderJob] Fatal error:', err);
       process.exit(1);
     });
 }

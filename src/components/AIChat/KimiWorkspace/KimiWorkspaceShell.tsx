@@ -111,7 +111,7 @@ const LANE_CONFIG = {
   excele: {
     icon: FileSpreadsheet,
     label: 'Excele',
-    labelPl: 'Arkusze',
+    labelPl: 'Tabele',
     accentColor: 'emerald',
     inputPlaceholder: 'Upload a spreadsheet to work with or create from scratch',
     inputPlaceholderPl: 'Prześlij arkusz lub stwórz od zera',
@@ -262,8 +262,9 @@ function ArtifactPreviewPane({
   onStartGeneration?: (goal: string) => Promise<void>;
   onRetry?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const config = LANE_CONFIG[lane];
+  const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
   const Icon = config.icon;
   const [activeSheet, setActiveSheet] = useState(0);
   const [goalInput, setGoalInput] = React.useState('');
@@ -360,7 +361,7 @@ function ArtifactPreviewPane({
               <textarea
                 value={goalInput}
                 onChange={(e) => setGoalInput(e.target.value)}
-                placeholder={config.inputPlaceholder}
+                placeholder={isPolish ? config.inputPlaceholderPl : config.inputPlaceholder}
                 rows={3}
                 className="w-full rounded-hig-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 resize-none"
               />
@@ -719,8 +720,9 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   onStartGeneration,
   chatSystemPrompt,
 }) => {
-  const { t: tShell } = useTranslation();
+  const { t: tShell, i18n } = useTranslation();
   const { setDisplayMode, setWorkspaceContext } = useConversationStore();
+  const isPolish = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('pl');
 
   const workspaceContext = useMemo(() => {
     const laneViewMap: Record<KimiLane, AppView> = {
@@ -778,7 +780,9 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
             className: 'text-slate-500 dark:text-slate-400',
           })}
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {tShell(`kimi.lane${LANE_CONFIG[lane].label}`, LANE_CONFIG[lane].label)}
+            {isPolish
+              ? LANE_CONFIG[lane].labelPl
+              : tShell(`kimi.lane${LANE_CONFIG[lane].label}`, LANE_CONFIG[lane].label)}
           </span>
           <span className="text-xs text-slate-400 dark:text-slate-500">
             / {tShell('kimi.workspace', 'Workspace')}

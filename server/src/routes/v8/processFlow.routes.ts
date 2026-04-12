@@ -29,6 +29,7 @@ import { Router } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 import {
   P14_ACCEPTANCE_CHECKLIST,
   P14_AI_PROPOSAL_RULES,
@@ -280,9 +281,9 @@ router.post(
       authorUserId: req.user?.id ?? null,
       channel: 'process_flow_validate',
       sourceLabel: 'Process Flow Validation',
-      content: { processId: req.params.processId, valid: result.valid, issueCount: result.issues?.length ?? 0 },
+      content: { processId: req.params.processId, valid: result.valid, issueCount: (result as any).issues?.length ?? 0 },
       metadata: { surface: 'process_flow', action: 'validate' },
-    }).catch(() => {});
+    }).catch((err: unknown) => logger.warn('[ProcessFlow] context recording failed', err));
 
     return res.json({ data: result, meta: pfMeta({ action: 'validated', valid: result.valid }) });
   }),
@@ -305,9 +306,9 @@ router.get(
       authorUserId: req.user?.id ?? null,
       channel: 'process_flow_readback',
       sourceLabel: 'Process Flow Readback',
-      content: { processId: req.params.processId, readbackText: typeof result === 'string' ? result.slice(0, 500) : '' },
+      content: { processId: req.params.processId, readbackText: typeof result === 'string' ? (result as string).slice(0, 500) : '' },
       metadata: { surface: 'process_flow', action: 'readback' },
-    }).catch(() => {});
+    }).catch((err: unknown) => logger.warn('[ProcessFlow] context recording failed', err));
 
     return res.json({ data: result, meta: pfMeta({ action: 'readback' }) });
   }),

@@ -77,7 +77,7 @@ class SiemService {
         logger.debug('[SIEM] Would stream batch of logs', { count: batch.length });
       }
     } catch (error: any) {
-      console.warn(`[SIEM] Delivery failed: ${error.message}`);
+      logger.warn(`[SIEM] Delivery failed: ${error.message}`);
       // Re-buffer for a future retry (limited depth to prevent memory leak)
       if (this.buffer.length < 100) {
         this.buffer.unshift(...batch);

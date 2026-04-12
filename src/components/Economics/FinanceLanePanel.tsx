@@ -11,7 +11,6 @@ import {
   Loader2,
   Lock,
   Shield,
-  X,
   XCircle,
 } from 'lucide-react';
 
@@ -23,7 +22,7 @@ import type {
   KpiCoherenceResult,
 } from '../../services/api/v8/finance';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Dialog, DialogOverlay } from '../ui/dialog';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { FinanceVersionTimeline } from './FinanceVersionTimeline';
 import type { DegradedAlert, DegradedSeverity } from './hooks/useFinanceLane';
 
@@ -121,23 +120,23 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogOverlay className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg flex flex-col bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 shadow-2xl animate-in slide-in-from-right-full duration-200">
-        {/* Header */}
-        <div className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('finance.lane.title', 'Finance Lane')}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {activeLaneRun
-                ? `${t('finance.lane.run', 'Run')} ${activeLaneRun.runId.slice(0, 8)}… · ${activeLaneRun.versionType}`
-                : t('finance.lane.noActiveRun', 'No active run')}
-            </p>
+    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <SheetContent side="right" className="flex w-full max-w-lg flex-col p-0 shadow-2xl dark:bg-slate-900">
+        <SheetHeader className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <SheetTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {t('finance.lane.title', 'Finance Lane')}
+              </SheetTitle>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {activeLaneRun
+                  ? `${t('finance.lane.run', 'Run')} ${activeLaneRun.runId.slice(0, 8)}… · ${activeLaneRun.versionType}`
+                  : t('finance.lane.noActiveRun', 'No active run')}
+              </p>
+            </div>
+            <SheetClose className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100" />
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" type="button">
-            <X size={18} />
-          </button>
-        </div>
+        </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
           {/* Lane Progress Stepper */}
@@ -372,7 +371,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
             )}
           </section>
         </div>
-      </div>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };

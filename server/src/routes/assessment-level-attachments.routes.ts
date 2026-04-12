@@ -8,6 +8,7 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/assessment-level-attachments.js');
 const assessment_level_attachmentsRoutesJS = module.default || module;
@@ -32,6 +33,6 @@ if (typeof assessment_level_attachmentsRoutesJS === 'function') {
   );
 } else {
   // Fallback or error
-  console.error('assessment-level-attachments.js did not export a valid router');
+  logger.error('assessment-level-attachments.js did not export a valid router');
 }
 export default router;

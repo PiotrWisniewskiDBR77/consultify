@@ -25,6 +25,7 @@ import {
   ChevronDown,
   FileText,
   GitBranch,
+  MessageCircle,
   Plus,
   Sparkles,
   Target,
@@ -1983,6 +1984,28 @@ export const FinanceHub: React.FC = () => {
         primaryCta={primaryCta}
         commandRowContent={commandRowContent}
         rightControls={rightControls}
+        aiControl={
+          <button
+            type="button"
+            onClick={() =>
+              openChatWithContext({
+                entityType: 'finance_module',
+                entityId: 'finance',
+                entityName: t('finance.aiChat', 'Finance'),
+                contextData: {
+                  activeTab,
+                  organizationName: currentOrganization?.name,
+                  laneStatus: lane.activeLaneRun?.currentStep ?? 'idle',
+                },
+              })
+            }
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/40 transition-colors"
+            title={t('finance.openAiChat', 'Open AI Chat for Finance')}
+          >
+            <MessageCircle size={15} />
+            <span className="hidden sm:inline">AI</span>
+          </button>
+        }
       >
         <FinanceDegradedBanner
           degradedAlerts={lane.degradedAlerts}

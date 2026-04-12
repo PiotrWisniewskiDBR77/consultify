@@ -1,5 +1,17 @@
 /**
  * Studio Node Types Export
+ *
+ * NOTE: These are Studio-specific variants of the diagram nodes.
+ * Shared versions live in components/shared/DiagramNodes/ and are used by
+ * Discovery Canvas + AI Chat Artifacts.
+ *
+ * Key differences preventing consolidation:
+ *   - Styling: Studio uses dark-slate-canvas; shared uses light/dark theming
+ *   - TextNode data shape: Studio uses `label` + color; shared uses `text` + typography
+ *   - React Flow keys: Studio uses `mindmapNode`; shared uses `mindmap`
+ *
+ * Consolidation would require a theming prop or wrapper pattern
+ * to share the core logic while varying appearance per surface.
  */
 
 import { DecisionNode } from './DecisionNode';
@@ -22,7 +34,10 @@ export {
   TextNode,
 };
 
-// Node type mapping for React Flow
+/**
+ * @deprecated Currently unused — StudioCanvas defines its own nodeTypes inline.
+ * Remove after confirming no external consumers.
+ */
 export const nodeTypes = {
   processStep: ProcessStepNode,
   decision: DecisionNode,

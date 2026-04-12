@@ -30,6 +30,7 @@ type ToolSessionRow = {
   confidence_avg: number;
   answers_json?: string | null;
   context_snapshot?: string | null;
+  missing_items_json?: string | null;
   runtime_contract_json?: string | null;
   dod_status?: string | null;
   review_requested_at?: string | null;

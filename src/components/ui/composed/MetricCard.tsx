@@ -1,6 +1,12 @@
 /**
  * MetricCard Component - Apple HIG Design System
  *
+ * @deprecated This component has ZERO runtime consumers. Before adding new
+ * MetricCard usage, consider consolidating with:
+ *   - Reports/Management/shared/MetricCard.tsx (4 importers — most used)
+ *   - Admin/shared/MetricCard.tsx (2 importers)
+ *   - Reports/Premium/Editor/Extensions/MetricCard.tsx (TipTap extension — keep separate)
+ *
  * A dashboard metric card with value, trend, and sparkline support.
  *
  * @example

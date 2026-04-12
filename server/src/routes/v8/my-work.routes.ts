@@ -2206,7 +2206,7 @@ router.get(
           editAuthority: item.editAuthority,
           syncState: item.syncState,
           permissionGradient: source?.permissionGradient ?? 'read',
-          etag: item.etag,
+          etag: item.etag ?? undefined,
         });
       }
     } catch (p02Err: any) {

@@ -122,31 +122,35 @@ export const KnowledgeBaseHomePage: React.FC = () => {
   const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
   const { data: collections = [] } = useKnowledgeCollections(undefined, docsLanguage);
-  const { data: allFeatured } = useDocsFeatured(docsLanguage, 20);
-  const { data: searchResults } = useDocsSearch(activeSearch, docsLanguage);
-  const { data: tags } = useKnowledgeTags(undefined, docsLanguage);
+  const { data: allFeatured = [] } = useDocsFeatured(docsLanguage, 20);
+  const { data: searchResults = [] } = useDocsSearch(activeSearch, docsLanguage);
+  const { data: tags = [] } = useKnowledgeTags(undefined, docsLanguage);
   const { data: allArticlesData } = useDocsArticles({ language: docsLanguage, limit: 100 });
-  const allArticles = allArticlesData?.articles;
+  const allArticles = allArticlesData?.articles || [];
 
-  const siteCollections = useMemo(() =>
-    collections?.filter((c: KbCollection) => isKbCategoryForCurrentSite(c.slug)) || [],
+  const siteCollections = useMemo(
+    () =>
+      (collections || [])
+        .filter((c: KbCollection) => (c.article_count || 0) > 0)
+        .filter((c: KbCollection) => c.slug?.startsWith(KNOWLEDGE_BASE_SITE.categoryPrefix))
+        .slice(0, 3),
     [collections]
   );
 
   const featured = useMemo(
     () =>
       allFeatured
-        ?.filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag))
-        .slice(0, 6) || [],
+        .slice(0, 6),
     [allFeatured, selectedTag]
   );
 
   const browseArticles = useMemo(
     () =>
       allArticles
-        ?.filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
-        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag)) || [],
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
+        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag)),
     [allArticles, selectedTag]
   );
 
@@ -160,12 +164,14 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
   const displayArticles = useMemo(() => {
     if (activeSearch) {
-      return (searchResults || [])
+      return searchResults
         .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
         .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
     if (selectedCollection && collectionArticles?.length) {
-      return collectionArticles.filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
+      return collectionArticles
+        .filter((a: KbArticleListItem) => isKbCategoryForCurrentSite(a.category_slug))
+        .filter((a: KbArticleListItem) => matchesSelectedTag(a, selectedTag));
     }
     return null;
   }, [activeSearch, searchResults, selectedCollection, collectionArticles, selectedTag]);

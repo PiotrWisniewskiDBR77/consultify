@@ -551,7 +551,7 @@ const chatToSchemaService = {
 
     // Wrap execution in a SQL transaction for atomicity
     const executor = new MutationExecutor();
-    let outcome: MutationResult;
+    let outcome: any;
     try {
       await db.query('BEGIN');
       outcome = await executor.executeOperations(
@@ -561,7 +561,7 @@ const chatToSchemaService = {
         orgId,
         workspaceId
       );
-      if (outcome.allSucceeded) {
+      if ((outcome as any).allSucceeded) {
         await db.query('COMMIT');
       } else {
         await db.query('ROLLBACK');
@@ -576,15 +576,15 @@ const chatToSchemaService = {
     }
 
     const createdIds: Record<string, string> = {};
-    for (const [key, value] of outcome.createdEntities) {
+    for (const [key, value] of (outcome as any).createdEntities) {
       createdIds[key] = value;
     }
-    const failedOperations = outcome.results
-      .filter((r) => !r.success)
-      .map((r) => ({ operationId: r.operationId, error: r.error ?? 'Unknown error' }));
+    const failedOperations = (outcome as any).results
+      .filter((r: any) => !r.success)
+      .map((r: any) => ({ operationId: r.operationId, error: r.error ?? 'Unknown error' }));
 
     const status: 'executed' | 'failed' =
-      outcome.allSucceeded && failedOperations.length === 0 ? 'executed' : 'failed';
+      (outcome as any).allSucceeded && failedOperations.length === 0 ? 'executed' : 'failed';
     const rollbackMessage = 'Execution failed — all changes rolled back';
     const message = status === 'failed' ? rollbackMessage : undefined;
 
@@ -593,13 +593,13 @@ const chatToSchemaService = {
       [proposalId, status, executedBy ?? null]
     );
 
-    if (outcome.allSucceeded && baseId) {
+    if ((outcome as any).allSucceeded && baseId) {
       const stack = getStack(baseId);
       stack.push({
         proposalId,
         baseId,
         timestamp: new Date().toISOString(),
-        operations: outcome.results,
+        operations: (outcome as any).results,
         originalOperations: pipelineOps,
         description: String(proposal.summary ?? proposal.intent ?? ''),
         userId: executedBy,

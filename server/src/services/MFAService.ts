@@ -7,13 +7,14 @@
  */
 
 import { AppError } from '../utils/ErrorHandler.js';
+import logger from '../utils/Logger.js';
 
 const mfaService = {
   /**
    * Get MFA status for a user - returns disabled by default
    */
   getMFAStatus: async (userId: string) => {
-    console.log(`[MFAService] getMFAStatus called for user: ${userId}`);
+    logger.info(`[MFAService] getMFAStatus called for user: ${userId}`);
     return {
       enabled: false,
       methods: [],
@@ -25,7 +26,7 @@ const mfaService = {
    * Check if a device is trusted
    */
   isDeviceTrusted: async (userId: string, deviceFingerprint: string) => {
-    console.log(`[MFAService] isDeviceTrusted called for user: ${userId}`);
+    logger.info(`[MFAService] isDeviceTrusted called for user: ${userId}`);
     return false;
   },
 
@@ -33,7 +34,7 @@ const mfaService = {
    * Trust a device
    */
   trustDevice: async (userId: string, deviceFingerprint: string, deviceName: string) => {
-    console.log(`[MFAService] trustDevice called for user: ${userId}`);
+    logger.info(`[MFAService] trustDevice called for user: ${userId}`);
     return { success: false, error: 'Device trust is not available' };
   },
 
@@ -41,7 +42,7 @@ const mfaService = {
    * Verify TOTP code
    */
   verifyTOTP: async (userId: string, code: string) => {
-    console.log(`[MFAService] verifyTOTP called for user: ${userId}`);
+    logger.info(`[MFAService] verifyTOTP called for user: ${userId}`);
     return {
       success: false,
       error: 'MFA verification is not available',
@@ -53,7 +54,7 @@ const mfaService = {
    * Setup MFA for a user
    */
   setupMFA: async (userId: string, email: string) => {
-    console.log(`[MFAService] setupMFA called for user: ${userId}`);
+    logger.info(`[MFAService] setupMFA called for user: ${userId}`);
     throw new AppError('MFA setup is not available', 503, 'FEATURE_UNAVAILABLE');
   },
 
@@ -61,7 +62,7 @@ const mfaService = {
    * Verify and enable MFA
    */
   verifyAndEnableMFA: async (userId: string, token: string) => {
-    console.log(`[MFAService] verifyAndEnableMFA called for user: ${userId}`);
+    logger.info(`[MFAService] verifyAndEnableMFA called for user: ${userId}`);
     throw new AppError('MFA enable is not available', 503, 'FEATURE_UNAVAILABLE');
   },
 
@@ -69,7 +70,7 @@ const mfaService = {
    * Disable MFA for a user
    */
   disableMFA: async (userId: string, token: string) => {
-    console.log(`[MFAService] disableMFA called for user: ${userId}`);
+    logger.info(`[MFAService] disableMFA called for user: ${userId}`);
     throw new AppError('MFA disable is not available', 503, 'FEATURE_UNAVAILABLE');
   },
 
@@ -77,7 +78,7 @@ const mfaService = {
    * Set dependencies (for testing)
    */
   setDependencies: (deps: any) => {
-    console.log('[MFAService] setDependencies called');
+    logger.info('[MFAService] setDependencies called');
   },
 };
 

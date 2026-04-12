@@ -55,12 +55,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
     useHelpSidePanel();
 
-  const openContextualHelp = useCallback(() => {
-    setKnowledgeModuleIdOverride(activeTab === 'templates' ? 'templates' : 'outputs');
-    setHelpTab('knowledge');
-    setHelpOpen(true);
-  }, [activeTab, setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
-
   const { initialTab, initialArtifactId } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
     const fromQuery = parseRapTabFromQuery(params.get('tab'));
@@ -76,6 +70,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+
+  const openContextualHelp = useCallback(() => {
+    setKnowledgeModuleIdOverride(activeTab === 'templates' ? 'templates' : 'outputs');
+    setHelpTab('knowledge');
+    setHelpOpen(true);
+  }, [activeTab, setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('reports_presentations');

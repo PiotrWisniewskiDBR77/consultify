@@ -21,6 +21,7 @@ import type { ConsumerClass } from './contextSnapshot.js';
 import { ConsumerClassValues } from './contextSnapshot.js';
 import type { ApprovalClass } from './executionSpine.js';
 import { ApprovalClassValues } from './executionSpine.js';
+import type { OperationContract } from './operationContract.js';
 
 // ==========================================
 // ENUMS / LITERALS
@@ -142,6 +143,7 @@ export interface ToolInvocationRequest {
   policyRef: string | null;
   blockReason: string | null;
   createdAt: string;
+  operationContract?: OperationContract;
 }
 
 export interface ToolInvocationTrace {

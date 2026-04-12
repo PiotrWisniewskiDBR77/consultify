@@ -7,7 +7,7 @@ import { V8Provider } from '@/providers/V8Provider';
 
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TourProvider } from '../components/Onboarding/TourProvider';
-import { AutoSaveProvider } from '../context/AutoSaveContext';
+import { AutoSaveProvider } from '../contexts/AutoSaveContext';
 import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
 import { AIProvider } from '../contexts/AIContext';
 import { TeresaVoiceProvider } from '../contexts/TeresaVoiceContext';

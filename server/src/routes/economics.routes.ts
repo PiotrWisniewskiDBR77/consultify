@@ -28,10 +28,10 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
-console.log('[Economics Routes] Module loaded - TypeScript version');
-console.log('[Economics Routes] Router type:', typeof Router);
+logger.info('[Economics Routes] Module loaded - TypeScript version');
+logger.info('[Economics Routes] Router type:', typeof Router);
 const router = Router();
-console.log('[Economics Routes] Router created. Stack length:', router.stack?.length);
+logger.info('[Economics Routes] Router created. Stack length:', router.stack?.length);
 
 // Helper to safely parse JSON
 function safeJsonParse(str: string | null | undefined, fallback: any = {}): any {
@@ -157,7 +157,7 @@ router.get(
   })
 );
 
-console.log('[Economics Routes] After /analyses route. Stack length:', router.stack?.length);
+logger.info('[Economics Routes] After /analyses route. Stack length:', router.stack?.length);
 
 /**
  * GET /api/economics/stats

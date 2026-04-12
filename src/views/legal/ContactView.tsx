@@ -1,20 +1,20 @@
 import { motion } from 'framer-motion';
 import {
-  Building,
+  ArrowRight,
+  Calendar,
   CheckCircle,
-  Globe,
-  Linkedin,
+  Clock,
   Loader2,
   Mail,
-  MessageSquare,
+  MapPin,
   Send,
+  Shield,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { AnnaAssistantWidget } from '../../components/Landing/AnnaAssistantWidget';
-import { DemoButton } from '../../components/Landing/DemoButton';
 import { EntryFooter } from '../../components/Landing/EntryFooter';
 import { EntryTopBar } from '../../components/Landing/EntryTopBar';
 import {
@@ -24,31 +24,31 @@ import {
 } from '../../services/annaLpCtaContext';
 import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
 
-// WhatsApp icon component
-const WhatsAppIcon: React.FC<{ size?: number; className?: string }> = ({
-  size = 20,
-  className,
-}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-  </svg>
-);
-
-const COMPANY = {
-  name: 'DBR77 Robotics Sp. z o.o.',
-  address: 'ul. Żółkiewskiego 31',
-  city: '87-100 Toruń, Poland',
-  email: 'contact@dbr77.com',
-  salesEmail: 'sales@dbr77.com',
-  supportEmail: 'support@dbr77.com',
-  whatsapp: '+49 176 217 57 563',
-  calendarUrl:
-    'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017',
-  founderLinkedIn: 'https://www.linkedin.com/in/piotrkrzysztofwisniewski/',
-  website: 'https://dbr77.com',
+const OFFICES = {
+  usa: {
+    name: 'DBR77 USA Inc.',
+    address: '9319 Robert D. Snyder Road',
+    city: 'Charlotte, NC 28262, USA',
+    flag: '🇺🇸',
+  },
+  germany: {
+    name: 'DBR77 GmbH',
+    address: 'Kurfürstendamm 194',
+    city: '10707 Berlin, Germany',
+    flag: '🇩🇪',
+  },
 };
 
-type ContactType = 'general' | 'sales' | 'support' | 'partnership';
+const EMAILS = {
+  general: 'contact@dbr77.com',
+  sales: 'sales@dbr77.com',
+  support: 'support@dbr77.com',
+};
+
+const CALENDAR_URL =
+  'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
+
+type ContactType = 'general' | 'sales' | 'support' | 'partnership' | 'security' | 'press';
 
 interface FormData {
   name: string;
@@ -57,6 +57,13 @@ interface FormData {
   type: ContactType;
   message: string;
 }
+
+const INPUT_BASE =
+  'w-full px-4 h-[48px] bg-white/[0.04] border border-white/[0.10] rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/30 transition-all';
+
+const INPUT_CLASS = INPUT_BASE;
+
+const SELECT_CLASS = `${INPUT_BASE} appearance-none cursor-pointer bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat`;
 
 export const ContactView: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -89,11 +96,13 @@ export const ContactView: React.FC = () => {
     updateAnnaLpCtaContext({ start_recorded_at_ms: Date.now() });
   }, []);
 
-  const contactTypes = [
-    { value: 'general', label: 'General Inquiry', icon: MessageSquare },
-    { value: 'sales', label: 'Sales / Demo Request', icon: Building },
-    { value: 'support', label: 'Technical Support', icon: Mail },
-    { value: 'partnership', label: 'Partnership', icon: Mail },
+  const contactTypes: { value: ContactType; label: string }[] = [
+    { value: 'general', label: t('contact.types.general', 'General Inquiry') },
+    { value: 'sales', label: t('contact.types.sales', 'Sales / Demo Request') },
+    { value: 'support', label: t('contact.types.support', 'Technical Support') },
+    { value: 'partnership', label: t('contact.types.partnership', 'Partnership') },
+    { value: 'security', label: t('contact.types.security', 'Security & Compliance') },
+    { value: 'press', label: t('contact.types.press', 'Press & Media') },
   ];
 
   const handleChange = (
@@ -139,6 +148,23 @@ export const ContactView: React.FC = () => {
       }
 
       setIsSubmitted(true);
+
+      setTimeout(() => {
+        const typeLabelMap: Record<ContactType, string> = {
+          general: 'general inquiry',
+          sales: 'sales / demo request',
+          support: 'technical support',
+          partnership: 'partnership opportunity',
+          security: 'security & compliance',
+          press: 'press & media',
+        };
+        const topicLabel = typeLabelMap[formData.type] || formData.type;
+        const annaPrompt = `A visitor just submitted a contact form. Their name is ${formData.name}${formData.company ? ` from ${formData.company}` : ''}. They wrote about: "${formData.message.slice(0, 200)}". The inquiry type is "${topicLabel}". Please greet them warmly, acknowledge their message, and try to help them right now with their question. If you can address their concern, do so. Otherwise, reassure them the team will follow up within 1 business day.`;
+
+        window.dispatchEvent(
+          new CustomEvent('anna:open', { detail: { prompt: annaPrompt } })
+        );
+      }, 1500);
 
       if (ctx && ctx.cta_type === 'contact') {
         void postPublicAnnaFunnelEvent('anna_lp.cta.submit_success', {
@@ -186,21 +212,12 @@ export const ContactView: React.FC = () => {
     }
   };
 
-  const handleTrialClick = () => {
-    navigate('/trial/start');
-  };
-
-  const handleDemoClick = () => {
-    navigate('/demo');
-  };
-
-  const handleContactClick = () => {
-    navigate('/contact');
-  };
+  const handleTrialClick = () => navigate('/trial/start');
+  const handleDemoClick = () => navigate('/demo');
+  const handleContactClick = () => navigate('/contact');
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
-      {/* Header */}
+    <div className="min-h-screen flex flex-col bg-[#0A0A1F]">
       <EntryTopBar
         onTrialClick={handleTrialClick}
         onDemoClick={handleDemoClick}
@@ -209,221 +226,198 @@ export const ContactView: React.FC = () => {
         hasWorkspace={false}
       />
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-16 px-6 bg-gradient-to-b from-purple-50 to-white dark:from-navy-900 dark:to-navy-950">
-        <div className="max-w-4xl mx-auto text-center">
+      {/* Hero */}
+      <section className="relative pt-32 pb-16 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+        <div className="absolute top-[-20%] left-[10%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.18)_0%,transparent_65%)] blur-[80px]" />
+        <div className="absolute bottom-[-10%] right-[5%] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(0,210,255,0.08)_0%,transparent_65%)] blur-[90px]" />
+
+        <div className="relative max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 
-                                         text-purple-600 dark:text-purple-400 text-sm font-semibold mb-6"
-            >
-              <Mail size={16} />
-              Contact Us
-            </span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/10 backdrop-blur-sm text-xs font-bold text-violet-300 tracking-wide mb-8">
+              <Mail size={14} />
+              <span>{t('contact.badge', 'Get in touch')}</span>
+            </div>
 
-            <h1 className="text-4xl md:text-5xl font-black text-navy-950 dark:text-white mb-6 tracking-tight">
-              Get in{' '}
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Touch
+            <h1
+              className="font-black tracking-tight text-white leading-[1.05]"
+              style={{ fontSize: 'clamp(32px, 5vw, 64px)' }}
+            >
+              {t('contact.hero.title1', "Let's talk about")}{' '}
+              <span
+                style={{
+                  background: 'linear-gradient(90deg, #a78bfa, #c084fc, #67e8f9)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                {t('contact.hero.title2', 'your next step')}
               </span>
             </h1>
 
-            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Have questions about Consultify? Want to schedule a demo? We'd love to hear from you.
+            <p className="mt-6 text-lg text-white/50 font-medium leading-relaxed max-w-2xl mx-auto">
+              {t(
+                'contact.hero.subtitle',
+                'Whether you need a demo, want to discuss enterprise deployment, or have a question — we are here to help.'
+              )}
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="py-16 px-6 flex-1">
+      {/* Main content */}
+      <section className="relative flex-1 px-4 sm:px-6 pb-16 -mt-2">
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Info */}
-            <div className="space-y-8">
-              <div>
-                <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-6">
-                  Contact Information
-                </h2>
-
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Building size={20} className="text-purple-600 dark:text-purple-400" />
+          <div className="grid lg:grid-cols-[1fr_1.8fr] gap-8 lg:gap-12">
+            {/* Left column — info */}
+            <div className="space-y-6">
+              {/* Offices */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-6">
+                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/30 mb-5">
+                  {t('contact.offices', 'Offices')}
+                </h3>
+                <div className="space-y-5">
+                  {[OFFICES.usa, OFFICES.germany].map((office) => (
+                    <div key={office.name} className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/20 text-lg shrink-0">
+                        {office.flag}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{office.name}</p>
+                        <p className="text-xs text-white/40 mt-0.5">{office.address}</p>
+                        <p className="text-xs text-white/40">{office.city}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-navy-950 dark:text-white">
-                        {COMPANY.name}
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        {COMPANY.address}
-                      </p>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">{COMPANY.city}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Mail size={20} className="text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-navy-950 dark:text-white">Email</h3>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        General:{' '}
-                        <a
-                          href={`mailto:${COMPANY.email}`}
-                          className="text-purple-600 hover:underline"
-                        >
-                          {COMPANY.email}
-                        </a>
-                      </p>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        Sales:{' '}
-                        <a
-                          href={`mailto:${COMPANY.salesEmail}`}
-                          className="text-purple-600 hover:underline"
-                        >
-                          {COMPANY.salesEmail}
-                        </a>
-                      </p>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        Support:{' '}
-                        <a
-                          href={`mailto:${COMPANY.supportEmail}`}
-                          className="text-purple-600 hover:underline"
-                        >
-                          {COMPANY.supportEmail}
-                        </a>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-[#25D366]/10 dark:bg-[#25D366]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <WhatsAppIcon size={20} className="text-[#25D366]" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-navy-950 dark:text-white">WhatsApp</h3>
-                      <a
-                        href={`https://wa.me/${COMPANY.whatsapp.replace(/\s+/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#25D366] hover:underline text-sm font-medium"
-                      >
-                        {COMPANY.whatsapp}
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Globe size={20} className="text-cyan-600 dark:text-cyan-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-navy-950 dark:text-white">Web</h3>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        <a
-                          href={COMPANY.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-purple-600 hover:underline"
-                        >
-                          dbr77.com
-                        </a>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-[#0077B5]/10 dark:bg-[#0077B5]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Linkedin size={20} className="text-[#0077B5]" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-navy-950 dark:text-white">Founder</h3>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        <a
-                          href={COMPANY.founderLinkedIn}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-purple-600 hover:underline"
-                        >
-                          Piotr Wiśniewski Ph.D.
-                        </a>
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Schedule Meeting CTA - Subtle & Elegant */}
-              <DemoButton href={COMPANY.calendarUrl} />
+              {/* Email */}
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-6">
+                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/30 mb-5">
+                  {t('contact.email', 'Email')}
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    { label: t('contact.emailGeneral', 'General'), email: EMAILS.general },
+                    { label: t('contact.emailSales', 'Sales'), email: EMAILS.sales },
+                    { label: t('contact.emailSupport', 'Support'), email: EMAILS.support },
+                  ].map((item) => (
+                    <div key={item.email} className="flex items-center gap-3">
+                      <MapPin size={12} className="text-white/20 shrink-0" />
+                      <span className="text-xs text-white/40 w-16 shrink-0">{item.label}</span>
+                      <a
+                        href={`mailto:${item.email}`}
+                        className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                      >
+                        {item.email}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-              {/* Response Time */}
-              <div className="p-6 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-                <h3 className="font-semibold text-navy-950 dark:text-white mb-2">Response Time</h3>
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  We typically respond to all inquiries within 24 business hours. For urgent support
-                  issues, please use the chat widget or call us directly.
+              {/* Book a call */}
+              <a
+                href={CALENDAR_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-all hover:bg-white/[0.04] hover:border-white/[0.12] group"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+                  <Calendar size={16} className="text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-white">
+                    {t('contact.bookDemo', 'Book a 30-min call')}
+                  </p>
+                  <p className="text-xs text-white/40 mt-0.5">
+                    {t('contact.bookDemoSub', 'Free consultation. See Consultify in action.')}
+                  </p>
+                </div>
+                <ArrowRight size={14} className="text-white/20 group-hover:text-white/40 transition-colors" />
+              </a>
+
+              {/* SLA */}
+              <div className="flex items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
+                <Clock size={14} className="text-white/20 mt-0.5 shrink-0" />
+                <p className="text-xs text-white/35 leading-relaxed">
+                  {t(
+                    'contact.sla',
+                    'We respond within 1 business day. Existing customers get faster resolution through in-app support.'
+                  )}
                 </p>
               </div>
             </div>
 
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
+            {/* Right column — form */}
+            <div>
               {isSubmitted ? (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 rounded-xl p-12 text-center"
+                  className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-12 text-center"
                 >
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
+                  <div className="w-16 h-16 bg-emerald-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle size={32} className="text-emerald-400" />
                   </div>
-                  <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-4">
-                    Message Sent!
+                  <h2 className="text-2xl font-black text-white mb-3">
+                    {t('contact.success.title', 'Message sent')}
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-300 mb-8">
-                    Thank you for reaching out. We'll get back to you as soon as possible.
+                  <p className="text-white/50 mb-8 max-w-md mx-auto">
+                    {t(
+                      'contact.success.subtitle',
+                      "Thank you for reaching out. We'll get back to you within 1 business day."
+                    )}
                   </p>
                   <button
                     onClick={() => {
                       setIsSubmitted(false);
-                      setFormData({
-                        name: '',
-                        email: '',
-                        company: '',
-                        type: 'general',
-                        message: '',
-                      });
+                      setFormData({ name: '', email: '', company: '', type: 'general', message: '' });
                     }}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
+                    style={{
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
+                      boxShadow: '0 0 30px -8px rgba(124,58,237,0.50)',
+                    }}
                   >
-                    Send Another Message
+                    {t('contact.success.another', 'Send another message')}
                   </button>
                 </motion.div>
               ) : (
                 <form
                   onSubmit={handleSubmit}
-                  className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8"
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-6 sm:p-8"
                 >
-                  <h2 className="text-2xl font-bold text-navy-950 dark:text-white mb-6">
-                    Send us a Message
-                  </h2>
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 text-white shadow-lg shadow-violet-500/20">
+                      <Send size={18} />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-white">
+                        {t('contact.form.title', 'Send us a message')}
+                      </h2>
+                      <p className="text-xs text-white/35">
+                        {t('contact.form.subtitle', 'All fields marked with * are required')}
+                      </p>
+                    </div>
+                  </div>
 
                   {error && (
-                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-sm">
+                    <div className="mb-6 p-4 rounded-xl border border-red-500/20 bg-red-500/[0.08] text-red-400 text-sm">
                       {error}
                     </div>
                   )}
 
-                  <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="grid md:grid-cols-2 gap-5 mb-5">
                     <div>
-                      <label className="block text-sm font-medium text-navy-950 dark:text-white mb-2">
-                        Your Name *
+                      <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">
+                        {t('contact.form.name', 'Your Name')} *
                       </label>
                       <input
                         type="text"
@@ -431,14 +425,13 @@ export const ContactView: React.FC = () => {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+                        className={INPUT_CLASS}
                         placeholder="John Smith"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium text-navy-950 dark:text-white mb-2">
-                        Email Address *
+                      <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">
+                        {t('contact.form.email', 'Email Address')} *
                       </label>
                       <input
                         type="email"
@@ -446,40 +439,43 @@ export const ContactView: React.FC = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+                        className={INPUT_CLASS}
                         placeholder="john@company.com"
                       />
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="grid md:grid-cols-2 gap-5 mb-5">
                     <div>
-                      <label className="block text-sm font-medium text-navy-950 dark:text-white mb-2">
-                        Company
+                      <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">
+                        {t('contact.form.company', 'Company')}
                       </label>
                       <input
                         type="text"
                         name="company"
                         value={formData.company}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+                        className={INPUT_CLASS}
                         placeholder="Company Inc."
                       />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium text-navy-950 dark:text-white mb-2">
-                        Inquiry Type
+                      <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">
+                        {t('contact.form.inquiryType', 'Inquiry Type')}
                       </label>
                       <select
                         name="type"
                         value={formData.type}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+                        className={SELECT_CLASS}
+                        style={{
+                          backgroundImage:
+                            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24' stroke='rgba(255,255,255,0.35)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
+                        }}
                       >
-                        {contactTypes.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
+                        {contactTypes.map((ct) => (
+                          <option key={ct.value} value={ct.value}>
+                            {ct.label}
                           </option>
                         ))}
                       </select>
@@ -487,34 +483,49 @@ export const ContactView: React.FC = () => {
                   </div>
 
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-navy-950 dark:text-white mb-2">
-                      Message *
+                    <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-wider">
+                      {t('contact.form.message', 'Message')} *
                     </label>
                     <textarea
                       name="message"
                       value={formData.message}
                       onChange={handleChange}
                       required
-                      rows={6}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-950 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 resize-none"
-                      placeholder="How can we help you?"
+                      rows={5}
+                      className="w-full px-4 py-3.5 bg-white/[0.04] border border-white/[0.10] rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/30 transition-all resize-none"
+                      placeholder={t('contact.form.messagePlaceholder', 'How can we help you?')}
                     />
+                  </div>
+
+                  {/* Security note */}
+                  <div className="flex items-center gap-2 mb-6 text-[10px] text-white/25">
+                    <Shield size={11} />
+                    <span>
+                      {t(
+                        'contact.form.securityNote',
+                        'Your data is encrypted and processed in accordance with our Privacy Policy.'
+                      )}
+                    </span>
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full md:w-auto px-8 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300 active:scale-[0.98]"
+                    style={{
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
+                      boxShadow: '0 0 40px -10px rgba(124,58,237,0.60), 0 3px 16px rgba(0,0,0,0.35)',
+                    }}
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 size={18} className="animate-spin" />
-                        Sending...
+                        <Loader2 size={16} className="animate-spin" />
+                        {t('contact.form.sending', 'Sending...')}
                       </>
                     ) : (
                       <>
-                        <Send size={18} />
-                        Send Message
+                        <Send size={16} />
+                        {t('contact.form.send', 'Send Message')}
                       </>
                     )}
                   </button>
@@ -525,7 +536,6 @@ export const ContactView: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <EntryFooter />
       <AnnaAssistantWidget
         onDemoClick={handleDemoClick}

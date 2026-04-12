@@ -290,7 +290,8 @@ router.get(
         artifactFamily:
           req.query.artifactFamily === 'document' ||
           req.query.artifactFamily === 'presentation' ||
-          req.query.artifactFamily === 'sheet'
+          req.query.artifactFamily === 'sheet' ||
+          req.query.artifactFamily === 'template'
             ? req.query.artifactFamily
             : undefined,
         visibilityScope:
@@ -543,7 +544,7 @@ router.post(
         action: 'artifact_review_started',
         entityType: 'artifact',
         entityId: artifact.artifactId,
-        entityName: artifact.title || artifact.artifactId,
+        entityName: (artifact as any).title || artifact.artifactId,
         metadata: { reviewers, artifactFamily: artifact.artifactFamily },
       }).catch((err) => {
         logger.warn('[artifacts] Failed to log review activity', { error: err });
@@ -945,7 +946,7 @@ router.post(
           agentType: 'template_deprecation',
           userId,
           goalDescription: `Deprecate template: ${deprecationReason || 'no reason'}`,
-        });
+        } as any);
       } catch {
         // Non-fatal: spine integration is supplementary
       }

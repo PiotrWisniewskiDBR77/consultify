@@ -8,6 +8,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../utils/Logger.js';
+
 // ============================================
 // TYPES
 // ============================================
@@ -680,7 +682,7 @@ class ReportInitiativeService {
 
         savedIds.push(initiative.id);
       } catch (error) {
-        console.error(`Failed to save initiative ${initiative.id}:`, error);
+        logger.error(`Failed to save initiative ${initiative.id}:`, error);
       }
     }
 
@@ -704,7 +706,7 @@ class ReportInitiativeService {
           [uuidv4(), reportId, initiativeId, organizationId, new Date().toISOString()]
         );
       } catch (error) {
-        console.error(`Failed to link initiative ${initiativeId} to report ${reportId}:`, error);
+        logger.error(`Failed to link initiative ${initiativeId} to report ${reportId}:`, error);
       }
     }
   }

@@ -13,7 +13,14 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { materializeMyWorkSession } from '@/services/traceabilityService';
 import type { MyWorkDerivedSource, MyWorkSession } from '@/types/domain/traceability';
 
-export type ConvertTargetType = 'initiative' | 'report' | 'presentation';
+export type ConvertTargetType =
+  | 'initiative'
+  | 'report'
+  | 'presentation'
+  | 'financial_model'
+  | 'budget'
+  | 'valuation'
+  | 'analysis';
 
 export interface ConvertToDialogProps {
   open: boolean;
@@ -27,6 +34,10 @@ const TARGET_LABELS: Record<ConvertTargetType, { en: string; pl: string }> = {
   initiative: { en: 'Initiative', pl: 'Inicjatywa' },
   report: { en: 'Report', pl: 'Raport' },
   presentation: { en: 'Presentation', pl: 'Prezentacja' },
+  financial_model: { en: 'Financial Model', pl: 'Model finansowy' },
+  budget: { en: 'Budget', pl: 'Budżet' },
+  valuation: { en: 'Valuation', pl: 'Wycena' },
+  analysis: { en: 'Financial Analysis', pl: 'Analiza finansowa' },
 };
 
 export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
@@ -119,8 +130,8 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {t('traceability.convertTo.targetType', 'Target type')}
               </span>
-              <div className="mt-1.5 flex gap-2">
-                {(['initiative', 'report', 'presentation'] as const).map((tt) => (
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {(Object.keys(TARGET_LABELS) as ConvertTargetType[]).map((tt) => (
                   <button
                     key={tt}
                     type="button"

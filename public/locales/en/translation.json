@@ -96,28 +96,30 @@
     },
     "problemPlatform": {
       "badge": "Why this category matters",
-      "heading": "Consulting intelligence should be accessible, not locked behind elite access.",
-      "sub": "This is the missing narrative layer between the hero promise and the product surface: why access matters and why platform patterns win.",
+      "heading": "What Spotify did for music,",
+      "headingAccent": "we do for consulting.",
+      "sub": "Consulting intelligence should be accessible, not locked behind elite access.",
       "problem": {
-        "badge": "Problem",
-        "title": "Business knowledge is valuable, but access is still limited.",
-        "body": "For decades, the best consulting methods, decision frameworks, and transformation guidance were effectively reserved for the companies that could afford elite firms.",
+        "badge": "The market problem",
+        "title": "Business intelligence is still inaccessible, generic, and unsafe.",
+        "body": "The market still has not turned AI and digital tools into a scalable layer for tactical and strategic business execution.",
         "points": [
-          "World-class consulting knowledge is still expensive, fragmented, and unevenly distributed.",
-          "Most teams never get structured access to the methods used by top advisory firms.",
-          "That leaves critical business decisions dependent on guesswork, slides, and one-off advice."
-        ]
+          "Consulting remains inaccessible to most firms.",
+          "Large language models are not specialists and do not understand company context.",
+          "Most AI solutions are not secure enough for real business work."
+        ],
+        "solve": "That is exactly the gap Consultify closes."
       },
       "pattern": {
-        "badge": "Platform pattern",
-        "title": "Great platforms win by transforming access, not only by adding software.",
-        "body": "The strongest category-defining platforms made scarce value simple to reach. Consultify applies that same pattern to consulting intelligence.",
+        "badge": "The category shift",
+        "title": "What Spotify did for music: access, quality, and trust at scale.",
+        "body": "Spotify did not create more music. It made great music instantly accessible, reliable, and easy to use. Consultify applies the same shift to business intelligence.",
         "examples": [
-          "Spotify simplified access to music.",
-          "Uber simplified access to transport.",
-          "Consultify simplifies access to consulting intelligence."
+          "Direct access to business knowledge from Harvard.",
+          "Intelligence that works in the full context of your company, not in isolated prompts.",
+          "Trust and security through technology tailored to your company's requirements."
         ],
-        "summary": "Consultify is the Consulting Intelligence Platform: Spotify for consulting knowledge, delivered as a structured consulting workflow."
+        "summary": "Access. Quality. Trust. That is the shift."
       }
     },
     "valueJourney": {
@@ -211,15 +213,15 @@
     },
     "profitHero": {
       "h1": {
-        "line1": "Consultify gives teams",
-        "line2": "consulting intelligence",
-        "line3": "they can actually execute."
+        "line1": "Consultify AI.",
+        "line2": "All the world’s business knowledge.",
+        "line3": "Turned into your profits."
       },
       "sub": "For consultants, transformation teams, and operators who need diagnosis, planning, execution, and measurable results in one workflow.",
       "billboard": "We did for consulting what Spotify did for music: unlimited access — but instead of playlists, you get profit.",
       "billboardShort": "One workflow from diagnosis to execution to measurable results.",
       "ctaPrimary": "Start trial",
-      "ctaSecondary": "Watch demo",
+      "ctaSecondary": "Try demo",
       "ctaNote": "Short teasers are public. Full videos unlock after login.",
       "panel": {
         "title": "From chat → to deliverables → to profit",
@@ -699,27 +701,24 @@
       }
     },
     "docs": {
-      "badge": "Documentation",
-      "title": "Built for transparency",
-      "subtitle": "Everything you need to evaluate, integrate, and trust our platform.",
-      "searchPlaceholder": "Search documentation...",
+      "badge": "Help & evaluation",
+      "title": "Everything you need to evaluate Consultify",
+      "subtitle": "Use knowledge, security, pricing, and partner materials to decide whether Consultify fits your rollout.",
+      "searchPlaceholder": "Search knowledge and buyer guidance...",
       "searchBtn": "Search",
-      "gettingStarted": "Getting Started",
-      "gettingStartedDesc": "Quick guides to set up your workspace, run your first assessment, and build transformation roadmaps.",
+      "knowledgeBase": "Knowledge Base",
+      "knowledgeBaseDesc": "Expert guides on transformation, governance, ROI defense, and execution discipline.",
       "security": "Security & Compliance",
-      "securityDesc": "Enterprise-grade security architecture, certifications, data handling policies, and compliance frameworks.",
-      "apiReference": "API Reference",
-      "apiReferenceDesc": "RESTful API documentation for integrations, webhooks, and programmatic access to platform data.",
-      "changelog": "Changelog",
-      "changelogDesc": "Release notes, feature updates, and improvements. Stay current with the latest platform changes.",
+      "securityDesc": "AES-256, GDPR, data residency, and enterprise deployment options explained.",
+      "pricing": "Pricing",
+      "pricingDesc": "Seat packages, shared AI budget, licensed tools, and enterprise plans.",
+      "partnerProgram": "Partner Program",
+      "partnerProgramDesc": "Revenue share, certifications, academy access, and partner application process.",
       "legalCenter": "Legal Center",
-      "legalCenterDesc": "Terms of service, privacy policy, data processing agreements, and regulatory compliance documents.",
-      "integrations": "Integrations",
-      "integrationsDesc": "Connect with Jira, Azure DevOps, SAP, and other enterprise systems. Import and sync data seamlessly.",
-      "explore": "Explore",
-      "lastUpdated": "Last updated",
-      "lastUpdatedDate": "February 2026",
-      "whatsNew": "See what's new"
+      "legalCenterDesc": "Terms of service, privacy policy, data processing agreements, and compliance documents.",
+      "resources": "Resources",
+      "resourcesDesc": "Case studies, whitepapers, webinars, and product update announcements.",
+      "explore": "Explore"
     }
   },
   "partner": {
@@ -1264,9 +1263,9 @@
     "partnerPortal": "Partner Portal",
     "tasks": "Tasks",
     "toolsLibrary": "Library",
-    "wordy": "Wordy",
-    "excele": "Excele",
-    "prezentacje": "Presentations Gen"
+    "wordy": "Documents",
+    "excele": "Tables",
+    "prezentacje": "Presentations"
   },
   "widgets": {
     "help": {
@@ -6886,9 +6885,9 @@
     "generationFailed": "Generation failed",
     "retry": "Try again",
     "workspace": "Workspace",
-    "laneWordy": "Wordy",
-    "laneExcele": "Excele",
-    "lanePrezentacje": "Prezentacje",
+    "laneWordy": "Documents",
+    "laneExcele": "Tables",
+    "lanePrezentacje": "Presentations",
     "stepSnapshot": "Capture context snapshot",
     "stepPlan": "Create artifact plan",
     "stepPreflight": "Validate preflight checks",
@@ -6898,5 +6897,47 @@
     "stepMaterialize": "Materialize artifact",
     "stepGenerate": "Generate content",
     "sheetReady": "Spreadsheet ready — use Preview File or Download"
+  },
+  "contact": {
+    "badge": "Get in touch",
+    "hero": {
+      "title1": "Let's talk about",
+      "title2": "your next step",
+      "subtitle": "Whether you need a demo, want to discuss enterprise deployment, or have a question — we are here to help."
+    },
+    "offices": "Offices",
+    "email": "Email",
+    "emailGeneral": "General",
+    "emailSales": "Sales",
+    "emailSupport": "Support",
+    "bookDemo": "Book a 30-min call",
+    "bookDemoSub": "Free consultation. See Consultify in action.",
+    "sla": "We respond within 1 business day. Existing customers get faster resolution through in-app support.",
+    "types": {
+      "general": "General Inquiry",
+      "sales": "Sales / Demo Request",
+      "support": "Technical Support",
+      "partnership": "Partnership",
+      "security": "Security & Compliance",
+      "press": "Press & Media"
+    },
+    "form": {
+      "title": "Send us a message",
+      "subtitle": "All fields marked with * are required",
+      "name": "Your Name",
+      "email": "Email Address",
+      "company": "Company",
+      "inquiryType": "Inquiry Type",
+      "message": "Message",
+      "messagePlaceholder": "How can we help you?",
+      "securityNote": "Your data is encrypted and processed in accordance with our Privacy Policy.",
+      "send": "Send Message",
+      "sending": "Sending..."
+    },
+    "success": {
+      "title": "Message sent",
+      "subtitle": "Thank you for reaching out. We'll get back to you within 1 business day.",
+      "another": "Send another message"
+    }
   }
 }

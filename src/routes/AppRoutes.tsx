@@ -190,6 +190,7 @@ const DiscoveryConsultantView = React.lazy(() =>
 
 // Become Partner (Public Partner Recruitment Page)
 const BecomePartnerView = React.lazy(() => import('@/views/BecomePartnerView'));
+const PartnerApplicationView = React.lazy(() => import('@/views/PartnerApplicationView'));
 
 // Dashboard - DEPRECATED: Removed, redirects to Chat
 
@@ -288,6 +289,9 @@ const CookiePolicyView = React.lazy(() =>
 );
 const SecurityView = React.lazy(() =>
   import('@/views/legal/SecurityView').then((m) => ({ default: m.SecurityView }))
+);
+const VectorPage = React.lazy(() =>
+  import('../views/VectorPage').then((m) => ({ default: m.VectorPage }))
 );
 const LegalIndexView = React.lazy(() =>
   import('@/views/LegalIndexView').then((m) => ({ default: m.LegalIndexView }))
@@ -676,6 +680,16 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path={ROUTES.PARTNER.PUBLIC_APPLY}
+          element={
+            <AuthLayout>
+              <AnimationWrapper variant="fade">
+                <PartnerApplicationView />
+              </AnimationWrapper>
+            </AuthLayout>
+          }
+        />
+        <Route
           path={ROUTES.PARTNER.PRICING}
           element={
             <AuthLayout>
@@ -1031,7 +1045,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.WORDY}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Wordy']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]} noPadding>
                 <RouteErrorBoundary>
                   <WordyView />
                 </RouteErrorBoundary>
@@ -1045,7 +1059,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.EXCELE}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Excele']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Tables')]} noPadding>
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="fade">
                     <ExceleView />
@@ -1061,7 +1075,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Prezentacje')]} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]} noPadding>
                 <RouteErrorBoundary>
                   <PrezentacjeView />
                 </RouteErrorBoundary>
@@ -1822,6 +1836,14 @@ export const AppRoutes: React.FC = () => {
           element={
             <AnimationWrapper variant="fade">
               <SecurityView />
+            </AnimationWrapper>
+          }
+        />
+        <Route
+          path={ROUTES.VECTOR}
+          element={
+            <AnimationWrapper variant="fade">
+              <VectorPage />
             </AnimationWrapper>
           }
         />

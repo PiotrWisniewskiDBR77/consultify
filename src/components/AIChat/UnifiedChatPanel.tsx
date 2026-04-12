@@ -1387,6 +1387,60 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // Explicit output tool routing (user picked a tool via OutputToolSelector)
+      const outputTool = useAppStore.getState().chatOutputTool;
+      if (outputTool !== 'auto') {
+        const routeMap: Record<string, string> = {
+          wordy: '/wordy',
+          excele: '/excele',
+          prezentacje: '/prezentacje',
+        };
+        const uiLangExplicit = (i18n.language || 'en').split('-')[0];
+        const labelMap: Record<string, { pl: string; en: string }> = {
+          wordy: { pl: 'Dokumenty', en: 'Documents' },
+          excele: { pl: 'Tabele', en: 'Tables' },
+          prezentacje: { pl: 'Prezentacje', en: 'Presentations' },
+        };
+        const label = labelMap[outputTool]?.[uiLangExplicit === 'pl' ? 'pl' : 'en'] || outputTool;
+
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+
+        addChatMessage({
+          id: `tool-redirect-${Date.now()}`,
+          role: 'ai',
+          content:
+            uiLangExplicit === 'pl'
+              ? `Otwieram ${label} — zaraz zaczynam pracę.`
+              : `Opening ${label} — starting work now.`,
+          timestamp: new Date(),
+        });
+
+        useAppStore.getState().setChatKickoffMessage(text);
+        useAppStore.getState().setChatOutputTool('auto');
+        navigateToRoute(routeMap[outputTool]);
+        onMessageSent?.(content);
+        return;
+      }
+
       // P23 Excele: intercept workbook/excel/financial model intents before Table Builder
       if (detectExceleIntent(text)) {
         const userMessage: ChatMessage = {

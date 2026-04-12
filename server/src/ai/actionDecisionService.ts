@@ -5,6 +5,7 @@ const defaultDb = getDatabase();
 import { v4 as defaultUuidv4 } from 'uuid';
 
 import * as auditLogger from '../utils/auditLogger.js';
+import logger from '../utils/Logger.js';
 import actionErrors from './actionErrors.js';
 import ActionProposalEngine from './actionProposalEngine.js';
 import PolicyEngine from './policyEngine.js';
@@ -251,7 +252,7 @@ const ActionDecisionService = {
               );
             } catch (evidenceErr) {
               // Non-blocking: log but don't fail the decision
-              console.warn(
+              logger.warn(
                 '[ActionDecisionService] Evidence recording failed:',
                 evidenceErr.message
               );

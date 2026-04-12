@@ -8,6 +8,7 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/pmo-context.js');
 const pmo_contextRoutesJS = module.default || module;
@@ -28,6 +29,6 @@ if (typeof pmo_contextRoutesJS === 'function') {
   router.use(pmo_contextRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('pmo-context.js did not export a valid router');
+  logger.error('pmo-context.js did not export a valid router');
 }
 export default router;

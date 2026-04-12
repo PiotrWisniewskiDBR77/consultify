@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
@@ -320,7 +321,7 @@ router.get(
         stats: { total: logs.length, high: 0, medium: 0, low: logs.length, unresolved: 0 },
       });
     } catch (err) {
-      console.error('[Security] audit-logs fallback', err);
+      logger.error('[Security] audit-logs fallback', err);
       return res.json({ logs: [], stats: { total: 0, high: 0, medium: 0, low: 0, unresolved: 0 } });
     }
   })
@@ -345,7 +346,7 @@ router.get(
       );
       return res.json({ usage: rows });
     } catch (err) {
-      console.error('[Security] api-keys/usage fallback', err);
+      logger.error('[Security] api-keys/usage fallback', err);
       return res.json({ usage: [] });
     }
   })

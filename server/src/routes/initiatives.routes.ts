@@ -6,6 +6,7 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -110,7 +111,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     const rows = await dbAll(sql, params);
     res.json(rows);
   } catch (err: any) {
-    console.error('[initiatives] GET / error:', err?.message);
+    logger.error('[initiatives] GET / error:', err?.message);
     res.status(500).json({ error: 'Failed to fetch initiatives' });
   }
 });
@@ -136,7 +137,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     if (!row) return res.status(404).json({ error: 'Initiative not found' });
     res.json(row);
   } catch (err: any) {
-    console.error('[initiatives] GET /:id error:', err?.message);
+    logger.error('[initiatives] GET /:id error:', err?.message);
     res.status(500).json({ error: 'Failed to fetch initiative' });
   }
 });
@@ -210,7 +211,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ id, name: name || title, status });
   } catch (err: any) {
-    console.error('[initiatives] POST / error:', err?.message);
+    logger.error('[initiatives] POST / error:', err?.message);
     res.status(500).json({ error: 'Failed to create initiative' });
   }
 });
@@ -286,7 +287,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (err: any) {
-    console.error('[initiatives] PUT /:id error:', err?.message);
+    logger.error('[initiatives] PUT /:id error:', err?.message);
     res.status(500).json({ error: 'Failed to update initiative' });
   }
 });
@@ -304,7 +305,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
     ]);
     res.json({ success: true });
   } catch (err: any) {
-    console.error('[initiatives] DELETE /:id error:', err?.message);
+    logger.error('[initiatives] DELETE /:id error:', err?.message);
     res.status(500).json({ error: 'Failed to delete initiative' });
   }
 });

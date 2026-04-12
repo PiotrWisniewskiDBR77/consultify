@@ -122,21 +122,21 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
     // 10. Wordy — KIMI-style document generation (P22)
     {
       id: 'MODULE_WORDY',
-      label: t('sidebar.wordy', 'Wordy'),
+      label: t('sidebar.wordy', 'Documents'),
       icon: React.createElement(FileText, { size: 20 }),
       viewId: AppView.WORDY,
     },
     // 11. Excele — KIMI-style spreadsheet generation (P23)
     {
       id: 'MODULE_EXCELE',
-      label: t('sidebar.excele', 'Excele'),
+      label: t('sidebar.excele', 'Tables'),
       icon: React.createElement(FileSpreadsheet, { size: 20 }),
       viewId: AppView.EXCELE,
     },
     // 12. Prezentacje — Gamma-style presentation generation (P20)
     {
       id: 'MODULE_PREZENTACJE_GEN',
-      label: t('sidebar.prezentacje', 'Prezentacje'),
+      label: t('sidebar.prezentacje', 'Presentations'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PREZENTACJE_GEN,
     },
@@ -236,9 +236,9 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
     [AppView.PRESENTATIONS]: t('sidebar.outputsLibrary', 'Outputs'),
-    [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Prezentacje'),
-    [AppView.WORDY]: t('sidebar.wordy', 'Wordy'),
-    [AppView.EXCELE]: t('sidebar.excele', 'Excele'),
+    [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentations'),
+    [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
+    [AppView.EXCELE]: t('sidebar.excele', 'Tables'),
   };
   return viewNames[view] || t('common.previousStep');
 }

@@ -60,7 +60,7 @@ async function recordCanonicalDeckExportTrace(params: {
     await reportsPresModelService.recordCompletedExport(
       artifact.artifactId,
       params.organizationId,
-      params.format,
+      params.format as any,
       params.userId || 'system'
     );
     return;
@@ -68,7 +68,7 @@ async function recordCanonicalDeckExportTrace(params: {
   await reportsPresModelService.recordCompletedExport(
     artifact.artifactId,
     params.organizationId,
-    params.format,
+    params.format as any,
     params.userId || 'system'
   );
 }

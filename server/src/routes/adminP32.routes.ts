@@ -1005,7 +1005,7 @@ async function createAdminRoleAssignment(orgId: string, actorId: string, body: a
 function matchesAuditFilter(log: any, orgId: string, filters: Record<string, string>) {
   const metadata = parseJson<Record<string, unknown>>(log.metadata_json, {});
   const logOrgId = String(
-    metadata.orgId || metadata.organizationId || metadata.details?.orgId || ''
+    metadata.orgId || metadata.organizationId || (metadata.details as any)?.orgId || ''
   ).trim();
 
   if (logOrgId !== orgId) return false;

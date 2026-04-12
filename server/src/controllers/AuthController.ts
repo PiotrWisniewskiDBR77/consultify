@@ -98,7 +98,7 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   const dependencies = await getDeps();
 
-  console.log('[AuthController] Login request received for email:', req.body?.email);
+  logger.info('[AuthController] Login request received for email:', req.body?.email);
 
   const body = req.body as LoginRequest;
   logger.info(`[Auth] Login request received for email: ${body.email}`);
@@ -368,7 +368,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       entityName: 'User Login',
     });
 
-    console.log(
+    logger.info(
       '[AuthController] Sending response:',
       JSON.stringify({
         user: safeUser,
@@ -376,7 +376,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       })
     );
 
-    console.log('[AuthController] Sending response with res.send');
+    logger.info('[AuthController] Sending response with res.send');
 
     res.status(200).send({
       user: safeUser,

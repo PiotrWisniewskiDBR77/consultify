@@ -48,10 +48,7 @@ import remarkGfm from 'remark-gfm';
 
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
-import { NModeCanvas } from '@/components/shared/NModeLayout/NModeCanvas';
-import { NModeHeader } from '@/components/shared/NModeLayout/NModeHeader';
-import { NModeLeftNav } from '@/components/shared/NModeLayout/NModeLeftNav';
-import { NModePropertiesStrip } from '@/components/shared/NModeLayout/NModePropertiesStrip';
+import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModePropertyField, NModeSection } from '@/components/shared/NModeLayout/types';
 import {
   ActivityLogCanvas,
@@ -2482,166 +2479,148 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto space-y-0">
-          {/* ── Header ─────────────────────────────────────── */}
-          <NModeHeader
-            title={title}
-            onTitleChange={setTitle}
-            titlePlaceholder={{ en: 'Insight title...', pl: 'Tytuł wniosku...' }}
-            artifactId={insight?.id}
-            artifactType="insight"
-            onSave={handleSave}
-            saving={saving}
-            isDirty={isDirty}
-            onChat={handleOpenChat}
-            onClose={onClose}
-            statusDotColor={statusConfig.color}
-            presentationMode={presentationMode}
-            onPresentationModeChange={setPresentationMode}
-            buildArtifactCode={buildArtifactCode}
-          />
+    <NModeShell
+      header={{
+        title,
+        onTitleChange: setTitle,
+        titlePlaceholder: { en: 'Insight title...', pl: 'Tytuł wniosku...' },
+        artifactId: insight?.id,
+        artifactType: 'insight',
+        onSave: handleSave,
+        saving,
+        isDirty,
+        onChat: handleOpenChat,
+        onClose,
+        statusDotColor: statusConfig.color,
+      }}
+      properties={propertyFields}
+      sections={nModeSectionsWithContent}
+      activeSection={activeNSection}
+      onSectionChange={setActiveNSection}
+      presentationMode={presentationMode}
+      onPresentationModeChange={setPresentationMode}
+      buildArtifactCode={buildArtifactCode}
+      renderActionBar={() => (
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleRegenerate}
+            disabled={isRegenerating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
+            {isPolish ? 'Regeneruj' : 'Regenerate'}
+          </button>
 
-          <div className="col-span-full space-y-4 mt-4">
-            {/* ── Properties strip ────────────────────────── */}
-            <NModePropertiesStrip fields={propertyFields} />
+          <button
+            onClick={handleExportToTools}
+            disabled={isExportingTools || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            {isExportingTools ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Target size={14} />
+            )}
+            {isPolish ? 'Do Tools' : 'Export Tools'}
+          </button>
 
-            {/* ── Action bar ──────────────────────────────── */}
-            <div className="px-4 py-3 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={handleRegenerate}
-                  disabled={isRegenerating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-                  {isPolish ? 'Regeneruj' : 'Regenerate'}
-                </button>
+          <button
+            onClick={handleExportToAssessment}
+            disabled={isExportingAssessment || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            {isExportingAssessment ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <BarChart3 size={14} />
+            )}
+            {isPolish ? 'Do Assessment' : 'Export Assessment'}
+          </button>
 
-                <button
-                  onClick={handleExportToTools}
-                  disabled={isExportingTools || insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  {isExportingTools ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Target size={14} />
-                  )}
-                  {isPolish ? 'Do Tools' : 'Export Tools'}
-                </button>
+          <button
+            onClick={handleExportToNotebook}
+            disabled={isExportingNotebook || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            {isExportingNotebook ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <BookOpen size={14} />
+            )}
+            {isPolish ? 'Do Notatnika' : 'To Notebook'}
+          </button>
 
-                <button
-                  onClick={handleExportToAssessment}
-                  disabled={isExportingAssessment || insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  {isExportingAssessment ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <BarChart3 size={14} />
-                  )}
-                  {isPolish ? 'Do Assessment' : 'Export Assessment'}
-                </button>
+          <button
+            onClick={handleExportMarkdown}
+            disabled={insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            <Download size={14} />
+            {isPolish ? 'Markdown' : 'Download MD'}
+          </button>
 
-                <button
-                  onClick={handleExportToNotebook}
-                  disabled={isExportingNotebook || insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  {isExportingNotebook ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <BookOpen size={14} />
-                  )}
-                  {isPolish ? 'Do Notatnika' : 'To Notebook'}
-                </button>
+          <button
+            onClick={handleCopy}
+            disabled={insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
+          >
+            <Copy size={14} />
+            {isPolish ? 'Kopiuj' : 'Copy'}
+          </button>
 
-                <button
-                  onClick={handleExportMarkdown}
-                  disabled={insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <Download size={14} />
-                  {isPolish ? 'Markdown' : 'Download MD'}
-                </button>
+          <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
 
-                <button
-                  onClick={handleCopy}
-                  disabled={insight?.status !== 'completed'}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <Copy size={14} />
-                  {isPolish ? 'Kopiuj' : 'Copy'}
-                </button>
+          {(!insight?.reviewStatus || insight.reviewStatus === 'draft') && (insight?.status === 'completed' || insight?.status === 'failed') && (
+            <button
+              onClick={() => handleLifecycleTransition('submit_review')}
+              disabled={lifecycleTransitioning}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
+            >
+              {lifecycleTransitioning ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
+              {isPolish ? 'Wyślij do recenzji' : 'Submit for Review'}
+            </button>
+          )}
 
-                <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
+          {insight?.reviewStatus === 'in_review' && (
+            <>
+              <button
+                onClick={() => handleLifecycleTransition('approve')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                {lifecycleTransitioning ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                {isPolish ? 'Zatwierdź i opublikuj' : 'Approve & Publish'}
+              </button>
+              <button
+                onClick={() => handleLifecycleTransition('reject')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                <X size={14} />
+                {isPolish ? 'Odrzuć' : 'Reject'}
+              </button>
+            </>
+          )}
 
-                {(!insight?.reviewStatus || insight.reviewStatus === 'draft') && (insight?.status === 'completed' || insight?.status === 'failed') && (
-                  <button
-                    onClick={() => handleLifecycleTransition('submit_review')}
-                    disabled={lifecycleTransitioning}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                  >
-                    {lifecycleTransitioning ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
-                    {isPolish ? 'Wyślij do recenzji' : 'Submit for Review'}
-                  </button>
-                )}
-
-                {insight?.reviewStatus === 'in_review' && (
-                  <>
-                    <button
-                      onClick={() => handleLifecycleTransition('approve')}
-                      disabled={lifecycleTransitioning}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                    >
-                      {lifecycleTransitioning ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                      {isPolish ? 'Zatwierdź i opublikuj' : 'Approve & Publish'}
-                    </button>
-                    <button
-                      onClick={() => handleLifecycleTransition('reject')}
-                      disabled={lifecycleTransitioning}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                    >
-                      <X size={14} />
-                      {isPolish ? 'Odrzuć' : 'Reject'}
-                    </button>
-                  </>
-                )}
-
-                {insight?.reviewStatus === 'published' && (
-                  <>
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-                      <CheckCircle2 size={14} />
-                      {isPolish ? 'Opublikowano' : 'Published'}
-                    </span>
-                    <button
-                      onClick={() => handleLifecycleTransition('revert_draft')}
-                      disabled={lifecycleTransitioning}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-                    >
-                      <RefreshCw size={14} />
-                      {isPolish ? 'Przywróć do szkicu' : 'Revert to Draft'}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* ── 2-pane layout ───────────────────────────── */}
-            <div className="flex gap-0 min-h-[60vh]">
-              <NModeLeftNav
-                sections={nModeSectionsWithContent}
-                activeSection={activeNSection}
-                onSectionChange={setActiveNSection}
-              />
-              <NModeCanvas sections={nModeSectionsWithContent} activeSection={activeNSection} />
-            </div>
-          </div>
+          {insight?.reviewStatus === 'published' && (
+            <>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+                <CheckCircle2 size={14} />
+                {isPolish ? 'Opublikowano' : 'Published'}
+              </span>
+              <button
+                onClick={() => handleLifecycleTransition('revert_draft')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                <RefreshCw size={14} />
+                {isPolish ? 'Przywróć do szkicu' : 'Revert to Draft'}
+              </button>
+            </>
+          )}
         </div>
-      </div>
-
+      )}
+    >
       {handoffModalOpen && handoffFinding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
@@ -2723,7 +2702,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </NModeShell>
   );
 };
 

@@ -583,7 +583,7 @@ export const Sidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isActive = item.viewId === currentView;
     const isCompleted = item.viewId && completedViews.includes(item.viewId);
-    const badgeLabel = item.badge === 'soon' ? 'In development' : item.badge;
+    const badgeLabel = item.badge === 'soon' ? 'Coming soon' : item.badge;
 
     // Check if locked
     const isLocked =

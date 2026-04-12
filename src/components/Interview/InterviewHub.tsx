@@ -770,6 +770,67 @@ export const InterviewHub: React.FC = () => {
     permissionsLoading,
   ]);
 
+  const handleOpenDocument = useCallback((doc: OpenDocument) => {
+    setOpenDocuments((prev) => {
+      if (prev.find((d) => d.id === doc.id)) return prev;
+      return [...prev, doc];
+    });
+    setActiveDocumentId(doc.id);
+  }, []);
+
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
+
+  const handleShowList = useCallback(() => {
+    setActiveDocumentId(null);
+  }, []);
+
+  const handleViewSession = useCallback(
+    (session: InterviewSession) => {
+      handleOpenDocument({
+        id: session.id,
+        type: 'interview_session',
+        subType: 'interview',
+        name: session.name || 'Interview Session',
+        status: (session.status?.toUpperCase() || 'DRAFT') as any,
+      });
+    },
+    [handleOpenDocument]
+  );
+
+  const handleViewInsight = useCallback(
+    (insight: InterviewInsight) => {
+      handleOpenDocument({
+        id: insight.id,
+        type: 'interview_insight',
+        subType: 'interview',
+        name: insight.title,
+        status: ((insight.status || 'approved').toUpperCase()) as any,
+      });
+    },
+    [handleOpenDocument]
+  );
+
+  const handleViewTemplate = useCallback(
+    (template: InterviewTemplate) => {
+      handleOpenDocument({
+        id: template.id,
+        type: 'interview_template',
+        subType: 'interview',
+        name: template.name,
+        status: 'APPROVED' as any,
+      });
+    },
+    [handleOpenDocument]
+  );
+
   // Open session from URL
   useEffect(() => {
     if (sessionIdFromUrl && sessions.length > 0) {
@@ -1196,67 +1257,6 @@ export const InterviewHub: React.FC = () => {
       toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
     }
   }, [ensureProjectId, isPolish]);
-
-  const handleOpenDocument = useCallback((doc: OpenDocument) => {
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === doc.id)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(doc.id);
-  }, []);
-
-  const handleCloseDocument = useCallback(
-    (id: string) => {
-      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-      if (activeDocumentId === id) {
-        setActiveDocumentId(null);
-      }
-    },
-    [activeDocumentId]
-  );
-
-  const handleShowList = useCallback(() => {
-    setActiveDocumentId(null);
-  }, []);
-
-  const handleViewSession = useCallback(
-    (session: InterviewSession) => {
-      handleOpenDocument({
-        id: session.id,
-        type: 'interview_session',
-        subType: 'interview',
-        name: session.name || 'Interview Session',
-        status: (session.status?.toUpperCase() || 'DRAFT') as any,
-      });
-    },
-    [handleOpenDocument]
-  );
-
-  const handleViewInsight = useCallback(
-    (insight: InterviewInsight) => {
-      handleOpenDocument({
-        id: insight.id,
-        type: 'interview_insight',
-        subType: 'interview',
-        name: insight.title,
-        status: ((insight.status || 'approved').toUpperCase()) as any,
-      });
-    },
-    [handleOpenDocument]
-  );
-
-  const handleViewTemplate = useCallback(
-    (template: InterviewTemplate) => {
-      handleOpenDocument({
-        id: template.id,
-        type: 'interview_template',
-        subType: 'interview',
-        name: template.name,
-        status: 'APPROVED' as any,
-      });
-    },
-    [handleOpenDocument]
-  );
 
   const handleSessionComplete = useCallback(
     (sessionId: string) => {

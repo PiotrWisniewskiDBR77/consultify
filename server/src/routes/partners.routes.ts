@@ -41,6 +41,10 @@ import {
   getPartnerPayoutSettings,
   updatePartnerPayoutSettings,
 } from '../services/partnerPayoutSettingsService.js';
+import {
+  listPartnerApplications,
+  reviewPartnerApplication,
+} from '../services/partnerApplicationIntakeService.js';
 import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
@@ -2746,5 +2750,45 @@ partnerConfigRouter.get('/reporting', async (req: Request, res: Response, next: 
     next(error);
   }
 });
+
+partnerConfigRouter.get('/applications', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = Math.max(1, Math.min(200, Number(req.query.limit || 100) || 100));
+    const data = await listPartnerApplications(limit);
+    res.json({ success: true, data });
+  } catch (error: any) {
+    logger.error('Error fetching partner applications:', error);
+    next(error);
+  }
+});
+
+partnerConfigRouter.post(
+  '/applications/:applicationId/review',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const applicationId = String(req.params.applicationId || '').trim();
+      const status = String(req.body?.status || '').trim() as
+        | 'pending'
+        | 'approved'
+        | 'rejected'
+        | 'needs_follow_up';
+      const reviewNote = typeof req.body?.reviewNote === 'string' ? req.body.reviewNote : null;
+      const reviewedBy = String((req as any).user?.id || (req as any).userId || '').trim() || null;
+
+      if (!applicationId) {
+        return res.status(400).json({ success: false, error: 'applicationId is required' });
+      }
+      if (!['pending', 'approved', 'rejected', 'needs_follow_up'].includes(status)) {
+        return res.status(400).json({ success: false, error: 'Invalid status' });
+      }
+
+      await reviewPartnerApplication({ applicationId, status, reviewNote, reviewedBy });
+      res.json({ success: true, message: 'Partner application reviewed' });
+    } catch (error: any) {
+      logger.error('Error reviewing partner application:', error);
+      next(error);
+    }
+  }
+);
 
 export default router;

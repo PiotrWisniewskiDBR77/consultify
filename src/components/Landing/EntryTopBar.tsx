@@ -48,7 +48,8 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     { label: t('nav.knowledgeBase', 'Knowledge Base'), href: ROUTES.KNOWLEDGE_BASE_PUBLIC },
     { label: t('nav.pricing', 'Pricing'), href: ROUTES.PRICING },
     { label: t('nav.partners', 'Partners'), href: ROUTES.BECOME_PARTNER },
-    { label: t('nav.help', 'Help'), href: ROUTES.DOCS },
+    { label: t('nav.vector', 'Vector AI'), href: ROUTES.VECTOR },
+    { label: t('nav.security', 'Security'), href: ROUTES.LEGAL.SECURITY },
   ];
   const { theme, toggleTheme } = useAppStore();
   const effectiveTheme = forceDark ? 'dark' : theme;

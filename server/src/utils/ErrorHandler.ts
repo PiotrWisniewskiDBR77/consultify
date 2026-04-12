@@ -187,11 +187,11 @@ export function errorHandlerMiddleware(
 /**
  * Async route wrapper to catch errors
  */
-export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void> | void
+export function asyncHandler<Req extends Request = Request>(
+  fn: (req: Req, res: Response, next: NextFunction) => Promise<any> | any
 ): (req: Request, res: Response, next: NextFunction) => void {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req as Req, res, next)).catch(next);
   };
 }
 

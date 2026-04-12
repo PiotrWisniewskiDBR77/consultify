@@ -6,6 +6,7 @@
  * and ETag-based optimistic concurrency on writes.
  */
 
+// @ts-ignore — optional dependency, may not have type declarations
 import { google, type calendar_v3 } from 'googleapis';
 import { v4 as uuidv4 } from 'uuid';
 import type {
@@ -48,7 +49,7 @@ const ACCESS_ROLE_MAP: Record<string, ProviderCalendarRef['accessRole']> = {
 };
 
 function mapAccessRole(role: string | undefined | null): ProviderCalendarRef['accessRole'] {
-  return (role && ACCESS_ROLE_MAP[role]) ?? 'reader';
+  return ((role && ACCESS_ROLE_MAP[role]) ?? 'reader') as ProviderCalendarRef['accessRole'];
 }
 
 function mapEventStatus(status: string | undefined | null): ProviderEvent['status'] {
@@ -112,7 +113,7 @@ function mapGoogleEvent(event: calendar_v3.Schema$Event, calendarId: string): Pr
     organizer: event.organizer
       ? { email: event.organizer.email!, self: event.organizer.self ?? undefined }
       : undefined,
-    attendees: event.attendees?.map((a) => ({
+    attendees: event.attendees?.map((a: any) => ({
       email: a.email!,
       responseStatus: a.responseStatus ?? 'needsAction',
     })),
@@ -148,7 +149,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
       const res = await cal.calendarList.list({ maxResults: 250 });
       const items = res.data.items ?? [];
 
-      return items.map((entry) => ({
+      return items.map((entry: any) => ({
         calendarId: entry.id!,
         name: entry.summary ?? entry.id!,
         primary: entry.primary === true,

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { getById as getInsightById } from '../../services/InterviewInsightService.js';
+import { fireAndForget } from '../../utils/fireAndForget.js';
 import type { InsightStatus } from '../../services/InterviewInsightService.js';
 import notificationService from '../../services/notificationService.js';
 import { canPublishFinding } from '../../services/v8/interviewInsightCanon.js';
@@ -117,7 +118,7 @@ function emitInsightLifecycleNotifications(
     }
   };
 
-  fire().catch(() => {});
+  fireAndForget(fire(), 'InsightLifecycle notification');
 }
 
 router.post(
@@ -194,7 +195,7 @@ router.post(
     );
 
     if (transition.targetStatus === 'published') {
-      rebuildOrganizationContextSnapshot(organizationId).catch(() => {});
+      fireAndForget(rebuildOrganizationContextSnapshot(organizationId), 'rebuildOrgContextSnapshot');
 
       const freshInsight = await getInsightById(insightId);
       if (freshInsight) {
@@ -459,11 +460,11 @@ router.post(
               insightId,
               handoffTarget: target_initiative_id || initiativeRef.id,
             },
-            confidence: finding.confidence_level === 'HIGH' ? 0.95 : finding.confidence_level === 'MEDIUM' ? 0.75 : 0.55,
+            confidence: finding.confidence_level === 'high' ? 0.95 : finding.confidence_level === 'medium' ? 0.75 : 0.55,
           },
         ],
       })
-      .catch(() => {});
+      .catch((err: unknown) => logger.warn('[InsightHandoff] artifact registration failed', err));
 
     return res.json({
       data: {

@@ -1472,6 +1472,52 @@
         "security": "Sicherheitsübersicht",
         "consent": "Einwilligung & Kontrolle"
       }
+    },
+    "problemPlatform": {
+      "heading": "Was Spotify für Musik getan hat,",
+      "headingAccent": "tun wir für Consulting.",
+      "problem": {
+        "badge": "Das Marktproblem",
+        "title": "Business Intelligence ist noch immer unzugänglich, generisch und unsicher.",
+        "body": "Der Markt hat KI und digitale Werkzeuge noch immer nicht in eine skalierbare Ebene für taktische und strategische Geschäftsprozesse verwandelt.",
+        "points": [
+          "Beratung bleibt für die meisten Unternehmen unzugänglich.",
+          "Große Sprachmodelle sind keine Spezialisten und verstehen den Unternehmenskontext nicht.",
+          "Die meisten KI-Lösungen sind für echte Geschäftsarbeit nicht sicher genug."
+        ],
+        "solve": "Genau diese Lücke schließt Consultify."
+      },
+      "pattern": {
+        "badge": "Der Kategoriewechsel",
+        "title": "Was Spotify für Musik getan hat: Zugang, Qualität und Vertrauen im großen Maßstab.",
+        "body": "Spotify hat nicht mehr Musik geschaffen. Es hat großartige Musik sofort zugänglich, verlässlich und einfach nutzbar gemacht. Consultify vollzieht denselben Wandel für Business Intelligence.",
+        "examples": [
+          "Direkter Zugang zu Business-Wissen aus Harvard.",
+          "Intelligenz, die im vollen Kontext Ihres Unternehmens arbeitet, nicht in isolierten Prompts.",
+          "Vertrauen und Sicherheit durch Technologie, die auf die individuellen Anforderungen Ihres Unternehmens zugeschnitten ist."
+        ],
+        "summary": "Zugang. Qualität. Vertrauen. Das ist der Wandel."
+      }
+    },
+    "docs": {
+      "badge": "Hilfe & Bewertung",
+      "title": "Alles, was Sie zur Bewertung von Consultify brauchen",
+      "subtitle": "Nutzen Sie Wissen, Sicherheit, Preise und Partnermaterialien, um zu entscheiden, ob Consultify zu Ihrem Rollout passt.",
+      "searchPlaceholder": "Wissensartikel und Leitfäden durchsuchen...",
+      "searchBtn": "Suchen",
+      "knowledgeBase": "Wissensdatenbank",
+      "knowledgeBaseDesc": "Experten-Leitfäden zu Transformation, Governance, ROI-Verteidigung und Umsetzungsdisziplin.",
+      "security": "Sicherheit & Compliance",
+      "securityDesc": "AES-256, DSGVO, Datenresidenz und Enterprise-Deployment-Optionen erklärt.",
+      "pricing": "Preise",
+      "pricingDesc": "Seat-Pakete, gemeinsames AI-Budget, lizenzierte Tools und Enterprise-Pläne.",
+      "partnerProgram": "Partnerprogramm",
+      "partnerProgramDesc": "Umsatzbeteiligung, Zertifizierungen, Akademie-Zugang und Bewerbungsprozess.",
+      "legalCenter": "Rechtszentrum",
+      "legalCenterDesc": "AGB, Datenschutzrichtlinie, Datenverarbeitungsverträge und Compliance-Dokumente.",
+      "resources": "Ressourcen",
+      "resourcesDesc": "Fallstudien, Whitepapers, Webinare und Produktaktualisierungen.",
+      "explore": "Entdecken"
     }
   },
   "partner": {
@@ -2052,6 +2098,48 @@
       "executeFailed": "Intervention konnte nicht ausgeführt werden.",
       "rejected": "Intervention abgelehnt.",
       "rejectFailed": "Intervention konnte nicht abgelehnt werden."
+    }
+  },
+  "contact": {
+    "badge": "Kontakt aufnehmen",
+    "hero": {
+      "title1": "Sprechen wir über",
+      "title2": "Ihren nächsten Schritt",
+      "subtitle": "Ob Sie eine Demo benötigen, Enterprise-Deployment besprechen oder eine Frage haben — wir sind für Sie da."
+    },
+    "offices": "Büros",
+    "email": "E-Mail",
+    "emailGeneral": "Allgemein",
+    "emailSales": "Vertrieb",
+    "emailSupport": "Support",
+    "bookDemo": "30-Min-Gespräch buchen",
+    "bookDemoSub": "Kostenlose Beratung. Sehen Sie Consultify in Aktion.",
+    "sla": "Wir antworten innerhalb von 1 Werktag. Bestehende Kunden erhalten schnellere Hilfe über den In-App-Support.",
+    "types": {
+      "general": "Allgemeine Anfrage",
+      "sales": "Vertrieb / Demo-Anfrage",
+      "support": "Technischer Support",
+      "partnership": "Partnerschaft",
+      "security": "Sicherheit & Compliance",
+      "press": "Presse & Medien"
+    },
+    "form": {
+      "title": "Senden Sie uns eine Nachricht",
+      "subtitle": "Mit * markierte Felder sind Pflichtfelder",
+      "name": "Ihr Name",
+      "email": "E-Mail-Adresse",
+      "company": "Unternehmen",
+      "inquiryType": "Anfragetyp",
+      "message": "Nachricht",
+      "messagePlaceholder": "Wie können wir Ihnen helfen?",
+      "securityNote": "Ihre Daten werden verschlüsselt und gemäß unserer Datenschutzrichtlinie verarbeitet.",
+      "send": "Nachricht senden",
+      "sending": "Wird gesendet..."
+    },
+    "success": {
+      "title": "Nachricht gesendet",
+      "subtitle": "Vielen Dank für Ihre Kontaktaufnahme. Wir melden uns innerhalb von 1 Werktag.",
+      "another": "Weitere Nachricht senden"
     }
   }
 }

@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 
+import logger from '../../utils/Logger.js';
 import ProjectControllerRaw from '../../controllers/ProjectController.js';
 const ProjectController = ProjectControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
@@ -51,7 +52,7 @@ router.get('/', ProjectController.getProjects);
 router.post(
   '/',
   (req, res, next) => {
-    console.log('[ProjectsRoute] POST / hit');
+    logger.info('[ProjectsRoute] POST / hit');
     next();
   },
   checkPlanLimit('max_projects'),

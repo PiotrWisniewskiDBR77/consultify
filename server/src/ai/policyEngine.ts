@@ -1,5 +1,6 @@
 // @ts-nocheck
 // @ts-nocheck
+import logger from '../utils/Logger.js';
 /**
  * Policy Engine (Step 9.8)
  *
@@ -218,7 +219,7 @@ const PolicyEngine = {
     for (const [conditionKey, conditionValue] of Object.entries(conditions)) {
       const handler = (handlers as any)[conditionKey];
       if (!handler) {
-        console.warn(`[PolicyEngine] Unknown condition: ${conditionKey}`);
+        logger.warn(`[PolicyEngine] Unknown condition: ${conditionKey}`);
         return false; // Unknown condition = no match for safety
       }
 

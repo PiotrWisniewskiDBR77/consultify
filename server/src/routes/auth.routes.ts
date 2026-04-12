@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import { Response, Router } from 'express';
 
 import { login } from '../controllers/AuthController.js';
+import logger from '../utils/Logger.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import mfaService from '../services/MFAService.js';
@@ -73,7 +74,7 @@ const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
 };
 
 // LOGIN
-console.log('[AuthRoutes] login handler is type:', typeof login);
+logger.info('[AuthRoutes] login handler is type:', typeof login);
 router.post('/login', validateBody(LoginRequestSchema), asyncHandler(login));
 
 // REFRESH TOKEN - Get new access token using refresh token

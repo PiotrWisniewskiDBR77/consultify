@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { getDatabase } from '../database/index.js';
 import * as auditLogger from '../utils/auditLogger.js';
+import logger from '../utils/Logger.js';
 import ActionDecisionService from './actionDecisionService.js';
 import ActionExecutionAdapter from './actionExecutionAdapter.js';
 import AIPlaybookRoutingEngine from './aiPlaybookRoutingEngine.js';
@@ -176,7 +177,7 @@ const AIPlaybookExecutor = {
         reason: routingResult.reason,
       };
     } catch (err) {
-      console.error('[AIPlaybookExecutor] BRANCH step failed:', err);
+      logger.error('[AIPlaybookExecutor] BRANCH step failed:', err);
       return {
         status: 'FAILED',
         reason: err.message,
@@ -221,7 +222,7 @@ const AIPlaybookExecutor = {
         reason: checkResult.reason,
       };
     } catch (err) {
-      console.error('[AIPlaybookExecutor] CHECK step failed:', err);
+      logger.error('[AIPlaybookExecutor] CHECK step failed:', err);
       return {
         status: 'FAILED',
         reason: err.message,
@@ -270,7 +271,7 @@ const AIPlaybookExecutor = {
         trace: { wait_result: 'ready', reason },
       };
     } catch (err) {
-      console.error('[AIPlaybookExecutor] WAIT step failed:', err);
+      logger.error('[AIPlaybookExecutor] WAIT step failed:', err);
       return {
         status: 'FAILED',
         reason: err.message,
@@ -284,7 +285,7 @@ const AIPlaybookExecutor = {
    * For now, falls back to BRANCH behavior with logging.
    */
   _executeAIRouterStep: async (step, run, userId) => {
-    console.log('[AIPlaybookExecutor] AI_ROUTER step - using deterministic BRANCH fallback');
+    logger.info('[AIPlaybookExecutor] AI_ROUTER step - using deterministic BRANCH fallback');
 
     // AI_ROUTER uses same logic as BRANCH but could incorporate AI suggestion in future
     const result = await AIPlaybookExecutor._executeBranchStep(step, run, userId);
@@ -374,7 +375,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         };
       }
     } catch (err) {
-      console.error('[AIPlaybookExecutor] ACTION step failed:', err);
+      logger.error('[AIPlaybookExecutor] ACTION step failed:', err);
       return {
         status: 'FAILED',
         reason: err.message,

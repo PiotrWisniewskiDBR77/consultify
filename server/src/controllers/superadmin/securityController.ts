@@ -1,4 +1,5 @@
 import { type AuthenticatedRequest, AppError, catchAsync, deps, tableExists } from './shared.js';
+import logger from '../../utils/Logger.js';
 
 /**
  * Get all security incidents
@@ -153,7 +154,7 @@ export const getIPAccessRules = catchAsync(async (req, res, next) => {
 
     res.json([]);
   } catch (error) {
-    console.error('getIPAccessRules error:', error);
+    logger.error('getIPAccessRules error:', error);
     res.status(500).json({ error: 'Failed to fetch IP access rules' });
   }
 });
@@ -248,7 +249,7 @@ export const getSecurityPolicies = catchAsync(async (req, res, next) => {
 
     res.json({ policies });
   } catch (error) {
-    console.error('getSecurityPolicies error:', error);
+    logger.error('getSecurityPolicies error:', error);
     res.status(500).json({ error: 'Failed to fetch security policies' });
   }
 });

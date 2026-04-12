@@ -4080,7 +4080,7 @@ ${questionsForPrompt}`;
 
       res.json(evaluation);
     } catch (err) {
-      console.error('[evaluateSessionAnswers] AI call failed:', err);
+      logger.error('[evaluateSessionAnswers] AI call failed:', err);
       res.status(500).json({ error: 'AI evaluation failed' });
     }
   }),

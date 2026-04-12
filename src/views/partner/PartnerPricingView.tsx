@@ -17,6 +17,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { PARTNER_DOCS } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 import {
@@ -66,7 +67,7 @@ export const PartnerPricingView: React.FC = () => {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const startApplication = useCallback(() => {
-    navigate(ROUTES.PARTNER.ONBOARDING);
+    navigate(ROUTES.PARTNER.PUBLIC_APPLY);
   }, [navigate]);
 
   const openPartnerLogin = useCallback(() => {
@@ -99,7 +100,8 @@ export const PartnerPricingView: React.FC = () => {
   const priorityBenefits = useMemo(() => PARTNER_BENEFITS.slice(0, 6), []);
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-navy-950">
+    <MarketingLayout>
+      <div className="min-h-full bg-slate-50 dark:bg-navy-950">
       <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-20 pt-14 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
 
@@ -724,7 +726,8 @@ export const PartnerPricingView: React.FC = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </MarketingLayout>
   );
 };
 

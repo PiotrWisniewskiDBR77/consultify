@@ -12,6 +12,7 @@ import circuitBreaker from '../../services/ai/circuitBreaker.js';
 import llmConfigService from '../../services/ai/llmConfigService.js';
 import { llmService } from '../../services/ai/llmService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 export class LLMController {
   private static lastHealthEventWriteAt = new Map<string, number>();
@@ -169,7 +170,7 @@ export class LLMController {
       });
       return res.json(safe);
     } catch (error: any) {
-      console.error('[LLMController] Error listing providers:', error);
+      logger.error('[LLMController] Error listing providers:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -191,7 +192,7 @@ export class LLMController {
       });
       return res.json(safe);
     } catch (error: any) {
-      console.error('[LLMController] Error listing public providers:', error);
+      logger.error('[LLMController] Error listing public providers:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -275,7 +276,7 @@ export class LLMController {
       }
       return res.status(400).json(payload);
     } catch (error: any) {
-      console.error('[LLMController] Error testing provider:', error);
+      logger.error('[LLMController] Error testing provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -398,7 +399,7 @@ export class LLMController {
       const newProvider = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.status(201).json(LLMController.sanitizeProvider(newProvider));
     } catch (error: any) {
-      console.error('[LLMController] Error creating provider:', error);
+      logger.error('[LLMController] Error creating provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -466,7 +467,7 @@ export class LLMController {
       const updated = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.json(LLMController.sanitizeProvider(updated));
     } catch (error: any) {
-      console.error('[LLMController] Error updating provider:', error);
+      logger.error('[LLMController] Error updating provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -487,7 +488,7 @@ export class LLMController {
       await dbRun('DELETE FROM llm_providers WHERE id = ?', [id]);
       return res.json({ success: true, message: 'Provider deleted' });
     } catch (error: any) {
-      console.error('[LLMController] Error deleting provider:', error);
+      logger.error('[LLMController] Error deleting provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -551,7 +552,7 @@ export class LLMController {
       const row = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.status(201).json(LLMController.sanitizeProvider(row));
     } catch (error: any) {
-      console.error('[LLMController] Error cloning provider model:', error);
+      logger.error('[LLMController] Error cloning provider model:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -596,7 +597,7 @@ export class LLMController {
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting health status:', error);
+      logger.error('[LLMController] Error getting health status:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -858,7 +859,7 @@ export class LLMController {
         },
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting detailed health:', error);
+      logger.error('[LLMController] Error getting detailed health:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -960,7 +961,7 @@ export class LLMController {
         });
       }
     } catch (error: any) {
-      console.error('[LLMController] Error testing provider:', error);
+      logger.error('[LLMController] Error testing provider:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -1105,7 +1106,7 @@ export class LLMController {
 
       return res.json(result);
     } catch (error: any) {
-      console.error('[LLMController] Error testing capability:', error);
+      logger.error('[LLMController] Error testing capability:', error);
       return res.status(500).json({
         capability: req.params.capabilityId,
         status: 'FAILED',
@@ -1180,7 +1181,7 @@ export class LLMController {
         byDay: byDayRows.map((r: any) => ({ date: r.date, calls: r.calls, tokens: r.tokens })),
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting analytics:', error);
+      logger.error('[LLMController] Error getting analytics:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1222,7 +1223,7 @@ export class LLMController {
         },
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting logs:', error);
+      logger.error('[LLMController] Error getting logs:', error);
       return res.status(500).json({ error: error.message, logs: [] });
     }
   }
@@ -1444,7 +1445,7 @@ export class LLMController {
         timeoutMs,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting providers health:', error);
+      logger.error('[LLMController] Error getting providers health:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1484,7 +1485,7 @@ export class LLMController {
         },
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting recommended provider:', error);
+      logger.error('[LLMController] Error getting recommended provider:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1627,7 +1628,7 @@ export class LLMController {
         incidents,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting incidents:', error);
+      logger.error('[LLMController] Error getting incidents:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -1687,7 +1688,7 @@ export class LLMController {
         byProvider,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting usage stats:', error);
+      logger.error('[LLMController] Error getting usage stats:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1748,7 +1749,7 @@ export class LLMController {
         byProvider: costByProvider,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error getting costs:', error);
+      logger.error('[LLMController] Error getting costs:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1823,7 +1824,7 @@ export class LLMController {
         diagnostics,
       });
     } catch (error: any) {
-      console.error('[LLMController] Error running diagnostics:', error);
+      logger.error('[LLMController] Error running diagnostics:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1849,7 +1850,7 @@ export class LLMController {
       const updated = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.json(updated);
     } catch (error: any) {
-      console.error('[LLMController] Error updating tier:', error);
+      logger.error('[LLMController] Error updating tier:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1901,7 +1902,7 @@ export class LLMController {
 
       return res.json({ assignments: grouped });
     } catch (error: any) {
-      console.error('[LLMController] Error getting tier assignments:', error);
+      logger.error('[LLMController] Error getting tier assignments:', error);
       return res.status(500).json({ error: error.message, assignments: {} });
     }
   }
@@ -1944,7 +1945,7 @@ export class LLMController {
 
       return res.json({ success: true, message: 'Provider assigned to tier' });
     } catch (error: any) {
-      console.error('[LLMController] Error assigning to tier:', error);
+      logger.error('[LLMController] Error assigning to tier:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1971,7 +1972,7 @@ export class LLMController {
 
       return res.json({ success: true, message: 'Provider removed from tier' });
     } catch (error: any) {
-      console.error('[LLMController] Error removing from tier:', error);
+      logger.error('[LLMController] Error removing from tier:', error);
       return res.status(500).json({ error: error.message });
     }
   }
@@ -1999,7 +2000,7 @@ export class LLMController {
 
       return res.json({ success: true, message: 'Priority updated' });
     } catch (error: any) {
-      console.error('[LLMController] Error updating priority:', error);
+      logger.error('[LLMController] Error updating priority:', error);
       return res.status(500).json({ error: error.message });
     }
   }

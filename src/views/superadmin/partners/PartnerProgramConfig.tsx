@@ -64,6 +64,22 @@ interface CertificationReviewItem {
   updated_at?: string;
 }
 
+interface PartnerApplicationItem {
+  id: string;
+  full_name: string;
+  email: string;
+  company: string;
+  website?: string | null;
+  country?: string | null;
+  role?: string | null;
+  focus_area?: string | null;
+  team_size?: string | null;
+  message?: string | null;
+  status: 'pending' | 'approved' | 'rejected' | 'needs_follow_up';
+  review_note?: string | null;
+  created_at?: string;
+}
+
 interface PartnerProgramReporting {
   certificationsByTrack: Array<{
     track: string;
@@ -135,6 +151,7 @@ export const PartnerProgramConfig: React.FC = () => {
   const [editingTier, setEditingTier] = useState<string | null>(null);
   const [editRate, setEditRate] = useState<number>(0);
   const [reviewQueue, setReviewQueue] = useState<CertificationReviewItem[]>([]);
+  const [partnerApplications, setPartnerApplications] = useState<PartnerApplicationItem[]>([]);
   const [reporting, setReporting] = useState<PartnerProgramReporting | null>(null);
 
   // Fetch configuration
@@ -164,6 +181,11 @@ export const PartnerProgramConfig: React.FC = () => {
       const reviewRes = await Api.get('/api/superadmin/partner-config/review-queue');
       if (reviewRes?.success && reviewRes?.data) {
         setReviewQueue(reviewRes.data);
+      }
+
+      const applicationsRes = await Api.get('/api/superadmin/partner-config/applications');
+      if (applicationsRes?.success && applicationsRes?.data) {
+        setPartnerApplications(applicationsRes.data);
       }
 
       const reportingRes = await Api.get('/api/superadmin/partner-config/reporting');
@@ -220,6 +242,33 @@ export const PartnerProgramConfig: React.FC = () => {
     } catch (err: any) {
       console.error('Error saving discount config:', err);
       toast.error(err?.message || 'Failed to save configuration');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePartnerApplicationDecision = async (
+    applicationId: string,
+    status: PartnerApplicationItem['status']
+  ) => {
+    try {
+      setSaving(true);
+      const response = await Api.post(
+        `/api/superadmin/partner-config/applications/${applicationId}/review`,
+        { status }
+      );
+
+      if (response?.success) {
+        setPartnerApplications((prev) =>
+          prev.map((item) => (item.id === applicationId ? { ...item, status } : item))
+        );
+        toast.success('Partner application updated');
+      } else {
+        toast.error(response?.error || 'Failed to update partner application');
+      }
+    } catch (err: any) {
+      console.error('Error updating partner application:', err);
+      toast.error(err?.message || 'Failed to update partner application');
     } finally {
       setSaving(false);
     }
@@ -526,6 +575,90 @@ export const PartnerProgramConfig: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-emerald-500/20">
+              <Users className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Public Partner Applications</h2>
+              <p className="text-sm text-slate-400 dark:text-slate-500">
+                Lightweight qualification leads submitted from the public recruitment page
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {partnerApplications.length === 0 ? (
+              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-400">
+                No partner applications submitted yet.
+              </div>
+            ) : (
+              partnerApplications.slice(0, 6).map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-white/5 bg-navy-900/40 p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-white font-medium">{item.company}</div>
+                      <div className="text-xs text-slate-400">
+                        {item.full_name} • {item.email}
+                      </div>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300">
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-slate-400 space-y-1">
+                    {item.role ? <div>Role: {item.role}</div> : null}
+                    {item.country ? <div>Country: {item.country}</div> : null}
+                    {item.team_size ? <div>Team size: {item.team_size}</div> : null}
+                    {item.focus_area ? <div>Focus: {item.focus_area}</div> : null}
+                    {item.created_at ? (
+                      <div>Submitted: {new Date(item.created_at).toLocaleString()}</div>
+                    ) : null}
+                  </div>
+
+                  {item.message ? (
+                    <div className="rounded-lg bg-black/20 px-3 py-2 text-sm text-slate-300">
+                      {item.message}
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handlePartnerApplicationDecision(item.id, 'approved')}
+                      disabled={saving}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm disabled:opacity-50"
+                    >
+                      <Check className="w-4 h-4" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handlePartnerApplicationDecision(item.id, 'needs_follow_up')}
+                      disabled={saving}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm disabled:opacity-50"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Follow up
+                    </button>
+                    <button
+                      onClick={() => handlePartnerApplicationDecision(item.id, 'rejected')}
+                      disabled={saving}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm disabled:opacity-50"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 rounded-lg bg-amber-500/20">

@@ -23,6 +23,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
+import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { KbCategory, useDocsCategories } from '@/hooks/useDocs';
 import { cn } from '@/lib/utils';
 
@@ -71,9 +72,10 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 text-slate-900 dark:text-white">
+    <MarketingLayout footerVariant="knowledge">
+      <div className="min-h-screen bg-white dark:bg-navy-950 text-slate-900 dark:text-white">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-14 border-b border-slate-200 dark:border-navy-800 bg-white/80 dark:bg-navy-950/80 backdrop-blur-lg">
+      <header className="fixed top-14 left-0 right-0 z-50 h-14 border-b border-slate-200 dark:border-navy-800 bg-white/80 dark:bg-navy-950/80 backdrop-blur-lg">
         <div className="h-full flex items-center justify-between px-4 lg:px-6">
           {/* Left: Logo + Mobile Menu Toggle */}
           <div className="flex items-center gap-4">
@@ -179,7 +181,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className="pt-14 flex">
+      <div className="pt-28 flex">
         {/* Sidebar - Desktop */}
         <aside
           className={cn(
@@ -294,7 +296,8 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
           {children || <Outlet />}
         </main>
       </div>
-    </div>
+      </div>
+    </MarketingLayout>
   );
 };
 

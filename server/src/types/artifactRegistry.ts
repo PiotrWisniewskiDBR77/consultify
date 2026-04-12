@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { OperationContract } from './operationContract.js';
+
 export const ArtifactFamilyValues = ['document', 'presentation', 'sheet', 'template'] as const;
 export type ArtifactFamily = (typeof ArtifactFamilyValues)[number];
 
@@ -225,16 +227,15 @@ export interface ArtifactRunRecord {
   failureReason: string | null;
   preflight: ArtifactRunPreflight | null;
   failurePackage: ArtifactRunFailurePackage | null;
-  materializationOrigin:
-    | {
-        originRuntime: ArtifactOriginRuntime;
-        originRecordId: string;
-      }
-    | null;
+  materializationOrigin: {
+    originRuntime: ArtifactOriginRuntime;
+    originRecordId: string;
+  } | null;
   startedAt: string;
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  operationContract?: OperationContract;
 }
 
 export interface MaterializeArtifactRunParams {

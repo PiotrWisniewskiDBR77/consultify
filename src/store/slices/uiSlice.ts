@@ -100,6 +100,10 @@ export interface UISlice {
   // Dynamic breadcrumbs override set by Interview hub
   interviewBreadcrumbs: string[] | null;
   setInterviewBreadcrumbs: (crumbs: string[] | null) => void;
+
+  // Chat output tool selector (auto = intent detection, others = explicit routing)
+  chatOutputTool: 'auto' | 'wordy' | 'excele' | 'prezentacje';
+  setChatOutputTool: (tool: 'auto' | 'wordy' | 'excele' | 'prezentacje') => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
@@ -155,6 +159,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   interviewBreadcrumbs: null,
   setInterviewBreadcrumbs: (crumbs) => set({ interviewBreadcrumbs: crumbs }),
+
+  chatOutputTool: 'auto',
+  setChatOutputTool: (tool) => set({ chatOutputTool: tool }),
 
   setChatKickoffMessage: (message) => set({ chatKickoffMessage: message }),
   clearChatKickoffMessage: () => set({ chatKickoffMessage: null }),

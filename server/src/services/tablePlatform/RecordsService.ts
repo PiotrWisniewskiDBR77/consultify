@@ -375,12 +375,12 @@ const recordsService = {
               recordId: id,
               newCellValues: enrichedData,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
           webhookRelayService
             .dispatchEvent(baseId, 'record.created', { recordId: id, tableId, data: enrichedData })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       return row ?? null;
     } catch (e) {
@@ -598,7 +598,7 @@ const recordsService = {
               oldCellValues: existingData,
               newCellValues: enrichedData,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
           webhookRelayService
             .dispatchEvent(baseId, 'record.updated', {
               recordId,
@@ -606,9 +606,9 @@ const recordsService = {
               data: enrichedData,
               previousData: existingData,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       recordWatchService
         .notifyWatchers(recordId, {
@@ -618,7 +618,7 @@ const recordsService = {
           actorId: updatedBy,
           changes: enrichedData,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       return after ?? null;
     } catch (e) {
@@ -665,12 +665,12 @@ const recordsService = {
               tableId,
               recordId,
             })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
           webhookRelayService
             .dispatchEvent(baseId, 'record.deleted', { recordId, tableId })
-            .catch(() => {});
+            .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       recordWatchService
         .notifyWatchers(recordId, {
@@ -679,7 +679,7 @@ const recordsService = {
           tableId,
           actorId: deletedBy,
         })
-        .catch(() => {});
+        .catch((err: unknown) => logger.warn('[RecordsService] event dispatch failed', err));
 
       return true;
     } catch (e) {

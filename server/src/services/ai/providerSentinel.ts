@@ -368,10 +368,10 @@ class ProviderSentinel {
   start(intervalMs = 120_000): void {
     if (this.intervalId) return;
     this.intervalId = setInterval(
-      () => void this.runOnce().catch(() => {}),
+      () => void this.runOnce().catch((err: unknown) => logger.warn('[ProviderSentinel] health check failed', err)),
       Math.max(30_000, intervalMs)
     );
-    void this.runOnce().catch(() => {});
+    void this.runOnce().catch((err: unknown) => logger.warn('[ProviderSentinel] initial health check failed', err));
     logger.info('[ProviderSentinel] Started', { intervalMs });
   }
 

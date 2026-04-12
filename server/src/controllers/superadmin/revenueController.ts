@@ -96,7 +96,7 @@ export const getSubscriptionChanges = catchAsync(async (req, res, next) => {
   }
 
   sql += ' ORDER BY sc.created_at DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(String(limit)));
 
   const changes = await deps.db.all(sql, params);
   res.json(changes);
@@ -121,7 +121,7 @@ export const approveSubscriptionChange = catchAsync(async (req, res, next) => {
 
   await deps.db.run(
     'UPDATE subscription_changes SET status = "approved", approved_by = ?, approved_at = datetime("now") WHERE id = ?',
-    [req.user.id, id]
+    [(req as AuthenticatedRequest).user!.id, id]
   );
 
   res.json({ message: 'Subscription change approved' });
@@ -175,11 +175,11 @@ export const getRevenueRecognitions = catchAsync(async (req, res, next) => {
   }
 
   sql += ' ORDER BY rr.created_at DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(String(limit)));
 
   const recognitions = await deps.db.all(sql, params);
   res.json(
-    recognitions.map((r) => ({
+    recognitions.map((r: any) => ({
       ...r,
       recognitionSchedule: JSON.parse(r.recognition_schedule_json || '[]'),
     }))
@@ -236,8 +236,8 @@ export const recognizeRevenue = catchAsync(async (req, res, next) => {
     return next(new AppError('Revenue recognition not found', 404));
   }
 
-  const newRecognized = (recognition.recognized_amount || 0) + amount;
-  const newRemaining = (recognition.remaining_amount || 0) - amount;
+  const newRecognized = ((recognition as any).recognized_amount || 0) + amount;
+  const newRemaining = ((recognition as any).remaining_amount || 0) - amount;
 
   await deps.db.run(
     'UPDATE revenue_recognition SET recognized_amount = ?, remaining_amount = ?, updated_at = datetime("now") WHERE id = ?',
@@ -256,10 +256,10 @@ export const getRecognitionSchedule = catchAsync(async (req, res, next) => {
   }
 
   res.json({
-    id: recognition.id,
-    schedule: JSON.parse(recognition.recognition_schedule_json || '[]'),
-    recognized: recognition.recognized_amount,
-    remaining: recognition.remaining_amount,
+    id: (recognition as any).id,
+    schedule: JSON.parse((recognition as any).recognition_schedule_json || '[]'),
+    recognized: (recognition as any).recognized_amount,
+    remaining: (recognition as any).remaining_amount,
   });
 });
 
@@ -312,10 +312,10 @@ export const getRevenueForecasts = catchAsync(async (req, res, next) => {
   }
 
   sql += ' ORDER BY period_start DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(String(limit)));
 
   const forecasts = await deps.db.all(sql, params);
-  res.json(forecasts.map((f) => ({ ...f, inputData: JSON.parse(f.input_data_json || '{}') })));
+  res.json(forecasts.map((f: any) => ({ ...f, inputData: JSON.parse(f.input_data_json || '{}') })));
 });
 
 export const createRevenueForecast = catchAsync(async (req, res, next) => {
@@ -419,7 +419,7 @@ export const getPaymentMethods = catchAsync(async (req, res, next) => {
   const methods = await deps.db.all(sql, params);
 
   res.json(
-    methods.map((m) => ({
+    methods.map((m: any) => ({
       ...m,
       paymentDetails: JSON.parse(m.payment_details_json || '{}'),
       isDefault: m.is_default === 1,
@@ -456,7 +456,7 @@ export const updatePaymentMethod = catchAsync(async (req, res, next) => {
 
   if (isDefault) {
     await deps.db.run('UPDATE payment_methods SET is_default = 0 WHERE organization_id = ?', [
-      method.organization_id,
+      (method as any).organization_id,
     ]);
   }
 
@@ -495,7 +495,7 @@ export const getPaymentFailures = catchAsync(async (req, res, next) => {
   }
 
   sql += ' ORDER BY pf.attempted_at DESC LIMIT ?';
-  params.push(parseInt(limit));
+  params.push(parseInt(String(limit)));
 
   const failures = await deps.db.all(sql, params);
   res.json(failures);

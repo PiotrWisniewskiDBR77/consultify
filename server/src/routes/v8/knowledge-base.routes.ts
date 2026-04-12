@@ -192,7 +192,7 @@ publicKnowledgeBaseRoutes.post(
 // ============================================================
 
 /**
- * GET /api/v8/kb/collections?lang=&parent=&featured=
+ * GET /api/v8/kb/collections?lang=&parent=&featured=&site=
  * Browse collections (IA spine). Public + authenticated.
  */
 publicKnowledgeBaseRoutes.get(
@@ -201,10 +201,12 @@ publicKnowledgeBaseRoutes.get(
     const language = firstParam(req.query.lang) || 'en';
     const parentId = firstParam(req.query.parent);
     const featured = firstParam(req.query.featured) === 'true';
+    const slugPrefix = sitePrefix(firstParam(req.query.site));
     const collections = await KnowledgeBaseService.getCollections(language, {
       parentId: parentId || undefined,
       visibility: 'public',
       featured: featured || undefined,
+      slugPrefix: slugPrefix || undefined,
     });
     return res.json({ data: { collections }, meta: kbMeta() });
   })
@@ -257,7 +259,11 @@ publicKnowledgeBaseRoutes.get(
   asyncHandler(async (req: Request, res: Response) => {
     const language = firstParam(req.query.lang) || 'en';
     const kind = firstParam(req.query.kind);
-    const tags = await KnowledgeBaseService.getTags(language, { kind: kind || undefined });
+    const slugPrefix = sitePrefix(req.query.site);
+    const tags = await KnowledgeBaseService.getTags(language, {
+      kind: kind || undefined,
+      sitePrefix: slugPrefix,
+    });
     return res.json({ data: { tags }, meta: kbMeta() });
   })
 );

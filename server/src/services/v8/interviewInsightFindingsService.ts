@@ -392,7 +392,7 @@ export function buildHandoffPayload(
     insightArtifactId: insightId,
     findingId: finding.id,
     findingStatement: finding.finding_statement,
-    confidenceLevel: finding.confidence_level,
+    confidenceLevel: (finding.confidence_level === 'insufficient' ? 'unknown' : finding.confidence_level) as any,
     limits: finding.limits,
     nextAction: finding.next_action,
     evidencePointers: activePointers,

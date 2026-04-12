@@ -742,12 +742,12 @@ export async function resetConnection(): Promise<void> {
   resetConnectionLocally();
 
   if (db) {
-    console.log('[Database] Closing database handle...');
+    logger.info('[Database] Closing database handle...');
     (db as any).__CLOSED__ = true;
     if ((db as any).close) {
       await new Promise<void>((resolve) => {
         (db as any).close((err: any) => {
-          if (err) console.error('[Database] Error closing DB handle', err);
+          if (err) logger.error('[Database] Error closing DB handle', err);
           resolve();
         });
       });

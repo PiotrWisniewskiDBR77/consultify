@@ -6,7 +6,7 @@ import { AppError, type AuthenticatedRequest, catchAsync, deps } from './shared.
 export const getDashboards = catchAsync(async (req, res, next) => {
   const { isShared } = req.query;
   const dashboards = await deps.DashboardBuilderService.getDashboards({
-    createdBy: req.user.id,
+    createdBy: (req as AuthenticatedRequest).user!.id,
     isShared: isShared === 'true' ? true : isShared === 'false' ? false : undefined,
   });
   res.json(dashboards);
@@ -48,7 +48,7 @@ export const createDashboard = catchAsync(async (req, res, next) => {
     layout,
     widgets,
     isShared,
-    createdBy: req.user.id,
+    createdBy: (req as AuthenticatedRequest).user!.id,
   });
 
   res.status(201).json(dashboard);
@@ -84,7 +84,7 @@ export const cloneDashboard = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
-  const cloned = await deps.DashboardBuilderService.cloneDashboard(id, name, req.user.id);
+  const cloned = await deps.DashboardBuilderService.cloneDashboard(id, name, (req as AuthenticatedRequest).user!.id);
 
   if (!cloned) {
     return next(new AppError('Dashboard not found', 404));

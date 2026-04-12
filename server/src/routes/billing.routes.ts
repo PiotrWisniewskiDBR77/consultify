@@ -15,6 +15,7 @@ import {
 import BillingWebhookService, { BILLING_EVENT_TYPES } from '../services/BillingWebhookService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   BillingStatsQuerySchema,
   CancelSubscriptionRequestSchema,
@@ -140,7 +141,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[Billing] Stats error:', error);
+      logger.error('[Billing] Stats error:', error);
       return res.status(500).json({ error: 'Failed to get billing stats' });
     }
   })
@@ -236,7 +237,7 @@ router.get(
         pageSize,
       });
     } catch (error: unknown) {
-      console.error('[Billing] List invoices error:', error);
+      logger.error('[Billing] List invoices error:', error);
       return res.status(500).json({ error: 'Failed to list invoices' });
     }
   })
@@ -295,7 +296,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[Billing] Get invoice error:', error);
+      logger.error('[Billing] Get invoice error:', error);
       return res.status(500).json({ error: 'Failed to get invoice' });
     }
   })
@@ -348,7 +349,7 @@ router.post(
 
       res.json({ success: true, id, invoiceNumber });
     } catch (error: unknown) {
-      console.error('[Billing] Create invoice error:', error);
+      logger.error('[Billing] Create invoice error:', error);
       return res.status(500).json({ error: 'Failed to create invoice' });
     }
   })
@@ -415,7 +416,7 @@ router.put(
 
       res.json({ success: true });
     } catch (error: unknown) {
-      console.error('[Billing] Update invoice error:', error);
+      logger.error('[Billing] Update invoice error:', error);
       return res.status(500).json({ error: 'Failed to update invoice' });
     }
   })
@@ -441,7 +442,7 @@ router.post(
 
       res.json({ success: true, message: 'Invoice sent' });
     } catch (error: unknown) {
-      console.error('[Billing] Send invoice error:', error);
+      logger.error('[Billing] Send invoice error:', error);
       return res.status(500).json({ error: 'Failed to send invoice' });
     }
   })
@@ -520,7 +521,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[Billing] List subscriptions error:', error);
+      logger.error('[Billing] List subscriptions error:', error);
       return res.status(500).json({ error: 'Failed to list subscriptions' });
     }
   })
@@ -571,7 +572,7 @@ router.get(
         },
       });
     } catch (error: unknown) {
-      console.error('[Billing] Get subscription error:', error);
+      logger.error('[Billing] Get subscription error:', error);
       return res.status(500).json({ error: 'Failed to get subscription' });
     }
   })
@@ -637,7 +638,7 @@ router.post(
 
       res.json({ success: true, id });
     } catch (error: unknown) {
-      console.error('[Billing] Create subscription error:', error);
+      logger.error('[Billing] Create subscription error:', error);
       return res.status(500).json({ error: 'Failed to create subscription' });
     }
   })
@@ -693,7 +694,7 @@ router.put(
 
       res.json({ success: true });
     } catch (error: unknown) {
-      console.error('[Billing] Update subscription error:', error);
+      logger.error('[Billing] Update subscription error:', error);
       return res.status(500).json({ error: 'Failed to update subscription' });
     }
   })
@@ -751,7 +752,7 @@ router.post(
           : 'Subscription will be canceled at period end',
       });
     } catch (error: unknown) {
-      console.error('[Billing] Cancel subscription error:', error);
+      logger.error('[Billing] Cancel subscription error:', error);
       return res.status(500).json({ error: 'Failed to cancel subscription' });
     }
   })
@@ -803,7 +804,7 @@ router.get(
         })),
       });
     } catch (error: unknown) {
-      console.error('[Billing] List plans error:', error);
+      logger.error('[Billing] List plans error:', error);
       return res.status(500).json({ error: 'Failed to list plans' });
     }
   })
@@ -854,7 +855,7 @@ router.post(
 
       res.json({ success: true, id });
     } catch (error: unknown) {
-      console.error('[Billing] Create plan error:', error);
+      logger.error('[Billing] Create plan error:', error);
       return res.status(500).json({ error: 'Failed to create plan' });
     }
   })
@@ -915,7 +916,7 @@ router.put(
 
       res.json({ success: true });
     } catch (error: unknown) {
-      console.error('[Billing] Update plan error:', error);
+      logger.error('[Billing] Update plan error:', error);
       return res.status(500).json({ error: 'Failed to update plan' });
     }
   })
@@ -966,7 +967,7 @@ router.get(
 
       res.json({ creditNotes });
     } catch (error: unknown) {
-      console.error('[Billing] List credit notes error:', error);
+      logger.error('[Billing] List credit notes error:', error);
       return res.status(500).json({ error: 'Failed to list credit notes' });
     }
   })
@@ -995,7 +996,7 @@ router.post(
 
       res.json({ success: true, id, noteNumber });
     } catch (error: unknown) {
-      console.error('[Billing] Create credit note error:', error);
+      logger.error('[Billing] Create credit note error:', error);
       return res.status(500).json({ error: 'Failed to create credit note' });
     }
   })
@@ -1103,7 +1104,7 @@ router.get(
 
       res.json({ usage, structuredUsage, totals });
     } catch (error: unknown) {
-      console.error('[Billing] Get usage error:', error);
+      logger.error('[Billing] Get usage error:', error);
       return res.status(500).json({ error: 'Failed to get usage' });
     }
   })
@@ -1129,7 +1130,7 @@ router.post(
 
       res.json({ success: true, id });
     } catch (error: unknown) {
-      console.error('[Billing] Record usage error:', error);
+      logger.error('[Billing] Record usage error:', error);
       return res.status(500).json({ error: 'Failed to record usage' });
     }
   })
@@ -1190,7 +1191,7 @@ router.get(
         }))
       );
     } catch (error: unknown) {
-      console.error('[Billing] Get spending alerts error:', error);
+      logger.error('[Billing] Get spending alerts error:', error);
       return res.status(500).json({ error: 'Failed to get spending alerts' });
     }
   })
@@ -1226,7 +1227,7 @@ router.post(
 
       res.json({ success: true, id });
     } catch (error: unknown) {
-      console.error('[Billing] Create spending alert error:', error);
+      logger.error('[Billing] Create spending alert error:', error);
       return res.status(500).json({ error: 'Failed to create spending alert' });
     }
   })
@@ -1264,7 +1265,7 @@ router.put(
 
       res.json({ success: true });
     } catch (error: unknown) {
-      console.error('[Billing] Update spending alert error:', error);
+      logger.error('[Billing] Update spending alert error:', error);
       return res.status(500).json({ error: 'Failed to update spending alert' });
     }
   })
@@ -1291,7 +1292,7 @@ router.post(
 
       res.json({ success: true });
     } catch (error: unknown) {
-      console.error('[Billing] Toggle spending alert error:', error);
+      logger.error('[Billing] Toggle spending alert error:', error);
       return res.status(500).json({ error: 'Failed to toggle spending alert' });
     }
   })
@@ -1310,7 +1311,7 @@ router.delete(
 
       res.json({ success: true });
     } catch (error: unknown) {
-      console.error('[Billing] Delete spending alert error:', error);
+      logger.error('[Billing] Delete spending alert error:', error);
       return res.status(500).json({ error: 'Failed to delete spending alert' });
     }
   })
@@ -1329,7 +1330,7 @@ router.get(
       const addons = await dbAll(sql, []);
       res.json(addons);
     } catch (error: unknown) {
-      console.error('[Billing] Get addons error:', error);
+      logger.error('[Billing] Get addons error:', error);
       return res.status(500).json({ error: 'Failed to get add-ons' });
     }
   })
@@ -1351,7 +1352,7 @@ router.get(
       const events = await BillingWebhookService.getRecentEvents(orgId, limit);
       res.json({ events });
     } catch (error: unknown) {
-      console.error('[Billing] Get webhook events error:', error);
+      logger.error('[Billing] Get webhook events error:', error);
       return res.status(500).json({ error: 'Failed to get webhook events' });
     }
   })
@@ -1369,7 +1370,7 @@ router.get(
       const stats = await BillingWebhookService.getEventStats(orgId, period);
       res.json({ stats });
     } catch (error: unknown) {
-      console.error('[Billing] Get webhook event stats error:', error);
+      logger.error('[Billing] Get webhook event stats error:', error);
       return res.status(500).json({ error: 'Failed to get webhook event statistics' });
     }
   })
@@ -1400,7 +1401,7 @@ router.get(
       }
       res.json({ event });
     } catch (error: unknown) {
-      console.error('[Billing] Get webhook event error:', error);
+      logger.error('[Billing] Get webhook event error:', error);
       return res.status(500).json({ error: 'Failed to get webhook event' });
     }
   })
@@ -1455,7 +1456,7 @@ router.post(
 
       res.json({ success: true, result });
     } catch (error: unknown) {
-      console.error('[Billing Admin] Retry webhook event error:', error);
+      logger.error('[Billing Admin] Retry webhook event error:', error);
       return res.status(500).json({ error: 'Failed to retry webhook event' });
     }
   })
@@ -1471,7 +1472,7 @@ router.get(
       const failedEvents = await BillingWebhookService.getFailedEvents(limit);
       res.json({ events: failedEvents });
     } catch (error: unknown) {
-      console.error('[Billing Admin] Get failed webhook events error:', error);
+      logger.error('[Billing Admin] Get failed webhook events error:', error);
       return res.status(500).json({ error: 'Failed to get failed webhook events' });
     }
   })
@@ -1487,7 +1488,7 @@ router.get(
       const pendingEvents = await BillingWebhookService.getPendingRetries(limit);
       res.json({ events: pendingEvents });
     } catch (error: unknown) {
-      console.error('[Billing Admin] Get pending webhook events error:', error);
+      logger.error('[Billing Admin] Get pending webhook events error:', error);
       return res.status(500).json({ error: 'Failed to get pending webhook events' });
     }
   })

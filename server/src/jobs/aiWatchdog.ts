@@ -13,6 +13,7 @@
  */
 
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
 const db = getDatabase();
 const PredictiveService = import('predictiveService.js');
 const { getCoordinator } = import('ai/agents.js');
@@ -70,7 +71,7 @@ const AIWatchdog = {
    */
   run: async () => {
     if (AIWatchdog.isRunning) {
-      console.log('[AIWatchdog] Already running, skipping...');
+      logger.info('[AIWatchdog] Already running, skipping...');
       return { skipped: true };
     }
 
@@ -78,12 +79,12 @@ const AIWatchdog = {
     const startTime = Date.now();
     const runId = uuidv4();
 
-    console.log(`[AIWatchdog] Starting run ${runId}`);
+    logger.info(`[AIWatchdog] Starting run ${runId}`);
 
     try {
       // 1. Get all active projects
       const activeProjects = await AIWatchdog.getActiveProjects();
-      console.log(`[AIWatchdog] Monitoring ${activeProjects.length} active projects`);
+      logger.info(`[AIWatchdog] Monitoring ${activeProjects.length} active projects`);
 
       const results = {
         runId,
@@ -99,7 +100,7 @@ const AIWatchdog = {
           const projectResults = await AIWatchdog.analyzeProject(project);
           results.alertsGenerated += projectResults.alertsCreated;
         } catch (error) {
-          console.error(`[AIWatchdog] Error analyzing project ${project.id}:`, error);
+          logger.error(`[AIWatchdog] Error analyzing project ${project.id}:`, error);
           results.errors.push({ projectId: project.id, error: error.message });
         }
       }
@@ -123,10 +124,10 @@ const AIWatchdog = {
       // 6. Log run
       await AIWatchdog.logRun(runId, results, Date.now() - startTime);
 
-      console.log(`[AIWatchdog] Run ${runId} completed in ${Date.now() - startTime}ms`);
+      logger.info(`[AIWatchdog] Run ${runId} completed in ${Date.now() - startTime}ms`);
       return results;
     } catch (error) {
-      console.error('[AIWatchdog] Critical error:', error);
+      logger.error('[AIWatchdog] Critical error:', error);
       throw error;
     } finally {
       AIWatchdog.isRunning = false;
@@ -150,7 +151,7 @@ const AIWatchdog = {
         [],
         (err, rows) => {
           if (err) {
-            console.error('[AIWatchdog] Error fetching projects:', err);
+            logger.error('[AIWatchdog] Error fetching projects:', err);
             return resolve([]);
           }
           resolve(rows || []);
@@ -318,7 +319,7 @@ const AIWatchdog = {
         ],
         function (err) {
           if (err) {
-            console.error('[AIWatchdog] Error creating alert:', err);
+            logger.error('[AIWatchdog] Error creating alert:', err);
             return resolve(null);
           }
 

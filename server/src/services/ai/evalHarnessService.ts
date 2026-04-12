@@ -43,6 +43,10 @@ export const EvalRunConfigSchema = z.object({
       'policy_compliance',
       'response_quality',
       'latency',
+      'groundedness',
+      'hallucination_rate',
+      'instruction_following',
+      'citation_accuracy',
     ])
   ),
   modelId: z.string().optional(),
@@ -61,6 +65,10 @@ export interface EvalMetrics {
   avgResponseQuality?: number;
   avgLatencyMs?: number;
   p95LatencyMs?: number;
+  groundednessScore?: number;
+  hallucinationRate?: number;
+  instructionFollowing?: number;
+  citationAccuracy?: number;
 }
 
 export interface SampleResult {
@@ -326,6 +334,26 @@ export async function runEvalHarness(
       qualityCount++;
     }
 
+    if (evalTypes.includes('groundedness') && sample.expectedOutput) {
+      const grounding = computeGroundednessScore(sample.expectedOutput, sample.input);
+      (result as any).groundednessScore = grounding;
+    }
+
+    if (evalTypes.includes('hallucination_rate') && sample.expectedOutput) {
+      const halluc = computeHallucinationRate(sample.expectedOutput);
+      (result as any).hallucinationRate = halluc;
+    }
+
+    if (evalTypes.includes('instruction_following') && sample.expectedOutput) {
+      const instrScore = computeInstructionFollowing(sample.expectedOutput, sample.input);
+      (result as any).instructionFollowing = instrScore;
+    }
+
+    if (evalTypes.includes('citation_accuracy') && sample.expectedOutput) {
+      const citAcc = computeCitationAccuracyScore(sample.expectedOutput);
+      (result as any).citationAccuracy = citAcc;
+    }
+
     const elapsed = Date.now() - startMs;
     if (evalTypes.includes('latency')) {
       result.latencyMs = elapsed;
@@ -353,6 +381,36 @@ export async function runEvalHarness(
     const sorted = [...latencies].sort((a, b) => a - b);
     metrics.p95LatencyMs = sorted[Math.floor(sorted.length * 0.95)] ?? sorted[sorted.length - 1];
   }
+
+  const groundednessScores = sampleResults
+    .filter((r: any) => r.groundednessScore !== undefined)
+    .map((r: any) => r.groundednessScore as number);
+  if (groundednessScores.length > 0)
+    metrics.groundednessScore =
+      Math.round(
+        (groundednessScores.reduce((a, b) => a + b, 0) / groundednessScores.length) * 10000
+      ) / 10000;
+
+  const hallucRates = sampleResults
+    .filter((r: any) => r.hallucinationRate !== undefined)
+    .map((r: any) => r.hallucinationRate as number);
+  if (hallucRates.length > 0)
+    metrics.hallucinationRate =
+      Math.round((hallucRates.reduce((a, b) => a + b, 0) / hallucRates.length) * 10000) / 10000;
+
+  const instrScores = sampleResults
+    .filter((r: any) => r.instructionFollowing !== undefined)
+    .map((r: any) => r.instructionFollowing as number);
+  if (instrScores.length > 0)
+    metrics.instructionFollowing =
+      Math.round((instrScores.reduce((a, b) => a + b, 0) / instrScores.length) * 10000) / 10000;
+
+  const citAccScores = sampleResults
+    .filter((r: any) => r.citationAccuracy !== undefined)
+    .map((r: any) => r.citationAccuracy as number);
+  if (citAccScores.length > 0)
+    metrics.citationAccuracy =
+      Math.round((citAccScores.reduce((a, b) => a + b, 0) / citAccScores.length) * 10000) / 10000;
 
   let regression: RegressionComparison | undefined;
   let passesGate = true;
@@ -1257,6 +1315,55 @@ function extractActionsFromOutput(output: string): string[] {
     }
   }
   return actions;
+}
+
+function computeGroundednessScore(response: string, context: string): number {
+  if (!context?.trim()) return 0.5;
+  const sentences = response.split(/[.!?]\s+/).filter((s) => s.length > 10);
+  if (!sentences.length) return 0.5;
+  const ctxLower = context.toLowerCase();
+  let grounded = 0;
+  for (const sent of sentences) {
+    const keywords = sent
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 3);
+    const overlap = keywords.filter((w) => ctxLower.includes(w)).length / Math.max(keywords.length, 1);
+    if (overlap > 0.3) grounded++;
+  }
+  return Math.round((grounded / sentences.length) * 10000) / 10000;
+}
+
+const HALLUC_INDICATORS = [
+  'as everyone knows', 'it is well known', 'studies show', 'research proves',
+  'jak powszechnie wiadomo', 'badania dowodzą', 'jak wynika z badań',
+  'according to experts', 'scientists agree', 'eksperci twierdzą',
+];
+
+function computeHallucinationRate(response: string): number {
+  const lower = response.toLowerCase();
+  const hits = HALLUC_INDICATORS.filter((p) => lower.includes(p)).length;
+  const sentences = response.split(/[.!?]\s+/).filter((s) => s.length > 10);
+  if (!sentences.length) return 0;
+  return Math.round(Math.min(1, hits / Math.max(sentences.length * 0.1, 1)) * 10000) / 10000;
+}
+
+function computeInstructionFollowing(response: string, _input: string): number {
+  let score = 0.5;
+  if (/^#{1,3}\s/m.test(response)) score += 0.15;
+  if (/^\d+\.\s/m.test(response) || /^[-*]\s/m.test(response)) score += 0.1;
+  if (response.split(/\n\n+/).filter((p) => p.trim()).length > 1) score += 0.1;
+  if (/\[DT\]|\[KB\]|\[BM\]|\[\d+\]/.test(response)) score += 0.15;
+  return Math.max(0, Math.min(1, Math.round(score * 10000) / 10000));
+}
+
+function computeCitationAccuracyScore(response: string): number {
+  const citationRefs = response.match(/\[(?:DT|KB|BM|\d+)\]/g) || [];
+  if (!citationRefs.length) return 0;
+  const sentences = response.split(/[.!?]\s+/).filter((s) => s.length > 10);
+  if (!sentences.length) return 0;
+  const citedSentences = sentences.filter((s) => /\[(?:DT|KB|BM|\d+)\]/.test(s)).length;
+  return Math.round((citedSentences / sentences.length) * 10000) / 10000;
 }
 
 function computeResponseQuality(expectedOutput: string, actualInput: string): number {

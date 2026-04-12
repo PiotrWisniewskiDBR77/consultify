@@ -8,10 +8,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import { useDeviceType } from '../../../hooks/useDeviceType';
-import { getRouteFromAppView } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
@@ -37,7 +35,6 @@ import { ActiveFloatingState, MenuItem } from './types';
 export const Sidebar: React.FC = () => {
   const { t } = useTranslation();
   const { isTablet, isMobile, isTouchDevice } = useDeviceType();
-  const navigate = useNavigate();
 
   // Prefetch route modules / data on hover to reduce perceived navigation latency.
   const prefetchedRef = React.useRef<Set<string>>(new Set());
@@ -46,7 +43,7 @@ export const Sidebar: React.FC = () => {
   // Avoid selectors returning new objects/arrays each call (even with shallow),
   // because it can trigger "getSnapshot should be cached" warnings/loops.
   const currentView = useAppStore((s) => s.currentView);
-  const setCurrentViewState = useAppStore((s) => s.setCurrentViewState);
+  const setCurrentView = useAppStore((s) => s.setCurrentView);
   const logout = useAppStore((s) => s.logout);
   const isSidebarOpen = useAppStore((s) => s.isSidebarOpen);
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
@@ -117,9 +114,8 @@ export const Sidebar: React.FC = () => {
 
   const navigateToFullChat = React.useCallback(() => {
     setDisplayMode('full');
-    setCurrentViewState(AppView.AI_CHAT);
-    navigate(getRouteFromAppView(AppView.AI_CHAT));
-  }, [navigate, setCurrentViewState, setDisplayMode]);
+    setCurrentView(AppView.AI_CHAT);
+  }, [setCurrentView, setDisplayMode]);
 
   const navigateToView = React.useCallback(
     (viewId: AppView) => {
@@ -129,10 +125,9 @@ export const Sidebar: React.FC = () => {
         projectId: currentProjectId || undefined,
       });
       setWorkspaceContext(context);
-      setCurrentViewState(viewId);
-      navigate(getRouteFromAppView(viewId));
+      setCurrentView(viewId);
     },
-    [currentProjectId, navigate, setCurrentViewState, setDisplayMode, setWorkspaceContext]
+    [currentProjectId, setCurrentView, setDisplayMode, setWorkspaceContext]
   );
 
   const handleItemClick = React.useCallback(

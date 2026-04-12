@@ -8,6 +8,7 @@
  */
 
 import { type RequestHandler, Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/workstreams.js');
 const workstreamsRoutesJS = module.default || module;
@@ -28,6 +29,6 @@ if (typeof workstreamsRoutesJS === 'function') {
   router.use(workstreamsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
   // Fallback or error
-  console.error('workstreams.js did not export a valid router');
+  logger.error('workstreams.js did not export a valid router');
 }
 export default router;
