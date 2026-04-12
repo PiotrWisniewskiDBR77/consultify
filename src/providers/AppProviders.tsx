@@ -70,13 +70,13 @@ interface AppProvidersProps {
 
 const AuthenticatedProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <V8Provider>
-    <TrialProvider>
-      <AccessPolicyProvider>
+    <AccessPolicyProvider>
+      <TrialProvider>
         <AIProvider>
           <TeresaVoiceProvider>{children}</TeresaVoiceProvider>
         </AIProvider>
-      </AccessPolicyProvider>
-    </TrialProvider>
+      </TrialProvider>
+    </AccessPolicyProvider>
   </V8Provider>
 );
 
