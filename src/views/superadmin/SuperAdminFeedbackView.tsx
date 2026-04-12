@@ -42,6 +42,7 @@ interface FeedbackItem {
   user_email: string;
   user_name?: string;
   type: 'BUG' | 'IDEA' | 'FEATURE' | 'PULSE';
+  title?: string;
   message: string;
   status: FeedbackStatus;
   severity?: string;
@@ -54,6 +55,8 @@ interface FeedbackItem {
   screen_size?: string;
   ui_language?: string;
   ui_theme?: string;
+  source_env?: string;
+  linked_task_id?: string;
   created_at: string;
   updated_at?: string;
   statusHistory?: StatusHistoryEntry[];
@@ -104,7 +107,7 @@ const STATUS_CONFIG: Record<FeedbackStatus, { color: string; bg: string; border:
 const SEVERITY_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
   CRITICAL: { color: 'text-red-700 dark:text-red-400', icon: <AlertTriangle size={12} /> },
   HIGH: { color: 'text-orange-700 dark:text-orange-400', icon: <AlertTriangle size={12} /> },
-  NORMAL: { color: 'text-slate-600 dark:text-slate-400', icon: null },
+  MEDIUM: { color: 'text-amber-700 dark:text-amber-400', icon: <AlertTriangle size={12} /> },
   LOW: { color: 'text-slate-600 dark:text-slate-500', icon: null },
 };
 
@@ -207,8 +210,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
         .filter(
           (item) =>
             !search ||
+            (item.title || '').toLowerCase().includes(search.toLowerCase()) ||
             item.message.toLowerCase().includes(search.toLowerCase()) ||
             (item.user_email || '').toLowerCase().includes(search.toLowerCase()) ||
+            (item.linked_task_id || '').toLowerCase().includes(search.toLowerCase()) ||
             item.id.toLowerCase().includes(search.toLowerCase())
         )
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
@@ -260,7 +265,12 @@ export const SuperAdminFeedbackView: React.FC = () => {
                   {selectedItem.type === 'BUG' ? <Bug size={12} /> : <Lightbulb size={12} />}
                   {selectedItem.type}
                 </span>
-                {selectedItem.severity && selectedItem.severity !== 'NORMAL' && (
+                {selectedItem.source_env && (
+                  <span className="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide bg-slate-100 text-slate-700 border border-slate-200 dark:bg-navy-900/40 dark:text-slate-300 dark:border-slate-700">
+                    {selectedItem.source_env}
+                  </span>
+                )}
+                {selectedItem.severity && selectedItem.severity !== 'LOW' && (
                   <span
                     className={`text-xs font-bold ${SEVERITY_CONFIG[selectedItem.severity]?.color || 'text-slate-400'} flex items-center gap-1`}
                   >
@@ -290,6 +300,11 @@ export const SuperAdminFeedbackView: React.FC = () => {
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-navy-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+            {selectedItem.title ? (
+              <p className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                {selectedItem.title}
+              </p>
+            ) : null}
             <p className="text-slate-800 dark:text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">
               {selectedItem.message}
             </p>
@@ -304,6 +319,11 @@ export const SuperAdminFeedbackView: React.FC = () => {
             {selectedItem.rating && (
               <span className="flex items-center gap-1">
                 <Star size={12} /> {selectedItem.rating}/5
+              </span>
+            )}
+            {selectedItem.linked_task_id && (
+              <span className="flex items-center gap-1">
+                <CheckCircle2 size={12} /> Task {selectedItem.linked_task_id}
               </span>
             )}
           </div>
@@ -349,7 +369,18 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 </div>
               )}
               {Object.entries(meta)
-                .filter(([k]) => !['userEmail', 'userName', 'type', 'severity'].includes(k))
+                .filter(
+                  ([k]) =>
+                    ![
+                      'userEmail',
+                      'userName',
+                      'type',
+                      'severity',
+                      'title',
+                      'feedbackType',
+                      'linkedTaskId',
+                    ].includes(k)
+                )
                 .map(([k, v]) => (
                   <div key={k} className="text-slate-600 dark:text-slate-400">
                     <span className="text-slate-500">{k}:</span>{' '}
@@ -489,7 +520,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
             <option value="ALL">{t('feedback.allSeverities', 'All Severities')}</option>
             <option value="CRITICAL">Critical</option>
             <option value="HIGH">High</option>
-            <option value="NORMAL">Normal</option>
+            <option value="MEDIUM">Medium</option>
             <option value="LOW">Low</option>
           </select>
         </div>
@@ -557,7 +588,12 @@ export const SuperAdminFeedbackView: React.FC = () => {
                         >
                           {item.status}
                         </span>
-                        {item.severity && item.severity !== 'NORMAL' && (
+                        {item.source_env && (
+                          <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200 dark:bg-navy-900/40 dark:text-slate-300 dark:border-slate-700">
+                            {item.source_env}
+                          </span>
+                        )}
+                        {item.severity && item.severity !== 'LOW' && (
                           <span
                             className={`text-xs font-bold ${SEVERITY_CONFIG[item.severity]?.color || 'text-slate-400'} flex items-center gap-1`}
                           >
@@ -568,6 +604,11 @@ export const SuperAdminFeedbackView: React.FC = () => {
                           <Clock size={12} /> {formatDate(item.created_at)}
                         </span>
                       </div>
+                      {item.title ? (
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                          {item.title}
+                        </p>
+                      ) : null}
                       <p className="text-slate-900 dark:text-slate-200 text-sm whitespace-pre-wrap leading-relaxed line-clamp-2">
                         {item.message}
                       </p>
@@ -583,6 +624,11 @@ export const SuperAdminFeedbackView: React.FC = () => {
                         {item.admin_response && (
                           <span className="flex items-center gap-1 text-green-500">
                             <MessageSquare size={12} /> Responded
+                          </span>
+                        )}
+                        {item.linked_task_id && (
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 size={12} /> Task {item.linked_task_id}
                           </span>
                         )}
                       </div>

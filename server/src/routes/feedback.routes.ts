@@ -22,7 +22,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { getAlertEmailService } from '../services/AlertEmailService.js';
 import feedbackAIService from '../services/feedbackAIService.js';
 import NotificationService from '../services/notificationService.js';
 import slackService from '../services/slackService.js';
@@ -35,8 +37,16 @@ import logger from '../utils/Logger.js';
 // Apply rate limiting
 const router = Router();
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuidLike(value: unknown): value is string {
+  return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
 type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
 type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
+type FeedbackAlertChannel = 'in_app' | 'slack' | 'email' | 'whatsapp';
+type FeedbackEscalationKind = 'feedback' | 'pulse' | 'feature';
 
 let _feedbackSchemaEnsured = false;
 async function ensureFeedbackSchema(): Promise<void> {
@@ -161,6 +171,308 @@ function safeJsonParseLoose<T = any>(raw: string, fallback: T): T {
       }
     }
     return fallback;
+  }
+}
+
+const reportFeedbackSchema = z.object({
+  userId: z.string().trim().min(1).optional(),
+  userEmail: z.string().trim().optional(),
+  userName: z.string().trim().optional(),
+  type: z.enum(['BUG', 'IDEA']),
+  title: z.string().trim().max(120).optional(),
+  message: z.string().trim().min(1).max(5000),
+  description: z.string().trim().max(15000).optional(),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  routePath: z.string().trim().max(500).optional(),
+  deviceType: z.enum(['mobile', 'tablet', 'desktop']).optional(),
+  screenSize: z.string().trim().max(100).optional(),
+  uiLanguage: z.string().trim().max(50).optional(),
+  uiTheme: z.string().trim().max(30).optional(),
+  workspaceContext: z.string().trim().max(1000).optional(),
+  clientEnv: z.string().trim().max(50).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+const pulseFeedbackSchema = z.object({
+  userId: z.string().trim().min(1).optional(),
+  rating: z.number().int().min(1).max(5),
+  context: z.string().trim().max(500).optional(),
+  comment: z.string().trim().max(5000).optional(),
+  timestamp: z.string().trim().optional(),
+});
+
+const featureFeedbackSchema = z.object({
+  userId: z.string().trim().min(1).optional(),
+  userEmail: z.string().trim().optional(),
+  category: z.enum(['usability', 'performance', 'missing', 'improvement', 'other']).optional(),
+  featureName: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1).max(8000),
+  impact: z.enum(['low', 'medium', 'high']).optional(),
+  context: z.string().trim().max(500).optional(),
+  requestAIAnalysis: z.boolean().optional(),
+});
+
+function buildNotificationBody(message: string, extras: string[] = []): string {
+  return [String(message || '').trim(), ...extras.filter(Boolean)].filter(Boolean).join('\n\n');
+}
+
+function isBlockingPulseComment(comment?: string | null): boolean {
+  return /blocked|cannot|can't|unable|stuck|unusable|down|outage|incident|error|broken|nie mogę|nie moge|zablok|blokuje|nie działa|nie dziala|awaria/i.test(
+    String(comment || '')
+  );
+}
+
+function resolveEscalationChannels(input: {
+  kind: FeedbackEscalationKind;
+  feedbackType?: string | null;
+  severity?: string | null;
+  rating?: number | null;
+  comment?: string | null;
+}): FeedbackAlertChannel[] {
+  if (input.kind === 'feature') {
+    return ['in_app', 'slack'];
+  }
+
+  if (input.kind === 'pulse') {
+    const channels: FeedbackAlertChannel[] = ['in_app', 'slack'];
+    if ((input.rating || 0) <= 2) {
+      channels.push('email');
+      if (isBlockingPulseComment(input.comment)) {
+        channels.push('whatsapp');
+      }
+    }
+    return Array.from(new Set(channels));
+  }
+
+  const type = String(input.feedbackType || '').toUpperCase();
+  if (type === 'IDEA') {
+    return ['in_app', 'slack'];
+  }
+
+  const severity = String(input.severity || 'MEDIUM').toUpperCase();
+  if (severity === 'CRITICAL') {
+    return ['in_app', 'slack', 'email', 'whatsapp'];
+  }
+  if (severity === 'HIGH') {
+    return ['in_app', 'slack', 'email'];
+  }
+  return ['in_app', 'slack'];
+}
+
+async function getSuperAdminRecipients(): Promise<
+  Array<{ id: string; email: string | null; organizationId: string | null }>
+> {
+  const userCols = await getTableColumns('users');
+  const selectName = userCols.has('email') ? 'email' : 'NULL as email';
+  const selectOrg = userCols.has('organization_id')
+    ? 'organization_id'
+    : userCols.has('organizationId')
+      ? 'organizationId as organization_id'
+      : 'NULL as organization_id';
+  const activeClause = userCols.has('is_active') ? ' AND (is_active = 1 OR is_active IS NULL)' : '';
+
+  const rows = await dbAll<{ id: string; email: string | null; organization_id: string | null }>(
+    `
+      SELECT id, ${selectName}, ${selectOrg}
+      FROM users
+      WHERE lower(coalesce(role, '')) IN ('superadmin', 'super_admin')
+      ${activeClause}
+    `,
+    []
+  );
+
+  return (rows || []).map((row) => ({
+    id: String(row.id),
+    email: row.email ? String(row.email) : null,
+    organizationId: row.organization_id ? String(row.organization_id) : null,
+  }));
+}
+
+async function notifySuperAdminsInApp(input: {
+  type: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  title: string;
+  body: string;
+  relatedObjectType: 'FEEDBACK' | 'PULSE' | 'FEATURE';
+  relatedObjectId: string;
+  organizationId?: string | null;
+  actionUrl: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const recipients = await getSuperAdminRecipients();
+  if (recipients.length === 0) {
+    logger.warn('[Feedback] No superadmin recipients found for in-app escalation');
+    return;
+  }
+
+  const results = await Promise.allSettled(
+    recipients.map((recipient) =>
+      NotificationService.send({
+        userId: recipient.id,
+        organizationId: recipient.organizationId || input.organizationId || 'system',
+        type: input.type,
+        severity: input.severity,
+        title: input.title,
+        body: input.body,
+        message: input.body,
+        relatedObjectType: input.relatedObjectType,
+        relatedObjectId: input.relatedObjectId,
+        isActionable: true,
+        actionUrl: input.actionUrl,
+        metadata: {
+          ...(input.metadata || {}),
+          recipientEmail: recipient.email || undefined,
+        },
+        channels: ['in_app'],
+        bypassPreferences: true,
+        bypassQuietHours: true,
+      })
+    )
+  );
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      logger.warn('[Feedback] Failed to send in-app escalation to superadmin:', result.reason);
+    }
+  });
+}
+
+async function dispatchFeedbackEscalation(input: {
+  kind: FeedbackEscalationKind;
+  id: string;
+  organizationId?: string | null;
+  appEnv: string;
+  channels: FeedbackAlertChannel[];
+  feedbackType: 'BUG' | 'IDEA' | 'FEATURE' | 'PULSE';
+  severity?: string | null;
+  priority?: string | null;
+  userId?: string | null;
+  userEmail?: string | null;
+  userName?: string | null;
+  routePath?: string | null;
+  deviceType?: string | null;
+  screenSize?: string | null;
+  uiLanguage?: string | null;
+  uiTheme?: string | null;
+  title: string;
+  message: string;
+  taskId?: string | null;
+  rating?: number | null;
+  comment?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const uniqueChannels = Array.from(new Set(input.channels));
+  const notificationSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
+    input.kind === 'feature'
+      ? 'INFO'
+      : input.kind === 'pulse'
+        ? (input.rating || 0) <= 2
+          ? 'WARNING'
+          : 'INFO'
+        : input.severity === 'CRITICAL'
+          ? 'CRITICAL'
+          : input.severity === 'HIGH'
+            ? 'WARNING'
+            : 'INFO';
+  const actionUrl =
+    input.kind === 'feature' ? '/admin?section=features' : '/admin?section=feedback';
+  const body = buildNotificationBody(input.message, [
+    input.routePath ? `Route: ${input.routePath}` : '',
+    input.taskId ? `Task: ${input.taskId}` : '',
+    input.rating ? `Pulse: ${input.rating}/5` : '',
+  ]);
+
+  if (uniqueChannels.includes('in_app')) {
+    await notifySuperAdminsInApp({
+      type:
+        input.kind === 'feature'
+          ? 'FEATURE_REQUEST'
+          : input.kind === 'pulse'
+            ? 'LOW_PULSE_ALERT'
+            : input.feedbackType === 'BUG' && input.severity === 'CRITICAL'
+              ? 'CLIENT_TICKET'
+              : 'USER_FEEDBACK',
+      severity: notificationSeverity,
+      title:
+        input.kind === 'feature'
+          ? `New Feature Request: ${input.title}`
+          : input.kind === 'pulse'
+            ? `Low Pulse Rating: ${input.rating || 0}/5`
+            : `${input.feedbackType}${input.severity ? ` [${input.severity}]` : ''}: ${input.title}`,
+      body,
+      relatedObjectType:
+        input.kind === 'feature' ? 'FEATURE' : input.kind === 'pulse' ? 'PULSE' : 'FEEDBACK',
+      relatedObjectId: input.id,
+      organizationId: input.organizationId || 'system',
+      actionUrl,
+      metadata: {
+        ...(input.metadata || {}),
+        appEnv: input.appEnv,
+        feedbackType: input.feedbackType,
+        severity: input.severity || undefined,
+        linkedTaskId: input.taskId || undefined,
+      },
+    });
+  }
+
+  if (uniqueChannels.includes('slack')) {
+    await slackService.sendNewFeedbackAlert({
+      type: input.feedbackType === 'PULSE' ? 'IDEA' : input.feedbackType,
+      userEmail: input.userEmail || undefined,
+      userName: input.userName || undefined,
+      message: body,
+      severity: input.severity || undefined,
+      priority: input.priority || undefined,
+      routePath: input.routePath || undefined,
+      deviceType: input.deviceType || undefined,
+      screenSize: input.screenSize || undefined,
+      uiLanguage: input.uiLanguage || undefined,
+      uiTheme: input.uiTheme || undefined,
+      organizationId: input.organizationId || undefined,
+      feedbackId: input.id,
+      taskId: input.taskId || undefined,
+      appEnv: input.appEnv,
+    });
+  }
+
+  if (uniqueChannels.includes('email')) {
+    const alertEmailService = getAlertEmailService();
+    const emailPayload = {
+      alertType: `feedback_${input.kind}`,
+      severity:
+        notificationSeverity === 'CRITICAL'
+          ? 'critical'
+          : notificationSeverity === 'WARNING'
+            ? 'warning'
+            : 'info',
+      title:
+        input.kind === 'pulse'
+          ? `Low Pulse Rating ${input.rating || 0}/5`
+          : `${input.feedbackType}${input.severity ? ` ${input.severity}` : ''}: ${input.title}`,
+      message: body,
+      timestamp: new Date().toISOString(),
+      environment: input.appEnv,
+      data: {
+        routePath: input.routePath || undefined,
+        organizationId: input.organizationId || undefined,
+        feedbackId: input.id,
+        taskId: input.taskId || undefined,
+        userEmail: input.userEmail || undefined,
+      },
+    };
+    if (notificationSeverity === 'CRITICAL') {
+      await alertEmailService.sendCriticalAlert(emailPayload);
+    } else {
+      await alertEmailService.sendAlert(emailPayload);
+    }
+  }
+
+  if (uniqueChannels.includes('whatsapp')) {
+    await WhatsAppService.sendNewFeedbackAlert({
+      userId: input.userId || null,
+      userEmail: input.userEmail || null,
+      type: input.feedbackType,
+      message: body,
+    });
   }
 }
 
@@ -355,13 +667,34 @@ async function createTaskForFeedback(params: {
 router.post(
   '/',
   optionalVerifyToken,
+  apiAuthRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureFeedbackSchema();
-    const { userId, userEmail, userName, type, message, severity, metadata } = req.body;
-
-    if (!message || !type) {
-      return res.status(400).json({ error: 'Message and type are required' });
+    const parsed = reportFeedbackSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid feedback payload',
+        details: parsed.error.flatten(),
+      });
     }
+    const {
+      userId,
+      userEmail,
+      userName,
+      type,
+      message,
+      severity,
+      metadata,
+      title: parsedTitle,
+      description: parsedDescription,
+      routePath,
+      deviceType,
+      screenSize,
+      uiLanguage,
+      uiTheme,
+      workspaceContext,
+      clientEnv,
+    } = parsed.data;
 
     const appEnv = getAppEnv();
 
@@ -388,7 +721,7 @@ router.post(
     const feedbackCols = await getTableColumns('feedback_items');
     const feedbackId = uuidv4();
 
-    const rawTitle = String(req.body.title || '').trim();
+    const rawTitle = String(parsedTitle || '').trim();
     const inferredTitle =
       rawTitle ||
       String(message)
@@ -397,7 +730,7 @@ router.post(
         .filter(Boolean)[0] ||
       String(message).slice(0, 80);
     const title = inferredTitle.length > 120 ? inferredTitle.slice(0, 120) + '…' : inferredTitle;
-    const description = String(req.body.description || message || '').trim();
+    const description = String(parsedDescription || message || '').trim();
 
     const priority = priorityFromEnvAndSeverity({ appEnv, severity, type });
     const status: TicketStatus = 'NEW';
@@ -411,15 +744,23 @@ router.post(
       'workspaceContext',
     ];
     const contextMeta: Record<string, unknown> = {};
+    const contextSources: Record<string, unknown> = {
+      routePath,
+      deviceType,
+      screenSize,
+      uiLanguage,
+      uiTheme,
+      workspaceContext,
+    };
     for (const field of contextFields) {
-      if (req.body[field] !== undefined) contextMeta[field] = req.body[field];
+      if (contextSources[field] !== undefined) contextMeta[field] = contextSources[field];
     }
 
     const metadataJson = {
       ...(metadata || {}),
       ...contextMeta,
       appEnv,
-      clientEnv: req.body.clientEnv || undefined,
+      clientEnv: clientEnv || undefined,
       userEmail: userEmail || undefined,
       userName: userName || undefined,
       feedbackType: type,
@@ -445,7 +786,6 @@ router.post(
     ];
 
     const optional: Array<[string, unknown]> = [
-      ['category', req.body.category || null],
       ['priority', priority],
       ['status', status],
       ['metadata_json', JSON.stringify(metadataJson)],
@@ -520,63 +860,35 @@ router.post(
       logger.warn('[Feedback] Failed to auto-create task from feedback:', e);
     }
 
-    // Send external notifications (Slack + WhatsApp)
     try {
-      await slackService.sendNewFeedbackAlert({
-        type,
-        userEmail,
-        userName,
-        message: `${title}\n\n${description}`,
-        severity,
-        priority,
-        routePath: req.body.routePath,
-        deviceType: req.body.deviceType,
-        screenSize: req.body.screenSize,
-        uiLanguage: req.body.uiLanguage,
-        uiTheme: req.body.uiTheme,
+      await dispatchFeedbackEscalation({
+        kind: 'feedback',
+        id: feedbackId,
         organizationId: orgIdForNotifications,
-        feedbackId,
-        taskId: linkedTaskId || undefined,
         appEnv,
-      });
-    } catch (e: unknown) {
-      logger.warn('Slack feedback notification failed:', e);
-    }
-
-    try {
-      await WhatsAppService.sendNewFeedbackAlert({ userId, userEmail, type, message });
-    } catch (e: unknown) {
-      logger.warn('WhatsApp notification failed:', e);
-    }
-
-    // Create Internal Notification for SuperAdmin
-    try {
-      const isCritical = severity === 'CRITICAL';
-      const notificationType = isCritical ? 'CLIENT_TICKET' : 'USER_FEEDBACK';
-      const notificationSeverity = isCritical ? 'WARNING' : 'INFO';
-
-      await NotificationService.send({
-        userId: userId,
-        organizationId: orgIdForNotifications,
-        type: notificationType,
-        severity: notificationSeverity as 'INFO' | 'WARNING' | 'CRITICAL',
-        title: isCritical ? `Critical Feedback: ${type}` : `New Feedback: ${type}`,
-        body: description.substring(0, 200) + (description.length > 200 ? '...' : ''),
-        message: description.substring(0, 200) + (description.length > 200 ? '...' : ''),
-        relatedObjectType: 'FEEDBACK',
-        relatedObjectId: feedbackId,
-        isActionable: true,
-        actionUrl: '/admin?section=feedback',
-        metadata: {
-          ...(metadata || {}),
-          userEmail,
+        channels: resolveEscalationChannels({
+          kind: 'feedback',
           feedbackType: type,
-          appEnv,
-          linkedTaskId,
-        },
+          severity,
+        }),
+        feedbackType: type,
+        severity: severity || 'MEDIUM',
+        priority,
+        userId: userId || req.user?.id || null,
+        userEmail: userEmail || null,
+        userName: userName || null,
+        routePath: routePath || null,
+        deviceType: deviceType || null,
+        screenSize: screenSize || null,
+        uiLanguage: uiLanguage || null,
+        uiTheme: uiTheme || null,
+        title,
+        message: description,
+        taskId: linkedTaskId,
+        metadata: metadataJson,
       });
-    } catch (noteErr) {
-      logger.error('Failed to create notification for feedback:', noteErr);
+    } catch (dispatchErr) {
+      logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
     }
 
     return res.json({ success: true, id: feedbackId, taskId: linkedTaskId });
@@ -589,6 +901,7 @@ router.post(
  */
 router.get(
   '/',
+  verifySuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     await ensureFeedbackSchema();
     const rows = await dbAll<any>(
@@ -645,10 +958,15 @@ router.get(
  */
 router.patch(
   '/:id/status',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { status, note } = req.body;
     const { id } = req.params;
     const changedBy = (req as any).user?.id || req.body.userId || null;
+
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
 
     const validStatuses = ['NEW', 'PENDING', 'IN_PROGRESS', 'REVIEWED', 'RESOLVED', 'ARCHIVED'];
     if (!validStatuses.includes(status.toUpperCase())) {
@@ -690,9 +1008,14 @@ router.patch(
  */
 router.post(
   '/:id/respond',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { response } = req.body;
     const { id } = req.params;
+
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
 
     if (!response || !response.trim()) {
       return res.status(400).json({ error: 'Response is required' });
@@ -769,8 +1092,13 @@ router.post(
  */
 router.get(
   '/:id',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
+
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
 
     const row = await dbGet<{
       id: string;
@@ -826,6 +1154,7 @@ router.get(
  */
 router.get(
   '/stats/summary',
+  verifySuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     const queries = {
       total: 'SELECT COUNT(*) as count FROM feedback_items',
@@ -852,6 +1181,7 @@ router.get(
  */
 router.get(
   '/backlog/tasks',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const limit = Math.min(Math.max(Number(req.query.limit || 200), 1), 500);
     const rows = await dbAll<any>(
@@ -893,12 +1223,19 @@ router.get(
 router.post(
   '/pulse',
   optionalVerifyToken,
+  apiAuthRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { userId, rating, context, comment, timestamp } = req.body;
-
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    const parsed = pulseFeedbackSchema.safeParse({
+      ...(req.body || {}),
+      rating: Number(req.body?.rating),
+    });
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid pulse payload',
+        details: parsed.error.flatten(),
+      });
     }
+    const { userId, rating, context, comment, timestamp } = parsed.data;
 
     const id = uuidv4();
     const actualUserId = userId || req.user?.id;
@@ -923,24 +1260,32 @@ router.post(
     // Log for analytics
     logger.info(`[Pulse] User ${actualUserId} rated ${rating}/5 on ${context}`);
 
-    // If low rating, create notification for admins
-    if (rating <= 2 && comment) {
-      try {
-        await NotificationService.send({
-          userId: 'admin',
-          organizationId: 'system',
-          type: 'LOW_PULSE_ALERT',
-          severity: 'WARNING',
-          title: `Low Pulse Rating: ${rating}/5`,
-          body: comment.substring(0, 200),
-          message: comment.substring(0, 200),
-          relatedObjectType: 'PULSE',
-          relatedObjectId: id,
-          isActionable: true,
-        });
-      } catch (e) {
-        logger.warn('[Pulse] Failed to create notification:', e);
-      }
+    try {
+      await dispatchFeedbackEscalation({
+        kind: 'pulse',
+        id,
+        organizationId: req.organizationId || 'system',
+        appEnv: getAppEnv(),
+        channels: resolveEscalationChannels({
+          kind: 'pulse',
+          rating,
+          comment,
+        }),
+        feedbackType: 'PULSE',
+        userId: actualUserId || null,
+        title: `Pulse ${rating}/5`,
+        message: comment || `User rated the experience ${rating}/5 on ${context || '/'}.`,
+        rating,
+        comment: comment || null,
+        routePath: context || '/',
+        metadata: {
+          rating,
+          context: context || '/',
+          timestamp: timestamp || new Date().toISOString(),
+        },
+      });
+    } catch (dispatchErr) {
+      logger.error('[Pulse] Failed to dispatch escalation:', dispatchErr);
     }
 
     return res.json({ success: true, id });
@@ -953,6 +1298,7 @@ router.post(
  */
 router.get(
   '/pulse-summary',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { period = '30d' } = req.query;
 
@@ -977,21 +1323,17 @@ router.get(
 router.post(
   '/feature',
   optionalVerifyToken,
+  apiAuthRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const {
-      userId,
-      userEmail,
-      category,
-      featureName,
-      description,
-      impact,
-      context,
-      requestAIAnalysis,
-    } = req.body;
-
-    if (!featureName || !description) {
-      return res.status(400).json({ error: 'Feature name and description are required' });
+    const parsed = featureFeedbackSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid feature payload',
+        details: parsed.error.flatten(),
+      });
     }
+    const { userId, userEmail, category, featureName, description, impact, context, requestAIAnalysis } =
+      parsed.data;
 
     const id = uuidv4();
     const actualUserId = userId || req.user?.id;
@@ -1041,23 +1383,31 @@ router.post(
       }
     }
 
-    // Create notification for product team
     try {
-      await NotificationService.send({
-        userId: 'product',
-        organizationId: 'system',
-        type: 'FEATURE_REQUEST',
-        severity: impact === 'high' ? 'WARNING' : 'INFO',
-        title: `New Feature Request: ${featureName}`,
-        body: description.substring(0, 200),
-        message: description.substring(0, 200),
-        relatedObjectType: 'FEATURE',
-        relatedObjectId: id,
-        isActionable: true,
-        actionUrl: '/admin?section=features',
+      await dispatchFeedbackEscalation({
+        kind: 'feature',
+        id,
+        organizationId: req.organizationId || 'system',
+        appEnv: getAppEnv(),
+        channels: resolveEscalationChannels({
+          kind: 'feature',
+        }),
+        feedbackType: 'FEATURE',
+        severity: impact === 'high' ? 'HIGH' : 'MEDIUM',
+        priority: impact || 'medium',
+        userId: actualUserId || null,
+        userEmail: actualEmail || null,
+        title: featureName,
+        message: description,
+        routePath: context || '/',
+        metadata: {
+          category: category || 'other',
+          impact: impact || 'medium',
+          aiSuggestion: aiSuggestion || undefined,
+        },
       });
-    } catch (e) {
-      logger.warn('[Feature] Failed to create notification:', e);
+    } catch (dispatchErr) {
+      logger.error('[Feature] Failed to dispatch escalation:', dispatchErr);
     }
 
     return res.json({
@@ -1077,6 +1427,7 @@ router.post(
  */
 router.get(
   '/features',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { status, category, limit = 50 } = req.query;
 
@@ -1169,6 +1520,7 @@ router.post(
  */
 router.get(
   '/ai-analysis/:id',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
@@ -1198,12 +1550,17 @@ router.get(
  */
 router.post(
   '/:id/analyze',
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
+
     // Get the feedback
     const feedback = await dbGet<{ id: string; message: string; type: string }>(
-      `SELECT id, message, type FROM system_feedback WHERE id = ?`,
+      `SELECT id, description as message, feedback_type as type FROM feedback_items WHERE id = ?`,
       [id]
     );
 
@@ -1231,6 +1588,7 @@ router.post(
  */
 router.get(
   '/trending',
+  verifySuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const trending = await feedbackAIService.getTrendingTopics();
@@ -1248,14 +1606,8 @@ router.get(
  */
 router.post(
   '/seed-demo',
-  verifyToken,
+  verifySuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    // Check if admin/superadmin
-    const userRole = (req.user?.role || '').toLowerCase();
-    if (!['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(userRole)) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
     logger.info('[Feedback] Seeding demo data...');
 
     const DEMO_USERS = [

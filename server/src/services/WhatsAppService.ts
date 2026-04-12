@@ -9,12 +9,30 @@ export type NewFeedbackAlert = {
   message: string;
 };
 
+function getEnvSuffix(): string {
+  return String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
+}
+
+function getWhatsAppConfig() {
+  const envSuffix = getEnvSuffix();
+  return {
+    sid: process.env.WHATSAPP_SID,
+    token: process.env.WHATSAPP_TOKEN,
+    from: process.env[`WHATSAPP_FROM_${envSuffix}`] || process.env.WHATSAPP_FROM,
+    to: process.env[`WHATSAPP_TO_${envSuffix}`] || process.env.WHATSAPP_TO,
+  };
+}
+
 function isConfigured() {
+  const cfg = getWhatsAppConfig();
   return Boolean(
-    process.env.WHATSAPP_SID &&
-    process.env.WHATSAPP_TOKEN &&
-    process.env.WHATSAPP_FROM &&
-    process.env.WHATSAPP_TO
+    cfg.sid &&
+    cfg.token &&
+    cfg.from &&
+    cfg.to
   );
 }
 
@@ -24,10 +42,11 @@ async function sendNewFeedbackAlert(feedback: NewFeedbackAlert): Promise<void> {
     return;
   }
 
-  const sid = String(process.env.WHATSAPP_SID);
-  const token = String(process.env.WHATSAPP_TOKEN);
-  const from = String(process.env.WHATSAPP_FROM);
-  const to = String(process.env.WHATSAPP_TO);
+  const cfg = getWhatsAppConfig();
+  const sid = String(cfg.sid);
+  const token = String(cfg.token);
+  const from = String(cfg.from);
+  const to = String(cfg.to);
 
   const client = twilio(sid, token);
   const type = String(feedback.type || 'OTHER').toUpperCase();

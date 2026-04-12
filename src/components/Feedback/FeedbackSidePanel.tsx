@@ -38,6 +38,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 
 // ==================== TYPES ====================
@@ -203,22 +204,11 @@ export const FeedbackSidePanel: React.FC = () => {
   const fetchAIInsights = async () => {
     setLoadingInsights(true);
     try {
-      const response = await fetch('/api/feedback/ai-insights', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          context: currentContext,
-          userId: currentUser?.id,
-        }),
+      const data = await Api.getFeedbackAIInsights({
+        context: currentContext,
+        userId: currentUser?.id,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAiInsights(data.insights || []);
-      }
+      setAiInsights(data?.insights || []);
     } catch (error) {
       console.error('Failed to fetch AI insights:', error);
     } finally {
@@ -271,48 +261,36 @@ export const FeedbackSidePanel: React.FC = () => {
 
     const fullDescription = [message.trim(), ...structuredBlocks.map((b) => `\n\n${b}`)].join('');
     try {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          userId: currentUser?.id || 'anonymous',
-          userEmail: currentUser?.email || 'anonymous',
-          userName: currentUser?.full_name || currentUser?.firstName,
-          type: reportType,
-          title: reportTitle.trim() || undefined,
-          message,
-          description: fullDescription,
-          severity,
-          routePath: ctx.routePath,
-          deviceType: ctx.deviceType,
+      await Api.sendFeedback({
+        userId: currentUser?.id || undefined,
+        userEmail: currentUser?.email || undefined,
+        userName: currentUser?.full_name || currentUser?.firstName,
+        type: reportType,
+        title: reportTitle.trim() || undefined,
+        message,
+        description: fullDescription,
+        severity,
+        routePath: ctx.routePath,
+        deviceType: ctx.deviceType,
+        screenSize: ctx.screenSize,
+        uiLanguage: ctx.uiLanguage,
+        uiTheme: ctx.uiTheme,
+        clientEnv,
+        metadata: {
+          context: ctx.routePath,
+          moduleName: ctx.moduleName,
+          pageTitle: ctx.pageTitle,
+          browser: ctx.browser,
+          timestamp: ctx.timestamp,
           screenSize: ctx.screenSize,
-          uiLanguage: ctx.uiLanguage,
-          uiTheme: ctx.uiTheme,
-          clientEnv,
-          metadata: {
-            context: ctx.routePath,
-            moduleName: ctx.moduleName,
-            pageTitle: ctx.pageTitle,
-            browser: ctx.browser,
-            timestamp: ctx.timestamp,
-            screenSize: ctx.screenSize,
-            scrollPosition: ctx.scrollPosition,
-          },
-        }),
+          scrollPosition: ctx.scrollPosition,
+        },
       });
-
-      if (response.ok) {
-        handleSuccess(
-          reportType === 'BUG'
-            ? t('feedback.success.bugReported', "Bug reported! We'll investigate ASAP.")
-            : t('feedback.success.ideaSubmitted', 'Great idea! Added to our backlog.')
-        );
-      } else {
-        throw new Error('Failed to submit');
-      }
+      handleSuccess(
+        reportType === 'BUG'
+          ? t('feedback.success.bugReported', "Bug reported! We'll investigate ASAP.")
+          : t('feedback.success.ideaSubmitted', 'Great idea! Added to our backlog.')
+      );
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
@@ -327,32 +305,22 @@ export const FeedbackSidePanel: React.FC = () => {
     setIsComposing(true);
     setAiQuestions([]);
     try {
-      const res = await fetch('/api/feedback/compose', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+      const json = await Api.composeFeedback({
+        type: reportType,
+        title: reportTitle.trim() || undefined,
+        message: message.trim(),
+        severity,
+        appEnv: clientEnv || undefined,
+        context: {
+          routePath: ctx.routePath,
+          moduleName: ctx.moduleName,
+          pageTitle: ctx.pageTitle,
+          deviceType: ctx.deviceType,
+          screenSize: ctx.screenSize,
+          uiLanguage: ctx.uiLanguage,
+          uiTheme: ctx.uiTheme,
         },
-        body: JSON.stringify({
-          type: reportType,
-          title: reportTitle.trim() || undefined,
-          message: message.trim(),
-          severity,
-          appEnv: clientEnv || undefined,
-          context: {
-            routePath: ctx.routePath,
-            moduleName: ctx.moduleName,
-            pageTitle: ctx.pageTitle,
-            deviceType: ctx.deviceType,
-            screenSize: ctx.screenSize,
-            uiLanguage: ctx.uiLanguage,
-            uiTheme: ctx.uiTheme,
-          },
-        }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'AI compose failed');
-
       const data = json?.data || json;
       if (data?.title) setReportTitle(String(data.title));
       if (data?.summary) setMessage(String(data.summary));
@@ -391,24 +359,14 @@ export const FeedbackSidePanel: React.FC = () => {
     setIsSubmitting(true);
     const ctx = capturedCtx || capturePageContext();
     try {
-      const response = await fetch('/api/feedback/pulse', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          userId: currentUser?.id,
-          rating,
-          context: ctx.routePath,
-          comment: comment || pulseComment,
-          timestamp: ctx.timestamp,
-        }),
+      await Api.submitPulseFeedback({
+        userId: currentUser?.id,
+        rating,
+        context: ctx.routePath,
+        comment: comment || pulseComment,
+        timestamp: ctx.timestamp,
       });
-
-      if (response.ok) {
-        handleSuccess(t('feedback.success.pulse', 'Thanks for your feedback! 🎉'));
-      }
+      handleSuccess(t('feedback.success.pulse', 'Thanks for your feedback! 🎉'));
     } catch (error) {
       console.error('Error submitting pulse:', error);
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));
@@ -425,35 +383,24 @@ export const FeedbackSidePanel: React.FC = () => {
     setIsSubmitting(true);
     const ctx = capturedCtx || capturePageContext();
     try {
-      const response = await fetch('/api/feedback/feature', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          userId: currentUser?.id,
-          userEmail: currentUser?.email,
-          category: featureCategory,
-          featureName,
-          description: featureDescription,
-          impact: featureImpact,
-          context: ctx.routePath,
-          requestAIAnalysis: true,
-        }),
+      const data = await Api.submitFeatureFeedback({
+        userId: currentUser?.id,
+        userEmail: currentUser?.email,
+        category: featureCategory,
+        featureName,
+        description: featureDescription,
+        impact: featureImpact,
+        context: ctx.routePath,
+        requestAIAnalysis: true,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        handleSuccess(
-          data.aiSuggestion
-            ? t(
-                'feedback.success.featureWithAI',
-                'Feature request submitted! AI found similar requests.'
-              )
-            : t('feedback.success.feature', 'Feature request submitted!')
-        );
-      }
+      handleSuccess(
+        data.aiSuggestion
+          ? t(
+              'feedback.success.featureWithAI',
+              'Feature request submitted! AI found similar requests.'
+            )
+          : t('feedback.success.feature', 'Feature request submitted!')
+      );
     } catch (error) {
       console.error('Error submitting feature:', error);
       toast.error(t('feedback.error.submit', 'Failed to submit feedback'));

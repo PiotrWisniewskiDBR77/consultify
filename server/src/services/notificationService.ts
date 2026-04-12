@@ -9,6 +9,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { send as sendEmail } from './emailService.js';
 import { SlackServiceClass } from './slackService.js';
 
 // ==========================================
@@ -80,6 +81,11 @@ export interface SendNotificationInput {
   metadata?: Record<string, unknown>;
   data?: Record<string, unknown>;
   priority?: 'low' | 'normal' | 'high' | 'urgent' | 'critical';
+  channels?: string[];
+  recipientEmail?: string;
+  recipientEmails?: string[];
+  bypassPreferences?: boolean;
+  bypassQuietHours?: boolean;
 }
 
 // ==========================================
@@ -194,18 +200,20 @@ class NotificationService {
     const db = await this.getDb();
     const id = `notif-${uuidv4()}`;
     const now = new Date().toISOString();
+    const bypassPreferences = Boolean(input.bypassPreferences);
+    const bypassQuietHours = Boolean(input.bypassQuietHours);
 
     // Get user preferences
     const prefs = await this.getPreferences(input.userId);
 
     // Check if globally disabled
-    if (!prefs?.globalEnabled) {
+    if (!bypassPreferences && !prefs?.globalEnabled) {
       logger.debug(`[NotificationService] Notifications disabled for user ${input.userId}`);
       return id;
     }
 
     // Check quiet hours
-    if (prefs?.quietHoursEnabled && this.isInQuietHours(prefs)) {
+    if (!bypassQuietHours && prefs?.quietHoursEnabled && this.isInQuietHours(prefs)) {
       logger.debug(`[NotificationService] User ${input.userId} in quiet hours`);
       // Still save notification but don't push
     }
@@ -214,8 +222,10 @@ class NotificationService {
     const typeConfig = await this.getNotificationTypeConfig(input.type);
 
     // Determine channels
-    let channels = typeConfig?.defaultChannels || ['in_app'];
-    if (prefs?.typeSettings) {
+    let channels = Array.isArray(input.channels) && input.channels.length > 0
+      ? Array.from(new Set(input.channels))
+      : typeConfig?.defaultChannels || ['in_app'];
+    if (!bypassPreferences && prefs?.typeSettings) {
       const key =
         Object.keys(prefs.typeSettings).find(
           (k) => String(k || '').toLowerCase() === String(input.type || '').toLowerCase()
@@ -300,7 +310,10 @@ class NotificationService {
     );
 
     // Dispatch to channels
-    await this.dispatchToChannels(id, input, channels, prefs);
+    await this.dispatchToChannels(id, input, channels, prefs, {
+      bypassPreferences,
+      bypassQuietHours,
+    });
 
     logger.info(
       `[NotificationService] Sent notification ${id} type=${input.type} severity=${severity} to user=${input.userId}`
@@ -1251,9 +1264,14 @@ class NotificationService {
     notificationId: string,
     input: SendNotificationInput,
     channels: string[],
-    prefs: NotificationPreferences | null
+    prefs: NotificationPreferences | null,
+    options?: {
+      bypassPreferences?: boolean;
+      bypassQuietHours?: boolean;
+    }
   ): Promise<void> {
     const db = await this.getDb();
+    const bypassPreferences = Boolean(options?.bypassPreferences);
 
     const severity = this.computeSeverity(input.type, input.data || input.metadata, input.severity);
     const slackWebhookUrl = await this.getSlackWebhookUrlForOrg(
@@ -1293,11 +1311,25 @@ class NotificationService {
             // Already saved, just mark as sent
             break;
           case 'email':
-            if (prefs?.emailEnabled) {
-              // Would send email here
-              // await emailService.send(...)
-            } else {
+            if (!bypassPreferences && prefs && !prefs.emailEnabled) {
               status = 'skipped';
+              break;
+            }
+            {
+              const recipients = await this.resolveNotificationEmailRecipients(input);
+              if (recipients.length === 0) {
+                status = 'skipped';
+                break;
+              }
+              const subject = `[${severity}] ${input.title}`;
+              const html = this.renderEmailNotification(input, severity);
+              for (const recipient of recipients) {
+                await sendEmail({
+                  to: recipient,
+                  subject,
+                  html,
+                });
+              }
             }
             break;
           case 'slack':
@@ -1341,7 +1373,12 @@ class NotificationService {
     // Some notification types are expected to always notify Slack (ops/product),
     // even if the notification_types table doesn't include 'slack' in channels.
     // This matches usage in feedback routes ("Triggers Slack via NotificationService").
-    if (slackService && !channels.includes('slack') && this.shouldAutoSlack(input.type)) {
+    if (
+      slackService &&
+      !channels.includes('slack') &&
+      !Array.isArray(input.channels) &&
+      this.shouldAutoSlack(input.type)
+    ) {
       try {
         await this.sendSlackNotification(slackService, input, severity);
       } catch (e) {
@@ -1361,6 +1398,72 @@ class NotificationService {
       t.startsWith('ADMIN_') ||
       (t.includes('AI_') && (t.includes('ALERT') || t.includes('RISK') || t.includes('OVERLOAD')))
     );
+  }
+
+  private async resolveNotificationEmailRecipients(
+    input: SendNotificationInput
+  ): Promise<string[]> {
+    const metadataRecipientEmails = Array.isArray(input.metadata?.recipientEmails)
+      ? (input.metadata.recipientEmails as unknown[]).map((email) => String(email))
+      : [];
+    const explicit = [
+      ...(Array.isArray(input.recipientEmails) ? input.recipientEmails : []),
+      typeof input.recipientEmail === 'string' ? input.recipientEmail : '',
+      typeof input.metadata?.recipientEmail === 'string' ? String(input.metadata.recipientEmail) : '',
+      ...metadataRecipientEmails,
+    ]
+      .map((email) => String(email || '').trim().toLowerCase())
+      .filter(Boolean);
+
+    if (explicit.length > 0) {
+      return Array.from(new Set(explicit));
+    }
+
+    try {
+      const db = await this.getDb();
+      const row = await db.get<{ email?: string | null }>(
+        `SELECT email FROM users WHERE id = ? LIMIT 1`,
+        [input.userId]
+      );
+      const email = String(row?.email || '')
+        .trim()
+        .toLowerCase();
+      return email ? [email] : [];
+    } catch (error) {
+      logger.warn('[NotificationService] Failed to resolve notification recipient email:', error);
+      return [];
+    }
+  }
+
+  private renderEmailNotification(
+    input: SendNotificationInput,
+    severity: 'INFO' | 'WARNING' | 'CRITICAL'
+  ): string {
+    const actionUrl = input.actionUrl
+      ? `<p><strong>Action:</strong> <a href="${String(input.actionUrl)}">${String(input.actionUrl)}</a></p>`
+      : '';
+    const metadataHtml =
+      input.metadata && Object.keys(input.metadata).length > 0
+        ? `<pre>${JSON.stringify(input.metadata, null, 2)}</pre>`
+        : '';
+    return `
+      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
+        <h2 style="margin-bottom: 8px;">${this.escapeHtml(input.title)}</h2>
+        <p><strong>Severity:</strong> ${severity}</p>
+        <p>${this.escapeHtml(input.body || input.message || input.title)}</p>
+        ${actionUrl}
+        ${metadataHtml}
+      </div>
+    `;
+  }
+
+  private escapeHtml(value: string): string {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   private async getSlackWebhookUrlForOrg(
@@ -1529,7 +1632,12 @@ class NotificationService {
     }
 
     // 2) Global env fallback
-    const envUrl = process.env.SLACK_WEBHOOK_URL;
+    const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+    const envUrl =
+      process.env[`SLACK_WEBHOOK_URL_${envName}`] || process.env.SLACK_WEBHOOK_URL;
     if (envUrl && String(envUrl).trim()) return String(envUrl).trim();
     return null;
   }

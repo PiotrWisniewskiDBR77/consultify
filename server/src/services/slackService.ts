@@ -67,8 +67,16 @@ class SlackServiceClass {
   private axiosInstance: AxiosInstance;
 
   constructor(deps?: SlackServiceDependencies) {
-    this.webhookUrl = deps?.webhookUrl || process.env.SLACK_WEBHOOK_URL;
+    this.webhookUrl = deps?.webhookUrl || this.resolveWebhookUrl();
     this.axiosInstance = deps?.axiosInstance || axios;
+  }
+
+  private resolveWebhookUrl(): string | undefined {
+    const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+    return process.env[`SLACK_WEBHOOK_URL_${envName}`] || process.env.SLACK_WEBHOOK_URL;
   }
 
   /**

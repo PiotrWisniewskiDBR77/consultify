@@ -38,7 +38,12 @@ const RATE_LIMIT_MS = 5 * 60 * 1000; // 5 minutes
 
 // Alert recipients (can be configured via environment variables)
 const getAlertRecipients = (): string[] => {
-  const recipients = process.env.ALERT_EMAIL_RECIPIENTS;
+  const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
+  const recipients =
+    process.env[`ALERT_EMAIL_RECIPIENTS_${envName}`] || process.env.ALERT_EMAIL_RECIPIENTS;
   if (recipients) {
     return recipients.split(',').map((email) => email.trim());
   }

@@ -13,6 +13,7 @@
 import i18n from '@/i18n';
 
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
+import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
 import { trackFunnelEvent } from './funnelAnalytics';
@@ -88,7 +89,11 @@ async function waitForApiReady(timeoutMs = 15000): Promise<boolean> {
 // localStorage access + JSON.parse are synchronous and can cause noticeable UI jank
 // when the app polls multiple endpoints (notifications, onboarding, etc.).
 // ---------------------------------------------------------------------------
-export type DemoFlags = { isDemoMode: boolean; isDemoSession: boolean };
+export type DemoFlags = {
+  isDemoMode: boolean;
+  isDemoSession: boolean;
+  demoSessionOrgId: string | null;
+};
 
 export type DataContextSummary = {
   status: string;
@@ -115,7 +120,11 @@ export type DataContextSummary = {
 };
 
 let _cachedStorageRaw: string | null | undefined = undefined;
-let _cachedDemoFlags: DemoFlags = { isDemoMode: false, isDemoSession: false };
+let _cachedDemoFlags: DemoFlags = {
+  isDemoMode: false,
+  isDemoSession: false,
+  demoSessionOrgId: null,
+};
 
 export function getDemoFlags(): DemoFlags {
   const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
@@ -132,10 +141,12 @@ export function getDemoFlags(): DemoFlags {
 
   let isDemoMode = false;
   let isDemoSession = false;
+  let demoSessionOrgId: string | null = null;
   try {
     if (raw) {
       const parsed = JSON.parse(raw);
       isDemoMode = parsed?.state?.isDemoMode === true;
+      demoSessionOrgId = parsed?.state?.demoSessionOrgId || null;
       const persistedUser = parsed?.state?.currentUser;
       isDemoSession =
         persistedUser?.isDemo === true ||
@@ -146,7 +157,7 @@ export function getDemoFlags(): DemoFlags {
     // Ignore parsing errors
   }
 
-  _cachedDemoFlags = { isDemoMode, isDemoSession };
+  _cachedDemoFlags = { isDemoMode, isDemoSession, demoSessionOrgId };
   return _cachedDemoFlags;
 }
 
@@ -190,7 +201,7 @@ function getCachedUserLanguage(): string {
 export const getHeaders = () => {
   const token = tokenService.getToken();
 
-  const { isDemoMode, isDemoSession } = getDemoFlags();
+  const { isDemoMode, demoSessionOrgId } = getDemoFlags();
   const userLanguage = getCachedUserLanguage();
 
   const headers: Record<string, string> = {
@@ -208,6 +219,9 @@ export const getHeaders = () => {
   // Previously only sent when isDemoSession (demo account email), which meant real users' writes persisted.
   if (isDemoMode) {
     headers['X-Demo-Mode'] = 'true';
+    if (demoSessionOrgId) {
+      headers['X-Demo-Session-Org'] = demoSessionOrgId;
+    }
   }
 
   return headers;
@@ -5929,18 +5943,87 @@ export const Api = {
   },
   // --- FEEDBACK ---
   sendFeedback: async (data: {
-    user_id: string;
-    type: string;
+    userId?: string;
+    userEmail?: string;
+    userName?: string;
+    type: 'BUG' | 'IDEA';
+    title?: string;
     message: string;
-    screenshot?: string;
-    url?: string;
-  }): Promise<void> => {
-    const res = await fetch(`${API_URL}/feedback`, {
+    description?: string;
+    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    routePath?: string;
+    deviceType?: 'mobile' | 'tablet' | 'desktop';
+    screenSize?: string;
+    uiLanguage?: string;
+    uiTheme?: string;
+    workspaceContext?: string;
+    clientEnv?: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to submit feedback');
+    return handleResponse(res, 'Failed to submit feedback');
+  },
+
+  composeFeedback: async (data: {
+    type: 'BUG' | 'IDEA';
+    title?: string;
+    message: string;
+    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    appEnv?: string;
+    context?: Record<string, unknown>;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/compose`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'AI compose failed');
+  },
+
+  submitPulseFeedback: async (data: {
+    userId?: string;
+    rating: number;
+    context?: string;
+    comment?: string;
+    timestamp?: string;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/pulse`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to submit pulse feedback');
+  },
+
+  submitFeatureFeedback: async (data: {
+    userId?: string;
+    userEmail?: string;
+    category?: 'usability' | 'performance' | 'missing' | 'improvement' | 'other';
+    featureName: string;
+    description: string;
+    impact?: 'low' | 'medium' | 'high';
+    context?: string;
+    requestAIAnalysis?: boolean;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/feature`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to submit feature feedback');
+  },
+
+  getFeedbackAIInsights: async (data: { context: string; userId?: string }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/ai-insights`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to fetch feedback AI insights');
   },
 
   getFeedback: async (): Promise<any[]> => {
@@ -6056,12 +6139,14 @@ export const Api = {
   },
 
   acceptAccessCode: async (code: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/access-codes/${code}/accept`, {
+    const res = await fetch(`${API_URL}/access-codes/accept`, {
       method: 'POST',
       headers: getHeaders(),
+      body: JSON.stringify({ code }),
     });
-    if (!res.ok) throw new Error('Failed to accept access code');
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to accept access code');
+    return json;
   },
 
   generateAccessCode: async (data: {
@@ -9109,6 +9194,13 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to fetch feature flags');
     return res.json();
   },
+  getRuntimeFeatureFlags: async () => {
+    const res = await fetch(`${API_URL}/feature-flags/runtime`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch runtime feature flags');
+    return res.json();
+  },
   // API Key usage
   getApiKeyUsage: async (keyId?: string) => {
     return { requests: 0, tokens: 0, cost: 0 };
@@ -9925,7 +10017,6 @@ export const Api = {
     });
     return res.json();
   },
-  executeSuccessAction: async (actionId: string) => ({ success: true }),
   deleteSuccessPlaybook: async (id: string) => {
     const res = await fetch(`${API_URL}/superadmin/playbooks/${id}`, {
       method: 'DELETE',
@@ -11195,7 +11286,7 @@ export const Api = {
     role?: string;
     reason?: string | null;
   }> => {
-    const res = await fetch(`${API_URL}/access-control/codes/${encodeURIComponent(code)}/info`);
+    const res = await fetch(`${API_URL}/access-codes/validate/${encodeURIComponent(code)}`);
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
       if (res.status === 404) return { valid: false, type: '', organizationId: '' };
@@ -11203,11 +11294,11 @@ export const Api = {
     }
     return {
       valid: Boolean((json as any)?.valid),
-      type: String((json as any)?.role || ''),
+      type: String((json as any)?.type || ''),
       organizationId: '',
-      organizationName: (json as any)?.organizationName,
-      role: (json as any)?.role,
-      reason: (json as any)?.reason ?? null,
+      organizationName: undefined,
+      role: undefined,
+      reason: (json as any)?.valid ? null : 'Invalid or expired access code',
     };
   },
 
@@ -11266,10 +11357,19 @@ export const Api = {
    * Toggle demo mode on/off
    */
   toggleDemoMode: async (
-    enabled: boolean
+    enabled: boolean,
+    source: string = 'demo_toggle'
   ): Promise<{
     success: boolean;
     isDemoMode: boolean;
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+    demoLocale?: 'en' | 'pl';
     demoOrganization?: {
       id: string;
       name: string;
@@ -11284,15 +11384,23 @@ export const Api = {
       projects: number;
       initiatives: number;
       tasks: number;
-      assessments: number;
+      decisions?: number;
+      users?: number;
     };
+    coverage?: Array<{
+      tool: string;
+      seededRecords: string[];
+      userGoal: string;
+      ahaMoment: string;
+      cta: string;
+    }>;
     hints?: string[];
     message?: string;
   }> => {
     const res = await fetch(`${API_URL}/demo/toggle`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ enabled }),
+      body: JSON.stringify({ enabled, source }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -11307,6 +11415,14 @@ export const Api = {
   getDemoStatus: async (): Promise<{
     success: boolean;
     isDemoMode: boolean;
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+    demoLocale?: 'en' | 'pl';
     demoOrganization?: {
       id: string;
       name: string;
@@ -11317,8 +11433,16 @@ export const Api = {
       projects: number;
       initiatives: number;
       tasks: number;
-      assessments: number;
+      decisions?: number;
+      users?: number;
     };
+    coverage?: Array<{
+      tool: string;
+      seededRecords: string[];
+      userGoal: string;
+      ahaMoment: string;
+      cta: string;
+    }>;
   }> => {
     const res = await fetch(`${API_URL}/demo/status`, {
       headers: getHeaders(),
@@ -11341,30 +11465,40 @@ export const Api = {
    */
   getDemoOrganization: async (): Promise<{
     success: boolean;
+    demoSession?: {
+      id: string;
+      organizationId: string;
+      locale: 'en' | 'pl';
+      expiresAt: string;
+      anchorDate: string;
+    } | null;
+    demoLocale?: 'en' | 'pl';
     organization: {
       id: string;
       name: string;
       slug: string;
-      industry: string;
-      size: string;
-      region: string;
       description: string;
-      branding: {
-        primaryColor: string;
-        secondaryColor: string;
-        logo: string;
-      };
     };
     stats: {
       projects: number;
       initiatives: number;
       tasks: number;
-      assessments: number;
+      decisions?: number;
+      users?: number;
     };
     scenarios: Array<{
-      name: string;
-      description: string;
-      highlight: string;
+      id: string;
+      title: string;
+      duration?: string;
+      audience?: string;
+      persona?: string;
+    }>;
+    coverage?: Array<{
+      tool: string;
+      seededRecords: string[];
+      userGoal: string;
+      ahaMoment: string;
+      cta: string;
     }>;
   } | null> => {
     const res = await fetch(`${API_URL}/demo/organization`, {
@@ -11981,58 +12115,52 @@ export const Api = {
     }
   },
 
-  // ==================== SETTINGS API STUBS ====================
-  // These are stub implementations for settings management
+  // ==================== SETTINGS API BRIDGE ====================
+  // Delegates legacy callers to the typed settings client.
 
   getAccessibilitySettings: async () => {
-    return {
-      preferences: {
-        highContrast: false,
-        largeText: false,
-        reduceMotion: false,
-        screenReaderOptimized: false,
-      },
-    };
+    return SettingsApi.getAccessibilityPreferences();
   },
 
   updateAccessibilitySettings: async (settings: any) => {
-    return { success: true, preferences: settings };
+    return SettingsApi.updateAccessibilityPreferences(settings);
   },
 
-  exportSettings: async (_filters?: any) => {
-    return {
-      data: { version: '1.0', settings: {} },
-      filename: `settings-export-${Date.now()}.json`,
-    };
+  exportSettings: async (filters?: any) => {
+    const categories = Array.isArray(filters)
+      ? filters
+      : Array.isArray(filters?.categories)
+        ? filters.categories
+        : undefined;
+    return SettingsApi.exportSettings(categories);
   },
 
-  importSettings: async (data: any, _overwrite?: boolean) => {
-    const imported = Array.isArray(data) ? data : [data];
-    return { success: true, imported };
+  importSettings: async (data: any, overwrite?: boolean) => {
+    return SettingsApi.importSettings(data, overwrite);
   },
 
-  getSettingsHistory: async (_category?: string, _days?: number) => {
-    return { entries: [], total: 0 };
+  getSettingsHistory: async (category?: string, days?: number) => {
+    return SettingsApi.getSettingsHistory(category, days);
   },
 
   restoreSettingsEntry: async (entryId: string) => {
-    return { success: true, entryId };
+    return SettingsApi.restoreSettingsHistoryEntry(entryId);
   },
 
   getSettingsTemplates: async () => {
-    return { templates: [] };
+    return SettingsApi.getSettingsTemplates();
   },
 
   applySettingsTemplate: async (templateId: string) => {
-    return { success: true, templateId };
+    return SettingsApi.applySettingsTemplate(templateId);
   },
 
   createSettingsTemplate: async (data: any) => {
-    return { success: true, template: { id: `template-${Date.now()}`, ...data } };
+    return SettingsApi.createSettingsTemplate(data);
   },
 
   deleteSettingsTemplate: async (templateId: string) => {
-    return { success: true, templateId };
+    return SettingsApi.deleteSettingsTemplate(templateId);
   },
 
   // ── AI Settings: backed by /api/ai-settings/* (real endpoints) ──
@@ -12280,24 +12408,11 @@ export const Api = {
   },
 
   getDeveloperSettings: async () => {
-    return {
-      settings: {
-        debugMode: false,
-        verboseLogging: false,
-        apiMocking: false,
-        experimentalFeatures: false,
-        apiEndpoint: '',
-        developerMode: false,
-        apiLogging: false,
-        showDebugInfo: false,
-        verboseErrors: false,
-        betaFeatures: [] as string[],
-      },
-    };
+    return SettingsApi.getDeveloperSettings();
   },
 
   saveDeveloperSettings: async (settings: any) => {
-    return { success: true, settings };
+    return SettingsApi.saveDeveloperSettings(settings);
   },
 
   // Integration Settings
@@ -12457,75 +12572,53 @@ export const Api = {
 
   // Keyboard Shortcuts
   getShortcuts: async () => {
-    return {
-      preferences: {
-        preset: 'default' as const,
-        enabled: true,
-        showHints: true,
-        customShortcuts: {} as Record<string, string>,
-        disabledShortcuts: [] as string[],
-      },
-    };
+    return SettingsApi.getShortcutsPreferences();
   },
 
   saveShortcuts: async (shortcuts: any) => {
-    return { success: true, shortcuts };
+    return SettingsApi.updateShortcutsPreferences(shortcuts);
   },
 
   // Privacy
   getPrivacyPreferences: async () => {
-    return {
-      preferences: {
-        analytics: true,
-        marketing: false,
-        thirdParty: false,
-      },
-    };
+    return SettingsApi.getPrivacyPreferences();
   },
 
   savePrivacyPreferences: async (preferences: any) => {
-    return { success: true, preferences };
+    return SettingsApi.updatePrivacyPreferences(preferences);
   },
 
   // Theme/Appearance
   getAppearancePreferences: async () => {
-    return {
-      preferences: {
-        theme: 'system',
-        accentColor: 'blue',
-        density: 'comfortable',
-        fontSize: 'medium',
-        compactMode: false,
-      },
-    };
+    return SettingsApi.getAppearancePreferences();
   },
 
   saveAppearancePreferences: async (preferences: any) => {
-    return { success: true, preferences };
+    return SettingsApi.updateAppearancePreferences(preferences);
   },
 
-  // Voice Settings — stored client-side (no backend table for voice prefs yet)
   getAIVoice: async () => {
-    try {
-      const stored = localStorage.getItem('ai-voice-preferences');
-      if (stored) return { preferences: JSON.parse(stored) };
-    } catch {
-      /* ignore */
-    }
-    return {
-      preferences: {
-        ttsEnabled: false,
-        sttEnabled: false,
-        voice: 'alloy',
-        speed: 1.0,
-        autoPlay: false,
-      },
-    };
+    return SettingsApi.getAIVoicePreferences();
   },
 
   saveAIVoice: async (settings: any) => {
-    localStorage.setItem('ai-voice-preferences', JSON.stringify(settings));
-    return { success: true, settings };
+    return SettingsApi.updateAIVoicePreferences(settings);
+  },
+
+  getAIPrivacyPreferences: async () => {
+    return SettingsApi.getAIPrivacyPreferences();
+  },
+
+  saveAIPrivacyPreferences: async (preferences: any) => {
+    return SettingsApi.updateAIPrivacyPreferences(preferences);
+  },
+
+  getPromptLibrary: async () => {
+    return SettingsApi.getPromptLibrary();
+  },
+
+  savePromptLibrary: async (prompts: any[]) => {
+    return SettingsApi.savePromptLibrary(prompts);
   },
 
   // System/Enterprise
