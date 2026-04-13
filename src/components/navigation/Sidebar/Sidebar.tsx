@@ -123,6 +123,27 @@ export const Sidebar: React.FC = () => {
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
   const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
   const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
+  const shouldLockFooterAdminMenus = !isSuperAdminRole(currentUser?.role);
+  const lockedOrganizationMenuItem = React.useMemo<MenuItem>(() => {
+    if (!shouldLockFooterAdminMenus) return organizationMenuItem;
+    return {
+      ...organizationMenuItem,
+      isLocked: true,
+      lockedMessage:
+        'Organization is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
+      lockedCtaHref: '/interview',
+    };
+  }, [organizationMenuItem, shouldLockFooterAdminMenus]);
+  const lockedAdminMenuItem = React.useMemo<MenuItem>(() => {
+    if (!shouldLockFooterAdminMenus) return adminMenuItem;
+    return {
+      ...adminMenuItem,
+      isLocked: true,
+      lockedMessage:
+        'Admin is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
+      lockedCtaHref: '/interview',
+    };
+  }, [adminMenuItem, shouldLockFooterAdminMenus]);
 
   // Completed views
   const completedViews = React.useMemo(() => {
@@ -440,8 +461,8 @@ export const Sidebar: React.FC = () => {
             !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role)
           }
         >
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(organizationMenuItem)}
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(adminMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedOrganizationMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedAdminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}
         </SidebarFooter>

@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 
 import { AppView, AuthStep, SessionMode, User } from '../../types';
-import { AppState } from '../useAppStore';
+import type { AppState } from '../useAppStore';
 
 export interface AuthSlice {
   currentUser: User | null;

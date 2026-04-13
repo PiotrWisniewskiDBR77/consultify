@@ -105,7 +105,7 @@ import {
 } from './ideaWorkspaceState';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
-import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './MyIdeasListContent';
+import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
@@ -540,6 +540,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const openChatWithContext = useOpenChatWithContext();
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentUser,
@@ -1144,7 +1145,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [myWorkEvent, clearMyWorkEvent]);
 
   // F3: Handle mywork-open-item custom event (dispatched by KnowledgePulse, detail views, etc.)
-  const navigate = useNavigate();
   const { isEnabled } = useFeatureFlagsContext();
   useEffect(() => {
     const handler = (e: Event) => {

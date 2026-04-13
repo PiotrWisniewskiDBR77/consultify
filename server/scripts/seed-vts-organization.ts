@@ -107,6 +107,14 @@ const PIOTR_EMAIL = process.env.VTS_ADMIN_EMAIL || 'piotr.wisniewski@dbr77.com';
 const ACCESS_CODE = process.env.VTS_ACCESS_CODE || 'VTS-2026';
 const ACCESS_CODE_MAX_USES = parseInt(process.env.VTS_ACCESS_CODE_MAX_USES || '30', 10);
 const ACCESS_CODE_EXPIRES = process.env.VTS_ACCESS_CODE_EXPIRES || '2026-04-30T23:59:59.000Z';
+const VTS_TEMPLATE_TARGET_ORGS = Array.from(
+  new Set(
+    String(process.env.VTS_TEMPLATE_TARGET_ORGS || `${VTS_ORG_ID},vts-group`)
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+  )
+);
 
 function nowIso() {
   return new Date().toISOString();
@@ -661,9 +669,13 @@ async function upsertVtsInterviewTemplates(
   db: {
     run: (sql: string, params?: unknown[]) => Promise<unknown>;
   },
+  targetOrganizationId: string,
   createdByUserId: string
 ) {
   for (const template of VTS_INTERVIEW_TEMPLATES) {
+    const templateRecordId =
+      targetOrganizationId === VTS_ORG_ID ? template.id : `${targetOrganizationId}__${template.id}`;
+
     await db.run(
       `INSERT INTO interview_library_templates
        (id, organization_id, name, description, category, status, visibility, template_scope, audience, estimated_time_minutes, runtime_mode_default, answer_design_guide, area_tags, is_default, version, created_by, created_at, updated_at)
@@ -686,8 +698,8 @@ async function upsertVtsInterviewTemplates(
          created_by = EXCLUDED.created_by,
          updated_at = CURRENT_TIMESTAMP`,
       [
-        template.id,
-        VTS_ORG_ID,
+        templateRecordId,
+        targetOrganizationId,
         template.name,
         template.description,
         template.category,
@@ -700,6 +712,11 @@ async function upsertVtsInterviewTemplates(
     );
 
     for (const [index, question] of template.questions.entries()) {
+      const questionRecordId =
+        targetOrganizationId === VTS_ORG_ID
+          ? `${template.id}_${question.id}`
+          : `${targetOrganizationId}__${template.id}_${question.id}`;
+
       await db.run(
         `INSERT INTO interview_library_template_questions
          (id, template_id, category, question_text, description, evidence_prompt, answer_type, answer_options, expected_answer_shape, is_required, allow_voice, allow_file_upload, allow_url, allow_context_note, sort_order, created_at)
@@ -720,8 +737,8 @@ async function upsertVtsInterviewTemplates(
            allow_context_note = EXCLUDED.allow_context_note,
            sort_order = EXCLUDED.sort_order`,
         [
-          `${template.id}_${question.id}`,
-          template.id,
+          questionRecordId,
+          templateRecordId,
           question.category,
           question.questionText,
           question.description || null,
@@ -991,11 +1008,16 @@ async function main() {
 
   // ── 5. Create organization-scoped interview templates for VTS ───
   try {
-    await upsertVtsInterviewTemplates(db, piotrId);
+    for (const targetOrganizationId of VTS_TEMPLATE_TARGET_ORGS) {
+      await upsertVtsInterviewTemplates(db, targetOrganizationId, piotrId);
+    }
     logger.info('[seed-vts] Interview templates synced', {
-      organizationId: VTS_ORG_ID,
-      templateCount: VTS_INTERVIEW_TEMPLATES.length,
-      questionCount: VTS_INTERVIEW_TEMPLATES.reduce((sum, template) => sum + template.questions.length, 0),
+      organizationIds: VTS_TEMPLATE_TARGET_ORGS,
+      templateCountPerOrganization: VTS_INTERVIEW_TEMPLATES.length,
+      questionCountPerOrganization: VTS_INTERVIEW_TEMPLATES.reduce(
+        (sum, template) => sum + template.questions.length,
+        0
+      ),
       scope: 'organization',
       visibility: 'org',
     });
@@ -1022,8 +1044,12 @@ async function main() {
       headquartersCountry: VTS_PROFILE.headquartersCountry,
     },
     interviewTemplates: {
-      count: VTS_INTERVIEW_TEMPLATES.length,
-      questionCount: VTS_INTERVIEW_TEMPLATES.reduce((sum, template) => sum + template.questions.length, 0),
+      targetOrganizations: VTS_TEMPLATE_TARGET_ORGS,
+      countPerOrganization: VTS_INTERVIEW_TEMPLATES.length,
+      questionCountPerOrganization: VTS_INTERVIEW_TEMPLATES.reduce(
+        (sum, template) => sum + template.questions.length,
+        0
+      ),
       scope: 'organization',
       templateNames: VTS_INTERVIEW_TEMPLATES.map((template) => template.name),
     },

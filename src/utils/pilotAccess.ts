@@ -2,7 +2,6 @@ import { isPilotRestrictedRole } from './roleGuards';
 
 export const PILOT_VISIBLE_MENU_IDS = new Set([
   'AI_CHAT',
-  'MY_WORK',
   'INTERVIEW',
 ]);
 
@@ -16,16 +15,12 @@ export const PILOT_ALLOWED_SETTINGS_SECTIONS = new Set([
 const PILOT_ALLOWED_ROUTE_PREFIXES = [
   '/chat',
   '/interview',
-  '/my-work',
   '/settings',
   '/share/',
 ] as const;
 
 const PILOT_ALLOWED_ARTIFACT_TYPES = new Set([
-  'task',
-  'decision',
   'insight',
-  'notebook',
 ]);
 
 export function getPilotLockedAreaDetail(
@@ -55,6 +50,19 @@ export function getPilotLockedAreaDetail(
       href: '/interview',
       message:
         'Tools and Assessment are locked for tomorrow’s pilot. We will unlock them in the next project phase.',
+    };
+  }
+
+  if (
+    normalized === 'MY_WORK' ||
+    normalized === 'MODULE_MY_WORK' ||
+    areaLabel === 'my work' ||
+    areaLabel === 'moja praca'
+  ) {
+    return {
+      href: '/interview',
+      message:
+        'My Work is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
     };
   }
 
@@ -142,7 +150,7 @@ export function getPilotBlockedFallbackPath(path?: string | null): string {
     return getPilotDefaultSettingsRoute();
   }
   if (normalized.startsWith('/my-work')) {
-    return '/my-work';
+    return '/interview';
   }
   if (normalized.startsWith('/initiatives')) {
     return '/initiatives';

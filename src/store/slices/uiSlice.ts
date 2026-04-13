@@ -4,7 +4,7 @@ import { getRouteFromAppView } from '../../routes/routeConfig';
 import { AppView } from '../../types';
 import { NavigationOptions } from '../../types/workspace';
 import { navigationMonitor, validateNavigation } from '../../utils/navigationGuard';
-import { AppState } from '../useAppStore';
+import type { AppState } from '../useAppStore';
 
 export interface UISlice {
   currentView: AppView;

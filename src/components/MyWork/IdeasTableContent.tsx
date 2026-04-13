@@ -34,7 +34,7 @@ import type {
 import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
-import type { IdeaStage, MyIdea, SortDir, SortField } from './MyIdeasListContent';
+import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
 
 const STAGE_META: Record<
   IdeaStage,

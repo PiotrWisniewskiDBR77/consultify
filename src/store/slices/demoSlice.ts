@@ -6,7 +6,7 @@
  */
 import { StateCreator } from 'zustand';
 
-import { AppState } from '../useAppStore';
+import type { AppState } from '../useAppStore';
 
 // ==========================================
 // TYPES
