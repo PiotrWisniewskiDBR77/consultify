@@ -442,6 +442,399 @@ function getDefaultLayout(): HomeLayoutConfig {
   return JSON.parse(JSON.stringify(DEFAULT_LAYOUT)) as HomeLayoutConfig;
 }
 
+function isValidTimeMode(value: unknown): value is HomeScreenData['timeMode'] {
+  return value === 'morning' || value === 'liveDay' || value === 'eveningWrap';
+}
+
+function isValidAccent(value: unknown): value is HomeBlock['accent'] {
+  return (
+    value === 'ai' ||
+    value === 'warm' ||
+    value === 'cool' ||
+    value === 'alert' ||
+    value === 'success' ||
+    value === 'neutral'
+  );
+}
+
+function asString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function cloneDefaultBlock<K extends HomeBlockId>(blockId: K): Extract<HomeBlock, { id: K }> {
+  const block = MOCK_SCREEN.blocks.find((entry): entry is Extract<HomeBlock, { id: K }> => entry.id === blockId);
+  if (!block) {
+    throw new Error(`Missing default home block for ${blockId}`);
+  }
+  return JSON.parse(JSON.stringify(block)) as Extract<HomeBlock, { id: K }>;
+}
+
+function normalizeSignalCard(value: unknown, fallback: { id: string; title?: string; summary?: string; tag?: string }) {
+  const input = asObject(value);
+  return {
+    id: asString(input.id, fallback.id),
+    title: asString(input.title, fallback.title || ''),
+    summary: asString(input.summary, fallback.summary || ''),
+    tag: asString(input.tag, fallback.tag || ''),
+    tone:
+      input.tone === 'positive' || input.tone === 'warning' || input.tone === 'neutral'
+        ? input.tone
+        : 'neutral',
+    entityType:
+      input.entityType === 'home' ||
+      input.entityType === 'idea' ||
+      input.entityType === 'note' ||
+      input.entityType === 'task' ||
+      input.entityType === 'decision' ||
+      input.entityType === 'industry_signal' ||
+      input.entityType === 'transformation_signal'
+        ? input.entityType
+        : undefined,
+    entityId: typeof input.entityId === 'string' ? input.entityId : undefined,
+  };
+}
+
+function normalizeHomeBlock(block: unknown): HomeBlock | null {
+  const input = asObject(block);
+  const blockId = typeof input.id === 'string' ? (input.id as HomeBlockId) : null;
+  if (!blockId) return null;
+
+  switch (blockId) {
+    case 'aiPulseCore': {
+      const fallback = cloneDefaultBlock('aiPulseCore');
+      const payload = asObject(input.payload);
+      const focusItemsRaw = Array.isArray(payload.focusItems) ? payload.focusItems : fallback.payload.focusItems;
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: {
+          greeting: asString(payload.greeting, fallback.payload.greeting),
+          headline: asString(payload.headline, fallback.payload.headline),
+          summary: asString(payload.summary, fallback.payload.summary),
+          insight: asString(payload.insight, fallback.payload.insight),
+          weekProgress: asNumber(payload.weekProgress, fallback.payload.weekProgress),
+          pulseScore: asNumber(payload.pulseScore, fallback.payload.pulseScore),
+          appTipOfDay: payload.appTipOfDay ?? fallback.payload.appTipOfDay ?? null,
+          aiPlaybookTip: payload.aiPlaybookTip ?? fallback.payload.aiPlaybookTip ?? null,
+          focusItems: focusItemsRaw
+            .filter((item) => item && typeof item === 'object')
+            .map((item: any, index) => ({
+              id: asString(item.id, `focus-${index}`),
+              type: item.type === 'task' || item.type === 'decision' || item.type === 'idea' ? item.type : 'idea',
+              title: asString(item.title, ''),
+              meta: asString(item.meta, ''),
+              priority:
+                item.priority === 'high' || item.priority === 'medium' || item.priority === 'low'
+                  ? item.priority
+                  : 'medium',
+            })),
+        },
+      };
+    }
+    case 'momentum': {
+      const fallback = cloneDefaultBlock('momentum');
+      const payload = asObject(input.payload);
+      const statsRaw = Array.isArray(payload.stats) ? payload.stats : fallback.payload.stats;
+      const signalsRaw = Array.isArray(payload.signals) ? payload.signals : fallback.payload.signals;
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: {
+          headline: asString(payload.headline, fallback.payload.headline),
+          summary: asString(payload.summary, fallback.payload.summary),
+          stats: statsRaw.map((stat: any, index) => ({
+            label: asString(stat?.label, `stat-${index}`),
+            value: asString(stat?.value, '0'),
+            trend: asString(stat?.trend, ''),
+          })),
+          signals: signalsRaw.map((signal: any, index) =>
+            normalizeSignalCard(signal, { id: `momentum-${index}` })
+          ),
+        },
+      };
+    }
+    case 'sparkField': {
+      const fallback = cloneDefaultBlock('sparkField');
+      const payload = asObject(input.payload);
+      const ideasRaw = Array.isArray(payload.ideas) ? payload.ideas : fallback.payload.ideas;
+      const notesRaw = Array.isArray(payload.notes) ? payload.notes : fallback.payload.notes;
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: {
+          ideas: ideasRaw.map((item: any, index) => ({
+            id: asString(item?.id, `idea-${index}`),
+            type: 'idea' as const,
+            title: asString(item?.title, ''),
+            snippet: asString(item?.snippet, ''),
+            stage: asString(item?.stage, 'spark'),
+            updatedAt: asString(item?.updatedAt, ''),
+            nodeCount: typeof item?.nodeCount === 'number' ? item.nodeCount : undefined,
+            taskCount: typeof item?.taskCount === 'number' ? item.taskCount : undefined,
+          })),
+          notes: notesRaw.map((item: any, index) => ({
+            id: asString(item?.id, `note-${index}`),
+            type: 'note' as const,
+            title: asString(item?.title, ''),
+            snippet: asString(item?.snippet, ''),
+            updatedAt: asString(item?.updatedAt, ''),
+          })),
+          nudge:
+            payload.nudge && typeof payload.nudge === 'object'
+              ? {
+                  text: asString((payload.nudge as any).text, ''),
+                  ideaId: asString((payload.nudge as any).ideaId, ''),
+                }
+              : null,
+          runtimeSummary:
+            payload.runtimeSummary && typeof payload.runtimeSummary === 'object'
+              ? {
+                  ideasWithTasks: asNumber((payload.runtimeSummary as any).ideasWithTasks, 0),
+                  recentNotes: asNumber((payload.runtimeSummary as any).recentNotes, 0),
+                  recentOutputs: asNumber((payload.runtimeSummary as any).recentOutputs, 0),
+                  orgSignals: asNumber((payload.runtimeSummary as any).orgSignals, 0),
+                }
+              : undefined,
+          orgIdeas: Array.isArray(payload.orgIdeas) ? payload.orgIdeas : undefined,
+        },
+      };
+    }
+    case 'decisionTemperature': {
+      const fallback = cloneDefaultBlock('decisionTemperature');
+      const payload = asObject(input.payload);
+      const signalsRaw = Array.isArray(payload.signals) ? payload.signals : fallback.payload.signals;
+      const hottestDecision =
+        payload.hottestDecision && typeof payload.hottestDecision === 'object'
+          ? {
+              id: asString((payload.hottestDecision as any).id, ''),
+              title: asString((payload.hottestDecision as any).title, ''),
+              ownerLabel: asString((payload.hottestDecision as any).ownerLabel, ''),
+              priority: asString((payload.hottestDecision as any).priority, ''),
+              deadlineLabel: asString((payload.hottestDecision as any).deadlineLabel, ''),
+            }
+          : null;
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: {
+          pendingCount: asNumber(payload.pendingCount, fallback.payload.pendingCount),
+          blockedCount: asNumber(payload.blockedCount, fallback.payload.blockedCount),
+          hottestDecision,
+          signals: signalsRaw.map((signal: any, index) =>
+            normalizeSignalCard(signal, { id: `decision-${index}` })
+          ),
+        },
+      };
+    }
+    case 'industryLens': {
+      const fallback = cloneDefaultBlock('industryLens');
+      const payload = asObject(input.payload);
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: {
+          industryLabel: asString(payload.industryLabel, fallback.payload.industryLabel),
+          roleLens: asString(payload.roleLens, fallback.payload.roleLens),
+          marketSignal: normalizeSignalCard(payload.marketSignal, fallback.payload.marketSignal),
+          technologySignal: normalizeSignalCard(payload.technologySignal, fallback.payload.technologySignal),
+          aiNews: Array.isArray(payload.aiNews) ? payload.aiNews : undefined,
+          benchmark:
+            payload.benchmark && typeof payload.benchmark === 'object'
+              ? {
+                  label: asString((payload.benchmark as any).label, fallback.payload.benchmark.label),
+                  value: asString((payload.benchmark as any).value, fallback.payload.benchmark.value),
+                  delta: asString((payload.benchmark as any).delta, fallback.payload.benchmark.delta),
+                  implication: asString(
+                    (payload.benchmark as any).implication,
+                    fallback.payload.benchmark.implication
+                  ),
+                }
+              : fallback.payload.benchmark,
+          peerCase:
+            payload.peerCase && typeof payload.peerCase === 'object'
+              ? {
+                  title: asString((payload.peerCase as any).title, fallback.payload.peerCase.title),
+                  summary: asString((payload.peerCase as any).summary, fallback.payload.peerCase.summary),
+                  implication: asString(
+                    (payload.peerCase as any).implication,
+                    fallback.payload.peerCase.implication
+                  ),
+                }
+              : fallback.payload.peerCase,
+        },
+      };
+    }
+    case 'executionCurrent': {
+      const fallback = cloneDefaultBlock('executionCurrent');
+      const payload = asObject(input.payload);
+      const streamsRaw = Array.isArray(payload.streams) ? payload.streams : fallback.payload.streams;
+      const artifactOutputsRaw = Array.isArray(payload.artifactOutputs)
+        ? payload.artifactOutputs
+        : fallback.payload.artifactOutputs || [];
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: {
+          headline: asString(payload.headline, fallback.payload.headline),
+          streams: streamsRaw.map((stream: any, index) => ({
+            id: asString(stream?.id, `stream-${index}`),
+            label: asString(stream?.label, ''),
+            progressLabel: asString(stream?.progressLabel, ''),
+            status:
+              stream?.status === 'accelerating' || stream?.status === 'steady' || stream?.status === 'blocked'
+                ? stream.status
+                : 'steady',
+            entityType:
+              stream?.entityType === 'home' ||
+              stream?.entityType === 'idea' ||
+              stream?.entityType === 'note' ||
+              stream?.entityType === 'task' ||
+              stream?.entityType === 'decision' ||
+              stream?.entityType === 'industry_signal' ||
+              stream?.entityType === 'transformation_signal'
+                ? stream.entityType
+                : undefined,
+            entityId: typeof stream?.entityId === 'string' ? stream.entityId : undefined,
+          })),
+          nextUp: Array.isArray(payload.nextUp) ? payload.nextUp : undefined,
+          artifactOutputs: artifactOutputsRaw.map((artifact: any, index) => ({
+            id: asString(artifact?.id, `artifact-${index}`),
+            artifactId: asString(artifact?.artifactId, `artifact-${index}`),
+            title: asString(artifact?.title, ''),
+            outputType:
+              artifact?.outputType === 'report' || artifact?.outputType === 'presentation' || artifact?.outputType === 'sheet'
+                ? artifact.outputType
+                : 'report',
+            originRuntime:
+              artifact?.originRuntime === 'report' || artifact?.originRuntime === 'presentation' || artifact?.originRuntime === 'sheet'
+                ? artifact.originRuntime
+                : 'report',
+            deliveryState: asString(artifact?.deliveryState, ''),
+            visibilityScope:
+              artifact?.visibilityScope === 'private' ||
+              artifact?.visibilityScope === 'project' ||
+              artifact?.visibilityScope === 'organization' ||
+              artifact?.visibilityScope === 'review_shared' ||
+              artifact?.visibilityScope === 'demo'
+                ? artifact.visibilityScope
+                : 'private',
+            publishState: typeof artifact?.publishState === 'string' ? artifact.publishState : null,
+            reviewGateCount:
+              typeof artifact?.reviewGateCount === 'number' ? artifact.reviewGateCount : undefined,
+          })),
+        },
+      };
+    }
+    case 'teamSignal': {
+      const fallback = cloneDefaultBlock('teamSignal');
+      const payload = asObject(input.payload);
+      const signalsRaw = Array.isArray(payload.signals) ? payload.signals : fallback.payload.signals;
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: {
+          headline: asString(payload.headline, fallback.payload.headline),
+          summary: asString(payload.summary, fallback.payload.summary),
+          signals: signalsRaw.map((signal: any, index) => ({
+            id: asString(signal?.id, `team-${index}`),
+            title: asString(signal?.title, ''),
+            detail: asString(signal?.detail, ''),
+            tone:
+              signal?.tone === 'positive' || signal?.tone === 'warning' || signal?.tone === 'neutral'
+                ? signal.tone
+                : 'neutral',
+          })),
+          peerTips: Array.isArray(payload.peerTips) ? payload.peerTips : undefined,
+        },
+      };
+    }
+    case 'commandDock': {
+      const fallback = cloneDefaultBlock('commandDock');
+      return {
+        ...fallback,
+        title: asString(input.title, fallback.title),
+        subtitle: asString(input.subtitle, fallback.subtitle || ''),
+        accent: isValidAccent(input.accent) ? input.accent : fallback.accent,
+        size: isValidBlockSize(input.size) ? input.size : fallback.size,
+        priorityWeight: asNumber(input.priorityWeight, fallback.priorityWeight),
+        relevanceScore: asNumber(input.relevanceScore, fallback.relevanceScore),
+        freshnessScore: asNumber(input.freshnessScore, fallback.freshnessScore),
+        ctaIntents: Array.isArray(input.ctaIntents) ? input.ctaIntents.map((item) => String(item)) : fallback.ctaIntents,
+        payload: asObject(input.payload) as any,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+function normalizeHomeScreenData(value: unknown): HomeScreenData {
+  const fallback = createEmptyScreen();
+  const input = asObject(value);
+  const rawBlocks = Array.isArray(input.blocks) ? input.blocks : [];
+  return {
+    timeMode: isValidTimeMode(input.timeMode) ? input.timeMode : fallback.timeMode,
+    updatedAt: asString(input.updatedAt, new Date().toISOString()),
+    pulseLabel: asString(input.pulseLabel, fallback.pulseLabel),
+    blocks: rawBlocks
+      .map((block) => normalizeHomeBlock(block))
+      .filter((block): block is HomeBlock => block !== null),
+  };
+}
+
 function isValidBlockSize(value: unknown): value is HomeBlockSize {
   return value === 'sm' || value === 'md' || value === 'lg' || value === 'hero';
 }
@@ -675,8 +1068,8 @@ export function useHomeData(refreshTrigger?: number): HomeData {
     ]);
 
     const screenData =
-      screenRes.status === 'fulfilled' && screenRes.value?.data?.blocks
-        ? (screenRes.value.data as HomeScreenData)
+      screenRes.status === 'fulfilled'
+        ? normalizeHomeScreenData(screenRes.value?.data)
         : createEmptyScreen();
     const savedLayout =
       prefsRes.status === 'fulfilled' && prefsRes.value?.data?.home_layout

@@ -7,6 +7,7 @@ import {
   type FinanceVersionSnapshot,
   type FinanceVersionType,
   type KpiCoherenceResult,
+  shouldFallbackToLegacyFinance,
   V8FinanceApi,
 } from '../../../services/api/v8/finance';
 import { getFinanceErrorMessage } from '../financeErrorMap';
@@ -63,6 +64,11 @@ function mapDegradedToAlerts(entries: FinanceDegradedEntry[]): DegradedAlert[] {
 
 const POLL_INTERVAL_MS = 30_000;
 
+interface UseFinanceLaneOptions {
+  enabled?: boolean;
+  onUnavailable?: () => void;
+}
+
 function normalizeLaneRun(run: FinanceLaneRun): FinanceLaneRun {
   return {
     ...run,
@@ -80,7 +86,8 @@ function normalizeLaneRun(run: FinanceLaneRun): FinanceLaneRun {
   };
 }
 
-export function useFinanceLane() {
+export function useFinanceLane(options: UseFinanceLaneOptions = {}) {
+  const { enabled = true, onUnavailable } = options;
   const [activeLaneRun, setActiveLaneRun] = useState<FinanceLaneRun | null>(null);
   const [laneHistory, setLaneHistory] = useState<FinanceLaneRun[]>([]);
   const [mutationAudits, setMutationAudits] = useState<FinanceMutationAudit[]>([]);
@@ -92,6 +99,15 @@ export function useFinanceLane() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refreshLane = useCallback(async () => {
+    if (!enabled) {
+      setActiveLaneRun(null);
+      setLaneHistory([]);
+      setMutationAudits([]);
+      setVersionSnapshots([]);
+      setKpiCoherence(null);
+      setError(null);
+      return;
+    }
     try {
       const res = await V8FinanceApi.getLaneRuns(20);
       const runs = Array.isArray(res?.data) ? res.data.map((run) => normalizeLaneRun(run)) : [];
@@ -111,21 +127,40 @@ export function useFinanceLane() {
         setVersionSnapshots(versionsRes?.data || []);
       }
     } catch (err) {
+      if (shouldFallbackToLegacyFinance(err)) {
+        setActiveLaneRun(null);
+        setLaneHistory([]);
+        setMutationAudits([]);
+        setVersionSnapshots([]);
+        setKpiCoherence(null);
+        setError(null);
+        onUnavailable?.();
+        return;
+      }
       setError(getFinanceErrorMessage(err));
     }
-  }, []);
+  }, [enabled, onUnavailable]);
 
   const refreshCoherence = useCallback(async () => {
-    if (!activeLaneRun) return;
+    if (!enabled || !activeLaneRun) return;
     try {
       const res = await V8FinanceApi.checkKpiCoherence(activeLaneRun.runId);
       setKpiCoherence(res?.data || null);
-    } catch {
+    } catch (err) {
+      if (shouldFallbackToLegacyFinance(err)) {
+        setKpiCoherence(null);
+        setError(null);
+        onUnavailable?.();
+        return;
+      }
       setKpiCoherence({ status: 'unavailable', detail: 'Failed to check KPI coherence' });
     }
-  }, [activeLaneRun]);
+  }, [activeLaneRun, enabled, onUnavailable]);
 
   const startRun = useCallback(async (versionType?: FinanceVersionType) => {
+    if (!enabled) {
+      throw new Error('Finance lane is unavailable for the current organization.');
+    }
     setLoading(true);
     setError(null);
     try {
@@ -142,9 +177,12 @@ export function useFinanceLane() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [enabled]);
 
   const advanceStep = useCallback(async (outcome: string, detail?: string) => {
+    if (!enabled) {
+      throw new Error('Finance lane is unavailable for the current organization.');
+    }
     if (!activeLaneRun) throw new Error('No active lane run');
     setLoading(true);
     setError(null);
@@ -162,7 +200,7 @@ export function useFinanceLane() {
     } finally {
       setLoading(false);
     }
-  }, [activeLaneRun]);
+  }, [activeLaneRun, enabled]);
 
   const degradedAlerts: DegradedAlert[] = activeLaneRun
     ? mapDegradedToAlerts(activeLaneRun.degraded || [])

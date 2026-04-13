@@ -151,7 +151,7 @@ export const FinanceHub: React.FC = () => {
   const [showAnalyzeMenu, setShowAnalyzeMenu] = useState(false);
   const [v8Dashboard, setV8Dashboard] = useState<V8FinanceDashboard | null>(null);
   const [lanePanelOpen, setLanePanelOpen] = useState(false);
-  const lane = useFinanceLane();
+  const [useLegacyFinanceMode, setUseLegacyFinanceMode] = useState(false);
   const [createModelSourceStatementPackId, setCreateModelSourceStatementPackId] = useState<
     string | null
   >(null);
@@ -171,6 +171,15 @@ export const FinanceHub: React.FC = () => {
   const { isEnabled: isV8FinanceEnabled, isLoading: isV8FlagLoading } = useV8FeatureFlag('finance');
   const { isFeatureBlocked } = usePolicySnapshot();
   const isFinanceBlocked = isFeatureBlocked('finance');
+  const isFinanceRuntimeV8 = isV8FinanceEnabled && !useLegacyFinanceMode;
+  const lane = useFinanceLane({
+    enabled: isFinanceRuntimeV8,
+    onUnavailable: () => {
+      setUseLegacyFinanceMode(true);
+      setV8Dashboard(null);
+      setLanePanelOpen(false);
+    },
+  });
   const validFinanceTabs = useMemo(
     () => ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'] as ModuleTab[],
     []
@@ -242,19 +251,44 @@ export const FinanceHub: React.FC = () => {
   );
 
   const loadV8Dashboard = useCallback(async () => {
-    const response = await V8FinanceApi.getDashboard();
-    setV8Dashboard(response.dashboard);
-  }, []);
+    if (!isFinanceRuntimeV8) {
+      setV8Dashboard(null);
+      return;
+    }
+    try {
+      const response = await V8FinanceApi.getDashboard();
+      setV8Dashboard(response.dashboard);
+    } catch (error) {
+      if (shouldFallbackToLegacyFinance(error)) {
+        setUseLegacyFinanceMode(true);
+        setV8Dashboard(null);
+        return;
+      }
+      throw error;
+    }
+  }, [isFinanceRuntimeV8]);
+
+  useEffect(() => {
+    setUseLegacyFinanceMode(false);
+    setV8Dashboard(null);
+    setLanePanelOpen(false);
+  }, [currentOrganization?.id]);
 
   useEffect(() => {
     let cancelled = false;
+    if (!isFinanceRuntimeV8) {
+      setV8Dashboard(null);
+      return () => {
+        cancelled = true;
+      };
+    }
     void loadV8Dashboard().catch(() => {
       if (!cancelled) setV8Dashboard(null);
     });
     return () => {
       cancelled = true;
     };
-  }, [loadV8Dashboard]);
+  }, [isFinanceRuntimeV8, loadV8Dashboard]);
 
   useEffect(() => {
     if (location.pathname !== ROUTES.ECONOMICS) return;
@@ -1603,7 +1637,7 @@ export const FinanceHub: React.FC = () => {
             </span>
           </div>
         ))}
-        {v8Dashboard && (
+        {isFinanceRuntimeV8 && v8Dashboard && (
           <>
             <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
             <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
@@ -1622,14 +1656,26 @@ export const FinanceHub: React.FC = () => {
             </div>
           </>
         )}
-        <FinanceLaneStrip
-          activeLaneRun={lane.activeLaneRun}
-          degradedAlerts={lane.degradedAlerts}
-          onOpenPanel={() => setLanePanelOpen(true)}
-        />
+        {isFinanceRuntimeV8 && (
+          <FinanceLaneStrip
+            activeLaneRun={lane.activeLaneRun}
+            degradedAlerts={lane.degradedAlerts}
+            onOpenPanel={() => setLanePanelOpen(true)}
+          />
+        )}
       </div>
     );
-  }, [rowsForActiveTab.length, statusCounts, activeFilters, activeTab, t, v8Dashboard, lane.activeLaneRun, lane.degradedAlerts]);
+  }, [
+    rowsForActiveTab.length,
+    statusCounts,
+    activeFilters,
+    activeTab,
+    t,
+    v8Dashboard,
+    lane.activeLaneRun,
+    lane.degradedAlerts,
+    isFinanceRuntimeV8,
+  ]);
 
   const emptyMessage = useMemo(() => {
     const activeStatusFilter = activeFilters.find((filter) => filter.column === 'status')?.value;
@@ -1937,7 +1983,7 @@ export const FinanceHub: React.FC = () => {
   ]);
 
   // ---- Render ----
-  if (!isV8FlagLoading && !isV8FinanceEnabled) {
+  if (!isV8FlagLoading && !isV8FinanceEnabled && !useLegacyFinanceMode) {
     return (
       <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
         <div>
@@ -2007,34 +2053,38 @@ export const FinanceHub: React.FC = () => {
           </button>
         }
       >
-        <FinanceDegradedBanner
-          degradedAlerts={lane.degradedAlerts}
-          onViewAll={() => setLanePanelOpen(true)}
-        />
+        {isFinanceRuntimeV8 && (
+          <FinanceDegradedBanner
+            degradedAlerts={lane.degradedAlerts}
+            onViewAll={() => setLanePanelOpen(true)}
+          />
+        )}
         {content}
       </ModuleHub>
 
-      <FinanceLanePanel
-        open={lanePanelOpen}
-        onClose={() => setLanePanelOpen(false)}
-        activeLaneRun={lane.activeLaneRun}
-        degradedAlerts={lane.degradedAlerts}
-        mutationAudits={lane.mutationAudits}
-        kpiCoherence={lane.kpiCoherence}
-        versionSnapshots={lane.versionSnapshots}
-        onAdvanceStep={lane.advanceStep}
-        onFinalizeVersion={async (snapshotId) => {
-          try {
-            await V8FinanceApi.finalizeVersion(snapshotId);
-            toast.success(t('finance.lane.finalized', 'Version finalized'));
-            await lane.refreshLane();
-          } catch (err: any) {
-            toast.error(getFinanceErrorMessage(err));
-          }
-        }}
-        onRefreshCoherence={lane.refreshCoherence}
-        loading={lane.loading}
-      />
+      {isFinanceRuntimeV8 && (
+        <FinanceLanePanel
+          open={lanePanelOpen}
+          onClose={() => setLanePanelOpen(false)}
+          activeLaneRun={lane.activeLaneRun}
+          degradedAlerts={lane.degradedAlerts}
+          mutationAudits={lane.mutationAudits}
+          kpiCoherence={lane.kpiCoherence}
+          versionSnapshots={lane.versionSnapshots}
+          onAdvanceStep={lane.advanceStep}
+          onFinalizeVersion={async (snapshotId) => {
+            try {
+              await V8FinanceApi.finalizeVersion(snapshotId);
+              toast.success(t('finance.lane.finalized', 'Version finalized'));
+              await lane.refreshLane();
+            } catch (err: any) {
+              toast.error(getFinanceErrorMessage(err));
+            }
+          }}
+          onRefreshCoherence={lane.refreshCoherence}
+          loading={lane.loading}
+        />
+      )}
 
       {showCreateModelModal && (
         <CreateModelModal

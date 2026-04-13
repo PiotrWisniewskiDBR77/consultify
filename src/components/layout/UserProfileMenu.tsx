@@ -145,6 +145,14 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   const activeOrganizationName =
     (isDemoMode ? demoOrganization?.name : currentOrganization?.name) || currentUser.companyName || 'Workspace';
   const roleLabel = currentUser.role?.toLowerCase();
+  const activeOrganizationId =
+    (isDemoMode ? demoOrganization?.id : currentOrganization?.id) || currentUser.organizationId || null;
+  const shouldShowOrgSwitcher = !isDemoMode;
+
+  useEffect(() => {
+    if (!isOpen || !shouldShowOrgSwitcher || orgsLoading || orgs.length > 0) return;
+    void fetchOrgs();
+  }, [fetchOrgs, isOpen, orgs.length, orgsLoading, shouldShowOrgSwitcher]);
 
   return (
     <div className={`relative ${className}`} ref={menuRef}>
@@ -222,6 +230,111 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               </div>
             </div>
           </div>
+
+          {shouldShowOrgSwitcher && (
+            <div className="p-2 border-b border-slate-100 dark:border-navy-700">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!showOrgList) void fetchOrgs();
+                  setShowOrgList(!showOrgList);
+                }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
+                  showOrgList
+                    ? 'bg-purple-50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-300'
+                    : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      {t('settings.menu.switchOrg', 'Switch Organization')}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-2 text-sm font-medium">
+                      <Building2 size={14} />
+                      <span className="truncate">{activeOrganizationName}</span>
+                    </div>
+                  </div>
+                  {showOrgList ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              </button>
+
+              {showOrgList && (
+                <div className="mx-1 mt-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/[0.02] overflow-hidden">
+                  {orgsLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 size={16} className="animate-spin text-slate-400" />
+                      <span className="ml-2 text-xs text-slate-400">
+                        {t('common.loading', 'Loading...')}
+                      </span>
+                    </div>
+                  ) : orgs.length === 0 ? (
+                    <div className="py-3 px-3 text-xs text-slate-400 dark:text-slate-500 text-center">
+                      {t('common.noOrganizations', 'No organizations found')}
+                    </div>
+                  ) : (
+                    <div className="max-h-52 overflow-y-auto py-1">
+                      {orgs.map((org) => {
+                        const isCurrent = org.id === activeOrganizationId || org.is_current;
+                        const isSwitching = switchingOrgId === org.id;
+                        return (
+                          <button
+                            key={org.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isCurrent && !switchingOrgId) {
+                                handleSwitchOrg(org.id, org.name);
+                              }
+                            }}
+                            disabled={!!switchingOrgId}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors
+                              ${isCurrent
+                                ? 'bg-purple-100/60 dark:bg-purple-900/20'
+                                : 'hover:bg-white dark:hover:bg-white/5'}
+                              disabled:opacity-50`}
+                          >
+                            <div className="w-4 shrink-0 flex items-center justify-center">
+                              {isSwitching ? (
+                                <Loader2 size={13} className="animate-spin text-purple-500" />
+                              ) : isCurrent ? (
+                                <Check size={14} className="text-purple-500" />
+                              ) : null}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div
+                                className={`text-sm truncate ${
+                                  isCurrent
+                                    ? 'font-semibold text-purple-700 dark:text-purple-300'
+                                    : 'text-slate-700 dark:text-slate-300'
+                                }`}
+                              >
+                                {org.name}
+                              </div>
+                            </div>
+
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 ${
+                                org.role === 'OWNER'
+                                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
+                                  : org.role === 'ADMIN'
+                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
+                                    : org.role === 'CONSULTANT'
+                                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
+                                      : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20'
+                              }`}
+                            >
+                              {org.role}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Settings Section */}
           <div className="p-2 border-b border-slate-100 dark:border-navy-700">
@@ -384,95 +497,6 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               <Cpu size={16} />
               {t('settings.menu.aiConfig', 'AI Configuration')}
             </button>
-
-            {/* ── Switch Organization ── */}
-            <div className="my-1 border-t border-slate-100 dark:border-navy-700 opacity-50"></div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!showOrgList) fetchOrgs();
-                setShowOrgList(!showOrgList);
-              }}
-              className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between rounded-lg transition-colors ${
-                showOrgList
-                  ? 'bg-purple-50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-300'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Building2 size={16} />
-                {t('settings.menu.switchOrg', 'Switch Organization')}
-              </div>
-              {showOrgList ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
-
-            {/* Organization List (inline expand) */}
-            {showOrgList && (
-              <div className="mx-1 mb-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/[0.02] overflow-hidden">
-                {orgsLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 size={16} className="animate-spin text-slate-400" />
-                    <span className="ml-2 text-xs text-slate-400">{t('common.loading', 'Loading...')}</span>
-                  </div>
-                ) : orgs.length === 0 ? (
-                  <div className="py-3 px-3 text-xs text-slate-400 dark:text-slate-500 text-center">
-                    {t('common.noOrganizations', 'No organizations found')}
-                  </div>
-                ) : (
-                  <div className="max-h-52 overflow-y-auto py-1">
-                    {orgs.map((org) => {
-                      const isCurrent = org.is_current || org.id === currentUser?.organizationId;
-                      const isSwitching = switchingOrgId === org.id;
-                      return (
-                        <button
-                          key={org.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isCurrent && !switchingOrgId) {
-                              handleSwitchOrg(org.id, org.name);
-                            }
-                          }}
-                          disabled={!!switchingOrgId}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors
-                            ${isCurrent
-                              ? 'bg-purple-100/60 dark:bg-purple-900/20'
-                              : 'hover:bg-white dark:hover:bg-white/5'}
-                            disabled:opacity-50`}
-                        >
-                          <div className="w-4 shrink-0 flex items-center justify-center">
-                            {isSwitching ? (
-                              <Loader2 size={13} className="animate-spin text-purple-500" />
-                            ) : isCurrent ? (
-                              <Check size={14} className="text-purple-500" />
-                            ) : null}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-sm truncate ${isCurrent ? 'font-semibold text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}>
-                              {org.name}
-                            </div>
-                          </div>
-
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 ${
-                              org.role === 'OWNER'
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/20'
-                                : org.role === 'ADMIN'
-                                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
-                                  : org.role === 'CONSULTANT'
-                                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
-                                    : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20'
-                            }`}
-                          >
-                            {org.role}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
 
             <div className="my-1 border-t border-slate-100 dark:border-navy-700 opacity-50"></div>
 

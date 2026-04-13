@@ -30,6 +30,28 @@ interface HomeViewProps {
   onAction: (action: HomeScreenAction) => void;
 }
 
+class HomeBlockErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown): void {
+    console.error('[MyWorkHome] block render failed', error);
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      return null;
+    }
+    return this.props.children;
+  }
+}
+
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
   const { t, i18n } = useTranslation();
   const { isV8Enabled } = useV8();
@@ -280,7 +302,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       <div className="relative z-10 flex-1 overflow-auto px-4 md:px-5 pb-4">
         <div className="grid grid-cols-12 gap-2.5">
           {blocks.map((block) => (
-            <React.Fragment key={block.id}>{renderHomeBlock(block, onAction)}</React.Fragment>
+            <HomeBlockErrorBoundary key={block.id}>
+              {renderHomeBlock(block, onAction)}
+            </HomeBlockErrorBoundary>
           ))}
         </div>
       </div>

@@ -985,14 +985,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </button>
         </div>
 
-        {!hasInviteCode && targetMode !== SessionMode.DEMO && (
+        {!hasInviteCode && (
           <div className="text-xs text-slate-500 dark:text-slate-400">
             {t('auth.haveAccessCodePrompt', 'Have an organization code?')}{' '}
             <button
               type="button"
               onClick={() => setStep(AuthStep.CODE_ENTRY)}
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
+              <Lock size={12} />
               {t('auth.enterAccessCodeCta', 'Enter access code')}
             </button>
           </div>
@@ -1116,18 +1117,19 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </button>
       </div>
 
-      {targetMode !== SessionMode.DEMO && (
-        <div className="text-center -mt-4 text-xs text-slate-500 dark:text-slate-400">
-          {t('auth.haveAccessCodePrompt', 'Have an organization code?')}{' '}
-          <button
-            type="button"
-            onClick={() => setStep(AuthStep.CODE_ENTRY)}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-          >
-            {t('auth.enterAccessCodeCta', 'Enter access code')}
-          </button>
+      <div className="text-center -mt-4">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
+          {t('auth.haveAccessCodePrompt', 'Have an organization code?')}
         </div>
-      )}
+        <button
+          type="button"
+          onClick={() => setStep(AuthStep.CODE_ENTRY)}
+          className="mt-2 inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/15"
+        >
+          <Lock size={13} />
+          {t('auth.enterAccessCodeCta', 'Enter access code')}
+        </button>
+      </div>
 
       {/* Privacy Policy Link */}
       <div className="text-center pt-3 border-t border-slate-200 dark:border-navy-700">
