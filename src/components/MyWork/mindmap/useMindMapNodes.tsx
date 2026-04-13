@@ -2,7 +2,7 @@
  * useMindMapNodes — Extracted node CRUD, selection, field change, and tree traversal
  * for the Mind Map component.
  */
-import { useCallback, useMemo, useRef } from 'react';
+import { createElement, useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 import { MAX_MINDMAP_NODES, resolveDeleteAnchor, wouldCreateCycle } from './mindmapCanonHelpers';
@@ -432,25 +432,31 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
             const msg = isPolish
               ? `Usunięcie obejmie ${subtreeExtra} podwęzłów. Kontynuować?`
               : `This will also delete ${subtreeExtra} child node${subtreeExtra === 1 ? '' : 's'}. Continue?`;
-            return (
-              <span className="flex items-center gap-2 text-sm">
-                {msg}
-                <button
-                  className="ml-2 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700"
-                  onClick={() => {
+            return createElement(
+              'span',
+              { className: 'flex items-center gap-2 text-sm' },
+              msg,
+              createElement(
+                'button',
+                {
+                  className:
+                    'ml-2 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700',
+                  onClick: () => {
                     toast.dismiss(t.id);
                     deleteSelected({ confirmed: true });
-                  }}
-                >
-                  {isPolish ? 'Usuń' : 'Delete'}
-                </button>
-                <button
-                  className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-medium hover:bg-slate-300"
-                  onClick={() => toast.dismiss(t.id)}
-                >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
-                </button>
-              </span>
+                  },
+                },
+                isPolish ? 'Usuń' : 'Delete'
+              ),
+              createElement(
+                'button',
+                {
+                  className:
+                    'px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-medium hover:bg-slate-300',
+                  onClick: () => toast.dismiss(t.id),
+                },
+                isPolish ? 'Anuluj' : 'Cancel'
+              )
             ) as any;
           },
           { duration: 10000, id: 'mm-delete-confirm' }
