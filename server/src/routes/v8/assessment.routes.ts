@@ -570,7 +570,8 @@ router.get(
       permission: 'canView',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     const state = await AssessmentWorkbenchService.load(
       assessmentId,
@@ -608,7 +609,8 @@ router.get(
       permission: 'canView',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     const state = await AssessmentWorkbenchService.load(
       assessmentId,
@@ -646,7 +648,8 @@ router.post(
       permission: 'canEdit',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     try {
       const state = await AssessmentWorkbenchService.applyMethodologyPreset(
@@ -691,7 +694,8 @@ router.post(
       permission: to === 'completed' ? 'canApprove' : 'canEdit',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     try {
       const state = await AssessmentWorkbenchService.transition(
@@ -730,7 +734,8 @@ router.post(
       permission: 'canEdit',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     try {
       const state = await AssessmentWorkbenchService.addEvidence(
@@ -766,7 +771,8 @@ router.post(
       permission: 'canEdit',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     try {
       const state = await AssessmentWorkbenchService.setRequiredEvidenceKinds(
@@ -801,7 +807,8 @@ router.post(
       permission: 'canEdit',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     try {
       const state = await AssessmentWorkbenchService.proposeScore(
@@ -852,7 +859,8 @@ router.post(
       permission: 'canApprove',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     const action = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
     if (!['accept', 'reject', 'override'].includes(action)) {
@@ -897,7 +905,8 @@ router.post(
       permission: 'canEdit',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     try {
       const state = await AssessmentWorkbenchService.proposeInterpretation(
@@ -937,7 +946,8 @@ router.post(
       permission: 'canApprove',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     const intAction = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
     if (!['accept', 'reject', 'override'].includes(intAction)) {
@@ -994,7 +1004,8 @@ router.get(
       permission: 'canView',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     const state = await AssessmentWorkbenchService.load(
       assessmentId,
@@ -1050,7 +1061,8 @@ router.post(
       permission: 'canApprove',
     });
     if (!permission.ok) {
-      return res.status(permission.status).json(permission.body);
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
     }
     try {
       const state = await AssessmentWorkbenchService.recordPromotion(

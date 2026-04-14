@@ -294,7 +294,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     };
 
     try {
-      const res = await cal.events.update({
+      const res = await (cal.events.update as Function)({
         calendarId: item.calendarId,
         eventId: item.providerEventId!,
         requestBody: body,
@@ -331,7 +331,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     const cal = google.calendar({ version: 'v3', auth });
 
     try {
-      await cal.events.delete({
+      await (cal.events.delete as Function)({
         calendarId: connection.selectedCalendars[0],
         eventId: providerEventId,
         headers: { 'If-Match': providerEtag },

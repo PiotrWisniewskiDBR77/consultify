@@ -2363,8 +2363,8 @@ router.get(
       myWorkRoofService.getCalendarPhases(organizationId).catch(() => []),
     ]);
 
-    const blockMap = new Map(storedBlocks.map((block) => [block.blockName, block]));
-    const calendarMap = new Map(storedCalendarPhases.map((phase) => [phase.phaseName, phase]));
+    const blockMap = new Map(storedBlocks.map((block) => [block.blockName, block] as const));
+    const calendarMap = new Map(storedCalendarPhases.map((phase) => [phase.phaseName, phase] as const));
 
     const homeBlocks = DERIVED_HOME_BLOCKS.map((block) => {
       const stored = blockMap.get(block.blockName);
