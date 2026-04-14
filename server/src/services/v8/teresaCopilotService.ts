@@ -955,18 +955,23 @@ export async function createProposal(params: {
 
   logger.info(`${LOG_PREFIX} Proposal created: ${proposalId} → ${targetModule}`);
 
-  return {
+  const proposalWithoutContract = {
     id: proposalId,
     organization_id: organizationId,
     user_id: userId,
     session_id: sessionId,
-    state: 'proposal',
+    state: 'proposal' as const,
     handoff_context: handoffContext,
     target_module: targetModule,
     target_payload: targetPayload,
     created_at: now,
     updated_at: now,
     audit_trail: [auditEntry],
+  };
+
+  return {
+    ...proposalWithoutContract,
+    operation_contract: buildTeresaOperationContract(proposalWithoutContract),
   };
 }
 

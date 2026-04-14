@@ -251,12 +251,12 @@ export async function createProvenanceLedgerEntry(
     outputId: validated.outputId,
     outputType: validated.outputType,
     trustClass: validated.trustClass,
-    citationBindings: validated.citationBindings,
+    citationBindings: validated.citationBindings as ProvenanceLedgerEntry['citationBindings'],
     contextSnapshotId: validated.contextSnapshotId,
     retrievalTraceId: validated.retrievalTraceId ?? null,
     executionRunId: validated.executionRunId ?? null,
     routingExplanationId: validated.routingExplanationId ?? null,
-    trustSummary: validated.trustSummary,
+    trustSummary: validated.trustSummary as ProvenanceLedgerEntry['trustSummary'],
     createdAt: now,
     createdBy: validated.createdBy,
   };
@@ -324,8 +324,8 @@ export async function createSupportTrace(params: CreateSupportTraceParams): Prom
     retrievalRequestId: validated.retrievalRequestId ?? null,
     routingExplanationId: validated.routingExplanationId ?? null,
     trustClass: validated.trustClass,
-    routingExplanation: validated.routingExplanation ?? null,
-    degradedConditions: validated.degradedConditions,
+    routingExplanation: (validated.routingExplanation ?? null) as SupportTrace['routingExplanation'],
+    degradedConditions: validated.degradedConditions as SupportTrace['degradedConditions'],
     createdAt: now,
   };
 
