@@ -317,12 +317,48 @@ export class LLMConfigService {
   private cacheTTL: number;
   private healthStatus: Map<string, string>;
   private initialized: boolean;
+  private llmProvidersFlagTypeCache: Partial<Record<'is_active' | 'is_default', 'boolean' | 'integer' | 'unknown'>>;
   constructor() {
     this.providerCache = new Map();
     this.cacheExpiry = 0;
     this.cacheTTL = 5 * 60 * 1000;
     this.healthStatus = new Map();
     this.initialized = false;
+    this.llmProvidersFlagTypeCache = {};
+  }
+
+  private async getLlmProvidersFlagType(
+    column: 'is_active' | 'is_default'
+  ): Promise<'boolean' | 'integer' | 'unknown'> {
+    const cached = this.llmProvidersFlagTypeCache[column];
+    if (cached) return cached;
+
+    try {
+      const row = await this.getAsync<{ data_type?: string }>(
+        `SELECT data_type
+         FROM information_schema.columns
+         WHERE table_name = 'llm_providers' AND column_name = ?`,
+        [column]
+      );
+      const dt = String(row?.data_type || '').toLowerCase();
+      const resolved = dt === 'boolean' ? 'boolean' : dt.includes('int') ? 'integer' : 'unknown';
+      this.llmProvidersFlagTypeCache[column] = resolved;
+      return resolved;
+    } catch {
+      // SQLite / limited-permission DBs may not expose information_schema; fall back to safest default.
+      this.llmProvidersFlagTypeCache[column] = 'unknown';
+      return 'unknown';
+    }
+  }
+
+  private async coerceLlmProvidersFlagValue(
+    column: 'is_active' | 'is_default',
+    value: boolean
+  ): Promise<boolean | number> {
+    const t = await this.getLlmProvidersFlagType(column);
+    if (t === 'integer') return value ? 1 : 0;
+    // boolean or unknown → prefer boolean (Postgres boolean columns accept boolean; SQLite will store as 0/1 anyway)
+    return value;
   }
 
   private getProviderCacheKey(
@@ -507,8 +543,16 @@ export class LLMConfigService {
     try {
       await this.runAsync(
         `ALTER TABLE llm_providers
+         ALTER COLUMN is_active DROP DEFAULT`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
          ALTER COLUMN is_active TYPE BOOLEAN
          USING (CASE WHEN (is_active::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_active SET DEFAULT TRUE`
       );
     } catch {
       /* ignore */
@@ -516,8 +560,16 @@ export class LLMConfigService {
     try {
       await this.runAsync(
         `ALTER TABLE llm_providers
+         ALTER COLUMN is_default DROP DEFAULT`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
          ALTER COLUMN is_default TYPE BOOLEAN
          USING (CASE WHEN (is_default::text) IN ('1', 't', 'true', 'y', 'yes', 'on') THEN TRUE ELSE FALSE END)`
+      );
+      await this.runAsync(
+        `ALTER TABLE llm_providers
+         ALTER COLUMN is_default SET DEFAULT FALSE`
       );
     } catch {
       /* ignore */
@@ -699,13 +751,13 @@ export class LLMConfigService {
           (changes.api_key ?? existingProvider.api_key ?? '') || ''
         ).trim();
         if (effectiveKey) {
-          changes.is_active = 1;
+          changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', true);
         }
 
         // Only OpenRouter is auto-promoted to "default" by env sync.
         // Other providers should not silently become default (multi-default can break routing expectations).
         if (providerId === 'openrouter') {
-          changes.is_default = 1;
+          changes.is_default = await this.coerceLlmProvidersFlagValue('is_default', true);
         }
 
         await this.updateProviderInDb(providerId, changes);
@@ -715,8 +767,11 @@ export class LLMConfigService {
           id: `${providerId}-01`,
           provider: providerId,
           api_key: apiKey || null,
-          is_active: apiKey ? 1 : 0,
-          is_default: providerId === 'openrouter' ? 1 : 0,
+          is_active: await this.coerceLlmProvidersFlagValue('is_active', !!apiKey),
+          is_default: await this.coerceLlmProvidersFlagValue(
+            'is_default',
+            providerId === 'openrouter'
+          ),
           ...changes,
         });
         aiLogger.info('LLMConfigService', `Created provider ${providerId} (Active: ${!!apiKey})`);
@@ -732,12 +787,14 @@ export class LLMConfigService {
         !!String(openrouterRow?.api_key || '').trim() ||
         !!String(this.getApiKeyFromEnv('openrouter') || '').trim();
       if (hasOpenrouterKey) {
+        const notDefault = await this.coerceLlmProvidersFlagValue('is_default', false);
+        const isDefault = await this.coerceLlmProvidersFlagValue('is_default', true);
         await this.runAsync('UPDATE llm_providers SET is_default = ? WHERE provider != ?', [
-          false,
+          notDefault,
           'openrouter',
         ]);
         await this.runAsync('UPDATE llm_providers SET is_default = ? WHERE provider = ?', [
-          true,
+          isDefault,
           'openrouter',
         ]);
       }
