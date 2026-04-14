@@ -140,7 +140,9 @@ async function seedPurposeAssignments(): Promise<{ seeded: number; purposes: str
           `INSERT INTO ai_purpose_assignments
            (id, organization_id, purpose, provider_id, model_id, priority, is_active, created_at, updated_at)
            VALUES (?, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-          [randomUUID(), p, providerRowId, modelId, i * 10, activeValue],
+          // Lower priority is preferred (see modelRouter ORDER BY apa.priority ...).
+          // Use negative numbers so “primary” providers win even if a cheaper provider exists.
+          [randomUUID(), p, providerRowId, modelId, -100 + i * 10, activeValue],
           { fallback: true } as any
         );
         seeded += 1;
