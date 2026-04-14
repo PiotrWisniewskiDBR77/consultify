@@ -347,12 +347,8 @@ export async function hasPermission(
       'INTERVIEW_ASSIGN_MANAGE',
       'INTERVIEW_REMIND',
     ],
-    [ROLES.TEAM_MEMBER]: [
-      'INTERVIEW_TEMPLATE_VIEW',
-      'INTERVIEW_TEMPLATE_USE',
-      'INTERVIEW_ASSIGN_VIEW',
-    ],
-    [ROLES.VIEWER]: ['INTERVIEW_TEMPLATE_VIEW', 'INTERVIEW_ASSIGN_VIEW'],
+    [ROLES.TEAM_MEMBER]: [],
+    [ROLES.VIEWER]: [],
   };
   const allowFallbackInterview = (key: string): boolean => {
     const allowed = FALLBACK_INTERVIEW_PERMISSIONS[userRole] || [];
