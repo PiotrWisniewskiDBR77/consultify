@@ -311,6 +311,19 @@ function getEnvSyncAllowlist(): Set<string> {
   return new Set(['openrouter']);
 }
 
+function getDisabledProviders(): Set<string> {
+  const raw = String(process.env.LLM_DISABLED_PROVIDERS || process.env.AI_DISABLED_PROVIDERS || '')
+    .trim()
+    .toLowerCase();
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
 export class LLMConfigService {
   private providerCache: Map<string, ProviderConfig>;
   private cacheExpiry: number;
@@ -706,6 +719,7 @@ export class LLMConfigService {
     aiLogger.info('LLMConfigService', 'Syncing database with environment definitions...');
 
     const allowlist = getEnvSyncAllowlist();
+    const disabledProviders = getDisabledProviders();
 
     for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
       if (!allowlist.has(providerId)) continue;
@@ -732,6 +746,10 @@ export class LLMConfigService {
       const existingProvider = await this.getProviderFromDb(providerId);
 
       if (existingProvider) {
+        if (disabledProviders.has(providerId)) {
+          changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', false);
+        }
+
         const isDev = process.env.NODE_ENV !== 'production';
         const allowEnvSecretOverride =
           isDev &&
@@ -750,7 +768,7 @@ export class LLMConfigService {
         const effectiveKey = String(
           (changes.api_key ?? existingProvider.api_key ?? '') || ''
         ).trim();
-        if (effectiveKey) {
+        if (!disabledProviders.has(providerId) && effectiveKey) {
           changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', true);
         } else {
           // If a provider has no usable key (env+db empty/placeholder), keep it inactive to avoid
