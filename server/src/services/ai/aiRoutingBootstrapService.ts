@@ -77,6 +77,37 @@ async function ensureRoutingSchema(): Promise<void> {
   }
 }
 
+async function ensurePurposeExists(purpose: string, activeValue: boolean | number): Promise<void> {
+  const p = String(purpose || '').trim();
+  if (!p) return;
+
+  // Some deployments already have a foreign key constraint from ai_purpose_assignments.purpose
+  // -> ai_purposes.purpose. Seed the parent row first (best-effort, idempotent).
+  try {
+    await dbRun(
+      `INSERT INTO ai_purposes (purpose, kind, is_active, created_at, updated_at)
+       VALUES (?, 'routing', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT(purpose) DO NOTHING`,
+      [p, activeValue],
+      { fallback: true } as any
+    );
+    return;
+  } catch {
+    // fall through
+  }
+
+  try {
+    await dbRun(
+      `INSERT OR IGNORE INTO ai_purposes (purpose, kind, is_active, created_at, updated_at)
+       VALUES (?, 'routing', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [p, activeValue],
+      { fallback: true } as any
+    );
+  } catch {
+    // best-effort
+  }
+}
+
 async function pickDefaultProviderId(): Promise<{ providerId: string; modelId: string }> {
   const candidates = ['openrouter', 'openai', 'anthropic', 'google', 'deepseek'];
   for (const key of candidates) {
@@ -118,6 +149,7 @@ async function seedPurposeAssignments(): Promise<{ seeded: number; purposes: str
 
   let seeded = 0;
   for (const p of Array.from(purposes).map((x) => String(x).trim()).filter(Boolean)) {
+    await ensurePurposeExists(p, activeValue);
     for (let i = 0; i < selectedProviders.length; i++) {
       const sp = selectedProviders[i];
       const providerRowId = String((sp as any).rowId || (sp as any).providerId || '').trim();
