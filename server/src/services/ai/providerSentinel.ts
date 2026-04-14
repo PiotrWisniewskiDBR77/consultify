@@ -142,18 +142,65 @@ async function writeProviderStatus(params: {
   providerId: string;
   status: HealthStatus;
   checkedAtIso: string;
+  errorCategory?: ErrorCategory | null;
+  errorHttpStatus?: number | null;
+  errorMessage?: string | null;
 }): Promise<void> {
   try {
+    const hasErrorCols = await hasProviderErrorColumns();
+    if (!hasErrorCols) {
+      await dbRun(
+        `UPDATE llm_providers
+         SET health_status = ?, last_health_check = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [params.status, params.checkedAtIso, params.providerId],
+        { fallback: true }
+      );
+      return;
+    }
+
     await dbRun(
       `UPDATE llm_providers
-       SET health_status = ?, last_health_check = ?, updated_at = CURRENT_TIMESTAMP
+       SET
+         health_status = ?,
+         last_health_check = ?,
+         last_error_category = ?,
+         last_error_http_status = ?,
+         last_error_message = ?,
+         last_error_at = ?,
+         updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [params.status, params.checkedAtIso, params.providerId],
+      [
+        params.status,
+        params.checkedAtIso,
+        params.errorCategory || null,
+        typeof params.errorHttpStatus === 'number' ? params.errorHttpStatus : null,
+        params.errorMessage || null,
+        params.errorCategory ? params.checkedAtIso : null,
+        params.providerId,
+      ],
       { fallback: true }
     );
   } catch {
     /* ignore */
   }
+}
+
+let providerErrorColsCached: boolean | null = null;
+async function hasProviderErrorColumns(): Promise<boolean> {
+  if (providerErrorColsCached !== null) return providerErrorColsCached;
+  try {
+    const [c1, c2, c3, c4] = await Promise.all([
+      dbColumnExists('llm_providers', 'last_error_category'),
+      dbColumnExists('llm_providers', 'last_error_http_status'),
+      dbColumnExists('llm_providers', 'last_error_message'),
+      dbColumnExists('llm_providers', 'last_error_at'),
+    ]);
+    providerErrorColsCached = !!(c1 && c2 && c3 && c4);
+  } catch {
+    providerErrorColsCached = false;
+  }
+  return providerErrorColsCached;
 }
 
 async function writeHealthEvent(params: {
@@ -440,7 +487,14 @@ class ProviderSentinel {
             ? `${cat ? `${cat.toUpperCase()}: ` : ''}${r.errorMessage}`
             : null;
 
-          await writeProviderStatus({ providerId: p.id, status: statusToWrite, checkedAtIso });
+          await writeProviderStatus({
+            providerId: p.id,
+            status: statusToWrite,
+            checkedAtIso,
+            errorCategory: available ? null : (cat || 'unknown'),
+            errorHttpStatus: available ? null : (r.httpStatus ?? null),
+            errorMessage: available ? null : errorMsg,
+          });
           await writeHealthEvent({
             provider: p.provider,
             model: p.model_id || null,
@@ -452,13 +506,40 @@ class ProviderSentinel {
           });
 
           if (!available) {
+            const severity =
+              cat === 'billing' || cat === 'auth' || cat === 'missing_key' || cat === 'rate_limit'
+                ? SEVERITY.WARNING
+                : SEVERITY.CRITICAL;
+
+            const titlePrefix =
+              cat === 'billing'
+                ? 'Provider billing issue'
+                : cat === 'auth'
+                  ? 'Provider auth issue'
+                  : cat === 'missing_key'
+                    ? 'Provider missing key'
+                    : cat === 'rate_limit'
+                      ? 'Provider rate-limited'
+                      : 'Provider down';
+
+            const hint =
+              cat === 'billing'
+                ? 'Likely unpaid/credits/quota issue. Check provider billing/subscription.'
+                : cat === 'auth'
+                  ? 'Likely invalid/expired key. Check API key permissions.'
+                  : cat === 'missing_key'
+                    ? 'Provider key not configured in env/DB.'
+                    : cat === 'rate_limit'
+                      ? 'Rate limit hit. Consider throttling or adding fallback.'
+                      : null;
+
             await emitAggregatedAlert(
               String(p.kind || '').toUpperCase() === 'IMAGE_MODEL'
                 ? ALERT_TYPE.IMAGE_PROVIDER_UNAVAILABLE
                 : ALERT_TYPE.PROVIDER_DOWN,
-              SEVERITY.CRITICAL,
-              `Provider down: ${p.provider}`,
-              errorMsg || 'Provider unavailable',
+              severity,
+              `${titlePrefix}: ${p.provider}`,
+              `${errorMsg || 'Provider unavailable'}${hint ? `\n\nHint: ${hint}` : ''}`,
               {
                 providerId: p.provider,
                 modelId: p.model_id || null,
@@ -467,6 +548,8 @@ class ProviderSentinel {
                     ? 'presentation_visual_generation'
                     : undefined,
                 error: errorMsg,
+                errorCategory: cat || 'unknown',
+                httpStatus: r.httpStatus ?? null,
               }
             );
           } else if ((r.latencyMs || 0) >= 8000) {

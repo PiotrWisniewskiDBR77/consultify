@@ -1,6 +1,13 @@
 export type ModelKind = 'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL';
 export type ProviderType = 'direct' | 'aggregator' | 'local' | 'customer_managed';
 export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
+export type ErrorCategory =
+  | 'missing_key'
+  | 'auth'
+  | 'billing'
+  | 'rate_limit'
+  | 'network'
+  | 'unknown';
 export type DataClass = 'no_pii' | 'pii' | 'confidential';
 export type PriceSource = 'api_sync' | 'manual' | 'contract';
 
@@ -23,6 +30,10 @@ export interface RegistryModel {
   isActive: boolean;
   healthStatus: HealthStatus;
   lastHealthCheck?: string;
+  lastErrorCategory?: ErrorCategory;
+  lastErrorHttpStatus?: number;
+  lastErrorMessage?: string;
+  lastErrorAt?: string;
   avgLatencyMs?: number;
   costPer1k?: number;
   capabilities: ModelCapabilities;
