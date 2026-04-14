@@ -31,21 +31,41 @@ async function buildSnapshot(): Promise<{
     dbOk = false;
   }
 
-  const providers = await dbAll<{ provider: string; health_status?: string; is_active?: unknown }>(
-    `SELECT provider, health_status, is_active
+  const activeSql = (expr: string) =>
+    `COALESCE(NULLIF(LOWER(TRIM(CAST(${expr} AS TEXT))), ''), 'false') IN ('1','t','true','y','yes','on')`;
+
+  // Only include active providers and dedupe by provider name (there may be multiple rows per provider).
+  const rows = await dbAll<{
+    provider: string;
+    health_status?: string | null;
+    is_active?: unknown;
+    is_default?: unknown;
+    priority?: number | null;
+    updated_at?: string | null;
+  }>(
+    `SELECT provider, health_status, is_active, is_default, priority, updated_at
      FROM llm_providers
-     ORDER BY priority DESC, provider ASC`,
+     WHERE ${activeSql('is_active')}
+     ORDER BY provider ASC, is_default DESC, priority DESC, updated_at DESC`,
     [],
     { fallback: true } as any
   );
 
+  const byProvider = new Map<string, { provider: string; health: string; active: unknown }>();
+  for (const r of rows || []) {
+    const provider = String((r as any).provider || '').trim().toLowerCase();
+    if (!provider) continue;
+    if (byProvider.has(provider)) continue;
+    const rawHealth = String((r as any).health_status || 'unknown').trim();
+    const health = ['healthy', 'degraded', 'unhealthy', 'unknown'].includes(rawHealth)
+      ? rawHealth
+      : 'unknown';
+    byProvider.set(provider, { provider, health, active: (r as any).is_active });
+  }
+
   return {
     dbOk,
-    providers: (providers || []).map((p) => ({
-      provider: String((p as any).provider || ''),
-      health: String((p as any).health_status || 'unknown'),
-      active: (p as any).is_active,
-    })),
+    providers: Array.from(byProvider.values()).sort((a, b) => a.provider.localeCompare(b.provider)),
   };
 }
 
@@ -58,6 +78,7 @@ async function sendOpsSnapshotToSlack(): Promise<void> {
   const healthy = snapshot.providers.filter((p) => p.health === 'healthy').length;
   const degraded = snapshot.providers.filter((p) => p.health === 'degraded').length;
   const unhealthy = snapshot.providers.filter((p) => p.health === 'unhealthy').length;
+  const unknown = snapshot.providers.filter((p) => p.health === 'unknown').length;
 
   const lines = snapshot.providers
     .slice(0, 12)
@@ -66,8 +87,8 @@ async function sendOpsSnapshotToSlack(): Promise<void> {
 
   await slack.sendSystemAlert(
     'AI Ops hourly snapshot',
-    `DB: ${snapshot.dbOk ? 'healthy' : 'degraded'}\nLLM providers: healthy=${healthy}, degraded=${degraded}, unhealthy=${unhealthy}\n\n${lines}`,
-    snapshot.dbOk && unhealthy === 0 ? 'INFO' : 'WARNING'
+    `DB: ${snapshot.dbOk ? 'healthy' : 'degraded'}\nLLM providers: healthy=${healthy}, degraded=${degraded}, unhealthy=${unhealthy}, unknown=${unknown}\n\n${lines}`,
+    snapshot.dbOk && unhealthy === 0 && degraded === 0 ? 'INFO' : 'WARNING'
   );
 }
 

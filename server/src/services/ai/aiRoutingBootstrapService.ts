@@ -91,8 +91,19 @@ async function pickDefaultProviderId(): Promise<{ providerId: string; modelId: s
 }
 
 async function seedPurposeAssignments(): Promise<{ seeded: number; purposes: string[] }> {
-  const { providerId, modelId } = await pickDefaultProviderId();
   const activeValue = await coerceActiveValue('ai_purpose_assignments', 'is_active', true);
+
+  // Prefer multiple active+configured providers for critical purposes (chat) so routing has fallback.
+  const availableProviders = await llmConfigService.getAllProviders(false);
+  const preferredOrder = ['openrouter', 'openai', 'anthropic', 'google', 'deepseek'];
+  const providerCandidates = preferredOrder
+    .map((id) => availableProviders.find((p) => String((p as any).provider || '').toLowerCase() === id))
+    .filter((p) => p && (p as any).apiKey) as any[];
+
+  const selectedProviders =
+    providerCandidates.length > 0
+      ? providerCandidates.slice(0, 3)
+      : [await pickDefaultProviderId()].map((x) => ({ rowId: x.providerId, modelId: x.modelId }));
 
   const purposes = new Set<string>();
   for (const useCase of EXECUTIVE_USE_CASES) {
@@ -107,30 +118,39 @@ async function seedPurposeAssignments(): Promise<{ seeded: number; purposes: str
 
   let seeded = 0;
   for (const p of Array.from(purposes).map((x) => String(x).trim()).filter(Boolean)) {
-    try {
-      const exists = await dbGet(
-        `SELECT id FROM ai_purpose_assignments
-         WHERE purpose = ?
-           AND organization_id IS NULL
-         LIMIT 1`,
-        [p],
-        { fallback: true } as any
-      );
-      if (exists) continue;
+    for (let i = 0; i < selectedProviders.length; i++) {
+      const sp = selectedProviders[i];
+      const providerRowId = String((sp as any).rowId || (sp as any).providerId || '').trim();
+      const modelId = String((sp as any).modelId || (sp as any).id || '').trim();
+      if (!providerRowId || !modelId) continue;
 
-      await dbRun(
-        `INSERT INTO ai_purpose_assignments
-         (id, organization_id, purpose, provider_id, model_id, priority, is_active, created_at, updated_at)
-         VALUES (?, NULL, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [randomUUID(), p, providerId, modelId, activeValue],
-        { fallback: true } as any
-      );
-      seeded += 1;
-    } catch (err: any) {
-      logger.warn('[AIRoutingBootstrap] failed to seed purpose assignment', {
-        purpose: p,
-        error: err?.message || err,
-      });
+      try {
+        const exists = await dbGet(
+          `SELECT id FROM ai_purpose_assignments
+           WHERE purpose = ?
+             AND organization_id IS NULL
+             AND provider_id = ?
+           LIMIT 1`,
+          [p, providerRowId],
+          { fallback: true } as any
+        );
+        if (exists) continue;
+
+        await dbRun(
+          `INSERT INTO ai_purpose_assignments
+           (id, organization_id, purpose, provider_id, model_id, priority, is_active, created_at, updated_at)
+           VALUES (?, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [randomUUID(), p, providerRowId, modelId, i * 10, activeValue],
+          { fallback: true } as any
+        );
+        seeded += 1;
+      } catch (err: any) {
+        logger.warn('[AIRoutingBootstrap] failed to seed purpose assignment', {
+          purpose: p,
+          providerId: providerRowId,
+          error: err?.message || err,
+        });
+      }
     }
   }
 

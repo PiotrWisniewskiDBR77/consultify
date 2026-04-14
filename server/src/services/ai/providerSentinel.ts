@@ -269,6 +269,8 @@ async function emitAggregatedAlert(
 }
 
 let hasLoggedCoverageSchemaSkip = false;
+const coverageStartAtMs = Date.now();
+let hasLoggedCoverageGraceSkip = false;
 
 async function routingCoverageSchemaReady(): Promise<boolean> {
   try {
@@ -290,6 +292,18 @@ async function routingCoverageSchemaReady(): Promise<boolean> {
 }
 
 async function evaluateUseCaseCoverage(): Promise<void> {
+  // Avoid false-positive "coverage missing" alerts during cold start while bootstrap is seeding.
+  const graceMs = Number(process.env.AI_PURPOSE_COVERAGE_GRACE_MS || 120_000);
+  if (Number.isFinite(graceMs) && graceMs > 0 && Date.now() - coverageStartAtMs < graceMs) {
+    if (!hasLoggedCoverageGraceSkip) {
+      logger.info('[ProviderSentinel] Skipping purpose coverage check during startup grace window', {
+        graceMs,
+      });
+      hasLoggedCoverageGraceSkip = true;
+    }
+    return;
+  }
+
   const schemaReady = await routingCoverageSchemaReady();
   if (!schemaReady) {
     if (!hasLoggedCoverageSchemaSkip) {
