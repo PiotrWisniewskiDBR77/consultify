@@ -247,10 +247,45 @@ export class AlertingService {
         message = `User ${data.userId} in org ${data.organizationId} exceeded rate limit for ${data.capability}.`;
         break;
       case ALERT_TYPE.PROVIDER_DOWN:
-        severity = SEVERITY.CRITICAL;
-        emoji = '💀';
-        title = `Provider DOWN: ${data.providerId}`;
-        message = `LLM provider ${data.providerId} is not responding. Error: ${data.error}`;
+        // Classify operational vs billing/auth causes so Slack responders know what to do.
+        // `errorCategory` is injected by ProviderSentinel.
+        // - billing/auth/missing_key/rate_limit: actionable config/account issues (WARNING)
+        // - network/unknown: likely outage/infrastructure (CRITICAL)
+        {
+          const cat = String((data as any)?.errorCategory || '').toLowerCase();
+          const provider = String(data.providerId || 'unknown');
+          const err = String((data as any)?.error || '');
+          const http = (data as any)?.httpStatus;
+          const httpPart = typeof http === 'number' ? ` (HTTP ${http})` : '';
+
+          const isConfigIssue =
+            cat === 'billing' || cat === 'auth' || cat === 'missing_key' || cat === 'rate_limit';
+          severity = isConfigIssue ? SEVERITY.WARNING : SEVERITY.CRITICAL;
+          emoji =
+            cat === 'billing'
+              ? '💳'
+              : cat === 'auth'
+                ? '🔑'
+                : cat === 'missing_key'
+                  ? '🧩'
+                  : cat === 'rate_limit'
+                    ? '⏱️'
+                    : '💀';
+
+          const label =
+            cat === 'billing'
+              ? 'Provider billing issue'
+              : cat === 'auth'
+                ? 'Provider auth issue'
+                : cat === 'missing_key'
+                  ? 'Provider missing key'
+                  : cat === 'rate_limit'
+                    ? 'Provider rate-limited'
+                    : 'Provider DOWN';
+
+          title = `${label}: ${provider}${httpPart}`;
+          message = `LLM provider ${provider} is not responding.\nError: ${err}`;
+        }
         break;
       case ALERT_TYPE.PROVIDER_RECOVERED:
         severity = SEVERITY.INFO;
