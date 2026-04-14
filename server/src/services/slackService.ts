@@ -89,8 +89,14 @@ class SlackServiceClass {
     }
 
     try {
-      const emoji = severity === 'CRITICAL' ? ':rotating_light:' : ':warning:';
-      const color = severity === 'CRITICAL' ? '#ff0000' : '#ffcc00';
+      const emoji =
+        severity === 'CRITICAL'
+          ? ':rotating_light:'
+          : severity === 'WARNING'
+            ? ':warning:'
+            : ':information_source:';
+      const color =
+        severity === 'CRITICAL' ? '#ff0000' : severity === 'WARNING' ? '#ffcc00' : '#3b82f6';
 
       const payload = {
         attachments: [

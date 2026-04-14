@@ -752,6 +752,14 @@ export class LLMConfigService {
         ).trim();
         if (effectiveKey) {
           changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', true);
+        } else {
+          // If a provider has no usable key (env+db empty/placeholder), keep it inactive to avoid
+          // noisy health checks / circuit breaker churn.
+          const existingKeyLooksUsable = existingKey && !isPlaceholderKey(existingKey);
+          const envKeyLooksUsable = envKey && !isPlaceholderKey(envKey);
+          if (!existingKeyLooksUsable && !envKeyLooksUsable) {
+            changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', false);
+          }
         }
 
         // Only OpenRouter is auto-promoted to "default" by env sync.
