@@ -92,6 +92,7 @@ function classifyError(message: string, httpStatus?: number | null): ErrorCatego
   const s = typeof httpStatus === 'number' ? httpStatus : null;
 
   if (m.includes('no ') && m.includes(' api key')) return 'missing_key';
+  if (m.includes('api key expired') || m.includes('renew the api key')) return 'auth';
   if (s === 401) return 'auth';
   if (s === 402) return 'billing';
   if (s === 429) return 'rate_limit';

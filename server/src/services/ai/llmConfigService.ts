@@ -754,15 +754,25 @@ export class LLMConfigService {
           changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', false);
         }
 
-        const isDev = process.env.NODE_ENV !== 'production';
-        const allowEnvSecretOverride =
-          isDev &&
-          (process.env.LLM_SECRETS_FROM_ENV === 'true' ||
-            process.env.LLM_SECRETS_FROM_ENV === '1' ||
-            process.env.LLM_SECRETS_FROM_ENV === 'yes');
+        const runtimeEnv = String(
+          process.env.APP_ENV ||
+            process.env.RAILWAY_ENVIRONMENT_NAME ||
+            process.env.RAILWAY_ENVIRONMENT ||
+            process.env.ENVIRONMENT ||
+            process.env.NODE_ENV ||
+            ''
+        )
+          .trim()
+          .toLowerCase();
+        const isProdEnv = runtimeEnv === 'production' || runtimeEnv === 'prod';
+        const explicitEnvOverride = ['true', '1', 'yes', 'on'].includes(
+          String(process.env.LLM_SECRETS_FROM_ENV || '').trim().toLowerCase()
+        );
+        const allowEnvSecretOverride = !isProdEnv || explicitEnvOverride;
 
-        // DB is the canonical source for secrets (prod). In dev, allow env to override to make
-        // local setup frictionless (paste key into `.env.local` and restart).
+        // In production, DB is the canonical source for secrets by default.
+        // In non-prod envs (staging/dev), prefer env keys so rotating `OPENAI_API_KEY` etc.
+        // immediately takes effect without manual DB edits.
         const existingKey = String(existingProvider.api_key || '').trim();
         const envKey = String(apiKey || '').trim();
         if (envKey && (allowEnvSecretOverride || !existingKey || isPlaceholderKey(existingKey))) {
