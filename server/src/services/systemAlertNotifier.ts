@@ -1,5 +1,6 @@
 import WhatsAppService from './WhatsAppService.js';
 import slackService from './slackService.js';
+import { SlackServiceClass } from './slackService.js';
 import logger from '../utils/Logger.js';
 
 export type SystemAlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
@@ -14,6 +15,10 @@ type SystemAlertInput = {
 };
 
 const alertThrottle = new Map<string, number>();
+
+const aiSlackWebhookUrl = String(process.env.AI_SLACK_WEBHOOK_URL || '').trim();
+const aiSlack =
+  aiSlackWebhookUrl.length > 0 ? new SlackServiceClass({ webhookUrl: aiSlackWebhookUrl }) : null;
 
 function shouldThrottle(input: SystemAlertInput): boolean {
   if (!input.throttleMs || input.throttleMs <= 0) {
@@ -43,8 +48,10 @@ export async function sendSystemAlert(input: SystemAlertInput): Promise<void> {
   }
 
   const title = input.source ? `${input.source}: ${input.title}` : input.title;
+  const sourceKey = String(input.source || '').trim().toUpperCase();
+  const slackTarget = (sourceKey === 'LLM' || sourceKey === 'AI') && aiSlack ? aiSlack : slackService;
   const results = await Promise.allSettled([
-    slackService.sendSystemAlert(title, input.message, input.severity),
+    slackTarget.sendSystemAlert(title, input.message, input.severity),
     WhatsAppService.sendSystemAlert({
       title,
       message: input.message,

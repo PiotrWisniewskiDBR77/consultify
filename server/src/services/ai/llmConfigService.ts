@@ -241,6 +241,15 @@ const TIER_PRIORITY: Record<string, number> = {
   FREE: 1,
 };
 
+// NOTE: Some Postgres deployments may carry legacy SQLite-first schemas where boolean flags
+// were stored as INTEGER (0/1). Comparing INTEGER to TRUE/FALSE breaks Postgres with:
+// "operator does not exist: integer = boolean".
+// This helper makes filters tolerant to both representations.
+const SQL_TRUTHY_LITERALS = "('1','t','true','y','yes','on')";
+function sqlIsTruthy(column: string): string {
+  return `LOWER(CAST(${column} AS TEXT)) IN ${SQL_TRUTHY_LITERALS}`;
+}
+
 export const DEFAULT_FALLBACK_CHAIN = [
   'openrouter',
   'openai',
@@ -743,7 +752,7 @@ export class LLMConfigService {
     aiLogger.info('LLMConfigService', 'Seeding tier assignments for active providers...');
 
     const activeProviders = await this.allAsync<{ id: string; provider: string; tier: string }>(
-      'SELECT id, provider, tier FROM llm_providers WHERE is_active = TRUE'
+      `SELECT id, provider, tier FROM llm_providers WHERE ${sqlIsTruthy('is_active')}`
     );
 
     for (const p of activeProviders || []) {
@@ -907,7 +916,7 @@ export class LLMConfigService {
     }
 
     const rows = await this.allAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC, is_default DESC'
+      `SELECT * FROM llm_providers WHERE ${sqlIsTruthy('is_active')} ORDER BY priority DESC, is_default DESC`
     );
 
     this.providerCache.clear();
@@ -968,11 +977,11 @@ export class LLMConfigService {
 
   async getDefaultProvider(): Promise<ProviderConfig | null> {
     let row = await this.getAsync<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_default = TRUE AND is_active = TRUE LIMIT 1'
+      `SELECT * FROM llm_providers WHERE ${sqlIsTruthy('is_default')} AND ${sqlIsTruthy('is_active')} LIMIT 1`
     );
     if (!row) {
       row = await this.getAsync<ProviderRow>(
-        'SELECT * FROM llm_providers WHERE is_active = TRUE ORDER BY priority DESC LIMIT 1'
+        `SELECT * FROM llm_providers WHERE ${sqlIsTruthy('is_active')} ORDER BY priority DESC LIMIT 1`
       );
     }
     return row ? this.enrichProviderConfig(row) : null;
