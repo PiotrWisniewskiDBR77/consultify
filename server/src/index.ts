@@ -399,6 +399,16 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
   });
 
+  // Hourly AI Ops snapshot to Slack (non-blocking)
+  scheduleStartupTask(async () => {
+    try {
+      const { startAIOpsReportCron } = await import('./cron/AIOpsReportCron.js');
+      startAIOpsReportCron();
+    } catch (err: any) {
+      logger.warn('[Server] AI Ops report cron failed to start', { error: err?.message || err });
+    }
+  });
+
   // Init Health Check Monitor (ES modules) - non-blocking
   if (process.env.DISABLE_STARTUP_HEALTH_MONITOR !== 'true') {
     scheduleStartupTask(async () => {
@@ -466,6 +476,19 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       const { llmConfigService } = await import('./services/ai/llmConfigService.js');
       await llmConfigService.initialize();
       logger.info('[Server] ✅ LLM Config Service initialized (tables + providers synced)');
+
+      // Ensure purpose routing schema + seed baseline assignments so model routing has coverage.
+      // This prevents "Purpose coverage missing" alerts on fresh/legacy DBs.
+      try {
+        const { ensureRoutingSchemaAndSeedDefaults } = await import(
+          './services/ai/aiRoutingBootstrapService.js'
+        );
+        await ensureRoutingSchemaAndSeedDefaults();
+        logger.info('[Server] ✅ AI purpose routing bootstrap complete');
+      } catch (err: any) {
+        const e = err as Error;
+        logger.warn('[Server] AI purpose routing bootstrap failed (continuing):', e.message);
+      }
     } catch (err: any) {
       const error = err as Error;
       logger.error('[Server] LLM Config initialization failed:', error.message);

@@ -976,6 +976,8 @@ export class ModelRouter {
     if (!p) return [];
 
     const fetchRows = async (routingKey: string): Promise<ProviderRow[]> => {
+      const activeSql = (expr: string) =>
+        `COALESCE(NULLIF(LOWER(TRIM(CAST(${expr} AS TEXT))), ''), 'false') IN ('1','t','true','y','yes','on')`;
       const query = organizationId
         ? `
         SELECT
@@ -990,8 +992,8 @@ export class ModelRouter {
         LEFT JOIN organization_provider_settings ops ON lp.id = ops.provider_id AND ops.organization_id = ?
         WHERE apa.purpose = ?
           AND (apa.organization_id = ? OR apa.organization_id IS NULL)
-          AND apa.is_active = TRUE
-          AND lp.is_active = 1
+          AND ${activeSql('apa.is_active')}
+          AND ${activeSql('lp.is_active')}
           AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
           AND (lp.health_status IS NULL OR lp.health_status != 'unhealthy')
         ORDER BY
@@ -1012,8 +1014,8 @@ export class ModelRouter {
         INNER JOIN llm_providers lp ON lp.id = apa.provider_id
         WHERE apa.purpose = ?
           AND apa.organization_id IS NULL
-          AND apa.is_active = TRUE
-          AND lp.is_active = 1
+          AND ${activeSql('apa.is_active')}
+          AND ${activeSql('lp.is_active')}
           AND (lp.health_status IS NULL OR lp.health_status != 'unhealthy')
         ORDER BY apa.priority, lp.cost_per_1k, lp.priority
       `;
