@@ -500,9 +500,10 @@ type ExecutiveAggregateSnapshot = {
 };
 
 const normalizeTaskStatus = (
-  status: ProjectTaskStatus
+  status: ProjectTaskStatus | null | undefined
 ): 'todo' | 'in_progress' | 'review' | 'blocked' | 'done' => {
-  const normalized = status.toString().toLowerCase();
+  if (!status) return 'todo';
+  const normalized = String(status).toLowerCase();
   if (normalized === 'in_progress') return 'in_progress';
   if (normalized === 'review') return 'review';
   if (normalized === 'blocked') return 'blocked';
@@ -1362,7 +1363,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (i) => i.name.toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
+        (i) => (i.name || '').toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
       );
     }
     return result;
