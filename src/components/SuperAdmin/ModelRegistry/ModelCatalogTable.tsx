@@ -28,7 +28,14 @@ import { useTranslation } from 'react-i18next';
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
-import type { DataClass, HealthStatus, ModelKind, ProviderType, RegistryModel } from './types';
+import type {
+  DataClass,
+  ErrorCategory,
+  HealthStatus,
+  ModelKind,
+  ProviderType,
+  RegistryModel,
+} from './types';
 import { HEALTH_STYLES, KIND_BADGE_STYLES, PROVIDER_TYPE_STYLES } from './types';
 
 const authHeaders = () => ({
@@ -44,6 +51,45 @@ function HealthBadge({ status }: { status: HealthStatus }) {
     >
       <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
       {status}
+    </span>
+  );
+}
+
+function ErrorCategoryBadge({
+  category,
+  httpStatus,
+}: {
+  category?: ErrorCategory;
+  httpStatus?: number;
+}) {
+  if (!category || category === 'unknown') return null;
+  const label =
+    category === 'billing'
+      ? 'Billing'
+      : category === 'auth'
+        ? 'Auth'
+        : category === 'missing_key'
+          ? 'Missing key'
+          : category === 'rate_limit'
+            ? 'Rate limit'
+            : category === 'network'
+              ? 'Network'
+              : 'Unknown';
+  const cls =
+    category === 'billing'
+      ? 'bg-amber-500/10 text-amber-400'
+      : category === 'auth' || category === 'missing_key'
+        ? 'bg-rose-500/10 text-rose-400'
+        : category === 'rate_limit'
+          ? 'bg-yellow-500/10 text-yellow-400'
+          : 'bg-slate-500/10 text-slate-400';
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}
+      title={httpStatus ? `${label} (HTTP ${httpStatus})` : label}
+    >
+      {label}
+      {httpStatus ? ` ${httpStatus}` : ''}
     </span>
   );
 }
@@ -359,6 +405,15 @@ export const ModelCatalogTable: React.FC = () => {
           isActive: p.is_active === 1 || p.is_active === true,
           healthStatus: (p.health_status as HealthStatus) || 'unknown',
           lastHealthCheck: p.last_health_check || undefined,
+          lastErrorCategory: (p.last_error_category as ErrorCategory) || undefined,
+          lastErrorHttpStatus:
+            typeof p.last_error_http_status === 'number'
+              ? p.last_error_http_status
+              : p.last_error_http_status
+                ? Number(p.last_error_http_status)
+                : undefined,
+          lastErrorMessage: p.last_error_message || undefined,
+          lastErrorAt: p.last_error_at || undefined,
           avgLatencyMs: Number(p.avg_latency_ms || 0) || undefined,
           costPer1k: Number(p.cost_per_1k || 0) || undefined,
           capabilities: {
@@ -723,7 +778,13 @@ export const ModelCatalogTable: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <HealthBadge status={model.healthStatus} />
+                    <div className="flex flex-col gap-1">
+                      <HealthBadge status={model.healthStatus} />
+                      <ErrorCategoryBadge
+                        category={model.lastErrorCategory}
+                        httpStatus={model.lastErrorHttpStatus}
+                      />
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <CapabilityIcons caps={model.capabilities} />
