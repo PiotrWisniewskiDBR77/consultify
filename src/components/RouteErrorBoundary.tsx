@@ -40,14 +40,27 @@ export class RouteErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
     console.error('[RouteErrorBoundary] Caught error:', error, errorInfo);
 
-    // Update state with error details
     this.setState({
       error,
       errorInfo,
     });
+
+    if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+      window
+        .fetch('/api/errors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: error.message,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+            url: window.location.href,
+          }),
+        })
+        .catch(() => {});
+    }
 
     // System recovery: dynamic-import/module-script failures are typically fixed by a hard reload,
     // but users shouldn't have to click anything. Guard against infinite reload loops by allowing
@@ -127,7 +140,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
               Wystąpił nieoczekiwany błąd podczas ładowania tej strony.
             </p>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {this.state.error && (
               <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
                 <p className="text-sm font-mono text-red-600 dark:text-red-400 mb-2">
                   {this.state.error.toString()}
@@ -135,7 +148,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
                 {this.state.errorInfo && (
                   <details className="text-xs text-gray-600 dark:text-gray-400">
                     <summary className="cursor-pointer">Stack trace</summary>
-                    <pre className="mt-2 overflow-auto">{this.state.errorInfo.componentStack}</pre>
+                    <pre className="mt-2 overflow-auto max-h-40">{this.state.errorInfo.componentStack}</pre>
                   </details>
                 )}
               </div>
