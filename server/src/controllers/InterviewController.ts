@@ -2120,14 +2120,19 @@ export const InterviewController = {
       return;
     }
 
-    const answered = Number((sessionRow as any).answered_questions || 0);
-    const total = Number((sessionRow as any).total_questions || 0);
+    // Recalculate progress from actual question data to avoid stale counters
+    const sessionId = (assignment as any).session_id;
+    await InterviewController.updateSessionProgress(sessionId);
+    const freshSession = await queryHelpers.queryOne(
+      `SELECT answered_questions, total_questions FROM interview_sessions WHERE id = ?`,
+      [sessionId]
+    );
+    const answered = Number((freshSession as any)?.answered_questions || 0);
+    const total = Number((freshSession as any)?.total_questions || 0);
     const completenessRatio = calcCompletenessRatio(answered, total);
     const completenessPercent = Math.round(completenessRatio * 100);
     const now = new Date().toISOString();
 
-    // Canon: submit ALWAYS sends to review.
-    // Session status remains within DB constraint (active|completed|paused); the "lock" is enforced by assignment status.
     const newAssignmentStatus = 'submitted';
 
     await queryHelpers.queryRun(
@@ -2138,8 +2143,8 @@ export const InterviewController = {
     );
 
     await queryHelpers.queryRun(
-      `UPDATE interview_sessions SET updated_at = ?, last_activity_at = ? WHERE id = ?`,
-      [now, now, (assignment as any).session_id]
+      `UPDATE interview_sessions SET status = 'submitted', updated_at = ?, last_activity_at = ? WHERE id = ?`,
+      [now, now, sessionId]
     );
 
     if ((assignment as any).task_id) {
@@ -4702,34 +4707,21 @@ ${JSON.stringify(questions || [], null, 2)}
       [sessionId]
     )) as { category: string; status: string }[];
 
-    const progress: Record<string, number> = {
-      strategy: 0,
-      operations: 0,
-      digital: 0,
-      people: 0,
-      finance: 0,
-    };
-    const categoryCount: Record<string, number> = {
-      strategy: 0,
-      operations: 0,
-      digital: 0,
-      people: 0,
-      finance: 0,
-    };
+    const progress: Record<string, number> = {};
+    const categoryCount: Record<string, number> = {};
     let answeredTotal = 0;
 
     for (const q of questions) {
-      if (INTERVIEW_CATEGORIES.includes(q.category as InterviewCategory)) {
-        categoryCount[q.category]++;
-        if (q.status === 'answered') {
-          progress[q.category]++;
-          answeredTotal++;
-        }
+      const cat = q.category || 'general';
+      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+      progress[cat] = progress[cat] || 0;
+      if (q.status === 'answered') {
+        progress[cat]++;
+        answeredTotal++;
       }
     }
 
-    // Calculate percentage per category
-    for (const cat of INTERVIEW_CATEGORIES) {
+    for (const cat of Object.keys(progress)) {
       if (categoryCount[cat] > 0) {
         progress[cat] = Math.round((progress[cat] / categoryCount[cat]) * 100);
       }
