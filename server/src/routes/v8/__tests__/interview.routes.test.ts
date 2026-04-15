@@ -6,10 +6,12 @@ import { V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT, V8_INTERVIEW_INSIGHT_READ_CONTR
 
 const mockListSessions = vi.fn();
 const mockListAcceptedSessions = vi.fn();
+const mockListManagedSessions = vi.fn();
 const mockGetSession = vi.fn();
 const mockGetMyAssignments = vi.fn();
 const mockGetManagedAssignments = vi.fn();
 const mockGetOverdueAssignments = vi.fn();
+const mockResolveInterviewManagerScope = vi.fn();
 const mockStartAssignment = vi.fn();
 const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
@@ -33,6 +35,8 @@ vi.mock('../../../controllers/InterviewController.js', () => ({
   loadInterviewSessionsForOrganization: (...args: unknown[]) => mockListSessions(...args),
   loadAcceptedInterviewSessionsForManager: (...args: unknown[]) =>
     mockListAcceptedSessions(...args),
+  loadManagedInterviewSessionsForManager: (...args: unknown[]) =>
+    mockListManagedSessions(...args),
   loadInterviewSessionForOrganization: (...args: unknown[]) => mockGetSession(...args),
 }));
 
@@ -40,6 +44,10 @@ vi.mock('../../../services/InterviewAssignmentService.js', () => ({
   getMyAssignments: (...args: unknown[]) => mockGetMyAssignments(...args),
   getManagedAssignments: (...args: unknown[]) => mockGetManagedAssignments(...args),
   getOverdueAssignments: (...args: unknown[]) => mockGetOverdueAssignments(...args),
+}));
+
+vi.mock('../../../services/interviewManagerScope.js', () => ({
+  resolveInterviewManagerScope: (...args: unknown[]) => mockResolveInterviewManagerScope(...args),
 }));
 
 vi.mock('../../../services/InterviewInsightService.js', () => ({
@@ -163,6 +171,7 @@ describe('V8 Interview read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
+    mockResolveInterviewManagerScope.mockResolvedValue({ kind: 'organization' });
   });
 
   it('GET /api/v8/interview/sessions returns V8 envelope and forwards org + status to loader', async () => {
@@ -215,6 +224,34 @@ describe('V8 Interview read-only routes', () => {
     expect(mockListAcceptedSessions).toHaveBeenCalledWith(ORG, UID);
   });
 
+  it('GET /api/v8/interview/sessions/managed returns V8 envelope and forwards org + user to loader', async () => {
+    mockListManagedSessions.mockResolvedValue([
+      {
+        id: 'managed-1',
+        name: 'Managed workflow session',
+        status: 'submitted',
+        assignmentStatus: 'submitted',
+        answeredQuestions: 6,
+        totalQuestions: 10,
+      },
+    ]);
+
+    const res = await request(createApp())
+      .get('/api/v8/interview/sessions/managed')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_INTERVIEW_READ_CONTRACT);
+    expect(res.body.data?.sessions).toHaveLength(1);
+    expect(res.body.data?.sessions?.[0]?.id).toBe('managed-1');
+    expect(mockResolveInterviewManagerScope).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      role: 'ADMIN',
+    });
+    expect(mockListManagedSessions).toHaveBeenCalledWith(ORG, UID, { scope: { kind: 'organization' } });
+  });
+
   it('GET /api/v8/interview/assignments/my returns V8 envelope and forwards user + org to service', async () => {
     mockGetMyAssignments.mockResolvedValue([{ id: 'mine-1', status: 'assigned' }]);
 
@@ -240,7 +277,9 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_READ_CONTRACT);
     expect(res.body.data?.assignments).toHaveLength(1);
     expect(res.body.data?.assignments?.[0]?.id).toBe('managed-1');
-    expect(mockGetManagedAssignments).toHaveBeenCalledWith(UID, ORG);
+    expect(mockGetManagedAssignments).toHaveBeenCalledWith(UID, ORG, {
+      scope: { kind: 'organization' },
+    });
   });
 
   it('GET /api/v8/interview/assignments/overdue returns V8 envelope and forwards org to service', async () => {
@@ -254,7 +293,9 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_READ_CONTRACT);
     expect(res.body.data?.assignments).toHaveLength(1);
     expect(res.body.data?.assignments?.[0]?.id).toBe('overdue-1');
-    expect(mockGetOverdueAssignments).toHaveBeenCalledWith(ORG);
+    expect(mockGetOverdueAssignments).toHaveBeenCalledWith(ORG, {
+      scope: { kind: 'organization' },
+    });
   });
 
   it('GET /api/v8/interview/sessions/:id returns 404 when loader returns null', async () => {

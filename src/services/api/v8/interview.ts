@@ -25,6 +25,17 @@ export interface V8InterviewSession {
   templateCategory?: string;
   respondentId?: string;
   respondentName?: string;
+  assignmentStatus?: string;
+  sessionRuntimeStatus?: string;
+  assignmentPriority?: string;
+  assignmentCreatedBy?: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  assigneeEmail?: string;
+  dueAt?: string;
+  submittedAt?: string;
+  sentBackAt?: string;
+  sentBackReason?: string;
 }
 
 export interface V8InterviewAssignment {
@@ -111,6 +122,9 @@ export const V8InterviewApi = {
 
   getAcceptedSessions: () =>
     v8Get<{ sessions: V8InterviewSession[] }>('/interview/sessions/accepted'),
+
+  getManagedSessions: () =>
+    v8Get<{ sessions: V8InterviewSession[] }>('/interview/sessions/managed'),
 
   getSession: (id: string) =>
     v8Get<{ session: V8InterviewSession }>(`/interview/sessions/${encodeURIComponent(id)}`),

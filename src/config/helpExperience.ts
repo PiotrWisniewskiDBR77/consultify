@@ -325,16 +325,16 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
     ),
     whatYouDoHere: [
       text(
-        'Run interviews and gather organizational context.',
-        'Prowadzisz wywiady i zbierasz kontekst organizacyjny.'
+        'As an assignee: work from Inbox, complete the interview template, and submit answers for review.',
+        'Jako wykonawca: pracujesz z Inbox, uzupełniasz szablon wywiadu i wysyłasz odpowiedzi do review.'
       ),
       text(
-        'Capture process, data, capability, and constraint signals.',
-        'Zapisujesz sygnały o procesach, danych, kompetencjach i ograniczeniach.'
+        'As a manager: use Sessions as your main cockpit to track in-progress, submitted, sent-back, and approved interview work.',
+        'Jako manager: używasz Sessions jako głównego cockpit view do śledzenia wywiadów w statusach in progress, submitted, sent back i approved.'
       ),
       text(
-        'Turn raw input into a shared starting point for the client team.',
-        'Zamieniasz surowe wejście we wspólny punkt startowy dla zespołu klienta.'
+        'Capture process, data, capability, and constraint signals, then turn raw input into a shared starting point for the client team.',
+        'Zbierasz sygnały o procesach, danych, kompetencjach i ograniczeniach, a potem zamieniasz surowe wejście we wspólny punkt startowy dla zespołu klienta.'
       ),
     ],
     howAiHelpsHere: [
@@ -370,6 +370,14 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
         text(
           'Focus on facts, constraints, and reusable context for the next step.',
           'Skup się na faktach, ograniczeniach i kontekście do wykorzystania dalej.'
+        )
+      ),
+      makeGuide(
+        'interview-manager-cockpit',
+        text('How managers should work in Sessions', 'Jak manager pracuje w Sessions'),
+        text(
+          'Use Sessions as the primary review cockpit, and use Assigned only for assignment administration.',
+          'Używaj Sessions jako głównego cockpit view do review, a Assigned tylko do administracji przypisaniami.'
         )
       ),
       SHARED_GUIDES.kb,

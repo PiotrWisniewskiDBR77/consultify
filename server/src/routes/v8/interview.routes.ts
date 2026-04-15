@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   InterviewController,
   loadAcceptedInterviewSessionsForManager,
+  loadManagedInterviewSessionsForManager,
   loadInterviewSessionForOrganization,
   loadInterviewSessionsForOrganization,
 } from '../../controllers/InterviewController.js';
@@ -22,6 +23,7 @@ import {
   getMyAssignments,
   getOverdueAssignments,
 } from '../../services/InterviewAssignmentService.js';
+import { resolveInterviewManagerScope } from '../../services/interviewManagerScope.js';
 import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
@@ -155,6 +157,22 @@ router.get(
   })
 );
 
+router.get(
+  '/sessions/managed',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const scope = await resolveInterviewManagerScope({
+      organizationId,
+      userId,
+      role: userRole,
+    });
+    const sessions = await loadManagedInterviewSessionsForManager(organizationId, userId, {
+      scope,
+    });
+    return res.json({ data: { sessions }, meta: interviewMeta() });
+  })
+);
+
 /**
  * GET /api/v8/interview/sessions/:id
  * Same org-scoped access as GET /api/interview/sessions/:id.
@@ -254,8 +272,15 @@ router.get(
 router.get(
   '/assignments/managed',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId } = getV8Context(req);
-    const assignments = await getManagedAssignments(userId, organizationId);
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const scope = await resolveInterviewManagerScope({
+      organizationId,
+      userId,
+      role: userRole,
+    });
+    const assignments = await getManagedAssignments(userId, organizationId, {
+      scope,
+    });
     return res.json({ data: { assignments }, meta: interviewMeta() });
   })
 );
@@ -267,8 +292,13 @@ router.get(
 router.get(
   '/assignments/overdue',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const assignments = await getOverdueAssignments(organizationId);
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const scope = await resolveInterviewManagerScope({
+      organizationId,
+      userId,
+      role: userRole,
+    });
+    const assignments = await getOverdueAssignments(organizationId, { scope });
     return res.json({ data: { assignments }, meta: interviewMeta() });
   })
 );

@@ -47,6 +47,14 @@ describe('V8InterviewApi', () => {
     expect(v8Get).toHaveBeenCalledWith('/interview/sessions/accepted');
   });
 
+  it('requests managed interview sessions from the V8 namespace', async () => {
+    vi.mocked(v8Get).mockResolvedValue({ sessions: [] });
+
+    await V8InterviewApi.getManagedSessions();
+
+    expect(v8Get).toHaveBeenCalledWith('/interview/sessions/managed');
+  });
+
   it('requests my interview assignments from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({ assignments: [] });
 

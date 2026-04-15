@@ -14,6 +14,10 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import emailService from './emailService.js';
+import {
+  buildAssignmentManagerScopeClause,
+  type InterviewManagerScope,
+} from './interviewManagerScope.js';
 import notificationService from './notificationService.js';
 
 // ==========================================
@@ -687,7 +691,8 @@ class InterviewAssignmentService {
   }
 
   /**
-   * Get assignments created by a manager
+   * Get assignments managed by a user.
+   * Elevated roles (OWNER/ADMIN/SUPERADMIN) can see org-wide assignments.
    */
   async getManagedAssignments(
     managerId: string,
@@ -695,12 +700,18 @@ class InterviewAssignmentService {
     options?: {
       projectId?: string;
       status?: AssignmentStatus;
+      elevated?: boolean;
+      scope?: InterviewManagerScope;
     }
   ): Promise<AssignmentWithDetails[]> {
     const db = await this.getDb();
-    const params: any[] = [organizationId, managerId];
+    const params: any[] = [organizationId];
+    const scope =
+      options?.scope || (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: managerId });
+    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
 
-    let where = `WHERE a.organization_id = ? AND a.created_by = ?`;
+    let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
+    params.push(...scopeClause.params);
 
     if (options?.projectId) {
       where += ` AND a.project_id = ?`;
@@ -738,7 +749,10 @@ class InterviewAssignmentService {
   /**
    * Get overdue assignments
    */
-  async getOverdueAssignments(organizationId?: string): Promise<AssignmentWithDetails[]> {
+  async getOverdueAssignments(
+    organizationId?: string,
+    options?: { scope?: InterviewManagerScope }
+  ): Promise<AssignmentWithDetails[]> {
     const db = await this.getDb();
     const now = new Date().toISOString();
     const params: any[] = [now];
@@ -748,6 +762,11 @@ class InterviewAssignmentService {
     if (organizationId) {
       where += ` AND a.organization_id = ?`;
       params.push(organizationId);
+    }
+    if (options?.scope) {
+      const scopeClause = buildAssignmentManagerScopeClause(options.scope, { assignmentAlias: 'a' });
+      where += scopeClause.clause;
+      params.push(...scopeClause.params);
     }
 
     const rows = await db.all<any>(
@@ -779,18 +798,25 @@ class InterviewAssignmentService {
   /**
    * Get overdue count for a manager
    */
-  async getOverdueCount(managerId: string, organizationId: string): Promise<number> {
+  async getOverdueCount(
+    managerId: string,
+    organizationId: string,
+    options?: { scope?: InterviewManagerScope }
+  ): Promise<number> {
     const db = await this.getDb();
     const now = new Date().toISOString();
+    const scope =
+      options?.scope || { kind: 'creator', creatorId: managerId };
+    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'interview_assignments' });
 
     const result = await db.get<{ count: number }>(
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
-         AND created_by = ?
+         ${scopeClause.clause}
          AND due_at < ?
          AND status NOT IN ('completed', 'submitted')`,
-      [organizationId, managerId, now]
+      [organizationId, ...scopeClause.params, now]
     );
 
     return result?.count || 0;
@@ -1334,10 +1360,10 @@ export const getMyAssignments = (userId: string, organizationId: string, options
   interviewAssignmentService.getMyAssignments(userId, organizationId, options);
 export const getManagedAssignments = (managerId: string, organizationId: string, options?: any) =>
   interviewAssignmentService.getManagedAssignments(managerId, organizationId, options);
-export const getOverdueAssignments = (organizationId?: string) =>
-  interviewAssignmentService.getOverdueAssignments(organizationId);
-export const getOverdueCount = (managerId: string, organizationId: string) =>
-  interviewAssignmentService.getOverdueCount(managerId, organizationId);
+export const getOverdueAssignments = (organizationId?: string, options?: any) =>
+  interviewAssignmentService.getOverdueAssignments(organizationId, options);
+export const getOverdueCount = (managerId: string, organizationId: string, options?: any) =>
+  interviewAssignmentService.getOverdueCount(managerId, organizationId, options);
 export const sendReminder = (assignmentId: string, senderId: string) =>
   interviewAssignmentService.sendReminder(assignmentId, senderId);
 export const checkAndSendReminders = () => interviewAssignmentService.checkAndSendReminders();
