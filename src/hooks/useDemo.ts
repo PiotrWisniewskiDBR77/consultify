@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import Api from '../services/api';
 import { normalizeLanguageCode } from '../i18n';
 import { useAppStore } from '../store/useAppStore';
+import type { DemoExperienceType } from '../store/slices/demoSlice';
 
 const normalizeDemoLocaleClient = (value?: string | null): 'en' | 'pl' | null => {
   const normalized = normalizeLanguageCode(value || '');
@@ -22,11 +23,27 @@ const normalizeDemoLocaleClient = (value?: string | null): 'en' | 'pl' | null =>
   return null;
 };
 
+const inferDemoExperienceType = (
+  source?: string | null,
+  fallback: DemoExperienceType = 'sales_demo'
+): DemoExperienceType => {
+  const normalized = String(source || '')
+    .trim()
+    .toLowerCase();
+
+  if (!normalized) return fallback;
+  if (normalized.includes('profile_menu') || normalized.includes('workspace')) {
+    return 'workspace_demo';
+  }
+  return 'sales_demo';
+};
+
 export const useDemo = () => {
   const { t, i18n } = useTranslation();
   const {
     isDemoMode,
     demoLocale,
+    demoExperienceType,
     demoOrganization,
     demoStats,
     demoHints,
@@ -35,6 +52,7 @@ export const useDemo = () => {
     availableTours,
     setDemoMode,
     setDemoSessionOrgId,
+    setDemoExperienceType,
     setDemoLocale,
     setDemoOrganization,
     setDemoStats,
@@ -67,6 +85,9 @@ export const useDemo = () => {
           if (response.isDemoMode && response.demoOrganization) {
             sessionStorage.setItem('demo_entry_source', source);
             setDemoSessionOrgId(response.demoSession?.organizationId || null);
+            setDemoExperienceType(
+              response.demoExperienceType || inferDemoExperienceType(source, 'workspace_demo')
+            );
             setDemoLocale(response.demoLocale || response.demoSession?.locale || currentAppLocale);
             setDemoOrganization(response.demoOrganization);
             setDemoStats(response.stats || null);
@@ -82,6 +103,7 @@ export const useDemo = () => {
           } else {
             sessionStorage.removeItem('demo_entry_source');
             setDemoSessionOrgId(null);
+            setDemoExperienceType(null);
             setDemoLocale(null);
             setDemoOrganization(null);
             setDemoStats(null);
@@ -103,6 +125,7 @@ export const useDemo = () => {
     [
       currentAppLocale,
       isDemoMode,
+      setDemoExperienceType,
       setDemoLocale,
       setDemoMode,
       setDemoSessionOrgId,
@@ -118,11 +141,13 @@ export const useDemo = () => {
   const clearDemoState = useCallback(() => {
     setDemoMode(false);
     setDemoSessionOrgId(null);
+    setDemoExperienceType(null);
     setDemoLocale(null);
     setDemoOrganization(null);
     setDemoStats(null);
     setDemoHints([]);
   }, [
+    setDemoExperienceType,
     setDemoHints,
     setDemoLocale,
     setDemoMode,
@@ -141,6 +166,13 @@ export const useDemo = () => {
       if (response.success && response.isDemoMode) {
         setDemoMode(true);
         setDemoSessionOrgId(response.demoSession?.organizationId || null);
+        setDemoExperienceType(
+          response.demoExperienceType ||
+            inferDemoExperienceType(
+              sessionStorage.getItem('demo_entry_source'),
+              demoExperienceType || 'sales_demo'
+            )
+        );
         setDemoLocale(response.demoLocale || response.demoSession?.locale || currentAppLocale);
         setDemoOrganization(response.demoOrganization || null);
         setDemoStats(response.stats || null);
@@ -155,7 +187,9 @@ export const useDemo = () => {
   }, [
     clearDemoState,
     currentAppLocale,
+    demoExperienceType,
     setDemoHints,
+    setDemoExperienceType,
     setDemoLocale,
     setDemoMode,
     setDemoOrganization,
@@ -210,6 +244,7 @@ export const useDemo = () => {
     isDemoMode,
     demoOrganization,
     demoLocale,
+    demoExperienceType,
     isDemoLocaleMismatch,
     demoStats,
     demoHints,

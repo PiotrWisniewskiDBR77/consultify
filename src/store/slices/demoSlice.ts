@@ -43,10 +43,13 @@ export interface DemoTour {
   category: 'beginner' | 'core' | 'advanced';
 }
 
+export type DemoExperienceType = 'sales_demo' | 'workspace_demo';
+
 export interface DemoSlice {
   // State
   isDemoMode: boolean;
   demoSessionOrgId: string | null;
+  demoExperienceType: DemoExperienceType | null;
   demoLocale: 'en' | 'pl' | null;
   demoOrganization: DemoOrganization | null;
   demoStats: DemoStats | null;
@@ -59,6 +62,7 @@ export interface DemoSlice {
   // Actions
   setDemoMode: (enabled: boolean) => void;
   setDemoSessionOrgId: (organizationId: string | null) => void;
+  setDemoExperienceType: (experienceType: DemoExperienceType | null) => void;
   setDemoLocale: (locale: 'en' | 'pl' | null) => void;
   setDemoOrganization: (org: DemoOrganization | null) => void;
   setDemoStats: (stats: DemoStats | null) => void;
@@ -79,6 +83,7 @@ export interface DemoSlice {
 const initialDemoState = {
   isDemoMode: false,
   demoSessionOrgId: null,
+  demoExperienceType: null,
   demoLocale: null,
   demoOrganization: null,
   demoStats: null,
@@ -99,6 +104,8 @@ export const createDemoSlice: StateCreator<AppState, [], [], DemoSlice> = (set) 
   setDemoMode: (enabled) => set({ isDemoMode: enabled }),
 
   setDemoSessionOrgId: (organizationId) => set({ demoSessionOrgId: organizationId }),
+
+  setDemoExperienceType: (experienceType) => set({ demoExperienceType: experienceType }),
 
   setDemoLocale: (locale) => set({ demoLocale: locale }),
 

@@ -13,6 +13,7 @@
 import i18n from '@/i18n';
 
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
+import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
@@ -11362,6 +11363,7 @@ export const Api = {
   ): Promise<{
     success: boolean;
     isDemoMode: boolean;
+    demoExperienceType?: DemoExperienceType;
     demoSession?: {
       id: string;
       organizationId: string;
@@ -11415,6 +11417,7 @@ export const Api = {
   getDemoStatus: async (): Promise<{
     success: boolean;
     isDemoMode: boolean;
+    demoExperienceType?: DemoExperienceType;
     demoSession?: {
       id: string;
       organizationId: string;
