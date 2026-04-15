@@ -21,6 +21,10 @@ import {
   isPilotAllowedMenuId,
 } from '../../../utils/pilotAccess';
 import {
+  filterMainMenuForPublicProduction,
+  shouldHideNonCoreModulesInPublicProduction,
+} from '../../../utils/publicProduction';
+import {
   isAdminOwnerOrSuperAdminRole,
   isPilotRestrictedRole,
   isSuperAdminRole,
@@ -86,11 +90,19 @@ export const Sidebar: React.FC = () => {
   // That made "expanded" mode effectively impossible in narrower desktop windows / split-screen.
   // We now allow expanded mode anywhere except mobile.
   const showFull = !isSidebarCollapsed && !isMobile;
+  const hideNonCoreModulesOnPublicProduction = React.useMemo(
+    () => shouldHideNonCoreModulesInPublicProduction(),
+    []
+  );
 
   // Menu configuration
   const menuStructure = React.useMemo(
-    () => getMenuStructure(t, currentUser?.journeyState),
-    [t, currentUser?.journeyState]
+    () =>
+      filterMainMenuForPublicProduction(
+        getMenuStructure(t, currentUser?.journeyState),
+        hideNonCoreModulesOnPublicProduction
+      ),
+    [t, currentUser?.journeyState, hideNonCoreModulesOnPublicProduction]
   );
   const visibleMenuStructure = React.useMemo(() => {
     if (!isPilotRestrictedRole(currentUser?.role)) {
