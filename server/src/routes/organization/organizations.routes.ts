@@ -41,6 +41,35 @@ router.use(verifyToken);
 router.get('/current', OrganizationController.getCurrentOrganizations);
 
 /**
+ * GET /api/organizations/debug-memberships
+ * Temporary diagnostic — direct PG query to verify memberships
+ */
+router.get('/debug-memberships', async (req: any, res: any) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const result = await pool.query(
+      `SELECT o.id, o.name, o.billing_status, m.role, m.status
+       FROM organizations o
+       JOIN organization_members m ON o.id = m.organization_id
+       WHERE m.user_id = $1
+       ORDER BY o.name`,
+      [userId]
+    );
+    await pool.end();
+
+    console.log(`[DEBUG-MEMBERSHIPS] userId=${userId} rows=${result.rows.length}`);
+    res.json({ userId, memberships: result.rows, count: result.rows.length });
+  } catch (err: any) {
+    console.error('[DEBUG-MEMBERSHIPS] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * POST /api/organizations
  * Create new organization
  */
