@@ -323,14 +323,14 @@ class SlackServiceClass {
       if (feedback.feedbackId) {
         contextElements.push({
           type: 'mrkdwn',
-          text: `🔗 <${appUrl}/superadmin?tab=feedback|View in SuperAdmin>`,
+          text: `🔗 <${appUrl}/superadmin/customers/feedback|View in SuperAdmin>`,
         });
       }
 
       if (feedback.taskId) {
         contextElements.push({
           type: 'mrkdwn',
-          text: `🧩 <${appUrl}/my-work/tasks/${feedback.taskId}|Open task>`,
+          text: `🧩 <${appUrl}/my-work?taskId=${feedback.taskId}|Open task>`,
         });
       }
 
