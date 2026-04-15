@@ -1217,25 +1217,27 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setRuntimeView('answering')}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200"
-            >
-              <ArrowLeft size={16} />
-              {isPolish ? 'Wróć do pytań' : 'Back to questions'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void onSubmitSession()}
-              disabled={readOnly || isPersisting}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/20"
-            >
-              <Check size={16} />
-              {isPolish ? 'Zatwierdź i wyślij' : 'Submit'}
-            </button>
+        <div className="sticky bottom-0 z-20 -mx-6 px-6 pb-4 pt-3 bg-gradient-to-t from-white via-white dark:from-navy-950 dark:via-navy-950 to-transparent">
+          <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl p-4 shadow-xl shadow-slate-200/40 dark:shadow-navy-950/60">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setRuntimeView('answering')}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                <ArrowLeft size={16} />
+                {isPolish ? 'Wróć do pytań' : 'Back to questions'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void onSubmitSession()}
+                disabled={readOnly || isPersisting}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/25 transition-colors"
+              >
+                <Check size={16} />
+                {isPolish ? 'Zatwierdź i wyślij' : 'Submit'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
