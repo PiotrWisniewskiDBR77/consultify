@@ -78,7 +78,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
           memberships.map((m: any) => ({
             projectId: m.projectId || m.project_id,
             projectName: m.projectName || m.project_name || 'Unknown Project',
-            projectRole: m.projectRole || m.project_role,
+            projectRole: m.projectRole || m.project_role || '',
             workstreamId: m.workstreamId || m.workstream_id,
           }))
         );
@@ -103,7 +103,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
   // Sprawdź czy użytkownik ma uprawnienia do przydzielania na podstawie ról projektowych
   const hasProjectLevelAssignPermission = useMemo(() => {
     return projectMemberships.some((pm) =>
-      PROJECT_ROLES_WITH_ASSIGN.includes(pm.projectRole.toUpperCase())
+      PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase())
     );
   }, [projectMemberships]);
 
@@ -125,7 +125,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
     // Jeśli ma uprawnienia na poziomie projektu - tylko członkom swoich projektów
     if (hasProjectLevelAssignPermission) {
       const managedProjectIds = projectMemberships
-        .filter((pm) => PROJECT_ROLES_WITH_ASSIGN.includes(pm.projectRole.toUpperCase()))
+        .filter((pm) => PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase()))
         .map((pm) => pm.projectId);
 
       return {
@@ -178,7 +178,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
 
     // Zwróć tylko projekty gdzie ma rolę zarządzającą
     return projectMemberships.filter((pm) =>
-      PROJECT_ROLES_WITH_ASSIGN.includes(pm.projectRole.toUpperCase())
+      PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase())
     );
   }, [canAssign, hasOrgLevelAssignPermission, projectMemberships]);
 

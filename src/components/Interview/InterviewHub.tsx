@@ -961,10 +961,10 @@ export const InterviewHub: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (s) =>
-          s.name.toLowerCase().includes(query) ||
-          (s.assigneeName || '').toLowerCase().includes(query) ||
-          (s.templateName || '').toLowerCase().includes(query) ||
-          new Date(s.startedAt).toLocaleDateString().includes(query)
+          (s.name ?? '').toLowerCase().includes(query) ||
+          (s.assigneeName ?? '').toLowerCase().includes(query) ||
+          (s.templateName ?? '').toLowerCase().includes(query) ||
+          new Date(s.startedAt || 0).toLocaleDateString().includes(query)
       );
     }
 
@@ -1041,7 +1041,7 @@ export const InterviewHub: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (i) =>
-          i.title.toLowerCase().includes(query) || (i.content || '').toLowerCase().includes(query)
+          (i.title ?? '').toLowerCase().includes(query) || (i.content ?? '').toLowerCase().includes(query)
       );
     }
 
@@ -1126,11 +1126,11 @@ export const InterviewHub: React.FC = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (t) =>
-          t.name.toLowerCase().includes(query) ||
-          t.description.toLowerCase().includes(query) ||
-          t.category.toLowerCase().includes(query) ||
-          (t.scope || '').toLowerCase().includes(query) ||
-          (t.areaTags || []).join(' ').toLowerCase().includes(query)
+          (t.name ?? '').toLowerCase().includes(query) ||
+          (t.description ?? '').toLowerCase().includes(query) ||
+          (t.category ?? '').toLowerCase().includes(query) ||
+          (t.scope ?? '').toLowerCase().includes(query) ||
+          (t.areaTags ?? []).join(' ').toLowerCase().includes(query)
       );
     }
 
