@@ -21,8 +21,8 @@ import {
   isPilotAllowedMenuId,
 } from '../../../utils/pilotAccess';
 import {
-  filterMainMenuForPublicProduction,
-  shouldHideNonCoreModulesInPublicProduction,
+  lockMainMenuForPublicProduction,
+  shouldLockNonCoreModulesInPublicProduction,
 } from '../../../utils/publicProduction';
 import {
   isAdminOwnerOrSuperAdminRole,
@@ -90,19 +90,28 @@ export const Sidebar: React.FC = () => {
   // That made "expanded" mode effectively impossible in narrower desktop windows / split-screen.
   // We now allow expanded mode anywhere except mobile.
   const showFull = !isSidebarCollapsed && !isMobile;
-  const hideNonCoreModulesOnPublicProduction = React.useMemo(
-    () => shouldHideNonCoreModulesInPublicProduction(),
+  const lockNonCoreModulesOnPublicProduction = React.useMemo(
+    () => shouldLockNonCoreModulesInPublicProduction(),
     []
   );
+  const publicProductionLockedMessage =
+    'This module is visible in the platform overview, but access is disabled on public production. Please use Chat or Interview.';
 
   // Menu configuration
   const menuStructure = React.useMemo(
     () =>
-      filterMainMenuForPublicProduction(
+      lockMainMenuForPublicProduction(
         getMenuStructure(t, currentUser?.journeyState),
-        hideNonCoreModulesOnPublicProduction
+        lockNonCoreModulesOnPublicProduction,
+        publicProductionLockedMessage,
+        '/interview'
       ),
-    [t, currentUser?.journeyState, hideNonCoreModulesOnPublicProduction]
+    [
+      t,
+      currentUser?.journeyState,
+      lockNonCoreModulesOnPublicProduction,
+      publicProductionLockedMessage,
+    ]
   );
   const visibleMenuStructure = React.useMemo(() => {
     if (!isPilotRestrictedRole(currentUser?.role)) {

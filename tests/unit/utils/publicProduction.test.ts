@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  filterMainMenuForPublicProduction,
+  lockMainMenuForPublicProduction,
   isPublicProductionHost,
-  shouldHideNonCoreModulesInPublicProduction,
+  shouldLockNonCoreModulesInPublicProduction,
 } from '../../../src/utils/publicProduction';
 
 describe('publicProduction utils', () => {
@@ -18,22 +18,41 @@ describe('publicProduction utils', () => {
     expect(isPublicProductionHost('localhost')).toBe(false);
   });
 
-  it('hides non-core modules only on public production', () => {
+  it('locks non-core modules only on public production', () => {
     vi.stubEnv('NODE_ENV', 'production');
-    expect(shouldHideNonCoreModulesInPublicProduction('consultify.ai')).toBe(true);
-    expect(shouldHideNonCoreModulesInPublicProduction('www.consultify.ai')).toBe(true);
-    expect(shouldHideNonCoreModulesInPublicProduction('localhost')).toBe(false);
+    expect(shouldLockNonCoreModulesInPublicProduction('consultify.ai')).toBe(true);
+    expect(shouldLockNonCoreModulesInPublicProduction('www.consultify.ai')).toBe(true);
+    expect(shouldLockNonCoreModulesInPublicProduction('localhost')).toBe(false);
 
     vi.stubEnv('NODE_ENV', 'development');
-    expect(shouldHideNonCoreModulesInPublicProduction('consultify.ai')).toBe(false);
+    expect(shouldLockNonCoreModulesInPublicProduction('consultify.ai')).toBe(false);
   });
 
-  it('keeps only chat and interview in the main menu', () => {
-    const filtered = filterMainMenuForPublicProduction(
+  it('keeps all modules visible but locks non-core entries', () => {
+    const locked = lockMainMenuForPublicProduction(
       [{ id: 'AI_CHAT' }, { id: 'INTERVIEW' }, { id: 'MY_WORK' }, { id: 'TOOLS' }],
-      true
+      true,
+      'Locked on public production.',
+      '/interview'
     );
 
-    expect(filtered).toEqual([{ id: 'AI_CHAT' }, { id: 'INTERVIEW' }]);
+    expect(locked).toEqual([
+      { id: 'AI_CHAT', subItems: undefined },
+      { id: 'INTERVIEW', subItems: undefined },
+      {
+        id: 'MY_WORK',
+        subItems: undefined,
+        isLocked: true,
+        lockedMessage: 'Locked on public production.',
+        lockedCtaHref: '/interview',
+      },
+      {
+        id: 'TOOLS',
+        subItems: undefined,
+        isLocked: true,
+        lockedMessage: 'Locked on public production.',
+        lockedCtaHref: '/interview',
+      },
+    ]);
   });
 });
