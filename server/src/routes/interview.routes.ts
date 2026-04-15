@@ -54,14 +54,14 @@ router.get('/sessions/completed', InterviewController.getCompletedSessions);
 /** GET /interview/sessions/accepted - Get accepted sessions (manager pipeline) */
 router.get(
   '/sessions/accepted',
-  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getAcceptedSessions
 );
 
 /** GET /interview/sessions/managed - Get manager workflow sessions */
 router.get(
   '/sessions/managed',
-  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getManagedSessions
 );
 
@@ -84,14 +84,14 @@ router.get('/assignments/my', InterviewController.getMyAssignments);
 /** GET /interview/assignments/managed - Get assignments created by current user (manager view) */
 router.get(
   '/assignments/managed',
-  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getManagedAssignments
 );
 
 /** GET /interview/assignments/overdue - Get overdue assignments */
 router.get(
   '/assignments/overdue',
-  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getOverdueAssignments
 );
 
@@ -121,14 +121,14 @@ router.post(
 /** GET /interview/assignments - Admin list assignments */
 router.get(
   '/assignments',
-  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.listAssignments
 );
 
 /** GET /interview/assignments/:id - Get single assignment with details */
 router.get(
   '/assignments/:id',
-  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getAssignment
 );
 
@@ -167,7 +167,7 @@ router.post(
 /** GET /interview/assignments/:id/members - Get team members for assignment */
 router.get(
   '/assignments/:id/members',
-  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   InterviewController.getAssignmentMembers
 );
 
