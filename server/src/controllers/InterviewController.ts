@@ -1777,13 +1777,16 @@ export const InterviewController = {
     } = req.body || {};
 
     // Support both singular and plural assignee fields
-    const userIds: string[] = assigneeUserIds
+    const requestedUserIds: string[] = assigneeUserIds
       ? Array.isArray(assigneeUserIds)
         ? assigneeUserIds
         : [assigneeUserIds]
       : assigneeUserId
         ? [assigneeUserId]
         : [];
+    const userIds = Array.from(
+      new Set(requestedUserIds.map((id) => String(id || '').trim()).filter(Boolean))
+    );
 
     if (userIds.length === 0 || !templateId) {
       res.status(400).json({ error: 'assigneeUserId(s) and templateId are required' });
@@ -1883,25 +1886,50 @@ export const InterviewController = {
     const { default: interviewAssignmentService } =
       await import('../services/InterviewAssignmentService.js');
 
-    const assignment = await interviewAssignmentService.create({
+    const createPayloadBase = {
       organizationId: admin.organizationId,
       projectId: projectId || undefined,
       templateId,
       templateVersion: (template as any).version || 1,
-      assigneeUserIds: userIds,
-      teamLeadId: teamLeadId || undefined,
-      dueAt: dueAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 7 days
+      dueAt: dueAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       priority: priority || 'medium',
-      escalateTo: escalateTo || admin.id, // Default to creator
+      escalateTo: escalateTo || admin.id,
       notes: notes || undefined,
       processRef: processRef || undefined,
       createdBy: admin.id,
+    };
+
+    // Multi-assign is modeled as separate assignments per assignee so each person
+    // gets an independent session and manager review flow.
+    if (userIds.length > 1) {
+      const createdAssignments = [] as any[];
+      for (const userId of userIds) {
+        const created = await interviewAssignmentService.create({
+          ...createPayloadBase,
+          assigneeUserIds: [userId],
+        });
+        const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(created.id);
+        if (assignmentWithDetails) {
+          createdAssignments.push(assignmentWithDetails);
+        }
+      }
+      const primaryAssignment = createdAssignments[0] || null;
+      res.status(201).json({
+        ...(primaryAssignment || {}),
+        createdAssignments,
+        createdCount: createdAssignments.length,
+        splitAssignments: true,
+      });
+      return;
+    }
+
+    const assignment = await interviewAssignmentService.create({
+      ...createPayloadBase,
+      assigneeUserIds: userIds,
+      teamLeadId: teamLeadId || undefined,
     });
 
-    // Return with full details
-    const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
-      assignment.id
-    );
+    const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(assignment.id);
     res.status(201).json(assignmentWithDetails);
   }),
 

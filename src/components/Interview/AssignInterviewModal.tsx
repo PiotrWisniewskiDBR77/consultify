@@ -339,7 +339,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await Api.post('/interview/assignments', {
+      const result = await Api.post('/interview/assignments', {
         templateId: selectedTemplateId,
         assigneeUserIds: selectedUserIds,
         teamLeadId: isTeamAssignment ? teamLeadId : undefined,
@@ -350,9 +350,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       });
 
       toast.success(
-        isPolish
-          ? `Wywiad przydzielony do ${selectedUserIds.length} osób`
-          : `Interview assigned to ${selectedUserIds.length} user(s)`
+        (result as any)?.splitAssignments
+          ? isPolish
+            ? `Utworzono ${((result as any)?.createdCount || selectedUserIds.length)} osobne przydziały`
+            : `Created ${((result as any)?.createdCount || selectedUserIds.length)} separate assignments`
+          : isPolish
+            ? `Wywiad przydzielony do ${selectedUserIds.length} osób`
+            : `Interview assigned to ${selectedUserIds.length} user(s)`
       );
 
       onSuccess?.();
