@@ -5520,7 +5520,7 @@ Return ONLY the answer text (no markdown fences).`;
         primaryCta={primaryCta}
         toolControl={toolControl}
         commandRowContent={commandRowContent}
-        availableViewModes={['table', 'grid']}
+        availableViewModes={activeTab === 'my_assignments' || activeTab === 'managed' ? ['table'] : ['table', 'grid']}
         showTabCounts={false}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
