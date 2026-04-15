@@ -1578,24 +1578,100 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   </div>
 
-                  {/* Question text */}
+                  {/* Question text — adaptive size for long descriptive questions */}
                   <h2
                     className={`font-semibold leading-snug text-slate-900 dark:text-white ${
-                      immersive ? 'text-2xl md:text-[28px]' : 'text-2xl md:text-3xl'
+                      currentQuestion.questionText.length > 120
+                        ? immersive
+                          ? 'text-lg md:text-xl'
+                          : 'text-lg md:text-xl'
+                        : immersive
+                          ? 'text-2xl md:text-[28px]'
+                          : 'text-2xl md:text-3xl'
                     }`}
                   >
                     {currentQuestion.questionText}
                   </h2>
 
-                  {/* Helper text / description (with helpHint fallback) */}
-                  {(currentQuestion.description || (currentQuestion as any).helpHint) && (
-                    <p className="flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                      <HelpCircle
-                        size={14}
-                        className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500"
-                      />
-                      {currentQuestion.description || (currentQuestion as any).helpHint}
-                    </p>
+                  {/* Guidance block — hint + evidence grouped before answer */}
+                  {(currentQuestion.description ||
+                    (currentQuestion as any).helpHint ||
+                    currentQuestion.evidencePrompt) && (
+                    <div className="space-y-2.5">
+                      {(currentQuestion.description || (currentQuestion as any).helpHint) && (
+                        <div
+                          className={`rounded-xl px-4 py-3 border ${
+                            immersive
+                              ? 'bg-amber-500/[0.06] border-amber-500/10'
+                              : 'bg-amber-50/70 dark:bg-amber-500/[0.06] border-amber-200/50 dark:border-amber-500/10'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <HelpCircle
+                              size={15}
+                              className="mt-0.5 shrink-0 text-amber-500 dark:text-amber-400"
+                            />
+                            <div className="space-y-1 min-w-0">
+                              <span
+                                className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                  immersive
+                                    ? 'text-amber-400/70'
+                                    : 'text-amber-600/70 dark:text-amber-400/70'
+                                }`}
+                              >
+                                {isPolish ? 'Wskazówka' : 'Hint'}
+                              </span>
+                              <p
+                                className={`text-sm leading-relaxed ${
+                                  immersive
+                                    ? 'text-amber-200/90'
+                                    : 'text-amber-900/80 dark:text-amber-200/90'
+                                }`}
+                              >
+                                {currentQuestion.description || (currentQuestion as any).helpHint}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {currentQuestion.evidencePrompt && (
+                        <div
+                          className={`rounded-xl px-4 py-3 border ${
+                            immersive
+                              ? 'bg-sky-500/[0.06] border-sky-500/10'
+                              : 'bg-sky-50/70 dark:bg-sky-500/[0.06] border-sky-200/50 dark:border-sky-500/10'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <Paperclip
+                              size={14}
+                              className="mt-0.5 shrink-0 text-sky-500 dark:text-sky-400"
+                            />
+                            <div className="space-y-1 min-w-0">
+                              <span
+                                className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                  immersive
+                                    ? 'text-sky-400/70'
+                                    : 'text-sky-600/70 dark:text-sky-400/70'
+                                }`}
+                              >
+                                {isPolish ? 'Czego szukamy' : 'What we look for'}
+                              </span>
+                              <p
+                                className={`text-sm leading-relaxed ${
+                                  immersive
+                                    ? 'text-sky-200/90'
+                                    : 'text-sky-800/80 dark:text-sky-200/90'
+                                }`}
+                              >
+                                {currentQuestion.evidencePrompt}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Expected answer shape */}
@@ -1919,13 +1995,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   )}
 
-                  {/* Evidence prompt */}
-                  {currentQuestion.evidencePrompt && (
-                    <div className="rounded-xl border border-sky-200/50 dark:border-sky-500/15 bg-sky-50/50 dark:bg-sky-500/5 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
-                      <Paperclip size={13} className="inline mr-1.5 -mt-0.5" />
-                      {currentQuestion.evidencePrompt}
-                    </div>
-                  )}
+                  {/* Evidence prompt is now shown above the answer in the guidance block */}
                 </div>
 
                 {/* ── Context capture section (always visible) ── */}

@@ -18,8 +18,10 @@ import {
   Circle,
   Clock,
   Edit3,
+  HelpCircle,
   Lightbulb,
   MessageSquare,
+  Paperclip,
   Plus,
   RefreshCw,
   Send,
@@ -703,6 +705,32 @@ Rules:
                       </div>
                     </div>
                   </PreviewMetaCard>
+
+                  {/* Guidance: hint + evidence prompt */}
+                  {(item.description || item.evidencePrompt) && (
+                    <div className="space-y-2">
+                      {item.description && (
+                        <div className="rounded-lg bg-amber-50/70 dark:bg-amber-500/[0.06] border border-amber-200/50 dark:border-amber-500/10 px-3 py-2">
+                          <div className="flex items-start gap-2">
+                            <HelpCircle size={13} className="mt-0.5 shrink-0 text-amber-500 dark:text-amber-400" />
+                            <p className="text-xs text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
+                              {item.description}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {item.evidencePrompt && (
+                        <div className="rounded-lg bg-sky-50/70 dark:bg-sky-500/[0.06] border border-sky-200/50 dark:border-sky-500/10 px-3 py-2">
+                          <div className="flex items-start gap-2">
+                            <Paperclip size={12} className="mt-0.5 shrink-0 text-sky-500 dark:text-sky-400" />
+                            <p className="text-xs text-sky-800/80 dark:text-sky-200/80 leading-relaxed">
+                              {item.evidencePrompt}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
