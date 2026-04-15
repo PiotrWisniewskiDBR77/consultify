@@ -14,9 +14,14 @@ import {
   FileText,
   FolderKanban,
   LayoutDashboard,
+  Lightbulb,
   ListChecks,
   MapPin,
+  MessageSquare,
+  NotebookPen,
+  Presentation,
   Sparkles,
+  Wallet,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +46,11 @@ const WORKSPACE_ICONS: Record<WorkspaceType, React.ReactNode> = {
   report: <FileText size={14} />,
   dashboard: <LayoutDashboard size={14} />,
   project: <Briefcase size={14} />,
+  notebook: <NotebookPen size={14} />,
+  finance: <Wallet size={14} />,
+  insight: <Lightbulb size={14} />,
+  interview: <MessageSquare size={14} />,
+  presentation: <Presentation size={14} />,
   general: <Sparkles size={14} />,
   empty: <Sparkles size={14} />,
 };
@@ -56,6 +66,11 @@ const WORKSPACE_LABELS: Record<WorkspaceType, string> = {
   report: 'Report',
   dashboard: 'Dashboard',
   project: 'Project',
+  notebook: 'Notebook',
+  finance: 'Finance',
+  insight: 'Insight',
+  interview: 'Interview',
+  presentation: 'Presentation',
   general: 'General',
   empty: 'Chat',
 };

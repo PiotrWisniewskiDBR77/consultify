@@ -593,7 +593,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const handleDeleteUser = async (id: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
-      await Api.deleteUser(id);
+      if (mode === 'platform') {
+        await Api.deleteSuperAdminUser(id);
+      } else {
+        await Api.deleteUser(id);
+      }
       toast.success('User deleted');
       loadUsers();
     } catch (e) {

@@ -63,6 +63,7 @@ import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction, TeresaChatProposal } from '../types';
 import { MessageFeedback } from '../types';
 import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
+import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
 import { isRtlLanguage, textDirection } from '../utils/textDirection';
@@ -185,9 +186,7 @@ export const AIChatWelcomeView: React.FC = () => {
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref =
-      localStorage.getItem('consultinity-preferred-chat-lang') ||
-      localStorage.getItem('consultify-preferred-chat-lang');
+    const explicitPref = readPreferredChatLanguage();
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
@@ -196,7 +195,8 @@ export const AIChatWelcomeView: React.FC = () => {
     const uiLang = i18n.language?.split('-')[0] || 'en';
     const candidate = explicitPref || activeLang || draftChatLanguage || uiLang;
     const base = String(candidate).split('-')[0];
-    return (isValidLanguage(base) ? (base as SupportedLanguage) : 'en') as SupportedLanguage;
+    return (readPreferredChatLanguage(candidate) ||
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 

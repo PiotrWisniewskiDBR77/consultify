@@ -64,6 +64,7 @@ import {
 } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
+import { readPreferredChatLanguage } from '../../utils/chatLanguagePreference';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
@@ -367,9 +368,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref =
-      localStorage.getItem('consultinity-preferred-chat-lang') ||
-      localStorage.getItem('consultify-preferred-chat-lang');
+    const explicitPref = readPreferredChatLanguage();
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
@@ -378,8 +377,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const uiLang = i18n.language?.split('-')[0] || 'en';
     const candidate = explicitPref || activeLang || uiLang;
     const base = String(candidate).split('-')[0];
-    return (normalizeLanguageCode(base) ||
-      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
+    return (
+      readPreferredChatLanguage(candidate) ||
+      normalizeLanguageCode(base) ||
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')
+    ) as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, i18n.language]);
 
   // Voice Hook (uses autoReadEnabled state)
@@ -1242,25 +1244,37 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {
           id: 'generate-insights',
           label: t('chat.suggestions.generateInsights', 'Generate AI insights from completed sessions'),
-          type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.generateInsightsPrompt', 'Generate AI insights from completed interview sessions') },
+          type: 'interview',
+          action: {
+            type: 'CHAT_PROMPT',
+            prompt: t(
+              'chat.suggestions.generateInsightsPrompt',
+              'Generate AI insights from completed interview sessions'
+            ),
+          },
         },
         {
           id: 'submit-review',
           label: t('chat.suggestions.submitReview', 'Submit this insight for review'),
-          type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review') },
+          type: 'interview',
+          action: {
+            type: 'CHAT_PROMPT',
+            prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review'),
+          },
         },
         {
           id: 'export-initiative',
           label: t('chat.suggestions.exportInsight', 'Export insight to initiative'),
-          type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.exportInsightPrompt', 'Export this insight to an initiative') },
+          type: 'interview',
+          action: {
+            type: 'CHAT_PROMPT',
+            prompt: t('chat.suggestions.exportInsightPrompt', 'Export this insight to an initiative'),
+          },
         },
         {
           id: 'view-evidence',
           label: t('chat.suggestions.viewEvidence', 'View evidence map'),
-          type: 'interview' as any,
+          type: 'interview',
           action: { type: 'NAVIGATE', targetModule: 'interview' },
         },
       );
@@ -1293,13 +1307,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {
           id: 'open-outputs',
           label: t('chat.suggestions.openOutputs', 'Open Outputs Library'),
-          type: 'outputs' as any,
+          type: 'outputs',
           action: { type: 'NAVIGATE', targetModule: 'presentations' },
         },
         {
           id: 'review-pending',
           label: t('chat.suggestions.reviewPending', 'Review pending artifacts'),
-          type: 'outputs' as any,
+          type: 'outputs',
           action: { type: 'NAVIGATE', targetModule: 'presentations', params: { tab: 'review' } },
         },
       );
@@ -1307,13 +1321,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
     return items;
   }, [displayMessages.length, isStreaming, workspaceContext, t]);
-
-  const handleSuggestionClick = useCallback(
-    async (suggestion: ChatSuggestion) => {
-      await handleChatAction(suggestion.action);
-    },
-    [handleChatAction]
-  );
 
   // ========================================================================
   // Ensure messages are loaded when activeConversationId changes (e.g. after
@@ -1868,6 +1875,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         setIsBotTyping(false);
       }
 
+      if (sourcesCount > 0 && uploadedAttachments.length === 0) {
+        toast.error(
+          t(
+            'aiChat.attachments.noSourcesProcessed',
+            'Nie udało się przygotować żadnego pliku ani linku do analizy. Popraw źródła i spróbuj ponownie.'
+          ),
+          { duration: 5000 }
+        );
+        return;
+      }
+
       const attachmentDocIds = Array.from(
         new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
       );
@@ -2166,6 +2184,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       i18n.language,
       setIsBotTyping,
     ]
+  );
+
+  const handleSuggestionClick = useCallback(
+    async (suggestion: ChatSuggestion) => {
+      if (suggestion.action.type === 'CHAT_PROMPT') {
+        await handleSendMessage(suggestion.action.prompt);
+        return;
+      }
+      await handleChatAction(suggestion.action);
+    },
+    [handleChatAction, handleSendMessage]
   );
 
   // One-shot kickoff: when panel opens in split mode, auto-send the configured message.

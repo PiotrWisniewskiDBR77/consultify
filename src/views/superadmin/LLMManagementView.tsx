@@ -326,7 +326,7 @@ export const LLMManagementView: React.FC = () => {
       resetProviderForm();
       loadInitialData();
     } catch (err) {
-      toast.error('Operation failed');
+      toast.error((err as any)?.message || 'Operation failed');
     }
   };
 

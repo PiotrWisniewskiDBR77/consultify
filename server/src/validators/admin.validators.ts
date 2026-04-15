@@ -11,6 +11,15 @@ import { z } from 'zod';
 // REQUEST SCHEMAS
 // ==========================================
 
+const userStatusValues = ['active', 'blocked', 'inactive', 'suspended', 'pending', 'deleted'] as const;
+
+const userStatusSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .transform((value) => value.toLowerCase())
+  .pipe(z.enum(userStatusValues));
+
 export const UpdateOrganizationAdminSchema = z.object({
   plan: z.enum(['free', 'starter', 'professional', 'enterprise']).optional(),
   status: z.enum(['active', 'suspended', 'cancelled', 'trial']).optional(),
@@ -22,7 +31,7 @@ export const CreateUserAdminSchema = z.object({
   firstName: z.string().min(1).max(255),
   lastName: z.string().min(1).max(255),
   role: z.enum(['USER', 'ADMIN', 'SUPERADMIN', 'MANAGER']).optional(),
-  organizationId: z.string().uuid().optional(),
+  organizationId: z.string().trim().min(1).max(255).optional(),
 });
 
 export const UpdateUserAdminSchema = z.object({
@@ -30,12 +39,13 @@ export const UpdateUserAdminSchema = z.object({
   firstName: z.string().max(255).optional(),
   lastName: z.string().max(255).optional(),
   role: z.enum(['USER', 'ADMIN', 'SUPERADMIN', 'MANAGER']).optional(),
-  organizationId: z.string().uuid().optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING']).optional(),
+  organizationId: z.string().trim().min(1).max(255).optional(),
+  status: userStatusSchema.optional(),
+  licensePlanId: z.string().trim().max(255).nullable().optional(),
 });
 
 export const ImpersonateUserSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().trim().min(1).max(255),
 });
 
 export const CreateAccessCodeSchema = z.object({
@@ -61,7 +71,7 @@ export const CreateAdminAlertSchema = z.object({
 // ==========================================
 
 export const GetAdminDataQuerySchema = z.object({
-  orgId: z.string().uuid().optional(),
+  orgId: z.string().trim().min(1).max(255).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   limit: z.coerce.number().int().min(1).max(1000).optional().default(50),

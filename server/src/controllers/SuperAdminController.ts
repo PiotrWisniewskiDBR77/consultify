@@ -87,7 +87,7 @@ const getOrganizations = catchAsync(async (req, res, next) => {
             o.id, o.name, o.plan, o.status, 
             COALESCE(o.trial_started_at, o.created_at) as created_at, 
             0 as discount_percent,
-            COUNT(u.id) as user_count
+            COUNT(CASE WHEN COALESCE(LOWER(u.status), 'active') != 'deleted' THEN 1 END) as user_count
         FROM organizations o
         LEFT JOIN users u ON o.id = u.organization_id
         GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at
@@ -297,7 +297,8 @@ const getUsers = catchAsync(async (req, res, next) => {
   const organizationId =
     typeof req.query.organizationId === 'string' ? req.query.organizationId.trim() : '';
   const role = typeof req.query.role === 'string' ? req.query.role.trim() : '';
-  const status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+  const status =
+    typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
   const queryParams: string[] = [];
   const whereClauses: string[] = [];
 
@@ -312,8 +313,10 @@ const getUsers = catchAsync(async (req, res, next) => {
   }
 
   if (status) {
-    whereClauses.push('u.status = ?');
+    whereClauses.push(`COALESCE(LOWER(u.status), 'active') = ?`);
     queryParams.push(status);
+  } else {
+    whereClauses.push(`COALESCE(LOWER(u.status), 'active') != 'deleted'`);
   }
 
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
@@ -321,7 +324,7 @@ const getUsers = catchAsync(async (req, res, next) => {
   const sql = `
         SELECT
             u.id, u.organization_id, u.email, u.first_name, u.last_name,
-            u.role, u.status, u.last_login, u.created_at,
+            u.role, u.status, u.last_login, u.created_at, u.license_plan_id,
             o.name as organization_name
         FROM users u
         LEFT JOIN organizations o ON u.organization_id = o.id
@@ -341,6 +344,7 @@ const getUsers = catchAsync(async (req, res, next) => {
       email: u.email,
       role: u.role,
       status: u.status,
+      licensePlanId: u.license_plan_id,
       lastLogin: u.last_login,
       createdAt: u.created_at,
     }));
@@ -353,11 +357,55 @@ const getUsers = catchAsync(async (req, res, next) => {
  */
 const updateUser = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const { organizationId, role, status } = req.body;
+  const {
+    organizationId,
+    role,
+    status,
+    email,
+    firstName,
+    lastName,
+    licensePlanId,
+  } = req.body;
 
-  const sql = `UPDATE users SET organization_id = COALESCE(?, organization_id), role = COALESCE(?, role), status = COALESCE(?, status) WHERE id = ? `;
+  const updates: string[] = [];
+  const params: any[] = [];
 
-  deps.db.run(sql, [organizationId, role, status, id], function (err) {
+  if (organizationId !== undefined) {
+    updates.push('organization_id = ?');
+    params.push(organizationId);
+  }
+  if (role !== undefined) {
+    updates.push('role = ?');
+    params.push(role);
+  }
+  if (status !== undefined) {
+    updates.push('status = ?');
+    params.push(status);
+  }
+  if (email !== undefined) {
+    updates.push('email = ?');
+    params.push(email);
+  }
+  if (firstName !== undefined) {
+    updates.push('first_name = ?');
+    params.push(firstName);
+  }
+  if (lastName !== undefined) {
+    updates.push('last_name = ?');
+    params.push(lastName);
+  }
+  if (licensePlanId !== undefined) {
+    updates.push('license_plan_id = ?');
+    params.push(licensePlanId || null);
+  }
+
+  if (updates.length === 0) {
+    return res.json({ message: 'No changes submitted' });
+  }
+
+  const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+
+  deps.db.run(sql, [...params, id], function (err) {
     if (err) return next(new AppError(err.message, 500));
     if (this.changes === 0) return next(new AppError('User not found', 404));
 
@@ -366,7 +414,7 @@ const updateUser = catchAsync(async (req, res, next) => {
       action: 'updated',
       entityType: 'user',
       entityId: id,
-      newValue: { organizationId, role, status },
+      newValue: { organizationId, role, status, email, firstName, lastName, licensePlanId },
     });
 
     res.json({ message: 'User updated successfully' });

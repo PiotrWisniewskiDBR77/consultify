@@ -127,9 +127,33 @@ export interface V8InterviewInsight {
   sourceSessionIds: string[];
   content?: string;
   executiveSummary?: string;
-  themes?: Array<{ title: string; description: string; evidence_refs: string[]; strength: string }>;
-  issues?: Array<{ title: string; description: string; severity: string; evidence_refs: string[] }>;
-  opportunities?: Array<{ title: string; description: string; impact: string; evidence_refs: string[] }>;
+  themes?: Array<{
+    title: string;
+    description: string;
+    evidence_refs: string[];
+    strength: string;
+    crossSessionPattern?: boolean;
+    perspective_labels?: string[];
+    divergence_note?: string;
+  }>;
+  issues?: Array<{
+    title: string;
+    description: string;
+    severity: string;
+    evidence_refs: string[];
+    crossSessionPattern?: boolean;
+    perspective_labels?: string[];
+    divergence_note?: string;
+  }>;
+  opportunities?: Array<{
+    title: string;
+    description: string;
+    impact: string;
+    evidence_refs: string[];
+    crossSessionPattern?: boolean;
+    perspective_labels?: string[];
+    divergence_note?: string;
+  }>;
   status: string;
   reviewStatus?: 'draft' | 'in_review' | 'published';
   publishedAt?: string;
@@ -165,6 +189,114 @@ export interface V8InsightFinding {
   source_section_index?: number | null;
   source_key?: string | null;
   review_status?: 'draft' | 'in_review' | 'published';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface V8InsightAnalysisLens {
+  id: string;
+  kind: 'session' | 'stakeholder';
+  label: string;
+  sessionIds: string[];
+  respondentName?: string;
+  role?: string;
+  department?: string;
+  supportedTopicIds: string[];
+  supportedFindingIds: string[];
+  localSummary: string;
+}
+
+export interface V8InsightAnalysisTopic {
+  id: string;
+  sourceKey: string;
+  kind: 'theme' | 'issue' | 'opportunity';
+  label: string;
+  description: string;
+  findingId?: string;
+  confidenceLevel: 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+  reviewStatus?: 'draft' | 'in_review' | 'published';
+  limits: string;
+  nextAction: string;
+  evidenceCount: number;
+  supportingSessionIds: string[];
+  supportingStakeholderLabels: string[];
+  crossSessionPattern: boolean;
+  isContradicted: boolean;
+  perspectiveLabels: string[];
+  divergenceNote?: string;
+}
+
+export interface V8InsightAnalysisMatrixCell {
+  topicId: string;
+  lensId: string;
+  state: 'supported' | 'contradicted' | 'local_only' | 'not_observed';
+  supportingSessionIds: string[];
+  evidenceCount: number;
+}
+
+export interface V8InsightAnalysis {
+  insightId: string;
+  insightTitle: string;
+  scope: {
+    sourceSessionIds: string[];
+    sourceSessionCount: number;
+    distinctStakeholderCount: number;
+    stakeholderLabels: string[];
+    departments: string[];
+    roles: string[];
+    posture: 'single_perspective' | 'cross_perspective' | 'organization_synthesis';
+  };
+  people: {
+    sessionLenses: V8InsightAnalysisLens[];
+    stakeholderLenses: V8InsightAnalysisLens[];
+  };
+  topics: V8InsightAnalysisTopic[];
+  matrix: {
+    rows: Array<{
+      id: string;
+      label: string;
+      kind: 'theme' | 'issue' | 'opportunity';
+      confidenceLevel: 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+    }>;
+    sessionColumns: Array<{ id: string; label: string }>;
+    stakeholderColumns: Array<{ id: string; label: string }>;
+    sessionCells: V8InsightAnalysisMatrixCell[];
+    stakeholderCells: V8InsightAnalysisMatrixCell[];
+  };
+  synthesis: {
+    consensusTopicIds: string[];
+    localOnlyTopicIds: string[];
+    contradictedTopicIds: string[];
+    coverageGaps: string[];
+  };
+}
+
+export interface V8InsightCandidate {
+  id: string;
+  insightId: string;
+  organizationId: string;
+  source_section_type: 'theme' | 'issue' | 'opportunity' | 'manual';
+  source_section_index?: number | null;
+  source_key?: string | null;
+  candidate_statement: string;
+  rationale: string;
+  confidence_hint: 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+  triage_status:
+    | 'candidate'
+    | 'needs_split'
+    | 'needs_evidence'
+    | 'ready_for_review'
+    | 'rejected'
+    | 'promoted';
+  followup_type:
+    | 'investigate'
+    | 'validate'
+    | 'split'
+    | 'collect_evidence'
+    | 'publish'
+    | 'reinterview';
+  followup_recommendation: string;
+  linked_finding_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -328,6 +460,40 @@ export const V8InterviewApi = {
         updatedAt: string;
       };
     }>(`/interview/insights/${encodeURIComponent(insightId)}/lifecycle`, { action }),
+
+  listCandidates: (insightId: string) =>
+    v8Get<{ candidates: V8InsightCandidate[]; insightId: string }>(
+      `/interview/insights/${encodeURIComponent(insightId)}/candidates`
+    ),
+
+  triageCandidate: (
+    insightId: string,
+    candidateId: string,
+    payload: {
+      action:
+        | 'mark_candidate'
+        | 'mark_needs_split'
+        | 'mark_needs_evidence'
+        | 'mark_ready_for_review'
+        | 'reject'
+        | 'promote_to_finding';
+      candidate_statement?: string;
+      rationale?: string;
+      followup_recommendation?: string;
+      confidence_level?: 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+      limits?: string;
+      next_action?: string;
+    }
+  ) =>
+    v8Post<{ candidate: V8InsightCandidate; finding?: V8InsightFinding; insightId: string; candidateId: string }>(
+      `/interview/insights/${encodeURIComponent(insightId)}/candidates/${encodeURIComponent(candidateId)}/triage`,
+      payload
+    ),
+
+  getAnalysis: (insightId: string) =>
+    v8Get<{ analysis: V8InsightAnalysis; insightId: string }>(
+      `/interview/insights/${encodeURIComponent(insightId)}/analysis`
+    ),
 
   listFindings: (insightId: string) =>
     v8Get<{ findings: V8InsightFinding[]; insightId: string }>(

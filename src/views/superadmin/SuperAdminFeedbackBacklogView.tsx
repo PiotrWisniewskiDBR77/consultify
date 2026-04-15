@@ -1,6 +1,7 @@
 import { ExternalLink, Filter, Loader2, Tag } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
@@ -20,6 +21,7 @@ interface FeedbackBacklogTask {
 
 export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<FeedbackBacklogTask[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -73,8 +75,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
   }, [tasks, query, priority]);
 
   const openTask = (taskId: string) => {
-    const url = `/my-work/tasks/${taskId}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    navigate(`/my-work?taskId=${encodeURIComponent(taskId)}`);
   };
 
   const envFromTags = (tags?: string[]) =>

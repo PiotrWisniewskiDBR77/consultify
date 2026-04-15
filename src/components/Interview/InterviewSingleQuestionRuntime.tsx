@@ -161,7 +161,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   immersive = false,
 }) => {
   const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const isPolish = i18n.language?.startsWith('pl');
 
   const orderedQuestions = useMemo(() => {
     return [...questions].sort((a, b) => {
@@ -706,7 +706,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           const mimeType = recorder.mimeType || mimeHint || 'audio/webm';
           const extensionForMime = (mt: string): string => {
             const m = String(mt || '').toLowerCase();
-            if (m.includes('audio/mp4') || m.includes('video/mp4') || m.includes('mp4')) return 'm4a';
+            if (m.includes('audio/mp4') || m.includes('video/mp4') || m.includes('mp4'))
+              return 'm4a';
             if (m.includes('ogg')) return 'ogg';
             if (m.includes('webm')) return 'webm';
             return 'webm';
@@ -1007,7 +1008,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   }, [currentQuestion, currentQuestionOptions, answerDraft, readOnly, isPolish, dropdownOpen]);
 
   const activeCategoryConfig = currentQuestion
-    ? (CATEGORY_CONFIG[currentQuestion.category] || CATEGORY_CONFIG.general)
+    ? CATEGORY_CONFIG[currentQuestion.category] || CATEGORY_CONFIG.general
     : undefined;
   const answeredCount = orderedQuestions.filter(
     (question) => question.status === 'answered'

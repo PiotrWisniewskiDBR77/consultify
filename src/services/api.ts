@@ -2082,14 +2082,23 @@ export const Api = {
 
   updateSuperAdminUser: async (
     id: string,
-    updates: { organizationId?: string; role?: string; status?: string }
+    updates: {
+      organizationId?: string;
+      role?: string;
+      status?: string;
+      email?: string;
+      firstName?: string;
+      lastName?: string;
+      licensePlanId?: string | null;
+    }
   ): Promise<void> => {
     const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to update user');
   },
 
   createSuperAdminUser: async (user: any): Promise<User> => {
@@ -2804,8 +2813,9 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update provider');
-    return res.json();
+    const payload = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(payload?.error || 'Failed to update provider');
+    return payload;
   },
 
   applyRecommendedAiModelPresetV3: async (params?: {

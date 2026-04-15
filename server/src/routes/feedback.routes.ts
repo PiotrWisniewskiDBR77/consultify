@@ -319,6 +319,30 @@ function resolveEscalationChannels(input: {
   return ['in_app', 'slack'];
 }
 
+function shouldDeferFeedbackFollowUp(severity?: string | null): boolean {
+  const normalized = String(severity || '')
+    .trim()
+    .toUpperCase();
+  return normalized === 'HIGH' || normalized === 'CRITICAL';
+}
+
+function scheduleFeedbackFollowUp(label: string, work: () => Promise<void>): void {
+  const runner = () => {
+    void Promise.resolve()
+      .then(work)
+      .catch((error) => {
+        logger.error(`[Feedback] Deferred follow-up failed (${label}):`, error);
+      });
+  };
+
+  if (typeof setImmediate === 'function') {
+    setImmediate(runner);
+    return;
+  }
+
+  setTimeout(runner, 0);
+}
+
 async function getSuperAdminRecipients(): Promise<
   Array<{ id: string; email: string | null; organizationId: string | null }>
 > {
@@ -802,6 +826,143 @@ async function createTaskForFeedback(params: {
   return id;
 }
 
+async function persistFeedbackTaskLink(
+  feedbackId: string,
+  linkedTaskId: string,
+  metadataJson: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const feedbackCols = await getTableColumns('feedback_items');
+  const nextMeta = { ...metadataJson, linkedTaskId };
+
+  if (!(feedbackCols.has('linked_task_id') || feedbackCols.has('metadata_json'))) {
+    return nextMeta;
+  }
+
+  const updateCols: string[] = [];
+  const updateVals: unknown[] = [];
+
+  if (feedbackCols.has('linked_task_id')) {
+    updateCols.push('linked_task_id = ?');
+    updateVals.push(linkedTaskId);
+  }
+  if (feedbackCols.has('metadata_json')) {
+    updateCols.push('metadata_json = ?');
+    updateVals.push(JSON.stringify(nextMeta));
+  }
+  if (feedbackCols.has('updated_at')) {
+    updateCols.push('updated_at = CURRENT_TIMESTAMP');
+  }
+
+  if (updateCols.length > 0) {
+    await dbRun(`UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`, [
+      ...updateVals,
+      feedbackId,
+    ]);
+  }
+
+  return nextMeta;
+}
+
+async function executeFeedbackTicketFollowUp(input: {
+  feedbackId: string;
+  ticketOrgId: string | null;
+  actualUserId: string | null;
+  actualUserEmail: string | null;
+  actualUserName: string | null;
+  userId?: string;
+  userEmail?: string;
+  userName?: string;
+  appEnv: string;
+  type: 'BUG' | 'IDEA';
+  severity?: string;
+  priority: TicketPriority;
+  title: string;
+  description: string;
+  routePath?: string;
+  deviceType?: string;
+  screenSize?: string;
+  uiLanguage?: string;
+  uiTheme?: string;
+  orgIdForNotifications: string | null;
+  metadataJson: Record<string, unknown>;
+}): Promise<{ taskId: string | null; metadataJson: Record<string, unknown> }> {
+  let linkedTaskId: string | null = null;
+  let nextMeta = { ...input.metadataJson };
+
+  try {
+    if (!input.ticketOrgId) {
+      throw new Error('No organizationId resolved for ticket; skipping auto-task');
+    }
+    const taskTitle = `[${input.appEnv.toUpperCase()}] ${String(input.type).toUpperCase()}: ${input.title}`;
+    const taskDescription =
+      `${input.description}\n\n` +
+      `---\n` +
+      `Ticket: ${input.feedbackId}\n` +
+      `Env: ${input.appEnv}\n` +
+      `Route: ${String((nextMeta as any)?.routePath || '')}\n` +
+      `User: ${input.userEmail || input.userName || input.userId || 'anonymous'}\n`;
+
+    linkedTaskId = await createTaskForFeedback({
+      organizationId: input.ticketOrgId,
+      userId: input.actualUserId,
+      title: taskTitle,
+      description: taskDescription,
+      priority: input.priority,
+      feedbackId: input.feedbackId,
+      appEnv: input.appEnv,
+    });
+
+    nextMeta = await persistFeedbackTaskLink(input.feedbackId, linkedTaskId, nextMeta);
+  } catch (error) {
+    logger.warn('[Feedback] Failed to auto-create task from feedback:', error);
+    nextMeta = {
+      ...nextMeta,
+      taskCreationError: error instanceof Error ? error.message : String(error),
+    };
+    await updateFeedbackMetadata(input.feedbackId, nextMeta);
+  }
+
+  try {
+    const alertDispatch = await dispatchFeedbackEscalation({
+      kind: 'feedback',
+      id: input.feedbackId,
+      organizationId: input.orgIdForNotifications,
+      appEnv: input.appEnv,
+      channels: resolveEscalationChannels({
+        kind: 'feedback',
+        feedbackType: input.type,
+        severity: input.severity,
+      }),
+      feedbackType: input.type,
+      severity: input.severity || 'MEDIUM',
+      priority: input.priority,
+      userId: input.actualUserId,
+      userEmail: input.actualUserEmail,
+      userName: input.actualUserName,
+      routePath: input.routePath || null,
+      deviceType: input.deviceType || null,
+      screenSize: input.screenSize || null,
+      uiLanguage: input.uiLanguage || null,
+      uiTheme: input.uiTheme || null,
+      title: input.title,
+      message: input.description,
+      taskId: linkedTaskId,
+      metadata: nextMeta,
+    });
+    nextMeta = { ...nextMeta, alertDispatch };
+    await updateFeedbackMetadata(input.feedbackId, nextMeta);
+  } catch (dispatchErr) {
+    logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
+    nextMeta = {
+      ...nextMeta,
+      alertDispatchError: dispatchErr instanceof Error ? dispatchErr.message : String(dispatchErr),
+    };
+    await updateFeedbackMetadata(input.feedbackId, nextMeta);
+  }
+
+  return { taskId: linkedTaskId, metadataJson: nextMeta };
+}
+
 /**
  * POST /api/feedback
  * Submit new feedback
@@ -914,6 +1075,7 @@ router.post(
       feedbackType: type,
       severity: severity || undefined,
       title,
+      followUpMode: shouldDeferFeedbackFollowUp(severity) ? 'async' : 'inline',
     };
 
     const insertCols: string[] = [
@@ -955,94 +1117,64 @@ router.post(
       throw new Error(insertResult.error || 'Failed to insert feedback ticket');
     }
 
-    // Auto-create backlog task for every ticket
-    let linkedTaskId: string | null = null;
-    try {
-      if (!ticketOrgId) {
-        throw new Error('No organizationId resolved for ticket; skipping auto-task');
-      }
-      const taskTitle = `[${appEnv.toUpperCase()}] ${String(type).toUpperCase()}: ${title}`;
-      const taskDescription =
-        `${description}\n\n` +
-        `---\n` +
-        `Ticket: ${feedbackId}\n` +
-        `Env: ${appEnv}\n` +
-        `Route: ${String((metadataJson as any)?.routePath || '')}\n` +
-        `User: ${userEmail || userName || userId || 'anonymous'}\n`;
-
-      linkedTaskId = await createTaskForFeedback({
-        organizationId: ticketOrgId,
-        userId: actualUserId,
-        title: taskTitle,
-        description: taskDescription,
-        priority,
-        feedbackId,
-        appEnv,
-      });
-
-      if (feedbackCols.has('linked_task_id') || feedbackCols.has('metadata_json')) {
-        const updateCols: string[] = [];
-        const updateVals: unknown[] = [];
-        const nextMeta = { ...metadataJson, linkedTaskId };
-
-        if (feedbackCols.has('linked_task_id')) {
-          updateCols.push('linked_task_id = ?');
-          updateVals.push(linkedTaskId);
-        }
-        if (feedbackCols.has('metadata_json')) {
-          updateCols.push('metadata_json = ?');
-          updateVals.push(JSON.stringify(nextMeta));
-        }
-        if (feedbackCols.has('updated_at')) {
-          updateCols.push('updated_at = CURRENT_TIMESTAMP');
-        }
-
-        if (updateCols.length > 0) {
-          await dbRun(`UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`, [
-            ...updateVals,
-            feedbackId,
-          ]);
-        }
-        metadataJson = nextMeta;
-      }
-    } catch (e) {
-      logger.warn('[Feedback] Failed to auto-create task from feedback:', e);
-    }
-
-    try {
-      const alertDispatch = await dispatchFeedbackEscalation({
-        kind: 'feedback',
-        id: feedbackId,
-        organizationId: orgIdForNotifications,
-        appEnv,
-        channels: resolveEscalationChannels({
-          kind: 'feedback',
-          feedbackType: type,
+    if (shouldDeferFeedbackFollowUp(severity)) {
+      scheduleFeedbackFollowUp(`feedback:${feedbackId}`, async () => {
+        await executeFeedbackTicketFollowUp({
+          feedbackId,
+          ticketOrgId,
+          actualUserId,
+          actualUserEmail,
+          actualUserName,
+          userId,
+          userEmail,
+          userName,
+          appEnv,
+          type,
           severity,
-        }),
-        feedbackType: type,
-        severity: severity || 'MEDIUM',
-        priority,
-        userId: actualUserId,
-        userEmail: actualUserEmail,
-        userName: actualUserName,
-        routePath: routePath || null,
-        deviceType: deviceType || null,
-        screenSize: screenSize || null,
-        uiLanguage: uiLanguage || null,
-        uiTheme: uiTheme || null,
-        title,
-        message: description,
-        taskId: linkedTaskId,
-        metadata: metadataJson,
+          priority,
+          title,
+          description,
+          routePath,
+          deviceType,
+          screenSize,
+          uiLanguage,
+          uiTheme,
+          orgIdForNotifications,
+          metadataJson: {
+            ...metadataJson,
+            followUpQueuedAt: new Date().toISOString(),
+          },
+        });
       });
-      metadataJson = { ...metadataJson, alertDispatch };
-      await updateFeedbackMetadata(feedbackId, metadataJson);
-    } catch (dispatchErr) {
-      logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
+
+      return res.json({ success: true, id: feedbackId, taskId: null, queuedFollowUp: true });
     }
 
-    return res.json({ success: true, id: feedbackId, taskId: linkedTaskId });
+    const followUpResult = await executeFeedbackTicketFollowUp({
+      feedbackId,
+      ticketOrgId,
+      actualUserId,
+      actualUserEmail,
+      actualUserName,
+      userId,
+      userEmail,
+      userName,
+      appEnv,
+      type,
+      severity,
+      priority,
+      title,
+      description,
+      routePath,
+      deviceType,
+      screenSize,
+      uiLanguage,
+      uiTheme,
+      orgIdForNotifications,
+      metadataJson,
+    });
+
+    return res.json({ success: true, id: feedbackId, taskId: followUpResult.taskId });
   })
 );
 
@@ -1546,7 +1678,7 @@ router.post(
         const analysis = await feedbackAIService.analyzeFeatureRequest(
           featureName,
           description,
-          category
+          category || 'other'
         );
         aiSuggestion = analysis;
 

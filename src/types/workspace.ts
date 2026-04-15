@@ -23,6 +23,9 @@ export type WorkspaceType =
   | 'project'
   | 'notebook'
   | 'finance'
+  | 'insight'
+  | 'interview'
+  | 'presentation'
   | 'general'
   | 'empty';
 

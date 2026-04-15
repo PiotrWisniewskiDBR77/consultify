@@ -159,6 +159,99 @@ Co najmniej poniższe scenariusze muszą mieć jawne UI + audit + operator next 
 - [ ] `EXECUTION_INDEX.md` #10 jest ustawiony na `approved(scope)` po closeout P10-A.
 - [ ] Wiersz evidence ledger `P10-A` jest wypełniony commit ref po closeout pakietu.
 
+#### 2.3.8 Analysis frame canon (`topic x person x scope`)
+
+P10 definiuje **publishable finding** jako audytowalny obiekt prawdy. Sam proces analizy nad findingami musi jednak wspierać dwa równoczesne cele:
+
+- uchwycenie **niuansu per osoba / rola / dział**
+- zbudowanie **szerokiej syntezy organizacyjnej**
+
+Dlatego kanon analizy dla `Interview Insights` jest wielowarstwowy:
+
+`evidence fragment -> person slice -> topic synthesis -> topic x person matrix -> organization synthesis`
+
+Frozen rules:
+
+1. **Findings remain the only publishable truth object**
+- `Person slice`, `Topic synthesis` i `Matrix cell` są warstwą interpretacyjną nad findingami.
+- Nie wolno tworzyć drugiego, równoległego artefaktu “v2 insight truth” poza findingami.
+
+2. **Every broad claim must preserve perspective**
+- Każda synteza topic-level lub organization-level musi zachować informację:
+  - kto wspiera claim,
+  - z jakiej roli/działu pochodzi wsparcie,
+  - czy istnieje `minority view` lub `contradiction`.
+
+3. **The matrix is canonical for comparison, not for truth-authoring**
+- Wiersze: topic groups (`theme`, `issue`, `opportunity`, `contradiction`, `gap`, `signal`)
+- Kolumny: respondent lub stakeholder lens (`role`, `department`, `stakeholder class`)
+- Komórka matrix pokazuje: `supported | contradicted | local_only | not_observed`
+- Matrix nie jest osobnym findingiem i nie może być handoffowana downstream bez finding back-link.
+
+4. **Scope must travel with synthesis**
+- Każda synteza powyżej poziomu person slice musi mieć jawny scope:
+  - source sessions,
+  - stakeholder coverage,
+  - segment / function / timeframe (jeśli dotyczy),
+  - posture (`local_signal | repeated_pattern | organization_synthesis`).
+
+5. **Executive summary is derived, not authored independently**
+- Executive layer może agregować istniejące findings/topic syntheses,
+- ale nie może wnosić nowych twierdzeń bez back-linka do findingów/evidence.
+
+6. **Contradiction is a valid output**
+- Sprzeczność nie oznacza “błędu analizy”.
+- Musi być pokazywana jako pełnoprawny rezultat discovery.
+- `contradicted` finding blokuje automatyczny handoff i wymusza operator decision.
+
+7. **Coverage posture limits claim width**
+- Szerokość claimu zależy nie tylko od liczby respondentów, ale też od pokrycia ról, działów i decision proximity.
+- Brak ważnej perspektywy musi być widoczny jako coverage gap.
+
+Implementation note:
+
+- Runtime v1 SHOULD expose four read modes above the same findings:
+  - `Executive`
+  - `Topics`
+  - `People`
+  - `Matrix`
+- Wszystkie te widoki MUST resolve back do tego samego finding/evidence ledger.
+
+#### 2.3.9 Candidate findings + review triage canon
+
+Żeby konsultant mógł pracować na materiale discovery bez przedwczesnego publikowania twierdzeń, system wprowadza **persisted working layer**:
+
+`candidate finding -> triage -> P10 finding -> review -> publish -> handoff`
+
+Frozen rules:
+
+1. **Candidate finding is not a second truth object**
+- Kandydat służy do roboczego kształtowania claimu.
+- Nie może być publikowany ani handoffowany downstream.
+- Jedynym publishable artifact pozostaje `P10 finding`.
+
+2. **Candidate must stay linked to topic/finding lineage**
+- Kandydat musi wskazywać `source_key` / topic lineage.
+- Promocja kandydata nie tworzy równoległej prawdy, tylko zasila istniejący finding workflow.
+
+3. **Triage states are canonical**
+- `candidate`
+- `needs_evidence`
+- `needs_split`
+- `ready_for_review`
+- `rejected`
+- `promoted`
+
+4. **Follow-up recommendations are system-derived**
+- `local_only` -> walidacja z dodatkowymi perspektywami
+- `contradicted` -> split lub contradiction follow-up
+- `coverage_gap` -> re-interview / evidence collection
+
+5. **Promotion means entering governed finding lifecycle**
+- Operator może promować kandydata dopiero do findingu,
+- a nie bezpośrednio do downstream action.
+- Review/publish/handoff gates nadal obowiązują na poziomie findingu.
+
 ## 3. Authority chain (SSOT)
 - Master index: `docs/product/work-packets/cursor-work/FINAL_V8_MASTER_PLAN_2026-03-29.md`
 - Detailed plan (direct): `docs/product/work-packets/cursor-work/wave1-full-audit/WAVE1_FINAL_IMPLEMENTATION_PLAN_WNIOSKI_W_INTERVIEW_2026-03-29.md`

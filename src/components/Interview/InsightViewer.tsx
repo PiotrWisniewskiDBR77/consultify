@@ -25,7 +25,7 @@ import {
   Lightbulb,
   Link2,
   Loader2,
-  Map,
+  Map as MapIcon,
   MessageSquare,
   Plus,
   Radio,
@@ -36,6 +36,7 @@ import {
   Star,
   Target,
   TrendingUp,
+  Users,
   X,
   Zap,
 } from 'lucide-react';
@@ -66,11 +67,16 @@ import {
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
-import { V8InterviewApi, type V8InsightFinding } from '@/services/api/v8/interview';
+import {
+  V8InterviewApi,
+  type V8InsightAnalysis,
+  type V8InsightAnalysisMatrixCell,
+  type V8InsightCandidate,
+  type V8InsightFinding,
+} from '@/services/api/v8/interview';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useAppStore } from '@/store/useAppStore';
-import { useConversationStore } from '@/store/useConversationStore';
-import { AppView } from '@/types';
-import { buildArtifactCode } from '@/utils/artifactLinks';
+import { buildArtifactCode, type ArtifactType } from '@/utils/artifactLinks';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
@@ -101,6 +107,9 @@ interface InsightTheme {
   strength: 'strong' | 'moderate' | 'weak';
   confidence?: P10ConfidenceLevel;
   limits?: string[];
+  crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 interface InsightIssue {
@@ -110,6 +119,9 @@ interface InsightIssue {
   evidence_refs: string[];
   confidence?: P10ConfidenceLevel;
   limits?: string[];
+  crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 interface InsightOpportunity {
@@ -119,6 +131,9 @@ interface InsightOpportunity {
   evidence_refs: string[];
   confidence?: P10ConfidenceLevel;
   limits?: string[];
+  crossSessionPattern?: boolean;
+  perspective_labels?: string[];
+  divergence_note?: string;
 }
 
 interface InsightSignal {
@@ -368,6 +383,9 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     icon: Sparkles,
     label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
   },
+  { id: 'candidate-triage', icon: Eye, label: { en: 'Candidate Triage', pl: 'Triage kandydatów' } },
+  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
+  { id: 'analysis-matrix', icon: BarChart3, label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' } },
   { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
   {
     id: 'issues-risks',
@@ -376,7 +394,7 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   },
   { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
   { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
-  { id: 'evidence-map', icon: Map, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
+  { id: 'evidence-map', icon: MapIcon, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
   { id: 'traceability', icon: Target, label: { en: 'Traceability', pl: 'Traceability' } },
   { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
   {
@@ -398,9 +416,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 }) => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, currentUser, currentOrganization } = useAppStore();
-  const { updateWorkspaceFromView } = useConversationStore();
+  const isPolish = i18n.language?.startsWith('pl');
+  const { currentUser, currentOrganization } = useAppStore();
+  const openChatWithContext = useOpenChatWithContext();
   const interviewDemoData = useMemo(
     () =>
       createInterviewDemoDataset({
@@ -469,6 +487,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   >({});
   const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
   const [findings, setFindings] = useState<V8InsightFinding[]>([]);
+  const [candidates, setCandidates] = useState<V8InsightCandidate[]>([]);
+  const [analysis, setAnalysis] = useState<V8InsightAnalysis | null>(null);
+  const [analysisLensMode, setAnalysisLensMode] = useState<'stakeholder' | 'session'>('stakeholder');
+  const [analysisRoleFilter, setAnalysisRoleFilter] = useState('all');
+  const [analysisDepartmentFilter, setAnalysisDepartmentFilter] = useState('all');
+  const [candidateActionLoadingId, setCandidateActionLoadingId] = useState<string | null>(null);
 
   // NMode shared section state — Comments
   const [nComments, setNComments] = useState<CommentItem[]>([]);
@@ -485,6 +509,28 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setFindings(Array.isArray(findingsRes) ? findingsRes : []);
     } catch {
       setFindings([]);
+    }
+  }, []);
+
+  const loadInsightAnalysis = useCallback(async (currentInsightId: string) => {
+    try {
+      const analysisRes = await V8InterviewApi.getAnalysis(currentInsightId)
+        .then((r) => r.analysis)
+        .catch(() => null);
+      setAnalysis(analysisRes || null);
+    } catch {
+      setAnalysis(null);
+    }
+  }, []);
+
+  const loadCandidates = useCallback(async (currentInsightId: string) => {
+    try {
+      const candidatesRes = await V8InterviewApi.listCandidates(currentInsightId)
+        .then((r) => r.candidates)
+        .catch(() => []);
+      setCandidates(Array.isArray(candidatesRes) ? candidatesRes : []);
+    } catch {
+      setCandidates([]);
     }
   }, []);
 
@@ -518,6 +564,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         );
         setNComments((interviewDemoData.insightCommentsById[id] || []) as CommentItem[]);
         setFindings([]);
+        setCandidates([]);
+        setAnalysis(null);
         return true;
       };
 
@@ -534,6 +582,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setInsight(data);
         setTitle(data.title || '');
         await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
 
         if (data.sourceSessionIds?.length > 0) {
           try {
@@ -608,6 +658,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         const data = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(data);
         await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
         const nextStatus = data?.status as InsightStatus | undefined;
         if (lastStatus === null) lastStatus = nextStatus ?? null;
 
@@ -626,7 +678,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [insightId, interviewDemoData, isPolish, loadPersistedFindings]);
+  }, [insightId, interviewDemoData, isPolish, loadCandidates, loadInsightAnalysis, loadPersistedFindings]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -745,6 +797,137 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [findings]
   );
 
+  const candidateSummary = useMemo(
+    () => ({
+      total: candidates.length,
+      ready: candidates.filter((candidate) => candidate.triage_status === 'ready_for_review').length,
+      needsEvidence: candidates.filter((candidate) => candidate.triage_status === 'needs_evidence').length,
+      needsSplit: candidates.filter((candidate) => candidate.triage_status === 'needs_split').length,
+      promoted: candidates.filter((candidate) => candidate.triage_status === 'promoted').length,
+    }),
+    [candidates]
+  );
+
+  const analysisTopicsById = useMemo(
+    () =>
+      (analysis?.topics || []).reduce<Record<string, V8InsightAnalysis['topics'][number]>>((acc, topic) => {
+        acc[topic.id] = topic;
+        return acc;
+      }, {}),
+    [analysis]
+  );
+
+  const consensusTopics = useMemo(
+    () =>
+      (analysis?.synthesis.consensusTopicIds || [])
+        .map((id) => analysisTopicsById[id])
+        .filter(Boolean),
+    [analysis?.synthesis.consensusTopicIds, analysisTopicsById]
+  );
+
+  const localOnlyTopics = useMemo(
+    () =>
+      (analysis?.synthesis.localOnlyTopicIds || [])
+        .map((id) => analysisTopicsById[id])
+        .filter(Boolean),
+    [analysis?.synthesis.localOnlyTopicIds, analysisTopicsById]
+  );
+
+  const contradictedTopics = useMemo(
+    () =>
+      (analysis?.synthesis.contradictedTopicIds || [])
+        .map((id) => analysisTopicsById[id])
+        .filter(Boolean),
+    [analysis?.synthesis.contradictedTopicIds, analysisTopicsById]
+  );
+
+  const stakeholderMatrixCellMap = useMemo(
+    () =>
+      new Map(
+        (analysis?.matrix.stakeholderCells || []).map((cell) => [`${cell.topicId}:${cell.lensId}`, cell] as const)
+      ),
+    [analysis?.matrix.stakeholderCells]
+  );
+
+  const sessionMatrixCellMap = useMemo(
+    () =>
+      new Map(
+        (analysis?.matrix.sessionCells || []).map((cell) => [`${cell.topicId}:${cell.lensId}`, cell] as const)
+      ),
+    [analysis?.matrix.sessionCells]
+  );
+
+  const analysisRoleOptions = useMemo(
+    () =>
+      uniqueNonEmpty([
+        ...(analysis?.people.sessionLenses || []).map((lens) => lens.role),
+        ...(analysis?.people.stakeholderLenses || []).map((lens) => lens.role),
+      ]),
+    [analysis]
+  );
+
+  const analysisDepartmentOptions = useMemo(
+    () =>
+      uniqueNonEmpty([
+        ...(analysis?.people.sessionLenses || []).map((lens) => lens.department),
+        ...(analysis?.people.stakeholderLenses || []).map((lens) => lens.department),
+      ]),
+    [analysis]
+  );
+
+  const filteredSessionAnalysisLenses = useMemo(
+    () =>
+      (analysis?.people.sessionLenses || []).filter((lens) => {
+        if (analysisRoleFilter !== 'all' && lens.role !== analysisRoleFilter) return false;
+        if (analysisDepartmentFilter !== 'all' && lens.department !== analysisDepartmentFilter) return false;
+        return true;
+      }),
+    [analysis?.people.sessionLenses, analysisDepartmentFilter, analysisRoleFilter]
+  );
+
+  const filteredStakeholderAnalysisLenses = useMemo(
+    () =>
+      (analysis?.people.stakeholderLenses || []).filter((lens) => {
+        if (analysisRoleFilter !== 'all' && lens.role !== analysisRoleFilter) return false;
+        if (analysisDepartmentFilter !== 'all' && lens.department !== analysisDepartmentFilter) return false;
+        return true;
+      }),
+    [analysis?.people.stakeholderLenses, analysisDepartmentFilter, analysisRoleFilter]
+  );
+
+  const activeAnalysisColumns = useMemo(
+    () =>
+      analysisLensMode === 'stakeholder'
+        ? filteredStakeholderAnalysisLenses.map((lens) => ({ id: lens.id, label: lens.label }))
+        : filteredSessionAnalysisLenses.map((lens) => ({ id: lens.id, label: lens.label })),
+    [analysisLensMode, filteredSessionAnalysisLenses, filteredStakeholderAnalysisLenses]
+  );
+
+  const activeAnalysisCellMap = useMemo(
+    () => (analysisLensMode === 'stakeholder' ? stakeholderMatrixCellMap : sessionMatrixCellMap),
+    [analysisLensMode, sessionMatrixCellMap, stakeholderMatrixCellMap]
+  );
+
+  const visibleAnalysisTopicRows = useMemo(() => {
+    const baseRows = analysis?.matrix.rows || [];
+    const filtersApplied = analysisRoleFilter !== 'all' || analysisDepartmentFilter !== 'all';
+    if (!filtersApplied) return baseRows;
+    return baseRows.filter((row) =>
+      activeAnalysisColumns.some((column) => {
+        const cell = activeAnalysisCellMap.get(`${row.id}:${column.id}`);
+        return cell && cell.state !== 'not_observed';
+      })
+    );
+  }, [activeAnalysisCellMap, activeAnalysisColumns, analysis?.matrix.rows, analysisDepartmentFilter, analysisRoleFilter]);
+
+  const visiblePeopleLenses = useMemo(
+    () =>
+      analysisLensMode === 'stakeholder'
+        ? filteredStakeholderAnalysisLenses
+        : filteredSessionAnalysisLenses,
+    [analysisLensMode, filteredSessionAnalysisLenses, filteredStakeholderAnalysisLenses]
+  );
+
   // Evidence drilldown state
   const [expandedEvidenceRef, setExpandedEvidenceRef] = useState<string | null>(null);
 
@@ -772,6 +955,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       if (refreshed) {
         setInsight(refreshed);
         await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
         onSaved?.(refreshed);
       } else {
         onSaved?.({ ...insight, title });
@@ -788,14 +973,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   };
 
   const handleOpenChat = () => {
-    if (isChatCollapsed) toggleChatCollapse();
-    updateWorkspaceFromView(AppView.INTERVIEW, insightId, {
-      type: 'insight',
-      id: insightId,
-      title,
-      promptType: insight?.promptType,
-      status: insight?.status,
-      sourceSessionCount: insight?.sourceSessionCount,
+    void openChatWithContext({
+      entityType: 'interview insight',
+      entityId: insightId,
+      entityName: title || insight?.title || insightId,
+      contextData: {
+        insightId,
+        title,
+        promptType: insight?.promptType,
+        status: insight?.status,
+        sourceSessionCount: insight?.sourceSessionCount,
+      },
     });
   };
 
@@ -847,6 +1035,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       const data = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
       setInsight(data);
       await loadPersistedFindings(insightId);
+      await loadCandidates(insightId);
+      await loadInsightAnalysis(insightId);
       const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
         () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
       );
@@ -1054,6 +1244,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         const refreshed = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(refreshed);
         await loadPersistedFindings(insightId);
+        await loadCandidates(insightId);
+        await loadInsightAnalysis(insightId);
         const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
           () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
         );
@@ -1082,7 +1274,63 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setLifecycleTransitioning(false);
       }
     },
-    [insight, insightId, isPolish, loadPersistedFindings]
+    [insight, insightId, isPolish, loadCandidates, loadInsightAnalysis, loadPersistedFindings]
+  );
+
+  const handleCandidateAction = useCallback(
+    async (
+      candidate: V8InsightCandidate,
+      action:
+        | 'mark_candidate'
+        | 'mark_needs_split'
+        | 'mark_needs_evidence'
+        | 'mark_ready_for_review'
+        | 'reject'
+        | 'promote_to_finding'
+    ) => {
+      if (!insight) return;
+      setCandidateActionLoadingId(candidate.id);
+      try {
+        await V8InterviewApi.triageCandidate(insight.id, candidate.id, {
+          action,
+          candidate_statement:
+            action === 'promote_to_finding'
+              ? candidate.candidate_statement
+              : undefined,
+          confidence_level:
+            action === 'promote_to_finding'
+              ? candidate.confidence_hint
+              : undefined,
+        });
+        await Promise.all([
+          loadCandidates(insightId),
+          loadPersistedFindings(insightId),
+          loadInsightAnalysis(insightId),
+        ]);
+        const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
+          () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
+        );
+        setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
+        const labels: Record<string, { pl: string; en: string }> = {
+          mark_candidate: { pl: 'Przywrócono jako kandydat', en: 'Reset to candidate' },
+          mark_needs_split: { pl: 'Oznaczono jako do rozbicia', en: 'Marked as needs split' },
+          mark_needs_evidence: { pl: 'Oznaczono jako wymagające dowodów', en: 'Marked as needs evidence' },
+          mark_ready_for_review: { pl: 'Oznaczono jako gotowe do recenzji', en: 'Marked as ready for review' },
+          reject: { pl: 'Kandydat odrzucony', en: 'Candidate rejected' },
+          promote_to_finding: { pl: 'Kandydat promowany do findingu', en: 'Candidate promoted to finding' },
+        };
+        toast.success(isPolish ? labels[action].pl : labels[action].en);
+      } catch (err) {
+        toast.error(
+          isPolish
+            ? 'Nie udało się zaktualizować triage kandydata'
+            : 'Failed to update candidate triage'
+        );
+      } finally {
+        setCandidateActionLoadingId(null);
+      }
+    },
+    [insight, insightId, isPolish, loadCandidates, loadInsightAnalysis, loadPersistedFindings]
   );
 
   const toggleLimitsExpand = useCallback((cardKey: string) => {
@@ -1344,6 +1592,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         readOnly: true,
       },
       {
+        id: 'candidates',
+        label: { en: 'Candidates', pl: 'Kandydaci' },
+        type: 'text' as const,
+        value: String(candidateSummary.total),
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
         id: 'evidence',
         label: { en: 'Evidence', pl: 'Dowody' },
         type: 'text' as const,
@@ -1352,7 +1608,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         readOnly: true,
       },
     ],
-    [findingsSummary.activeEvidence, findingsSummary.total, insight, isPolish, typeMeta]
+    [candidateSummary.total, findingsSummary.activeEvidence, findingsSummary.total, insight, isPolish, typeMeta]
   );
 
   // ── Activity log → NMode format ───────────────────────────────────────────
@@ -1578,6 +1834,330 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           break;
         }
 
+        case 'analysis-matrix': {
+          const stakeholderLenses = analysis?.people.stakeholderLenses || [];
+          const sessionLenses = analysis?.people.sessionLenses || [];
+          const cellMeta = (cell?: V8InsightAnalysisMatrixCell) => {
+            switch (cell?.state) {
+              case 'supported':
+                return {
+                  label: isPolish ? 'Wspiera' : 'Supports',
+                  className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+                };
+              case 'contradicted':
+                return {
+                  label: isPolish ? 'Sprzeczne' : 'Contradicted',
+                  className: 'bg-red-500/10 text-red-700 dark:text-red-300',
+                };
+              case 'local_only':
+                return {
+                  label: isPolish ? 'Lokalny sygnał' : 'Local only',
+                  className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                };
+              default:
+                return {
+                  label: isPolish ? 'Brak sygnału' : 'Not observed',
+                  className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+                };
+            }
+          };
+
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="info"
+                title={isPolish ? 'Kanon analizy: osoba x temat x zakres' : 'Analysis canon: person x topic x scope'}
+              >
+                {isPolish
+                  ? 'Ta warstwa nie tworzy nowych truth objectów. Pokazuje, jak persisted findings rozkładają się po rolach, osobach i szerokości pokrycia.'
+                  : 'This layer does not create new truth objects. It shows how persisted findings distribute across roles, people, and coverage width.'}
+              </Callout>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Posture' : 'Posture'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {analysis?.scope.posture === 'organization_synthesis'
+                      ? isPolish ? 'Szeroka synteza' : 'Organization synthesis'
+                      : analysis?.scope.posture === 'cross_perspective'
+                        ? isPolish ? 'Wiele perspektyw' : 'Cross perspective'
+                        : isPolish ? 'Jedna perspektywa' : 'Single perspective'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Sesje źródłowe' : 'Source sessions'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {analysis?.scope.sourceSessionCount || 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Lenses' : 'Lenses'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {analysis?.scope.distinctStakeholderCount || 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Consensus' : 'Consensus'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {consensusTopics.length}
+                  </div>
+                </div>
+              </div>
+
+              {(analysis?.synthesis.coverageGaps || []).length > 0 && (
+                <Callout
+                  variant="warning"
+                  title={isPolish ? 'Luki pokrycia' : 'Coverage gaps'}
+                >
+                  <ul className="list-disc list-inside space-y-1">
+                    {(analysis?.synthesis.coverageGaps || []).map((gap) => (
+                      <li key={gap} className="text-sm">{gap}</li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
+
+              <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4">
+                <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+                  <div className="inline-flex rounded-full bg-slate-100 dark:bg-navy-900/60 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('stakeholder')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'stakeholder'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Stakeholder lenses' : 'Stakeholder lenses'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('session')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'session'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Sesje / osoby' : 'Sessions / people'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-2 xl:ml-auto">
+                    <select
+                      value={analysisRoleFilter}
+                      onChange={(e) => setAnalysisRoleFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">{isPolish ? 'Wszystkie role' : 'All roles'}</option>
+                      {analysisRoleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={analysisDepartmentFilter}
+                      onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">{isPolish ? 'Wszystkie działy' : 'All departments'}</option>
+                      {analysisDepartmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Consensus topics' : 'Consensus topics'}
+                  </div>
+                  {consensusTopics.length > 0 ? consensusTopics.map((topic) => (
+                    <div key={topic.id} className="rounded-2xl bg-emerald-500/[0.05] px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{topic.label}</div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {topic.supportingStakeholderLabels.join(', ') || (isPolish ? 'Brak lensów' : 'No lenses')}
+                      </div>
+                    </div>
+                  )) : (
+                    <EmptyStateInline
+                      icon={CheckCircle2}
+                      message={isPolish ? 'Brak potwierdzonego konsensusu' : 'No confirmed consensus yet'}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Local-only signals' : 'Local-only signals'}
+                  </div>
+                  {localOnlyTopics.length > 0 ? localOnlyTopics.slice(0, 6).map((topic) => (
+                    <div key={topic.id} className="rounded-2xl bg-amber-500/[0.05] px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{topic.label}</div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {topic.supportingSessionIds.length === 1
+                          ? (sessionLenses.find((lens) => lens.sessionIds.includes(topic.supportingSessionIds[0]))?.label ||
+                            topic.supportingSessionIds[0])
+                          : `${topic.supportingSessionIds.length} ${isPolish ? 'sesje' : 'sessions'}`}
+                      </div>
+                    </div>
+                  )) : (
+                    <EmptyStateInline
+                      icon={Radio}
+                      message={isPolish ? 'Brak lokalnych sygnałów' : 'No local-only signals'}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {analysisLensMode === 'stakeholder'
+                      ? isPolish ? 'Stakeholder lenses' : 'Stakeholder lenses'
+                      : isPolish ? 'Sesje / osoby' : 'Sessions / people'}
+                  </div>
+                  {(analysisLensMode === 'stakeholder' ? filteredStakeholderAnalysisLenses : filteredSessionAnalysisLenses).length > 0 ? (analysisLensMode === 'stakeholder' ? filteredStakeholderAnalysisLenses : filteredSessionAnalysisLenses).map((lens) => (
+                    <div key={lens.id} className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{lens.label}</div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                        {lens.localSummary}
+                        {(lens.role || lens.department) && (
+                          <div>
+                            {[lens.role, lens.department].filter(Boolean).join(' · ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )) : (
+                    <EmptyStateInline
+                      icon={Users}
+                      message={isPolish ? 'Brak zbudowanych lensów' : 'No lenses built yet'}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {contradictedTopics.length > 0 && (
+                <Callout
+                  variant="critical"
+                  title={isPolish ? 'Tematy sprzeczne między perspektywami' : 'Topics with cross-perspective contradiction'}
+                >
+                  <ul className="list-disc list-inside space-y-1">
+                    {contradictedTopics.map((topic) => (
+                      <li key={topic.id} className="text-sm">
+                        <span className="font-medium">{topic.label}</span>
+                        {topic.supportingStakeholderLabels.length > 0 && (
+                          <> ({topic.supportingStakeholderLabels.join(', ')})</>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
+
+              {visibleAnalysisTopicRows.length > 0 && activeAnalysisColumns.length > 0 ? (
+                <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-200/70 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/50">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {analysisLensMode === 'stakeholder'
+                        ? isPolish ? 'Macierz temat x stakeholder lens' : 'Topic x stakeholder lens matrix'
+                        : isPolish ? 'Macierz temat x sesja/osoba' : 'Topic x session/person matrix'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish
+                        ? 'Komórki pokazują, gdzie finding jest wspierany, lokalny lub sprzeczny.'
+                        : 'Cells show where a finding is supported, local-only, or contradicted.'}
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="bg-white/70 dark:bg-navy-900/30">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Temat' : 'Topic'}
+                          </th>
+                          {activeAnalysisColumns.map((column) => (
+                            <th
+                              key={column.id}
+                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500"
+                            >
+                              {column.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleAnalysisTopicRows.map((row) => (
+                          <tr key={row.id} className="border-t border-slate-200/60 dark:border-navy-700/50">
+                            <td className="px-4 py-3 align-top min-w-[220px]">
+                              <div className="font-medium text-slate-900 dark:text-slate-100">{row.label}</div>
+                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {analysisTopicsById[row.id]?.kind}
+                              </div>
+                              {analysisTopicsById[row.id]?.perspectiveLabels?.length ? (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {analysisTopicsById[row.id]?.perspectiveLabels.map((label) => (
+                                    <span
+                                      key={label}
+                                      className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                    >
+                                      {label}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {analysisTopicsById[row.id]?.divergenceNote && (
+                                <div className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                                  {analysisTopicsById[row.id]?.divergenceNote}
+                                </div>
+                              )}
+                            </td>
+                            {activeAnalysisColumns.map((column) => {
+                              const cell = activeAnalysisCellMap.get(`${row.id}:${column.id}`);
+                              const meta = cellMeta(cell);
+                              return (
+                                <td key={column.id} className="px-3 py-3 align-top">
+                                  <div className={`inline-flex px-2 py-1 rounded-full text-[10px] font-medium ${meta.className}`}>
+                                    {meta.label}
+                                  </div>
+                                  {cell && cell.evidenceCount > 0 && (
+                                    <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                      {cell.evidenceCount} {isPolish ? 'dow.' : 'ev.'}
+                                    </div>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <EmptyStateInline
+                  icon={BarChart3}
+                  message={isPolish ? 'Brak danych po obecnych filtrach albo macierz nie jest jeszcze gotowa.' : 'No data for the current filters or the matrix is not ready yet.'}
+                />
+              )}
+            </div>
+          );
+          break;
+        }
+
         case 'themes':
           component = (
             <div className="space-y-4">
@@ -1668,6 +2248,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                         {theme.description}
                       </p>
+                      {(theme.perspective_labels?.length || theme.divergence_note) ? (
+                        <div className="space-y-2">
+                          {theme.perspective_labels && theme.perspective_labels.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {theme.perspective_labels.map((label) => (
+                                <span
+                                  key={label}
+                                  className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                >
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {theme.divergence_note && (
+                            <div className="text-xs text-amber-700 dark:text-amber-300">
+                              {theme.divergence_note}
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
                       <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
                         <button
                           onClick={() => toggleLimitsExpand(limitsKey)}
@@ -1834,6 +2435,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                           {issue.description}
                         </p>
+                        {(issue.perspective_labels?.length || issue.divergence_note) ? (
+                          <div className="space-y-2">
+                            {issue.perspective_labels && issue.perspective_labels.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {issue.perspective_labels.map((label) => (
+                                  <span
+                                    key={label}
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                  >
+                                    {label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {issue.divergence_note && (
+                              <div className="text-xs text-amber-700 dark:text-amber-300">
+                                {issue.divergence_note}
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
                         <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
                           <button
                             onClick={() => toggleLimitsExpand(limitsKey)}
@@ -1987,6 +2609,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                           {opp.description}
                         </p>
+                        {(opp.perspective_labels?.length || opp.divergence_note) ? (
+                          <div className="space-y-2">
+                            {opp.perspective_labels && opp.perspective_labels.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {opp.perspective_labels.map((label) => (
+                                  <span
+                                    key={label}
+                                    className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                                  >
+                                    {label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {opp.divergence_note && (
+                              <div className="text-xs text-amber-700 dark:text-amber-300">
+                                {opp.divergence_note}
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
                         <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
                           <button
                             onClick={() => toggleLimitsExpand(limitsKey)}
@@ -2164,7 +2807,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
               {v6EvidenceMap.length === 0 ? (
                 <EmptyStateInline
-                  icon={Map}
+                  icon={MapIcon}
                   message={isPolish ? 'Brak mapy dowodów' : 'No evidence map available'}
                   hint={
                     isPolish
@@ -2239,6 +2882,438 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   rowKey={(row, idx) => row.answer_id || String(idx)}
                   emptyMessage={isPolish ? 'Brak danych.' : 'No data.'}
                   striped
+                />
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'candidate-triage': {
+          const triageBadge = (
+            status: V8InsightCandidate['triage_status']
+          ): { label: string; className: string } => {
+            switch (status) {
+              case 'ready_for_review':
+                return {
+                  label: isPolish ? 'Gotowe do recenzji' : 'Ready for review',
+                  className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+                };
+              case 'needs_evidence':
+                return {
+                  label: isPolish ? 'Brak dowodów' : 'Needs evidence',
+                  className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+                };
+              case 'needs_split':
+                return {
+                  label: isPolish ? 'Do rozbicia' : 'Needs split',
+                  className: 'bg-red-500/10 text-red-700 dark:text-red-300',
+                };
+              case 'rejected':
+                return {
+                  label: isPolish ? 'Odrzucony' : 'Rejected',
+                  className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+                };
+              case 'promoted':
+                return {
+                  label: isPolish ? 'Promowany' : 'Promoted',
+                  className: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+                };
+              default:
+                return {
+                  label: isPolish ? 'Kandydat' : 'Candidate',
+                  className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
+                };
+            }
+          };
+
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Warstwa robocza przed findingiem P10' : 'Working layer before a P10 finding'}
+              >
+                {isPolish
+                  ? 'Kandydaci nie są publishable truth. To przestrzeń operatora do decyzji: dopnij evidence, rozbij sprzeczność, przygotuj do recenzji albo promuj do findingu.'
+                  : 'Candidates are not publishable truth. This is the operator layer to add evidence, split contradictions, prepare for review, or promote into a finding.'}
+              </Callout>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Kandydaci' : 'Candidates'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {candidateSummary.total}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Ready' : 'Ready'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
+                    {candidateSummary.ready}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Braki evidence' : 'Needs evidence'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
+                    {candidateSummary.needsEvidence}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Do rozbicia' : 'Needs split'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-red-600 dark:text-red-300">
+                    {candidateSummary.needsSplit}
+                  </div>
+                </div>
+              </div>
+
+              {candidates.length > 0 ? (
+                <div className="space-y-3">
+                  {candidates.map((candidate) => {
+                    const statusMeta = triageBadge(candidate.triage_status);
+                    const linkedTopic = candidate.source_key
+                      ? analysis?.topics.find((topic) => topic.sourceKey === candidate.source_key)
+                      : null;
+                    const linkedFinding = candidate.linked_finding_id
+                      ? findings.find((finding) => finding.id === candidate.linked_finding_id)
+                      : null;
+                    const isBusy = candidateActionLoadingId === candidate.id;
+                    return (
+                      <div
+                        key={candidate.id}
+                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              {candidate.candidate_statement}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${statusMeta.className}`}>
+                                {statusMeta.label}
+                              </span>
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                                {candidate.confidence_hint}
+                              </span>
+                              <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                                {candidate.followup_type}
+                              </span>
+                              {candidate.source_section_type && (
+                                <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/10 text-slate-600 dark:text-slate-300">
+                                  {candidate.source_section_type}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {linkedFinding && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-500/10 text-violet-700 dark:text-violet-300 text-[10px] font-medium">
+                              <Target size={10} />
+                              {isPolish ? 'Powiązany finding' : 'Linked finding'}
+                            </span>
+                          )}
+                        </div>
+
+                        {candidate.rationale && (
+                          <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">
+                            {candidate.rationale}
+                          </div>
+                        )}
+
+                        {linkedTopic?.divergenceNote && (
+                          <div className="text-xs text-amber-700 dark:text-amber-300">
+                            {linkedTopic.divergenceNote}
+                          </div>
+                        )}
+
+                        <Callout
+                          variant={
+                            candidate.triage_status === 'needs_split'
+                              ? 'critical'
+                              : candidate.triage_status === 'needs_evidence'
+                                ? 'warning'
+                                : 'info'
+                          }
+                          title={isPolish ? 'Rekomendowany następny krok' : 'Recommended next step'}
+                          compact
+                        >
+                          {candidate.followup_recommendation}
+                        </Callout>
+
+                        {linkedTopic?.supportingStakeholderLabels?.length ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {linkedTopic.supportingStakeholderLabels.map((label) => (
+                              <span
+                                key={label}
+                                className="inline-flex px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleCandidateAction(candidate, 'mark_needs_evidence')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? <Loader2 size={12} className="animate-spin" /> : <AlertTriangle size={12} />}
+                            {isPolish ? 'Needs evidence' : 'Needs evidence'}
+                          </button>
+                          <button
+                            onClick={() => handleCandidateAction(candidate, 'mark_needs_split')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? <Loader2 size={12} className="animate-spin" /> : <AlertCircle size={12} />}
+                            {isPolish ? 'Do rozbicia' : 'Needs split'}
+                          </button>
+                          <button
+                            onClick={() => handleCandidateAction(candidate, 'mark_ready_for_review')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                            {isPolish ? 'Gotowe do recenzji' : 'Ready for review'}
+                          </button>
+                          <button
+                            onClick={() => handleCandidateAction(candidate, 'reject')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-500/10 text-slate-700 dark:text-slate-300 hover:bg-slate-500/20 text-xs font-medium disabled:opacity-50"
+                          >
+                            {isBusy ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />}
+                            {isPolish ? 'Odrzuć' : 'Reject'}
+                          </button>
+                          {candidate.triage_status !== 'promoted' && candidate.triage_status !== 'rejected' && (
+                            <button
+                              onClick={() => handleCandidateAction(candidate, 'promote_to_finding')}
+                              disabled={isBusy}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20 text-xs font-medium disabled:opacity-50"
+                            >
+                              {isBusy ? <Loader2 size={12} className="animate-spin" /> : <Target size={12} />}
+                              {isPolish ? 'Promuj do findingu' : 'Promote to finding'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyStateInline
+                  icon={Eye}
+                  message={isPolish ? 'Brak kandydatów do triage' : 'No candidates available for triage'}
+                />
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'people': {
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="info"
+                title={isPolish ? 'Czytaj insight przez perspektywy ludzi' : 'Read the insight through people perspectives'}
+              >
+                {isPolish
+                  ? 'Ta sekcja pokazuje, które tematy wspiera dana osoba lub stakeholder lens i gdzie pojawiają się lokalne albo sprzeczne spojrzenia.'
+                  : 'This section shows which topics are supported by each person or stakeholder lens and where local or contradictory views appear.'}
+              </Callout>
+
+              <div className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4">
+                <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+                  <div className="inline-flex rounded-full bg-slate-100 dark:bg-navy-900/60 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('stakeholder')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'stakeholder'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Stakeholder lenses' : 'Stakeholder lenses'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisLensMode('session')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        analysisLensMode === 'session'
+                          ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {isPolish ? 'Sesje / osoby' : 'Sessions / people'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-2 xl:ml-auto">
+                    <select
+                      value={analysisRoleFilter}
+                      onChange={(e) => setAnalysisRoleFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">{isPolish ? 'Wszystkie role' : 'All roles'}</option>
+                      {analysisRoleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={analysisDepartmentFilter}
+                      onChange={(e) => setAnalysisDepartmentFilter(e.target.value)}
+                      className="h-10 rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white dark:bg-navy-900/50 px-3 text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="all">{isPolish ? 'Wszystkie działy' : 'All departments'}</option>
+                      {analysisDepartmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {visiblePeopleLenses.length > 0 ? (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  {visiblePeopleLenses.map((lens) => {
+                    const supportedTopics = lens.supportedTopicIds
+                      .map((id) => analysisTopicsById[id])
+                      .filter(Boolean);
+                    const contradictedSupportedTopics = supportedTopics.filter((topic) => topic.isContradicted);
+                    const localSupportedTopics = supportedTopics.filter(
+                      (topic) => !topic.isContradicted && topic.supportingSessionIds.length <= 1
+                    );
+
+                    return (
+                      <div
+                        key={lens.id}
+                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              {lens.label}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {[lens.role, lens.department].filter(Boolean).join(' · ') ||
+                                (analysisLensMode === 'session'
+                                  ? isPolish ? 'Sesja źródłowa' : 'Source session'
+                                  : isPolish ? 'Stakeholder lens' : 'Stakeholder lens')}
+                            </div>
+                          </div>
+                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                            <Target size={10} />
+                            {supportedTopics.length} {isPolish ? 'tem.' : 'topics'}
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {lens.localSummary}
+                        </div>
+
+                        {contradictedSupportedTopics.length > 0 && (
+                          <Callout
+                            variant="critical"
+                            title={isPolish ? 'Sprzeczne tematy dla tej perspektywy' : 'Contradicted topics for this perspective'}
+                            compact
+                          >
+                            <ul className="list-disc list-inside space-y-1">
+                              {contradictedSupportedTopics.map((topic) => (
+                                <li key={topic.id} className="text-sm">
+                                  {topic.label}
+                                </li>
+                              ))}
+                            </ul>
+                          </Callout>
+                        )}
+
+                        <div className="space-y-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Wspierane tematy' : 'Supported topics'}
+                          </div>
+                          {supportedTopics.length > 0 ? (
+                            supportedTopics.map((topic) => (
+                              <div
+                                key={topic.id}
+                                className="rounded-xl bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/50 px-3 py-3"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                    {topic.label}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <span
+                                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                                        topic.isContradicted
+                                          ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                          : topic.supportingSessionIds.length <= 1
+                                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                            : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                      }`}
+                                    >
+                                      {topic.isContradicted
+                                        ? isPolish ? 'Sprzeczne' : 'Contradicted'
+                                        : topic.supportingSessionIds.length <= 1
+                                          ? isPolish ? 'Lokalne' : 'Local'
+                                          : isPolish ? 'Wspólne' : 'Shared'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                  {topic.kind} · {topic.confidenceLevel} · {topic.evidenceCount} {isPolish ? 'dow.' : 'ev.'}
+                                </div>
+                                {topic.divergenceNote && (
+                                  <div className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                                    {topic.divergenceNote}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <EmptyStateInline
+                              icon={Users}
+                              message={isPolish ? 'Brak wspieranych tematów dla tej perspektywy' : 'No supported topics for this perspective'}
+                            />
+                          )}
+                        </div>
+
+                        {localSupportedTopics.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Lokalne sygnały' : 'Local signals'}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {localSupportedTopics.map((topic) => (
+                                <span
+                                  key={topic.id}
+                                  className="inline-flex px-2 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-medium"
+                                >
+                                  {topic.label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyStateInline
+                  icon={Users}
+                  message={isPolish ? 'Brak perspektyw dla obecnych filtrów' : 'No perspectives for the current filters'}
                 />
               )}
             </div>
@@ -2543,6 +3618,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       }
 
       const badgeMap: Record<string, number | undefined> = {
+        'candidate-triage': candidates.length || undefined,
         comments: nComments.length,
         'source-sessions': sourceSessions.length,
         'activity-log': activityEntries.length,
@@ -2571,6 +3647,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     traceabilityRows,
     sourceSessions,
     sourceSessionSummaries,
+    candidates,
+    candidateSummary,
+    candidateActionLoadingId,
     nComments,
     commentDraft,
     commentDateFilter,
@@ -2641,7 +3720,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       onSectionChange={setActiveNSection}
       presentationMode={presentationMode}
       onPresentationModeChange={setPresentationMode}
-      buildArtifactCode={buildArtifactCode}
+      buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
       renderActionBar={() => (
         <div className="flex items-center gap-2 flex-wrap">
           <button

@@ -5,6 +5,7 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { parseArtifactsFromResponse, useArtifactsStore } from '@/store/useArtifactsStore';
 import type { Artifact, TeresaChatProposal, ThinkingStep } from '@/types';
+import { readPreferredChatLanguage } from '@/utils/chatLanguagePreference';
 
 function mergeCitations(prev: any[], next: any[]): any[] {
   const out: any[] = [];
@@ -1041,9 +1042,15 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       const mergedContext = focusMode ? { ...(context || {}), focusMode } : context;
       const uiLang = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
       const resolvedLanguage =
-        (language || localStorage.getItem('consultify-preferred-chat-lang') || uiLang).split(
-          '-'
-        )[0] || uiLang;
+        (
+          readPreferredChatLanguage(language || context?.conversationLanguage || uiLang) ||
+          uiLang
+        ).split('-')[0] || uiLang;
+      const resolvedKnowledgeSources = {
+        pmoDocuments: aiConfig?.knowledgeSources?.pmoDocuments ?? true,
+        projectData: aiConfig?.knowledgeSources?.projectData ?? true,
+        organizationData: aiConfig?.knowledgeSources?.organizationData ?? false,
+      };
 
       try {
         await Api.chatWithAIStream(
@@ -1064,11 +1071,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
             marketResearch: (aiConfig as any)?.marketResearch,
             coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
             privateMode: (aiConfig as any)?.privateMode ?? false,
-            knowledgeSources: {
-              pmoDocuments: true,
-              projectData: true,
-              organizationData: true,
-            },
+            knowledgeSources: resolvedKnowledgeSources,
             responseStyle: aiConfig?.responseStyle,
             selectedTier: (aiConfig as any)?.selectedTier,
             selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
@@ -1119,11 +1122,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
                   marketResearch: (aiConfig as any)?.marketResearch,
                   coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
                   privateMode: (aiConfig as any)?.privateMode ?? false,
-                  knowledgeSources: {
-                    pmoDocuments: true,
-                    projectData: true,
-                    organizationData: true,
-                  },
+                  knowledgeSources: resolvedKnowledgeSources,
                   responseStyle: aiConfig?.responseStyle,
                   selectedTier: (aiConfig as any)?.selectedTier,
                   selectedModelId: (aiConfig as any)?.selectedModelId ?? null,

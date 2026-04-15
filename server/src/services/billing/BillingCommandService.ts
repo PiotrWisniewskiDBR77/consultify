@@ -438,7 +438,7 @@ export class BillingCommandService {
         subscription_plan_id: planId,
         billing_rail: 'stripe_subscription',
         status: 'active',
-        contract_status: null,
+        contract_status: undefined,
         is_manual_override: false,
       });
       return { id: `mock_sub_${orgId}`, status: 'active', plan };
@@ -493,7 +493,7 @@ export class BillingCommandService {
       billing_rail: 'stripe_subscription',
       stripe_subscription_id: subscription.id,
       status: subscription.status,
-      contract_status: null,
+      contract_status: undefined,
       is_manual_override: false,
       current_period_start: (subscription as any).current_period_start
         ? new Date((subscription as any).current_period_start * 1000)
@@ -641,8 +641,11 @@ export class BillingCommandService {
     if (!deps.stripe || !billing.stripe_subscription_id) {
       await this.upsertOrgBilling(orgId, {
         status: 'active',
-        contract_status: billing.billing_rail === 'manual_invoice' ? 'active' : billing.contract_status,
-        access_expires_at: null,
+        contract_status:
+          billing.billing_rail === 'manual_invoice'
+            ? 'active'
+            : (billing.contract_status ?? undefined),
+        access_expires_at: undefined,
       });
       return { success: true };
     }

@@ -60,6 +60,7 @@ export type Capability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];
 // Legacy capability matrix (for backward compatibility)
 export const ROLE_CAPABILITIES: Record<Role, Capability[]> = {
   [ROLES.SUPERADMIN]: Object.values(CAPABILITIES) as Capability[],
+  [ROLES.OWNER]: Object.values(CAPABILITIES) as Capability[],
   [ROLES.ADMIN]: Object.values(CAPABILITIES) as Capability[],
   [ROLES.PROJECT_MANAGER]: [
     CAPABILITIES.EDIT_PROJECT_SETTINGS,

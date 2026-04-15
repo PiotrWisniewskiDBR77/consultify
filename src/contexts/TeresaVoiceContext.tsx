@@ -4,6 +4,7 @@ import { useTeresaVoice, type UseTeresaVoiceReturn } from '../hooks/useTeresaVoi
 import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
+import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
 import { buildTeresaVoiceSystemInstruction } from '../utils/teresaVoiceInstruction';
 
 interface TeresaVoiceContextValue extends UseTeresaVoiceReturn {
@@ -35,10 +36,7 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
   } = useConversationStore();
 
   const [chatLanguage] = useState<string>(() => {
-    const stored =
-      localStorage.getItem('consultinity-preferred-chat-lang') ||
-      localStorage.getItem('consultify-preferred-chat-lang');
-    return stored || 'pl';
+    return readPreferredChatLanguage('pl') || 'pl';
   });
 
   const systemInstruction = useMemo(

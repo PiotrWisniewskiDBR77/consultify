@@ -25,6 +25,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
@@ -59,17 +60,35 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
   initialTab,
   initialCommercialTab,
 }) => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState(initialTab || 'command-center');
   const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
 
+  const resolveRequestedTab = React.useCallback(() => {
+    const params = new URLSearchParams(location.search);
+    const rawTab = String(params.get('tab') || initialTab || '').trim().toLowerCase();
+    if (!rawTab) return null;
+
+    if (rawTab === 'backlog' || rawTab === 'feedback_backlog') {
+      return 'feedback-backlog';
+    }
+
+    return rawTab;
+  }, [initialTab, location.search]);
+
   useEffect(() => {
+    const requestedTab = resolveRequestedTab();
+    if (requestedTab) {
+      setActiveTab(requestedTab);
+      return;
+    }
     if (initialTab) {
       setActiveTab(initialTab);
     }
-  }, [initialTab]);
+  }, [initialTab, resolveRequestedTab]);
 
   useEffect(() => {
     const fetchOrganizations = async () => {

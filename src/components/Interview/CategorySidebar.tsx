@@ -5,12 +5,27 @@
  * Shows progress per category with question counts and completion status.
  */
 
-import { Check, ChevronRight, ClipboardList, DollarSign, Monitor, Settings, Target, Users } from 'lucide-react';
+import {
+  Check,
+  ChevronRight,
+  ClipboardList,
+  DollarSign,
+  Monitor,
+  Settings,
+  Target,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Types
-export type InterviewCategory = 'strategy' | 'operations' | 'digital' | 'people' | 'finance' | 'general';
+export type InterviewCategory =
+  | 'strategy'
+  | 'operations'
+  | 'digital'
+  | 'people'
+  | 'finance'
+  | 'general';
 
 export interface CategoryProgress {
   category: InterviewCategory;
@@ -115,7 +130,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
   lastUpdated,
 }) => {
   const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const isPolish = i18n.language?.startsWith('pl');
 
   // Calculate overall progress
   const totalQuestions = progress.reduce((sum, p) => sum + p.totalQuestions, 0);

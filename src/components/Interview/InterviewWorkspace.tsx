@@ -66,7 +66,7 @@ import {
 } from '@/services/api/v8/interview';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
-import { useConversationStore } from '@/store/useConversationStore';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { type LinkedItem, LinkedItemsSection } from '../MyWork/shared';
@@ -147,9 +147,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   onClose,
 }) => {
   const { i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
+  const isPolish = i18n.language?.startsWith('pl');
   const { currentUser, currentOrganization } = useAppStore();
-  const { setActiveConversation } = useConversationStore();
+  const openChatWithContext = useOpenChatWithContext();
   const interviewDemoData = useMemo(
     () =>
       createInterviewDemoDataset({
@@ -1124,8 +1124,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Open chat
   const handleOpenChat = useCallback(() => {
     if (!session) return;
-    setActiveConversation(`interview-${session.id}`);
-  }, [session, setActiveConversation]);
+    void openChatWithContext({
+      entityType: 'interview session',
+      entityId: session.id,
+      entityName: session.name,
+      contextData: {
+        sessionId: session.id,
+        projectId: session.projectId || projectId || null,
+        assignmentId: session.assignmentId || null,
+        status: session.status,
+        answeredQuestions: session.answeredQuestions,
+        totalQuestions: session.totalQuestions,
+      },
+    });
+  }, [openChatWithContext, projectId, session]);
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {

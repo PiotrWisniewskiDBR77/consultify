@@ -12,11 +12,14 @@ import { useTranslation } from 'react-i18next';
 import type { NavigateAction } from '@/services/chatNavigator';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
+/** Inline chat prompt (fills send flow) vs mechanical navigation */
+export type ChatSuggestionAction = NavigateAction | { type: 'CHAT_PROMPT'; prompt: string };
+
 export interface ChatSuggestion {
   id: string;
   label: string;
-  action: NavigateAction;
-  type?: 'initiative' | 'tool' | 'results' | 'outputs' | 'generic';
+  action: ChatSuggestionAction;
+  type?: 'initiative' | 'tool' | 'results' | 'outputs' | 'generic' | 'interview';
 }
 
 const SUGGESTION_ICONS: Record<string, React.ElementType> = {
@@ -51,8 +54,9 @@ export const ChatSmartSuggestions: React.FC<ChatSmartSuggestionsProps> = ({
   const handleClick = async (suggestion: ChatSuggestion) => {
     setLoadingId(suggestion.id);
     trackFunnelEvent('chat_suggestion_clicked', {
-      type: 'NAVIGATE',
-      targetModule: suggestion.action.targetModule,
+      type: suggestion.action.type,
+      targetModule:
+        suggestion.action.type === 'NAVIGATE' ? suggestion.action.targetModule : 'chat_prompt',
     });
     try {
       await onSuggestionClick(suggestion);

@@ -103,6 +103,12 @@ export const P10_CONFIDENCE_SEMANTICS: Record<
     uiRule: 'Must look like draft; block publish/handoff',
     overclaim_guard: 'Publication without confidence is forbidden',
   },
+  contradicted: {
+    meaning: 'Evidence points in conflicting directions for this claim in this context',
+    minimumEvidence: 'At least two credible pointers that materially disagree',
+    uiRule: 'Show contradiction explicitly; no single narrative; next action must be "resolve / validate"',
+    overclaim_guard: 'Forbidden: picking one side without new evidence or scope change',
+  },
 } as const;
 
 export const P10_EXTENDED_CONFIDENCE_LEVELS = [

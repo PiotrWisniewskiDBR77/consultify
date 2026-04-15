@@ -23,6 +23,13 @@ import {
   recordHandoff,
   type InsightLifecycleAction,
 } from '../../services/v8/interviewInsightFindingsService.js';
+import {
+  listCandidates,
+  promoteCandidateToFinding,
+  triageCandidate,
+  type CandidateTriageAction,
+} from '../../services/v8/interviewInsightCandidateService.js';
+import { buildInsightAnalysis } from '../../services/v8/interviewInsightAnalysisService.js';
 import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
 import {
   organizationContextService,
@@ -245,6 +252,138 @@ router.post(
         action: typedAction,
         updatedAt: now,
       },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.get(
+  '/insights/:insightId/candidates',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const candidates = await listCandidates(insightId);
+    return res.json({
+      data: { candidates, insightId },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.post(
+  '/insights/:insightId/candidates/:candidateId/triage',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { insightId, candidateId } = req.params as { insightId: string; candidateId: string };
+    const {
+      action,
+      candidate_statement,
+      rationale,
+      followup_recommendation,
+      confidence_level,
+      limits,
+      next_action,
+    } = req.body as {
+      action?: CandidateTriageAction;
+      candidate_statement?: string;
+      rationale?: string;
+      followup_recommendation?: string;
+      confidence_level?: 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+      limits?: string;
+      next_action?: string;
+    };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    if (!action) {
+      return res.status(400).json({ error: 'action is required', code: 'P10_CANDIDATE_ACTION_REQUIRED' });
+    }
+
+    if (action === 'promote_to_finding') {
+      const result = await promoteCandidateToFinding(
+        insightId,
+        candidateId,
+        {
+          finding_statement: candidate_statement,
+          confidence_level,
+          limits,
+          next_action,
+        },
+        {
+          actorUserId: userId,
+          organizationId,
+        }
+      );
+      if (result.error) {
+        return res.status(400).json({ error: result.error, code: 'P10_CANDIDATE_PROMOTE_FAILED' });
+      }
+      return res.json({
+        data: {
+          candidate: result.candidate,
+          finding: result.finding,
+          insightId,
+          candidateId,
+        },
+        meta: insightsMeta(),
+      });
+    }
+
+    const result = await triageCandidate(
+      insightId,
+      candidateId,
+      {
+        action,
+        candidate_statement,
+        rationale,
+        followup_recommendation,
+      },
+      userId
+    );
+    if (result.error) {
+      return res.status(400).json({ error: result.error, code: 'P10_CANDIDATE_TRIAGE_FAILED' });
+    }
+
+    return res.json({
+      data: {
+        candidate: result.candidate,
+        insightId,
+        candidateId,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.get(
+  '/insights/:insightId/analysis',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const analysis = await buildInsightAnalysis(insightId);
+    if (!analysis) {
+      return res.status(404).json({ error: 'Insight analysis not found', code: 'P10_ANALYSIS_NOT_FOUND' });
+    }
+
+    return res.json({
+      data: { analysis, insightId },
       meta: insightsMeta(),
     });
   })
