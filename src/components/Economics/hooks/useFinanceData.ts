@@ -64,7 +64,6 @@ export function useFinanceData(
         arr = Array.isArray(data) ? data : [];
       }
       setLoadError(null);
-      setIsUsingDemoData(false);
       setStatements(arr);
     } catch {
       setLoadError(
@@ -73,7 +72,6 @@ export function useFinanceData(
           'Failed to load real finance statements from the active data source.'
         )
       );
-      setIsUsingDemoData(false);
       setStatements([]);
     }
   }, [t]);
@@ -92,7 +90,6 @@ export function useFinanceData(
         arr = Array.isArray(data) ? data : [];
       }
       setLoadError(null);
-      setIsUsingDemoData(false);
       setModels(arr);
     } catch {
       setLoadError(
@@ -101,7 +98,6 @@ export function useFinanceData(
           'Failed to load real finance models from the active data source.'
         )
       );
-      setIsUsingDemoData(false);
       setModels([]);
     }
   }, [t]);
@@ -120,7 +116,6 @@ export function useFinanceData(
         arr = Array.isArray((data as any)?.analyses) ? (data as any).analyses : [];
       }
       setLoadError(null);
-      setIsUsingDemoData(false);
       setAnalyses(arr);
     } catch {
       setLoadError(
@@ -129,18 +124,15 @@ export function useFinanceData(
           'Failed to load real financial analyses from the active data source.'
         )
       );
-      setIsUsingDemoData(false);
       setAnalyses([]);
     }
   }, [t]);
 
   const loadValuations = useCallback(async () => {
     try {
-      // Keep valuations on one API family until V8 mutation parity exists.
       const data = await Api.get('/api/economics/valuations');
       const arr = Array.isArray((data as any)?.valuations) ? (data as any).valuations : [];
       setLoadError(null);
-      setIsUsingDemoData(false);
       setValuations(arr);
     } catch {
       setLoadError(
@@ -149,18 +141,15 @@ export function useFinanceData(
           'Failed to load real valuations from the active data source.'
         )
       );
-      setIsUsingDemoData(false);
       setValuations([]);
     }
   }, [t]);
 
   const loadBudgets = useCallback(async () => {
     try {
-      // Keep budgets on one API family until V8 mutation parity exists.
       const data = await Api.get('/api/economics/budgets');
       const arr = Array.isArray((data as any)?.budgets) ? (data as any).budgets : [];
       setLoadError(null);
-      setIsUsingDemoData(false);
       setBudgets(arr);
     } catch {
       setLoadError(
@@ -169,7 +158,6 @@ export function useFinanceData(
           'Failed to load real budgets from the active data source.'
         )
       );
-      setIsUsingDemoData(false);
       setBudgets([]);
     }
   }, [t]);

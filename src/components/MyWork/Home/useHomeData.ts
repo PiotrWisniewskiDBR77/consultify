@@ -1069,11 +1069,11 @@ export function useHomeData(refreshTrigger?: number): HomeData {
 
     const screenData =
       screenRes.status === 'fulfilled'
-        ? normalizeHomeScreenData(screenRes.value?.data)
+        ? normalizeHomeScreenData(screenRes.value?.data ?? screenRes.value)
         : createEmptyScreen();
     const savedLayout =
-      prefsRes.status === 'fulfilled' && prefsRes.value?.data?.home_layout
-        ? sanitizeLayout(prefsRes.value.data.home_layout)
+      prefsRes.status === 'fulfilled' && (prefsRes.value?.data?.home_layout ?? (prefsRes.value as any)?.home_layout)
+        ? sanitizeLayout(prefsRes.value?.data?.home_layout ?? (prefsRes.value as any)?.home_layout)
         : getDefaultLayout();
 
     if (screenRes.status === 'fulfilled') {

@@ -687,7 +687,8 @@ class InterviewAssignmentService {
   }
 
   /**
-   * Get assignments created by a manager
+   * Get assignments managed by a user.
+   * OWNER/ADMIN/SUPERADMIN see all org assignments; others see only their own created_by.
    */
   async getManagedAssignments(
     managerId: string,
@@ -695,12 +696,19 @@ class InterviewAssignmentService {
     options?: {
       projectId?: string;
       status?: AssignmentStatus;
+      elevated?: boolean;
     }
   ): Promise<AssignmentWithDetails[]> {
     const db = await this.getDb();
-    const params: any[] = [organizationId, managerId];
+    const params: any[] = [organizationId];
 
-    let where = `WHERE a.organization_id = ? AND a.created_by = ?`;
+    let where: string;
+    if (options?.elevated) {
+      where = `WHERE a.organization_id = ?`;
+    } else {
+      where = `WHERE a.organization_id = ? AND a.created_by = ?`;
+      params.push(managerId);
+    }
 
     if (options?.projectId) {
       where += ` AND a.project_id = ?`;

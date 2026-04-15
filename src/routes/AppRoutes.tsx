@@ -1045,44 +1045,42 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* KIMI-style Wordy — document generation workspace (P22) */}
+        {/* KIMI Dokumenty — contact-required blocking page */}
         <Route
           path={ROUTES.WORDY}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]}>
                 <RouteErrorBoundary>
-                  <WordyView />
+                  <V4ComingSoonView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* KIMI-style Excele — spreadsheet generation workspace (P23) */}
+        {/* KIMI Tabele — contact-required blocking page */}
         <Route
           path={ROUTES.EXCELE}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Tables')]} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.excele', 'Tables')]}>
                 <RouteErrorBoundary>
-                  <AnimationWrapper variant="fade">
-                    <ExceleView />
-                  </AnimationWrapper>
+                  <V4ComingSoonView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* Gamma-style Prezentacje — presentation generation workspace (P20) */}
+        {/* KIMI Prezentacje — contact-required blocking page */}
         <Route
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
                 <RouteErrorBoundary>
-                  <PrezentacjeView />
+                  <V4ComingSoonView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
