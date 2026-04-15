@@ -560,6 +560,10 @@ const buildNoteResponse = (row: any) => {
 
 const buildEvidenceResponse = (row: any) => {
   if (!row) return null;
+  const ingestToKnowledge =
+    typeof row.ingest_to_knowledge === 'boolean'
+      ? row.ingest_to_knowledge
+      : Number(row.ingest_to_knowledge || 0) !== 0;
   return {
     id: row.id,
     sessionId: row.session_id,
@@ -576,7 +580,7 @@ const buildEvidenceResponse = (row: any) => {
     fileType: row.file_type,
     url: row.url,
     transcriptText: row.transcript_text || '',
-    ingestToKnowledge: row.ingest_to_knowledge !== 0,
+    ingestToKnowledge,
     knowledgeDocumentId: row.knowledge_document_id || undefined,
     uploadedBy: row.uploaded_by,
     createdAt: row.created_at,
@@ -655,7 +659,7 @@ async function normalizeAnswerEvidence(
       `INSERT INTO interview_evidence
        (id, session_id, organization_id, question_id, category, evidence_type, evidence_role,
         title, transcript_text, ingest_to_knowledge, uploaded_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         question.session_id,
@@ -666,6 +670,7 @@ async function normalizeAnswerEvidence(
         mapping.evidenceRole,
         `${mapping.titlePrefix} – Q ${questionId.slice(0, 8)}`,
         mapping.evidenceType === 'text' ? null : content,
+        true,
         userId,
         now,
       ]
@@ -2072,16 +2077,32 @@ export const InterviewController = {
          FROM interview_assignments a
          LEFT JOIN interview_assignment_members m
            ON m.assignment_id = a.id AND m.user_id = ? AND m.role = 'lead'
+         LEFT JOIN interview_sessions s
+           ON s.id = a.session_id
          WHERE a.id = ?
            AND a.organization_id = ?
-           AND (a.assignee_user_id = ? OR m.id IS NOT NULL)`,
-        [user.id, id, user.organizationId, user.id]
+           AND (
+             a.assignee_user_id = ?
+             OR m.id IS NOT NULL
+             OR a.created_by = ?
+             OR s.owner_id = ?
+           )`,
+        [user.id, id, user.organizationId, user.id, user.id, user.id]
       );
     } catch {
       // Back-compat: environments without `interview_assignment_members`.
       assignment = await queryHelpers.queryOne(
-        `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND assignee_user_id = ?`,
-        [id, user.organizationId, user.id]
+        `SELECT a.*
+         FROM interview_assignments a
+         LEFT JOIN interview_sessions s ON s.id = a.session_id
+         WHERE a.id = ?
+           AND a.organization_id = ?
+           AND (
+             a.assignee_user_id = ?
+             OR a.created_by = ?
+             OR s.owner_id = ?
+           )`,
+        [id, user.organizationId, user.id, user.id, user.id]
       );
     }
     if (!assignment) {
@@ -5049,7 +5070,7 @@ ${JSON.stringify(questions || [], null, 2)}
         resolvedFileType,
         url || null,
         transcriptText || null,
-        ingestToKnowledge === false ? 0 : 1,
+        ingestToKnowledge !== false,
         user.id,
         now,
       ]

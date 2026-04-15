@@ -1305,14 +1305,20 @@ export const InterviewHub: React.FC = () => {
   }, [ensureProjectId, isPolish]);
 
   const handleSessionComplete = useCallback(
-    (sessionId: string) => {
+    async (sessionId: string) => {
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
-      // Refresh sessions list
-      loadManagedSessions().then((res) => {
-        setSessions(res);
-      });
+      const [sessionsRes, myRes, managedRes, overdueRes] = await Promise.all([
+        loadManagedSessions(),
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
+      setMyAssignments(Array.isArray(myRes) ? myRes : []);
+      setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+      setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
     },
-    [isPolish, loadManagedSessions]
+    [isPolish, loadManagedAssignments, loadManagedSessions, loadMyAssignments, loadOverdueAssignments]
   );
 
   const handleSessionChange = useCallback((session: InterviewSession) => {
@@ -1323,6 +1329,29 @@ export const InterviewHub: React.FC = () => {
           : doc
       )
     );
+    const completenessPercent =
+      session.totalQuestions > 0
+        ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
+        : 0;
+    setSessions((prev) => prev.map((item) => (item.id === session.id ? { ...item, ...session } : item)));
+    const mergeAssignmentSession = (assignment: InterviewAssignment) =>
+      assignment.sessionId === session.id || assignment.session?.id === session.id
+        ? {
+            ...assignment,
+            sessionId: session.id,
+            session: {
+              ...(assignment.session || {}),
+              id: session.id,
+              status: session.status,
+              answeredQuestions: session.answeredQuestions,
+              totalQuestions: session.totalQuestions,
+              completenessPercent,
+            },
+          }
+        : assignment;
+    setMyAssignments((prev) => prev.map(mergeAssignmentSession));
+    setManagedAssignments((prev) => prev.map(mergeAssignmentSession));
+    setOverdueAssignments((prev) => prev.map(mergeAssignmentSession));
   }, [setOpenDocuments]);
 
   // Search is handled by ModuleHub's onSearch prop

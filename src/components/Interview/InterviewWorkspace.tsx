@@ -595,7 +595,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
       try {
         const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
-        setQuestions((prev) => prev.map((q) => (q.id === questionId ? { ...q, ...updated } : q)));
+        const nextQuestions = questions.map((q) => (q.id === questionId ? { ...q, ...updated } : q));
+        setQuestions(nextQuestions);
+        const answeredQuestions = nextQuestions.filter((q) => q.status === 'answered').length;
+        setSession((prev) => {
+          if (!prev) return prev;
+          const nextSession = {
+            ...prev,
+            answeredQuestions,
+            totalQuestions: nextQuestions.length,
+          };
+          onSessionChange?.(nextSession);
+          return nextSession;
+        });
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to update question:', error);
         toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
@@ -603,7 +615,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setIsSaving(false);
       }
     },
-    [session, isPolish]
+    [session, questions, isPolish, onSessionChange]
   );
 
   // Add question
@@ -885,7 +897,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         const updatedSession = (result as any)?.session;
         const updatedAssignment = (result as any)?.assignment;
         const completeness = (result as any)?.completenessPercent;
-        if (updatedSession) setSession(updatedSession);
+        if (updatedSession) {
+          setSession(updatedSession);
+          onSessionChange?.(updatedSession);
+        }
         if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
         else setAssignmentStatus('submitted');
         toast.success(
@@ -893,6 +908,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
             : `Submitted for review (${completeness ?? 0}%).`
         );
+        onComplete?.(session.id);
         return;
       }
 
@@ -903,7 +919,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       console.error('[InterviewWorkspace] Failed to submit session:', error);
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to submit');
     }
-  }, [session, isLocked, isPolish, onComplete, questions]);
+  }, [session, isLocked, isPolish, onComplete, onSessionChange, questions]);
 
   // V6-C04: Reviewer actions
   const handleSendBack = useCallback(async () => {
