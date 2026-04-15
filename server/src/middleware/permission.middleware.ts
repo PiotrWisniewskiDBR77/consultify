@@ -34,7 +34,7 @@ const normalizeRoleForDb = (role?: string): string => {
   // Common aliases from JWT/app layer
   if (upper === 'ADMINISTRATOR' || upper === 'ADMIN') return 'ADMIN';
   if (upper === 'SUPER_ADMIN' || upper === 'SUPERADMIN') return 'SUPERADMIN';
-  if (upper === 'OWNER') return 'ADMIN';
+  if (upper === 'OWNER') return 'SUPERADMIN';
   if (upper === 'PROJECT_MANAGER' || upper === 'MANAGER') return 'PROJECT_MANAGER';
   if (upper === 'TEAM_MEMBER' || upper === 'MEMBER') return 'TEAM_MEMBER';
   if (upper === 'GUEST' || upper === 'CLIENT') return 'VIEWER';
