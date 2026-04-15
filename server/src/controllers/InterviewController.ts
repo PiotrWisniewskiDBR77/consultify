@@ -18,6 +18,13 @@ import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
 import notificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import {
+  buildAssignmentManagerScopeClause,
+  buildSessionManagerScopeClause,
+  isOrgWideInterviewManagerRole,
+  resolveInterviewManagerScope,
+  type InterviewManagerScope,
+} from '../services/interviewManagerScope.js';
 import PDFParserService from '../services/pdfParserService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -1258,6 +1265,137 @@ export async function loadAcceptedInterviewSessionsForManager(
   }));
 }
 
+export async function loadManagedInterviewSessionsForManager(
+  organizationId: string,
+  userId: string,
+  options?: { elevated?: boolean; scope?: InterviewManagerScope }
+): Promise<
+  Array<{
+    id: string;
+    organizationId: string;
+    projectId?: string;
+    name: string;
+    ownerId: string;
+    status: string;
+    sessionRuntimeStatus?: string;
+    assignmentId?: string;
+    assignmentStatus?: string;
+    assignmentPriority?: string;
+    assignmentCreatedBy?: string;
+    totalQuestions: number;
+    answeredQuestions: number;
+    startedAt: string;
+    completedAt?: string;
+    lastActivityAt?: string;
+    templateId?: string;
+    templateName?: string;
+    templateCategory?: string;
+    respondentId?: string;
+    respondentName?: string;
+    assigneeId?: string;
+    assigneeName?: string;
+    assigneeEmail?: string;
+    dueAt?: string;
+    submittedAt?: string;
+    sentBackAt?: string;
+    sentBackReason?: string;
+  }>
+> {
+  const scope =
+    options?.scope ||
+    (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: userId });
+  const scopeClause = buildSessionManagerScopeClause(scope, {
+    assignmentAlias: 'a',
+    sessionProjectColumn: 's.project_id',
+  });
+  const params: unknown[] = [organizationId, ...scopeClause.params, organizationId, organizationId];
+
+  const rows = await queryHelpers.queryAll(
+    `SELECT
+       s.id,
+       COALESCE(s.organization_id, a.organization_id) as organization_id,
+       s.project_id,
+       s.name,
+       s.owner_id,
+       s.status as session_runtime_status,
+       s.template_id,
+       s.started_at,
+       s.completed_at,
+       s.last_activity_at,
+       s.answered_questions,
+       s.total_questions,
+       a.id as assignment_id,
+       a.status as assignment_status,
+       a.priority as assignment_priority,
+       a.created_by as assignment_created_by,
+       a.due_at,
+       a.submitted_at,
+       a.sent_back_at,
+       a.sent_back_reason,
+       t.name as template_name,
+       t.category as template_category,
+       COALESCE(owner_u.first_name, '') || ' ' || COALESCE(owner_u.last_name, '') as respondent_name,
+       a.assignee_user_id as assignee_id,
+       COALESCE(assignee_u.first_name, '') || ' ' || COALESCE(assignee_u.last_name, '') as assignee_name,
+       assignee_u.email as assignee_email
+     FROM interview_assignments a
+     INNER JOIN interview_sessions s ON s.id = a.session_id
+     LEFT JOIN projects p ON p.id = s.project_id
+     LEFT JOIN interview_library_templates t ON t.id = s.template_id
+     LEFT JOIN users owner_u ON owner_u.id = s.owner_id
+     LEFT JOIN users assignee_u ON assignee_u.id = a.assignee_user_id
+     WHERE a.organization_id = ?
+       ${scopeClause.clause}
+       AND a.status IN ('in_progress', 'submitted', 'sent_back', 'approved', 'completed')
+       AND (
+         p.organization_id = ?
+         OR (s.project_id IS NULL AND s.organization_id = ?)
+       )
+     ORDER BY
+       CASE a.status
+         WHEN 'submitted' THEN 0
+         WHEN 'sent_back' THEN 1
+         WHEN 'in_progress' THEN 2
+         WHEN 'approved' THEN 3
+         WHEN 'completed' THEN 4
+         ELSE 5
+       END,
+       COALESCE(a.submitted_at, a.sent_back_at, s.last_activity_at, s.started_at) DESC`,
+    params
+  );
+
+  return (rows || []).map((row: any) => ({
+    id: row.id,
+    organizationId: row.organization_id,
+    projectId: row.project_id || undefined,
+    name: row.name || 'Discovery Interview',
+    ownerId: row.owner_id,
+    status: row.assignment_status || 'in_progress',
+    sessionRuntimeStatus: row.session_runtime_status || undefined,
+    assignmentId: row.assignment_id || undefined,
+    assignmentStatus: row.assignment_status || undefined,
+    assignmentPriority: row.assignment_priority || undefined,
+    assignmentCreatedBy: row.assignment_created_by || undefined,
+    totalQuestions: row.total_questions || 0,
+    answeredQuestions: row.answered_questions || 0,
+    startedAt: row.started_at,
+    completedAt: row.completed_at || undefined,
+    lastActivityAt: row.last_activity_at || undefined,
+    templateId: row.template_id || undefined,
+    templateName: row.template_name || undefined,
+    templateCategory: row.template_category || undefined,
+    respondentId: row.owner_id || undefined,
+    respondentName: String(row.respondent_name || '').trim() || undefined,
+    assigneeId: row.assignee_id || undefined,
+    assigneeName: String(row.assignee_name || '').trim() || undefined,
+    assigneeEmail: row.assignee_email || undefined,
+    dueAt: row.due_at || undefined,
+    submittedAt: row.submitted_at || undefined,
+    sentBackAt: row.sent_back_at || undefined,
+    sentBackReason: row.sent_back_reason || undefined,
+  }));
+}
+
 export const InterviewController = {
   // ==========================================
   // SESSIONS
@@ -1283,6 +1421,19 @@ export const InterviewController = {
   getAcceptedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const sessions = await loadAcceptedInterviewSessionsForManager(user.organizationId, user.id);
+    res.json(sessions);
+  }),
+
+  getManagedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const sessions = await loadManagedInterviewSessionsForManager(user.organizationId, user.id, {
+      scope,
+    });
     res.json(sessions);
   }),
 
@@ -2336,9 +2487,14 @@ export const InterviewController = {
   getManagedAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { status, projectId } = req.query as any;
-
-    const params: unknown[] = [user.organizationId, user.id];
-    let where = `WHERE a.organization_id = ? AND a.created_by = ?`;
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
+    const params: unknown[] = [user.organizationId, ...scopeClause.params];
+    let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -2424,6 +2580,12 @@ export const InterviewController = {
   getOverdueAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const now = new Date().toISOString();
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
 
     const rows = await queryHelpers.queryAll(
       `SELECT
@@ -2440,12 +2602,12 @@ export const InterviewController = {
        LEFT JOIN interview_sessions s ON s.id = a.session_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
        WHERE a.organization_id = ?
-         AND a.created_by = ?
+         ${scopeClause.clause}
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
          AND a.status NOT IN ('completed', 'submitted')
        ORDER BY a.due_at ASC`,
-      [user.organizationId, user.id, now]
+      [user.organizationId, ...scopeClause.params, now]
     );
 
     const mapped = (rows || []).map((r: any) => {
@@ -2488,6 +2650,14 @@ export const InterviewController = {
   getAssignmentCounts: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const now = new Date().toISOString();
+    const scope = await resolveInterviewManagerScope({
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+    });
+    const countScopeClause = buildAssignmentManagerScopeClause(scope, {
+      assignmentAlias: 'interview_assignments',
+    });
 
     // My assignments count (including team memberships)
     let myResult: any = null;
@@ -2515,8 +2685,9 @@ export const InterviewController = {
     const managedResult = await queryHelpers.queryOne(
       `SELECT COUNT(*) as count
        FROM interview_assignments
-       WHERE organization_id = ? AND created_by = ?`,
-      [user.organizationId, user.id]
+       WHERE organization_id = ?
+         ${countScopeClause.clause}`,
+      [user.organizationId, ...countScopeClause.params]
     );
 
     // Overdue count (managed only)
@@ -2524,11 +2695,11 @@ export const InterviewController = {
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
-         AND created_by = ?
+         ${countScopeClause.clause}
          AND due_at IS NOT NULL
          AND due_at < ?
          AND status NOT IN ('completed', 'submitted')`,
-      [user.organizationId, user.id, now]
+      [user.organizationId, ...countScopeClause.params, now]
     );
 
     res.json({

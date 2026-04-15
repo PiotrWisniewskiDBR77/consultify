@@ -183,7 +183,12 @@ interface InterviewSession {
   projectId?: string;
   name: string;
   ownerId: string;
-  status: string; // 'active' | 'completed' | 'archived' - using string to avoid type conflicts
+  status: string;
+  sessionRuntimeStatus?: string;
+  assignmentId?: string;
+  assignmentStatus?: string;
+  assignmentPriority?: 'low' | 'medium' | 'high' | 'urgent' | string;
+  assignmentCreatedBy?: string;
   totalQuestions: number;
   answeredQuestions: number;
   startedAt: string;
@@ -193,6 +198,13 @@ interface InterviewSession {
   templateCategory?: string;
   respondentId?: string;
   respondentName?: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  assigneeEmail?: string;
+  dueAt?: string;
+  submittedAt?: string;
+  sentBackAt?: string;
+  sentBackReason?: string;
 }
 
 interface InterviewInsight {
@@ -563,10 +575,10 @@ export const InterviewHub: React.FC = () => {
     []
   );
 
-  const loadAcceptedSessions = useCallback(async (): Promise<InterviewSession[]> => {
-    const sessionsRes = await V8InterviewApi.getAcceptedSessions()
+  const loadManagedSessions = useCallback(async (): Promise<InterviewSession[]> => {
+    const sessionsRes = await V8InterviewApi.getManagedSessions()
       .then((res) => res.sessions)
-      .catch(() => Api.get('/interview/sessions/accepted'))
+      .catch(() => Api.get('/interview/sessions/managed'))
       .catch(() => []);
     return Array.isArray(sessionsRes) ? (sessionsRes as InterviewSession[]) : [];
   }, []);
@@ -686,9 +698,8 @@ export const InterviewHub: React.FC = () => {
       setIsLoading(true);
       try {
         const [sessionsRes, insightsRes, templatesRes] = await Promise.all([
-          // Sessions tab is "accepted sources" in the manager workflow.
-          // Non-managers won't see the tab, so empty here is fine.
-          loadAcceptedSessions(),
+          // Sessions tab is the main manager cockpit for assignment-backed interview work.
+          loadManagedSessions(),
           V8InterviewApi.listInsights().then(r => r.insights).catch(() => Api.get('/interview/insights').catch(() => [])),
           Api.get('/interview/templates').catch(() => []),
         ]);
@@ -716,7 +727,7 @@ export const InterviewHub: React.FC = () => {
     };
 
     loadData();
-  }, [loadAcceptedSessions, normalizeTemplateRecord]);
+  }, [loadManagedSessions, normalizeTemplateRecord]);
 
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
@@ -794,12 +805,13 @@ export const InterviewHub: React.FC = () => {
 
   const handleViewSession = useCallback(
     (session: InterviewSession) => {
+      const workflowStatus = String(session.assignmentStatus || session.status || 'in_progress');
       handleOpenDocument({
         id: session.id,
         type: 'interview_session',
         subType: 'interview',
         name: session.name || 'Interview Session',
-        status: (session.status?.toUpperCase() || 'DRAFT') as any,
+        status: (workflowStatus.toUpperCase() || 'DRAFT') as any,
       });
     },
     [handleOpenDocument]
@@ -849,7 +861,11 @@ export const InterviewHub: React.FC = () => {
     const assignment = allAssignments.find((a) => a.id === assignmentIdFromUrl);
     if (!assignment) return;
     const isManagerView = managedAssignments.some((a) => a.id === assignmentIdFromUrl);
-    setActiveTab(isManagerView ? 'managed' : 'my_assignments');
+    const shouldOpenInSessions =
+      isManagerView &&
+      Boolean(assignment.sessionId || assignment.session?.id) &&
+      ['in_progress', 'submitted', 'sent_back', 'approved', 'completed'].includes(assignment.status);
+    setActiveTab(shouldOpenInSessions ? 'sessions' : isManagerView ? 'managed' : 'my_assignments');
     void openInterviewAssignmentFull(assignment, isManagerView);
     const next = new URLSearchParams(searchParams);
     next.delete('assignmentId');
@@ -918,13 +934,26 @@ export const InterviewHub: React.FC = () => {
     templateQuestionsLoading,
   ]);
 
+  const getSessionWorkflowStatus = useCallback(
+    (session: InterviewSession) => String(session.assignmentStatus || session.status || 'in_progress'),
+    []
+  );
+
+  const getSessionProgress = useCallback(
+    (session: InterviewSession) =>
+      session.totalQuestions > 0
+        ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
+        : 0,
+    []
+  );
+
   // Filter sessions
   const filteredSessions = useMemo(() => {
     let result = sessions;
 
     // Filter by status
     if (sessionStatusFilter !== 'all') {
-      result = result.filter((s) => s.status === sessionStatusFilter);
+      result = result.filter((s) => getSessionWorkflowStatus(s) === sessionStatusFilter);
     }
 
     // Filter by search query
@@ -933,21 +962,27 @@ export const InterviewHub: React.FC = () => {
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(query) ||
+          (s.assigneeName || '').toLowerCase().includes(query) ||
+          (s.templateName || '').toLowerCase().includes(query) ||
           new Date(s.startedAt).toLocaleDateString().includes(query)
       );
     }
 
     return result;
-  }, [sessions, searchQuery, sessionStatusFilter]);
+  }, [getSessionWorkflowStatus, searchQuery, sessionStatusFilter, sessions]);
 
   // Session status counts for filter badges
   const sessionStatusCounts = useMemo(() => {
     return {
       all: sessions.length,
-      completed: sessions.filter((s) => s.status === 'completed').length,
-      archived: sessions.filter((s) => s.status === 'archived').length,
+      in_progress: sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length,
+      submitted: sessions.filter((s) => getSessionWorkflowStatus(s) === 'submitted').length,
+      sent_back: sessions.filter((s) => getSessionWorkflowStatus(s) === 'sent_back').length,
+      approved: sessions.filter((s) =>
+        ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
+      ).length,
     };
-  }, [sessions]);
+  }, [getSessionWorkflowStatus, sessions]);
 
   const sessionStatusOptions = useMemo(() => {
     const opts = [
@@ -957,14 +992,24 @@ export const InterviewHub: React.FC = () => {
         count: sessionStatusCounts.all,
       },
       {
-        id: 'completed',
-        label: isPolish ? 'Zakończone' : 'Completed',
-        count: sessionStatusCounts.completed,
+        id: 'in_progress',
+        label: isPolish ? 'W trakcie' : 'In progress',
+        count: sessionStatusCounts.in_progress,
       },
       {
-        id: 'archived',
-        label: isPolish ? 'Archiwum' : 'Archived',
-        count: sessionStatusCounts.archived,
+        id: 'submitted',
+        label: isPolish ? 'Wysłane' : 'Submitted',
+        count: sessionStatusCounts.submitted,
+      },
+      {
+        id: 'sent_back',
+        label: isPolish ? 'Do poprawy' : 'Sent back',
+        count: sessionStatusCounts.sent_back,
+      },
+      {
+        id: 'approved',
+        label: isPolish ? 'Zatwierdzone' : 'Approved',
+        count: sessionStatusCounts.approved,
       },
     ];
 
@@ -1262,11 +1307,11 @@ export const InterviewHub: React.FC = () => {
     (sessionId: string) => {
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
       // Refresh sessions list
-      loadAcceptedSessions().then((res) => {
+      loadManagedSessions().then((res) => {
         setSessions(res);
       });
     },
-    [isPolish, loadAcceptedSessions]
+    [isPolish, loadManagedSessions]
   );
 
   const handleSessionChange = useCallback((session: InterviewSession) => {
@@ -1391,15 +1436,17 @@ export const InterviewHub: React.FC = () => {
         setShowSendBackModal(false);
         setSelectedAssignment(null);
 
-        // Refresh all assignments (both my and managed)
-        const [myRes, managedRes, overdueRes] = await Promise.all([
+        // Refresh all assignments + manager sessions cockpit
+        const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
           loadMyAssignments(),
           loadManagedAssignments(),
           loadOverdueAssignments(),
+          loadManagedSessions(),
         ]);
         setMyAssignments(myRes);
         setManagedAssignments(managedRes);
         setOverdueAssignments(overdueRes);
+        setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
       } catch (error: any) {
         console.error('[InterviewHub] Failed to send back:', error);
         safeToastError(
@@ -1412,6 +1459,7 @@ export const InterviewHub: React.FC = () => {
     [
       isPolish,
       loadManagedAssignments,
+      loadManagedSessions,
       loadMyAssignments,
       loadOverdueAssignments,
       selectedAssignment,
@@ -1426,12 +1474,12 @@ export const InterviewHub: React.FC = () => {
         );
         toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
 
-        // Refresh assignments + accepted sessions (post-approval)
+        // Refresh assignments + manager sessions cockpit (post-approval)
         const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
           loadMyAssignments(),
           loadManagedAssignments(),
           loadOverdueAssignments(),
-          loadAcceptedSessions(),
+          loadManagedSessions(),
         ]);
         setMyAssignments(myRes);
         setManagedAssignments(managedRes);
@@ -1448,11 +1496,20 @@ export const InterviewHub: React.FC = () => {
     },
     [
       isPolish,
-      loadAcceptedSessions,
+      loadManagedSessions,
       loadManagedAssignments,
       loadMyAssignments,
       loadOverdueAssignments,
     ]
+  );
+
+  const getManagedAssignmentForSession = useCallback(
+    (session: InterviewSession) =>
+      managedAssignments.find(
+        (assignment) =>
+          assignment.id === session.assignmentId || assignment.sessionId === session.id
+      ) || null,
+    [managedAssignments]
   );
 
   // Export intentionally not available in this view (KANON v3).
@@ -1713,12 +1770,15 @@ export const InterviewHub: React.FC = () => {
         'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
 
       const allCount = sessions.length;
-      const inProgressCount = sessions.filter((s) => s.status === 'in_progress').length;
-      const submittedCount = sessions.filter((s) => s.status === 'submitted').length;
-      const completedCount = sessions.filter((s) => s.status === 'completed').length;
+      const inProgressCount = sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length;
+      const submittedCount = sessions.filter((s) => getSessionWorkflowStatus(s) === 'submitted').length;
+      const sentBackCount = sessions.filter((s) => getSessionWorkflowStatus(s) === 'sent_back').length;
+      const approvedCount = sessions.filter((s) =>
+        ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
+      ).length;
 
       const buttons: Array<{
-        id: 'all' | 'in_progress' | 'submitted' | 'completed';
+        id: 'all' | 'in_progress' | 'submitted' | 'sent_back' | 'approved';
         label: string;
         count: number;
         onClick: () => void;
@@ -1744,19 +1804,27 @@ export const InterviewHub: React.FC = () => {
             setSessionStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
         },
         {
-          id: 'completed',
-          label: isPolish ? 'Zakończone' : 'Completed',
-          count: completedCount,
+          id: 'sent_back',
+          label: isPolish ? 'Do poprawy' : 'Sent back',
+          count: sentBackCount,
           onClick: () =>
-            setSessionStatusFilter((prev) => (prev === 'completed' ? 'all' : 'completed')),
+            setSessionStatusFilter((prev) => (prev === 'sent_back' ? 'all' : 'sent_back')),
+        },
+        {
+          id: 'approved',
+          label: isPolish ? 'Zatwierdzone' : 'Approved',
+          count: approvedCount,
+          onClick: () =>
+            setSessionStatusFilter((prev) => (prev === 'approved' ? 'all' : 'approved')),
         },
       ];
 
       const activeId =
         sessionStatusFilter === 'in_progress' ||
         sessionStatusFilter === 'submitted' ||
-        sessionStatusFilter === 'completed'
-          ? (sessionStatusFilter as 'in_progress' | 'submitted' | 'completed')
+        sessionStatusFilter === 'sent_back' ||
+        sessionStatusFilter === 'approved'
+          ? (sessionStatusFilter as 'in_progress' | 'submitted' | 'sent_back' | 'approved')
           : 'all';
 
       return (
@@ -1859,6 +1927,18 @@ export const InterviewHub: React.FC = () => {
         textColor: 'text-amber-300',
         dotColor: 'bg-amber-400',
       },
+      sent_back: {
+        label: { en: 'Sent Back', pl: 'Do poprawy' },
+        bgColor: 'bg-rose-500/20',
+        textColor: 'text-rose-300',
+        dotColor: 'bg-rose-400',
+      },
+      approved: {
+        label: { en: 'Approved', pl: 'Zatwierdzony' },
+        bgColor: 'bg-emerald-500/20',
+        textColor: 'text-emerald-300',
+        dotColor: 'bg-emerald-400',
+      },
       in_review: {
         label: { en: 'In Review', pl: 'Do przeglądu' },
         bgColor: 'bg-amber-500/20',
@@ -1941,13 +2021,16 @@ export const InterviewHub: React.FC = () => {
           </thead>
           <tbody>
             {rows.map((session) => {
-              const progress =
-                session.totalQuestions > 0
-                  ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
-                  : 0;
-              const statusConfig = getSessionStatusConfig(session.status);
-              const isCompleted = session.status === 'completed';
+              const progress = getSessionProgress(session);
+              const workflowStatus = getSessionWorkflowStatus(session);
+              const statusConfig = getSessionStatusConfig(workflowStatus);
+              const isApproved = ['approved', 'completed'].includes(workflowStatus);
+              const isSubmitted = workflowStatus === 'submitted';
+              const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
               const isSelected = opts?.selectedId === session.id;
+              const linkedAssignment = getManagedAssignmentForSession(session);
+              const primaryMeta = session.assigneeName || session.respondentName || '—';
+              const secondaryMeta = session.templateName || session.templateCategory || '—';
 
               return (
                 <tr
@@ -1978,11 +2061,11 @@ export const InterviewHub: React.FC = () => {
                         <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
                           {session.name || 'Discovery Interview'}
                         </span>
-                        {session.ownerId && (
-                          <span className="text-xs text-slate-500 truncate block">
-                            ID: {session.id.slice(0, 8)}...
-                          </span>
-                        )}
+                        <span className="text-xs text-slate-500 truncate block">
+                          {(isPolish ? 'Assignee' : 'Assignee')}: {primaryMeta}
+                          {' · '}
+                          {(isPolish ? 'Template' : 'Template')}: {secondaryMeta}
+                        </span>
                       </div>
                     </div>
                   </td>
@@ -2024,8 +2107,16 @@ export const InterviewHub: React.FC = () => {
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                         <Calendar size={12} />
-                        {new Date(session.startedAt).toLocaleDateString()}
+                        {session.dueAt
+                          ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
+                          : new Date(session.startedAt).toLocaleDateString()}
                       </div>
+                      {session.submittedAt && (
+                        <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Submitted' : 'Submitted'}{' '}
+                          {new Date(session.submittedAt).toLocaleDateString()}
+                        </div>
+                      )}
                     </td>
                   )}
 
@@ -2040,7 +2131,33 @@ export const InterviewHub: React.FC = () => {
                             icon: ChevronRight,
                             onClick: () => handleViewSession(session),
                           },
-                          ...(isCompleted
+                          ...(isSubmitted && linkedAssignment
+                            ? [
+                                {
+                                  id: 'approve',
+                                  label: isPolish ? 'Zatwierdź' : 'Approve',
+                                  icon: Check,
+                                  onClick: () => handleApproveAssignment(linkedAssignment),
+                                },
+                                {
+                                  id: 'send-back',
+                                  label: isPolish ? 'Odeślij' : 'Send back',
+                                  icon: ArrowRight,
+                                  onClick: () => handleOpenSendBackModal(linkedAssignment),
+                                },
+                              ]
+                            : []),
+                          ...(canRemind && linkedAssignment
+                            ? [
+                                {
+                                  id: 'remind',
+                                  label: isPolish ? 'Przypomnij' : 'Remind',
+                                  icon: Clock,
+                                  onClick: () => handleOpenReminderModal(linkedAssignment),
+                                },
+                              ]
+                            : []),
+                          ...(isApproved
                             ? [
                                 {
                                   id: 'generate-insight',
@@ -2064,12 +2181,12 @@ export const InterviewHub: React.FC = () => {
                   <div className="flex flex-col items-center">
                     <MessageSquare className="w-12 h-12 text-slate-600 mb-3" />
                     <p className="text-slate-500 dark:text-slate-400 text-sm">
-                      {isPolish ? 'Brak zaakceptowanych sesji' : 'No accepted sessions yet'}
+                      {isPolish ? 'Brak sesji managera' : 'No manager sessions yet'}
                     </p>
                     <p className="text-xs text-slate-500 mt-2 max-w-md">
                       {isPolish
-                        ? 'Sesje pojawiają się tutaj dopiero po zatwierdzeniu wywiadu w zakładce „Przydzielone”.'
-                        : 'Sessions appear here only after an interview is approved in the “Assigned” tab.'}
+                        ? 'Tutaj pojawiają się wszystkie uruchomione sesje z workflow managera: w trakcie, wysłane, do poprawy i zatwierdzone.'
+                        : 'This view shows manager workflow sessions across in progress, submitted, sent back, and approved states.'}
                     </p>
                   </div>
                 </td>
@@ -2085,19 +2202,23 @@ export const InterviewHub: React.FC = () => {
   const renderSessionsGrid = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {filteredSessions.map((session) => {
-        const progress =
-          session.totalQuestions > 0
-            ? Math.round((session.answeredQuestions / session.totalQuestions) * 100)
-            : 0;
+        const progress = getSessionProgress(session);
+        const workflowStatus = getSessionWorkflowStatus(session);
+        const linkedAssignment = getManagedAssignmentForSession(session);
+        const isApproved = ['approved', 'completed'].includes(workflowStatus);
+        const isSubmitted = workflowStatus === 'submitted';
+        const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
 
         const typeColor =
-          session.status === 'completed'
+          workflowStatus === 'approved' || workflowStatus === 'completed'
             ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30'
-            : session.status === 'in_progress'
+            : workflowStatus === 'in_progress'
               ? 'from-purple-500/20 to-purple-600/10 border-purple-500/30'
-              : session.status === 'submitted'
+              : workflowStatus === 'submitted'
                 ? 'from-amber-500/15 to-amber-600/10 border-amber-500/30'
-                : 'from-slate-500/20 to-slate-600/10 border-slate-500/30';
+                : workflowStatus === 'sent_back'
+                  ? 'from-rose-500/15 to-rose-600/10 border-rose-500/30'
+                  : 'from-slate-500/20 to-slate-600/10 border-slate-500/30';
 
         return (
           <div
@@ -2112,23 +2233,27 @@ export const InterviewHub: React.FC = () => {
                   <Brain
                     size={16}
                     className={
-                      session.status === 'completed'
+                      workflowStatus === 'approved' || workflowStatus === 'completed'
                         ? 'text-emerald-400'
-                        : session.status === 'in_progress'
+                        : workflowStatus === 'in_progress'
                           ? 'text-purple-400'
-                          : session.status === 'submitted'
+                          : workflowStatus === 'submitted'
                             ? 'text-amber-400'
-                            : 'text-slate-400'
+                            : workflowStatus === 'sent_back'
+                              ? 'text-rose-400'
+                              : 'text-slate-400'
                     }
                   />
                   <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
-                    {session.status === 'completed'
-                      ? 'DONE'
-                      : session.status === 'in_progress'
+                    {workflowStatus === 'approved' || workflowStatus === 'completed'
+                      ? 'OK'
+                      : workflowStatus === 'in_progress'
                         ? 'LIVE'
-                        : session.status === 'submitted'
+                        : workflowStatus === 'submitted'
                           ? 'SUB'
-                          : 'ARCH'}
+                          : workflowStatus === 'sent_back'
+                            ? 'FIX'
+                            : 'ARCH'}
                   </span>
                 </div>
               </div>
@@ -2139,6 +2264,10 @@ export const InterviewHub: React.FC = () => {
               <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[40px]">
                 {session.name || 'Discovery Interview'}
               </h4>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                {(session.assigneeName || session.respondentName || '—')}{' · '}
+                {(session.templateName || session.templateCategory || '—')}
+              </div>
             </div>
 
             {/* Progress */}
@@ -2160,55 +2289,122 @@ export const InterviewHub: React.FC = () => {
             <div className="px-4 pb-4 flex items-center justify-between">
               <div
                 className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${
-                  session.status === 'completed'
+                  workflowStatus === 'approved' || workflowStatus === 'completed'
                     ? 'bg-emerald-500/20'
-                    : session.status === 'in_progress'
+                    : workflowStatus === 'in_progress'
                       ? 'bg-purple-500/20'
-                      : session.status === 'submitted'
+                      : workflowStatus === 'submitted'
                         ? 'bg-amber-500/20'
-                        : 'bg-slate-500/20'
+                        : workflowStatus === 'sent_back'
+                          ? 'bg-rose-500/20'
+                          : 'bg-slate-500/20'
                 }`}
               >
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    session.status === 'completed'
+                    workflowStatus === 'approved' || workflowStatus === 'completed'
                       ? 'bg-emerald-400'
-                      : session.status === 'in_progress'
+                      : workflowStatus === 'in_progress'
                         ? 'bg-purple-400'
-                        : session.status === 'submitted'
+                        : workflowStatus === 'submitted'
                           ? 'bg-amber-400'
-                          : 'bg-slate-400'
+                          : workflowStatus === 'sent_back'
+                            ? 'bg-rose-400'
+                            : 'bg-slate-400'
                   }`}
                 />
                 <span
                   className={`text-xs font-medium ${
-                    session.status === 'completed'
+                    workflowStatus === 'approved' || workflowStatus === 'completed'
                       ? 'text-emerald-300'
-                      : session.status === 'in_progress'
+                      : workflowStatus === 'in_progress'
                         ? 'text-purple-300'
-                        : session.status === 'submitted'
+                        : workflowStatus === 'submitted'
                           ? 'text-amber-300'
-                          : 'text-slate-300'
+                          : workflowStatus === 'sent_back'
+                            ? 'text-rose-300'
+                            : 'text-slate-300'
                   }`}
                 >
-                  {session.status === 'completed'
+                  {workflowStatus === 'approved' || workflowStatus === 'completed'
                     ? isPolish
-                      ? 'Zakończony'
-                      : 'Completed'
-                    : session.status === 'in_progress'
+                      ? 'Zatwierdzony'
+                      : 'Approved'
+                    : workflowStatus === 'in_progress'
                       ? isPolish
                         ? 'W trakcie'
                         : 'In Progress'
-                      : session.status === 'submitted'
+                      : workflowStatus === 'submitted'
                         ? isPolish
                           ? 'Wysłany'
                           : 'Submitted'
-                        : session.status}
+                        : workflowStatus === 'sent_back'
+                          ? isPolish
+                            ? 'Do poprawy'
+                            : 'Sent back'
+                          : workflowStatus}
                 </span>
               </div>
               <span className="text-xs text-slate-500">
-                {new Date(session.startedAt).toLocaleDateString()}
+                {session.dueAt
+                  ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
+                  : new Date(session.startedAt).toLocaleDateString()}
               </span>
+            </div>
+
+            <div className="px-4 pb-4 flex flex-wrap gap-2">
+              {isSubmitted && linkedAssignment && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApproveAssignment(linkedAssignment);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/25 transition-colors"
+                  >
+                    <Check size={12} />
+                    {isPolish ? 'Zatwierdź' : 'Approve'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenSendBackModal(linkedAssignment);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-medium text-amber-300 hover:bg-amber-500/25 transition-colors"
+                  >
+                    <ArrowRight size={12} />
+                    {isPolish ? 'Odeślij' : 'Send back'}
+                  </button>
+                </>
+              )}
+              {canRemind && linkedAssignment && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenReminderModal(linkedAssignment);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/15 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-500/25 transition-colors"
+                >
+                  <Clock size={12} />
+                  {isPolish ? 'Przypomnij' : 'Remind'}
+                </button>
+              )}
+              {isApproved && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGenerateInsight(session, 'summary');
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary-500/15 px-2.5 py-1 text-[11px] font-medium text-primary-300 hover:bg-primary-500/25 transition-colors"
+                >
+                  <Lightbulb size={12} />
+                  {isPolish ? 'AI insight' : 'AI insight'}
+                </button>
+              )}
             </div>
           </div>
         );
@@ -4315,7 +4511,8 @@ Return ONLY the answer text (no markdown fences).`;
                   s.totalQuestions > 0
                     ? Math.round((s.answeredQuestions / s.totalQuestions) * 100)
                     : 0;
-                const statusCfg = getSessionStatusConfig(s.status);
+                const workflowStatus = getSessionWorkflowStatus(s);
+                const statusCfg = getSessionStatusConfig(workflowStatus);
 
                 return (
                   <InterviewSessionPreviewBody
@@ -4329,7 +4526,7 @@ Return ONLY the answer text (no markdown fences).`;
                       copyToClipboard(
                         [
                           `id: ${s.id}`,
-                          `status: ${s.status}`,
+                          `status: ${workflowStatus}`,
                           `answered: ${s.answeredQuestions}/${s.totalQuestions}`,
                           `startedAt: ${s.startedAt}`,
                         ].join('\n')
@@ -4341,7 +4538,8 @@ Return ONLY the answer text (no markdown fences).`;
               }}
               renderPreviewFooter={(item) => {
                 const s = item as InterviewSession;
-                const canRunAi = s.status === 'completed';
+                const workflowStatus = getSessionWorkflowStatus(s);
+                const canRunAi = ['approved', 'completed'].includes(workflowStatus);
                 const aiHints = isPolish
                   ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
                   : ['Summarize', 'Risks', 'Next steps'];
@@ -4354,6 +4552,14 @@ Return ONLY the answer text (no markdown fences).`;
                   'Next steps': 'recommendations',
                 };
                 const relations = [
+                  {
+                    label: `${isPolish ? 'Assignee' : 'Assignee'}: ${s.assigneeName || s.respondentName || '—'}`,
+                    tone: 'text-slate-600 dark:text-slate-300',
+                  },
+                  {
+                    label: `${isPolish ? 'Template' : 'Template'}: ${s.templateName || s.templateCategory || '—'}`,
+                    tone: 'text-slate-600 dark:text-slate-300',
+                  },
                   {
                     label: `${isPolish ? 'Projekt' : 'Project'}: ${s.projectId || '—'}`,
                     tone: 'text-slate-600 dark:text-slate-300',
@@ -4848,6 +5054,11 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full flex flex-col">
+          <div className="mx-4 mt-3 rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/80 dark:bg-navy-900/50 px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
+            {isPolish
+              ? 'Assigned służy do administracji przypisaniami. Główny workflow review i akceptacji managera jest teraz w zakładce Sessions.'
+              : 'Assigned is for assignment administration. The primary manager review and approval workflow now lives in Sessions.'}
+          </div>
           <div className="flex-1 min-h-0 flex flex-col">
             <TableWithPreviewLayout<InterviewAssignment & { title: string }>
               selectedId={previewAssignmentId}
@@ -6074,15 +6285,19 @@ Return ONLY the answer text (no markdown fences).`;
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-emerald-400">
-                    {sessions.filter((s) => s.status === 'completed').length}
+                    {
+                      sessions.filter((s) =>
+                        ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
+                      ).length
+                    }
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Zakończone' : 'Completed'}
+                    {isPolish ? 'Zatwierdzone' : 'Approved'}
                   </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
                   <div className="text-2xl font-bold text-purple-400">
-                    {sessions.filter((s) => s.status === 'active').length}
+                    {sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length}
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
                     {isPolish ? 'W trakcie' : 'In Progress'}
