@@ -20,6 +20,15 @@ import {
 } from './interviewManagerScope.js';
 import notificationService from './notificationService.js';
 
+const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -34,6 +43,73 @@ export type AssignmentStatus =
   | 'completed';
 export type AssignmentPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TeamMemberRole = 'lead' | 'member';
+export type InterviewAiFixType =
+  | 'clarify'
+  | 'add_evidence'
+  | 'expand_answer'
+  | 'make_specific'
+  | 'complete_required_fields'
+  | 'correct_meaning';
+export type InterviewAiAnswerVerdict =
+  | 'sufficient'
+  | 'needs_improvement'
+  | 'insufficient'
+  | 'unanswered';
+export type InterviewAiOverallVerdict =
+  | 'ready_for_approval'
+  | 'needs_improvement'
+  | 'insufficient'
+  | 'empty';
+export type InterviewReviewAlignment =
+  | 'aligned'
+  | 'manager_stricter_than_ai'
+  | 'manager_overrode_ai_warning'
+  | 'no_ai_signal';
+
+export interface InterviewAiWeakAnswerItem {
+  key: string;
+  label: string;
+  questionId?: string;
+  sectionId?: string;
+  score: number;
+  verdict: InterviewAiAnswerVerdict;
+  feedback: string;
+  fixType: InterviewAiFixType;
+  isRequired: boolean;
+}
+
+export interface InterviewAiReviewSnapshot {
+  overallScore: number;
+  overallVerdict: InterviewAiOverallVerdict;
+  questionEvaluations: Array<{
+    questionId: string;
+    score: number;
+    verdict: InterviewAiAnswerVerdict;
+    feedback: string;
+    fixType: InterviewAiFixType;
+  }>;
+  recommendations: string[];
+  weakAnswerMap: InterviewAiWeakAnswerItem[];
+}
+
+export interface InterviewReviewDecisionMemoryEntry {
+  id: string;
+  action: 'approve' | 'send_back';
+  actorId: string;
+  actorRole?: string;
+  createdAt: string;
+  aiOverallVerdict: InterviewAiOverallVerdict;
+  aiOverallScore: number | null;
+  aiWeakAnswerCount: number;
+  alignment: InterviewReviewAlignment;
+  reason?: string;
+  missingItems?: Array<{
+    key: string;
+    label: string;
+    questionId?: string;
+    sectionId?: string;
+  }>;
+}
 
 export interface CreateAssignmentInput {
   organizationId: string;
@@ -66,6 +142,9 @@ export interface Assignment {
   submittedAt?: string;
   sentBackAt?: string;
   sentBackReason?: string;
+  aiReview?: InterviewAiReviewSnapshot | null;
+  aiReviewedAt?: string;
+  reviewDecisionMemory?: InterviewReviewDecisionMemoryEntry[];
   priority: AssignmentPriority;
   reminderSentAt?: string;
   reminderCount: number;
@@ -231,6 +310,9 @@ class InterviewAssignmentService {
     await ensureAssignmentColumn('is_team_assignment', 'is_team_assignment INTEGER DEFAULT 0');
     await ensureAssignmentColumn('notes', 'notes TEXT');
     await ensureAssignmentColumn('escalate_to', 'escalate_to TEXT');
+    await ensureAssignmentColumn('ai_review_snapshot_json', 'ai_review_snapshot_json TEXT');
+    await ensureAssignmentColumn('ai_reviewed_at', 'ai_reviewed_at TIMESTAMP');
+    await ensureAssignmentColumn('review_decision_memory_json', 'review_decision_memory_json TEXT');
 
     await querySafe(`
       CREATE TABLE IF NOT EXISTS interview_assignment_members (
@@ -1276,6 +1358,12 @@ class InterviewAssignmentService {
       submittedAt: row.submitted_at || undefined,
       sentBackAt: row.sent_back_at || undefined,
       sentBackReason: row.sent_back_reason || undefined,
+      aiReview: parseJson<InterviewAiReviewSnapshot | null>(row.ai_review_snapshot_json, null),
+      aiReviewedAt: row.ai_reviewed_at || undefined,
+      reviewDecisionMemory: parseJson<InterviewReviewDecisionMemoryEntry[]>(
+        row.review_decision_memory_json,
+        []
+      ),
       priority: (row.priority || 'medium') as AssignmentPriority,
       reminderSentAt: row.reminder_sent_at || undefined,
       reminderCount: row.reminder_count || 0,

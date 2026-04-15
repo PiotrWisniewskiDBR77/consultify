@@ -59,7 +59,11 @@ import {
   NModeShell,
 } from '@/components/shared/NModeLayout';
 import { Api } from '@/services/api';
-import { V8InterviewApi } from '@/services/api/v8/interview';
+import {
+  V8InterviewApi,
+  type V8InterviewSessionEvaluation,
+  type V8InterviewWeakAnswerItem,
+} from '@/services/api/v8/interview';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -113,6 +117,15 @@ interface SummaryData {
   constraints: string[];
   painPoints: string[];
 }
+
+type InterviewAnswerEvaluation = V8InterviewSessionEvaluation;
+type SendBackChecklistItem = {
+  key: string;
+  label: string;
+  checked: boolean;
+  questionId?: string;
+  fixType?: V8InterviewWeakAnswerItem['fixType'];
+};
 
 interface InterviewWorkspaceProps {
   sessionId?: string;
@@ -176,6 +189,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [linkedItems, setLinkedItems] = useState<PersistedLinkedItem[]>([]);
   const [assignmentStatus, setAssignmentStatus] = useState<string | null>(null);
   const [assignmentInfo, setAssignmentInfo] = useState<any>(null);
+  const [aiEvaluation, setAiEvaluation] = useState<InterviewAnswerEvaluation | null>(null);
+  const [aiEvaluationUpdatedAt, setAiEvaluationUpdatedAt] = useState<string | null>(null);
+  const [isAiEvaluating, setIsAiEvaluating] = useState(false);
+  const [aiEvaluationError, setAiEvaluationError] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -187,13 +204,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([]));
 
   // Locking rules:
-  // - For assignments: lock on assignment status (submitted/approved/completed)
+  // - For assignments: approval is the final lock; submitted stays editable
   // - For ad-hoc sessions: lock on session completion
   const isLocked = useMemo(() => {
     const sessionStatus = (session?.status || '').toLowerCase();
     const asgStatus = (assignmentStatus || '').toLowerCase();
     const assignmentLocked =
-      Boolean(session?.assignmentId) && ['submitted', 'approved', 'completed'].includes(asgStatus);
+      Boolean(session?.assignmentId) && ['approved', 'completed'].includes(asgStatus);
     return assignmentLocked || sessionStatus === 'completed';
   }, [assignmentStatus, session?.assignmentId, session?.status]);
 
@@ -210,9 +227,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   }, [assignmentStatus, currentUser?.id, isAssignmentMode, session?.ownerId]);
 
   const [sendBackReason, setSendBackReason] = useState('');
-  const [sendBackMissingItems, setSendBackMissingItems] = useState<
-    { key: string; label: string; checked: boolean }[]
-  >([]);
+  const [sendBackMissingItems, setSendBackMissingItems] = useState<SendBackChecklistItem[]>([]);
   const [isSendingBack, setIsSendingBack] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [showSendBackForm, setShowSendBackForm] = useState(false);
@@ -220,13 +235,26 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Populate send-back checklist when entering reviewer mode
   useEffect(() => {
     if (!isReviewerMode) return;
-    const items: { key: string; label: string; checked: boolean }[] = [];
+    const items: SendBackChecklistItem[] = [];
+    const weakAnswerMap = aiEvaluation?.weakAnswerMap || [];
+    for (const weakItem of weakAnswerMap) {
+      items.push({
+        key: weakItem.key,
+        label: `${weakItem.label} (${weakItem.fixType.replaceAll('_', ' ')})`,
+        checked: true,
+        questionId: weakItem.questionId,
+        fixType: weakItem.fixType,
+      });
+    }
     const unansweredRequired = questions.filter((q) => q.isRequired && q.status !== 'answered');
     for (const q of unansweredRequired) {
+      if (items.some((item) => item.questionId === q.id)) continue;
       items.push({
         key: `q_${q.id}`,
         label: q.questionText.length > 80 ? q.questionText.slice(0, 77) + '…' : q.questionText,
         checked: true,
+        questionId: q.id,
+        fixType: 'complete_required_fields',
       });
     }
     if (items.length === 0) {
@@ -237,7 +265,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       });
     }
     setSendBackMissingItems(items);
-  }, [isReviewerMode, questions, isPolish]);
+  }, [aiEvaluation?.weakAnswerMap, isReviewerMode, questions, isPolish]);
 
   // Domyślnie nie wybieramy żadnej kategorii - użytkownik sam zdecyduje
   const [activeCategory, setActiveCategory] = useState<InterviewCategory | undefined>(undefined);
@@ -340,13 +368,80 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     if (raw === 'assigned') return 'assigned';
     if (raw === 'in_progress') return 'in_progress';
     if (raw === 'submitted') return 'submitted';
-    if (raw === 'sent_back') return 'sent_back';
+    if (raw === 'sent_back') return 'in_progress';
     if (raw === 'approved') return 'approved';
     if (raw === 'completed') return 'completed';
     if (raw === 'archived') return 'completed';
     return 'in_progress';
   }, [assignmentStatus, session?.status]);
+
+  const reviewFeedback = useMemo(() => {
+    const reason = String((assignmentInfo as any)?.sentBackReason || '').trim();
+    const missingItems = Array.isArray((assignmentInfo as any)?.missingItems)
+      ? ((assignmentInfo as any)?.missingItems as Array<{ key: string; label: string }>)
+      : [];
+    if (!reason && missingItems.length === 0) return null;
+    if (String(assignmentStatus || '').toLowerCase() !== 'in_progress') return null;
+    return { reason, missingItems };
+  }, [assignmentInfo, assignmentStatus]);
+  const aiVerdictLabel = useMemo(() => {
+    switch (aiEvaluation?.overallVerdict) {
+      case 'ready_for_approval':
+        return isPolish ? 'Gotowe do zatwierdzenia' : 'Ready for approval';
+      case 'needs_improvement':
+        return isPolish ? 'Wymaga poprawy' : 'Needs improvement';
+      case 'insufficient':
+        return isPolish ? 'Niewystarczające' : 'Insufficient';
+      case 'empty':
+        return isPolish ? 'Brak danych' : 'Empty';
+      default:
+        return isPolish ? 'Brak oceny' : 'No review';
+    }
+  }, [aiEvaluation?.overallVerdict, isPolish]);
+  const aiWeakAnswerMap = useMemo(() => aiEvaluation?.weakAnswerMap || [], [aiEvaluation]);
+  const latestReviewDecision = useMemo(() => {
+    const decisions = Array.isArray((assignmentInfo as any)?.reviewDecisionMemory)
+      ? ((assignmentInfo as any)?.reviewDecisionMemory as Array<Record<string, unknown>>)
+      : [];
+    return decisions.length > 0 ? decisions[decisions.length - 1] : null;
+  }, [assignmentInfo]);
   const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.in_progress;
+
+  const runAiQualityReview = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!session?.id) return null;
+      setIsAiEvaluating(true);
+      setAiEvaluationError(null);
+      try {
+        const language = isPolish ? 'pl' : 'en';
+        const result = (await V8InterviewApi.evaluateSessionAnswers(session.id, { language }).catch(
+          () =>
+            Api.post(`/interview/sessions/${session.id}/evaluate-answers`, {
+              language,
+            })
+        )) as InterviewAnswerEvaluation;
+        setAiEvaluation(result);
+        setAiEvaluationUpdatedAt(new Date().toISOString());
+        if (!opts?.silent) {
+          toast.success(
+            isPolish ? 'Ocena jakości AI jest gotowa.' : 'AI quality review is ready.'
+          );
+        }
+        return result;
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to evaluate answers:', error);
+        const message = isPolish
+          ? 'Nie udało się uruchomić oceny AI'
+          : 'Failed to run AI quality review';
+        setAiEvaluationError(message);
+        if (!opts?.silent) toast.error(message);
+        return null;
+      } finally {
+        setIsAiEvaluating(false);
+      }
+    },
+    [isPolish, session?.id]
+  );
 
   const handleRuntimeModeSelect = useCallback(
     (nextMode: RuntimeMode) => {
@@ -484,7 +579,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             evidenceRes,
             contextRes,
             summaryRes,
-            myAssignmentsRes,
+            assignmentRes,
             linkedItemsRes,
           ] = await Promise.all([
             Api.get(`/interview/sessions/${currentSession.id}/questions`).catch(() => []),
@@ -493,8 +588,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             Api.get('/interview/context').catch(() => null),
             Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
             currentSession.assignmentId
-              ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
-              : Promise.resolve([]),
+              ? V8InterviewApi.getManagedAssignments()
+                  .then((res) =>
+                    (res.assignments || []).find((item) => item.id === currentSession?.assignmentId) ||
+                    null
+                  )
+                  .catch(() => Api.get(`/interview/assignments/${currentSession.assignmentId}`))
+                  .catch(() => Api.get(`/interview/assignments/my?includeCompleted=true`))
+                  .catch(() => null)
+              : Promise.resolve(null),
             Api.get(`/interview/sessions/${currentSession.id}/linked-items`).catch(() => []),
           ]);
 
@@ -522,12 +624,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           );
 
           if (currentSession.assignmentId) {
-            const list = Array.isArray(myAssignmentsRes) ? myAssignmentsRes : [];
-            const found =
-              list.find((a: any) => a?.id === currentSession?.assignmentId) ||
-              interviewDemoData.assignmentsBySessionId[currentSession.id];
+            const found = (
+              Array.isArray(assignmentRes)
+                ? assignmentRes.find((a: any) => a?.id === currentSession?.assignmentId)
+                : assignmentRes
+            ) || interviewDemoData.assignmentsBySessionId[currentSession.id];
             setAssignmentStatus(found?.status || null);
             setAssignmentInfo(found || null);
+            setAiEvaluation((found as any)?.aiReview || null);
+            setAiEvaluationUpdatedAt((found as any)?.aiReviewedAt || null);
+            if (String(found?.status || '').toLowerCase() === 'submitted') {
+              void runAiQualityReview({ silent: true });
+            } else {
+              setAiEvaluationError(null);
+            }
           }
 
           if (contextRes && typeof contextRes === 'object') {
@@ -569,7 +679,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
 
     loadSession();
-  }, [initialSessionId, interviewDemoData, isPolish, onSessionChange, projectId]);
+  }, [initialSessionId, interviewDemoData, isPolish, onSessionChange, projectId, runAiQualityReview]);
 
   // ==========================================
   // HANDLERS
@@ -901,13 +1011,23 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           setSession(updatedSession);
           onSessionChange?.(updatedSession);
         }
-        if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
+        if (updatedAssignment?.status) {
+          setAssignmentStatus(String(updatedAssignment.status));
+          setAssignmentInfo((prev: any) => ({
+            ...(prev || {}),
+            ...updatedAssignment,
+            sentBackAt: null,
+            sentBackReason: null,
+            missingItems: [],
+          }));
+        }
         else setAssignmentStatus('submitted');
         toast.success(
           isPolish
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
             : `Submitted for review (${completeness ?? 0}%).`
         );
+        await runAiQualityReview({ silent: true });
         onComplete?.(session.id);
         return;
       }
@@ -919,7 +1039,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       console.error('[InterviewWorkspace] Failed to submit session:', error);
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to submit');
     }
-  }, [session, isLocked, isPolish, onComplete, onSessionChange, questions]);
+  }, [session, isLocked, isPolish, onComplete, onSessionChange, questions, runAiQualityReview]);
 
   // V6-C04: Reviewer actions
   const handleSendBack = useCallback(async () => {
@@ -928,7 +1048,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     try {
       const missingItems = sendBackMissingItems
         .filter((item) => item.checked)
-        .map((item) => ({ key: item.key, label: item.label }));
+        .map((item) => ({
+          key: item.key,
+          label: item.label,
+          questionId: item.questionId,
+          fixType: item.fixType,
+        }));
       const result = (await V8InterviewApi.sendBackAssignment(session.assignmentId, {
         reason: sendBackReason.trim(),
         missingItems,
@@ -938,9 +1063,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           missingItems,
         })
       )) as any;
-      const updatedAssignment = result?.assignment;
-      if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
-      else setAssignmentStatus('sent_back');
+      const updatedAssignment = result?.assignment || result;
+      const updatedSession = result?.session;
+      if (updatedAssignment?.status) {
+        setAssignmentStatus(String(updatedAssignment.status));
+        setAssignmentInfo((prev: any) => ({ ...(prev || {}), ...updatedAssignment }));
+      } else setAssignmentStatus('in_progress');
+      if (updatedSession) {
+        setSession(updatedSession);
+        onSessionChange?.(updatedSession);
+      }
+      setAiEvaluation((updatedAssignment as any)?.aiReview || aiEvaluation);
+      setAiEvaluationUpdatedAt((updatedAssignment as any)?.aiReviewedAt || aiEvaluationUpdatedAt);
+      setAiEvaluationError(null);
       setShowSendBackForm(false);
       setSendBackReason('');
       toast.success(isPolish ? 'Wywiad odesłany do poprawy.' : 'Interview sent back for revision.');
@@ -950,7 +1085,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     } finally {
       setIsSendingBack(false);
     }
-  }, [session?.assignmentId, sendBackReason, sendBackMissingItems, isPolish]);
+  }, [
+    aiEvaluation,
+    aiEvaluationUpdatedAt,
+    isPolish,
+    sendBackMissingItems,
+    sendBackReason,
+    session?.assignmentId,
+  ]);
 
   const handleApprove = useCallback(async () => {
     if (!session?.assignmentId) return;
@@ -960,8 +1102,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         Api.post(`/interview/assignments/${session.assignmentId}/approve`, {})
       )) as any;
       const updatedAssignment = (result as any)?.assignment;
-      if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
+      const updatedSession = (result as any)?.session;
+      if (updatedAssignment?.status) {
+        setAssignmentStatus(String(updatedAssignment.status));
+        setAssignmentInfo((prev: any) => ({ ...(prev || {}), ...updatedAssignment }));
+      }
       else setAssignmentStatus('approved');
+      if (updatedSession) {
+        setSession(updatedSession);
+        onSessionChange?.(updatedSession);
+      }
       toast.success(isPolish ? 'Wywiad zatwierdzony.' : 'Interview approved.');
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to approve:', error);
@@ -1265,6 +1415,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         readOnly: true,
       },
       {
+        id: 'aiReview',
+        label: { en: 'AI review', pl: 'Ocena AI' },
+        type: 'text',
+        value: aiVerdictLabel,
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
         id: 'locked',
         label: { en: 'Editable', pl: 'Edycja' },
         type: 'text',
@@ -1319,6 +1477,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     }
 
     out.push({
+      id: 'ai-review',
+      label: { en: 'AI review', pl: 'Ocena AI' },
+      icon: Sparkles,
+      variant: 'neutral',
+      onClick: () => {
+        void runAiQualityReview();
+      },
+      disabled: isAiEvaluating || !session?.id,
+    });
+    out.push({
       id: 'export-md',
       label: { en: 'Markdown', pl: 'Markdown' },
       icon: Download,
@@ -1344,6 +1512,111 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             {isPolish
               ? 'Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków "Zatwierdź" lub "Odeślij" w pasku akcji.'
               : 'You are reviewing answers for approval. Use "Approve" or "Send back" in the action bar.'}
+          </Callout>
+        )}
+        {!isReviewerMode && reviewFeedback && (
+          <Callout
+            variant="warning"
+            title={isPolish ? 'Feedback od managera' : 'Manager feedback'}
+            compact
+          >
+            <div className="space-y-2">
+              {reviewFeedback.reason && <p>{reviewFeedback.reason}</p>}
+              {reviewFeedback.missingItems.length > 0 && (
+                <ul className="list-disc pl-4 space-y-1">
+                  {reviewFeedback.missingItems.map((item) => (
+                    <li key={item.key}>{item.label}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Callout>
+        )}
+        {(aiEvaluation || isAiEvaluating || aiEvaluationError) && (
+          <Callout
+            variant={
+              aiEvaluation?.overallVerdict === 'ready_for_approval'
+                ? 'success'
+                : aiEvaluation?.overallVerdict === 'needs_improvement'
+                  ? 'warning'
+                  : aiEvaluation?.overallVerdict === 'insufficient'
+                    ? 'critical'
+                    : 'info'
+            }
+            title={isPolish ? 'AI quality review' : 'AI quality review'}
+            compact
+            action={{
+              label: isAiEvaluating
+                ? isPolish
+                  ? 'Analiza...'
+                  : 'Running...'
+                : isPolish
+                  ? 'Odśwież'
+                  : 'Refresh',
+              onClick: () => {
+                void runAiQualityReview();
+              },
+            }}
+          >
+            {isAiEvaluating ? (
+              <p>{isPolish ? 'AI analizuje jakość odpowiedzi...' : 'AI is reviewing answer quality...'}</p>
+            ) : aiEvaluation ? (
+              <div className="space-y-2">
+                <p>
+                  {isPolish ? 'Werdykt:' : 'Verdict:'} <strong>{aiVerdictLabel}</strong>
+                  {' · '}
+                  {isPolish ? 'Ocena:' : 'Score:'}{' '}
+                  <strong>{aiEvaluation.overallScore.toFixed(1)}/5</strong>
+                </p>
+                {aiWeakAnswerMap.length > 0 && (
+                  <div>
+                    <p className="font-medium">
+                      {isPolish ? 'Structured weak-answer map:' : 'Structured weak-answer map:'}
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      {aiWeakAnswerMap.slice(0, 5).map((item) => (
+                        <li key={item.key}>
+                          <strong>{item.label}</strong>
+                          {' · '}
+                          {item.fixType.replaceAll('_', ' ')}
+                          {' · '}
+                          {item.feedback}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {latestReviewDecision && (
+                  <p className="text-xs opacity-80">
+                    {isPolish ? 'Ostatnia decyzja review:' : 'Latest review decision:'}{' '}
+                    <strong>{String(latestReviewDecision.action || '-')}</strong>
+                    {' · '}
+                    {isPolish ? 'AI alignment:' : 'AI alignment:'}{' '}
+                    <strong>{String(latestReviewDecision.alignment || '-')}</strong>
+                  </p>
+                )}
+                {aiEvaluation.recommendations.length > 0 && (
+                  <div>
+                    <p className="font-medium">
+                      {isPolish ? 'Sugestie AI:' : 'AI recommendations:'}
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      {aiEvaluation.recommendations.map((item, index) => (
+                        <li key={`${index}-${item}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {aiEvaluationUpdatedAt && (
+                  <p className="text-xs opacity-80">
+                    {isPolish ? 'Ostatnia analiza:' : 'Last review:'}{' '}
+                    {new Date(aiEvaluationUpdatedAt).toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p>{aiEvaluationError}</p>
+            )}
           </Callout>
         )}
         {showSendBackForm && isReviewerMode && (
@@ -1437,9 +1710,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           }
           compact
         >
-          {isPolish
-            ? `Postęp: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`
-            : `Progress: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`}
+          {isReviewerMode
+            ? isPolish
+              ? `Przeglądasz zgłoszoną wersję. Respondent nadal może ją edytować do czasu zatwierdzenia.`
+              : `You are reviewing a submitted version. The respondent can still edit until approval.`
+            : currentStatus === 'submitted'
+              ? isPolish
+                ? `Wysłane do review. Nadal możesz edytować odpowiedzi i wysłać je ponownie.`
+                : `Submitted for review. You can keep editing and submit again.`
+              : isPolish
+                ? `Postęp: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`
+                : `Progress: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`}
         </Callout>
       </NModeSectionWrapper>
     );

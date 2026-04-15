@@ -161,10 +161,10 @@ Instancja przypisana do respondenta.
 - `template_id`
 - `assigned_to_user_id`
 - `assigned_by_user_id`
-- `status`: `assigned | in_progress | submitted | sent_back | approved`
+- `status`: `assigned | in_progress | submitted | approved`
 - `due_date?`
 - `started_at?`, `submitted_at?`, `approved_at?`
-- `sent_back_reason?`
+- `sent_back_reason?` (ostatni feedback review; nie jest osobnym stanem lifecycle)
 - `missing_items_json?` (lista braków do poprawy po `send-back`)
 - `progress` (np. `answered_count`, `total_count`, `percent`, `current_section_id?`)
 
@@ -222,7 +222,8 @@ Minimalne akcje (MUST):
 
 Reguły blokad edycji (MUST):
 
-- po `submitted` respondent nie edytuje (chyba że `sent_back`)
+- po `submitted` respondent nadal może edytować i ponownie wysłać materiał do review
+- `send-back` zapisuje feedback review i przywraca zwykły stan pracy `in_progress`
 - po `approved` brak edycji
 
 ---
@@ -281,16 +282,55 @@ Ten moduł ma być inspirowany nowoczesnym standardem 2025/2026: **Typeform + Li
 
 ---
 
-## 8) Integracje z resztą systemu
+## 8) AI assistance and quality control
 
-### 8.1 Linkowanie “system objects” w supporting materials
+AI w runtime Interview ma działać jako warstwa wspierająca, nie zastępująca odpowiedzialność człowieka.
+
+### 8.1 AI może
+
+- wyjaśnić pytanie respondentowi
+- poprawić formę odpowiedzi bez dodawania nowych faktów
+- oczyścić transcript z artefaktów mowy
+- zaproponować draft odpowiedzi z transcriptu lub czatu
+- ocenić jakość odpowiedzi po `submit`
+- wskazać słabe odpowiedzi i zasugerować poprawki
+
+### 8.2 AI nie może
+
+- automatycznie zatwierdzić odpowiedzi
+- zmienić znaczenia odpowiedzi bez potwierdzenia respondenta
+- wprowadzić niepotwierdzonych faktów do finalnej odpowiedzi
+- traktować niezatwierdzonego materiału jako organizacyjnej prawdy
+
+### 8.3 Reguła prawdy
+
+- respondent jest właścicielem znaczenia swojej odpowiedzi,
+- manager / reviewer jest właścicielem decyzji `approve` / `send-back`,
+- AI jest właścicielem sygnałów jakości i sugestii, nie decyzji końcowej.
+
+### 8.4 Reguła uczenia
+
+AI powinno uczyć się głównie z:
+
+- `approved` answers
+- zatwierdzonych transcriptów
+- powodów `send-back`
+- różnic między wersją przed i po poprawie
+
+Nie powinno uczyć się bezpośrednio z każdego surowego `submitted`.
+
+---
+
+## 9) Integracje z resztą systemu
+
+### 9.1 Linkowanie “system objects” w supporting materials
 
 Linki do artefaktów systemu (Initiative/Task/Decision/Report/Presentation/Assessment/Workspace/Note…) realizujemy przez kontrakt linkowania i backlinków:
 
 - SSOT: `docs/product/LINK_GRAPH_V3.md`
 - UI: pokazuje tylko obiekty dostępne wg uprawnień; brak wycieku tytułów/treści.
 
-### 8.2 Parent object relation (traceability)
+### 9.2 Parent object relation (traceability)
 
 `InterviewForm` może być powiązany z:
 

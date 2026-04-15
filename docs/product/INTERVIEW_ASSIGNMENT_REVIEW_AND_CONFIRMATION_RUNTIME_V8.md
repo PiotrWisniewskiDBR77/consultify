@@ -45,23 +45,21 @@ The runtime must make explicit:
 
 The canonical lifecycle should be:
 
-`assigned -> in_progress -> submitted -> under_review -> approved | sent_back -> resubmitted -> approved | expired | escalated`
+`assigned -> in_progress -> submitted -> approved | expired | escalated`
 
 ### 3.1 Runtime state meanings
 
 - `assigned`: work delegated but not yet started
 - `in_progress`: active answering or draft progression
-- `submitted`: respondent completed a reviewable submission
-- `under_review`: reviewer or assigner is actively evaluating the submission
-- `sent_back`: reviewer requested rework
-- `resubmitted`: respondent answered again after send-back
+- `submitted`: respondent marked the current answer set as reviewable, but can still continue editing until final approval
+- `send_back`: reviewer requested rework and the assignment returns to normal work state `in_progress`
 - `approved`: answer set confirmed and accepted
 - `expired`: deadline ended without acceptable completion
 - `escalated`: assignment moved into escalation handling
 
 Rule:
 
-`the lifecycle must make rework and confirmation explicit rather than hiding them inside one status`
+`the lifecycle must keep reviewability explicit, but only approval should hard-lock the respondent`
 
 ---
 
@@ -291,7 +289,103 @@ They should also see:
 
 ---
 
-## 11. Known implementation-facing risk
+## 11. AI quality governance
+
+AI in Interview should play three distinct roles:
+
+- respondent coach
+- machine quality reviewer
+- approved-knowledge learner
+
+These roles must not collapse into one opaque automation.
+
+### 11.1 Respondent-side AI
+
+AI may help the respondent by:
+
+- explaining the question intent
+- improving wording and structure
+- cleaning transcript artifacts
+- mapping conversational input into draft answers
+
+Rule:
+
+`AI may assist answer formation, but the respondent remains the final source of meaning`
+
+If an answer is produced or materially transformed by AI or transcript processing, the respondent should confirm it before it becomes the accepted stored answer.
+
+### 11.2 Review-stage AI
+
+After `submit`, the runtime should support an AI quality layer that evaluates:
+
+- completeness
+- specificity
+- relevance
+- actionability
+- evidence sufficiency
+
+The result should be visible to:
+
+- the respondent
+- the reviewer
+- the manager operating the workflow
+
+The AI quality layer may:
+
+- produce per-question warnings
+- produce an overall verdict
+- suggest improvements
+- flag quality risk markers
+
+The AI quality layer may not:
+
+- auto-approve the assignment
+- silently overwrite respondent answers
+- publish downstream outputs as trusted knowledge before human approval
+
+### 11.3 Human authority rule
+
+Manager or reviewer remains the final authority for:
+
+- `approve`
+- `send_back`
+- escalation decisions
+- downstream release of approved meaning
+
+Rule:
+
+`AI scores quality; humans decide acceptance`
+
+### 11.4 Learning loop
+
+Interview should improve AI quality over time using:
+
+- approved answers
+- approved transcripts
+- manager send-back reasons
+- resubmission deltas
+- approval outcomes compared with prior AI verdicts
+
+The preferred first mechanism is retrieval and governance memory, not silent model drift.
+
+Rule:
+
+`AI should learn primarily from approved and reviewer-confirmed meaning, not from raw submissions alone`
+
+### 11.5 Governance boundary
+
+The system should explicitly distinguish:
+
+- raw respondent content
+- AI-assisted draft content
+- submitted reviewable content
+- approved reusable context
+
+Only approved reusable context should be eligible for broad organizational learning and downstream knowledge reuse.
+
+---
+
+## 12. Known implementation-facing risk
 
 The documentation package should explicitly track one important risk until code catches up:
 
@@ -302,7 +396,7 @@ It is a reason to make the doctrine explicit.
 
 ---
 
-## 12. Related canonical docs
+## 13. Related canonical docs
 
 - `INTERVIEW_DISTRIBUTION_AND_PARTICIPANT_RUNTIME_V8.md`
 - `INTERVIEW_TEMPLATE_QUALITY_AND_METHODOLOGY_GUARDRAILS_V8.md`
