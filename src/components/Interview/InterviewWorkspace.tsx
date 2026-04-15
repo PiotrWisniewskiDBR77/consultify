@@ -217,6 +217,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [isApproving, setIsApproving] = useState(false);
   const [showSendBackForm, setShowSendBackForm] = useState(false);
 
+  // AI Pre-Review state
+  const [showAiPreReview, setShowAiPreReview] = useState(false);
+  const [aiPreReviewLoading, setAiPreReviewLoading] = useState(false);
+  const [aiPreReviewResult, setAiPreReviewResult] = useState<{
+    review: {
+      overallScore: number;
+      readyToSubmit: boolean;
+      summary: string;
+      issues: Array<{ questionIndex: number; severity: 'high' | 'medium' | 'low'; suggestion: string }>;
+      strengths: string[];
+    } | null;
+    stats: { total: number; answered: number; unansweredRequired: number };
+    fallback?: boolean;
+  } | null>(null);
+
   // Populate send-back checklist when entering reviewer mode
   useEffect(() => {
     if (!isReviewerMode) return;
@@ -523,9 +538,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
           if (currentSession.assignmentId) {
             const list = Array.isArray(myAssignmentsRes) ? myAssignmentsRes : [];
-            const found =
+            let found: any =
               list.find((a: any) => a?.id === currentSession?.assignmentId) ||
-              interviewDemoData.assignmentsBySessionId[currentSession.id];
+              interviewDemoData.assignmentsBySessionId[currentSession.id] ||
+              null;
+            if (!found && currentSession.assignmentId) {
+              found = await Api.get(`/interview/assignments/${currentSession.assignmentId}`).catch(() => null);
+            }
             setAssignmentStatus(found?.status || null);
             setAssignmentInfo(found || null);
           }
@@ -872,8 +891,27 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     }
   }, [session, sessionName, isPolish]);
 
-  // Submit session
-  const handleSubmitSession = useCallback(async () => {
+  // AI Pre-Review: run before submit for assignment-backed sessions
+  const handleRequestAiPreReview = useCallback(async () => {
+    if (!session?.assignmentId) return;
+    setAiPreReviewLoading(true);
+    setAiPreReviewResult(null);
+    setShowAiPreReview(true);
+    try {
+      const result = (await V8InterviewApi.aiPreReviewAssignment(session.assignmentId).catch(() =>
+        Api.post(`/interview/assignments/${session.assignmentId}/ai-pre-review`, {})
+      )) as any;
+      setAiPreReviewResult(result);
+    } catch (error) {
+      console.error('[InterviewWorkspace] AI pre-review failed:', error);
+      setAiPreReviewResult(null);
+    } finally {
+      setAiPreReviewLoading(false);
+    }
+  }, [session?.assignmentId]);
+
+  // Confirm submit (after AI review or directly for non-assignment sessions)
+  const handleConfirmSubmit = useCallback(async () => {
     if (!session) return;
     if (isLocked) return;
 
@@ -888,6 +926,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         if (updatedSession) setSession(updatedSession);
         if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
         else setAssignmentStatus('submitted');
+        setShowAiPreReview(false);
+        setAiPreReviewResult(null);
         toast.success(
           isPolish
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
@@ -904,6 +944,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to submit');
     }
   }, [session, isLocked, isPolish, onComplete, questions]);
+
+  // Submit session: triggers AI pre-review for assignments, direct submit for ad-hoc
+  const handleSubmitSession = useCallback(async () => {
+    if (!session) return;
+    if (isLocked) return;
+
+    if (session.assignmentId) {
+      await handleRequestAiPreReview();
+      return;
+    }
+
+    await handleConfirmSubmit();
+  }, [session, isLocked, handleRequestAiPreReview, handleConfirmSubmit]);
 
   // V6-C04: Reviewer actions
   const handleSendBack = useCallback(async () => {
@@ -1395,6 +1448,121 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               </button>
             </div>
           </div>
+        )}
+        {/* AI Pre-Review Panel */}
+        {showAiPreReview && !isReviewerMode && (
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="rounded-xl border border-purple-200/70 dark:border-purple-500/20 bg-purple-50/70 dark:bg-purple-500/10 p-4 space-y-3 mt-2"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-purple-500" />
+                <p className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                  {isPolish ? 'Przegląd AI przed wysłaniem' : 'AI Pre-Review'}
+                </p>
+              </div>
+
+              {aiPreReviewLoading && (
+                <div className="flex items-center gap-2 py-4 justify-center">
+                  <Loader2 size={18} className="animate-spin text-purple-500" />
+                  <span className="text-sm text-purple-600 dark:text-purple-400">
+                    {isPolish ? 'AI analizuje Twoje odpowiedzi...' : 'AI is analyzing your answers...'}
+                  </span>
+                </div>
+              )}
+
+              {!aiPreReviewLoading && aiPreReviewResult && (
+                <>
+                  {aiPreReviewResult.review ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          aiPreReviewResult.review.overallScore >= 7
+                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                            : aiPreReviewResult.review.overallScore >= 4
+                              ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                              : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300'
+                        }`}>
+                          {aiPreReviewResult.review.overallScore}/10
+                        </div>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                          {aiPreReviewResult.review.summary}
+                        </span>
+                      </div>
+
+                      {aiPreReviewResult.review.issues.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                            {isPolish ? 'Sugestie poprawek:' : 'Suggestions:'}
+                          </p>
+                          {aiPreReviewResult.review.issues.map((issue, idx) => (
+                            <div key={idx} className={`flex items-start gap-2 text-xs px-2.5 py-1.5 rounded-lg ${
+                              issue.severity === 'high'
+                                ? 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300'
+                                : issue.severity === 'medium'
+                                  ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                                  : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400'
+                            }`}>
+                              <CircleAlert size={12} className="shrink-0 mt-0.5" />
+                              <span>{issue.suggestion}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {aiPreReviewResult.review.strengths.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                            {isPolish ? 'Mocne strony:' : 'Strengths:'}
+                          </p>
+                          {aiPreReviewResult.review.strengths.map((s, idx) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs text-emerald-700 dark:text-emerald-300">
+                              <Check size={12} className="shrink-0 mt-0.5" />
+                              <span>{s}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish
+                        ? 'Przegląd AI niedostępny. Możesz wysłać bez niego.'
+                        : 'AI review unavailable. You can submit without it.'}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-purple-200/50 dark:border-purple-500/10">
+                    <button
+                      type="button"
+                      onClick={handleConfirmSubmit}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium text-white transition-colors ${
+                        aiPreReviewResult.review?.readyToSubmit !== false
+                          ? 'bg-emerald-500 hover:bg-emerald-600'
+                          : 'bg-amber-500 hover:bg-amber-600'
+                      }`}
+                    >
+                      <Send size={12} />
+                      {aiPreReviewResult.review?.readyToSubmit !== false
+                        ? (isPolish ? 'Wyślij do review' : 'Submit for review')
+                        : (isPolish ? 'Wyślij mimo uwag' : 'Submit anyway')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowAiPreReview(false); setAiPreReviewResult(null); }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors"
+                    >
+                      <Edit3 size={12} />
+                      {isPolish ? 'Popraw odpowiedzi' : 'Improve answers'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>
         )}
         <Callout
           variant={isReviewerMode ? 'info' : isLocked ? 'info' : 'purple'}

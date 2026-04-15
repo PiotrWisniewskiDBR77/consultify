@@ -94,6 +94,9 @@ router.get('/assignments/counts', InterviewController.getAssignmentCounts);
 /** POST /interview/assignments/:id/start - Start assigned interview (create session) */
 router.post('/assignments/:id/start', InterviewController.startAssignment);
 
+/** POST /interview/assignments/:id/ai-pre-review - AI quality check before submission */
+router.post('/assignments/:id/ai-pre-review', InterviewController.aiPreReviewAssignment);
+
 /** POST /interview/assignments/:id/submit - Submit assigned interview */
 router.post('/assignments/:id/submit', InterviewController.submitAssignment);
 
