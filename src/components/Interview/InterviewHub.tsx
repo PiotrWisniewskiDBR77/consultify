@@ -14,6 +14,7 @@
 
 import {
   AlertTriangle,
+  ArrowRight,
   BarChart3,
   Bell,
   Brain,
