@@ -5,12 +5,12 @@
  * Shows progress per category with question counts and completion status.
  */
 
-import { Check, ChevronRight, DollarSign, Monitor, Settings, Target, Users } from 'lucide-react';
+import { Check, ChevronRight, ClipboardList, DollarSign, Monitor, Settings, Target, Users } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Types
-export type InterviewCategory = 'strategy' | 'operations' | 'digital' | 'people' | 'finance';
+export type InterviewCategory = 'strategy' | 'operations' | 'digital' | 'people' | 'finance' | 'general';
 
 export interface CategoryProgress {
   category: InterviewCategory;
@@ -86,9 +86,19 @@ export const CATEGORY_CONFIG: Record<
     descriptionEn: 'Budgets, financial constraints, ROI expectations',
     descriptionPl: 'Budżety, ograniczenia finansowe, ROI expectations',
   },
+  general: {
+    labelEn: 'General',
+    labelPl: 'Ogólne',
+    icon: ClipboardList,
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-100 dark:bg-slate-900/30',
+    descriptionEn: 'General assessment questions',
+    descriptionPl: 'Ogólne pytania diagnostyczne',
+  },
 };
 
 export const CATEGORY_ORDER: InterviewCategory[] = [
+  'general',
   'strategy',
   'operations',
   'digital',

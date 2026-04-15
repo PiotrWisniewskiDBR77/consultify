@@ -1007,7 +1007,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   }, [currentQuestion, currentQuestionOptions, answerDraft, readOnly, isPolish, dropdownOpen]);
 
   const activeCategoryConfig = currentQuestion
-    ? CATEGORY_CONFIG[currentQuestion.category]
+    ? (CATEGORY_CONFIG[currentQuestion.category] || CATEGORY_CONFIG.general)
     : undefined;
   const answeredCount = orderedQuestions.filter(
     (question) => question.status === 'answered'

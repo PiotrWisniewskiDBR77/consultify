@@ -1113,7 +1113,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Render category section with questions
   const renderCategorySection = (category: InterviewCategory) => {
-    const config = CATEGORY_CONFIG[category];
+    const config = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.general;
     const Icon = config.icon;
     const progress = categoryProgress.find((p) => p.category === category);
     const categoryQuestions = questions.filter((q) => q.category === category);
