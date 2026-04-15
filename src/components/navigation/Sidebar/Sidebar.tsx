@@ -21,6 +21,10 @@ import {
   isPilotAllowedMenuId,
 } from '../../../utils/pilotAccess';
 import {
+  lockMainMenuForPublicProduction,
+  shouldLockNonCoreModulesInPublicProduction,
+} from '../../../utils/publicProduction';
+import {
   isAdminOwnerOrSuperAdminRole,
   isPilotRestrictedRole,
   isSuperAdminRole,
@@ -86,11 +90,28 @@ export const Sidebar: React.FC = () => {
   // That made "expanded" mode effectively impossible in narrower desktop windows / split-screen.
   // We now allow expanded mode anywhere except mobile.
   const showFull = !isSidebarCollapsed && !isMobile;
+  const lockNonCoreModulesOnPublicProduction = React.useMemo(
+    () => shouldLockNonCoreModulesInPublicProduction(),
+    []
+  );
+  const publicProductionLockedMessage =
+    'This module is visible in the platform overview, but access is disabled on public production. Please use Chat or Interview.';
 
   // Menu configuration
   const menuStructure = React.useMemo(
-    () => getMenuStructure(t, currentUser?.journeyState),
-    [t, currentUser?.journeyState]
+    () =>
+      lockMainMenuForPublicProduction(
+        getMenuStructure(t, currentUser?.journeyState),
+        lockNonCoreModulesOnPublicProduction,
+        publicProductionLockedMessage,
+        '/interview'
+      ),
+    [
+      t,
+      currentUser?.journeyState,
+      lockNonCoreModulesOnPublicProduction,
+      publicProductionLockedMessage,
+    ]
   );
   const visibleMenuStructure = React.useMemo(() => {
     if (!isPilotRestrictedRole(currentUser?.role)) {
@@ -461,7 +482,8 @@ export const Sidebar: React.FC = () => {
             !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role)
           }
         >
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedOrganizationMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
+            renderNavItem(lockedOrganizationMenuItem)}
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedAdminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}

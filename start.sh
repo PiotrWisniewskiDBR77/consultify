@@ -22,33 +22,32 @@ if [ "$NODE_VERSION" -lt 18 ]; then
     echo "Consider upgrading: https://nodejs.org/"
 fi
 
-# Check for .env.local file
-if [ ! -f ".env.local" ] && [ ! -f ".env" ]; then
-    echo "⚠️  Warning: No .env.local or .env file found!"
-    echo "Creating .env.local from template..."
+# Check for staging env file
+if [ ! -f ".env.staging.local" ]; then
+    echo "⚠️  Warning: No .env.staging.local file found!"
+    echo "Creating .env.staging.local from template..."
     echo ""
-    echo "# Consultinity Environment Variables" > .env.local
-    echo "NODE_ENV=development" >> .env.local
-    echo "PORT=3001" >> .env.local
-    echo "FRONTEND_URL=http://localhost:3000" >> .env.local
-    echo "" >> .env.local
-    echo "# Database (recommended)" >> .env.local
-    echo "DB_TYPE=postgres" >> .env.local
-    echo "DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME" >> .env.local
-    echo "" >> .env.local
-    echo "# To use local SQLite instead, set:" >> .env.local
-    echo "# DB_TYPE=sqlite" >> .env.local
-    echo "# SQLITE_PATH=./data/dev/consultinity.db" >> .env.local
-    echo "REDIS_URL=redis://localhost:6379" >> .env.local
-    echo "MOCK_REDIS=false" >> .env.local
-    echo "JWT_SECRET=supersecretkey_change_this_in_production" >> .env.local
-    echo "" >> .env.local
-    echo "# LLM provider (at least one)" >> .env.local
-    echo "OPENAI_API_KEY=your_openai_api_key_here" >> .env.local
-    echo "# OPENROUTER_API_KEY=your_openrouter_api_key_here" >> .env.local
+    echo "# Consultinity Staging-First Environment Variables" > .env.staging.local
+    echo "NODE_ENV=staging" >> .env.staging.local
+    echo "PORT=3001" >> .env.staging.local
+    echo "FRONTEND_URL=http://localhost:3000" >> .env.staging.local
+    echo "" >> .env.staging.local
+    echo "# Database (staging target)" >> .env.staging.local
+    echo "DB_TYPE=postgres" >> .env.staging.local
+    echo "DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME" >> .env.staging.local
+    echo "" >> .env.staging.local
+    echo "DATABASE_PUBLIC_URL=postgresql://USER:PASSWORD@PUBLIC-HOST:5432/DBNAME" >> .env.staging.local
+    echo "" >> .env.staging.local
+    echo "REDIS_URL=redis://localhost:6379" >> .env.staging.local
+    echo "MOCK_REDIS=false" >> .env.staging.local
+    echo "JWT_SECRET=staging-secret-change-me" >> .env.staging.local
+    echo "" >> .env.staging.local
+    echo "# LLM provider (at least one)" >> .env.staging.local
+    echo "OPENAI_API_KEY=your_openai_api_key_here" >> .env.staging.local
+    echo "# OPENROUTER_API_KEY=your_openrouter_api_key_here" >> .env.staging.local
     echo ""
-    echo "📝 Created .env.local - Please configure it with your API keys!"
-    echo "   See LOCAL_SETUP.md for detailed instructions."
+    echo "📝 Created .env.staging.local - Please configure it with staging-safe values."
+    echo "   See docs/operations/LOCAL_TO_STAGING_RUNBOOK.md for the supported local flow."
     echo ""
 fi
 
@@ -81,17 +80,17 @@ fi
 # Check database
 echo ""
 echo "🔍 Checking database configuration..."
-if grep -q "DB_TYPE=sqlite" .env.local 2>/dev/null || grep -q "DB_TYPE=sqlite" .env 2>/dev/null; then
-    echo "✓ Using SQLite database (will be created automatically)"
-elif grep -q "DB_TYPE=postgres" .env.local 2>/dev/null || grep -q "DB_TYPE=postgres" .env 2>/dev/null; then
+if grep -q "DB_TYPE=postgres" .env.staging.local 2>/dev/null || grep -q "DB_TYPE=postgres" .env 2>/dev/null; then
     echo "✓ Using PostgreSQL database"
     if ! command -v psql &> /dev/null; then
         echo "⚠️  Warning: psql not found. Make sure PostgreSQL is running."
     fi
+else
+    echo "⚠️  Warning: staging PostgreSQL is not configured in .env.staging.local"
 fi
 
 # Check Redis (optional)
-if grep -q "MOCK_REDIS=true" .env.local 2>/dev/null || grep -q "MOCK_REDIS=true" .env 2>/dev/null; then
+if grep -q "MOCK_REDIS=true" .env.staging.local 2>/dev/null || grep -q "MOCK_REDIS=true" .env 2>/dev/null; then
     echo "✓ Redis disabled (MOCK_REDIS=true)"
 else
     if command -v redis-cli &> /dev/null; then
@@ -117,4 +116,4 @@ echo ""
 echo "Press Ctrl+C to stop the application"
 echo ""
 
-npm run dev
+npm run dev:staging

@@ -46,6 +46,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     useAppStore();
   const { isDemoMode, demoExperienceType, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
   const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
+  const setCurrentProjectId = useAppStore((s) => s.setCurrentProjectId);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
 
   const { t, i18n } = useTranslation();
@@ -113,6 +114,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       const data = await res.json();
       tokenService.saveTokens(data.token, data.refreshToken);
       localStorage.setItem('consultify_current_org_id', orgId);
+      setCurrentProjectId(null);
       setCurrentOrganization({ id: data.organization.id, name: data.organization.name });
       toast.success(`Switched to ${data.organization.name}`);
       setTimeout(() => { window.location.href = window.location.pathname; }, 300);
@@ -120,7 +122,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       toast.error(err?.message || 'Failed to switch organization');
       setSwitchingOrgId(null);
     }
-  }, [setCurrentOrganization]);
+  }, [setCurrentOrganization, setCurrentProjectId]);
 
   const handleNavigate = (view: AppView) => {
     setCurrentView(view);

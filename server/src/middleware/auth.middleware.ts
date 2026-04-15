@@ -195,10 +195,11 @@ const normalizePermissionRole = (role?: string): string => {
   if (!role) return 'VIEWER';
   const r = role.toString().trim().toUpperCase();
   switch (r) {
-    case 'OWNER':
     case 'SUPER_ADMIN':
     case 'SUPERADMIN':
       return 'SUPERADMIN';
+    case 'OWNER':
+      return 'ADMIN';
     case 'ADMINISTRATOR':
     case 'ADMIN':
       return 'ADMIN';

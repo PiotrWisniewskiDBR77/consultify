@@ -40,6 +40,11 @@ export interface InterviewPermissions {
   canViewManaged: boolean;
   canViewOverdue: boolean;
   canSendReminder: boolean;
+  canViewInsights: boolean;
+  canCreateInsights: boolean;
+  canReviewInsights: boolean;
+  canPublishInsights: boolean;
+  canHandoffInsights: boolean;
 
   // Scope przydziałów
   assignmentScope: AssignmentScope;
@@ -57,6 +62,13 @@ export interface InterviewPermissions {
 
 export const useInterviewPermissions = (): InterviewPermissions => {
   const { currentUser, currentOrganization } = useAppStore();
+  const explicitPermissions = useMemo(
+    () =>
+      Array.isArray((currentUser as any)?.permissions)
+        ? ((currentUser as any).permissions as string[]).map((item) => String(item).toUpperCase())
+        : [],
+    [currentUser]
+  );
   const [projectMemberships, setProjectMemberships] = useState<ProjectMembership[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,7 +90,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
           memberships.map((m: any) => ({
             projectId: m.projectId || m.project_id,
             projectName: m.projectName || m.project_name || 'Unknown Project',
-            projectRole: m.projectRole || m.project_role,
+            projectRole: m.projectRole || m.project_role || '',
             workstreamId: m.workstreamId || m.workstream_id,
           }))
         );
@@ -103,7 +115,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
   // Sprawdź czy użytkownik ma uprawnienia do przydzielania na podstawie ról projektowych
   const hasProjectLevelAssignPermission = useMemo(() => {
     return projectMemberships.some((pm) =>
-      PROJECT_ROLES_WITH_ASSIGN.includes(pm.projectRole.toUpperCase())
+      PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase())
     );
   }, [projectMemberships]);
 
@@ -111,6 +123,33 @@ export const useInterviewPermissions = (): InterviewPermissions => {
   const canAssign = useMemo(() => {
     return hasOrgLevelAssignPermission || hasProjectLevelAssignPermission;
   }, [hasOrgLevelAssignPermission, hasProjectLevelAssignPermission]);
+
+  const hasExplicitInterviewPermission = useCallback(
+    (permissionKey: string) =>
+      explicitPermissions.length > 0 && explicitPermissions.includes(permissionKey.toUpperCase()),
+    [explicitPermissions]
+  );
+
+  const canViewInsights = useMemo(
+    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_VIEW') || canAssign,
+    [hasExplicitInterviewPermission, canAssign]
+  );
+  const canCreateInsights = useMemo(
+    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_CREATE') || canAssign,
+    [hasExplicitInterviewPermission, canAssign]
+  );
+  const canReviewInsights = useMemo(
+    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_REVIEW') || hasOrgLevelAssignPermission,
+    [hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+  );
+  const canPublishInsights = useMemo(
+    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_PUBLISH') || hasOrgLevelAssignPermission,
+    [hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+  );
+  const canHandoffInsights = useMemo(
+    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_HANDOFF') || canAssign,
+    [hasExplicitInterviewPermission, canAssign]
+  );
 
   // Scope przydziałów - komu użytkownik może przydzielać
   const assignmentScope = useMemo((): AssignmentScope => {
@@ -125,7 +164,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
     // Jeśli ma uprawnienia na poziomie projektu - tylko członkom swoich projektów
     if (hasProjectLevelAssignPermission) {
       const managedProjectIds = projectMemberships
-        .filter((pm) => PROJECT_ROLES_WITH_ASSIGN.includes(pm.projectRole.toUpperCase()))
+        .filter((pm) => PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase()))
         .map((pm) => pm.projectId);
 
       return {
@@ -178,7 +217,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
 
     // Zwróć tylko projekty gdzie ma rolę zarządzającą
     return projectMemberships.filter((pm) =>
-      PROJECT_ROLES_WITH_ASSIGN.includes(pm.projectRole.toUpperCase())
+      PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase())
     );
   }, [canAssign, hasOrgLevelAssignPermission, projectMemberships]);
 
@@ -187,6 +226,11 @@ export const useInterviewPermissions = (): InterviewPermissions => {
     canViewManaged: canAssign,
     canViewOverdue: canAssign,
     canSendReminder: canAssign,
+    canViewInsights,
+    canCreateInsights,
+    canReviewInsights,
+    canPublishInsights,
+    canHandoffInsights,
     assignmentScope,
     projectMemberships,
     isLoading,

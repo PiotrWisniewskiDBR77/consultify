@@ -40,7 +40,7 @@ function main() {
   const quarantineBase = path.join(repoRoot(), '_quarantine', `icloud-duplicates-${timestamp}`);
   safeMkdirp(quarantineBase);
 
-  const roots = ['src', 'server/src', 'views', 'packages', 'apps'];
+  const roots = ['src', 'server/src', 'server/scripts', 'tests', 'scripts', '.github', 'views', 'packages', 'apps'];
   const moved: string[] = [];
 
   for (const r of roots) {

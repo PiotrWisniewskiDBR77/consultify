@@ -65,6 +65,7 @@ export const P10_CONFIDENCE_LEVELS = [
   'medium',
   'low',
   'insufficient',
+  'contradicted',
 ] as const;
 
 export type P10ConfidenceLevel = (typeof P10_CONFIDENCE_LEVELS)[number];
@@ -394,13 +395,17 @@ export function canPublishFinding(finding: {
   confidenceLevel: string;
   evidencePointers: Array<{ isTombstone: boolean }>;
   limits?: string;
-}): { allowed: boolean; reason?: string } {
+}, mode: 'publish' | 'handoff' = 'publish'): { allowed: boolean; reason?: string } {
   if (!isValidP10ConfidenceLevel(finding.confidenceLevel)) {
     return { allowed: false, reason: 'Invalid confidence level' };
   }
 
   if (finding.confidenceLevel === 'insufficient') {
     return { allowed: false, reason: 'Insufficient confidence blocks publish' };
+  }
+
+  if (mode === 'handoff' && finding.confidenceLevel === 'contradicted') {
+    return { allowed: false, reason: 'Contradicted evidence blocks automatic handoff' };
   }
 
   const activePointers = finding.evidencePointers.filter((p) => !p.isTombstone);

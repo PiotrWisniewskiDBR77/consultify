@@ -6,10 +6,8 @@ import {
   Lock,
   Plus,
   Search,
-  Shield,
   Trash2,
   UserPlus,
-  Users,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -23,6 +21,8 @@ import { UserAssignmentsPanel } from '../Admin/UserAssignmentsPanel';
 export interface UserManagementCoreProps {
   mode: 'org-admin' | 'platform';
   organizationId?: string;
+  selectedOrganizationId?: string;
+  onSelectedOrganizationChange?: (organizationId: string) => void;
   organizations?: Array<{ id: string; name: string; status: string }>;
   showInvite?: boolean;
   showMove?: boolean;
@@ -310,10 +310,19 @@ export const UserFormModal: React.FC<{
 export const InviteUserModal: React.FC<{
   isOpen: boolean;
   organizations: Array<{ id: string; name: string }>;
+  defaultOrganizationId?: string;
   onClose: () => void;
   onInvite: (email: string, role: string, organizationId: string) => void;
-}> = ({ isOpen, organizations, onClose, onInvite }) => {
+}> = ({ isOpen, organizations, defaultOrganizationId = '', onClose, onInvite }) => {
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'USER', organizationId: '' });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setInviteForm((current) => ({
+      ...current,
+      organizationId: current.organizationId || defaultOrganizationId,
+    }));
+  }, [defaultOrganizationId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -468,6 +477,8 @@ export const MoveUserModal: React.FC<{
 export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   mode,
   organizationId,
+  selectedOrganizationId = '',
+  onSelectedOrganizationChange,
   organizations = [],
   showInvite = true,
   showMove = false,
@@ -480,6 +491,8 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Modal states
@@ -493,7 +506,13 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     try {
       setLoading(true);
       const fetchedUsers =
-        mode === 'platform' ? await Api.getSuperAdminUsers() : await Api.getUsers();
+        mode === 'platform'
+          ? await Api.getSuperAdminUsers({
+              organizationId: selectedOrganizationId || undefined,
+              role: selectedRole || undefined,
+              status: selectedStatus || undefined,
+            })
+          : await Api.getUsers();
       setUsers(fetchedUsers);
     } catch (e) {
       console.error('Failed to load users', e);
@@ -501,7 +520,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [mode]);
+  }, [mode, selectedOrganizationId, selectedRole, selectedStatus]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -522,6 +541,26 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       (u.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.lastName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const selectedOrganizationName =
+    mode === 'platform'
+      ? organizations.find((org) => org.id === selectedOrganizationId)?.name || ''
+      : '';
+  const roleOptions =
+    mode === 'platform'
+      ? Array.from(
+          new Set(
+            [UserRole.OWNER, UserRole.ADMIN, UserRole.USER, UserRole.MANAGER, UserRole.SUPERADMIN]
+              .concat(users.map((user) => String(user.role || '').trim()))
+              .filter(Boolean)
+          )
+        )
+      : [];
+  const statusOptions =
+    mode === 'platform'
+      ? Array.from(
+          new Set(['active', 'blocked', 'pending'].concat(users.map((user) => user.status || '')))
+        ).filter(Boolean)
+      : [];
 
   const handleSaveUser = async (formData: any) => {
     try {
@@ -623,21 +662,78 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     setShowUserModal(true);
   };
 
+  const clearPlatformFilters = () => {
+    onSelectedOrganizationChange?.('');
+    setSelectedRole('');
+    setSelectedStatus('');
+    setSearchTerm('');
+  };
+
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-            size={18}
-          />
-          <input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none w-64"
-          />
+      <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              size={18}
+            />
+            <input
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none w-full md:w-64"
+            />
+          </div>
+          {mode === 'platform' && (
+            <>
+              <select
+                value={selectedOrganizationId}
+                onChange={(e) => onSelectedOrganizationChange?.(e.target.value)}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[220px]"
+              >
+                <option value="">All organizations</option>
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
+              >
+                <option value="">All roles</option>
+                {roleOptions.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
+              >
+                <option value="">All statuses</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+              {(selectedOrganizationId || selectedRole || selectedStatus || searchTerm) && (
+                <button
+                  onClick={clearPlatformFilters}
+                  className="px-3 py-2 text-sm border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+            </>
+          )}
         </div>
         <div className="flex gap-3">
           {showInvite && mode === 'platform' && (
@@ -656,6 +752,20 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           </button>
         </div>
       </div>
+
+      {mode === 'platform' && (
+        <div className="text-sm text-slate-600 dark:text-slate-400">
+          Showing {filteredUsers.length} users
+          {selectedOrganizationName ? (
+            <>
+              {' '}
+              for <span className="font-medium text-slate-900 dark:text-white">{selectedOrganizationName}</span>
+            </>
+          ) : null}
+          {selectedRole ? ` with role ${selectedRole}` : ''}
+          {selectedStatus ? ` and status ${selectedStatus}` : ''}
+        </div>
+      )}
 
       {/* Users Table */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden">
@@ -683,7 +793,9 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
                   colSpan={mode === 'platform' ? 6 : 5}
                   className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
                 >
-                  No users found
+                  {selectedOrganizationName
+                    ? `No users found for ${selectedOrganizationName}`
+                    : 'No users found'}
                 </td>
               </tr>
             ) : (
@@ -726,6 +838,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
         <InviteUserModal
           isOpen={showInviteModal}
           organizations={organizations}
+          defaultOrganizationId={selectedOrganizationId}
           onClose={() => setShowInviteModal(false)}
           onInvite={handleInviteUser}
         />

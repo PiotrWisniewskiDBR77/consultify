@@ -38,6 +38,44 @@ export interface V8InterviewSession {
   sentBackReason?: string;
 }
 
+export type V8InterviewAiFixType =
+  | 'clarify'
+  | 'add_evidence'
+  | 'expand_answer'
+  | 'make_specific'
+  | 'complete_required_fields'
+  | 'correct_meaning';
+
+export interface V8InterviewWeakAnswerItem {
+  key: string;
+  label: string;
+  questionId?: string;
+  sectionId?: string;
+  score: number;
+  verdict: 'sufficient' | 'needs_improvement' | 'insufficient' | 'unanswered';
+  feedback: string;
+  fixType: V8InterviewAiFixType;
+  isRequired: boolean;
+}
+
+export interface V8InterviewReviewDecisionMemoryEntry {
+  id: string;
+  action: 'approve' | 'send_back';
+  actorId: string;
+  actorRole?: string;
+  createdAt: string;
+  aiOverallVerdict: 'ready_for_approval' | 'needs_improvement' | 'insufficient' | 'empty';
+  aiOverallScore: number | null;
+  aiWeakAnswerCount: number;
+  alignment:
+    | 'aligned'
+    | 'manager_stricter_than_ai'
+    | 'manager_overrode_ai_warning'
+    | 'no_ai_signal';
+  reason?: string;
+  missingItems?: Array<{ key: string; label: string; questionId?: string; sectionId?: string }>;
+}
+
 export interface V8InterviewAssignment {
   id: string;
   organizationId: string;
@@ -52,6 +90,9 @@ export interface V8InterviewAssignment {
   submittedAt?: string;
   sentBackAt?: string;
   sentBackReason?: string;
+  aiReview?: V8InterviewSessionEvaluation | null;
+  aiReviewedAt?: string;
+  reviewDecisionMemory?: V8InterviewReviewDecisionMemoryEntry[];
   priority: 'low' | 'medium' | 'high' | 'urgent';
   isTeamAssignment: boolean;
   notes?: string;
@@ -90,11 +131,42 @@ export interface V8InterviewInsight {
   issues?: Array<{ title: string; description: string; severity: string; evidence_refs: string[] }>;
   opportunities?: Array<{ title: string; description: string; impact: string; evidence_refs: string[] }>;
   status: string;
+  reviewStatus?: 'draft' | 'in_review' | 'published';
+  publishedAt?: string;
+  reviewedBy?: string;
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface V8InsightEvidencePointer {
+  pointerId: string;
+  type: string;
+  sourceRef: string;
+  capturedAt: string;
+  sourceFingerprint: string;
+  capturedExcerpt?: string | null;
+  removalReason?: string | null;
+  isTombstone: boolean;
+}
+
+export interface V8InsightFinding {
+  id: string;
+  insightId: string;
+  organizationId: string;
+  finding_statement: string;
+  confidence_level: 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
+  limits: string;
+  next_action: string;
+  evidence_pointers: V8InsightEvidencePointer[];
+  source_section_type: string;
+  source_section_index?: number | null;
+  source_key?: string | null;
+  review_status?: 'draft' | 'in_review' | 'published';
+  created_at: string;
+  updated_at: string;
 }
 
 export interface V8InsightComment {
@@ -111,6 +183,22 @@ export interface V8InsightActivity {
   description: string;
   timestamp: string;
   userName?: string;
+}
+
+export interface V8InterviewAnswerEvaluation {
+  questionId: string;
+  score: number;
+  verdict: 'sufficient' | 'needs_improvement' | 'insufficient' | 'unanswered';
+  feedback: string;
+  fixType?: V8InterviewAiFixType;
+}
+
+export interface V8InterviewSessionEvaluation {
+  overallScore: number;
+  overallVerdict: 'ready_for_approval' | 'needs_improvement' | 'insufficient' | 'empty';
+  questionEvaluations: V8InterviewAnswerEvaluation[];
+  recommendations: string[];
+  weakAnswerMap: V8InterviewWeakAnswerItem[];
 }
 
 export const V8InterviewApi = {
@@ -134,6 +222,12 @@ export const V8InterviewApi = {
       `/interview/sessions/${encodeURIComponent(id)}/summary`
     ),
 
+  evaluateSessionAnswers: (id: string, payload?: { language?: string }) =>
+    v8Post<V8InterviewSessionEvaluation>(
+      `/interview/sessions/${encodeURIComponent(id)}/evaluate-answers`,
+      payload ?? {}
+    ),
+
   getMyAssignments: () =>
     v8Get<{ assignments: V8InterviewAssignment[] }>('/interview/assignments/my'),
 
@@ -155,6 +249,7 @@ export const V8InterviewApi = {
       session: V8InterviewSession;
       completenessPercent: number;
       entersContext: boolean;
+      aiReview?: V8InterviewSessionEvaluation | null;
     }>(`/interview/assignments/${encodeURIComponent(id)}/submit`, {}),
 
   remindAssignment: (id: string) =>
@@ -171,6 +266,7 @@ export const V8InterviewApi = {
       session: V8InterviewSession;
       completenessPercent: number;
       entersContext: boolean;
+      aiReview?: V8InterviewSessionEvaluation | null;
     }>(`/interview/assignments/${encodeURIComponent(id)}/approve`, {}),
 
   // --- Insights ---
@@ -234,7 +330,7 @@ export const V8InterviewApi = {
     }>(`/interview/insights/${encodeURIComponent(insightId)}/lifecycle`, { action }),
 
   listFindings: (insightId: string) =>
-    v8Get<{ data: { findings: Array<Record<string, unknown>>; insightId: string } }>(
+    v8Get<{ findings: V8InsightFinding[]; insightId: string }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings`
     ),
 
@@ -253,7 +349,7 @@ export const V8InterviewApi = {
       }>;
     }
   ) =>
-    v8Post<{ data: { finding: Record<string, unknown> } }>(
+    v8Post<{ finding: V8InsightFinding }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings`,
       payload
     ),
@@ -263,7 +359,7 @@ export const V8InterviewApi = {
     findingId: string,
     payload: Record<string, unknown>
   ) =>
-    v8Patch<{ data: { finding: Record<string, unknown> } }>(
+    v8Patch<{ finding: V8InsightFinding; pointer_warnings?: string[] }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}`,
       payload
     ),
@@ -274,12 +370,10 @@ export const V8InterviewApi = {
     payload?: { target_initiative_id?: string }
   ) =>
     v8Post<{
-      data: {
-        handoff_payload: Record<string, unknown>;
-        initiative: { id: string; type: 'linked' | 'handoff_request' };
-        findingId: string;
-        insightId: string;
-      };
+      handoff_payload: Record<string, unknown>;
+      initiative: { id: string; type: 'linked' | 'handoff_request' };
+      findingId: string;
+      insightId: string;
     }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}/handoff`,
       payload ?? {}

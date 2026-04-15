@@ -10,7 +10,7 @@
 ## 📋 Opis
 
 System przydzielania wywiadów do członków zespołu z:
-- Workflow statusów (pending → in_progress → submitted → approved)
+- Workflow statusów (assigned → in_progress → submitted → approved)
 - Deadline tracking z alertami overdue
 - Przypomnienia email
 - Team assignments (wielu członków)
@@ -29,7 +29,7 @@ Assignments są formalnym mechanizmem „odbioru” wywiadu:
    - statusy pytań: `not_started`, `in_progress`, `answered`, `needs_follow_up`
    - reviewer powinien móc wskazać konkretne pytania do doprecyzowania.
 2) **Poziom całości (Assignment)** – formalny odbiór:
-   - statusy assignment: `pending`, `in_progress`, `submitted`, `sent_back`, `approved`.
+   - statusy assignment: `assigned`, `in_progress`, `submitted`, `approved`.
 
 ### Kryteria „Submit” (assignee → review)
 Minimalny warunek jakości (kanon, do dopięcia per template):
@@ -55,22 +55,15 @@ Send-back musi zawierać:
 ## 🔄 Workflow Statusów
 
 ```
-┌─────────┐    start    ┌─────────────┐    submit    ┌───────────┐
-│ PENDING │ ──────────► │ IN_PROGRESS │ ───────────► │ SUBMITTED │
-└─────────┘             └─────────────┘              └───────────┘
-                                                           │
-                              ┌─────────────────────────────┤
-                              │                             │
-                              ▼                             ▼
-                        ┌───────────┐               ┌──────────┐
-                        │ SENT_BACK │               │ APPROVED │
-                        └───────────┘               └──────────┘
-                              │
-                              │ re-submit
-                              ▼
-                        ┌───────────┐
-                        │ SUBMITTED │
-                        └───────────┘
+┌──────────┐   start    ┌─────────────┐   submit    ┌───────────┐
+│ ASSIGNED │ ─────────► │ IN_PROGRESS │ ──────────► │ SUBMITTED │
+└──────────┘            └─────────────┘             └───────────┘
+                              ▲                           │
+                              │                           │ approve
+                send-back + feedback                      ▼
+                              │                     ┌──────────┐
+                              └──────────────────── │ APPROVED │
+                                                    └──────────┘
 ```
 
 ---
@@ -79,18 +72,17 @@ Send-back musi zawierać:
 
 | Status | Opis | Akcje dostępne |
 |--------|------|----------------|
-| `pending` | Oczekuje na rozpoczęcie | Start, Delete |
-| `in_progress` | W trakcie realizacji | Submit |
-| `submitted` | Wysłane do review | Approve, Send Back |
+| `assigned` | Oczekuje na rozpoczęcie | Start, Delete |
+| `in_progress` | W trakcie realizacji lub po feedbacku review | Submit |
+| `submitted` | Wysłane do review, ale nadal edytowalne przez respondenta | Approve, Send Back, Re-submit |
 | `approved` | Zatwierdzone | - |
-| `sent_back` | Zwrócone do poprawy | Re-submit |
 
 ---
 
 ## Gate actions (kanon)
 Przejścia assignment traktujemy jako „mini‑gates” (z audytem i notyfikacjami):
 - `SUBMIT_INTERVIEW` (assignee): `in_progress → submitted`
-- `SEND_BACK_INTERVIEW` (reviewer): `submitted → sent_back`
+- `SEND_BACK_INTERVIEW` (reviewer): `submitted → in_progress` + zapis feedbacku
 - `APPROVE_INTERVIEW` (reviewer): `submitted → approved`
 
 Każda akcja:

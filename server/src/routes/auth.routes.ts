@@ -9,6 +9,11 @@ import { Response, Router } from 'express';
 
 import { login } from '../controllers/AuthController.js';
 import logger from '../utils/Logger.js';
+import {
+  authRuntimeConfig,
+  buildPasswordResetLink,
+  getPasswordResetExpiresAt,
+} from '../config/authRuntime.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import mfaService from '../services/MFAService.js';
@@ -38,6 +43,16 @@ import {
   VerifyEmailRequestSchema,
 } from '../validators/auth.validators.js';
 import legalService from '../services/legalService.js';
+import {
+  DuplicateOrganizationNameError,
+  assertOrganizationNameAvailable,
+  isGenericOrganizationName,
+} from '../services/organizationIdentityService.js';
+import {
+  buildCaseInsensitiveUserEmailLookupQuery,
+  normalizeAuthEmail,
+} from '../utils/authEmail.js';
+import slackService from '../services/slackService.js';
 
 const router = Router();
 import crypto from 'crypto';
@@ -52,7 +67,6 @@ import {
   recordDemoTrialEvent,
 } from '../services/demoTrialTelemetryService.js';
 import { AppError } from '../utils/ErrorHandler.js';
-import logger from '../utils/Logger.js';
 
 const FORCED_SUPERADMIN_EMAILS = (() => {
   const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
@@ -63,6 +77,89 @@ const FORCED_SUPERADMIN_EMAILS = (() => {
       .filter(Boolean)
   );
 })();
+
+const passwordResetSuccessMessage = 'If the email exists, a reset link has been sent.';
+const APLIX_ACCESS_CODE = 'APLIX-2026';
+const APLIX_DEFAULT_TEMPLATE_SUFFIXES = [
+  'aplix_global_all_v1',
+  'aplix_plant_charlotte_v1',
+] as const;
+const APLIX_DEFAULT_TEMPLATE_NAMES = [
+  'APLIX Global - All Respondents',
+  'APLIX Plant - Charlotte Leadership',
+] as const;
+
+const buildPasswordResetEmailHtml = (resetLink: string): string => `
+  <h2>Password Reset Request</h2>
+  <p>Click the link below to reset your password. This link expires in ${authRuntimeConfig.passwordResetTtlMinutes} minutes.</p>
+  <p><a href="${resetLink}">${resetLink}</a></p>
+  <p>If you did not request this, you can safely ignore this email.</p>
+`;
+
+async function assignAplixDefaultInterviews(params: {
+  organizationId: string;
+  userId: string;
+  createdBy: string;
+  accessCode?: string | null;
+}) {
+  const normalizedAccessCode = String(params.accessCode || '')
+    .trim()
+    .toUpperCase();
+  if (normalizedAccessCode !== APLIX_ACCESS_CODE) return;
+
+  const { default: interviewAssignmentService } = (await import(
+    '../services/InterviewAssignmentService.js'
+  )) as any;
+  const dueAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  for (const templateSuffix of APLIX_DEFAULT_TEMPLATE_SUFFIXES) {
+    const templateId = `${params.organizationId}__${templateSuffix}`;
+    const existingAssignment = await dbGet<{ id: string }>(
+      `SELECT id
+         FROM interview_assignments
+        WHERE organization_id = ?
+          AND assignee_user_id = ?
+          AND template_id = ?
+        LIMIT 1`,
+      [params.organizationId, params.userId, templateId]
+    );
+
+    if (existingAssignment?.id) continue;
+
+    await interviewAssignmentService.create({
+      organizationId: params.organizationId,
+      templateId,
+      assigneeUserIds: [params.userId],
+      dueAt,
+      priority: 'medium',
+      notes: 'Auto-assigned during APLIX access-code onboarding.',
+      createdBy: params.createdBy,
+      escalateTo: params.createdBy,
+    });
+  }
+}
+
+async function notifyAplixRegistrationInSlack(params: {
+  accessCode?: string | null;
+  firstName: string;
+  lastName?: string;
+  email: string;
+}) {
+  const normalizedAccessCode = String(params.accessCode || '')
+    .trim()
+    .toUpperCase();
+  if (normalizedAccessCode !== APLIX_ACCESS_CODE) return;
+
+  await slackService.sendRegistrationAlert({
+    firstName: params.firstName,
+    lastName: params.lastName,
+    email: params.email,
+    organizationName: 'APLIX Inc. - North America',
+    role: 'Manager',
+    accessCode: APLIX_ACCESS_CODE,
+    assignedInterviewNames: [...APLIX_DEFAULT_TEMPLATE_NAMES],
+  });
+}
 
 // Helper to add timeout to promises
 const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
@@ -204,53 +301,73 @@ router.get(
         organization_name: string | null;
         organization_plan: string | null;
         organization_status: string | null;
+        // Extended profile fields
+        display_name: string | null;
+        pronouns: string | null;
+        department: string | null;
+        job_title: string | null;
+        status_message: string | null;
+        out_of_office: number | null;
+        vacation_end: string | null;
+        linkedin_id: string | null;
+        phone: string | null;
+        timezone: string | null;
+        location: string | null;
+        // VTS metrics
+        seniority_level: string | null;
+        site_location: string | null;
+        tenure_years: string | null;
+        manages_team: number | null;
+        team_size: string | null;
+        expertise_tags: string | null;
+        engagement_level: string | null;
+        // Survey tracking
+        profile_survey_completed_at: string | null;
+        profile_survey_dismissed_count: number | null;
+        profile_survey_last_dismissed_at: string | null;
       } | null = null;
 
+      const ME_SELECT_COLS = `u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name,
+                   u.avatar_url, u.impersonator_id,
+                   u.display_name, u.pronouns, u.department, u.job_title,
+                   u.status_message, u.out_of_office, u.vacation_end,
+                   u.linkedin_id, u.phone, u.timezone, u.location,
+                   u.seniority_level, u.site_location, u.tenure_years,
+                   u.manages_team, u.team_size, u.expertise_tags,
+                   u.engagement_level, u.profile_survey_completed_at,
+                   u.profile_survey_dismissed_count, u.profile_survey_last_dismissed_at,
+                   o.name as organization_name, o.plan as organization_plan, o.status as organization_status`;
+
       try {
-        // Try with impersonator_id column
-        user = await dbGet<{
-          id: string;
-          email: string;
-          role: string;
-          organization_id: string;
-          first_name: string;
-          last_name: string;
-          avatar_url: string | null;
-          impersonator_id: string | null;
-          organization_name: string | null;
-          organization_plan: string | null;
-          organization_status: string | null;
-        }>(
-          `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
-                          o.name as organization_name, o.plan as organization_plan, o.status as organization_status
+        user = await dbGet(
+          `SELECT ${ME_SELECT_COLS}
                    FROM users u
                    LEFT JOIN organizations o ON u.organization_id = o.id
                    WHERE u.id = ?`,
           [req.user!.id]
         );
       } catch (err: any) {
-        // If column doesn't exist, retry without impersonator_id
-        if (err.message?.includes('impersonator_id') || err.message?.includes('does not exist')) {
-          user = await dbGet<{
-            id: string;
-            email: string;
-            role: string;
-            organization_id: string;
-            first_name: string;
-            last_name: string;
-            avatar_url: string | null;
-            impersonator_id: string | null;
-            organization_name: string | null;
-            organization_plan: string | null;
-            organization_status: string | null;
-          }>(
-            `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, NULL as impersonator_id,
-                            o.name as organization_name, o.plan as organization_plan, o.status as organization_status
-                     FROM users u
-                     LEFT JOIN organizations o ON u.organization_id = o.id
-                     WHERE u.id = ?`,
-            [req.user!.id]
-          );
+        // If new columns don't exist yet, retry with basic columns
+        if (err.message?.includes('does not exist') || err.message?.includes('no such column')) {
+          try {
+            user = await dbGet(
+              `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
+                              o.name as organization_name, o.plan as organization_plan, o.status as organization_status
+                       FROM users u
+                       LEFT JOIN organizations o ON u.organization_id = o.id
+                       WHERE u.id = ?`,
+              [req.user!.id]
+            );
+          } catch {
+            user = await dbGet(
+              `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, NULL as impersonator_id,
+                              o.name as organization_name, o.plan as organization_plan, o.status as organization_status
+                       FROM users u
+                       LEFT JOIN organizations o ON u.organization_id = o.id
+                       WHERE u.id = ?`,
+              [req.user!.id]
+            );
+          }
         } else {
           throw err;
         }
@@ -311,16 +428,34 @@ router.get(
         }
       }
 
-      // Check if role changed in database - if so, generate new token
+      // Resolve effective role: prefer organization_members.role for the
+      // user's current org so that switch-organization is not silently undone.
+      let effectiveRole = user.role;
+      if (user.organization_id) {
+        try {
+          const orgMembership = await dbGet<{ role: string }>(
+            `SELECT role FROM organization_members
+             WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+            [user.id, user.organization_id]
+          );
+          if (orgMembership?.role) {
+            effectiveRole = orgMembership.role;
+          }
+        } catch {
+          // If table/column missing, fall back to users.role
+        }
+      }
+
+      // Check if effective role changed vs JWT - if so, generate new token
       let newToken: string | null = null;
       let newRefreshToken: string | null = null;
-      if (user.role !== req.user!.role || remappedUserId) {
+      if (effectiveRole !== req.user!.role || remappedUserId) {
         const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
         const tokenPair = await refreshTokenService.generateTokenPair(
           {
             id: user.id,
             email: user.email,
-            role: user.role,
+            role: effectiveRole,
             organization_id: user.organization_id,
           },
           {
@@ -341,21 +476,13 @@ router.get(
         }
       }
 
+      let parsedExpertiseTags: string[] = [];
+      try {
+        if (user.expertise_tags) parsedExpertiseTags = JSON.parse(user.expertise_tags);
+      } catch { /* ignore bad JSON */ }
+
       const response: {
-        user: {
-          id: string;
-          email: string;
-          role: string;
-          organizationId: string;
-          organizationName: string | null;
-          firstName: string;
-          lastName: string;
-          avatarUrl: string | null;
-          impersonatorId: string | null;
-          companyName: string | null;
-          isAuthenticated: boolean;
-          accessLevel: 'free' | 'full';
-        };
+        user: Record<string, unknown>;
         token?: string;
         refreshToken?: string;
         roleChanged?: boolean;
@@ -364,7 +491,7 @@ router.get(
         user: {
           id: user.id,
           email: user.email,
-          role: user.role,
+          role: effectiveRole,
           organizationId: user.organization_id,
           organizationName: user.organization_name,
           firstName: user.first_name,
@@ -378,6 +505,30 @@ router.get(
             (user.organization_plan === 'enterprise' || user.organization_plan === 'pro')
               ? 'full'
               : 'free',
+          // Extended profile fields
+          displayName: user.display_name || null,
+          pronouns: user.pronouns || null,
+          department: user.department || null,
+          jobTitle: user.job_title || null,
+          statusMessage: user.status_message || null,
+          isOutOfOffice: user.out_of_office === 1,
+          outOfOfficeUntil: user.vacation_end || null,
+          linkedinId: user.linkedin_id || null,
+          phone: user.phone || null,
+          timezone: user.timezone || null,
+          location: user.location || null,
+          // VTS metrics
+          seniorityLevel: user.seniority_level || null,
+          siteLocation: user.site_location || null,
+          tenureYears: user.tenure_years || null,
+          managesTeam: user.manages_team === 1,
+          teamSize: user.team_size || null,
+          expertiseTags: parsedExpertiseTags,
+          engagementLevel: user.engagement_level || null,
+          // Survey tracking
+          profileSurveyCompletedAt: user.profile_survey_completed_at || null,
+          profileSurveyDismissedCount: user.profile_survey_dismissed_count || 0,
+          profileSurveyLastDismissedAt: user.profile_survey_last_dismissed_at || null,
         },
       };
 
@@ -387,7 +538,7 @@ router.get(
         if (newRefreshToken) {
           response.refreshToken = newRefreshToken;
         }
-        response.roleChanged = user.role !== req.user!.role;
+        response.roleChanged = effectiveRole !== req.user!.role;
       }
       if (remappedUserId) {
         response.userRemapped = true;
@@ -723,11 +874,13 @@ router.post(
   '/register-demo',
   validateBody(RegisterDemoRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { email, password, firstName, acceptedLegalDocs } = req.body;
+    const { email: requestedEmail, password, firstName, acceptedLegalDocs } = req.body;
+    const email = String(requestedEmail || '').trim();
+    const normalizedEmail = normalizeAuthEmail(requestedEmail);
 
     const existingUser = await dbGet<{ id: string; organization_id: string }>(
-      'SELECT id, organization_id FROM users WHERE email = ?',
-      [email]
+      buildCaseInsensitiveUserEmailLookupQuery('id, organization_id'),
+      [normalizedEmail]
     );
     if (existingUser) {
       return res.status(400).json({
@@ -1119,7 +1272,7 @@ router.post(
   validateBody(RegisterRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const {
-      email,
+      email: requestedEmail,
       password,
       firstName,
       lastName,
@@ -1132,6 +1285,8 @@ router.post(
       partner_code,
       acceptedLegalDocs,
     } = req.body;
+    const email = String(requestedEmail || '').trim();
+    const normalizedEmail = normalizeAuthEmail(requestedEmail);
 
     const { default: PromoCodeService } = (await import('../services/promoCodeService.js')) as any;
     const { default: AttributionService } =
@@ -1155,9 +1310,10 @@ router.post(
       }
     }
 
-    const existingUser = await dbGet<{ id: string }>('SELECT id FROM users WHERE email = ?', [
-      email,
-    ]);
+    const existingUser = await dbGet<{ id: string }>(
+      buildCaseInsensitiveUserEmailLookupQuery('id'),
+      [normalizedEmail]
+    );
     if (existingUser) {
       return res.status(400).json({ error: 'Email already in use' });
       return;
@@ -1175,6 +1331,25 @@ router.post(
         let trialExpiresAt: string | null = null;
 
         if (!joiningExistingOrg) {
+          if (!isGenericOrganizationName(companyName)) {
+            try {
+              await assertOrganizationNameAvailable(companyName);
+            } catch (error) {
+              if (error instanceof DuplicateOrganizationNameError) {
+                return res.status(409).json({
+                  error:
+                    'An organization with this company name already exists. Ask your admin for an invite or use the existing access flow instead of creating a duplicate workspace.',
+                  code: error.code,
+                  existingOrganization: {
+                    id: error.existingOrganization.id,
+                    name: error.existingOrganization.name,
+                  },
+                });
+              }
+              throw error;
+            }
+          }
+
           // Create self-serve trial organization with explicit trial metadata.
           trialStartedAt = new Date().toISOString();
           trialExpiresAt = new Date(
@@ -1247,6 +1422,18 @@ router.post(
            ON CONFLICT(organization_id, user_id) DO NOTHING`,
           [uuidv4(), orgId, userId, memberRole]
         );
+
+        try {
+          await assignAplixDefaultInterviews({
+            organizationId: orgId,
+            userId,
+            createdBy: userId,
+            accessCode,
+          });
+        } catch (assignmentErr) {
+          logger.error('[Auth] Failed to auto-assign APLIX interviews:', assignmentErr);
+          return res.status(500).json({ error: 'Failed to assign required APLIX interviews' });
+        }
 
         if (Array.isArray(acceptedLegalDocs) && acceptedLegalDocs.length > 0) {
           try {
@@ -1465,6 +1652,20 @@ router.post(
           logger.warn('[Auth] Failed to send welcome email:', welcomeErr);
         }
 
+        try {
+          await _withTimeout(
+            notifyAplixRegistrationInSlack({
+              accessCode,
+              firstName,
+              lastName,
+              email,
+            }),
+            1500
+          );
+        } catch (slackErr) {
+          logger.warn('[Auth] Failed to send APLIX registration Slack alert:', slackErr);
+        }
+
         return res.json({
           user: {
             id: userId,
@@ -1676,23 +1877,30 @@ router.post(
   '/forgot-password',
   validateBody(ForgotPasswordRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { email } = req.body;
+    const normalizedEmail = normalizeAuthEmail(req.body?.email);
 
-    const user = await dbGet<{ id: string; email: string }>(
-      'SELECT id, email FROM users WHERE LOWER(email) = LOWER(?)',
-      [email]
+    const user = await dbGet<{ id: string; email: string; status?: string }>(
+      buildCaseInsensitiveUserEmailLookupQuery('id, email, status'),
+      [normalizedEmail]
     );
 
     // Always return success to prevent email enumeration
     if (!user) {
       return res.json({
         success: true,
-        message: 'If the email exists, a reset link has been sent.',
+        message: passwordResetSuccessMessage,
       });
     }
 
+    const userStatus = String(user.status || 'active')
+      .trim()
+      .toLowerCase();
+    if (userStatus === 'deleted') {
+      return res.json({ success: true, message: passwordResetSuccessMessage });
+    }
+
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+    const expiresAt = getPasswordResetExpiresAt();
 
     await dbRun('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
     await dbRun(
@@ -1700,26 +1908,26 @@ router.post(
       [uuidv4(), user.id, token, expiresAt]
     );
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+    const resetLink = buildPasswordResetLink(token, req);
 
     try {
       const emailService = (await import('../services/emailService.js')).default;
-      await emailService.send({
+      const delivered = await emailService.send({
         to: user.email,
         subject: 'Consultify — Password Reset',
-        html: `
-          <h2>Password Reset Request</h2>
-          <p>Click the link below to reset your password. This link expires in 1 hour.</p>
-          <p><a href="${resetLink}">${resetLink}</a></p>
-          <p>If you did not request this, you can safely ignore this email.</p>
-        `,
+        html: buildPasswordResetEmailHtml(resetLink),
       });
+      if (!delivered) {
+        logger.warn('[Auth] Password reset email was not delivered', {
+          userId: user.id,
+          email: user.email,
+        });
+      }
     } catch (err) {
       logger.error('[Auth] Failed to send password reset email:', err);
     }
 
-    return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
+    return res.json({ success: true, message: passwordResetSuccessMessage });
   })
 );
 
@@ -1733,19 +1941,53 @@ router.post(
     const resetData = await dbGet<{
       user_id: string;
       expires_at: string;
-    }>('SELECT * FROM password_resets WHERE token = ?', [token]);
+      current_password: string;
+      user_status: string;
+    }>(
+      `SELECT pr.user_id, pr.expires_at, u.password as current_password, u.status as user_status
+       FROM password_resets pr
+       JOIN users u ON u.id = pr.user_id
+       WHERE pr.token = ?`,
+      [token]
+    );
 
     if (!resetData) {
-      return res.status(400).json({ error: 'Invalid or expired token' });
+      return res.status(400).json({
+        error: 'Invalid or expired reset link. Please request a new one.',
+        code: 'PASSWORD_RESET_INVALID',
+      });
       return;
     }
 
     if (new Date(resetData.expires_at) < new Date()) {
-      return res.status(400).json({ error: 'Token has expired' });
+      await dbRun('DELETE FROM password_resets WHERE token = ?', [token]);
+      return res.status(400).json({
+        error: 'This reset link has expired. Please request a new one.',
+        code: 'PASSWORD_RESET_EXPIRED',
+      });
       return;
     }
 
-    const hashedPassword = bcrypt.hashSync(newPassword, 8);
+    const userStatus = String(resetData.user_status || 'active')
+      .trim()
+      .toLowerCase();
+    if (userStatus === 'deleted') {
+      await dbRun('DELETE FROM password_resets WHERE user_id = ?', [resetData.user_id]);
+      return res.status(403).json({
+        error: 'This account is no longer available.',
+        code: 'ACCOUNT_DELETED',
+      });
+    }
+
+    if (bcrypt.compareSync(newPassword, resetData.current_password)) {
+      return res.status(400).json({
+        error: 'New password must be different from the current password.',
+        code: 'PASSWORD_REUSE_NOT_ALLOWED',
+      });
+      return;
+    }
+
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
 
     const updateResult = await dbRun('UPDATE users SET password = ? WHERE id = ?', [
       hashedPassword,
@@ -1756,8 +1998,28 @@ router.post(
       return;
     }
 
-    await dbRun('DELETE FROM password_resets WHERE token = ?', [token]);
-    return res.json({ message: 'Password updated successfully' });
+    await dbRun('DELETE FROM password_resets WHERE user_id = ?', [resetData.user_id]);
+    await refreshTokenService.revokeAllUserTokens(resetData.user_id, 'password_reset');
+
+    ActivityService.log({
+      organizationId: req.user?.organizationId || '',
+      userId: resetData.user_id,
+      action: 'password_reset_completed',
+      entityType: 'user',
+      entityId: resetData.user_id,
+      entityName: 'Password Reset',
+    });
+
+    try {
+      clearAuthCookies(res);
+    } catch {
+      // ignore cookie clear failures
+    }
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully. Please sign in again on this device.',
+    });
   })
 );
 

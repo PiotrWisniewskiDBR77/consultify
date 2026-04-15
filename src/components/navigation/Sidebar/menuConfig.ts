@@ -119,26 +119,29 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
     },
-    // 10. Wordy — KIMI-style document generation (P22)
+    // 10. Wordy — KIMI-style document generation (P22) — contact required
     {
       id: 'MODULE_WORDY',
       label: t('sidebar.wordy', 'Documents'),
       icon: React.createElement(FileText, { size: 20 }),
       viewId: AppView.WORDY,
+      badge: 'soon',
     },
-    // 11. Excele — KIMI-style spreadsheet generation (P23)
+    // 11. Excele — KIMI-style spreadsheet generation (P23) — contact required
     {
       id: 'MODULE_EXCELE',
       label: t('sidebar.excele', 'Tables'),
       icon: React.createElement(FileSpreadsheet, { size: 20 }),
       viewId: AppView.EXCELE,
+      badge: 'soon',
     },
-    // 12. Prezentacje — Gamma-style presentation generation (P20)
+    // 12. Prezentacje — Gamma-style presentation generation (P20) — contact required
     {
       id: 'MODULE_PREZENTACJE_GEN',
       label: t('sidebar.prezentacje', 'Presentations'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PREZENTACJE_GEN,
+      badge: 'soon',
     },
     {
       id: 'MODULE_MEETING',

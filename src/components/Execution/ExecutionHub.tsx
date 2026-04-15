@@ -500,9 +500,10 @@ type ExecutiveAggregateSnapshot = {
 };
 
 const normalizeTaskStatus = (
-  status: ProjectTaskStatus
+  status: ProjectTaskStatus | null | undefined
 ): 'todo' | 'in_progress' | 'review' | 'blocked' | 'done' => {
-  const normalized = status.toString().toLowerCase();
+  if (!status) return 'todo';
+  const normalized = String(status).toLowerCase();
   if (normalized === 'in_progress') return 'in_progress';
   if (normalized === 'review') return 'review';
   if (normalized === 'blocked') return 'blocked';
@@ -1362,7 +1363,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (i) => i.name.toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
+        (i) => (i.name || '').toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
       );
     }
     return result;
@@ -1486,6 +1487,41 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
     ],
     [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions, actionQueueItems]
+  );
+
+  // Handle inline status change from table/grid
+  const handleInlineStatusChange = useCallback(
+    async (initiativeId: string, newStatus: string) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
+      const previous = initiatives.find((i) => i.id === initiativeId);
+      try {
+        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
+        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
+        setInitiatives((prev) =>
+          prev.map((i) =>
+            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
+          )
+        );
+        trackFunnelEvent('execution_status_updated', {
+          initiativeId,
+          from: previous?.status || null,
+          to: newStatus,
+          tab: activeTab,
+          viewMode,
+        });
+        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
+        );
+      }
+    },
+    [activeTab, initiatives, isPilotParticipant, t, viewMode]
   );
 
   // Table columns
@@ -2305,41 +2341,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     },
     [activeDocumentId]
-  );
-
-  // Handle inline status change from table/grid
-  const handleInlineStatusChange = useCallback(
-    async (initiativeId: string, newStatus: string) => {
-      if (isPilotParticipant) {
-        dispatchPilotAccessBlocked({
-          href: '/implementation',
-        });
-        return;
-      }
-      const previous = initiatives.find((i) => i.id === initiativeId);
-      try {
-        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
-        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-        setInitiatives((prev) =>
-          prev.map((i) =>
-            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
-          )
-        );
-        trackFunnelEvent('execution_status_updated', {
-          initiativeId,
-          from: previous?.status || null,
-          to: newStatus,
-          tab: activeTab,
-          viewMode,
-        });
-        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
-      } catch (e: any) {
-        toast.error(
-          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
-        );
-      }
-    },
-    [activeTab, initiatives, isPilotParticipant, t, viewMode]
   );
 
   const handleViewModeChange = useCallback(

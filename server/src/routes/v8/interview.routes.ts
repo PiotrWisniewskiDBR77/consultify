@@ -17,12 +17,14 @@ import {
   loadInterviewSessionsForOrganization,
 } from '../../controllers/InterviewController.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getManagedAssignments,
   getMyAssignments,
   getOverdueAssignments,
 } from '../../services/InterviewAssignmentService.js';
+import { listFindings as listP10Findings } from '../../services/v8/interviewInsightFindingsService.js';
 import { resolveInterviewManagerScope } from '../../services/interviewManagerScope.js';
 import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -313,12 +315,15 @@ router.post('/assignments/:id/send-back', v8Wrap(InterviewController.sendBackAss
 
 router.post('/assignments/:id/approve', v8Wrap(InterviewController.approveAssignment, interviewMeta));
 
+router.post('/sessions/:sessionId/evaluate-answers', v8Wrap(InterviewController.evaluateSessionAnswers, interviewMeta));
+
 // ==========================================
 // INSIGHTS — V8 bounded bridge (P10)
 // ==========================================
 
 router.get(
   '/insights',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const limit = Number(firstParam(req.query.limit as string) ?? 50) || 50;
@@ -333,6 +338,7 @@ router.get(
 
 router.get(
   '/insights/:id',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const { id } = req.params;
@@ -352,6 +358,7 @@ router.get(
 
 router.post(
   '/insights',
+  requirePermission('INTERVIEW_INSIGHTS_CREATE'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { title, sessionIds, sessionId, promptType, filters, customPrompt } = req.body || {};
@@ -429,6 +436,7 @@ router.post(
 
 router.post(
   '/insights/:id/regenerate',
+  requirePermission('INTERVIEW_INSIGHTS_CREATE'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { id } = req.params;
@@ -458,6 +466,7 @@ router.post(
 
 router.patch(
   '/insights/:id',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { id } = req.params;
@@ -495,6 +504,7 @@ router.patch(
 
 router.post(
   '/insights/:id/export',
+  requirePermission('INTERVIEW_INSIGHTS_HANDOFF'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { id } = req.params;
@@ -578,6 +588,24 @@ router.post(
     }
 
     const now = new Date().toISOString();
+    const p10Findings = await listP10Findings(id).catch(() => []);
+    const boundedInsightPayload = {
+      findings: p10Findings.map((finding) => ({
+        id: finding.id,
+        findingStatement: finding.finding_statement,
+        confidenceLevel: finding.confidence_level,
+        limits: finding.limits,
+        nextAction: finding.next_action,
+        evidencePointers: finding.evidence_pointers.filter((pointer) => !pointer.isTombstone),
+      })),
+      counts: {
+        findings: p10Findings.length,
+        activeEvidence: p10Findings.reduce(
+          (sum, finding) => sum + finding.evidence_pointers.filter((pointer) => !pointer.isTombstone).length,
+          0
+        ),
+      },
+    };
 
     if (target === 'tools') {
       await queryHelpers.queryRun(
@@ -597,6 +625,7 @@ router.post(
       const orgContext = await organizationContextService.buildResolvedContext(organizationId);
       const contextSnapshot = {
         source: { kind: 'interview_insight', insightId: id, sessionId, category: insightRow.category, title: insightRow.title, description: insightRow.description || insightRow.content || null, insightType: insightRow.insight_type || insightRow.prompt_type || null, exportedAt: now },
+        boundedInsightPayload,
         organizationContext: orgContext,
       };
 
@@ -634,6 +663,7 @@ router.post(
     const orgContext = await organizationContextService.buildResolvedContext(organizationId);
     const contextSnapshot = {
       source: { kind: 'interview_insight', insightId: id, sessionId, category: insightRow.category, title: insightRow.title, description: insightRow.description || insightRow.content || null, insightType: insightRow.insight_type || insightRow.prompt_type || null, exportedAt: now },
+      boundedInsightPayload,
       organizationContext: orgContext,
     };
 
@@ -655,6 +685,7 @@ router.post(
 
 router.get(
   '/insights/:id/activity',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const { id } = req.params;
@@ -672,10 +703,42 @@ router.get(
        WHERE a.organization_id = ? AND a.insight_id = ? ORDER BY a.created_at DESC`,
       [organizationId, id]
     );
+    const auditEntries = await queryHelpers
+      .queryAll(
+        `SELECT a.id, a.action as type, a.created_at, a.detail_json, u.first_name, u.last_name
+         FROM interview_insight_audit_log a
+         LEFT JOIN users u ON u.id = a.actor_user_id
+         WHERE a.organization_id = ? AND a.insight_id = ?
+         ORDER BY a.created_at DESC`,
+        [organizationId, id]
+      )
+      .catch(() => []);
+    const mergedEntries = [
+      ...(entries || []).map((e: any) => ({
+        id: e.id,
+        type: e.type,
+        description: e.description,
+        created_at: e.created_at,
+        first_name: e.first_name,
+        last_name: e.last_name,
+      })),
+      ...(auditEntries || []).map((e: any) => ({
+        id: e.id,
+        type: e.type,
+        description: `P10: ${String(e.type || 'updated')}`,
+        created_at: e.created_at,
+        first_name: e.first_name,
+        last_name: e.last_name,
+      })),
+    ].sort((a: any, b: any) => {
+      const ta = new Date(a.created_at).getTime();
+      const tb = new Date(b.created_at).getTime();
+      return tb - ta;
+    });
 
     return res.json({
       data: {
-        activity: (entries || []).map((e: any) => ({
+        activity: mergedEntries.map((e: any) => ({
           id: e.id, type: e.type, description: e.description, timestamp: e.created_at,
           userName: `${String(e.first_name || '').trim()} ${String(e.last_name || '').trim()}`.trim() || undefined,
         })),
@@ -687,6 +750,7 @@ router.get(
 
 router.get(
   '/insights/:id/comments',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const { id } = req.params;
@@ -720,6 +784,7 @@ router.get(
 
 router.post(
   '/insights/:id/comments',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { id } = req.params;
@@ -758,6 +823,7 @@ router.post(
 
 router.delete(
   '/insights/:id/comments/:commentId',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { id, commentId } = req.params;
@@ -789,6 +855,7 @@ router.delete(
 
 router.delete(
   '/insights/:id',
+  requirePermission('INTERVIEW_INSIGHTS_PUBLISH'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const { id } = req.params;

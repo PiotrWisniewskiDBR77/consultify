@@ -552,12 +552,13 @@ async function dispatchFeedbackEscalation(input: {
       const alertEmailService = getAlertEmailService();
       const emailPayload = {
         alertType: `feedback_${input.kind}`,
-        severity:
+        severity: (
           notificationSeverity === 'CRITICAL'
             ? 'critical'
             : notificationSeverity === 'WARNING'
               ? 'warning'
-              : 'info',
+              : 'info'
+        ) as 'critical' | 'warning' | 'info',
         title:
           input.kind === 'pulse'
             ? `Low Pulse Rating ${input.rating || 0}/5`

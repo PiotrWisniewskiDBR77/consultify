@@ -55,6 +55,8 @@ export class OrganizationController {
       const { getUserOrganizations } = await import('../services/organizationService.js');
       const orgs = await getUserOrganizations(userId);
 
+      console.log(`[OrgSwitcher] userId=${userId} orgs=${orgs.length}: ${orgs.map((o: any) => `${o.name}(${o.id})`).join(', ')}`);
+
       const currentOrgId = (req as any).organizationId;
       const enriched = orgs.map((org) => ({
         ...org,

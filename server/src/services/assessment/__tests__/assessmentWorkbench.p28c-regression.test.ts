@@ -269,6 +269,6 @@ describe('AssessmentWorkbenchService — P28-C regression', () => {
     expect(state.promotionTraces).toHaveLength(1);
     expect(state.promotionTraces[0].targetKind).toBe('interview_insight');
     expect(state.promotionTraces[0].targetRef).toMatch(/^ii_/);
-    expect(listFindings(state.promotionTraces[0].targetRef)).toHaveLength(1);
+    await expect(listFindings(state.promotionTraces[0].targetRef)).resolves.toHaveLength(1);
   });
 });

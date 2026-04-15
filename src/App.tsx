@@ -131,9 +131,14 @@ function AppContent() {
         return;
       }
 
-      // 1. Immediate restore from localStorage (synchronous, no re-render needed)
+      // 1. Immediate restore from storage (synchronous, no re-render needed)
+      // Prefer the dedicated mirror key used by auth flows; fall back to the
+      // already-rehydrated Zustand user if this tab has it but the mirror key is stale/missing.
       const storedUser = localStorage.getItem('user');
-      let restoredUser: User | null = null;
+      let restoredUser: User | null =
+        currentUser && currentUser.id && currentUser.email
+          ? { ...currentUser, isAuthenticated: true }
+          : null;
       if (storedUser) {
         try {
           const userData = JSON.parse(storedUser);
@@ -161,7 +166,6 @@ function AppContent() {
             restoredUser.role !== user.role
           ) {
             setCurrentUser(authenticatedUser);
-            localStorage.setItem('user', JSON.stringify(user));
 
             if (user.organizationId) {
               setCurrentOrganization({

@@ -66,7 +66,7 @@ import {
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
-import { V8InterviewApi } from '@/services/api/v8/interview';
+import { V8InterviewApi, type V8InsightFinding } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -88,7 +88,7 @@ type InsightPromptType =
   | 'maturity'
   | 'stakeholder_map';
 
-type InsightStatus = 'generating' | 'completed' | 'failed';
+type InsightStatus = 'generating' | 'completed' | 'failed' | 'draft' | 'in_review' | 'published';
 
 type P10ConfidenceLevel = 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
 
@@ -153,6 +153,8 @@ interface Insight {
   missingData?: string[];
   status: InsightStatus;
   reviewStatus?: InsightReviewStatus;
+  publishedAt?: string;
+  reviewedBy?: string;
   errorMessage?: string;
   sourceSessionCount: number;
   tokensUsed: number;
@@ -334,10 +336,25 @@ const STATUS_CONFIG: Record<
     color: 'bg-amber-500',
     textColor: 'text-amber-500',
   },
+  draft: {
+    label: { en: 'Draft', pl: 'Szkic' },
+    color: 'bg-slate-500',
+    textColor: 'text-slate-500',
+  },
   completed: {
     label: { en: 'Completed', pl: 'Ukończone' },
     color: 'bg-emerald-500',
     textColor: 'text-emerald-500',
+  },
+  in_review: {
+    label: { en: 'In Review', pl: 'W recenzji' },
+    color: 'bg-blue-500',
+    textColor: 'text-blue-500',
+  },
+  published: {
+    label: { en: 'Published', pl: 'Opublikowane' },
+    color: 'bg-violet-500',
+    textColor: 'text-violet-500',
   },
   failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-red-500', textColor: 'text-red-500' },
 };
@@ -429,6 +446,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Handoff modal state
   const [handoffModalOpen, setHandoffModalOpen] = useState(false);
   const [handoffFinding, setHandoffFinding] = useState<{
+    findingId?: string;
     title: string;
     description: string;
     confidence?: P10ConfidenceLevel;
@@ -450,6 +468,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     Record<string, SourceSessionSummary>
   >({});
   const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
+  const [findings, setFindings] = useState<V8InsightFinding[]>([]);
 
   // NMode shared section state — Comments
   const [nComments, setNComments] = useState<CommentItem[]>([]);
@@ -457,6 +476,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [commentDateFilter, setCommentDateFilter] = useState<DateFilter>('all');
   const [commentSortOrder, setCommentSortOrder] = useState<SortOrder>('desc');
   const [draftPriority, setDraftPriority] = useState<CommentPriority>('normal');
+
+  const loadPersistedFindings = useCallback(async (currentInsightId: string) => {
+    try {
+      const findingsRes = await V8InterviewApi.listFindings(currentInsightId)
+        .then((r) => r.findings)
+        .catch(() => []);
+      setFindings(Array.isArray(findingsRes) ? findingsRes : []);
+    } catch {
+      setFindings([]);
+    }
+  }, []);
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -487,6 +517,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           (interviewDemoData.insightActivityById[id] || []) as NModeActivityLogEntry[]
         );
         setNComments((interviewDemoData.insightCommentsById[id] || []) as CommentItem[]);
+        setFindings([]);
         return true;
       };
 
@@ -502,6 +533,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
         setInsight(data);
         setTitle(data.title || '');
+        await loadPersistedFindings(insightId);
 
         if (data.sourceSessionIds?.length > 0) {
           try {
@@ -575,6 +607,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
         const data = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(data);
+        await loadPersistedFindings(insightId);
         const nextStatus = data?.status as InsightStatus | undefined;
         if (lastStatus === null) lastStatus = nextStatus ?? null;
 
@@ -593,7 +626,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [insightId, interviewDemoData, isPolish]);
+  }, [insightId, interviewDemoData, isPolish, loadPersistedFindings]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -691,6 +724,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [insight?.evidenceMap]
   );
   const v6MissingData = useMemo<string[]>(() => insight?.missingData ?? [], [insight?.missingData]);
+  const findingsBySourceKey = useMemo(
+    () =>
+      findings.reduce<Record<string, V8InsightFinding>>((acc, finding) => {
+        if (finding.source_key) acc[finding.source_key] = finding;
+        return acc;
+      }, {}),
+    [findings]
+  );
+  const findingsSummary = useMemo(
+    () => ({
+      total: findings.length,
+      activeEvidence: findings.reduce(
+        (sum, finding) => sum + finding.evidence_pointers.filter((pointer) => !pointer.isTombstone).length,
+        0
+      ),
+      pendingReview: findings.filter((finding) => finding.review_status === 'in_review').length,
+      contradicted: findings.filter((finding) => finding.confidence_level === 'contradicted').length,
+    }),
+    [findings]
+  );
 
   // Evidence drilldown state
   const [expandedEvidenceRef, setExpandedEvidenceRef] = useState<string | null>(null);
@@ -718,6 +771,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       const refreshed = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`).catch(() => null));
       if (refreshed) {
         setInsight(refreshed);
+        await loadPersistedFindings(insightId);
         onSaved?.(refreshed);
       } else {
         onSaved?.({ ...insight, title });
@@ -792,6 +846,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
       const data = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
       setInsight(data);
+      await loadPersistedFindings(insightId);
       const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
         () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
       );
@@ -885,6 +940,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const handleOpenHandoff = useCallback(
     (finding: {
+      findingId?: string;
       title: string;
       description: string;
       confidence?: P10ConfidenceLevel;
@@ -904,7 +960,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setHandoffSubmitting(true);
 
       const MAX_RETRIES = 2;
-      const findingId = `${handoffFinding.sectionType}-${handoffFinding.index}`;
+      const findingId = handoffFinding.findingId;
+      if (!findingId) {
+        toast.error(
+          isPolish
+            ? 'Finding nie został jeszcze zapisany w artefakcie P10. Zapisz lub odśwież insight.'
+            : 'This finding is not yet persisted in the P10 artifact. Refresh the insight first.'
+        );
+        setHandoffSubmitting(false);
+        return;
+      }
       let lastError: unknown;
 
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -916,7 +981,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           setHandoffModalOpen(false);
           setHandoffFinding(null);
-          const initiativeId = res?.data?.initiative?.id;
+          const initiativeId = res?.initiative?.id;
           toast.success(
             isPolish
               ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${initiativeId ? ` (${initiativeId})` : ''}`
@@ -988,6 +1053,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         await V8InterviewApi.lifecycleTransition(insight.id, backendAction);
         const refreshed = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(refreshed);
+        await loadPersistedFindings(insightId);
         const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
           () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
         );
@@ -1016,7 +1082,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setLifecycleTransitioning(false);
       }
     },
-    [insight, insightId, isPolish]
+    [insight, insightId, isPolish, loadPersistedFindings]
   );
 
   const toggleLimitsExpand = useCallback((cardKey: string) => {
@@ -1209,12 +1275,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         id: 'status',
         label: { en: 'Status', pl: 'Status' },
         type: 'select' as const,
-        value: insight?.status || 'generating',
+        value:
+          insight?.reviewStatus === 'in_review' || insight?.reviewStatus === 'published'
+            ? insight.reviewStatus
+            : insight?.status || 'generating',
         onChange: () => {},
         readOnly: true,
         options: [
+          { value: 'draft', label: { en: 'Draft', pl: 'Szkic' } },
           { value: 'generating', label: { en: 'Generating', pl: 'Generowanie' } },
           { value: 'completed', label: { en: 'Completed', pl: 'Ukończone' } },
+          { value: 'in_review', label: { en: 'In Review', pl: 'W recenzji' } },
+          { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
           { value: 'failed', label: { en: 'Failed', pl: 'Błąd' } },
         ],
       },
@@ -1263,8 +1335,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
         ],
       },
+      {
+        id: 'findings',
+        label: { en: 'Findings', pl: 'Findingi' },
+        type: 'text' as const,
+        value: String(findingsSummary.total),
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'evidence',
+        label: { en: 'Evidence', pl: 'Dowody' },
+        type: 'text' as const,
+        value: String(findingsSummary.activeEvidence),
+        onChange: () => {},
+        readOnly: true,
+      },
     ],
-    [insight, isPolish, typeMeta]
+    [findingsSummary.activeEvidence, findingsSummary.total, insight, isPolish, typeMeta]
   );
 
   // ── Activity log → NMode format ───────────────────────────────────────────
@@ -1519,6 +1607,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <div className="space-y-3">
                   {v6Themes.map((theme, idx) => {
+                    const persistedFinding = findingsBySourceKey[`theme:${idx}`];
+                    const findingConfidence = (persistedFinding?.confidence_level || theme.confidence) as
+                      | P10ConfidenceLevel
+                      | undefined;
+                    const findingLimits =
+                      persistedFinding?.limits
+                        ?.split(/\r?\n/)
+                        .map((item) => item.trim())
+                        .filter(Boolean) || theme.limits || [];
+                    const activePointerCount =
+                      persistedFinding?.evidence_pointers.filter((pointer) => !pointer.isTombstone).length || 0;
                     const confidenceBadgeMap: Record<P10ConfidenceLevel, { bg: string; label: string; labelPl: string }> = {
                       high: { bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', label: 'High confidence', labelPl: 'Wysoka pewność' },
                       medium: { bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', label: 'Medium confidence', labelPl: 'Średnia pewność' },
@@ -1553,14 +1652,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 ? isPolish ? 'Umiarkowany' : 'Moderate'
                                 : isPolish ? 'Słaby' : 'Weak'}
                           </span>
-                          {theme.confidence && (
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confidenceBadgeMap[theme.confidence].bg}`}>
-                              {isPolish ? confidenceBadgeMap[theme.confidence].labelPl : confidenceBadgeMap[theme.confidence].label}
+                          {findingConfidence && (
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confidenceBadgeMap[findingConfidence].bg}`}>
+                              {isPolish ? confidenceBadgeMap[findingConfidence].labelPl : confidenceBadgeMap[findingConfidence].label}
                             </span>
                           )}
                         </div>
                       </div>
-                      {theme.confidence === 'contradicted' && (
+                      {findingConfidence === 'contradicted' && (
                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
                           <AlertCircle size={14} />
                           {isPolish ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją' : 'Contradiction detected in data — verify before publishing'}
@@ -1580,9 +1679,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </button>
                         {limitsExpanded && (
                           <div className="px-3 pb-2">
-                            {theme.limits && theme.limits.length > 0 ? (
+                            {findingLimits.length > 0 ? (
                               <ul className="space-y-1">
-                                {theme.limits.map((limit, li) => (
+                                {findingLimits.map((limit, li) => (
                                   <li key={li} className="text-xs italic text-slate-500 dark:text-slate-400">{limit}</li>
                                 ))}
                               </ul>
@@ -1593,6 +1692,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         )}
                       </div>
                       <div className="flex items-center gap-2 pt-1">
+                        {persistedFinding && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                            <Target size={10} />
+                            {isPolish ? `P10: ${activePointerCount} dow.` : `P10: ${activePointerCount} ev.`}
+                          </span>
+                        )}
                         {theme.evidence_refs?.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {theme.evidence_refs.map((ref) => {
@@ -1629,8 +1734,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         )}
                         <button
-                          onClick={() => handleOpenHandoff({ title: theme.title, description: theme.description, confidence: theme.confidence, limits: theme.limits, sectionType: 'theme', index: idx })}
-                          className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
+                          onClick={() => handleOpenHandoff({ findingId: persistedFinding?.id, title: theme.title, description: theme.description, confidence: findingConfidence, limits: findingLimits, sectionType: 'theme', index: idx })}
+                          disabled={!persistedFinding}
+                          className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ExternalLink size={10} />
                           {isPolish ? 'Inicjatywa' : 'Handoff'}
@@ -1663,6 +1769,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <div className="space-y-3">
                   {v6Issues.map((issue, idx) => {
+                    const persistedFinding = findingsBySourceKey[`issue:${idx}`];
+                    const findingConfidence = (persistedFinding?.confidence_level || issue.confidence) as
+                      | P10ConfidenceLevel
+                      | undefined;
+                    const findingLimits =
+                      persistedFinding?.limits
+                        ?.split(/\r?\n/)
+                        .map((item) => item.trim())
+                        .filter(Boolean) || issue.limits || [];
+                    const activePointerCount =
+                      persistedFinding?.evidence_pointers.filter((pointer) => !pointer.isTombstone).length || 0;
                     const severityStyles =
                       issue.severity === 'high'
                         ? 'border-l-red-500 bg-red-500/[0.04] dark:bg-red-500/10'
@@ -1701,14 +1818,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ? isPolish ? 'Średni' : 'Medium'
                                   : isPolish ? 'Niski' : 'Low'}
                             </span>
-                            {issue.confidence && (
-                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[issue.confidence].bg}`}>
-                                {isPolish ? confMap[issue.confidence].labelPl : confMap[issue.confidence].label}
+                            {findingConfidence && (
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[findingConfidence].bg}`}>
+                                {isPolish ? confMap[findingConfidence].labelPl : confMap[findingConfidence].label}
                               </span>
                             )}
                           </div>
                         </div>
-                        {issue.confidence === 'contradicted' && (
+                        {findingConfidence === 'contradicted' && (
                           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją' : 'Contradiction detected in data — verify before publishing'}
@@ -1728,9 +1845,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </button>
                           {limitsExpanded && (
                             <div className="px-3 pb-2">
-                              {issue.limits && issue.limits.length > 0 ? (
+                              {findingLimits.length > 0 ? (
                                 <ul className="space-y-1">
-                                  {issue.limits.map((limit, li) => (
+                                  {findingLimits.map((limit, li) => (
                                     <li key={li} className="text-xs italic text-slate-500 dark:text-slate-400">{limit}</li>
                                   ))}
                                 </ul>
@@ -1741,6 +1858,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           )}
                         </div>
                         <div className="flex items-center gap-2 pt-1">
+                          {persistedFinding && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                              <Target size={10} />
+                              {isPolish ? `P10: ${activePointerCount} dow.` : `P10: ${activePointerCount} ev.`}
+                            </span>
+                          )}
                           {issue.evidence_refs?.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">
                               {issue.evidence_refs.map((ref) => {
@@ -1770,8 +1893,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             </div>
                           )}
                           <button
-                            onClick={() => handleOpenHandoff({ title: issue.title, description: issue.description, confidence: issue.confidence, limits: issue.limits, sectionType: 'issue', index: idx })}
-                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
+                            onClick={() => handleOpenHandoff({ findingId: persistedFinding?.id, title: issue.title, description: issue.description, confidence: findingConfidence, limits: findingLimits, sectionType: 'issue', index: idx })}
+                            disabled={!persistedFinding}
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <ExternalLink size={10} />
                             {isPolish ? 'Inicjatywa' : 'Handoff'}
@@ -1804,6 +1928,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <div className="space-y-3">
                   {v6Opportunities.map((opp, idx) => {
+                    const persistedFinding = findingsBySourceKey[`opportunity:${idx}`];
+                    const findingConfidence = (persistedFinding?.confidence_level || opp.confidence) as
+                      | P10ConfidenceLevel
+                      | undefined;
+                    const findingLimits =
+                      persistedFinding?.limits
+                        ?.split(/\r?\n/)
+                        .map((item) => item.trim())
+                        .filter(Boolean) || opp.limits || [];
+                    const activePointerCount =
+                      persistedFinding?.evidence_pointers.filter((pointer) => !pointer.isTombstone).length || 0;
                     const impactBadge =
                       opp.impact === 'high'
                         ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
@@ -1836,14 +1971,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ? isPolish ? 'Średni wpływ' : 'Medium impact'
                                   : isPolish ? 'Niski wpływ' : 'Low impact'}
                             </span>
-                            {opp.confidence && (
-                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[opp.confidence].bg}`}>
-                                {isPolish ? confMap[opp.confidence].labelPl : confMap[opp.confidence].label}
+                            {findingConfidence && (
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[findingConfidence].bg}`}>
+                                {isPolish ? confMap[findingConfidence].labelPl : confMap[findingConfidence].label}
                               </span>
                             )}
                           </div>
                         </div>
-                        {opp.confidence === 'contradicted' && (
+                        {findingConfidence === 'contradicted' && (
                           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
                             <AlertCircle size={14} />
                             {isPolish ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją' : 'Contradiction detected in data — verify before publishing'}
@@ -1863,9 +1998,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </button>
                           {limitsExpanded && (
                             <div className="px-3 pb-2">
-                              {opp.limits && opp.limits.length > 0 ? (
+                              {findingLimits.length > 0 ? (
                                 <ul className="space-y-1">
-                                  {opp.limits.map((limit, li) => (
+                                  {findingLimits.map((limit, li) => (
                                     <li key={li} className="text-xs italic text-slate-500 dark:text-slate-400">{limit}</li>
                                   ))}
                                 </ul>
@@ -1876,6 +2011,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           )}
                         </div>
                         <div className="flex items-center gap-2 pt-1">
+                          {persistedFinding && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-500/10 text-slate-600 dark:text-slate-300 text-[10px] font-medium">
+                              <Target size={10} />
+                              {isPolish ? `P10: ${activePointerCount} dow.` : `P10: ${activePointerCount} ev.`}
+                            </span>
+                          )}
                           {opp.evidence_refs?.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">
                               {opp.evidence_refs.map((ref) => {
@@ -1905,8 +2046,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             </div>
                           )}
                           <button
-                            onClick={() => handleOpenHandoff({ title: opp.title, description: opp.description, confidence: opp.confidence, limits: opp.limits, sectionType: 'opportunity', index: idx })}
-                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
+                            onClick={() => handleOpenHandoff({ findingId: persistedFinding?.id, title: opp.title, description: opp.description, confidence: findingConfidence, limits: findingLimits, sectionType: 'opportunity', index: idx })}
+                            disabled={!persistedFinding}
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <ExternalLink size={10} />
                             {isPolish ? 'Inicjatywa' : 'Handoff'}

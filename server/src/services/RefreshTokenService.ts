@@ -22,6 +22,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
+import { authRuntimeConfig } from '../config/authRuntime.js';
 import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
@@ -115,9 +116,9 @@ async function isDemoOrganizationId(db: IDatabase, organizationId: string): Prom
 // ==========================================
 
 const CONFIG = {
-  ACCESS_TOKEN_EXPIRY: '365d', // Long-lived for development
-  ACCESS_TOKEN_EXPIRY_MS: 365 * 24 * 60 * 60 * 1000, // 1 year
-  REFRESH_TOKEN_EXPIRY_DAYS: 365,
+  ACCESS_TOKEN_EXPIRY: authRuntimeConfig.accessTokenExpiry,
+  ACCESS_TOKEN_EXPIRY_MS: authRuntimeConfig.accessTokenExpiryMs,
+  REFRESH_TOKEN_EXPIRY_DAYS: authRuntimeConfig.refreshTokenExpiryDays,
   MAX_SESSIONS_PER_USER: 10,
   GRACE_PERIOD_SECONDS: 10,
 };
@@ -273,14 +274,20 @@ class RefreshTokenService {
     const { ip = null, userAgent = null } = options;
     const tokenHash = this.hashToken(refreshToken);
 
-    // Find valid refresh token
+    // Find valid refresh token; prefer org-scoped role from organization_members
     const storedToken = await this.dbGet<StoredRefreshToken>(
-      `SELECT rt.*, u.email, u.role, u.organization_id, u.status as user_status
-             FROM refresh_tokens rt
-             JOIN users u ON rt.user_id = u.id
-             WHERE rt.token_hash = ? 
-               AND rt.revoked_at IS NULL 
-               AND rt.expires_at > datetime('now')`,
+      `SELECT rt.*, u.email,
+              COALESCE(om.role, u.role) AS role,
+              u.organization_id, u.status as user_status
+       FROM refresh_tokens rt
+       JOIN users u ON rt.user_id = u.id
+       LEFT JOIN organization_members om
+              ON om.user_id = u.id
+             AND om.organization_id = u.organization_id
+             AND om.status = 'ACTIVE'
+       WHERE rt.token_hash = ?
+         AND rt.revoked_at IS NULL
+         AND rt.expires_at > datetime('now')`,
       [tokenHash]
     );
 
@@ -309,14 +316,20 @@ class RefreshTokenService {
           );
 
           const latestToken = await this.dbGet<StoredRefreshToken>(
-            `SELECT rt.*, u.email, u.role, u.organization_id, u.status as user_status
-                         FROM refresh_tokens rt
-                         JOIN users u ON rt.user_id = u.id
-                         WHERE rt.token_family = ? 
-                           AND rt.revoked_at IS NULL 
-                           AND rt.expires_at > datetime('now')
-                         ORDER BY rt.created_at DESC
-                         LIMIT 1`,
+            `SELECT rt.*, u.email,
+                    COALESCE(om.role, u.role) AS role,
+                    u.organization_id, u.status as user_status
+             FROM refresh_tokens rt
+             JOIN users u ON rt.user_id = u.id
+             LEFT JOIN organization_members om
+                    ON om.user_id = u.id
+                   AND om.organization_id = u.organization_id
+                   AND om.status = 'ACTIVE'
+             WHERE rt.token_family = ?
+               AND rt.revoked_at IS NULL
+               AND rt.expires_at > datetime('now')
+             ORDER BY rt.created_at DESC
+             LIMIT 1`,
             [revokedToken.token_family]
           );
 

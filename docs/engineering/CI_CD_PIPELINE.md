@@ -39,7 +39,7 @@ Deployment policy:
 
 **Automatic Triggers:**
 
-- Push to `main`, `develop`, or `Londyn` branches for quality checks
+- Push to `main` or `develop` branches for quality checks
 - Pull requests to `main` or `develop`
 
 **Manual Trigger:**
@@ -47,9 +47,9 @@ Deployment policy:
 ```bash
 # Via GitHub Actions UI:
 # - Go to Actions tab
-# - Select "Monorepo CI/CD"
+# - Select "IRIS 6.0 Automated Test Suite"
 # - Click "Run workflow"
-# - Choose app: all, consultinity, or new-app
+# - Choose the test scope from the workflow inputs
 ```
 
 ### Triggering Deployment
@@ -60,12 +60,21 @@ Deployment policy:
 git push origin develop
 ```
 
+Notes:
+- Automatic staging deploy is wired through `Railway Deploy`.
+- The push trigger is intentionally scoped to application/runtime paths in `.github/workflows/railway-deploy.yml`.
+- If you need an explicit staging refresh outside that scope, use manual `workflow_dispatch` on `develop`.
+
 **Production deployment:**
 
 ```bash
 # Merge approved release PR into main, then:
 # GitHub Actions -> Railway Deploy -> environment=production
 ```
+
+Notes:
+- Production deploy must be dispatched from `main`.
+- The workflow requires explicit confirmation before deploy continues.
 
 ## Environment Variables
 
@@ -216,8 +225,8 @@ Post-deployment verification includes:
 **For App Deployments:**
 
 ```
-feat(consultinity): Add new feature
-fix(new-app): Fix critical bug
+feat(platform): Add new feature
+fix(staging): Fix critical bug
 ```
 
 ## Related Documents
@@ -265,8 +274,7 @@ npm run test:e2e
 ```bash
 # Check build locally
 npm run build
-nx build consultinity
-nx build new-app
+npm run build:backend
 ```
 
 ### Deployment Failures

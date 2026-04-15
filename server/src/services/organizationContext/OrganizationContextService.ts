@@ -1084,7 +1084,7 @@ export class OrganizationContextService {
     }> = [];
     for (const insightId of publishedInsightIds) {
       try {
-        const findings = listP10Findings(insightId);
+        const findings = await listP10Findings(insightId);
         for (const f of findings) {
           const activePointers = f.evidence_pointers.filter((p) => !p.isTombstone);
           p10Findings.push({

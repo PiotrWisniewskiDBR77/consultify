@@ -84,14 +84,19 @@ const mockCommentGetContent = vi.fn();
 const mockCommentCreate = vi.fn();
 const mockCommentGetById = vi.fn();
 const mockCommentDelete = vi.fn();
+const permissionMockState = vi.hoisted(() => ({
+  registeredPermissionKeys: [] as string[],
+}));
 
 vi.mock('../../../services/content/CommentService.js', () => ({
-  CommentService: vi.fn().mockImplementation(() => ({
-    getContentComments: (...args: unknown[]) => mockCommentGetContent(...args),
-    createComment: (...args: unknown[]) => mockCommentCreate(...args),
-    getCommentById: (...args: unknown[]) => mockCommentGetById(...args),
-    deleteComment: (...args: unknown[]) => mockCommentDelete(...args),
-  })),
+  CommentService: vi.fn(function CommentServiceMock() {
+    return {
+      getContentComments: (...args: unknown[]) => mockCommentGetContent(...args),
+      createComment: (...args: unknown[]) => mockCommentCreate(...args),
+      getCommentById: (...args: unknown[]) => mockCommentGetById(...args),
+      deleteComment: (...args: unknown[]) => mockCommentDelete(...args),
+    };
+  }),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -109,6 +114,20 @@ vi.mock('../../../utils/v8MetricsStore.js', () => ({
 
 vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
   v8MetricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
+vi.mock('../../../middleware/permission.middleware.js', () => ({
+  requirePermission: (permissionKey: string) => {
+    permissionMockState.registeredPermissionKeys.push(permissionKey);
+    return (_req: unknown, _res: unknown, next: () => void) => next();
+  },
+  requireAnyPermission: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireAllPermissions: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
+vi.mock('../../../services/permissionService.js', () => ({
+  hasPermission: vi.fn().mockResolvedValue(true),
+  default: {},
 }));
 
 let mockUser: {
@@ -447,6 +466,13 @@ describe('V8 Interview insight routes', () => {
     expect(mockInsightList).toHaveBeenCalledWith(ORG, { limit: 50, offset: 0 });
   });
 
+  it('registers granular insight permissions on V8 routes', () => {
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_VIEW');
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_CREATE');
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_REVIEW');
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_HANDOFF');
+  });
+
   it('GET /api/v8/interview/insights/:id returns insight in V8 envelope', async () => {
     mockInsightGetById.mockResolvedValue({ id: 'ins-1', organizationId: ORG, title: 'Test', status: 'completed' });
 
@@ -533,7 +559,9 @@ describe('V8 Interview insight routes', () => {
 
   it('GET /api/v8/interview/insights/:id/activity returns activity in V8 envelope', async () => {
     mockQueryOne.mockResolvedValue({ organization_id: ORG });
-    mockQueryAll.mockResolvedValue([{ id: 'act-1', type: 'created', description: 'Created', created_at: '2026-01-01', first_name: 'Jan', last_name: 'Kowalski' }]);
+    mockQueryAll
+      .mockResolvedValueOnce([{ id: 'act-1', type: 'created', description: 'Created', created_at: '2026-01-01', first_name: 'Jan', last_name: 'Kowalski' }])
+      .mockResolvedValueOnce([{ id: 'audit-1', type: 'publish', created_at: '2026-01-02', first_name: 'Anna', last_name: 'Nowak' }]);
 
     const res = await request(createApp())
       .get('/api/v8/interview/insights/ins-1/activity')
@@ -541,8 +569,10 @@ describe('V8 Interview insight routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
-    expect(res.body.data?.activity).toHaveLength(1);
-    expect(res.body.data?.activity?.[0]?.userName).toBe('Jan Kowalski');
+    expect(res.body.data?.activity).toHaveLength(2);
+    expect(res.body.data?.activity?.[0]?.description).toBe('P10: publish');
+    expect(res.body.data?.activity?.[0]?.userName).toBe('Anna Nowak');
+    expect(res.body.data?.activity?.[1]?.userName).toBe('Jan Kowalski');
   });
 
   it('GET /api/v8/interview/insights/:id/comments returns comments in V8 envelope', async () => {

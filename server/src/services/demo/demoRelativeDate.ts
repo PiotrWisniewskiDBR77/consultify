@@ -137,7 +137,7 @@ export function materializeRelativeDate(
   options: RelativeDateOptions = {}
 ): Date {
   const anchor = coerceAnchorDate(options.anchorDate);
-  const normalized =
+  const normalized: { preset: RelativeDatePreset; offsetDays: number; setTimeUtc?: { hour: number; minute?: number } } =
     typeof spec === 'string'
       ? parseStringSpec(spec)
       : {

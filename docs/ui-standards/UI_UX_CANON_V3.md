@@ -26,7 +26,8 @@ Kanon v3:
 - Tekst główny w light mode: `text-slate-900` / `text-navy-900`
 - Zakaz: “jasne tło semantyczne + jasny tekst tego samego koloru” (badge/chips)
 
-SSOT: `docs/ui-standards/00-foundation/visual-language.md`
+SSOT: `docs/ui-standards/00-foundation/visual-language.md`  
+SSOT (readability rules): `docs/ui-standards/00-foundation/light-mode-readability.md`
 
 ---
 

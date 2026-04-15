@@ -726,7 +726,6 @@ export class LLMConfigService {
     const disabledProviders = getDisabledProviders();
 
     for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
-      if (!allowlist.has(providerId)) continue;
       const apiKey = this.getApiKeyFromEnv(providerId);
 
       const changes: Record<string, unknown> = {
@@ -775,28 +774,34 @@ export class LLMConfigService {
         // immediately takes effect without manual DB edits.
         const existingKey = String(existingProvider.api_key || '').trim();
         const envKey = String(apiKey || '').trim();
-        if (envKey && (allowEnvSecretOverride || !existingKey || isPlaceholderKey(existingKey))) {
+        if (
+          allowlist.has(providerId) &&
+          envKey &&
+          (allowEnvSecretOverride || !existingKey || isPlaceholderKey(existingKey))
+        ) {
           changes.api_key = envKey;
         }
 
         const effectiveKey = String(
           (changes.api_key ?? existingProvider.api_key ?? '') || ''
         ).trim();
-        if (!disabledProviders.has(providerId) && effectiveKey) {
+        if (!disabledProviders.has(providerId) && allowlist.has(providerId) && effectiveKey) {
           changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', true);
         } else {
           // If a provider has no usable key (env+db empty/placeholder), keep it inactive to avoid
           // noisy health checks / circuit breaker churn.
-          const existingKeyLooksUsable = existingKey && !isPlaceholderKey(existingKey);
-          const envKeyLooksUsable = envKey && !isPlaceholderKey(envKey);
-          if (!existingKeyLooksUsable && !envKeyLooksUsable) {
-            changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', false);
+          if (allowlist.has(providerId)) {
+            const existingKeyLooksUsable = existingKey && !isPlaceholderKey(existingKey);
+            const envKeyLooksUsable = envKey && !isPlaceholderKey(envKey);
+            if (!existingKeyLooksUsable && !envKeyLooksUsable) {
+              changes.is_active = await this.coerceLlmProvidersFlagValue('is_active', false);
+            }
           }
         }
 
         // Only OpenRouter is auto-promoted to "default" by env sync.
         // Other providers should not silently become default (multi-default can break routing expectations).
-        if (providerId === 'openrouter') {
+        if (allowlist.has(providerId) && providerId === 'openrouter') {
           changes.is_default = await this.coerceLlmProvidersFlagValue('is_default', true);
         }
 
@@ -806,11 +811,11 @@ export class LLMConfigService {
         await this.createProviderInDb({
           id: `${providerId}-01`,
           provider: providerId,
-          api_key: apiKey || null,
-          is_active: await this.coerceLlmProvidersFlagValue('is_active', !!apiKey),
+          api_key: allowlist.has(providerId) ? apiKey || null : null,
+          is_active: await this.coerceLlmProvidersFlagValue('is_active', allowlist.has(providerId) && !!apiKey),
           is_default: await this.coerceLlmProvidersFlagValue(
             'is_default',
-            providerId === 'openrouter'
+            allowlist.has(providerId) && providerId === 'openrouter'
           ),
           ...changes,
         });

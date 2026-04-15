@@ -3,6 +3,20 @@ import { StateCreator } from 'zustand';
 import { AppView, AuthStep, SessionMode, User } from '../../types';
 import type { AppState } from '../useAppStore';
 
+const USER_STORAGE_KEY = 'user';
+
+function syncStoredUser(user: User | null) {
+  try {
+    if (user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    }
+  } catch {
+    // ignore storage failures
+  }
+}
+
 export interface AuthSlice {
   currentUser: User | null;
   sessionMode: SessionMode;
@@ -26,7 +40,10 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
   currentOrganization: null,
   isAuthInitializing: true, // Start as true, will be set to false after initial auth check
 
-  setCurrentUser: (user) => set({ currentUser: user }),
+  setCurrentUser: (user) => {
+    syncStoredUser(user);
+    set({ currentUser: user });
+  },
   setSessionMode: (mode) => set({ sessionMode: mode }),
   setAuthInitialStep: (step) => set({ authInitialStep: step }),
   setCurrentOrganization: (org) => set({ currentOrganization: org }),
