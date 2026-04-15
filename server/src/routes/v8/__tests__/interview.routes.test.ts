@@ -84,6 +84,9 @@ const mockCommentGetContent = vi.fn();
 const mockCommentCreate = vi.fn();
 const mockCommentGetById = vi.fn();
 const mockCommentDelete = vi.fn();
+const permissionMockState = vi.hoisted(() => ({
+  registeredPermissionKeys: [] as string[],
+}));
 
 vi.mock('../../../services/content/CommentService.js', () => ({
   CommentService: vi.fn().mockImplementation(() => ({
@@ -109,6 +112,20 @@ vi.mock('../../../utils/v8MetricsStore.js', () => ({
 
 vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
   v8MetricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
+vi.mock('../../../middleware/permission.middleware.js', () => ({
+  requirePermission: (permissionKey: string) => {
+    permissionMockState.registeredPermissionKeys.push(permissionKey);
+    return (_req: unknown, _res: unknown, next: () => void) => next();
+  },
+  requireAnyPermission: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireAllPermissions: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
+vi.mock('../../../services/permissionService.js', () => ({
+  hasPermission: vi.fn().mockResolvedValue(true),
+  default: {},
 }));
 
 let mockUser: {
@@ -445,6 +462,13 @@ describe('V8 Interview insight routes', () => {
     expect(res.body.data?.insights).toHaveLength(1);
     expect(res.body.data?.insights?.[0]?.id).toBe('ins-1');
     expect(mockInsightList).toHaveBeenCalledWith(ORG, { limit: 50, offset: 0 });
+  });
+
+  it('registers granular insight permissions on V8 routes', () => {
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_VIEW');
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_CREATE');
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_REVIEW');
+    expect(permissionMockState.registeredPermissionKeys).toContain('INTERVIEW_INSIGHTS_HANDOFF');
   });
 
   it('GET /api/v8/interview/insights/:id returns insight in V8 envelope', async () => {

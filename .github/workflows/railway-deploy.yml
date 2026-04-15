@@ -35,7 +35,7 @@ concurrency:
 jobs:
   deploy-staging:
     name: Deploy Staging
-    if: github.event_name == 'push' || github.event.inputs.environment == 'staging'
+    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     environment: staging
@@ -75,7 +75,7 @@ jobs:
 
   deploy-production:
     name: Deploy Production
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production' && github.event.inputs.confirm_production == 'yes'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production' && github.event.inputs.confirm_production == 'yes'
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     environment: production

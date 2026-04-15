@@ -447,7 +447,7 @@ async function createInsightProposalFromAssessment(params: {
     }
   };
 
-  addFinding(insightId, {
+  await addFinding(insightId, {
     finding_statement: findingStatement,
     confidence_level: confidenceLevel,
     limits: String(payload.limits || 'Bounded assessment proposal'),

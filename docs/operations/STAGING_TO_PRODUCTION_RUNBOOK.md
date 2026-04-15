@@ -33,6 +33,7 @@ Before merging:
 1. confirm GitHub Actions passed on the PR
 2. confirm staging validation was completed
 3. confirm no unresolved rollback blockers remain
+4. run `npm run deploy:gate` from the repo root against the release candidate
 
 ### 3. Merge to production branch
 
@@ -44,6 +45,7 @@ Run the GitHub Actions workflow:
 
 - workflow: `Railway Deploy`
 - environment: `production`
+- source ref: `main`
 
 Production deploy is manual by design.
 

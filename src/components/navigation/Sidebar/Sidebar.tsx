@@ -482,7 +482,8 @@ export const Sidebar: React.FC = () => {
             !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role)
           }
         >
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedOrganizationMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
+            renderNavItem(lockedOrganizationMenuItem)}
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedAdminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
           {renderNavItem(settingsMenuItem)}

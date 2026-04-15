@@ -153,7 +153,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                 : sessionStatus}
           </span>
           {lastUpdated && (
-            <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
+            <span className="text-xs text-slate-500 dark:text-slate-500 truncate">
               {new Date(lastUpdated).toLocaleDateString()}
             </span>
           )}
@@ -176,7 +176,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
             style={{ width: `${overallPercent}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
           {answeredQuestions}/{totalQuestions} {isPolish ? 'pytań' : 'questions'} ({overallPercent}
           %)
         </p>
@@ -226,7 +226,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                   ) : (
                     <Icon
                       size={16}
-                      className={isActive ? config.color : 'text-slate-400 dark:text-slate-500'}
+                      className={isActive ? config.color : 'text-slate-500 dark:text-slate-500'}
                     />
                   )}
                 </div>
@@ -239,13 +239,13 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                           ? 'text-emerald-700 dark:text-emerald-400'
                           : isActive
                             ? 'text-navy-900 dark:text-white'
-                            : 'text-slate-600 dark:text-slate-400'
+                            : 'text-slate-700 dark:text-slate-400'
                       }
                     `}
                   >
                     {isPolish ? config.labelPl : config.labelEn}
                   </span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-500">
                     {answered}/{total} {isPolish ? 'odp.' : 'ans.'}
                   </span>
                 </div>
@@ -253,7 +253,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                   size={16}
                   className={`
                     shrink-0 transition-transform
-                    ${isActive ? 'text-slate-400 rotate-90' : 'text-slate-300 dark:text-slate-600'}
+                    ${isActive ? 'text-slate-500 rotate-90' : 'text-slate-400 dark:text-slate-600'}
                   `}
                 />
               </button>
@@ -264,7 +264,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
 
       {/* Footer info */}
       <div className="p-3 border-t border-slate-200 dark:border-navy-700">
-        <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+        <p className="text-xs text-slate-500 dark:text-slate-500 text-center">
           {isPolish ? 'Tylko fakty - bez rekomendacji' : 'Facts only - no recommendations'}
         </p>
       </div>

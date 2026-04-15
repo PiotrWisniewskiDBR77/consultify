@@ -78,6 +78,11 @@ const FORCED_SUPERADMIN_EMAILS = (() => {
 })();
 
 const passwordResetSuccessMessage = 'If the email exists, a reset link has been sent.';
+const APLIX_ACCESS_CODE = 'APLIX-2026';
+const APLIX_DEFAULT_TEMPLATE_SUFFIXES = [
+  'aplix_global_all_v1',
+  'aplix_plant_charlotte_v1',
+] as const;
 
 const buildPasswordResetEmailHtml = (resetLink: string): string => `
   <h2>Password Reset Request</h2>
@@ -85,6 +90,49 @@ const buildPasswordResetEmailHtml = (resetLink: string): string => `
   <p><a href="${resetLink}">${resetLink}</a></p>
   <p>If you did not request this, you can safely ignore this email.</p>
 `;
+
+async function assignAplixDefaultInterviews(params: {
+  organizationId: string;
+  userId: string;
+  createdBy: string;
+  accessCode?: string | null;
+}) {
+  const normalizedAccessCode = String(params.accessCode || '')
+    .trim()
+    .toUpperCase();
+  if (normalizedAccessCode !== APLIX_ACCESS_CODE) return;
+
+  const { default: interviewAssignmentService } = (await import(
+    '../services/InterviewAssignmentService.js'
+  )) as any;
+  const dueAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  for (const templateSuffix of APLIX_DEFAULT_TEMPLATE_SUFFIXES) {
+    const templateId = `${params.organizationId}__${templateSuffix}`;
+    const existingAssignment = await dbGet<{ id: string }>(
+      `SELECT id
+         FROM interview_assignments
+        WHERE organization_id = ?
+          AND assignee_user_id = ?
+          AND template_id = ?
+        LIMIT 1`,
+      [params.organizationId, params.userId, templateId]
+    );
+
+    if (existingAssignment?.id) continue;
+
+    await interviewAssignmentService.create({
+      organizationId: params.organizationId,
+      templateId,
+      assigneeUserIds: [params.userId],
+      dueAt,
+      priority: 'medium',
+      notes: 'Auto-assigned during APLIX access-code onboarding.',
+      createdBy: params.createdBy,
+      escalateTo: params.createdBy,
+    });
+  }
+}
 
 // Helper to add timeout to promises
 const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
@@ -1347,6 +1395,18 @@ router.post(
            ON CONFLICT(organization_id, user_id) DO NOTHING`,
           [uuidv4(), orgId, userId, memberRole]
         );
+
+        try {
+          await assignAplixDefaultInterviews({
+            organizationId: orgId,
+            userId,
+            createdBy: userId,
+            accessCode,
+          });
+        } catch (assignmentErr) {
+          logger.error('[Auth] Failed to auto-assign APLIX interviews:', assignmentErr);
+          return res.status(500).json({ error: 'Failed to assign required APLIX interviews' });
+        }
 
         if (Array.isArray(acceptedLegalDocs) && acceptedLegalDocs.length > 0) {
           try {

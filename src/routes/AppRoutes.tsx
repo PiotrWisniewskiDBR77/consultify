@@ -321,13 +321,19 @@ const BusinessCasesPage = React.lazy(() =>
 
 // Documentation Portal (Public)
 const KnowledgeBaseHomePage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({ default: m.KnowledgeBaseHomePage }))
+  import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({
+    default: m.KnowledgeBaseHomePage,
+  }))
 );
 const KnowledgeBaseCategoryPage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({ default: m.KnowledgeBaseCategoryPage }))
+  import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({
+    default: m.KnowledgeBaseCategoryPage,
+  }))
 );
 const KnowledgeBaseArticlePage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({ default: m.KnowledgeBaseArticlePage }))
+  import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({
+    default: m.KnowledgeBaseArticlePage,
+  }))
 );
 const DocsLayout = React.lazy(() =>
   import('@/layouts/DocsLayout').then((m) => ({ default: m.DocsLayout }))
@@ -481,9 +487,12 @@ export const AppRoutes: React.FC = () => {
   const {
     currentView,
     currentUser,
+    currentOrganization,
+    currentProjectId,
     setCurrentView,
     setCurrentUser,
     setCurrentOrganization,
+    setCurrentProjectId,
     setSessionMode,
     setAuthInitialStep,
     authInitialStep,
@@ -639,6 +648,16 @@ export const AppRoutes: React.FC = () => {
       // ignore storage errors
     }
 
+    if (
+      validUser.organizationId &&
+      currentProjectId &&
+      currentOrganization?.id &&
+      currentOrganization.id !== validUser.organizationId
+    ) {
+      // A persisted project from another org would make PMO modules appear empty.
+      setCurrentProjectId(null);
+    }
+
     if (validUser.organizationId) {
       setCurrentOrganization({
         id: validUser.organizationId,
@@ -733,7 +752,10 @@ export const AppRoutes: React.FC = () => {
         {/* Knowledge Base - Public Product KB */}
         <Route path="/knowledge-base" element={<KnowledgeBaseHomePage />} />
         <Route path="/knowledge-base/:categorySlug" element={<KnowledgeBaseCategoryPage />} />
-        <Route path="/knowledge-base/:categorySlug/:articleSlug" element={<KnowledgeBaseArticlePage />} />
+        <Route
+          path="/knowledge-base/:categorySlug/:articleSlug"
+          element={<KnowledgeBaseArticlePage />}
+        />
 
         {/* Public Form Page (Table Platform) — no auth required */}
         <Route

@@ -1099,7 +1099,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           <div className="space-y-1">
             {immersive ? (
               /* Flat question list for immersive mode */
-              <div className="rounded-xl border border-slate-100 dark:border-navy-800 overflow-hidden divide-y divide-slate-100 dark:divide-navy-800">
+              <div className="rounded-xl border border-slate-200 dark:border-navy-800 overflow-hidden divide-y divide-slate-200 dark:divide-navy-800">
                 {orderedQuestions.map((q, idx) => {
                   const answered = q.status === 'answered';
                   const snippet = q.answerText
@@ -1123,7 +1123,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                             : q.isRequired
                               ? 'bg-rose-500/10 text-rose-500'
-                              : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+                              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
                         }`}
                       >
                         {answered ? <Check size={10} /> : idx + 1}
@@ -1133,7 +1133,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           {q.questionText}
                         </p>
                         {snippet && (
-                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                          <p className="text-xs text-slate-600 dark:text-slate-500 truncate mt-0.5">
                             {snippet}
                           </p>
                         )}
@@ -1152,7 +1152,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 return (
                   <div
                     key={cat}
-                    className="rounded-xl border border-slate-100 dark:border-navy-800 overflow-hidden"
+                    className="rounded-xl border border-slate-200 dark:border-navy-800 overflow-hidden"
                   >
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 dark:bg-navy-950/40">
                       <span
@@ -1161,7 +1161,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         <catConfig.icon size={11} />
                         {isPolish ? catConfig.labelPl : catConfig.labelEn}
                       </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="text-xs text-slate-600 dark:text-slate-500">
                         {catInfo.answered}/{catInfo.total}
                       </span>
                       {catInfo.answered === catInfo.total && catInfo.total > 0 && (
@@ -1201,7 +1201,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 {q.questionText}
                               </p>
                               {snippet && (
-                                <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                                <p className="text-xs text-slate-600 dark:text-slate-500 truncate mt-0.5">
                                   {snippet}
                                 </p>
                               )}
@@ -1261,14 +1261,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           {/* Header with progress */}
           <div className="px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Pytania' : 'Questions'}
               </p>
               <span
                 className={`text-[10px] font-semibold tabular-nums ${
                   answeredCount === orderedQuestions.length
                     ? 'text-emerald-500'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
                 }`}
               >
                 {answeredCount}/{orderedQuestions.length}
@@ -1283,7 +1283,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               />
             </div>
             {answeredCount < orderedQuestions.length && (
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1.5">
                 {orderedQuestions.length - answeredCount}{' '}
                 {isPolish ? 'do uzupełnienia' : 'remaining'}
               </p>
@@ -1326,14 +1326,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         isCurrent
                           ? 'text-primary-700 dark:text-primary-300 font-medium'
                           : isAnswered
-                            ? 'text-slate-400 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-navy-600'
+                            ? 'text-slate-500 dark:text-slate-500 line-through decoration-slate-300 dark:decoration-navy-600'
                             : 'text-slate-700 dark:text-slate-200 font-medium'
                       }`}
                     >
                       {q.questionText}
                     </span>
                     {isAnswered && q.answerText && (
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate block mt-0.5">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-500 truncate block mt-0.5">
                         {q.answerText.length > 50 ? q.answerText.slice(0, 50) + '…' : q.answerText}
                       </span>
                     )}
@@ -1380,7 +1380,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           aria-label={isPolish ? 'Nawigacja kategorii' : 'Category navigation'}
         >
           {sessionName && (
-            <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 truncate">
+            <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500 truncate">
               {sessionName}
             </p>
           )}
@@ -1490,7 +1490,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
               </span>
             )}
-            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
               {currentIndex + 1} / {orderedQuestions.length}
             </span>
             <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
@@ -1501,7 +1501,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 }}
               />
             </div>
-            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
               {answeredCount}/{orderedQuestions.length}
             </span>
           </div>
@@ -1537,7 +1537,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       >
                         {currentIndex + 1}
                       </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                      <span className="text-xs text-slate-600 dark:text-slate-500 tabular-nums">
                         {isPolish ? 'z' : 'of'} {orderedQuestions.length}
                       </span>
                     </div>
@@ -1605,7 +1605,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           className={`rounded-xl px-4 py-3 border ${
                             immersive
                               ? 'bg-amber-500/[0.06] border-amber-500/10'
-                              : 'bg-amber-50/70 dark:bg-amber-500/[0.06] border-amber-200/50 dark:border-amber-500/10'
+                              : 'bg-amber-50 dark:bg-amber-500/[0.06] border-amber-200/80 dark:border-amber-500/10 shadow-sm shadow-amber-100/40'
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
@@ -1618,7 +1618,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
                                   immersive
                                     ? 'text-amber-400/70'
-                                    : 'text-amber-600/70 dark:text-amber-400/70'
+                                    : 'text-amber-700 dark:text-amber-400/70'
                                 }`}
                               >
                                 {isPolish ? 'Wskazówka' : 'Hint'}
@@ -1627,7 +1627,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 className={`text-sm leading-relaxed ${
                                   immersive
                                     ? 'text-amber-200/90'
-                                    : 'text-amber-900/80 dark:text-amber-200/90'
+                                    : 'text-amber-950 dark:text-amber-200/90'
                                 }`}
                               >
                                 {currentQuestion.description || (currentQuestion as any).helpHint}
@@ -1642,7 +1642,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           className={`rounded-xl px-4 py-3 border ${
                             immersive
                               ? 'bg-sky-500/[0.06] border-sky-500/10'
-                              : 'bg-sky-50/70 dark:bg-sky-500/[0.06] border-sky-200/50 dark:border-sky-500/10'
+                              : 'bg-sky-50 dark:bg-sky-500/[0.06] border-sky-200/80 dark:border-sky-500/10 shadow-sm shadow-sky-100/40'
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
@@ -1655,7 +1655,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
                                   immersive
                                     ? 'text-sky-400/70'
-                                    : 'text-sky-600/70 dark:text-sky-400/70'
+                                    : 'text-sky-700 dark:text-sky-400/70'
                                 }`}
                               >
                                 {isPolish ? 'Czego szukamy' : 'What we look for'}
@@ -1664,7 +1664,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 className={`text-sm leading-relaxed ${
                                   immersive
                                     ? 'text-sky-200/90'
-                                    : 'text-sky-800/80 dark:text-sky-200/90'
+                                    : 'text-sky-950 dark:text-sky-200/90'
                                 }`}
                               >
                                 {currentQuestion.evidencePrompt}
@@ -1682,11 +1682,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${
                         immersive
                           ? 'bg-primary-500/[0.06] border-primary-500/10'
-                          : 'bg-primary-500/5 dark:bg-primary-500/10 border-primary-500/10 dark:border-primary-500/15'
+                          : 'bg-primary-50 dark:bg-primary-500/10 border-primary-200/80 dark:border-primary-500/15 shadow-sm shadow-primary-500/5'
                       }`}
                     >
-                      <Sparkles size={13} className="text-primary-500 shrink-0" />
-                      <span className="text-xs text-primary-700 dark:text-primary-300">
+                      <Sparkles
+                        size={13}
+                        className="shrink-0 text-primary-600 dark:text-primary-400"
+                      />
+                      <span className="text-xs text-primary-900 dark:text-primary-300">
                         {isPolish ? 'Oczekiwany format:' : 'Expected format:'}{' '}
                         <span className="font-medium">{currentQuestion.expectedAnswerShape}</span>
                       </span>
@@ -1702,7 +1705,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
                         aiExplainResult
                           ? 'text-violet-600 dark:text-violet-400'
-                          : 'text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
+                          : 'text-slate-600 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
                       }`}
                     >
                       {aiExplaining ? (

@@ -125,6 +125,9 @@ function formatInviteRoleLabel(role?: string): string {
       return 'Owner';
     case 'ADMIN':
       return 'Admin';
+    case 'PROJECT_MANAGER':
+    case 'MANAGER':
+      return 'Manager';
     case 'GUEST':
       return 'Guest';
     case 'MEMBER':

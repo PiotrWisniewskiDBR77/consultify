@@ -1489,6 +1489,41 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [t, filteredInitiatives.length, stats.blocked, tasks.length, decisions, actionQueueItems]
   );
 
+  // Handle inline status change from table/grid
+  const handleInlineStatusChange = useCallback(
+    async (initiativeId: string, newStatus: string) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({
+          href: '/implementation',
+        });
+        return;
+      }
+      const previous = initiatives.find((i) => i.id === initiativeId);
+      try {
+        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
+        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
+        setInitiatives((prev) =>
+          prev.map((i) =>
+            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
+          )
+        );
+        trackFunnelEvent('execution_status_updated', {
+          initiativeId,
+          from: previous?.status || null,
+          to: newStatus,
+          tab: activeTab,
+          viewMode,
+        });
+        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
+        );
+      }
+    },
+    [activeTab, initiatives, isPilotParticipant, t, viewMode]
+  );
+
   // Table columns
   const columns: TableColumn[] = useMemo(
     () => [
@@ -2306,41 +2341,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       );
     },
     [activeDocumentId]
-  );
-
-  // Handle inline status change from table/grid
-  const handleInlineStatusChange = useCallback(
-    async (initiativeId: string, newStatus: string) => {
-      if (isPilotParticipant) {
-        dispatchPilotAccessBlocked({
-          href: '/implementation',
-        });
-        return;
-      }
-      const previous = initiatives.find((i) => i.id === initiativeId);
-      try {
-        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
-        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-        setInitiatives((prev) =>
-          prev.map((i) =>
-            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
-          )
-        );
-        trackFunnelEvent('execution_status_updated', {
-          initiativeId,
-          from: previous?.status || null,
-          to: newStatus,
-          tab: activeTab,
-          viewMode,
-        });
-        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
-      } catch (e: any) {
-        toast.error(
-          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
-        );
-      }
-    },
-    [activeTab, initiatives, isPilotParticipant, t, viewMode]
   );
 
   const handleViewModeChange = useCallback(

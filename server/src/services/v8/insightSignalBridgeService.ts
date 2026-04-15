@@ -59,7 +59,7 @@ export async function emitRadarSignalsForInsight(
   const signalIds: string[] = [];
   const errors: string[] = [];
 
-  const findings = listFindings(insight.id);
+  const findings = await listFindings(insight.id);
   if (findings.length === 0) {
     logger.info(`${LOG_PREFIX} No findings for insight ${insight.id}, skipping radar emission`);
     return { signalIds, errors };
@@ -130,7 +130,7 @@ export async function indexInsightInKnowledgeBase(
   organizationId: string
 ): Promise<{ docId: string | null; chunkCount: number; error?: string }> {
   try {
-    const findings = listFindings(insight.id);
+    const findings = await listFindings(insight.id);
 
     const contentParts: string[] = [
       `# Published Insight: ${insight.title}`,

@@ -19,6 +19,8 @@ const __dirname = path.dirname(__filename);
 
 const isProductionEnv = process.env.NODE_ENV === 'production';
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const shouldIgnoreLocalEnv =
+  process.env.DOTENV_IGNORE_LOCAL === '1' || process.env.DOTENV_IGNORE_LOCAL === 'true';
 
 const repoRootEnvPath = path.resolve(__dirname, '../../../.env');
 const repoRootEnvLocalPath = path.resolve(__dirname, '../../../.env.local');
@@ -39,11 +41,13 @@ const extraEnvPath = (() => {
 // Prefer repo-root `.env` (workspace-level config), fallback to `server/.env` for legacy setups.
 const baseEnvPath = fs.existsSync(repoRootEnvPath) ? repoRootEnvPath : serverEnvPath;
 // Prefer repo-root `.env.local`, fallback to `server/.env.local` for legacy setups.
-const localEnvPath = fs.existsSync(repoRootEnvLocalPath)
-  ? repoRootEnvLocalPath
-  : fs.existsSync(serverEnvLocalPath)
-    ? serverEnvLocalPath
-    : null;
+const localEnvPath = shouldIgnoreLocalEnv
+  ? null
+  : fs.existsSync(repoRootEnvLocalPath)
+    ? repoRootEnvLocalPath
+    : fs.existsSync(serverEnvLocalPath)
+      ? serverEnvLocalPath
+      : null;
 
 // By default, do NOT override env vars already set by the shell / npm scripts.
 // This is critical for local dev where scripts explicitly set DB_TYPE/DATABASE_URL.

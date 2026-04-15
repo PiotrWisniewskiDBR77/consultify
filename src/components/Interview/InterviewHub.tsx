@@ -224,6 +224,9 @@ interface InterviewInsight {
   impactLevel?: string;
   confidence?: string;
   status?: string;
+  reviewStatus?: 'draft' | 'in_review' | 'published';
+  publishedAt?: string;
+  reviewedBy?: string;
   actionable?: boolean;
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
@@ -288,6 +291,7 @@ interface InterviewAssignment {
   submittedAt?: string;
   sentBackAt?: string;
   sentBackReason?: string;
+  missingItems?: Array<{ key: string; label: string; questionId?: string; sectionId?: string }>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   isTeamAssignment: boolean;
   notes?: string;
@@ -312,6 +316,43 @@ interface InterviewAssignment {
     answeredQuestions: number;
     totalQuestions: number;
     completenessPercent: number;
+  };
+}
+
+function normalizeInterviewAssignmentStatus(status?: string): InterviewAssignment['status'] {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'sent_back') return 'in_progress';
+  if (
+    normalized === 'assigned' ||
+    normalized === 'in_progress' ||
+    normalized === 'submitted' ||
+    normalized === 'approved' ||
+    normalized === 'completed'
+  ) {
+    return normalized;
+  }
+  return 'in_progress';
+}
+
+function normalizeInterviewAssignmentRecord(
+  assignment: InterviewAssignment
+): InterviewAssignment {
+  return {
+    ...assignment,
+    status: normalizeInterviewAssignmentStatus(assignment.status),
+  };
+}
+
+function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSession {
+  return {
+    ...session,
+    status:
+      String(session.assignmentStatus || session.status || '').toLowerCase() === 'sent_back'
+        ? 'in_progress'
+        : session.status,
+    assignmentStatus: session.assignmentStatus
+      ? normalizeInterviewAssignmentStatus(session.assignmentStatus)
+      : session.assignmentStatus,
   };
 }
 
@@ -414,6 +455,9 @@ export const InterviewHub: React.FC = () => {
     canAssign: permissionsCanAssign,
     canViewManaged: permissionsCanViewManaged,
     canViewOverdue: permissionsCanViewOverdue,
+    canViewInsights: permissionsCanViewInsights,
+    canCreateInsights: permissionsCanCreateInsights,
+    canReviewInsights: permissionsCanReviewInsights,
     isLoading: permissionsLoading,
   } = useInterviewPermissions();
 
@@ -541,6 +585,9 @@ export const InterviewHub: React.FC = () => {
   const canAssign = permissionsCanAssign || isUsingDemoData;
   const canViewManaged = permissionsCanViewManaged || isUsingDemoData;
   const canViewOverdue = permissionsCanViewOverdue || isUsingDemoData;
+  const canViewInsights = permissionsCanViewInsights || isUsingDemoData;
+  const canCreateInsights = permissionsCanCreateInsights || isUsingDemoData;
+  const canReviewInsights = permissionsCanReviewInsights || isUsingDemoData;
 
   // Interview Inbox preview (Outlook-style) — Assignments
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
@@ -581,7 +628,9 @@ export const InterviewHub: React.FC = () => {
       .then((res) => res.sessions)
       .catch(() => Api.get('/interview/sessions/managed'))
       .catch(() => []);
-    return Array.isArray(sessionsRes) ? (sessionsRes as InterviewSession[]) : [];
+    return Array.isArray(sessionsRes)
+      ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
+      : [];
   }, []);
 
   const loadMyAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
@@ -589,7 +638,9 @@ export const InterviewHub: React.FC = () => {
       .then((res) => res.assignments)
       .catch(() => Api.get('/interview/assignments/my'))
       .catch(() => []);
-    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+    return Array.isArray(assignmentsRes)
+      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+      : [];
   }, []);
 
   const loadManagedAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
@@ -597,7 +648,9 @@ export const InterviewHub: React.FC = () => {
       .then((res) => res.assignments)
       .catch(() => Api.get('/interview/assignments/managed'))
       .catch(() => []);
-    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+    return Array.isArray(assignmentsRes)
+      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+      : [];
   }, []);
 
   const loadOverdueAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
@@ -605,7 +658,9 @@ export const InterviewHub: React.FC = () => {
       .then((res) => res.assignments)
       .catch(() => Api.get('/interview/assignments/overdue'))
       .catch(() => []);
-    return Array.isArray(assignmentsRes) ? (assignmentsRes as InterviewAssignment[]) : [];
+    return Array.isArray(assignmentsRes)
+      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+      : [];
   }, []);
 
   // V3-A02: Dynamic documents state with sessionStorage persistence (shared hook)
@@ -936,7 +991,8 @@ export const InterviewHub: React.FC = () => {
   ]);
 
   const getSessionWorkflowStatus = useCallback(
-    (session: InterviewSession) => String(session.assignmentStatus || session.status || 'in_progress'),
+    (session: InterviewSession) =>
+      normalizeInterviewAssignmentStatus(session.assignmentStatus || session.status || 'in_progress'),
     []
   );
 
@@ -978,7 +1034,6 @@ export const InterviewHub: React.FC = () => {
       all: sessions.length,
       in_progress: sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length,
       submitted: sessions.filter((s) => getSessionWorkflowStatus(s) === 'submitted').length,
-      sent_back: sessions.filter((s) => getSessionWorkflowStatus(s) === 'sent_back').length,
       approved: sessions.filter((s) =>
         ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
       ).length,
@@ -1001,11 +1056,6 @@ export const InterviewHub: React.FC = () => {
         id: 'submitted',
         label: isPolish ? 'Wysłane' : 'Submitted',
         count: sessionStatusCounts.submitted,
-      },
-      {
-        id: 'sent_back',
-        label: isPolish ? 'Do poprawy' : 'Sent back',
-        count: sessionStatusCounts.sent_back,
       },
       {
         id: 'approved',
@@ -1060,8 +1110,11 @@ export const InterviewHub: React.FC = () => {
     [insightTypes]
   );
   const INSIGHT_STATUS_FILTER_OPTIONS = [
+    { value: 'draft', label: 'Draft' },
     { value: 'generating', label: 'Generating' },
     { value: 'completed', label: 'Completed' },
+    { value: 'in_review', label: 'In Review' },
+    { value: 'published', label: 'Published' },
     { value: 'failed', label: 'Failed' },
   ];
 
@@ -1077,7 +1130,11 @@ export const InterviewHub: React.FC = () => {
     }
     const statusFilter = insightTableFilters.status as string[] | undefined;
     if (statusFilter?.length) {
-      result = result.filter((i) => statusFilter.includes((i.status || 'completed') as string));
+      result = result.filter((i) =>
+        statusFilter.includes(((i.reviewStatus === 'in_review' || i.reviewStatus === 'published')
+          ? i.reviewStatus
+          : i.status) || 'completed')
+      );
     }
     return result;
   }, [filteredInsights, insightTableFilters]);
@@ -1086,8 +1143,11 @@ export const InterviewHub: React.FC = () => {
   const insightStats = useMemo(() => {
     return {
       total: insights.length,
+      draft: insights.filter((i) => (i.reviewStatus || 'draft') === 'draft').length,
       generating: insights.filter((i) => i.status === 'generating').length,
       completed: insights.filter((i) => i.status === 'completed').length,
+      inReview: insights.filter((i) => i.reviewStatus === 'in_review' || i.status === 'in_review').length,
+      published: insights.filter((i) => i.reviewStatus === 'published' || i.status === 'published').length,
       failed: insights.filter((i) => i.status === 'failed').length,
       exportedToTools: insights.filter((i) => i.exportedToTools).length,
       exportedToAssessment: insights.filter((i) => i.exportedToAssessment).length,
@@ -1179,7 +1239,7 @@ export const InterviewHub: React.FC = () => {
   // Pracownik (TEAM_MEMBER/VIEWER): tylko Inbox
   // Pending review insights (for triage tab)
   const pendingReviewInsights = useMemo(
-    () => insights.filter((i) => i.status === 'in_review'),
+    () => insights.filter((i) => i.reviewStatus === 'in_review' || i.status === 'in_review'),
     [insights]
   );
 
@@ -1222,13 +1282,18 @@ export const InterviewHub: React.FC = () => {
         count: templates.length,
       });
 
+    }
+
+    if (canViewInsights) {
       baseTabs.push({
         id: 'insights' as ModuleTab,
         label: isPolish ? 'Wnioski' : 'Insights',
         icon: <Lightbulb size={16} />,
         count: insights.length,
       });
+    }
 
+    if (canReviewInsights) {
       baseTabs.push({
         id: 'pending_review' as ModuleTab,
         label: isPolish ? 'Do przeglądu' : 'Pending Review',
@@ -1245,7 +1310,9 @@ export const InterviewHub: React.FC = () => {
     templates.length,
     myAssignments,
     managedAssignments,
+    canViewInsights,
     canViewManaged,
+    canReviewInsights,
     pendingReviewInsights.length,
   ]);
 
@@ -1697,9 +1764,9 @@ export const InterviewHub: React.FC = () => {
       const chipBase =
         'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+        'border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
 
       const buttons: Array<{
         id: 'all' | 'my' | 'to-approve' | 'overdue';
@@ -1779,7 +1846,7 @@ export const InterviewHub: React.FC = () => {
                   } ${b.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-100 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1795,20 +1862,19 @@ export const InterviewHub: React.FC = () => {
       const chipBase =
         'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+        'border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
 
       const allCount = sessions.length;
       const inProgressCount = sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length;
       const submittedCount = sessions.filter((s) => getSessionWorkflowStatus(s) === 'submitted').length;
-      const sentBackCount = sessions.filter((s) => getSessionWorkflowStatus(s) === 'sent_back').length;
       const approvedCount = sessions.filter((s) =>
         ['approved', 'completed'].includes(getSessionWorkflowStatus(s))
       ).length;
 
       const buttons: Array<{
-        id: 'all' | 'in_progress' | 'submitted' | 'sent_back' | 'approved';
+        id: 'all' | 'in_progress' | 'submitted' | 'approved';
         label: string;
         count: number;
         onClick: () => void;
@@ -1834,13 +1900,6 @@ export const InterviewHub: React.FC = () => {
             setSessionStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
         },
         {
-          id: 'sent_back',
-          label: isPolish ? 'Do poprawy' : 'Sent back',
-          count: sentBackCount,
-          onClick: () =>
-            setSessionStatusFilter((prev) => (prev === 'sent_back' ? 'all' : 'sent_back')),
-        },
-        {
           id: 'approved',
           label: isPolish ? 'Zatwierdzone' : 'Approved',
           count: approvedCount,
@@ -1852,9 +1911,8 @@ export const InterviewHub: React.FC = () => {
       const activeId =
         sessionStatusFilter === 'in_progress' ||
         sessionStatusFilter === 'submitted' ||
-        sessionStatusFilter === 'sent_back' ||
         sessionStatusFilter === 'approved'
-          ? (sessionStatusFilter as 'in_progress' | 'submitted' | 'sent_back' | 'approved')
+          ? (sessionStatusFilter as 'in_progress' | 'submitted' | 'approved')
           : 'all';
 
       return (
@@ -1868,7 +1926,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${chipBase} ${activeId === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-100 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1884,9 +1942,9 @@ export const InterviewHub: React.FC = () => {
       const chipBase =
         'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
       const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
+        'border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06]';
       const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
+        'border-primary-200 dark:border-primary-500/30 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-200';
 
       const buttons: Array<{
         id: 'all' | 'default' | 'active';
@@ -1925,7 +1983,7 @@ export const InterviewHub: React.FC = () => {
                   className={`${chipBase} ${templateStatusFilter === b.id ? chipActive : chipInactive}`}
                 >
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  <span className="rounded-full bg-slate-100 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
                     {b.count}
                   </span>
                 </button>
@@ -1947,51 +2005,56 @@ export const InterviewHub: React.FC = () => {
     > = {
       in_progress: {
         label: { en: 'In Progress', pl: 'W trakcie' },
-        bgColor: 'bg-purple-500/20',
-        textColor: 'text-purple-300',
-        dotColor: 'bg-purple-400',
+        bgColor:
+          'bg-blue-100 border border-blue-200 dark:bg-purple-500/20 dark:border-purple-500/30',
+        textColor: 'text-blue-700 dark:text-purple-300',
+        dotColor: 'bg-blue-500 dark:bg-purple-400',
       },
       submitted: {
         label: { en: 'Submitted', pl: 'Wysłany' },
-        bgColor: 'bg-amber-500/20',
-        textColor: 'text-amber-300',
-        dotColor: 'bg-amber-400',
+        bgColor:
+          'bg-amber-100 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30',
+        textColor: 'text-amber-800 dark:text-amber-300',
+        dotColor: 'bg-amber-500 dark:bg-amber-400',
       },
       sent_back: {
         label: { en: 'Sent Back', pl: 'Do poprawy' },
-        bgColor: 'bg-rose-500/20',
-        textColor: 'text-rose-300',
-        dotColor: 'bg-rose-400',
+        bgColor: 'bg-red-100 border border-red-200 dark:bg-rose-500/20 dark:border-rose-500/30',
+        textColor: 'text-red-800 dark:text-rose-300',
+        dotColor: 'bg-red-500 dark:bg-rose-400',
       },
       approved: {
         label: { en: 'Approved', pl: 'Zatwierdzony' },
-        bgColor: 'bg-emerald-500/20',
-        textColor: 'text-emerald-300',
-        dotColor: 'bg-emerald-400',
+        bgColor:
+          'bg-emerald-100 border border-emerald-200 dark:bg-emerald-500/20 dark:border-emerald-500/30',
+        textColor: 'text-emerald-800 dark:text-emerald-300',
+        dotColor: 'bg-emerald-500 dark:bg-emerald-400',
       },
       in_review: {
         label: { en: 'In Review', pl: 'Do przeglądu' },
-        bgColor: 'bg-amber-500/20',
-        textColor: 'text-amber-300',
-        dotColor: 'bg-amber-400',
+        bgColor:
+          'bg-amber-100 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30',
+        textColor: 'text-amber-800 dark:text-amber-300',
+        dotColor: 'bg-amber-500 dark:bg-amber-400',
       },
       completed: {
         label: { en: 'Completed', pl: 'Zakończony' },
-        bgColor: 'bg-emerald-500/20',
-        textColor: 'text-emerald-300',
-        dotColor: 'bg-emerald-400',
+        bgColor:
+          'bg-emerald-100 border border-emerald-200 dark:bg-emerald-500/20 dark:border-emerald-500/30',
+        textColor: 'text-emerald-800 dark:text-emerald-300',
+        dotColor: 'bg-emerald-500 dark:bg-emerald-400',
       },
       paused: {
         label: { en: 'Paused', pl: 'Wstrzymany' },
-        bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-600 dark:text-slate-300',
-        dotColor: 'bg-slate-400',
+        bgColor: 'bg-slate-100 border border-slate-200 dark:bg-slate-500/20 dark:border-slate-500/30',
+        textColor: 'text-slate-700 dark:text-slate-300',
+        dotColor: 'bg-slate-500 dark:bg-slate-400',
       },
       archived: {
         label: { en: 'Archived', pl: 'Zarchiwizowany' },
-        bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-600 dark:text-slate-300',
-        dotColor: 'bg-slate-400',
+        bgColor: 'bg-slate-100 border border-slate-200 dark:bg-slate-500/20 dark:border-slate-500/30',
+        textColor: 'text-slate-700 dark:text-slate-300',
+        dotColor: 'bg-slate-500 dark:bg-slate-400',
       },
     };
     return configs[status] || configs.in_progress;
@@ -2019,28 +2082,28 @@ export const InterviewHub: React.FC = () => {
         <table className="w-full table-fixed">
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
-              <th className="w-[40%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <th className="w-[40%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 {isPolish ? 'Nazwa' : 'Name'}
               </th>
               {!hiddenSet.has('status') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Status' : 'Status'}
                 </th>
               )}
               {!hiddenSet.has('progress') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Postęp' : 'Progress'}
                 </th>
               )}
               {!hiddenSet.has('date') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Data' : 'Date'}
                 </th>
               )}
-              <th className="w-[15%] px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <th className="w-[15%] px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 <button
                   onClick={() => setIsSessionsViewSettingsOpen(true)}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
                   aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                   title={isPolish ? 'Ustawienia widoku' : 'View settings'}
                 >
@@ -2091,7 +2154,7 @@ export const InterviewHub: React.FC = () => {
                         <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
                           {session.name || 'Discovery Interview'}
                         </span>
-                        <span className="text-xs text-slate-500 truncate block">
+                        <span className="text-xs text-slate-600 dark:text-slate-400 truncate block">
                           {(isPolish ? 'Assignee' : 'Assignee')}: {primaryMeta}
                           {' · '}
                           {(isPolish ? 'Template' : 'Template')}: {secondaryMeta}
@@ -2126,7 +2189,7 @@ export const InterviewHub: React.FC = () => {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
                           {progress}%
                         </span>
                       </div>
@@ -2135,7 +2198,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('date') && (
                     <td className="px-3 py-2">
-                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                         <Calendar size={12} />
                         {session.dueAt
                           ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
@@ -2210,10 +2273,10 @@ export const InterviewHub: React.FC = () => {
                 <td colSpan={colSpan} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
                     <MessageSquare className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">
                       {isPolish ? 'Brak sesji managera' : 'No manager sessions yet'}
                     </p>
-                    <p className="text-xs text-slate-500 mt-2 max-w-md">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-md">
                       {isPolish
                         ? 'Tutaj pojawiają się wszystkie uruchomione sesje z workflow managera: w trakcie, wysłane, do poprawy i zatwierdzone.'
                         : 'This view shows manager workflow sessions across in progress, submitted, sent back, and approved states.'}
@@ -2239,16 +2302,17 @@ export const InterviewHub: React.FC = () => {
         const isSubmitted = workflowStatus === 'submitted';
         const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
 
+        const statusConfig = getSessionStatusConfig(workflowStatus);
         const typeColor =
           workflowStatus === 'approved' || workflowStatus === 'completed'
-            ? 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30'
+            ? 'from-emerald-50 via-white to-white border-emerald-200 dark:from-emerald-500/20 dark:to-emerald-600/10 dark:border-emerald-500/30'
             : workflowStatus === 'in_progress'
-              ? 'from-purple-500/20 to-purple-600/10 border-purple-500/30'
+              ? 'from-blue-50 via-white to-white border-blue-200 dark:from-purple-500/20 dark:to-purple-600/10 dark:border-purple-500/30'
               : workflowStatus === 'submitted'
-                ? 'from-amber-500/15 to-amber-600/10 border-amber-500/30'
+                ? 'from-amber-50 via-white to-white border-amber-200 dark:from-amber-500/15 dark:to-amber-600/10 dark:border-amber-500/30'
                 : workflowStatus === 'sent_back'
-                  ? 'from-rose-500/15 to-rose-600/10 border-rose-500/30'
-                  : 'from-slate-500/20 to-slate-600/10 border-slate-500/30';
+                  ? 'from-red-50 via-white to-white border-red-200 dark:from-rose-500/15 dark:to-rose-600/10 dark:border-rose-500/30'
+                  : 'from-slate-50 via-white to-white border-slate-200 dark:from-slate-500/20 dark:to-slate-600/10 dark:border-slate-500/30';
 
         return (
           <div
@@ -2264,14 +2328,14 @@ export const InterviewHub: React.FC = () => {
                     size={16}
                     className={
                       workflowStatus === 'approved' || workflowStatus === 'completed'
-                        ? 'text-emerald-400'
+                        ? 'text-emerald-600 dark:text-emerald-400'
                         : workflowStatus === 'in_progress'
-                          ? 'text-purple-400'
+                          ? 'text-blue-600 dark:text-purple-400'
                           : workflowStatus === 'submitted'
-                            ? 'text-amber-400'
+                            ? 'text-amber-600 dark:text-amber-400'
                             : workflowStatus === 'sent_back'
-                              ? 'text-rose-400'
-                              : 'text-slate-400'
+                              ? 'text-red-600 dark:text-rose-400'
+                              : 'text-slate-500 dark:text-slate-400'
                     }
                   />
                   <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-300">
@@ -2294,7 +2358,7 @@ export const InterviewHub: React.FC = () => {
               <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[40px]">
                 {session.name || 'Discovery Interview'}
               </h4>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+              <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
                 {(session.assigneeName || session.respondentName || '—')}{' · '}
                 {(session.templateName || session.templateCategory || '—')}
               </div>
@@ -2311,51 +2375,15 @@ export const InterviewHub: React.FC = () => {
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{progress}%</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400">{progress}%</span>
               </div>
             </div>
 
             {/* Footer */}
             <div className="px-4 pb-4 flex items-center justify-between">
-              <div
-                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${
-                  workflowStatus === 'approved' || workflowStatus === 'completed'
-                    ? 'bg-emerald-500/20'
-                    : workflowStatus === 'in_progress'
-                      ? 'bg-purple-500/20'
-                      : workflowStatus === 'submitted'
-                        ? 'bg-amber-500/20'
-                        : workflowStatus === 'sent_back'
-                          ? 'bg-rose-500/20'
-                          : 'bg-slate-500/20'
-                }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    workflowStatus === 'approved' || workflowStatus === 'completed'
-                      ? 'bg-emerald-400'
-                      : workflowStatus === 'in_progress'
-                        ? 'bg-purple-400'
-                        : workflowStatus === 'submitted'
-                          ? 'bg-amber-400'
-                          : workflowStatus === 'sent_back'
-                            ? 'bg-rose-400'
-                            : 'bg-slate-400'
-                  }`}
-                />
-                <span
-                  className={`text-xs font-medium ${
-                    workflowStatus === 'approved' || workflowStatus === 'completed'
-                      ? 'text-emerald-300'
-                      : workflowStatus === 'in_progress'
-                        ? 'text-purple-300'
-                        : workflowStatus === 'submitted'
-                          ? 'text-amber-300'
-                          : workflowStatus === 'sent_back'
-                            ? 'text-rose-300'
-                            : 'text-slate-300'
-                  }`}
-                >
+              <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}>
+                <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
+                <span className={`text-xs font-medium ${statusConfig.textColor}`}>
                   {workflowStatus === 'approved' || workflowStatus === 'completed'
                     ? isPolish
                       ? 'Zatwierdzony'
@@ -2375,7 +2403,7 @@ export const InterviewHub: React.FC = () => {
                           : workflowStatus}
                 </span>
               </div>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 {session.dueAt
                   ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
                   : new Date(session.startedAt).toLocaleDateString()}
@@ -2391,7 +2419,7 @@ export const InterviewHub: React.FC = () => {
                       e.stopPropagation();
                       handleApproveAssignment(linkedAssignment);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500/25 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-200 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25 transition-colors"
                   >
                     <Check size={12} />
                     {isPolish ? 'Zatwierdź' : 'Approve'}
@@ -2402,7 +2430,7 @@ export const InterviewHub: React.FC = () => {
                       e.stopPropagation();
                       handleOpenSendBackModal(linkedAssignment);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-medium text-amber-300 hover:bg-amber-500/25 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-200 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300 dark:hover:bg-amber-500/25 transition-colors"
                   >
                     <ArrowRight size={12} />
                     {isPolish ? 'Odeślij' : 'Send back'}
@@ -2416,7 +2444,7 @@ export const InterviewHub: React.FC = () => {
                     e.stopPropagation();
                     handleOpenReminderModal(linkedAssignment);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/15 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-500/25 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:border-slate-500/30 dark:bg-slate-500/15 dark:text-slate-300 dark:hover:bg-slate-500/25 transition-colors"
                 >
                   <Clock size={12} />
                   {isPolish ? 'Przypomnij' : 'Remind'}
@@ -2429,7 +2457,7 @@ export const InterviewHub: React.FC = () => {
                     e.stopPropagation();
                     handleGenerateInsight(session, 'summary');
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary-500/15 px-2.5 py-1 text-[11px] font-medium text-primary-300 hover:bg-primary-500/25 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-800 hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/15 dark:text-primary-300 dark:hover:bg-primary-500/25 transition-colors"
                 >
                   <Lightbulb size={12} />
                   {isPolish ? 'AI insight' : 'AI insight'}
@@ -2720,14 +2748,24 @@ export const InterviewHub: React.FC = () => {
               const promptType =
                 (insight as any).promptType || (insight as any).insightType || 'summary';
               const typeConfig = getInsightTypeConfig(promptType);
-              const status = (insight.status || 'completed') as
+              const status = (((insight.reviewStatus === 'in_review' || insight.reviewStatus === 'published')
+                ? insight.reviewStatus
+                : insight.status) || 'completed') as
+                | 'draft'
                 | 'generating'
                 | 'completed'
+                | 'in_review'
+                | 'published'
                 | 'failed';
               const statusConfig: Record<
                 typeof status,
                 { label: { en: string; pl: string }; bg: string; text: string }
               > = {
+                draft: {
+                  label: { en: 'Draft', pl: 'Szkic' },
+                  bg: 'bg-slate-500/20',
+                  text: 'text-slate-400',
+                },
                 generating: {
                   label: { en: 'Generating', pl: 'Generowanie' },
                   bg: 'bg-amber-500/20',
@@ -2737,6 +2775,16 @@ export const InterviewHub: React.FC = () => {
                   label: { en: 'Completed', pl: 'Gotowe' },
                   bg: 'bg-emerald-500/20',
                   text: 'text-emerald-400',
+                },
+                in_review: {
+                  label: { en: 'In Review', pl: 'W recenzji' },
+                  bg: 'bg-blue-500/20',
+                  text: 'text-blue-400',
+                },
+                published: {
+                  label: { en: 'Published', pl: 'Opublikowane' },
+                  bg: 'bg-violet-500/20',
+                  text: 'text-violet-400',
                 },
                 failed: {
                   label: { en: 'Failed', pl: 'Błąd' },
@@ -2905,9 +2953,11 @@ export const InterviewHub: React.FC = () => {
                     </p>
                     <button
                       onClick={() => {
+                        if (!canCreateInsights) return;
                         setSelectedSessionsForInsight([]);
                         setShowInsightModal(true);
                       }}
+                      disabled={!canCreateInsights}
                       className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                     >
                       <Sparkles size={16} />
@@ -3578,23 +3628,23 @@ export const InterviewHub: React.FC = () => {
   const getAssignmentStatusColor = useCallback((status: string) => {
     switch (status) {
       case 'assigned':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'border border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-300';
       case 'drafting':
-        return 'bg-slate-500/20 text-slate-400';
+        return 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/20 dark:text-slate-300';
       case 'in_progress':
-        return 'bg-purple-500/20 text-purple-400';
+        return 'border border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-500/30 dark:bg-primary-500/20 dark:text-primary-300';
       case 'review':
       case 'submitted':
-        return 'bg-amber-500/20 text-amber-400';
+        return 'border border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300';
       case 'sent_back':
       case 'rejected':
-        return 'bg-red-500/20 text-red-400';
+        return 'border border-red-200 bg-red-100 text-red-800 dark:border-red-500/30 dark:bg-red-500/20 dark:text-red-300';
       case 'accepted':
       case 'approved':
       case 'completed':
-        return 'bg-emerald-500/20 text-emerald-400';
+        return 'border border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300';
       default:
-        return 'bg-slate-500/20 text-slate-400';
+        return 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/20 dark:text-slate-300';
     }
   }, []);
 
@@ -3871,32 +3921,7 @@ Return ONLY the answer text (no markdown fences).`;
     const hiddenSet = new Set(hiddenColumns);
     const hasAssigneeColumn = !hiddenSet.has('assignee');
 
-    const getStatusColor = (status: string) => {
-      switch (status) {
-        case 'assigned':
-          return 'bg-blue-500/20 text-blue-400';
-        case 'drafting':
-          return 'bg-slate-500/20 text-slate-400';
-        case 'in_progress':
-          return 'bg-purple-500/20 text-purple-400';
-        case 'review':
-          return 'bg-amber-500/20 text-amber-400';
-        case 'submitted':
-          return 'bg-amber-500/20 text-amber-400';
-        case 'sent_back':
-          return 'bg-red-500/20 text-red-400';
-        case 'rejected':
-          return 'bg-red-500/20 text-red-400';
-        case 'accepted':
-          return 'bg-emerald-500/20 text-emerald-400';
-        case 'approved':
-          return 'bg-emerald-500/20 text-emerald-400';
-        case 'completed':
-          return 'bg-emerald-500/20 text-emerald-400';
-        default:
-          return 'bg-slate-500/20 text-slate-400';
-      }
-    };
+    const getStatusColor = (status: string) => getAssignmentStatusColor(status);
 
     const getStatusLabel = (status: string) => {
       const labels: Record<string, { pl: string; en: string }> = {
@@ -5701,7 +5726,15 @@ Return ONLY the answer text (no markdown fences).`;
     }
     if (activeTab === 'insights') {
       return (
-        <button onClick={() => { setSelectedSessionsForInsight([]); setShowInsightModal(true); }} className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors">
+        <button
+          onClick={() => {
+            if (!canCreateInsights) return;
+            setSelectedSessionsForInsight([]);
+            setShowInsightModal(true);
+          }}
+          disabled={!canCreateInsights}
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <Plus size={16} /><span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
         </button>
       );

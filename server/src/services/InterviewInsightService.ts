@@ -102,6 +102,7 @@ export interface Insight {
   evidenceMap?: InsightEvidenceMapEntry[];
   missingData?: string[];
   status: InsightStatus;
+  reviewStatus?: 'draft' | 'in_review' | 'published';
   publishedAt?: string;
   reviewedBy?: string;
   errorMessage?: string;
@@ -853,6 +854,10 @@ ${answerText}
       evidenceMap: safeJsonArray<InsightEvidenceMapEntry>(row.evidence_map_json),
       missingData: safeJsonArray<string>(row.missing_data_json),
       status: row.status as InsightStatus,
+      reviewStatus:
+        row.status === 'in_review' || row.status === 'published' ? (row.status as 'in_review' | 'published') : 'draft',
+      publishedAt: row.published_at || undefined,
+      reviewedBy: row.reviewed_by || undefined,
       errorMessage: row.error_message || undefined,
       sourceSessionCount:
         typeof row.source_session_count === 'number'
