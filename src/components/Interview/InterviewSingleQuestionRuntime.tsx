@@ -671,7 +671,27 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       }
 
       if (typeof MediaRecorder !== 'undefined') {
-        const recorder = new MediaRecorder(stream);
+        const pickSupportedMimeType = (): string | undefined => {
+          const candidates = [
+            'audio/webm;codecs=opus',
+            'audio/webm',
+            'audio/ogg;codecs=opus',
+            'audio/ogg',
+            // Safari often supports MediaRecorder only as audio/mp4.
+            'audio/mp4',
+          ];
+          for (const c of candidates) {
+            try {
+              if ((MediaRecorder as any).isTypeSupported?.(c)) return c;
+            } catch {
+              // ignore
+            }
+          }
+          return undefined;
+        };
+
+        const mimeHint = pickSupportedMimeType();
+        const recorder = new MediaRecorder(stream, mimeHint ? { mimeType: mimeHint } : undefined);
         mediaRecorderRef.current = recorder;
         recorder.ondataavailable = (event) => {
           if (event.data.size > 0) chunksRef.current.push(event.data);
@@ -683,9 +703,17 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           mediaStreamRef.current = null;
           if (!currentQuestion) return;
 
-          const mimeType = recorder.mimeType || 'audio/webm';
+          const mimeType = recorder.mimeType || mimeHint || 'audio/webm';
+          const extensionForMime = (mt: string): string => {
+            const m = String(mt || '').toLowerCase();
+            if (m.includes('audio/mp4') || m.includes('video/mp4') || m.includes('mp4')) return 'm4a';
+            if (m.includes('ogg')) return 'ogg';
+            if (m.includes('webm')) return 'webm';
+            return 'webm';
+          };
+          const ext = extensionForMime(mimeType);
           const audioBlob = new Blob(chunksRef.current, { type: mimeType });
-          const audioFile = new File([audioBlob], `interview-answer-${currentQuestion.id}.webm`, {
+          const audioFile = new File([audioBlob], `interview-answer-${currentQuestion.id}.${ext}`, {
             type: mimeType,
           });
           const browserTranscript = liveTranscriptRef.current.trim();
