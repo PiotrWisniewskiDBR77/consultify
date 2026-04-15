@@ -22,6 +22,7 @@ import logger from '../utils/Logger.js';
 
 export const ROLES = {
   SUPERADMIN: 'SUPERADMIN',
+  OWNER: 'OWNER',
   ADMIN: 'ADMIN',
   PROJECT_MANAGER: 'PROJECT_MANAGER',
   TEAM_MEMBER: 'TEAM_MEMBER',
@@ -325,13 +326,14 @@ export async function hasPermission(
 ): Promise<boolean> {
   if (!userId || !permissionKey) return false;
 
-  // SUPERADMIN bypass
-  if (userRole === ROLES.SUPERADMIN) return true;
+  // SUPERADMIN and OWNER bypass
+  if (userRole === ROLES.SUPERADMIN || userRole === ROLES.OWNER) return true;
 
   // Fallback role-permission mapping for environments where DB role_permissions
   // aren't migrated/seeded yet. Keep this intentionally narrow (Interview module).
-  const FALLBACK_INTERVIEW_PERMISSIONS: Record<Role, string[]> = {
+  const FALLBACK_INTERVIEW_PERMISSIONS: Record<string, string[]> = {
     [ROLES.SUPERADMIN]: ['*'],
+    [ROLES.OWNER]: ['*'],
     [ROLES.ADMIN]: [
       'INTERVIEW_TEMPLATE_VIEW',
       'INTERVIEW_TEMPLATE_USE',
