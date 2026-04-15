@@ -144,14 +144,13 @@ router.get(
 
 /**
  * GET /api/v8/interview/sessions/accepted
- * OWNER/ADMIN/SUPERADMIN see all org accepted sessions; others see only their own created_by.
+ * Same manager-scoped accepted-sources semantics as GET /api/interview/sessions/accepted.
  */
 router.get(
   '/sessions/accepted',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId, userRole } = getV8Context(req);
-    const elevated = ['SUPERADMIN', 'OWNER', 'ADMIN'].includes(String(userRole || '').toUpperCase());
-    const sessions = await loadAcceptedInterviewSessionsForManager(organizationId, userId, { elevated });
+    const { organizationId, userId } = getV8Context(req);
+    const sessions = await loadAcceptedInterviewSessionsForManager(organizationId, userId);
     return res.json({ data: { sessions }, meta: interviewMeta() });
   })
 );
@@ -250,14 +249,13 @@ router.get(
 
 /**
  * GET /api/v8/interview/assignments/managed
- * OWNER/ADMIN/SUPERADMIN see all org assignments; others see only their own created_by.
+ * Same manager-scoped semantics as GET /api/interview/assignments/managed.
  */
 router.get(
   '/assignments/managed',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, userId, userRole } = getV8Context(req);
-    const elevated = ['SUPERADMIN', 'OWNER', 'ADMIN'].includes(String(userRole || '').toUpperCase());
-    const assignments = await getManagedAssignments(userId, organizationId, { elevated });
+    const { organizationId, userId } = getV8Context(req);
+    const assignments = await getManagedAssignments(userId, organizationId);
     return res.json({ data: { assignments }, meta: interviewMeta() });
   })
 );
@@ -276,8 +274,6 @@ router.get(
 );
 
 router.post('/assignments/:id/start', v8Wrap(InterviewController.startAssignment, interviewMeta));
-
-router.post('/assignments/:id/ai-pre-review', v8Wrap(InterviewController.aiPreReviewAssignment, interviewMeta));
 
 router.post('/assignments/:id/submit', v8Wrap(InterviewController.submitAssignment, interviewMeta));
 

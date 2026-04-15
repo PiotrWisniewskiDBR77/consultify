@@ -2061,8 +2061,19 @@ export const Api = {
     return handleResponse(res, 'Failed to update legal document');
   },
 
-  getSuperAdminUsers: async (): Promise<User[]> => {
-    const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
+  getSuperAdminUsers: async (filters?: {
+    organizationId?: string;
+    role?: string;
+    status?: string;
+  }): Promise<User[]> => {
+    const params = new URLSearchParams();
+    if (filters?.organizationId) params.set('organizationId', filters.organizationId);
+    if (filters?.role) params.set('role', filters.role);
+    if (filters?.status) params.set('status', filters.status);
+    const query = params.toString();
+    const res = await fetch(`${API_URL}/superadmin/users${query ? `?${query}` : ''}`, {
+      headers: getHeaders(),
+    });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error((data as any)?.error || 'Failed to fetch super admin users');
     return (Array.isArray(data) ? data : []) as User[];

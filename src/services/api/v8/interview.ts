@@ -135,19 +135,6 @@ export const V8InterviewApi = {
       payload ?? {}
     ),
 
-  aiPreReviewAssignment: (id: string) =>
-    v8Post<{
-      review: {
-        overallScore: number;
-        readyToSubmit: boolean;
-        summary: string;
-        issues: Array<{ questionIndex: number; severity: 'high' | 'medium' | 'low'; suggestion: string }>;
-        strengths: string[];
-      } | null;
-      stats: { total: number; answered: number; unansweredRequired: number };
-      fallback?: boolean;
-    }>(`/interview/assignments/${encodeURIComponent(id)}/ai-pre-review`, {}),
-
   submitAssignment: (id: string) =>
     v8Post<{
       assignment: V8InterviewAssignment;

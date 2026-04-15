@@ -51,11 +51,11 @@ export function evaluateGatePolicy(input: GatePolicyInput): GateDecision {
     if (action === 'SUBMIT_INTERVIEW') {
       if (!hasSession)
         return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
-      if (status !== 'in_progress' && status !== 'sent_back') {
+      if (status !== 'in_progress') {
         return {
           allow: false,
           code: 'INVALID_STATE',
-          error: 'Only in_progress or sent_back assignments can be submitted',
+          error: 'Only in_progress assignments can be submitted',
         };
       }
       return { allow: true };

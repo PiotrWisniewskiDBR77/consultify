@@ -294,6 +294,30 @@ const getOrgBilling = catchAsync(async (req, res, next) => {
  * GET All Users
  */
 const getUsers = catchAsync(async (req, res, next) => {
+  const organizationId =
+    typeof req.query.organizationId === 'string' ? req.query.organizationId.trim() : '';
+  const role = typeof req.query.role === 'string' ? req.query.role.trim() : '';
+  const status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+  const queryParams: string[] = [];
+  const whereClauses: string[] = [];
+
+  if (organizationId) {
+    whereClauses.push('u.organization_id = ?');
+    queryParams.push(organizationId);
+  }
+
+  if (role) {
+    whereClauses.push('u.role = ?');
+    queryParams.push(role);
+  }
+
+  if (status) {
+    whereClauses.push('u.status = ?');
+    queryParams.push(status);
+  }
+
+  const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
   const sql = `
         SELECT
             u.id, u.organization_id, u.email, u.first_name, u.last_name,
@@ -301,10 +325,11 @@ const getUsers = catchAsync(async (req, res, next) => {
             o.name as organization_name
         FROM users u
         LEFT JOIN organizations o ON u.organization_id = o.id
+        ${whereClause}
         ORDER BY u.created_at DESC
     `;
 
-  deps.db.all(sql, [], (err, rows) => {
+  deps.db.all(sql, queryParams, (err, rows) => {
     if (err) return next(new AppError(err.message, 500));
 
     const users = rows.map((u) => ({

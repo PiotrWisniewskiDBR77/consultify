@@ -325,16 +325,16 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
     ),
     whatYouDoHere: [
       text(
-        'As a user: open your Inbox, complete assigned interview templates, and submit them for review. Track your progress via the ALL / My Inbox / To approve / Overdue filters.',
-        'Jako użytkownik: otwórz Inbox, wypełnij przydzielone szablony wywiadów i prześlij je do przeglądu. Śledź postęp przez filtry WSZYSTKIE / Mój Inbox / Do zatwierdzenia / Przeterminowane.'
+        'Run interviews and gather organizational context.',
+        'Prowadzisz wywiady i zbierasz kontekst organizacyjny.'
       ),
       text(
-        'As a manager: create interview templates, assign them to team members with deadlines, and monitor completion on the Assigned tab. Review and approve submitted work in Pending Review.',
-        'Jako manager: twórz szablony wywiadów, przydzielaj je członkom zespołu z terminami i monitoruj realizację w zakładce Przydzielone. Przeglądaj i zatwierdzaj przesłane prace w zakładce Do przeglądu.'
+        'Capture process, data, capability, and constraint signals.',
+        'Zapisujesz sygnały o procesach, danych, kompetencjach i ograniczeniach.'
       ),
       text(
-        'Capture process, data, capability, and constraint signals. Turn raw input into a shared starting point for the client team.',
-        'Zapisuj sygnały o procesach, danych, kompetencjach i ograniczeniach. Zamieniaj surowe dane we wspólny punkt startowy dla zespołu klienta.'
+        'Turn raw input into a shared starting point for the client team.',
+        'Zamieniasz surowe wejście we wspólny punkt startowy dla zespołu klienta.'
       ),
     ],
     howAiHelpsHere: [
@@ -364,22 +364,6 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
     },
     quickGuides: [
       SHARED_GUIDES.askAi,
-      makeGuide(
-        'interview-inbox-workflow',
-        text('How to work with your Inbox', 'Jak pracować z Inbox'),
-        text(
-          'Open assigned templates, fill in the answers, submit for review, and track status with filters.',
-          'Otwórz przydzielone szablony, wypełnij odpowiedzi, prześlij do przeglądu i śledź status za pomocą filtrów.'
-        )
-      ),
-      makeGuide(
-        'interview-manager-workflow',
-        text('Managing interviews as admin', 'Zarządzanie wywiadami jako admin'),
-        text(
-          'Create templates, assign to team members with deadlines, monitor progress on the Assigned tab, and approve in Pending Review.',
-          'Twórz szablony, przydzielaj członkom zespołu z terminami, monitoruj postęp w zakładce Przydzielone i zatwierdzaj w Do przeglądu.'
-        )
-      ),
       makeGuide(
         'interview-output',
         text('What a good interview output looks like', 'Jak wygląda dobry output z interview'),
@@ -411,40 +395,10 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
         ),
         ['interview', 'ai']
       ),
-      faq(
-        'journey-interview-3',
-        'interview',
-        text('How do I complete an assignment in my Inbox?', 'Jak wykonać przydzielone zadanie w Inbox?'),
-        text(
-          'Open the assignment from your Inbox, fill in the template fields, and submit it. Your manager will see it in the Pending Review tab and can approve or request changes.',
-          'Otwórz zadanie z Inbox, wypełnij pola szablonu i prześlij je. Manager zobaczy je w zakładce Do przeglądu i może zatwierdzić lub poprosić o zmiany.'
-        ),
-        ['interview', 'inbox', 'user']
-      ),
-      faq(
-        'journey-interview-4',
-        'interview',
-        text('How do I assign interviews to my team?', 'Jak przydzielić wywiady zespołowi?'),
-        text(
-          'Go to the Templates tab, select or create a template, then assign it to team members with a deadline. Track progress on the Assigned tab and review submissions in Pending Review.',
-          'Przejdź do zakładki Szablony, wybierz lub utwórz szablon, a następnie przydziel go członkom zespołu z terminem. Śledź postęp w zakładce Przydzielone i przeglądaj zgłoszenia w Do przeglądu.'
-        ),
-        ['interview', 'admin', 'templates']
-      ),
-      faq(
-        'journey-interview-5',
-        'interview',
-        text('What do the Inbox filters mean?', 'Co oznaczają filtry w Inbox?'),
-        text(
-          'ALL shows every assignment. My Inbox shows items requiring your action. To approve lists items awaiting your approval (managers only). Overdue highlights assignments past their deadline.',
-          'WSZYSTKIE pokazują każde zadanie. Mój Inbox pokazuje pozycje wymagające Twojego działania. Do zatwierdzenia wyświetla zadania oczekujące na zatwierdzenie (tylko managerowie). Przeterminowane wyróżniają zadania po terminie.'
-        ),
-        ['interview', 'inbox', 'filters']
-      ),
     ],
     nextStepId: 'tools_assessments',
     stageId: 'interview',
-    relatedKnowledgeModuleId: 'interview',
+    relatedKnowledgeModuleId: 'assessment',
     video: HELP_SYSTEM_OVERVIEW.video,
   },
   tools_assessments: {

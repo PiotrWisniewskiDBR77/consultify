@@ -60,6 +60,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
   initialCommercialTab,
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'command-center');
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
@@ -153,9 +154,22 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
       case 'command-center':
         return <TenantCommandCenterView />;
       case 'organizations':
-        return <OrganizationsView />;
+        return (
+          <OrganizationsView
+            onViewUsers={(organizationId) => {
+              setSelectedOrganizationId(organizationId);
+              setActiveTab('users');
+            }}
+          />
+        );
       case 'users':
-        return <SuperAdminUserManagement organizations={organizations} />;
+        return (
+          <SuperAdminUserManagement
+            organizations={organizations}
+            selectedOrganizationId={selectedOrganizationId}
+            onSelectedOrganizationChange={setSelectedOrganizationId}
+          />
+        );
       case 'lifecycle':
         return (
           <div className="p-6 overflow-y-auto h-full">
