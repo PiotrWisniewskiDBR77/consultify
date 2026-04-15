@@ -58,6 +58,13 @@ router.get(
   InterviewController.getAcceptedSessions
 );
 
+/** GET /interview/sessions/managed - Get manager workflow sessions */
+router.get(
+  '/sessions/managed',
+  requirePermission('INTERVIEW_ASSIGN_VIEW'),
+  InterviewController.getManagedSessions
+);
+
 /** GET /interview/sessions/:id - Get single session */
 router.get('/sessions/:id', InterviewController.getSession);
 
