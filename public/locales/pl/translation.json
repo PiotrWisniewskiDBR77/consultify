@@ -2516,11 +2516,12 @@
       "preferences": "Preferencje",
       "theme": "Motyw",
       "language": "Język",
-      "demoMode": "Otwórz demo",
+      "demoMode": "Otwórz przykładowy workspace",
       "demoModeExit": "Wyjdź z demo",
-      "demoModeOn": "Tryb demo jest włączony - przeglądasz Atelier Toys",
-      "demoModeOff": "Otwórz demo workspace Atelier Toys",
-      "demoReadOnly": "Dane demo - tylko do odczytu",
+      "demoModeExitWorkspace": "Wyjdź z przykładowego workspace",
+      "demoModeOn": "Przykładowy workspace jest włączony - przeglądasz Atelier Toys",
+      "demoModeOff": "Otwórz przykładowy workspace Atelier Toys",
+      "demoReadOnly": "Przykładowe dane - tylko do odczytu",
       "myProfile": "Mój profil",
       "billing": "Billing i plany",
       "aiConfig": "Konfiguracja AI",
@@ -6283,11 +6284,13 @@
       }
     },
     "tourComplete": {
-      "message": "Gotowy do eksploracji! Ta platforma zazwyczaj oszczędza zespołom 3+ tygodnie pracy konsultingowej."
+      "message": "Możesz już eksplorować przykładowy workspace. Potraktuj go jako bezpieczny wzorzec przed odtworzeniem tego samego flow we własnym środowisku."
     },
     "banner": {
       "mode": "Tryb demo",
       "exit": "Wyjdź z demo",
+      "sampleWorkspace": "Przykładowy workspace",
+      "exitWorkspace": "Wyjdź z przykładowego workspace",
       "exitShort": "Wyjdź",
       "startTrial": "Rozpocznij trial",
       "restartLocale": "Przeładuj demo w {{locale}}",
@@ -6295,13 +6298,20 @@
       "initiatives": "inicjatywy",
       "hints": "Podpowiedzi",
       "readOnlyTitle": "Tryb tylko do odczytu",
-      "readOnlyDesc": "Zmiany nie są zapisywane",
-      "exploreTitle": "Eksploruj funkcje",
-      "exploreDesc": "Przeglądaj wszystkie moduły",
-      "hintTitle": "Podpowiedź",
-      "defaultHint": "Kliknij w inicjatywy, aby zobaczyć szczegóły",
+      "readOnlyDesc": "Zmiany nie są zapisywane, więc możesz bezpiecznie eksplorować ten wzorzec pracy",
+      "exploreTitle": "Zrozum workflow",
+      "exploreDesc": "Zobacz, jak łączą się dashboardy, inicjatywy i AI",
+      "hintTitle": "Co sprawdzić dalej",
+      "defaultHint": "Otwórz jedną inicjatywę i prześledź powiązane zadania, decyzje i kontekst AI",
       "help": "Pomoc",
-      "partnerProgram": "Program partnerski"
+      "partnerProgram": "Program partnerski",
+      "backToWorkspace": "Wróć do mojego workspace",
+      "readyForMore": "Gotowy na własne dane?",
+      "readyForMoreWorkspace": "Chcesz przećwiczyć ten sam flow u siebie?"
+    },
+    "session": {
+      "returnWorkspace": "Wróć do mojego workspace",
+      "fullAccess": "Uzyskaj pełny dostęp"
     },
     "modal": {
       "title": "Poznaj demo Consultify",

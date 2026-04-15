@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, FlaskConical, Sparkles, X } from 'lucide-react';
+import { Clock3, FlaskConical, Sparkles, X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -26,12 +26,19 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
   compact = false,
 }) => {
   const { t } = useTranslation();
-  const currentUser = useAppStore((s) => s.currentUser);
   const isDemoMode = useAppStore((s) => s.isDemoMode);
   const { snapshot } = usePolicySnapshot();
-  const { demoOrganization, demoLocale, isDemoLoading, isDemoLocaleMismatch, toggleDemoMode, exitDemoMode } =
-    useDemo();
+  const {
+    demoExperienceType,
+    demoOrganization,
+    demoLocale,
+    isDemoLoading,
+    isDemoLocaleMismatch,
+    toggleDemoMode,
+    exitDemoMode,
+  } = useDemo();
   const { isDemo, timeRemainingMs } = useDemoSession();
+  const isWorkspaceDemo = demoExperienceType === 'workspace_demo';
 
   if (!isDemo) return null;
 
@@ -50,7 +57,9 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
       <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/10 px-3 py-1 text-xs text-violet-200">
         <FlaskConical className="h-3.5 w-3.5" />
         <span className="font-semibold uppercase tracking-wide">
-          {t('demo.banner.mode', 'Demo Mode')}
+          {isWorkspaceDemo
+            ? t('demo.banner.sampleWorkspace', 'Sample Workspace')
+            : t('demo.banner.mode', 'Demo Mode')}
         </span>
       </div>
 
@@ -98,7 +107,11 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
       {isDemoMode && isDemoLocaleMismatch && (
         <button
           type="button"
-          onClick={() => toggleDemoMode(true, { source: 'demo_locale_restart' })}
+          onClick={() =>
+            toggleDemoMode(true, {
+              source: isWorkspaceDemo ? 'workspace_locale_restart' : 'demo_locale_restart',
+            })
+          }
           disabled={isDemoLoading}
           className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-200 transition-colors hover:bg-amber-500/15 disabled:opacity-50"
         >
@@ -114,22 +127,15 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
           className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-50"
         >
           <X className="h-3.5 w-3.5" />
-          <span>{compact ? t('demo.banner.exitShort', 'Exit') : t('demo.banner.exit', 'Exit Demo')}</span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={() => window.location.assign('/auth?action=trial')}
-          className="inline-flex items-center gap-1.5 rounded-full bg-primary-500 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-primary-600"
-        >
           <span>
-            {currentUser?.isDemo
-              ? t('demo.banner.startTrial', 'Start Trial')
-              : t('trial.upgrade', 'Upgrade')}
+            {compact
+              ? t('demo.banner.exitShort', 'Exit')
+              : isWorkspaceDemo
+                ? t('demo.banner.exitWorkspace', 'Exit Sample Workspace')
+                : t('demo.banner.exit', 'Exit Demo')}
           </span>
-          <ArrowRight className="h-3.5 w-3.5" />
         </button>
-      )}
+      ) : null}
     </div>
   );
 };

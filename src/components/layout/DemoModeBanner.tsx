@@ -14,7 +14,6 @@ import {
   FlaskConical,
   HelpCircle,
   Lightbulb,
-  Users,
   X,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -33,8 +32,15 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentUser } = useAppStore();
-  const { isDemoMode, demoOrganization, demoStats, demoHints, isDemoLoading, exitDemoMode } =
-    useDemo();
+  const {
+    isDemoMode,
+    demoExperienceType,
+    demoOrganization,
+    demoStats,
+    demoHints,
+    isDemoLoading,
+    exitDemoMode,
+  } = useDemo();
   const { snapshot, isApproachingLimit } = usePolicySnapshot();
   const approachingAi = isApproachingLimit('aiCalls');
   const approachingTokens = isApproachingLimit('tokens');
@@ -43,6 +49,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
   // Don't show demo banner for SuperAdmin - they have access to all orgs including demo
   const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
+  const isWorkspaceDemo = demoExperienceType === 'workspace_demo';
 
   if (!isDemoMode || isSuperAdmin) return null;
 
@@ -69,7 +76,9 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
               <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1.5">
                 <FlaskConical className="w-4 h-4" />
                 <span className="text-xs font-semibold uppercase">
-                  {t('demo.banner.mode', 'Demo Mode')}
+                  {isWorkspaceDemo
+                    ? t('demo.banner.sampleWorkspace', 'Sample Workspace')
+                    : t('demo.banner.mode', 'Demo Mode')}
                 </span>
               </div>
 
@@ -147,7 +156,11 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                 ) : (
                   <X className="w-4 h-4" />
                 )}
-                <span className="hidden sm:inline">{t('demo.banner.exit', 'Exit Demo')}</span>
+                <span className="hidden sm:inline">
+                  {isWorkspaceDemo
+                    ? t('demo.banner.exitWorkspace', 'Exit Sample Workspace')
+                    : t('demo.banner.exit', 'Exit Demo')}
+                </span>
               </button>
             </div>
           </div>
@@ -176,7 +189,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                             {t('demo.banner.readOnlyTitle', 'Read-only mode')}
                           </p>
                           <p className="text-slate-400 text-xs">
-                            {t('demo.banner.readOnlyDesc', 'Changes are not saved')}
+                            {t('demo.banner.readOnlyDesc', 'Changes are not saved and the sample can be explored safely')}
                           </p>
                         </div>
                       </div>
@@ -186,10 +199,10 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         <Eye className="w-4 h-4 text-slate-500 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-slate-200">
-                            {t('demo.banner.exploreTitle', 'Explore features')}
+                            {t('demo.banner.exploreTitle', 'Understand the workflow')}
                           </p>
                           <p className="text-slate-400 text-xs">
-                            {t('demo.banner.exploreDesc', 'Browse all modules')}
+                            {t('demo.banner.exploreDesc', 'See how dashboards, initiatives, and AI fit together')}
                           </p>
                         </div>
                       </div>
@@ -199,11 +212,11 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         <Lightbulb className="w-4 h-4 text-primary-400 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-slate-200">
-                            {t('demo.banner.hintTitle', 'Hint')}
+                            {t('demo.banner.hintTitle', 'What to review next')}
                           </p>
                           <p className="text-slate-400 text-xs">
                             {demoHints?.[0] ||
-                              t('demo.banner.defaultHint', 'Click on initiatives to see details')}
+                              t('demo.banner.defaultHint', 'Open one initiative and trace the linked tasks, decisions, and AI context')}
                           </p>
                         </div>
                       </div>
@@ -220,13 +233,13 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         <span>{t('demo.banner.help', 'Help')}</span>
                       </button>
 
-                      {/* Partner Program Button */}
+                      {/* Return to workspace */}
                       <button
-                        onClick={() => navigate('/partner')}
+                        onClick={() => void exitDemoMode()}
                         className={`${buttonSecondaryClass} bg-white/10 hover:bg-white/20`}
                       >
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{t('demo.banner.partnerProgram', 'Partner Program')}</span>
+                        <X className="w-3.5 h-3.5" />
+                        <span>{t('demo.banner.backToWorkspace', 'Back to my workspace')}</span>
                       </button>
                     </div>
                   </div>

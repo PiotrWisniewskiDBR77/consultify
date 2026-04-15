@@ -44,7 +44,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 }) => {
   const { currentUser, setCurrentView, logout, theme, toggleTheme, sessionMode, setSessionMode } =
     useAppStore();
-  const { isDemoMode, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
+  const { isDemoMode, demoExperienceType, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
   const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
 
@@ -417,8 +417,10 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     <div>
                       <span className="font-medium">
                         {isDemoMode
-                          ? t('settings.menu.demoModeExit', 'Exit Demo')
-                          : t('settings.menu.demoMode', 'Open Demo')}
+                          ? demoExperienceType === 'workspace_demo'
+                            ? t('settings.menu.demoModeExitWorkspace', 'Exit Sample Workspace')
+                            : t('settings.menu.demoModeExit', 'Exit Demo')
+                          : t('settings.menu.demoMode', 'Open Sample Workspace')}
                       </span>
                       {isDemoMode && demoOrganization && (
                         <div className="text-[10px] text-indigo-500 dark:text-indigo-400 truncate max-w-[120px]">
@@ -446,11 +448,11 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                       isDemoMode
                         ? t(
                             'settings.menu.demoModeOn',
-                            'Demo mode is on - you are exploring Atelier Toys'
+                            'Sample workspace is on - you are exploring Atelier Toys'
                           )
                         : t(
                             'settings.menu.demoModeOff',
-                            'Open the Atelier Toys demo workspace'
+                            'Open the Atelier Toys sample workspace'
                           )
                     }
                   >
@@ -467,7 +469,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                 </div>
                 {isDemoMode && (
                   <div className="px-2 pb-1.5 text-[10px] text-indigo-600 dark:text-indigo-400">
-                    {t('settings.menu.demoReadOnly', 'Demo data - read only')}
+                    {t('settings.menu.demoReadOnly', 'Sample data - read only')}
                   </div>
                 )}
               </div>

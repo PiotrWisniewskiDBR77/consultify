@@ -33,7 +33,26 @@ interface RecordConversionEventInput {
   metadata?: Record<string, unknown>;
 }
 
-function mapToFunnelEventType(eventType: DemoTrialEventType): string | null {
+function mapToFunnelEventType(
+  eventType: DemoTrialEventType,
+  metadata?: Record<string, unknown>
+): string | null {
+  const experienceType = String(metadata?.experienceType || '')
+    .trim()
+    .toLowerCase();
+
+  if (experienceType === 'workspace_demo') {
+    if (eventType === DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED) {
+      return 'WORKSPACE_DEMO_STARTED';
+    }
+    if (eventType === DEMO_TRIAL_EVENT_TYPES.DEMO_MODE_ENABLED) {
+      return 'WORKSPACE_DEMO_ENABLED';
+    }
+    if (eventType === DEMO_TRIAL_EVENT_TYPES.DEMO_MODE_DISABLED) {
+      return 'WORKSPACE_DEMO_DISABLED';
+    }
+  }
+
   if (
     eventType === DEMO_TRIAL_EVENT_TYPES.DEMO_STARTED ||
     eventType === DEMO_TRIAL_EVENT_TYPES.DEMO_MODE_ENABLED
@@ -104,7 +123,7 @@ export async function recordConversionEvent(input: RecordConversionEventInput): 
 }
 
 export async function recordDemoTrialEvent(input: RecordDemoTrialEventInput): Promise<void> {
-  const funnelEventType = mapToFunnelEventType(input.eventType) || input.eventType;
+  const funnelEventType = mapToFunnelEventType(input.eventType, input.metadata) || input.eventType;
   return recordConversionEvent({
     eventType: funnelEventType,
     organizationId: input.organizationId,

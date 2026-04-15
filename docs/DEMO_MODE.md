@@ -2,208 +2,116 @@
 
 ## Overview
 
-Demo Mode allows new users to explore Consultinity with a fully populated demonstration environment. When enabled, users can see realistic sample data showing what the platform looks like when actively used for digital transformation projects.
+Consultify supports two demo experiences built on the same seeded `Atelier Toys` sample workspace:
 
-## Features
+1. **Sales demo**
+   Used from public landing and trial entry points. This flow can still contain conversion messaging.
 
-### Demo Company: DigiTrans Consulting
+2. **Workspace demo**
+   Used by logged-in users from the profile menu. This flow is intentionally read-only and educational. Its goal is to help users understand how work happens in Consultify on realistic sample data, not to push them into sales or trial actions.
 
-A mid-size consulting firm specializing in digital transformation:
+## Current sample workspace
 
-- **Industry**: Consulting & Professional Services
-- **Size**: ~150 employees
-- **Plan**: Enterprise
+### Demo company: Atelier Toys
 
-### Included Demo Data
+A sample manufacturing and transformation environment designed to show how strategy, execution, AI, and reporting connect.
 
-| Module              | Content                                                        |
-| ------------------- | -------------------------------------------------------------- |
-| **Assessment**      | 5 complete DRD maturity assessments across different scenarios |
-| **Projects**        | 5 digital transformation projects at various stages            |
-| **Initiatives**     | 15 strategic initiatives with ROI calculations                 |
-| **Tasks**           | 25 tasks across different statuses (To Do, In Progress, Done)  |
-| **Team Members**    | 5 team members with avatars and roles                          |
-| **Roadmap**         | 12-month transformation roadmap                                |
-| **Notifications**   | 8 sample notifications showing system activity                 |
-| **AI Chat History** | Sample AI conversations demonstrating capabilities             |
+### Included demo data
 
-## How to Enable Demo Mode
+| Module              | Content                                                          |
+| ------------------- | ---------------------------------------------------------------- |
+| **Assessments**     | Multiple maturity and operating baseline examples                |
+| **Projects**        | Cross-functional transformation projects                         |
+| **Initiatives**     | Strategic initiatives with owners, progress, and milestones      |
+| **Tasks**           | Execution follow-up with statuses and assignees                  |
+| **Decisions**       | Decision records linked to portfolio work                        |
+| **Reports**         | Executive and operational reporting examples                     |
+| **AI Context**      | Sample prompts, recommendations, and generated supporting output |
 
-### Option 1: Toggle in User Profile Menu
+## Workspace demo principles
 
-1. Click on your profile avatar in the top-right corner
-2. In the dropdown, find "Demo Mode" toggle
-3. Switch ON to enter demo mode
-4. The purple Demo Banner will appear at the top of the screen
+When a logged-in user opens demo from the profile menu:
 
-### Option 2: Direct URL
+- the user enters a **sample workspace**, not a sales funnel
+- the workspace is **read-only**
+- prompts should explain **how to use the product**
+- UI should point toward **how to repeat the same workflow in the user’s own workspace**
+- conversion CTAs such as `Start Trial`, `Upgrade`, `Schedule Demo`, or `Contact Sales` should not appear in this flow
 
-Navigate to `/demo` to enter demo mode directly.
+## What users can do
 
-### Option 3: Keyboard Shortcut
+- browse dashboards, projects, initiatives, and reports
+- inspect linked execution flows across modules
+- use guided onboarding to understand typical role-based scenarios
+- interact with AI within demo guardrails
+- compare the sample workflow with what they later want to do in their own workspace
 
-Press `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+D` (Mac) to toggle demo mode.
+## Limitations
 
-## Demo Mode Behavior
+- changes are session-scoped and do not persist as live work
+- write operations are blocked or simulated depending on the route
+- AI usage may still be limited by demo/session constraints
+- notifications and integrations should not be treated as production behavior
 
-### What Users Can Do:
+## Entry points
 
-- ✅ Browse all modules and data
-- ✅ View assessments, projects, tasks, and reports
-- ✅ Interact with the AI assistant (limited)
-- ✅ Explore dashboards and analytics
-- ✅ Test UI interactions and workflows
+### Workspace demo
 
-### Limitations:
+1. Open the user profile menu
+2. Select `Open Sample Workspace`
+3. Review the onboarding walkthrough and scenario cards
+4. Exit back to the user’s own workspace when ready
 
-- ⚠️ Changes are **session-based** and reset on logout
-- ⚠️ Some write operations are blocked (creating new projects, etc.)
-- ⚠️ AI responses are limited to demo context
-- ⚠️ Email notifications are disabled
+### Sales demo
 
-## Demo Data Scenarios
+Public landing and trial flows may still enter the same seeded environment, but with a different product purpose and telemetry classification.
 
-### Assessment Scenarios
+## Technical implementation
 
-1. **Cyfrowa Transformacja Produkcji** (Digital Factory 4.0)
-   - Status: APPROVED
-   - Focus: Industry 4.0, IoT, Smart Manufacturing
-   - Maturity: 3.5 → 5.8 target
+### Frontend
 
-2. **Digitalizacja Łańcucha Dostaw** (Supply Chain Digitalization)
-   - Status: IN_REVIEW
-   - Focus: Visibility, Tracking, Forecasting
-   - Maturity: 2.7 → 4.7 target
-
-3. **Platforma Customer Experience** (CX Platform)
-   - Status: IN_REVIEW
-   - Focus: Omnichannel, CRM, Personalization
-   - Maturity: 3.7 → 6.0 target
-
-4. **Centrum Operacji AI/ML** (AI Operations Center)
-   - Status: DRAFT
-   - Focus: MLOps, Data Science, AI Governance
-   - Maturity: 2.0 → 5.4 target
-
-5. **Cyfrowy Bliźniak Zrównoważonego Rozwoju** (Sustainability Digital Twin)
-   - Status: DRAFT
-   - Focus: ESG, Carbon Tracking, Circular Economy
-   - Maturity: 3.4 → 5.3 target
-
-## Technical Implementation
-
-### Frontend Components
-
-```
-src/
-├── components/
-│   ├── layout/
-│   │   ├── DemoBanner.tsx          # Demo mode indicator banner
-│   │   ├── GlobalAccessBanners.tsx # Banner orchestration
-│   │   └── UserProfileMenu.tsx     # Demo toggle location
-│   └── demo/
-│       ├── DemoWelcomeTour.tsx     # Onboarding tour
-│       ├── DemoUpgradePrompt.tsx   # Upgrade CTA
-│       ├── DemoLoadingOverlay.tsx  # Loading state
-│       └── SmartDemoBanner.tsx     # Intelligent banner
-├── store/
-│   └── slices/
-│       └── authSlice.ts            # SessionMode.DEMO state
-└── types/
-    └── core.ts                     # SessionMode enum
-```
-
-### State Management
-
-```typescript
-// Session mode stored in Zustand
-enum SessionMode {
-  FREE = 'FREE',
-  FULL = 'FULL',
-  DEMO = 'DEMO',
-}
-
-// Toggle demo mode
-const { sessionMode, setSessionMode } = useAppStore();
-setSessionMode(SessionMode.DEMO);
-```
+- `src/store/slices/demoSlice.ts`
+  Stores demo session state, locale, and demo experience type.
+- `src/hooks/useDemo.ts`
+  Syncs demo status from the backend and exposes toggle/exit actions.
+- `src/components/demo/DemoSessionManager.tsx`
+  Orchestrates onboarding and conditional demo UI.
+- `src/components/demo/DemoWelcomeTour.tsx`
+  Provides scenario-based onboarding.
+- `src/components/layout/UserProfileMenu.tsx`
+  Main entry point for workspace demo.
+- `src/components/layout/DemoModeBanner.tsx`
+  Shows contextual read-only and next-step guidance.
 
 ### Backend
 
-```
-server/
-├── seed/
-│   └── seed_digitrans_demo.js     # Demo data seeder
-├── services/
-│   └── accessPolicyService.ts     # Demo mode access control
-└── middleware/
-    └── demoGuard.middleware.ts    # Route protection
-```
+- `server/src/routes/demo.routes.ts`
+  Returns demo state and now classifies demo experience type.
+- `server/src/services/demo/demoSessionService.ts`
+  Creates and resolves isolated session workspaces.
+- `server/src/middleware/demoGuard.middleware.ts`
+  Protects writes in demo mode.
+- `server/src/services/demoTrialTelemetryService.ts`
+  Records demo-related telemetry, with workspace demo separated from sales funnel mapping.
 
-### Database
+## Data model
 
-Demo data is stored in the main database but isolated by organization:
+Demo data is stored in isolated session organizations created from the Atelier Toys template.
 
-- `organization_type = 'DEMO'`
-- Demo org ID: `org-digitrans-demo`
-
-## Seeding Demo Data
-
-### Initial Setup
-
-```bash
-# Seed the DigiTrans Consulting demo data
-node server/seed/seed_digitrans_demo.js
-```
-
-### Reset Demo Data
-
-```bash
-# Reset demo data to original state
-node server/seed/seed_digitrans_demo.js --reset
-```
-
-## Demo Login Credentials
-
-| Role  | Email                              | Password |
-| ----- | ---------------------------------- | -------- |
-| Admin | demo@digitrans.consulting          | Demo123! |
-| User  | anna.kowalska@digitrans.consulting | team123  |
-| User  | piotr.nowak@digitrans.consulting   | team123  |
+- base demo org: `DEMO_ORG_ID`
+- active user session org: generated per session in `demo_sessions`
+- demo sessions expire automatically and are cleaned up
 
 ## Configuration
 
-### Environment Variables
-
 ```env
-# Enable demo mode features
 DEMO_MODE_ENABLED=true
-
-# Demo session duration (hours)
 DEMO_SESSION_DURATION=24
-
-# Allow demo data modifications
 DEMO_ALLOW_WRITES=false
 ```
 
-## Maintenance
+## Maintenance notes
 
-### Monitoring Demo Usage
-
-- Demo sessions are tracked in `activity_logs`
-- Metrics available in SuperAdmin → Analytics
-
-### Data Cleanup
-
-Demo sessions are automatically cleaned up after 24 hours via cron job:
-
-- `server/src/cron/TrialCron.ts` handles cleanup
-
-## Changelog
-
-| Date       | Version | Changes                                   |
-| ---------- | ------- | ----------------------------------------- |
-| 2026-01-08 | 1.0.0   | Initial demo mode implementation          |
-|            |         | - Added DigiTrans Consulting demo company |
-|            |         | - Demo toggle in UserProfileMenu          |
-|            |         | - Session-based data persistence          |
+- workspace demo should be reviewed primarily as a **product enablement surface**
+- sales demo should be reviewed primarily as a **public acquisition surface**
+- changes to copy, prompts, and telemetry must preserve that separation
