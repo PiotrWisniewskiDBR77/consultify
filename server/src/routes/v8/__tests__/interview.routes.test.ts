@@ -89,12 +89,14 @@ const permissionMockState = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../services/content/CommentService.js', () => ({
-  CommentService: vi.fn().mockImplementation(() => ({
-    getContentComments: (...args: unknown[]) => mockCommentGetContent(...args),
-    createComment: (...args: unknown[]) => mockCommentCreate(...args),
-    getCommentById: (...args: unknown[]) => mockCommentGetById(...args),
-    deleteComment: (...args: unknown[]) => mockCommentDelete(...args),
-  })),
+  CommentService: vi.fn(function CommentServiceMock() {
+    return {
+      getContentComments: (...args: unknown[]) => mockCommentGetContent(...args),
+      createComment: (...args: unknown[]) => mockCommentCreate(...args),
+      getCommentById: (...args: unknown[]) => mockCommentGetById(...args),
+      deleteComment: (...args: unknown[]) => mockCommentDelete(...args),
+    };
+  }),
 }));
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
@@ -557,7 +559,9 @@ describe('V8 Interview insight routes', () => {
 
   it('GET /api/v8/interview/insights/:id/activity returns activity in V8 envelope', async () => {
     mockQueryOne.mockResolvedValue({ organization_id: ORG });
-    mockQueryAll.mockResolvedValue([{ id: 'act-1', type: 'created', description: 'Created', created_at: '2026-01-01', first_name: 'Jan', last_name: 'Kowalski' }]);
+    mockQueryAll
+      .mockResolvedValueOnce([{ id: 'act-1', type: 'created', description: 'Created', created_at: '2026-01-01', first_name: 'Jan', last_name: 'Kowalski' }])
+      .mockResolvedValueOnce([{ id: 'audit-1', type: 'publish', created_at: '2026-01-02', first_name: 'Anna', last_name: 'Nowak' }]);
 
     const res = await request(createApp())
       .get('/api/v8/interview/insights/ins-1/activity')
@@ -565,8 +569,10 @@ describe('V8 Interview insight routes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_READ_CONTRACT);
-    expect(res.body.data?.activity).toHaveLength(1);
-    expect(res.body.data?.activity?.[0]?.userName).toBe('Jan Kowalski');
+    expect(res.body.data?.activity).toHaveLength(2);
+    expect(res.body.data?.activity?.[0]?.description).toBe('P10: publish');
+    expect(res.body.data?.activity?.[0]?.userName).toBe('Anna Nowak');
+    expect(res.body.data?.activity?.[1]?.userName).toBe('Jan Kowalski');
   });
 
   it('GET /api/v8/interview/insights/:id/comments returns comments in V8 envelope', async () => {
