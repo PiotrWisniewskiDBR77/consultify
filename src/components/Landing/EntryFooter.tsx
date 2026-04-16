@@ -2,6 +2,7 @@ import { Handshake } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { normalizeLanguageCode } from '../../i18n';
 import { ROUTES } from '../../routes/routeConfig';
 
 const DBR77_SUPPORTED_LANGS = new Set(['en', 'pl', 'de']);
@@ -59,7 +60,7 @@ interface EntryFooterProps {
 
 export const EntryFooter: React.FC<EntryFooterProps> = () => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language;
+  const lang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
 
   const sections = useMemo(() => [
     {

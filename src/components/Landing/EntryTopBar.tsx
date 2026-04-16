@@ -63,6 +63,8 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const currentCode =
     normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || SUPPORTED_LANGUAGES[0];
   const currentLang = languages.find((l) => l.code === currentCode) || languages[0];
+  const languageMatches = (code: string) =>
+    currentCode === code || String(i18n.language || '').startsWith(code);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -331,19 +333,19 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       onClick={() => handleLangChange(lang.code)}
                       className="w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between"
                       style={{
-                        color: i18n.language.startsWith(lang.code)
+                        color: languageMatches(lang.code)
                           ? '#a855f7'
                           : isDark
                             ? 'rgba(255,255,255,0.65)'
                             : 'rgba(0,0,0,0.65)',
-                        background: i18n.language.startsWith(lang.code)
+                        background: languageMatches(lang.code)
                           ? 'rgba(168,85,247,0.10)'
                           : 'transparent',
-                        fontWeight: i18n.language.startsWith(lang.code) ? 700 : 400,
+                        fontWeight: languageMatches(lang.code) ? 700 : 400,
                       }}
                     >
                       {lang.label}
-                      {i18n.language.startsWith(lang.code) && (
+                      {languageMatches(lang.code) && (
                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                       )}
                     </button>
@@ -567,15 +569,15 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                         onClick={() => handleLangChange(lang.code)}
                         className="text-xs px-3 py-1 rounded-full border transition-colors font-medium"
                         style={{
-                          background: i18n.language.startsWith(lang.code)
+                          background: languageMatches(lang.code)
                             ? 'rgba(168,85,247,0.15)'
                             : 'transparent',
-                          borderColor: i18n.language.startsWith(lang.code)
+                          borderColor: languageMatches(lang.code)
                             ? 'rgba(168,85,247,0.40)'
                             : isDark
                               ? 'rgba(255,255,255,0.12)'
                               : 'rgba(0,0,0,0.10)',
-                          color: i18n.language.startsWith(lang.code)
+                          color: languageMatches(lang.code)
                             ? '#a855f7'
                             : isDark
                               ? 'rgba(255,255,255,0.50)'
