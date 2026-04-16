@@ -199,6 +199,14 @@ function getCachedUserLanguage(): string {
   return _cachedLang;
 }
 
+function getStoredOrganizationContextId(): string {
+  try {
+    return localStorage.getItem('consultify_current_org_id') || '';
+  } catch {
+    return '';
+  }
+}
+
 export const getHeaders = () => {
   const token = tokenService.getToken();
 
@@ -223,6 +231,11 @@ export const getHeaders = () => {
     if (demoSessionOrgId) {
       headers['X-Demo-Session-Org'] = demoSessionOrgId;
     }
+  }
+
+  const orgContextId = getStoredOrganizationContextId();
+  if (orgContextId) {
+    headers['x-org-context'] = orgContextId;
   }
 
   return headers;

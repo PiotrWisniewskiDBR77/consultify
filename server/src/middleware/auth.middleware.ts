@@ -241,16 +241,41 @@ const attachUser = async (
   next: NextFunction,
   res?: Response
 ): Promise<void> => {
-  const { PermissionService } = await getDeps();
+  const { PermissionService, dbGet } = await getDeps();
   const requestedDemoSessionOrgId = String(req.get?.(DEMO_SESSION_ORG_HEADER) || '').trim();
   const isDemoHeader = String(req.get?.('X-Demo-Mode') || '').toLowerCase() === 'true';
-  const resolvedOrganizationId =
+  const requestedOrgContextId = String(
+    req.get?.('x-org-context') || req.get?.('x-organization-id') || ''
+  ).trim();
+  let resolvedOrganizationId =
     isDemoHeader && requestedDemoSessionOrgId
       ? requestedDemoSessionOrgId
       : decoded.organizationId || (decoded as any).organization_id;
+  let resolvedUserRole = decoded.role || decoded.userRole;
+
+  // Respect the UI-selected organization when the user is a valid active member.
+  if (!isDemoHeader && requestedOrgContextId) {
+    try {
+      const membership = await dbGet<{ role?: string; status?: string }>(
+        `SELECT role, status
+         FROM organization_members
+         WHERE user_id = ? AND organization_id = ?
+         LIMIT 1`,
+        [decoded.id, requestedOrgContextId]
+      );
+      if (membership && String(membership.status || '').toUpperCase() === 'ACTIVE') {
+        resolvedOrganizationId = requestedOrgContextId;
+        if (membership.role) {
+          resolvedUserRole = membership.role;
+        }
+      }
+    } catch {
+      // Fall back to the token organization if membership lookup is unavailable.
+    }
+  }
 
   req.userId = decoded.id;
-  req.userRole = decoded.role || decoded.userRole;
+  req.userRole = resolvedUserRole;
   req.organizationId = resolvedOrganizationId;
 
   // Permanent role fix for selected internal accounts:

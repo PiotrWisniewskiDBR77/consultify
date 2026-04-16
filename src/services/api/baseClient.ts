@@ -14,13 +14,26 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
+const getStoredOrganizationContextId = (): string => {
+  try {
+    return localStorage.getItem('consultify_current_org_id') || '';
+  } catch {
+    return '';
+  }
+};
+
 export const getHeaders = (): Record<string, string> => {
   const token = tokenService.getToken();
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Authorization: token ? `Bearer ${token}` : '',
     'X-Correlation-ID': correlationId as string,
   };
+  const orgContextId = getStoredOrganizationContextId();
+  if (orgContextId) {
+    headers['x-org-context'] = orgContextId;
+  }
+  return headers;
 };
 
 /**

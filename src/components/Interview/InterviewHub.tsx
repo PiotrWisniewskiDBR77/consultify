@@ -548,10 +548,12 @@ export const InterviewHub: React.FC = () => {
   }, [selectedInsightId]);
 
   useEffect(() => {
-    // Interview Inbox: managed view is driven by Command Row chips (To approve / Overdue).
+    // Assigned should open on the full manager list.
+    // Narrow slices like "To approve" and "Overdue" are entered explicitly from Command Row chips.
     if (activeTab !== 'managed') return;
-    if (assignmentStatusFilter !== 'submitted' && assignmentStatusFilter !== 'overdue') {
-      setAssignmentStatusFilter('submitted');
+    if (assignmentStatusFilter === 'submitted' || assignmentStatusFilter === 'overdue') return;
+    if (assignmentStatusFilter !== 'all') {
+      setAssignmentStatusFilter('all');
     }
   }, [activeTab, assignmentStatusFilter]);
 
@@ -5693,7 +5695,7 @@ Return ONLY the answer text (no markdown fences).`;
     (tab: ModuleTab) => {
       setActiveTab(tab as InterviewTab);
       if (tab === 'managed') {
-        setAssignmentStatusFilter('submitted');
+        setAssignmentStatusFilter('all');
       }
       setActiveDocumentId(null);
     },
