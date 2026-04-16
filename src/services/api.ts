@@ -2077,7 +2077,12 @@ export const Api = {
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error((data as any)?.error || 'Failed to fetch super admin users');
-    return (Array.isArray(data) ? data : []) as User[];
+    // API may return a bare User[] (legacy) or { users, total } per SUPERADMIN_API docs.
+    if (Array.isArray(data)) return data as User[];
+    if (data && typeof data === 'object' && Array.isArray((data as { users?: unknown }).users)) {
+      return (data as { users: User[] }).users;
+    }
+    return [];
   },
 
   updateSuperAdminUser: async (
