@@ -319,7 +319,8 @@ const getUsers = catchAsync(async (req, res, next) => {
       lastLogin: u.last_login,
       createdAt: u.created_at,
     }));
-    res.json(users);
+    // Documented shape: { users, total } (see docs/api/SUPERADMIN_API). Keeps dashboard counts and list in sync.
+    res.json({ users, total: users.length });
   });
 });
 

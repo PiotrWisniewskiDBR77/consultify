@@ -245,10 +245,27 @@ export const AdminApi = {
   // USER MANAGEMENT (SuperAdmin)
   // ==========================================
 
-  getSuperAdminUsers: async (): Promise<User[]> => {
-    const res = await fetch(`${API_URL}/superadmin/users`, { headers: getHeaders() });
+  getSuperAdminUsers: async (filters?: {
+    organizationId?: string;
+    role?: string;
+    status?: string;
+  }): Promise<User[]> => {
+    const params = new URLSearchParams();
+    if (filters?.organizationId) params.set('organizationId', filters.organizationId);
+    if (filters?.role) params.set('role', filters.role);
+    if (filters?.status) params.set('status', filters.status);
+    const query = params.toString();
+    const res = await fetch(`${API_URL}/superadmin/users${query ? `?${query}` : ''}`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json().catch(() => null);
+
     if (!res.ok) throw new Error('Failed to fetch users');
-    return res.json();
+    if (Array.isArray(data)) return data as User[];
+    if (data && typeof data === 'object' && Array.isArray((data as { users?: unknown }).users)) {
+      return (data as { users: User[] }).users;
+    }
+    return [];
   },
 
   updateSuperAdminUser: async (
