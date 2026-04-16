@@ -15,6 +15,7 @@ import {
   tableExists,
 } from './superadmin/shared.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 // Domain controllers extracted from this monolith. Namespace imports provide
@@ -294,6 +295,7 @@ const getOrgBilling = catchAsync(async (req, res, next) => {
  * GET All Users
  */
 const getUsers = catchAsync(async (req, res, next) => {
+  const hasLicensePlanId = await hasColumn('users', 'license_plan_id').catch(() => false);
   const organizationId =
     typeof req.query.organizationId === 'string' ? req.query.organizationId.trim() : '';
   const role = typeof req.query.role === 'string' ? req.query.role.trim() : '';
@@ -324,7 +326,8 @@ const getUsers = catchAsync(async (req, res, next) => {
   const sql = `
         SELECT
             u.id, u.organization_id, u.email, u.first_name, u.last_name,
-            u.role, u.status, u.last_login, u.created_at, u.license_plan_id,
+            u.role, u.status, u.last_login, u.created_at,
+            ${hasLicensePlanId ? 'u.license_plan_id' : 'NULL'} as license_plan_id,
             o.name as organization_name
         FROM users u
         LEFT JOIN organizations o ON u.organization_id = o.id
@@ -357,6 +360,7 @@ const getUsers = catchAsync(async (req, res, next) => {
  * UPDATE User
  */
 const updateUser = catchAsync(async (req, res, next) => {
+  const hasLicensePlanId = await hasColumn('users', 'license_plan_id').catch(() => false);
   const { id } = req.params;
   const {
     organizationId,
@@ -395,7 +399,7 @@ const updateUser = catchAsync(async (req, res, next) => {
     updates.push('last_name = ?');
     params.push(lastName);
   }
-  if (licensePlanId !== undefined) {
+  if (hasLicensePlanId && licensePlanId !== undefined) {
     updates.push('license_plan_id = ?');
     params.push(licensePlanId || null);
   }
