@@ -258,8 +258,13 @@ export const AdminApi = {
     const res = await fetch(`${API_URL}/superadmin/users${query ? `?${query}` : ''}`, {
       headers: getHeaders(),
     });
+    const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error('Failed to fetch users');
-    return res.json();
+    if (Array.isArray(data)) return data as User[];
+    if (data && typeof data === 'object' && Array.isArray((data as { users?: unknown }).users)) {
+      return (data as { users: User[] }).users;
+    }
+    return [];
   },
 
   updateSuperAdminUser: async (
