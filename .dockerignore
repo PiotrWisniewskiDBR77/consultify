@@ -4,6 +4,9 @@ server/node_modules
 
 # Build artifacts
 dist
+server/dist
+server/dist-temp
+**/*.tsbuildinfo
 coverage
 playwright-report
 test-results
