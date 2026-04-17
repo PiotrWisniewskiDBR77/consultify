@@ -39,6 +39,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { buildFeedbackDossier } from '../../services/feedbackCollector';
 import { useAppStore } from '../../store/useAppStore';
 
 // ==================== TYPES ====================
@@ -184,15 +185,98 @@ export const FeedbackSidePanel: React.FC = () => {
   const [capturedCtx, setCapturedCtx] = useState<CapturedContext | null>(null);
   const wasOpenRef = useRef(false);
 
+  // Cursor-ready capture state (V2)
+  const [attachScreenshot, setAttachScreenshot] = useState(true);
+  const [attachDiagnostics, setAttachDiagnostics] = useState(true);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isPreparingDossier, setIsPreparingDossier] = useState(false);
+
   const isOpen = activeSidePanel === 'FEEDBACK';
 
   // Capture context snapshot when panel opens
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       setCapturedCtx(capturePageContext(t));
+      // Accept optional prefill from ErrorBoundary or other sources
+      try {
+        const prefill = (window as any).__FEEDBACK_PREFILL__;
+        if (prefill && typeof prefill === 'object') {
+          if (prefill.type === 'BUG' || prefill.type === 'IDEA') {
+            setReportType(prefill.type);
+            setActiveTab('report');
+          }
+          if (typeof prefill.title === 'string') setReportTitle(prefill.title);
+          if (typeof prefill.message === 'string') setMessage(prefill.message);
+          if (
+            prefill.severity === 'LOW' ||
+            prefill.severity === 'MEDIUM' ||
+            prefill.severity === 'HIGH' ||
+            prefill.severity === 'CRITICAL'
+          ) {
+            setSeverity(prefill.severity);
+          }
+          if (prefill.error && typeof prefill.error === 'object') {
+            const parts: string[] = [];
+            if (prefill.error.message) parts.push(`Error: ${prefill.error.message}`);
+            if (prefill.error.stack) parts.push(`Stack:\n${String(prefill.error.stack).slice(0, 2000)}`);
+            if (parts.length) setActualBehavior(parts.join('\n\n'));
+          }
+          delete (window as any).__FEEDBACK_PREFILL__;
+        }
+      } catch {
+        // ignore prefill failures
+      }
+    }
+    if (!isOpen && wasOpenRef.current) {
+      setScreenshotPreview(null);
     }
     wasOpenRef.current = isOpen;
   }, [isOpen, t]);
+
+  // When user enters Report tab in BUG mode, prepare a screenshot preview.
+  useEffect(() => {
+    let cancelled = false;
+    async function preparePreview() {
+      if (!isOpen || activeTab !== 'report' || !attachScreenshot) {
+        setScreenshotPreview(null);
+        return;
+      }
+      setIsPreparingDossier(true);
+      try {
+        const dossier = await buildFeedbackDossier({
+          includeScreenshot: true,
+          user: {
+            userId: currentUser?.id || null,
+            role: currentUser?.role || null,
+          },
+        });
+        if (!cancelled) {
+          setScreenshotPreview(dossier.screenshot?.dataUrl || null);
+        }
+      } catch (err) {
+        if (!cancelled) setScreenshotPreview(null);
+      } finally {
+        if (!cancelled) setIsPreparingDossier(false);
+      }
+    }
+    preparePreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, activeTab, attachScreenshot, currentUser?.id, currentUser?.role]);
+
+  // Listen for programmatic open events (e.g. ErrorBoundary)
+  useEffect(() => {
+    function onOpen() {
+      try {
+        useAppStore.getState().openSidePanel?.('FEEDBACK');
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('feedback:open', onOpen as EventListener);
+    return () => window.removeEventListener('feedback:open', onOpen as EventListener);
+  }, []);
 
   const currentContext =
     capturedCtx?.routePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
@@ -263,6 +347,24 @@ export const FeedbackSidePanel: React.FC = () => {
     if (impactNotes.trim()) structuredBlocks.push(`Impact:\n${impactNotes.trim()}`);
 
     const fullDescription = [message.trim(), ...structuredBlocks.map((b) => `\n\n${b}`)].join('');
+
+    let dossier: Awaited<ReturnType<typeof buildFeedbackDossier>> | null = null;
+    try {
+      dossier = await buildFeedbackDossier({
+        includeScreenshot: attachScreenshot,
+        user: {
+          userId: currentUser?.id || null,
+          role: currentUser?.role || null,
+        },
+        forSignature: {
+          message: `${reportTitle.trim()} ${message.trim()}`.trim(),
+          route: ctx.routePath,
+        },
+      });
+    } catch (err) {
+      console.warn('[FeedbackSidePanel] buildFeedbackDossier failed:', err);
+    }
+
     try {
       await Api.sendFeedback({
         userId: currentUser?.id || undefined,
@@ -288,6 +390,21 @@ export const FeedbackSidePanel: React.FC = () => {
           screenSize: ctx.screenSize,
           scrollPosition: ctx.scrollPosition,
         },
+        signatureHash: dossier?.signatureHash,
+        appContext: dossier ? (dossier.appContext as any) : undefined,
+        consoleLogs: attachDiagnostics && dossier ? (dossier.consoleLogs as any) : undefined,
+        networkErrors: attachDiagnostics && dossier ? (dossier.networkErrors as any) : undefined,
+        breadcrumbs: attachDiagnostics && dossier ? (dossier.breadcrumbs as any) : undefined,
+        lastUncaughtError: attachDiagnostics && dossier ? dossier.lastUncaughtError : undefined,
+        screenshot:
+          attachScreenshot && dossier?.screenshot
+            ? {
+                dataUrl: dossier.screenshot.dataUrl,
+                approxBytes: dossier.screenshot.approxBytes,
+                width: dossier.screenshot.width,
+                height: dossier.screenshot.height,
+              }
+            : null,
       });
       handleSuccess(
         reportType === 'BUG'
@@ -651,6 +768,58 @@ export const FeedbackSidePanel: React.FC = () => {
               onChange={(e) => setImpactNotes(e.target.value)}
             />
           </div>
+        </div>
+      )}
+
+      {/* Cursor-ready capture bundle */}
+      {reportType === 'BUG' && (
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span>{t('feedback.attach.title', 'Cursor-ready dowody')}</span>
+            {isPreparingDossier ? (
+              <span className="inline-flex items-center gap-1 text-slate-400">
+                <Loader2 size={12} className="animate-spin" />
+                {t('feedback.attach.preparing', 'Przygotowuję…')}
+              </span>
+            ) : null}
+          </div>
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={attachScreenshot}
+              onChange={(e) => setAttachScreenshot(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            {t('feedback.attach.screenshot', 'Dołącz screenshot bieżącego widoku')}
+          </label>
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={attachDiagnostics}
+              onChange={(e) => setAttachDiagnostics(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            {t(
+              'feedback.attach.diagnostics',
+              'Dołącz logi konsoli, błędy sieci i breadcrumbs (bez wartości z formularzy)'
+            )}
+          </label>
+          {attachScreenshot && screenshotPreview ? (
+            <div className="mt-1 overflow-hidden rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-900">
+              <img
+                src={screenshotPreview}
+                alt="preview"
+                className="w-full h-auto max-h-48 object-cover object-top"
+                data-feedback-redact
+              />
+              <div className="px-2 py-1 text-[10px] text-slate-400">
+                {t(
+                  'feedback.attach.previewHint',
+                  'Hasła i pola email są zamazywane automatycznie. Użyj atrybutu data-feedback-redact dla innych wrażliwych miejsc.'
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 

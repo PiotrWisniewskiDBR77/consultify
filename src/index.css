@@ -325,3 +325,27 @@
     font-size: 12pt !important;
   }
 }
+
+/*
+ * Feedback Pipeline V2 — redact styles applied while a screenshot is captured.
+ * Marking <html data-feedback-redact-active="1"> blocks out elements that opt
+ * into redaction (`data-feedback-redact`) or that are obviously sensitive
+ * inputs, without touching the live page.
+ */
+html[data-feedback-redact-active="1"] [data-feedback-redact],
+html[data-feedback-redact-active="1"] input[type="password"],
+html[data-feedback-redact-active="1"] input[type="email"],
+html[data-feedback-redact-active="1"] input[autocomplete*="password"],
+html[data-feedback-redact-active="1"] input[autocomplete*="email"] {
+  color: transparent !important;
+  background: #111 !important;
+  caret-color: transparent !important;
+  text-shadow: none !important;
+  filter: blur(6px) saturate(0) !important;
+}
+
+html[data-feedback-redact-active="1"] [data-feedback-redact]::before {
+  content: "■■■■■■■■" !important;
+  color: #111 !important;
+  letter-spacing: 0.1em !important;
+}

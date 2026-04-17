@@ -139,7 +139,17 @@ export interface ConversationMessage {
   conversationId: string;
   role: 'user' | 'ai';
   content: string;
-  messageType: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call' | 'voice';
+  messageType:
+    | 'text'
+    | 'action_request'
+    | 'summary'
+    | 'file'
+    | 'tool_call'
+    | 'voice'
+    // V8: governed proposal + execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
+    | 'execution_proposal'
+    | 'execution_progress'
+    | 'execution_result';
   metadata?: {
     citations?: Citation[];
     actions?: ResponseAction[];

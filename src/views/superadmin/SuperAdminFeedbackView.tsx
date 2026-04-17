@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import { enUS, pl } from 'date-fns/locale';
 import {
   AlertTriangle,
@@ -8,15 +8,21 @@ import {
   ChevronRight,
   Clock,
   Copy,
+  ExternalLink,
   Globe,
+  Image as ImageIcon,
   Lightbulb,
+  PanelsTopLeft,
   MessageSquare,
   MessageSquareWarning,
   Monitor,
   Palette,
   Search,
   Send,
+  Sparkles,
   Star,
+  Tag,
+  Terminal,
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -26,6 +32,32 @@ import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
 type FeedbackStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
+type FeedbackViewMode = 'board' | 'list';
+
+interface FeedbackWorkflow {
+  owner?: string | null;
+  cluster?: string | null;
+  source?: string | null;
+  branch?: string | null;
+  prUrl?: string | null;
+  taskUrl?: string | null;
+  linkedTaskId?: string | null;
+  deployStatus?: string | null;
+  deployTargets?: string[];
+  deployedAt?: string | null;
+  verifiedBy?: string | null;
+  verifiedAt?: string | null;
+  waitingOn?: string | null;
+  lastUpdatedAt?: string | null;
+}
+
+interface FeedbackResolution {
+  type?: string | null;
+  summary?: string | null;
+  rootCause?: string | null;
+  verificationNotes?: string | null;
+  testPlan?: string[];
+}
 
 interface StatusHistoryEntry {
   id: string;
@@ -53,6 +85,7 @@ interface AlertDispatchSummary {
 }
 
 interface FeedbackItem {
+  organization_id?: string | null;
   id: string;
   user_id: string;
   user_email: string;
@@ -72,10 +105,51 @@ interface FeedbackItem {
   ui_language?: string;
   ui_theme?: string;
   source_env?: string;
+  priority?: string;
   linked_task_id?: string;
   created_at: string;
   updated_at?: string;
   statusHistory?: StatusHistoryEntry[];
+  workflow?: FeedbackWorkflow;
+  resolution?: FeedbackResolution;
+  workflowTimeline?: WorkflowTimelineEntry[];
+  owner?: string | null;
+  cluster?: string | null;
+  pr_url?: string | null;
+  branch?: string | null;
+  deploy_status?: string | null;
+  deploy_targets?: string[];
+  resolution_summary?: string | null;
+}
+
+interface WorkflowTimelineEntry {
+  id: string;
+  at: string;
+  actor: string | null;
+  action: string;
+  note?: string | null;
+  changes?: string[];
+}
+
+interface WorkflowDraft {
+  owner: string;
+  cluster: string;
+  branch: string;
+  prUrl: string;
+  taskUrl: string;
+  linkedTaskId: string;
+  deployStatus: string;
+  deployTargets: string;
+  deployedAt: string;
+  verifiedBy: string;
+  verifiedAt: string;
+  waitingOn: string;
+  resolutionType: string;
+  resolutionSummary: string;
+  rootCause: string;
+  verificationNotes: string;
+  testPlan: string;
+  note: string;
 }
 
 const STATUS_ORDER: FeedbackStatus[] = [
@@ -153,24 +227,59 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<FeedbackViewMode>('board');
   const [statusFilter, setStatusFilter] = useState<FeedbackStatus | 'ALL'>('ALL');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
+  const [envFilter, setEnvFilter] = useState<string>('ALL');
+  const [ownershipFilter, setOwnershipFilter] = useState<'ALL' | 'ASSIGNED' | 'UNASSIGNED'>('ALL');
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<FeedbackItem | null>(null);
   const [responseText, setResponseText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [workflowDraft, setWorkflowDraft] = useState<WorkflowDraft>({
+    owner: '',
+    cluster: '',
+    branch: '',
+    prUrl: '',
+    taskUrl: '',
+    linkedTaskId: '',
+    deployStatus: '',
+    deployTargets: '',
+    deployedAt: '',
+    verifiedBy: '',
+    verifiedAt: '',
+    waitingOn: '',
+    resolutionType: '',
+    resolutionSummary: '',
+    rootCause: '',
+    verificationNotes: '',
+    testPlan: '',
+    note: '',
+  });
+  const [isSavingWorkflow, setIsSavingWorkflow] = useState(false);
+
+  const normalizeItem = useCallback(
+    (item: any): FeedbackItem => ({
+      ...item,
+      workflow: (item?.workflow || {}) as FeedbackWorkflow,
+      resolution: (item?.resolution || {}) as FeedbackResolution,
+      workflowTimeline: Array.isArray(item?.workflowTimeline) ? item.workflowTimeline : [],
+      deploy_targets: Array.isArray(item?.deploy_targets) ? item.deploy_targets : [],
+    }),
+    []
+  );
 
   const fetchFeedback = useCallback(async () => {
     try {
       const data = await Api.getFeedback();
-      setFeedback(data);
+      setFeedback((data || []).map((item: any) => normalizeItem(item)));
     } catch (error) {
       console.error('Error fetching feedback:', error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [normalizeItem]);
 
   useEffect(() => {
     fetchFeedback();
@@ -229,9 +338,96 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const loadDetail = async (item: FeedbackItem) => {
     try {
       const detail = await Api.get(`/feedback/${item.id}`);
-      setSelectedItem(detail);
+      setSelectedItem(normalizeItem(detail));
     } catch {
       setSelectedItem(item);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedItem) return;
+    const workflow = selectedItem.workflow || {};
+    const resolution = selectedItem.resolution || {};
+    setWorkflowDraft({
+      owner: workflow.owner || '',
+      cluster: workflow.cluster || '',
+      branch: workflow.branch || '',
+      prUrl: workflow.prUrl || '',
+      taskUrl: workflow.taskUrl || '',
+      linkedTaskId: workflow.linkedTaskId || selectedItem.linked_task_id || '',
+      deployStatus: workflow.deployStatus || '',
+      deployTargets: (workflow.deployTargets || []).join(', '),
+      deployedAt: workflow.deployedAt || '',
+      verifiedBy: workflow.verifiedBy || '',
+      verifiedAt: workflow.verifiedAt || '',
+      waitingOn: workflow.waitingOn || '',
+      resolutionType: resolution.type || '',
+      resolutionSummary: resolution.summary || '',
+      rootCause: resolution.rootCause || '',
+      verificationNotes: resolution.verificationNotes || '',
+      testPlan: (resolution.testPlan || []).join('\n'),
+      note: '',
+    });
+    setResponseText('');
+  }, [selectedItem]);
+
+  const saveWorkflow = async () => {
+    if (!selectedItem) return;
+    setIsSavingWorkflow(true);
+    try {
+      const result = await Api.updateFeedbackWorkflow(selectedItem.id, {
+        owner: workflowDraft.owner || null,
+        cluster: workflowDraft.cluster || null,
+        source: 'cursor',
+        branch: workflowDraft.branch || null,
+        prUrl: workflowDraft.prUrl || null,
+        taskUrl: workflowDraft.taskUrl || null,
+        linkedTaskId: workflowDraft.linkedTaskId || null,
+        deployStatus: workflowDraft.deployStatus || null,
+        deployTargets: workflowDraft.deployTargets
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean),
+        deployedAt: workflowDraft.deployedAt || null,
+        verifiedBy: workflowDraft.verifiedBy || null,
+        verifiedAt: workflowDraft.verifiedAt || null,
+        waitingOn: workflowDraft.waitingOn || null,
+        resolution: {
+          type: workflowDraft.resolutionType || null,
+          summary: workflowDraft.resolutionSummary || null,
+          rootCause: workflowDraft.rootCause || null,
+          verificationNotes: workflowDraft.verificationNotes || null,
+          testPlan: workflowDraft.testPlan
+            .split('\n')
+            .map((entry) => entry.trim())
+            .filter(Boolean),
+        },
+        note: workflowDraft.note || null,
+      });
+
+      const nextItem = normalizeItem({
+        ...selectedItem,
+        linked_task_id: workflowDraft.linkedTaskId || null,
+        workflow: result?.workflow || {
+          ...(selectedItem.workflow || {}),
+          owner: workflowDraft.owner || null,
+          cluster: workflowDraft.cluster || null,
+        },
+        resolution: result?.resolution || {
+          ...(selectedItem.resolution || {}),
+          summary: workflowDraft.resolutionSummary || null,
+        },
+        workflowTimeline:
+          result?.workflowTimeline || selectedItem.workflowTimeline || [],
+      });
+
+      setFeedback((prev) => prev.map((item) => (item.id === nextItem.id ? nextItem : item)));
+      setSelectedItem(nextItem);
+      setWorkflowDraft((prev) => ({ ...prev, note: '' }));
+    } catch (error) {
+      console.error('Error updating workflow:', error);
+    } finally {
+      setIsSavingWorkflow(false);
     }
   };
 
@@ -243,6 +439,13 @@ export const SuperAdminFeedbackView: React.FC = () => {
           if (typeFilter !== 'ALL' && item.type !== typeFilter) return false;
           if (severityFilter !== 'ALL' && (item.severity || 'NORMAL') !== severityFilter)
             return false;
+          if (
+            envFilter !== 'ALL' &&
+            String(item.source_env || '').toLowerCase() !== envFilter.toLowerCase()
+          )
+            return false;
+          if (ownershipFilter === 'ASSIGNED' && !item.workflow?.owner) return false;
+          if (ownershipFilter === 'UNASSIGNED' && item.workflow?.owner) return false;
           return true;
         })
         .filter(
@@ -252,14 +455,21 @@ export const SuperAdminFeedbackView: React.FC = () => {
             item.message.toLowerCase().includes(search.toLowerCase()) ||
             (item.user_email || '').toLowerCase().includes(search.toLowerCase()) ||
             (item.linked_task_id || '').toLowerCase().includes(search.toLowerCase()) ||
+            (item.workflow?.owner || '').toLowerCase().includes(search.toLowerCase()) ||
+            (item.workflow?.cluster || '').toLowerCase().includes(search.toLowerCase()) ||
             item.id.toLowerCase().includes(search.toLowerCase())
         )
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
-    [feedback, statusFilter, typeFilter, severityFilter, search]
+    [envFilter, feedback, ownershipFilter, search, severityFilter, statusFilter, typeFilter]
   );
 
   const formatDate = (date: string) =>
     format(new Date(date), 'PPP p', { locale: i18n.language === 'pl' ? pl : enUS });
+  const formatAge = (date: string) =>
+    formatDistanceToNowStrict(new Date(date), {
+      addSuffix: true,
+      locale: i18n.language === 'pl' ? pl : enUS,
+    });
   const parseMetadata = (meta?: string): Record<string, unknown> => {
     if (!meta) return {};
     try {
@@ -274,10 +484,170 @@ export const SuperAdminFeedbackView: React.FC = () => {
     return raw as AlertDispatchSummary;
   };
 
+  const pipelineStats = useMemo(() => {
+    const criticalProd = feedback.filter(
+      (item) =>
+        String(item.source_env || '').toLowerCase() === 'production' &&
+        (String(item.severity || '').toUpperCase() === 'CRITICAL' ||
+          String(item.priority || '').toLowerCase() === 'critical')
+    ).length;
+    const unassigned = feedback.filter((item) => !item.workflow?.owner).length;
+    const reviewPending = feedback.filter((item) => item.status === 'REVIEWED').length;
+    const staleNew = feedback.filter((item) => {
+      if (item.status !== 'NEW') return false;
+      return Date.now() - new Date(item.created_at).getTime() > 24 * 60 * 60 * 1000;
+    }).length;
+    return { criticalProd, unassigned, reviewPending, staleNew };
+  }, [feedback]);
+
+  const envOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          feedback
+            .map((item) => String(item.source_env || '').trim())
+            .filter(Boolean)
+        )
+      ),
+    [feedback]
+  );
+
+  const renderItemCard = (item: FeedbackItem, compact = false) => {
+    const sConf = STATUS_CONFIG[item.status] || STATUS_CONFIG.NEW;
+    return (
+      <button
+        key={item.id}
+        onClick={() => loadDetail(item)}
+        className="w-full text-left bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-2 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
+                  item.type === 'BUG'
+                    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
+                    : item.type === 'FEATURE'
+                      ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
+                      : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
+                }`}
+              >
+                {item.type === 'BUG' ? <Bug size={12} /> : <Lightbulb size={12} />}
+                {item.type}
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded text-[11px] font-bold ${sConf.color} ${sConf.bg} border ${sConf.border}`}
+              >
+                {item.status}
+              </span>
+              {item.source_env && (
+                <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200 dark:bg-navy-900/40 dark:text-slate-300 dark:border-slate-700">
+                  {item.source_env}
+                </span>
+              )}
+              {item.priority && (
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-navy-900/40 dark:text-slate-300 dark:border-slate-700">
+                  {String(item.priority).toUpperCase()}
+                </span>
+              )}
+              {item.severity && item.severity !== 'LOW' && (
+                <span
+                  className={`text-[11px] font-bold ${SEVERITY_CONFIG[item.severity]?.color || 'text-slate-400'} flex items-center gap-1`}
+                >
+                  {SEVERITY_CONFIG[item.severity]?.icon} {item.severity}
+                </span>
+              )}
+            </div>
+            {item.title ? (
+              <p className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                {item.title}
+              </p>
+            ) : null}
+            <p
+              className={`text-slate-900 dark:text-slate-200 text-sm whitespace-pre-wrap leading-relaxed ${compact ? 'line-clamp-3' : 'line-clamp-2'}`}
+            >
+              {item.message}
+            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-500">
+              <span className="flex items-center gap-1">
+                <User size={12} /> {item.user_email || 'Anonymous'}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock size={12} /> {formatAge(item.created_at)}
+              </span>
+              {item.workflow?.owner && (
+                <span>
+                  Owner: <b>{item.workflow.owner}</b>
+                </span>
+              )}
+              {item.workflow?.cluster && (
+                <span>
+                  Cluster: <b>{item.workflow.cluster}</b>
+                </span>
+              )}
+              {item.linked_task_id && (
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 size={12} /> Task {item.linked_task_id}
+                </span>
+              )}
+              {item.workflow?.prUrl && (
+                <span className="flex items-center gap-1 text-blue-600 dark:text-blue-300">
+                  <ExternalLink size={12} /> PR
+                </span>
+              )}
+              {item.workflow?.deployStatus && (
+                <span className="flex items-center gap-1">
+                  <PanelsTopLeft size={12} /> {item.workflow.deployStatus}
+                </span>
+              )}
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-slate-600 mt-2 shrink-0" />
+        </div>
+      </button>
+    );
+  };
+
   if (selectedItem) {
     const meta = parseMetadata(selectedItem.metadata);
     const alertDispatch = parseAlertDispatch(meta);
     const alertResults = alertDispatch?.results || {};
+    const dossier = (meta.dossier && typeof meta.dossier === 'object'
+      ? (meta.dossier as Record<string, unknown>)
+      : {}) as Record<string, unknown>;
+    const appCtx = (dossier.appContext && typeof dossier.appContext === 'object'
+      ? (dossier.appContext as Record<string, unknown>)
+      : {}) as Record<string, unknown>;
+    const consoleLogs = Array.isArray(dossier.consoleLogs)
+      ? (dossier.consoleLogs as Array<{ at?: string; level?: string; message?: string }>)
+      : [];
+    const networkErrorsList = Array.isArray(dossier.networkErrors)
+      ? (dossier.networkErrors as Array<{
+          at?: string;
+          method?: string;
+          url?: string;
+          status?: number | null;
+          durationMs?: number | null;
+          error?: string;
+        }>)
+      : [];
+    const breadcrumbs = Array.isArray(dossier.breadcrumbs)
+      ? (dossier.breadcrumbs as Array<{
+          at?: string;
+          kind?: string;
+          label?: string;
+          target?: string;
+        }>)
+      : [];
+    const lastUncaught = dossier.lastUncaughtError as
+      | { message?: string; stack?: string; at?: string; source?: string }
+      | undefined;
+    const artifacts = Array.isArray(meta.artifacts) ? (meta.artifacts as any[]) : [];
+    const hasScreenshot = artifacts.some((a) => a && a.kind === 'screenshot');
+    const signatureHash = typeof meta.signatureHash === 'string' ? (meta.signatureHash as string) : null;
+    const duplicateCandidates = Array.isArray(meta.duplicateCandidates)
+      ? (meta.duplicateCandidates as Array<{ id: string; title: string | null }>)
+      : [];
     const contextMetaEntries = Object.entries(meta).filter(
       ([k]) =>
         ![
@@ -288,7 +658,15 @@ export const SuperAdminFeedbackView: React.FC = () => {
           'title',
           'feedbackType',
           'linkedTaskId',
+          'workflow',
+          'resolution',
+          'workflowTimeline',
           'alertDispatch',
+          'dossier',
+          'artifacts',
+          'signatureHash',
+          'duplicateOf',
+          'duplicateCandidates',
         ].includes(k)
     );
     const alertChannels = Array.from(
@@ -304,6 +682,25 @@ export const SuperAdminFeedbackView: React.FC = () => {
     const statusHist = selectedItem.statusHistory || [];
     const sConf = STATUS_CONFIG[selectedItem.status] || STATUS_CONFIG.NEW;
     const nextStatuses = STATUS_ORDER.filter((s) => s !== selectedItem.status);
+    const mergedTimeline = [
+      ...(selectedItem.workflowTimeline || []).map((entry) => ({
+        id: `workflow-${entry.id}`,
+        at: entry.at,
+        label: entry.action.replace(/_/g, ' '),
+        note: entry.note,
+        actor: entry.actor,
+        color: 'text-blue-700 dark:text-blue-300',
+      })),
+      ...statusHist.map((entry) => ({
+        id: `status-${entry.id}`,
+        at: entry.created_at,
+        label: `${entry.from_status || '—'} -> ${entry.to_status}`,
+        note: entry.note,
+        actor: entry.changed_by,
+        color:
+          STATUS_CONFIG[entry.to_status as FeedbackStatus]?.color || 'text-slate-700 dark:text-slate-300',
+      })),
+    ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -384,6 +781,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
             <span className="flex items-center gap-1">
               <Clock size={12} /> {formatDate(selectedItem.created_at)}
             </span>
+            <span className="flex items-center gap-1">
+              <Tag size={12} /> {formatAge(selectedItem.created_at)}
+            </span>
             {selectedItem.rating && (
               <span className="flex items-center gap-1">
                 <Star size={12} /> {selectedItem.rating}/5
@@ -394,6 +794,237 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <CheckCircle2 size={12} /> Task {selectedItem.linked_task_id}
               </span>
             )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
+                {t('feedback.pipeline.operations', 'Operations')}
+              </h3>
+              {!selectedItem.workflow?.owner && (
+                <button
+                  onClick={() =>
+                    setWorkflowDraft((prev) => ({
+                      ...prev,
+                      owner: prev.owner || 'superadmin',
+                      note: prev.note || 'Ownership taken from Superadmin pipeline',
+                    }))
+                  }
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 dark:border-blue-900 dark:text-blue-300 dark:bg-blue-900/20"
+                >
+                  {t('feedback.takeOwnership', 'Take ownership')}
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">{t('feedback.owner', 'Owner')}</span>
+                <input
+                  value={workflowDraft.owner}
+                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, owner: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="owner"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">{t('feedback.cluster', 'Cluster')}</span>
+                <input
+                  value={workflowDraft.cluster}
+                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, cluster: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="Inbox / Superadmin Users"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">{t('feedback.waitingOn', 'Waiting on')}</span>
+                <input
+                  value={workflowDraft.waitingOn}
+                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, waitingOn: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="user verification / deploy / design"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">{t('feedback.linkedTask', 'Linked task')}</span>
+                <input
+                  value={workflowDraft.linkedTaskId}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, linkedTaskId: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="task id"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
+              {t('feedback.pipeline.delivery', 'Delivery')}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">Branch</span>
+                <input
+                  value={workflowDraft.branch}
+                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, branch: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">PR URL</span>
+                <input
+                  value={workflowDraft.prUrl}
+                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, prUrl: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">Task URL</span>
+                <input
+                  value={workflowDraft.taskUrl}
+                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, taskUrl: e.target.value }))}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">Deploy status</span>
+                <input
+                  value={workflowDraft.deployStatus}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, deployStatus: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="todo / staging / production / verified"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">Deploy targets</span>
+                <input
+                  value={workflowDraft.deployTargets}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, deployTargets: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="staging, production"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">Deployed at</span>
+                <input
+                  value={workflowDraft.deployedAt}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, deployedAt: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="2026-04-16T09:00:00Z"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">Verified by</span>
+                <input
+                  value={workflowDraft.verifiedBy}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, verifiedBy: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                />
+              </label>
+              <label className="space-y-1 text-xs">
+                <span className="text-slate-500">Verified at</span>
+                <input
+                  value={workflowDraft.verifiedAt}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, verifiedAt: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                  placeholder="2026-04-16T09:10:00Z"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
+            {t('feedback.pipeline.resolution', 'Resolution')}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label className="space-y-1 text-xs">
+              <span className="text-slate-500">Resolution type</span>
+              <input
+                value={workflowDraft.resolutionType}
+                onChange={(e) =>
+                  setWorkflowDraft((prev) => ({ ...prev, resolutionType: e.target.value }))
+                }
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+                placeholder="fixed / duplicate / not-a-bug"
+              />
+            </label>
+            <label className="space-y-1 text-xs">
+              <span className="text-slate-500">Resolution summary</span>
+              <input
+                value={workflowDraft.resolutionSummary}
+                onChange={(e) =>
+                  setWorkflowDraft((prev) => ({ ...prev, resolutionSummary: e.target.value }))
+                }
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+              />
+            </label>
+            <label className="space-y-1 text-xs">
+              <span className="text-slate-500">Root cause</span>
+              <textarea
+                value={workflowDraft.rootCause}
+                onChange={(e) =>
+                  setWorkflowDraft((prev) => ({ ...prev, rootCause: e.target.value }))
+                }
+                rows={3}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 resize-none"
+              />
+            </label>
+            <label className="space-y-1 text-xs">
+              <span className="text-slate-500">Verification notes</span>
+              <textarea
+                value={workflowDraft.verificationNotes}
+                onChange={(e) =>
+                  setWorkflowDraft((prev) => ({ ...prev, verificationNotes: e.target.value }))
+                }
+                rows={3}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 resize-none"
+              />
+            </label>
+            <label className="space-y-1 text-xs md:col-span-2">
+              <span className="text-slate-500">Test plan (one line per step)</span>
+              <textarea
+                value={workflowDraft.testPlan}
+                onChange={(e) =>
+                  setWorkflowDraft((prev) => ({ ...prev, testPlan: e.target.value }))
+                }
+                rows={3}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 resize-none"
+              />
+            </label>
+            <label className="space-y-1 text-xs md:col-span-2">
+              <span className="text-slate-500">Update note</span>
+              <textarea
+                value={workflowDraft.note}
+                onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, note: e.target.value }))}
+                rows={2}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 resize-none"
+                placeholder="What changed in the workflow?"
+              />
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={saveWorkflow}
+              disabled={isSavingWorkflow}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              {isSavingWorkflow ? 'Saving…' : 'Save pipeline data'}
+            </button>
           </div>
         </div>
 
@@ -524,28 +1155,173 @@ export const SuperAdminFeedbackView: React.FC = () => {
           )}
         </div>
 
-        {statusHist.length > 0 && (
+        {(hasScreenshot ||
+          consoleLogs.length > 0 ||
+          networkErrorsList.length > 0 ||
+          breadcrumbs.length > 0 ||
+          lastUncaught ||
+          signatureHash ||
+          duplicateCandidates.length > 0) && (
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300 flex items-center gap-2">
+                <Sparkles size={14} /> {t('feedback.cursorDossier', 'Cursor dossier')}
+              </h3>
+              <div className="flex items-center gap-2">
+                {signatureHash && (
+                  <span
+                    className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    title="signatureHash"
+                  >
+                    sig {signatureHash}
+                  </span>
+                )}
+                <button
+                  onClick={async () => {
+                    try {
+                      const brief = await Api.getFeedbackCursorBrief(selectedItem.id);
+                      await navigator.clipboard.writeText(brief);
+                    } catch (err) {
+                      console.error('Failed to copy Cursor brief', err);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                >
+                  <Copy size={12} /> {t('feedback.copyCursorBrief', 'Copy Cursor brief')}
+                </button>
+              </div>
+            </div>
+
+            {duplicateCandidates.length > 0 && (
+              <div className="text-xs text-slate-600 dark:text-slate-400">
+                <span className="font-semibold">
+                  {t('feedback.duplicates', 'Possible duplicates')}:
+                </span>{' '}
+                {duplicateCandidates
+                  .slice(0, 5)
+                  .map((d) => d.title || d.id.slice(0, 8))
+                  .join(' · ')}
+              </div>
+            )}
+
+            {hasScreenshot && (
+              <div className="space-y-1">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <ImageIcon size={12} /> {t('feedback.screenshot', 'Screenshot')}
+                </div>
+                <img
+                  src={Api.getFeedbackScreenshotUrl(selectedItem.id)}
+                  alt="feedback screenshot"
+                  className="rounded-lg border border-slate-200 dark:border-slate-700 max-h-[420px] w-auto"
+                />
+              </div>
+            )}
+
+            {lastUncaught?.message && (
+              <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/40 p-3 text-xs">
+                <div className="font-semibold text-red-700 dark:text-red-300">
+                  {t('feedback.lastError', 'Last uncaught error')}
+                </div>
+                <div className="text-red-800 dark:text-red-200 mt-1 font-mono break-all">
+                  {lastUncaught.message}
+                </div>
+                {lastUncaught.stack && (
+                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-red-700/80 dark:text-red-300/80 whitespace-pre-wrap">
+                    {lastUncaught.stack}
+                  </pre>
+                )}
+              </div>
+            )}
+
+            {breadcrumbs.length > 0 && (
+              <details className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs">
+                <summary className="cursor-pointer font-semibold text-slate-700 dark:text-slate-200">
+                  {t('feedback.breadcrumbs', 'Breadcrumbs')} ({breadcrumbs.length})
+                </summary>
+                <ul className="mt-2 space-y-1 text-slate-600 dark:text-slate-400">
+                  {breadcrumbs.slice(-20).map((b, idx) => (
+                    <li key={idx} className="flex gap-2">
+                      <span className="text-slate-400 text-[10px] shrink-0">
+                        {b.at ? format(new Date(b.at), 'HH:mm:ss') : ''}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide text-slate-400 shrink-0">
+                        {b.kind}
+                      </span>
+                      <span className="break-all">{b.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+
+            {networkErrorsList.length > 0 && (
+              <details className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs">
+                <summary className="cursor-pointer font-semibold text-slate-700 dark:text-slate-200">
+                  {t('feedback.networkErrors', 'Network errors')} ({networkErrorsList.length})
+                </summary>
+                <ul className="mt-2 space-y-1 font-mono text-[11px] text-slate-600 dark:text-slate-300">
+                  {networkErrorsList.slice(-15).map((n, idx) => (
+                    <li key={idx} className="break-all">
+                      <span className="text-slate-400">
+                        {n.at ? format(new Date(n.at), 'HH:mm:ss') : ''}
+                      </span>{' '}
+                      <span className="text-red-600 dark:text-red-400">
+                        {n.status ?? 'ERR'}
+                      </span>{' '}
+                      {n.method} {n.url} ({n.durationMs ?? '?'}ms)
+                      {n.error ? ` — ${n.error}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+
+            {consoleLogs.length > 0 && (
+              <details className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs">
+                <summary className="cursor-pointer font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                  <Terminal size={12} /> {t('feedback.consoleLogs', 'Console logs')} (
+                  {consoleLogs.length})
+                </summary>
+                <pre className="mt-2 max-h-60 overflow-auto text-[11px] bg-slate-50 dark:bg-navy-900 p-2 rounded font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                  {consoleLogs
+                    .slice(-30)
+                    .map(
+                      (c) =>
+                        `[${c.level || 'log'}] ${c.at || ''} ${c.message || ''}`
+                    )
+                    .join('\n')}
+                </pre>
+              </details>
+            )}
+
+            {Object.keys(appCtx).length > 0 && (
+              <details className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs">
+                <summary className="cursor-pointer font-semibold text-slate-700 dark:text-slate-200">
+                  {t('feedback.appContext', 'App context')}
+                </summary>
+                <pre className="mt-2 max-h-60 overflow-auto text-[10px] text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                  {JSON.stringify(appCtx, null, 2)}
+                </pre>
+              </details>
+            )}
+          </div>
+        )}
+
+        {mergedTimeline.length > 0 && (
           <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-3">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-300">
-              {t('feedback.statusHistory', 'Status History')}
+              {t('feedback.pipeline.timeline', 'Pipeline timeline')}
             </h3>
             <div className="space-y-2">
-              {statusHist.map((entry) => (
+              {mergedTimeline.map((entry) => (
                 <div
                   key={entry.id}
                   className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400"
                 >
-                  <span className="text-slate-500">{formatDate(entry.created_at)}</span>
+                  <span className="text-slate-500">{formatDate(entry.at)}</span>
                   <ChevronRight size={12} />
-                  <span>{entry.from_status || '—'}</span>
-                  <span>→</span>
-                  <span
-                    className={
-                      STATUS_CONFIG[entry.to_status as FeedbackStatus]?.color || 'text-slate-300'
-                    }
-                  >
-                    {entry.to_status}
-                  </span>
+                  <span className={entry.color}>{entry.label}</span>
+                  {entry.actor && <span className="text-slate-500">by {entry.actor}</span>}
                   {entry.note && <span className="text-slate-500 italic">({entry.note})</span>}
                 </div>
               ))}
@@ -612,6 +1388,28 @@ export const SuperAdminFeedbackView: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 w-full md:w-auto">
+          <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <button
+              onClick={() => setViewMode('board')}
+              className={`px-3 py-2 text-sm ${
+                viewMode === 'board'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-navy-900'
+                  : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              Board
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-2 text-sm border-l border-slate-200 dark:border-slate-700 ${
+                viewMode === 'list'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-navy-900'
+                  : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              List
+            </button>
+          </div>
           <div className="relative w-full sm:w-auto min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input
@@ -656,7 +1454,63 @@ export const SuperAdminFeedbackView: React.FC = () => {
             <option value="MEDIUM">Medium</option>
             <option value="LOW">Low</option>
           </select>
+          <select
+            value={envFilter}
+            onChange={(e) => setEnvFilter(e.target.value)}
+            className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
+          >
+            <option value="ALL">All envs</option>
+            {envOptions.map((env) => (
+              <option key={env} value={env}>
+                {env}
+              </option>
+            ))}
+          </select>
+          <select
+            value={ownershipFilter}
+            onChange={(e) =>
+              setOwnershipFilter(e.target.value as 'ALL' | 'ASSIGNED' | 'UNASSIGNED')
+            }
+            className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
+          >
+            <option value="ALL">All ownership</option>
+            <option value="ASSIGNED">Assigned</option>
+            <option value="UNASSIGNED">Unassigned</option>
+          </select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          {
+            label: 'Critical prod',
+            value: pipelineStats.criticalProd,
+            tone: 'text-red-600 dark:text-red-400',
+          },
+          {
+            label: 'Unassigned',
+            value: pipelineStats.unassigned,
+            tone: 'text-amber-600 dark:text-amber-400',
+          },
+          {
+            label: 'Awaiting verification',
+            value: pipelineStats.reviewPending,
+            tone: 'text-purple-600 dark:text-purple-400',
+          },
+          {
+            label: 'NEW > 24h',
+            value: pipelineStats.staleNew,
+            tone: 'text-orange-600 dark:text-orange-400',
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-800 p-4"
+          >
+            <div className={`text-2xl font-bold ${card.tone}`}>{card.value}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{card.label}</div>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -685,94 +1539,55 @@ export const SuperAdminFeedbackView: React.FC = () => {
           <div className="animate-spin text-blue-500">Loading...</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <>
           {filteredFeedback.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-navy-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
               <p className="text-slate-500">
                 {t('feedback.noResults', 'No feedback found matching your criteria.')}
               </p>
             </div>
-          ) : (
-            filteredFeedback.map((item) => {
-              const sConf = STATUS_CONFIG[item.status] || STATUS_CONFIG.NEW;
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => loadDetail(item)}
-                  className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span
-                          className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 border ${
-                            item.type === 'BUG'
-                              ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-400 dark:border-red-900'
-                              : item.type === 'FEATURE'
-                                ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-400 dark:border-purple-900'
-                                : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:border-amber-900'
-                          }`}
-                        >
-                          {item.type === 'BUG' ? <Bug size={12} /> : <Lightbulb size={12} />}{' '}
-                          {item.type}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded text-xs font-bold ${sConf.color} ${sConf.bg} border ${sConf.border}`}
-                        >
-                          {item.status}
-                        </span>
-                        {item.source_env && (
-                          <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200 dark:bg-navy-900/40 dark:text-slate-300 dark:border-slate-700">
-                            {item.source_env}
-                          </span>
-                        )}
-                        {item.severity && item.severity !== 'LOW' && (
-                          <span
-                            className={`text-xs font-bold ${SEVERITY_CONFIG[item.severity]?.color || 'text-slate-400'} flex items-center gap-1`}
-                          >
-                            {SEVERITY_CONFIG[item.severity]?.icon} {item.severity}
-                          </span>
-                        )}
-                        <span className="text-slate-500 text-xs flex items-center gap-1">
-                          <Clock size={12} /> {formatDate(item.created_at)}
-                        </span>
+          ) : viewMode === 'board' ? (
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              {STATUS_ORDER.map((status) => {
+                const items = filteredFeedback.filter((item) => item.status === status);
+                const conf = STATUS_CONFIG[status];
+                return (
+                  <div
+                    key={status}
+                    className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-800/60 p-4 space-y-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className={`text-sm font-semibold ${conf.color}`}>{status}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {items.length} item(s)
+                        </div>
                       </div>
-                      {item.title ? (
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
-                          {item.title}
-                        </p>
-                      ) : null}
-                      <p className="text-slate-900 dark:text-slate-200 text-sm whitespace-pre-wrap leading-relaxed line-clamp-2">
-                        {item.message}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <User size={12} /> {item.user_email || 'Anonymous'}
-                        </span>
-                        {item.route_path && (
-                          <span className="flex items-center gap-1">
-                            <Globe size={12} /> {item.route_path}
-                          </span>
-                        )}
-                        {item.admin_response && (
-                          <span className="flex items-center gap-1 text-green-500">
-                            <MessageSquare size={12} /> Responded
-                          </span>
-                        )}
-                        {item.linked_task_id && (
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 size={12} /> Task {item.linked_task_id}
-                          </span>
-                        )}
-                      </div>
+                      <span
+                        className={`px-2 py-1 rounded-lg text-xs font-bold ${conf.bg} ${conf.color} border ${conf.border}`}
+                      >
+                        {items.length}
+                      </span>
                     </div>
-                    <ChevronRight size={16} className="text-slate-600 mt-2 shrink-0" />
+                    <div className="space-y-3">
+                      {items.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 px-3 py-5 text-xs text-slate-500 text-center">
+                          Empty lane
+                        </div>
+                      ) : (
+                        items.map((item) => renderItemCard(item, true))
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {filteredFeedback.map((item) => renderItemCard(item))}
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

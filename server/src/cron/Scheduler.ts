@@ -28,17 +28,17 @@ export const Scheduler = {
 
     // Resolve lazy services
     const [ls_p, amms_p, accs_p, slas_p, tass_p, decs_p, amm_p, fs_p] = await Promise.all([
-      import('../services/ai/learningSystem').then(
+      import('../services/ai/learningSystem.js').then(
         (m) => (m as any).learningSystem || (m as any).default
       ),
-      import('../services/ai/aiMemoryMetricsService').then((m) => m.default),
-      import('../services/aiCostControlService').then((m) => m.default),
-      import('../services/slaService').then((m) => m.default),
-      import('../services/taskAssignmentService').then((m) => m.default),
-      import('../services/decisionEscalationChainService').then((m) => m.default),
+      import('../services/ai/aiMemoryMetricsService.js').then((m) => m.default),
+      import('../services/aiCostControlService.js').then((m) => m.default),
+      import('../services/slaService.js').then((m) => m.default),
+      import('../services/taskAssignmentService.js').then((m) => m.default),
+      import('../services/decisionEscalationChainService.js').then((m) => m.default),
       // import('../services/storageReconciliationService').then((m) => m.default),
-      import('../services/aiMemoryManager').then((m) => m.default),
-      import('../services/feedbackService').then((m) => m.default),
+      import('../services/aiMemoryManager.js').then((m) => m.default),
+      import('../services/feedbackService.js').then((m) => m.default),
     ]);
 
     learningSystem = ls_p;

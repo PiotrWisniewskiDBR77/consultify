@@ -26,6 +26,15 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getAlertEmailService } from '../services/AlertEmailService.js';
 import feedbackAIService from '../services/feedbackAIService.js';
+import {
+  readScreenshot as readFeedbackScreenshot,
+  saveScreenshotFromDataUrl,
+} from '../services/feedbackArtifacts.js';
+import {
+  inferCluster as inferFeedbackCluster,
+  inferPriorityForPipeline as inferFeedbackPriority,
+  findDuplicateCandidates as findFeedbackDuplicates,
+} from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
 import slackService from '../services/slackService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
@@ -251,6 +260,23 @@ const reportFeedbackSchema = z.object({
   workspaceContext: z.string().trim().max(1000).optional(),
   clientEnv: z.string().trim().max(50).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  // V2 Cursor-ready dossier (all optional, validated loosely to stay
+  // backwards compatible with older clients).
+  signatureHash: z.string().trim().max(64).optional(),
+  appContext: z.record(z.string(), z.unknown()).optional(),
+  consoleLogs: z.array(z.record(z.string(), z.unknown())).max(120).optional(),
+  networkErrors: z.array(z.record(z.string(), z.unknown())).max(60).optional(),
+  breadcrumbs: z.array(z.record(z.string(), z.unknown())).max(80).optional(),
+  lastUncaughtError: z.record(z.string(), z.unknown()).nullable().optional(),
+  screenshot: z
+    .object({
+      dataUrl: z.string().min(30).max(2_000_000),
+      approxBytes: z.number().int().nonnegative().max(5_000_000).optional(),
+      width: z.number().int().positive().max(10_000).optional(),
+      height: z.number().int().positive().max(10_000).optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 const pulseFeedbackSchema = z.object({
@@ -835,6 +861,13 @@ router.post(
       uiTheme,
       workspaceContext,
       clientEnv,
+      signatureHash,
+      appContext,
+      consoleLogs,
+      networkErrors,
+      breadcrumbs,
+      lastUncaughtError,
+      screenshot,
     } = parsed.data;
 
     const appEnv = getAppEnv();
@@ -879,9 +912,6 @@ router.post(
     const title = inferredTitle.length > 120 ? inferredTitle.slice(0, 120) + '…' : inferredTitle;
     const description = String(parsedDescription || message || '').trim();
 
-    const priority = priorityFromEnvAndSeverity({ appEnv, severity, type });
-    const status: TicketStatus = 'NEW';
-
     const contextFields = [
       'routePath',
       'deviceType',
@@ -903,6 +933,55 @@ router.post(
       if (contextSources[field] !== undefined) contextMeta[field] = contextSources[field];
     }
 
+    const dossier: Record<string, unknown> = {};
+    if (signatureHash) dossier.signatureHash = signatureHash;
+    if (appContext && typeof appContext === 'object') dossier.appContext = appContext;
+    if (Array.isArray(consoleLogs) && consoleLogs.length > 0) dossier.consoleLogs = consoleLogs;
+    if (Array.isArray(networkErrors) && networkErrors.length > 0) {
+      dossier.networkErrors = networkErrors;
+    }
+    if (Array.isArray(breadcrumbs) && breadcrumbs.length > 0) dossier.breadcrumbs = breadcrumbs;
+    if (lastUncaughtError && typeof lastUncaughtError === 'object') {
+      dossier.lastUncaughtError = lastUncaughtError;
+    }
+
+    let workflowSeed: Record<string, unknown> | undefined;
+    try {
+      const cluster = inferFeedbackCluster(routePath || null);
+      if (cluster) workflowSeed = { cluster };
+    } catch (err) {
+      logger.warn('[Feedback] inferCluster failed:', err);
+    }
+
+    let duplicateOf: string | null = null;
+    let duplicateCandidates: Array<{ id: string; title: string | null }> = [];
+    if (signatureHash) {
+      try {
+        duplicateCandidates = await findFeedbackDuplicates(signatureHash, 5);
+        if (duplicateCandidates.length > 0) {
+          duplicateOf = duplicateCandidates[0].id;
+        }
+      } catch (err) {
+        logger.warn('[Feedback] findDuplicateCandidates failed:', err);
+      }
+    }
+
+    const basePriority = priorityFromEnvAndSeverity({ appEnv, severity, type });
+    let priority: TicketPriority = basePriority;
+    try {
+      priority = inferFeedbackPriority({
+        basePriority,
+        appEnv,
+        type,
+        severity: severity || null,
+        hasUncaughtError: Boolean(lastUncaughtError),
+        duplicateCount: duplicateCandidates.length,
+      });
+    } catch (err) {
+      logger.warn('[Feedback] inferPriority failed:', err);
+    }
+    const status: TicketStatus = 'NEW';
+
     let metadataJson: Record<string, unknown> = {
       ...(metadata || {}),
       ...contextMeta,
@@ -913,6 +992,11 @@ router.post(
       feedbackType: type,
       severity: severity || undefined,
       title,
+      ...(Object.keys(dossier).length > 0 ? { dossier } : {}),
+      ...(signatureHash ? { signatureHash } : {}),
+      ...(duplicateOf ? { duplicateOf } : {}),
+      ...(duplicateCandidates.length > 0 ? { duplicateCandidates } : {}),
+      ...(workflowSeed ? { workflow: workflowSeed } : {}),
     };
 
     const insertCols: string[] = [
@@ -952,6 +1036,33 @@ router.post(
     const insertResult = await dbRun(sql, values);
     if (!insertResult.success) {
       throw new Error(insertResult.error || 'Failed to insert feedback ticket');
+    }
+
+    // Persist screenshot as a filesystem artefact (Railway volume / local /tmp).
+    if (screenshot && typeof screenshot.dataUrl === 'string') {
+      try {
+        const saved = await saveScreenshotFromDataUrl(feedbackId, screenshot.dataUrl, {
+          width: screenshot.width,
+          height: screenshot.height,
+        });
+        if (saved) {
+          const artifacts = Array.isArray((metadataJson as any).artifacts)
+            ? ((metadataJson as any).artifacts as unknown[])
+            : [];
+          metadataJson = {
+            ...metadataJson,
+            artifacts: [...artifacts, saved],
+          };
+          if (feedbackCols.has('metadata_json')) {
+            await dbRun(`UPDATE feedback_items SET metadata_json = ? WHERE id = ?`, [
+              JSON.stringify(metadataJson),
+              feedbackId,
+            ]);
+          }
+        }
+      } catch (err) {
+        logger.warn('[Feedback] Failed to store screenshot artifact:', err);
+      }
     }
 
     // Auto-create backlog task for every ticket
@@ -1045,6 +1156,153 @@ router.post(
   })
 );
 
+type FeedbackWorkflowRecord = {
+  owner?: string | null;
+  cluster?: string | null;
+  source?: string | null;
+  branch?: string | null;
+  prUrl?: string | null;
+  taskUrl?: string | null;
+  linkedTaskId?: string | null;
+  deployStatus?: string | null;
+  deployTargets?: string[];
+  deployedAt?: string | null;
+  verifiedBy?: string | null;
+  verifiedAt?: string | null;
+  waitingOn?: string | null;
+  lastUpdatedAt?: string | null;
+};
+
+type FeedbackResolutionRecord = {
+  type?: string | null;
+  summary?: string | null;
+  rootCause?: string | null;
+  verificationNotes?: string | null;
+  testPlan?: string[];
+};
+
+type FeedbackWorkflowTimelineEntry = {
+  id: string;
+  at: string;
+  actor: string | null;
+  action: string;
+  note?: string | null;
+  changes?: string[];
+};
+
+function compactObject<T extends Record<string, unknown>>(input: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([, value]) => {
+      if (value === undefined) return false;
+      if (value === null) return false;
+      if (typeof value === 'string' && !value.trim()) return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+      return true;
+    })
+  ) as Partial<T>;
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry) => String(entry || '').trim()).filter(Boolean);
+}
+
+function normalizeWorkflowMeta(meta: Record<string, unknown>): FeedbackWorkflowRecord {
+  const raw = meta.workflow;
+  const workflow =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  return compactObject({
+    owner: typeof workflow.owner === 'string' ? (workflow.owner as string) : null,
+    cluster: typeof workflow.cluster === 'string' ? (workflow.cluster as string) : null,
+    source: typeof workflow.source === 'string' ? (workflow.source as string) : null,
+    branch: typeof workflow.branch === 'string' ? (workflow.branch as string) : null,
+    prUrl: typeof workflow.prUrl === 'string' ? (workflow.prUrl as string) : null,
+    taskUrl: typeof workflow.taskUrl === 'string' ? (workflow.taskUrl as string) : null,
+    linkedTaskId:
+      typeof workflow.linkedTaskId === 'string'
+        ? (workflow.linkedTaskId as string)
+        : typeof meta.linkedTaskId === 'string'
+          ? (meta.linkedTaskId as string)
+          : null,
+    deployStatus:
+      typeof workflow.deployStatus === 'string' ? (workflow.deployStatus as string) : null,
+    deployTargets: normalizeStringArray(workflow.deployTargets),
+    deployedAt: typeof workflow.deployedAt === 'string' ? (workflow.deployedAt as string) : null,
+    verifiedBy: typeof workflow.verifiedBy === 'string' ? (workflow.verifiedBy as string) : null,
+    verifiedAt: typeof workflow.verifiedAt === 'string' ? (workflow.verifiedAt as string) : null,
+    waitingOn: typeof workflow.waitingOn === 'string' ? (workflow.waitingOn as string) : null,
+    lastUpdatedAt:
+      typeof workflow.lastUpdatedAt === 'string' ? (workflow.lastUpdatedAt as string) : null,
+  });
+}
+
+function normalizeResolutionMeta(meta: Record<string, unknown>): FeedbackResolutionRecord {
+  const raw = meta.resolution;
+  const resolution =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  return compactObject({
+    type: typeof resolution.type === 'string' ? (resolution.type as string) : null,
+    summary: typeof resolution.summary === 'string' ? (resolution.summary as string) : null,
+    rootCause: typeof resolution.rootCause === 'string' ? (resolution.rootCause as string) : null,
+    verificationNotes:
+      typeof resolution.verificationNotes === 'string'
+        ? (resolution.verificationNotes as string)
+        : null,
+    testPlan: normalizeStringArray(resolution.testPlan),
+  });
+}
+
+function normalizeWorkflowTimeline(meta: Record<string, unknown>): FeedbackWorkflowTimelineEntry[] {
+  const raw = meta.workflowTimeline;
+  if (!Array.isArray(raw)) return [];
+  const entries: FeedbackWorkflowTimelineEntry[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    const record = entry as Record<string, unknown>;
+    entries.push({
+      id: typeof record.id === 'string' ? (record.id as string) : uuidv4(),
+      at: typeof record.at === 'string' ? (record.at as string) : new Date().toISOString(),
+      actor: typeof record.actor === 'string' ? (record.actor as string) : null,
+      action: typeof record.action === 'string' ? (record.action as string) : 'updated',
+      note: typeof record.note === 'string' ? (record.note as string) : null,
+      changes: normalizeStringArray(record.changes),
+    });
+  }
+  return entries;
+}
+
+function shapeFeedbackRow(row: any) {
+  const meta = safeJsonParse<Record<string, unknown>>(row.metadata, {});
+  const resolvedUserEmail = row.user_email || (meta.userEmail as string | undefined) || null;
+  const resolvedUserName =
+    row.user_name || (meta.userName as string | undefined) || row.user_id || null;
+  const workflow = normalizeWorkflowMeta(meta);
+  const resolution = normalizeResolutionMeta(meta);
+  const workflowTimeline = normalizeWorkflowTimeline(meta);
+
+  return {
+    ...row,
+    user_email: resolvedUserEmail,
+    user_name: resolvedUserName,
+    route_path: (meta.routePath as string | undefined) || (meta.context as string | undefined) || null,
+    device_type: (meta.deviceType as string | undefined) || null,
+    screen_size: (meta.screenSize as string | undefined) || null,
+    ui_language: (meta.uiLanguage as string | undefined) || null,
+    ui_theme: (meta.uiTheme as string | undefined) || null,
+    metadata: row.metadata ? String(row.metadata) : null,
+    workflow,
+    resolution,
+    workflowTimeline,
+    owner: workflow.owner || null,
+    cluster: workflow.cluster || null,
+    pr_url: workflow.prUrl || null,
+    branch: workflow.branch || null,
+    deploy_status: workflow.deployStatus || null,
+    deploy_targets: workflow.deployTargets || [],
+    resolution_summary: resolution.summary || null,
+  };
+}
+
 /**
  * GET /api/feedback
  * List all feedback (Admin only)
@@ -1083,24 +1341,7 @@ router.get(
       []
     );
 
-    const shaped = (rows || []).map((r: any) => {
-      const meta = safeJsonParse<Record<string, any>>(r.metadata, {});
-      const resolvedUserEmail = r.user_email || meta.userEmail || null;
-      const resolvedUserName = r.user_name || meta.userName || r.user_id || null;
-      return {
-        ...r,
-        user_email: resolvedUserEmail,
-        user_name: resolvedUserName,
-        // Provide legacy context fields used by SuperAdmin view (computed from metadata_json)
-        route_path: meta.routePath || meta.context || null,
-        device_type: meta.deviceType || null,
-        screen_size: meta.screenSize || null,
-        ui_language: meta.uiLanguage || null,
-        ui_theme: meta.uiTheme || null,
-        // Keep metadata as string to match existing UI expectations
-        metadata: r.metadata ? String(r.metadata) : null,
-      };
-    });
+    const shaped = (rows || []).map((r: any) => shapeFeedbackRow(r));
 
     return res.json(shaped);
   })
@@ -1153,6 +1394,170 @@ router.patch(
     }
 
     return res.json({ success: true });
+  })
+);
+
+/**
+ * PATCH /api/feedback/:id/workflow
+ * Update pipeline metadata (owner, cluster, delivery, resolution) for a feedback ticket.
+ */
+router.patch(
+  '/:id/workflow',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const {
+      owner,
+      cluster,
+      source,
+      branch,
+      prUrl,
+      taskUrl,
+      linkedTaskId,
+      deployStatus,
+      deployTargets,
+      deployedAt,
+      verifiedBy,
+      verifiedAt,
+      waitingOn,
+      resolution,
+      note,
+    } = req.body || {};
+
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
+
+    const row = await dbGet<{ metadata_json: string | null; linked_task_id?: string | null }>(
+      `SELECT metadata_json, linked_task_id FROM feedback_items WHERE id = ?`,
+      [id]
+    );
+
+    if (!row) {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+
+    const meta = safeJsonParse<Record<string, unknown>>(row.metadata_json, {});
+    const currentWorkflow = normalizeWorkflowMeta(meta);
+    const currentResolution = normalizeResolutionMeta(meta);
+    const currentTimeline = normalizeWorkflowTimeline(meta);
+
+    const nextWorkflow = compactObject({
+      ...currentWorkflow,
+      owner: owner !== undefined ? owner : currentWorkflow.owner,
+      cluster: cluster !== undefined ? cluster : currentWorkflow.cluster,
+      source: source !== undefined ? source : currentWorkflow.source,
+      branch: branch !== undefined ? branch : currentWorkflow.branch,
+      prUrl: prUrl !== undefined ? prUrl : currentWorkflow.prUrl,
+      taskUrl: taskUrl !== undefined ? taskUrl : currentWorkflow.taskUrl,
+      linkedTaskId:
+        linkedTaskId !== undefined
+          ? linkedTaskId
+          : currentWorkflow.linkedTaskId || row.linked_task_id,
+      deployStatus: deployStatus !== undefined ? deployStatus : currentWorkflow.deployStatus,
+      deployTargets:
+        deployTargets !== undefined
+          ? normalizeStringArray(deployTargets)
+          : currentWorkflow.deployTargets || [],
+      deployedAt: deployedAt !== undefined ? deployedAt : currentWorkflow.deployedAt,
+      verifiedBy: verifiedBy !== undefined ? verifiedBy : currentWorkflow.verifiedBy,
+      verifiedAt: verifiedAt !== undefined ? verifiedAt : currentWorkflow.verifiedAt,
+      waitingOn: waitingOn !== undefined ? waitingOn : currentWorkflow.waitingOn,
+      lastUpdatedAt: new Date().toISOString(),
+    }) as FeedbackWorkflowRecord;
+
+    const nextResolution = compactObject({
+      ...currentResolution,
+      ...(resolution && typeof resolution === 'object' && !Array.isArray(resolution)
+        ? {
+            type: (resolution as any).type,
+            summary: (resolution as any).summary,
+            rootCause: (resolution as any).rootCause,
+            verificationNotes: (resolution as any).verificationNotes,
+            testPlan: normalizeStringArray((resolution as any).testPlan),
+          }
+        : {}),
+    }) as FeedbackResolutionRecord;
+
+    const changedFields = [
+      owner !== undefined ? 'owner' : null,
+      cluster !== undefined ? 'cluster' : null,
+      source !== undefined ? 'source' : null,
+      branch !== undefined ? 'branch' : null,
+      prUrl !== undefined ? 'prUrl' : null,
+      taskUrl !== undefined ? 'taskUrl' : null,
+      linkedTaskId !== undefined ? 'linkedTaskId' : null,
+      deployStatus !== undefined ? 'deployStatus' : null,
+      deployTargets !== undefined ? 'deployTargets' : null,
+      deployedAt !== undefined ? 'deployedAt' : null,
+      verifiedBy !== undefined ? 'verifiedBy' : null,
+      verifiedAt !== undefined ? 'verifiedAt' : null,
+      waitingOn !== undefined ? 'waitingOn' : null,
+      resolution !== undefined ? 'resolution' : null,
+    ].filter(Boolean) as string[];
+
+    const nextTimeline =
+      changedFields.length > 0
+        ? [
+            ...currentTimeline,
+            {
+              id: uuidv4(),
+              at: new Date().toISOString(),
+              actor: (req as any).user?.email || (req as any).user?.id || null,
+              action: 'workflow_updated',
+              note: typeof note === 'string' ? note : null,
+              changes: changedFields,
+            } satisfies FeedbackWorkflowTimelineEntry,
+          ].slice(-50)
+        : currentTimeline;
+
+    const nextMeta = {
+      ...meta,
+      workflow: nextWorkflow,
+      resolution: nextResolution,
+      workflowTimeline: nextTimeline,
+      linkedTaskId: nextWorkflow.linkedTaskId || undefined,
+    };
+
+    const feedbackCols = await getTableColumns('feedback_items');
+    const updateCols: string[] = [];
+    const updateVals: unknown[] = [];
+    if (feedbackCols.has('metadata_json')) {
+      updateCols.push('metadata_json = ?');
+      updateVals.push(JSON.stringify(nextMeta));
+    }
+    if (feedbackCols.has('linked_task_id') && linkedTaskId !== undefined) {
+      updateCols.push('linked_task_id = ?');
+      updateVals.push(nextWorkflow.linkedTaskId || null);
+    }
+    if (feedbackCols.has('updated_at')) {
+      updateCols.push('updated_at = CURRENT_TIMESTAMP');
+    }
+
+    if (updateCols.length === 0) {
+      return res.json({
+        success: true,
+        workflow: nextWorkflow,
+        resolution: nextResolution,
+        workflowTimeline: nextTimeline,
+      });
+    }
+
+    const runResult = await dbRun(
+      `UPDATE feedback_items SET ${updateCols.join(', ')} WHERE id = ?`,
+      [...updateVals, id]
+    );
+
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to update feedback workflow');
+    }
+
+    return res.json({
+      success: true,
+      workflow: nextWorkflow,
+      resolution: nextResolution,
+      workflowTimeline: nextTimeline,
+    });
   })
 );
 
@@ -1299,19 +1704,14 @@ router.get(
       /* Table may not exist */
     }
 
-    const meta = safeJsonParse<Record<string, any>>((row as any).metadata_json, {});
-    return res.json({
+    const shaped = shapeFeedbackRow({
       ...row,
-      user_email: (row as any).user_email || meta.userEmail || null,
-      user_name: (row as any).user_name || meta.userName || (row as any).user_id || null,
+      metadata: (row as any).metadata_json,
+    });
+    return res.json({
+      ...shaped,
       type: (row as any).feedback_type,
       message: (row as any).description,
-      metadata: (row as any).metadata_json,
-      route_path: meta.routePath || meta.context || null,
-      device_type: meta.deviceType || null,
-      screen_size: meta.screenSize || null,
-      ui_language: meta.uiLanguage || null,
-      ui_theme: meta.uiTheme || null,
       statusHistory,
     });
   })
@@ -2051,6 +2451,181 @@ router.post(
       logger.error('[Feedback] Seed error:', error);
       return res.status(500).json({ error: 'Failed to seed demo data', details: error.message });
     }
+  })
+);
+
+/**
+ * GET /api/feedback/:id/artifacts/screenshot
+ * SuperAdmin only — returns the stored screenshot bytes (jpeg/png/webp).
+ */
+router.get(
+  '/:id/artifacts/screenshot',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
+    const file = await readFeedbackScreenshot(id);
+    if (!file) return res.status(404).json({ error: 'Screenshot not found' });
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    return res.end(file.buffer);
+  })
+);
+
+/**
+ * GET /api/feedback/:id/cursor-brief
+ * SuperAdmin only — returns a markdown brief ready to paste into Cursor,
+ * with all captured context (logs, breadcrumbs, network, appContext, repro).
+ */
+router.get(
+  '/:id/cursor-brief',
+  verifySuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    if (!isUuidLike(id)) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
+    const row = await dbGet<any>(
+      `SELECT id, title, description, feedback_type, severity, priority, status,
+              source_env, created_at, metadata_json, linked_task_id
+       FROM feedback_items WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    if (!row) return res.status(404).json({ error: 'Feedback not found' });
+
+    const meta: Record<string, unknown> = (() => {
+      try {
+        return row.metadata_json ? JSON.parse(String(row.metadata_json)) : {};
+      } catch {
+        return {};
+      }
+    })();
+
+    const dossier = (meta.dossier && typeof meta.dossier === 'object'
+      ? (meta.dossier as Record<string, unknown>)
+      : {}) as Record<string, unknown>;
+    const appCtx = (dossier.appContext || {}) as Record<string, unknown>;
+    const workflow = (meta.workflow || {}) as Record<string, unknown>;
+    const signatureHash = (meta.signatureHash as string | undefined) || '—';
+
+    const lines: string[] = [];
+    lines.push(`# Cursor brief — ${row.feedback_type} ${row.id.slice(0, 8)}`);
+    lines.push('');
+    lines.push(`- **Title:** ${row.title || '(no title)'}`);
+    lines.push(`- **Severity:** ${row.severity || '—'}`);
+    lines.push(`- **Priority:** ${row.priority || '—'}`);
+    lines.push(`- **Status:** ${row.status || '—'}`);
+    lines.push(`- **Env:** ${row.source_env || (appCtx.appEnv as string) || '—'}`);
+    lines.push(`- **Cluster:** ${(workflow.cluster as string) || '—'}`);
+    lines.push(
+      `- **Route:** ${(meta.routePath as string) || (appCtx.route as any)?.pathname || '—'}`
+    );
+    lines.push(`- **Reporter:** ${(meta.userEmail as string) || (meta.userName as string) || '—'}`);
+    lines.push(`- **Created:** ${row.created_at || '—'}`);
+    lines.push(`- **Build:** ${(appCtx.buildSha as string) || '—'} @ ${(appCtx.buildAt as string) || '—'}`);
+    lines.push(`- **Signature:** \`${signatureHash}\``);
+    if (row.linked_task_id) lines.push(`- **Linked task:** ${row.linked_task_id}`);
+    if (Array.isArray(meta.duplicateCandidates) && (meta.duplicateCandidates as any[]).length > 0) {
+      lines.push(`- **Duplicates:** ${(meta.duplicateCandidates as any[]).length} candidate(s)`);
+    }
+    lines.push('');
+    lines.push('## Description');
+    lines.push(row.description || '(no description)');
+    lines.push('');
+
+    const breadcrumbs = Array.isArray(dossier.breadcrumbs)
+      ? (dossier.breadcrumbs as any[]).slice(-15)
+      : [];
+    if (breadcrumbs.length > 0) {
+      lines.push('## Breadcrumbs (last 15)');
+      for (const b of breadcrumbs) {
+        lines.push(
+          `- \`${b.at || ''}\` [${b.kind || 'custom'}] ${b.label || ''}${
+            b.target ? ` — \`${b.target}\`` : ''
+          }`
+        );
+      }
+      lines.push('');
+    }
+
+    const networkErrors = Array.isArray(dossier.networkErrors)
+      ? (dossier.networkErrors as any[]).slice(-10)
+      : [];
+    if (networkErrors.length > 0) {
+      lines.push('## Network errors');
+      for (const n of networkErrors) {
+        lines.push(
+          `- \`${n.at || ''}\` ${n.method || ''} ${n.status ?? 'ERR'} (${n.durationMs ?? '?'}ms) ${n.url || ''}${
+            n.error ? ` — ${n.error}` : ''
+          }`
+        );
+      }
+      lines.push('');
+    }
+
+    const consoleLogs = Array.isArray(dossier.consoleLogs)
+      ? (dossier.consoleLogs as any[]).slice(-15)
+      : [];
+    if (consoleLogs.length > 0) {
+      lines.push('## Console logs (last 15)');
+      lines.push('```');
+      for (const c of consoleLogs) {
+        lines.push(`[${c.level || 'log'}] ${c.at || ''} ${c.message || ''}`);
+      }
+      lines.push('```');
+      lines.push('');
+    }
+
+    const uncaught = dossier.lastUncaughtError as any;
+    if (uncaught && typeof uncaught === 'object' && uncaught.message) {
+      lines.push('## Last uncaught error');
+      lines.push('```');
+      lines.push(String(uncaught.message));
+      if (uncaught.stack) lines.push(String(uncaught.stack));
+      lines.push('```');
+      lines.push('');
+    }
+
+    if (appCtx.viewport) {
+      const vp = appCtx.viewport as any;
+      lines.push('## Environment');
+      lines.push(
+        `- viewport: ${vp.width || '?'}×${vp.height || '?'} @${vp.dpr || 1}x · ua: ${
+          (appCtx.userAgent as string) || '?'
+        }`
+      );
+      lines.push(
+        `- locale: ${(appCtx.locale as string) || '?'} · tz: ${
+          (appCtx.timezone as string) || '?'
+        } · online: ${appCtx.online ?? '?'}`
+      );
+      if (appCtx.memoryMb) lines.push(`- heap: ~${appCtx.memoryMb} MB`);
+      lines.push('');
+    }
+
+    lines.push('## Your job (Cursor)');
+    lines.push(
+      [
+        '1. Reproduce using the route and breadcrumbs above. Ask ONE clarifying question only if repro is ambiguous.',
+        `2. Create branch \`feedback/${row.id.slice(0, 8)}\` and take ownership:`,
+        '   ```',
+        `   PATCH /api/feedback/${row.id}/workflow`,
+        '   { "owner": "cursor", "source": "cursor", "branch": "feedback/' +
+          row.id.slice(0, 8) +
+          '", "note": "Picked up" }',
+        '   ```',
+        '3. Implement the fix, keep diff minimal, cover the regression with a test.',
+        `4. Open PR titled \`fix(feedback:${row.id.slice(0, 8)}): <summary>\`, then PATCH workflow with \`prUrl\`.`,
+        '5. After deploy, PATCH workflow with `deployStatus` and set `resolution.summary` before flipping status to `RESOLVED`.',
+      ].join('\n')
+    );
+    lines.push('');
+
+    const markdown = lines.join('\n');
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    return res.send(markdown);
   })
 );
 

@@ -38,9 +38,17 @@ import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList } from './CitationList';
+import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ResearchProgress } from './ResearchProgress';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
+
+// V8 governed proposal / execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
+const V8_EXECUTION_MESSAGE_TYPES = new Set<string>([
+  'execution_proposal',
+  'execution_progress',
+  'execution_result',
+]);
 
 // ============================================================================
 // Types
@@ -165,6 +173,12 @@ export interface MessageRendererProps {
 
   // Option select handler (external callback)
   onOptionSelect?: (option: { id: string; label: string; value: string }) => void;
+
+  // V8 governed proposal handlers (CHAT_V8_ACTIONS_AND_APPROVALS)
+  onProposalApprove?: (proposalId: string, msg: ChatMessage) => void;
+  onProposalReject?: (proposalId: string, msg: ChatMessage, reason?: string) => void;
+  onProposalInspect?: (proposalId: string, msg: ChatMessage) => void;
+  proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean }>;
 }
 
 // ============================================================================
@@ -237,6 +251,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   exportArtifact,
   handleAgentAuditAccept,
   onOptionSelect,
+  onProposalApprove,
+  onProposalReject,
+  onProposalInspect,
+  proposalBusyById,
 }) => {
   const { t } = useTranslation();
 
@@ -269,6 +287,31 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
     policyNotices.find((n: any) => n?.kind === 'no_sources') ||
     null;
   const isPolicyRefusal = msg.role === 'ai' && policyDecision && policyDecision.allowed === false;
+
+  // V8: first-class render for governed proposal / execution message family
+  // (CHAT_V8_ACTIONS_AND_APPROVALS, CHAT_V8_RESPONSE_MODEL).
+  // Intercepts before the generic bubble so proposals are never rendered as
+  // plain chat text and can never silently mutate state.
+  const msgType = (msg as any).type as string | undefined;
+  if (msgType && V8_EXECUTION_MESSAGE_TYPES.has(msgType)) {
+    const proposalId =
+      ((msg as any).metadata?.executionProposal?.proposalId as string | undefined) ||
+      ((msg as any).metadata?.proposal?.proposalId as string | undefined) ||
+      ((msg as any).metadata?.proposalId as string | undefined);
+    const busy = proposalId && proposalBusyById ? proposalBusyById[proposalId] : undefined;
+    return (
+      <ExecutionProposalMessage
+        msg={msg}
+        isCompact={isCompact}
+        isRtl={isRtlChatLanguage}
+        onApprove={onProposalApprove}
+        onReject={onProposalReject}
+        onInspect={onProposalInspect}
+        isApproveBusy={!!busy?.approve}
+        isRejectBusy={!!busy?.reject}
+      />
+    );
+  }
 
   return (
     <div

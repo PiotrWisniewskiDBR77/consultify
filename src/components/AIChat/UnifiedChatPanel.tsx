@@ -54,6 +54,7 @@ import { useAIActionsStore } from '../../store/useAIActionsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
+import { useProposalLifecycleStore } from '../../store/useProposalLifecycleStore';
 import {
   AppView,
   Artifact,
@@ -497,6 +498,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   useEffect(() => {
     setContextSavedMessageIds(new Set());
     setContextSaveBusyMessageId(null);
+  }, [activeConversationId]);
+
+  // V8 / Wave A6 — seed the unified proposal lifecycle cache when a
+  // conversation is opened so chat bubbles can render the freshest state
+  // rather than the snapshot frozen into each message's metadata at write time.
+  useEffect(() => {
+    if (!activeConversationId) return;
+    void useProposalLifecycleStore
+      .getState()
+      .loadForConversation(activeConversationId);
   }, [activeConversationId]);
 
   // Session hook: create new session when model/preset changes mid-conversation (§2.3.1)
@@ -2988,6 +2999,117 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   );
 
   // ========================================================================
+  // V8 governed proposal handlers (CHAT_V8_ACTIONS_AND_APPROVALS)
+  // ========================================================================
+
+  const [proposalBusyById, setProposalBusyById] = useState<
+    Record<string, { approve?: boolean; reject?: boolean }>
+  >({});
+
+  const handleProposalApprove = useCallback(
+    async (proposalId: string, msg: ChatMessage) => {
+      if (!proposalId) return;
+      setProposalBusyById((prev) => ({
+        ...prev,
+        [proposalId]: { ...(prev[proposalId] || {}), approve: true },
+      }));
+      try {
+        const result: any = await Api.approveAIAction(
+          proposalId,
+          activeConversationId || undefined
+        );
+        if (result?.success !== false) {
+          useProposalLifecycleStore.getState().patchLifecycle(proposalId, {
+            lifecycleState: 'approved',
+            actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+            latestMessageType: 'execution_progress',
+          });
+          // Optimistic local echo so the thread reflects the new lifecycle state
+          // immediately — backend already persisted the execution_progress row.
+          addChatMessage({
+            id: `exec-progress-${proposalId}-${Date.now()}`,
+            role: 'ai',
+            content: 'Proposal approved — ready to execute.',
+            timestamp: new Date(),
+            type: 'execution_progress',
+            metadata: {
+              executionProposal: {
+                proposalId,
+                lifecycleState: 'approved',
+                actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+              },
+            },
+          } as any);
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Proposal approve failed:', err);
+      } finally {
+        setProposalBusyById((prev) => {
+          const next = { ...prev };
+          const entry = { ...(next[proposalId] || {}) };
+          delete entry.approve;
+          if (Object.keys(entry).length === 0) delete next[proposalId];
+          else next[proposalId] = entry;
+          return next;
+        });
+      }
+    },
+    [activeConversationId, addChatMessage]
+  );
+
+  const handleProposalReject = useCallback(
+    async (proposalId: string, msg: ChatMessage, reason?: string) => {
+      if (!proposalId) return;
+      setProposalBusyById((prev) => ({
+        ...prev,
+        [proposalId]: { ...(prev[proposalId] || {}), reject: true },
+      }));
+      try {
+        const result: any = await Api.rejectAIAction(
+          proposalId,
+          reason,
+          activeConversationId || undefined
+        );
+        if (result?.success !== false) {
+          useProposalLifecycleStore.getState().patchLifecycle(proposalId, {
+            lifecycleState: 'rejected',
+            actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+            rejectionReason: reason || null,
+            latestMessageType: 'execution_result',
+          });
+          addChatMessage({
+            id: `exec-result-${proposalId}-${Date.now()}`,
+            role: 'ai',
+            content: reason ? `Proposal rejected — ${reason}` : 'Proposal rejected.',
+            timestamp: new Date(),
+            type: 'execution_result',
+            metadata: {
+              executionProposal: {
+                proposalId,
+                lifecycleState: 'rejected',
+                actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+                rejectionReason: reason || null,
+              },
+            },
+          } as any);
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Proposal reject failed:', err);
+      } finally {
+        setProposalBusyById((prev) => {
+          const next = { ...prev };
+          const entry = { ...(next[proposalId] || {}) };
+          delete entry.reject;
+          if (Object.keys(entry).length === 0) delete next[proposalId];
+          else next[proposalId] = entry;
+          return next;
+        });
+      }
+    },
+    [activeConversationId, addChatMessage]
+  );
+
+  // ========================================================================
   // Render helpers
   // ========================================================================
 
@@ -3059,6 +3181,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleAgentAuditAccept={handleAgentAuditAccept}
       onOptionSelect={onOptionSelect}
       isRtlChatLanguage={isRtlChatLanguage}
+      onProposalApprove={handleProposalApprove}
+      onProposalReject={handleProposalReject}
+      proposalBusyById={proposalBusyById}
     />
   );
 

@@ -5964,6 +5964,18 @@ export const Api = {
     workspaceContext?: string;
     clientEnv?: string;
     metadata?: Record<string, unknown>;
+    signatureHash?: string;
+    appContext?: Record<string, unknown>;
+    consoleLogs?: Array<Record<string, unknown>>;
+    networkErrors?: Array<Record<string, unknown>>;
+    breadcrumbs?: Array<Record<string, unknown>>;
+    lastUncaughtError?: Record<string, unknown> | null;
+    screenshot?: {
+      dataUrl: string;
+      approxBytes?: number;
+      width?: number;
+      height?: number;
+    } | null;
   }): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/feedback`, {
       method: 'POST',
@@ -6047,6 +6059,44 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to update feedback status');
   },
 
+  updateFeedbackWorkflow: async (
+    id: string,
+    payload: {
+      owner?: string | null;
+      cluster?: string | null;
+      source?: string | null;
+      branch?: string | null;
+      prUrl?: string | null;
+      taskUrl?: string | null;
+      linkedTaskId?: string | null;
+      deployStatus?: string | null;
+      deployTargets?: string[];
+      deployedAt?: string | null;
+      verifiedBy?: string | null;
+      verifiedAt?: string | null;
+      waitingOn?: string | null;
+      resolution?: {
+        type?: string | null;
+        summary?: string | null;
+        rootCause?: string | null;
+        verificationNotes?: string | null;
+        testPlan?: string[];
+      };
+      note?: string | null;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/feedback/${id}/workflow`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error((data as any)?.error || 'Failed to update feedback workflow');
+    }
+    return data;
+  },
+
   getFeedbackBacklogTasks: async (limit = 200): Promise<any[]> => {
     const url = `${API_URL}/feedback/backlog/tasks?limit=${encodeURIComponent(String(limit))}`;
     const res = await fetch(url, { headers: getHeaders() });
@@ -6054,6 +6104,20 @@ export const Api = {
     const data = await res.json();
     return data || [];
   },
+
+  getFeedbackCursorBrief: async (id: string): Promise<string> => {
+    const res = await fetch(`${API_URL}/feedback/${encodeURIComponent(id)}/cursor-brief`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data as any)?.error || 'Failed to fetch Cursor brief');
+    }
+    return res.text();
+  },
+
+  getFeedbackScreenshotUrl: (id: string): string =>
+    `${API_URL}/feedback/${encodeURIComponent(id)}/artifacts/screenshot`,
 
   // ==========================================
   // ACCESS CONTROL
@@ -8871,8 +8935,17 @@ export const Api = {
     return (data as any)?.logs || [];
   },
   // AI Actions
-  rejectAIAction: async (actionId: string, reason?: string) => {
-    return { success: true };
+  rejectAIAction: async (actionId: string, reason?: string, conversationId?: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason, conversationId }),
+      });
+      return handleResponse(res, 'Failed to reject action');
+    } catch (err: any) {
+      console.error('[Api] rejectAIAction error:', err);
+      return { success: false, error: err.message };
+    }
   },
   // Billing
   createSetupIntent: async () => {
@@ -12108,10 +12181,29 @@ export const Api = {
     }
   },
 
-  approveAIAction: async (actionId: string) => {
+  /**
+   * V8 / Wave A6 — fetch the unified list of proposals referenced in a
+   * conversation, with lifecycle state sourced from the governance row when
+   * available. Returns `{ proposals: ChatProposalView[] }`.
+   */
+  getConversationProposals: async (conversationId: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/conversations/${conversationId}/proposals`,
+        { method: 'GET' }
+      );
+      return handleResponse(res, 'Failed to load conversation proposals');
+    } catch (err: any) {
+      console.error('[Api] getConversationProposals error:', err);
+      return { proposals: [] };
+    }
+  },
+
+  approveAIAction: async (actionId: string, conversationId?: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/approve`, {
         method: 'POST',
+        body: JSON.stringify({ conversationId }),
       });
       return handleResponse(res, 'Failed to approve action');
     } catch (err: any) {
