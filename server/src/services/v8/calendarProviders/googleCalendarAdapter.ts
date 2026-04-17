@@ -294,12 +294,14 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     };
 
     try {
-      const res = await cal.events.update({
-        calendarId: item.calendarId,
-        eventId: item.providerEventId!,
-        requestBody: body,
-        headers: { 'If-Match': providerEtag },
-      });
+      const res = await cal.events.update(
+        {
+          calendarId: item.calendarId,
+          eventId: item.providerEventId!,
+          requestBody: body,
+        },
+        { headers: { 'If-Match': providerEtag } },
+      );
 
       return mapGoogleEvent(res.data, item.calendarId);
     } catch (err) {
@@ -331,11 +333,13 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     const cal = google.calendar({ version: 'v3', auth });
 
     try {
-      await cal.events.delete({
-        calendarId: connection.selectedCalendars[0],
-        eventId: providerEventId,
-        headers: { 'If-Match': providerEtag },
-      });
+      await cal.events.delete(
+        {
+          calendarId: connection.selectedCalendars[0],
+          eventId: providerEventId,
+        },
+        { headers: { 'If-Match': providerEtag } },
+      );
     } catch (err) {
       if (isGaxiosError(err) && err.code === 412) {
         logger.warn(`${LOG_PREFIX} deleteEvent 412 conflict for id=${providerEventId}`);

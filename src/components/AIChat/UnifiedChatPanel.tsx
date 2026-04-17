@@ -775,37 +775,44 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               artifacts: artifacts as any,
               citations: meta?.citations,
               streamSessionId: meta?.sessionId,
-              extra:
-                aiConfig?.deepResearch ||
-                (aiConfig as any)?.marketResearch ||
-                meta?.policyDecision ||
-                meta?.sourceLedger ||
-                (meta?.policyNotices && meta.policyNotices.length)
-                  ? {
-                      ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-                        ? {
-                            options: [
-                              { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                              { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                              {
-                                id: 'dt-challenge',
-                                label: 'Challenge this conclusion',
-                                value: 'Challenge this conclusion',
-                              },
-                            ],
-                            multiSelect: false,
-                            deepThinking: { kind: 'report' },
-                          }
-                        : {}),
-                      ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
-                        ? {
-                            policyDecision: meta?.policyDecision,
-                            policyNotices: meta?.policyNotices,
-                          }
-                        : {}),
-                      ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
-                    }
-                  : undefined,
+            extra:
+              aiConfig?.deepResearch ||
+              (aiConfig as any)?.marketResearch ||
+              meta?.policyDecision ||
+              meta?.sourceLedger ||
+              (meta?.policyNotices && meta.policyNotices.length) ||
+              meta?.trustBundle
+                ? {
+                    ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                      ? {
+                          options: [
+                            { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
+                            { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
+                            {
+                              id: 'dt-challenge',
+                              label: 'Challenge this conclusion',
+                              value: 'Challenge this conclusion',
+                            },
+                          ],
+                          multiSelect: false,
+                          deepThinking: { kind: 'report' },
+                        }
+                      : {}),
+                    ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
+                      ? {
+                          policyDecision: meta?.policyDecision,
+                          policyNotices: meta?.policyNotices,
+                        }
+                      : {}),
+                    ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
+                    // V8 / Wave A7 — forward the canonical trust bundle so
+                    // the persisted AI row carries the same pills rendered
+                    // live in the bubble. Server also enriches on write;
+                    // this keeps client + server in lockstep and avoids
+                    // depending on a refetch for live hydration.
+                    ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
+                  }
+                : undefined,
             }),
           });
           savedAiMessageId = String((saved as any)?.id || '') || null;
@@ -843,6 +850,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           ...(meta?.policyDecision ? { policyDecision: meta.policyDecision } : {}),
           ...(meta?.policyNotices && meta.policyNotices.length ? { policyNotices: meta.policyNotices } : {}),
           ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
+          ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
         },
       });
 
@@ -1319,12 +1327,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     return items;
   }, [displayMessages.length, isStreaming, workspaceContext, t]);
 
-  const handleSuggestionClick = useCallback(
-    async (suggestion: ChatSuggestion) => {
-      await handleChatAction(suggestion.action);
-    },
-    [handleChatAction]
-  );
+  // `handleSuggestionClick` is declared below `handleSendMessage` to avoid a
+  // temporal-dead-zone reference when a suggestion of type 'chat' forwards
+  // the prompt straight into the send pipeline. See decl further down.
 
   // ========================================================================
   // Ensure messages are loaded when activeConversationId changes (e.g. after
@@ -2177,6 +2182,22 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       i18n.language,
       setIsBotTyping,
     ]
+  );
+
+  // Chat V8 — smart-suggestion dispatcher. Lives below `handleSendMessage`
+  // so the `type: 'chat'` branch can forward the prompt straight into the
+  // send pipeline without hitting a temporal-dead-zone reference.
+  const handleSuggestionClick = useCallback(
+    async (suggestion: ChatSuggestion) => {
+      if (suggestion.action.type === 'chat') {
+        const prompt = String((suggestion.action as { prompt?: unknown }).prompt ?? '').trim();
+        if (!prompt) return;
+        await handleSendMessage(prompt);
+        return;
+      }
+      await handleChatAction(suggestion.action);
+    },
+    [handleChatAction, handleSendMessage]
   );
 
   // One-shot kickoff: when panel opens in split mode, auto-send the configured message.

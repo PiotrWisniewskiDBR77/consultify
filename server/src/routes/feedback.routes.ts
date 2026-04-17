@@ -576,14 +576,15 @@ async function dispatchFeedbackEscalation(input: {
   if (uniqueChannels.includes('email')) {
     try {
       const alertEmailService = getAlertEmailService();
+      const emailSeverity: 'critical' | 'warning' | 'info' =
+        notificationSeverity === 'CRITICAL'
+          ? 'critical'
+          : notificationSeverity === 'WARNING'
+            ? 'warning'
+            : 'info';
       const emailPayload = {
         alertType: `feedback_${input.kind}`,
-        severity:
-          notificationSeverity === 'CRITICAL'
-            ? 'critical'
-            : notificationSeverity === 'WARNING'
-              ? 'warning'
-              : 'info',
+        severity: emailSeverity,
         title:
           input.kind === 'pulse'
             ? `Low Pulse Rating ${input.rating || 0}/5`
@@ -1945,7 +1946,7 @@ router.post(
         const analysis = await feedbackAIService.analyzeFeatureRequest(
           featureName,
           description,
-          category
+          category || 'other'
         );
         aiSuggestion = analysis;
 

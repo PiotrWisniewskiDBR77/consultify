@@ -955,7 +955,7 @@ export async function createProposal(params: {
 
   logger.info(`${LOG_PREFIX} Proposal created: ${proposalId} → ${targetModule}`);
 
-  return {
+  const persistedProposal: Omit<ProposalRecord, 'operation_contract'> = {
     id: proposalId,
     organization_id: organizationId,
     user_id: userId,
@@ -967,6 +967,10 @@ export async function createProposal(params: {
     created_at: now,
     updated_at: now,
     audit_trail: [auditEntry],
+  };
+  return {
+    ...persistedProposal,
+    operation_contract: buildTeresaOperationContract(persistedProposal),
   };
 }
 

@@ -35,8 +35,10 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { usePermissions } from '../../hooks/usePermissions';
 import { useProposalLifecycle } from '../../store/useProposalLifecycleStore';
-import { ChatMessage, V8LifecycleState } from '../../types';
+import { ChatMessage, TrustBundle, V8LifecycleState } from '../../types';
+import { TrustPanel } from './TrustPanel';
 
 // ============================================================================
 // Types
@@ -258,7 +260,22 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
   isApproveBusy = false,
   isRejectBusy = false,
 }) => {
-  const { t } = useTranslation();
+  const { t: rawT } = useTranslation();
+  // Adapter: tighten `TFunction` into the simple `(k, d?) => string` shape
+  // the local helpers expect. Keeps strict-mode TS happy without forcing us
+  // to re-type every helper to know about i18next's complex return unions.
+  const t = React.useCallback(
+    (key: string, defaultValue?: string, options?: Record<string, unknown>): string => {
+      if (options !== undefined) {
+        return String(rawT(key, { defaultValue, ...options }));
+      }
+      return String(rawT(key, defaultValue as string));
+    },
+    [rawT]
+  );
+  // Wave A7.4 — gate routing-trace view to admin / super-admin.
+  const { isAdmin, isSuperAdmin } = usePermissions();
+  const showOperatorDetail = isAdmin || isSuperAdmin;
 
   const messageType = ((msg as any).type || 'execution_proposal') as ExecutionMessageType;
   const meta = extractProposalMetadata(msg);
@@ -272,6 +289,18 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
     freshProposal?.lifecycleState || meta.lifecycleState;
   const effectiveRejectionReason =
     freshProposal?.rejectionReason ?? meta.rejectionReason ?? null;
+
+  // V8 / Wave A7 (Gap #10 — Output trust as one contract).
+  //
+  // Prefer the freshest trust bundle from the unified proposal cache
+  // (seeded from `GET /ai/conversations/:id/proposals` — which returns
+  // the latest bundle across the proposal's message chain). Fall back to
+  // the metadata snapshot frozen at write time so historical conversations
+  // still render a bubble even before the cache is seeded.
+  const effectiveTrustBundle: TrustBundle | null | undefined =
+    (freshProposal?.trustBundle as TrustBundle | null | undefined) ??
+    ((msg as any).metadata?.trustBundle as TrustBundle | undefined) ??
+    null;
 
   const visual = lifecycleVisual(effectiveLifecycleState, messageType, t);
   const risk = riskVisual(meta.risk, t);
@@ -418,6 +447,23 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
                   } as any)}
                 </div>
               )}
+
+            {/*
+              V8 / Wave A7 — Canonical trust panel inside the proposal bubble.
+              Renders the newest bundle (cache → metadata fallback). Empty /
+              missing bundles produce no output so historical proposals and
+              unseeded caches are unaffected.
+            */}
+            {effectiveTrustBundle && (
+              <TrustPanel
+                bundle={effectiveTrustBundle}
+                isCompact
+                isRtl={isRtl}
+                showOperatorDetail={showOperatorDetail}
+                messageId={msg.id || null}
+                className="mt-2"
+              />
+            )}
 
             {/* Action row */}
             {(canApprove || canReject || typeof onInspect === 'function') && (
