@@ -43,8 +43,8 @@ jobs:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
       PROJECT_ID: ${{ vars.RAILWAY_STAGING_PROJECT_ID }}
       TARGET_ENVIRONMENT: ${{ vars.RAILWAY_STAGING_ENVIRONMENT }}
-      BACKEND_SERVICE: ${{ vars.RAILWAY_STAGING_BACKEND_SERVICE }}
-      FRONTEND_SERVICE: ${{ vars.RAILWAY_STAGING_FRONTEND_SERVICE }}
+      APP_SERVICE: ${{ vars.RAILWAY_STAGING_APP_SERVICE }}
+      SECONDARY_SERVICE: ${{ vars.RAILWAY_STAGING_SECONDARY_SERVICE }}
       API_HEALTH_URL: ${{ vars.STAGING_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
     steps:
@@ -55,14 +55,14 @@ jobs:
           test -n "$RAILWAY_TOKEN"
           test -n "$PROJECT_ID"
           test -n "$TARGET_ENVIRONMENT"
-          test -n "$BACKEND_SERVICE"
-          test -n "$FRONTEND_SERVICE"
+          test -n "$APP_SERVICE"
 
-      - name: Deploy backend to staging
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$BACKEND_SERVICE" --detach -m "staging backend ${GITHUB_SHA}"
+      - name: Deploy app to staging
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "staging app ${GITHUB_SHA}"
 
-      - name: Deploy frontend to staging
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$FRONTEND_SERVICE" --detach -m "staging frontend ${GITHUB_SHA}"
+      - name: Deploy secondary service to staging
+        if: env.SECONDARY_SERVICE != ''
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" --detach -m "staging secondary ${GITHUB_SHA}"
 
       - name: Verify staging deployment
         run: |
@@ -83,8 +83,8 @@ jobs:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
       PROJECT_ID: ${{ vars.RAILWAY_PRODUCTION_PROJECT_ID }}
       TARGET_ENVIRONMENT: ${{ vars.RAILWAY_PRODUCTION_ENVIRONMENT }}
-      BACKEND_SERVICE: ${{ vars.RAILWAY_PRODUCTION_BACKEND_SERVICE }}
-      FRONTEND_SERVICE: ${{ vars.RAILWAY_PRODUCTION_FRONTEND_SERVICE }}
+      APP_SERVICE: ${{ vars.RAILWAY_PRODUCTION_APP_SERVICE }}
+      SECONDARY_SERVICE: ${{ vars.RAILWAY_PRODUCTION_SECONDARY_SERVICE }}
       API_HEALTH_URL: ${{ vars.PRODUCTION_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
     steps:
@@ -95,14 +95,14 @@ jobs:
           test -n "$RAILWAY_TOKEN"
           test -n "$PROJECT_ID"
           test -n "$TARGET_ENVIRONMENT"
-          test -n "$BACKEND_SERVICE"
-          test -n "$FRONTEND_SERVICE"
+          test -n "$APP_SERVICE"
 
-      - name: Deploy backend to production
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$BACKEND_SERVICE" --detach -m "production backend ${GITHUB_SHA}"
+      - name: Deploy app to production
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "production app ${GITHUB_SHA}"
 
-      - name: Deploy frontend to production
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$FRONTEND_SERVICE" --detach -m "production frontend ${GITHUB_SHA}"
+      - name: Deploy secondary service to production
+        if: env.SECONDARY_SERVICE != ''
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" --detach -m "production secondary ${GITHUB_SHA}"
 
       - name: Verify production deployment
         run: |
