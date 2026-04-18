@@ -2603,6 +2603,12 @@ router.post(
 
           if (Array.isArray(chunks) && chunks.length > 0) {
             attachmentChunksInjected = true;
+            emitSSE({
+              type: 'thought',
+              step: 'attachments',
+              status: 'completed',
+              label: `Found ${chunks.length} relevant fragment(s) across ${attachmentDocIds.length} attachment(s).`,
+            });
             const attachmentsText = chunks
               .slice(0, 5)
               .map((c: any, i: number) => {
@@ -2670,6 +2676,12 @@ router.post(
 
             if (Array.isArray(rows) && rows.length > 0) {
               attachmentChunksInjected = true;
+              emitSSE({
+                type: 'thought',
+                step: 'attachments',
+                status: 'completed',
+                label: `Loaded ${rows.length} raw chunk(s) directly from attachment source(s).`,
+              });
               const attachmentsText = rows
                 .map((r: any, i: number) => {
                   const source = String(r?.filename || 'Attachment');
@@ -2714,6 +2726,13 @@ router.post(
                   .filter(Boolean)
               : []
           ).join(', ');
+
+          emitSSE({
+            type: 'thought',
+            step: 'attachments',
+            status: 'warning',
+            label: `Attachment content could not be retrieved — answering from metadata only${attachmentNames ? ` (${attachmentNames})` : ''}.`,
+          });
 
           pipelineRequest = {
             ...pipelineRequest,

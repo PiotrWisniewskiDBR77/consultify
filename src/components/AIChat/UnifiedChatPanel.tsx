@@ -1863,22 +1863,47 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Remove the "Analyzing file..." message once processing is done
       if (fileAnalysisMessageId) {
-        // Replace with a summary of processed attachments
         if (uploadedAttachments.length > 0) {
           const processedNames = uploadedAttachments.map((a) => a.filename).join(', ');
-          // Update the analysis message to show completion
+          const partialFailure = uploadedAttachments.length < sourcesCount;
+          addChatMessage({
+            id: fileAnalysisMessageId,
+            role: 'assistant',
+            content: partialFailure
+              ? t(
+                  'aiChat.attachments.filesPartial',
+                  '⚠️ {{processed}}/{{total}} attachment(s) processed: {{names}}. Some sources could not be read and will not be referenced. You can retry them or continue.',
+                  {
+                    processed: uploadedAttachments.length,
+                    total: sourcesCount,
+                    names: processedNames,
+                  }
+                )
+              : t(
+                  'aiChat.attachments.filesReady',
+                  '📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.',
+                  { count: uploadedAttachments.length, names: processedNames }
+                ),
+            timestamp: new Date(),
+          } as ChatMessage);
+        } else if (sourcesCount > 0) {
+          // All attachments failed — surface a persistent, actionable error in the chat
+          // instead of silently deleting the analysis message (feedback #f590c4fc, #e196a572).
+          const failedNames = [
+            ...files.map((f) => f.name),
+            ...urlAttachments.map((u) => u.name || u.url),
+          ].join(', ');
           addChatMessage({
             id: fileAnalysisMessageId,
             role: 'assistant',
             content: t(
-              'aiChat.attachments.filesReady',
-              '📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.',
-              { count: uploadedAttachments.length, names: processedNames }
+              'aiChat.attachments.allFailed',
+              '❌ Could not process the attached source(s): {{names}}. The AI will respond without them. Please re-upload in a supported format (PDF, TXT, MD, CSV, JSON) or check that the link is publicly accessible.',
+              { names: failedNames }
             ),
             timestamp: new Date(),
           } as ChatMessage);
         } else {
-          // Remove the message if no files were successfully processed
           deleteChatMessage(fileAnalysisMessageId);
         }
         setIsBotTyping(false);

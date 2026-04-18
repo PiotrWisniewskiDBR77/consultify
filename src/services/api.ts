@@ -5884,17 +5884,19 @@ export const Api = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const headers = getHeaders();
-    delete (headers as any)['Content-Type'];
+    // Intentionally skip default JSON headers so the browser sets multipart/form-data
+    // boundary. We still want auth header + 401→refresh retry via fetchWithRetry.
+    const authHeader: Record<string, string> = {};
+    const token = tokenService.getToken();
+    if (token) authHeader['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_URL}/ai/attachments/ingest`, {
+    const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest`, {
       method: 'POST',
-      headers,
+      headers: authHeader,
       body: formData,
+      skipDefaultHeaders: true,
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest attachment');
-    return data;
+    return handleResponse(res, 'Failed to ingest attachment');
   },
 
   ingestChatUrlAttachment: async (
@@ -5909,7 +5911,7 @@ export const Api = {
     totalChunks?: number;
     embeddedChunks?: number;
   }> => {
-    const res = await fetch(`${API_URL}/ai/attachments/ingest-url`, {
+    const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest-url`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -5917,9 +5919,7 @@ export const Api = {
         title: options?.title,
       }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest URL');
-    return data;
+    return handleResponse(res, 'Failed to ingest URL');
   },
 
   // --- GENERIC DOCUMENT UPLOAD (For Context Builder) ---

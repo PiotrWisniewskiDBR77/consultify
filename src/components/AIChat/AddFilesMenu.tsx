@@ -334,7 +334,10 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
           {/* Add URL */}
           {onUrlAdd && (
             <MenuItem
-              onClick={() => setUrlModalOpen(true)}
+              onClick={() => {
+                setUrlModalOpen(true);
+                setIsOpen(false);
+              }}
               icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
               label={t('aiChat.menu.addLink', 'Add link')}
               description={t('aiChat.menu.addLinkHint', 'Paste a URL to read and cite')}
