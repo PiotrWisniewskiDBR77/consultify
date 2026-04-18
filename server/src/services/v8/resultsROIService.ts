@@ -489,7 +489,7 @@ export async function createExecutiveReviewPack(
     packId,
     organizationId: validated.organizationId,
     reviewPeriod: validated.reviewPeriod,
-    kpiSummaries: validated.kpiSummaries,
+    kpiSummaries: validated.kpiSummaries as KPISummary[],
     deviationHighlights: validated.deviationHighlights,
     roiSnapshot: validated.roiSnapshot,
     status: 'draft',

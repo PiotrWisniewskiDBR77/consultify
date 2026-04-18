@@ -251,7 +251,7 @@ export async function createProvenanceLedgerEntry(
     outputId: validated.outputId,
     outputType: validated.outputType,
     trustClass: validated.trustClass,
-    citationBindings: validated.citationBindings,
+    citationBindings: validated.citationBindings as CitationBinding[],
     contextSnapshotId: validated.contextSnapshotId,
     retrievalTraceId: validated.retrievalTraceId ?? null,
     executionRunId: validated.executionRunId ?? null,
@@ -324,8 +324,8 @@ export async function createSupportTrace(params: CreateSupportTraceParams): Prom
     retrievalRequestId: validated.retrievalRequestId ?? null,
     routingExplanationId: validated.routingExplanationId ?? null,
     trustClass: validated.trustClass,
-    routingExplanation: validated.routingExplanation ?? null,
-    degradedConditions: validated.degradedConditions,
+    routingExplanation: (validated.routingExplanation ?? null) as RoutingExplanation | null,
+    degradedConditions: validated.degradedConditions as DegradedCondition[],
     createdAt: now,
   };
 
