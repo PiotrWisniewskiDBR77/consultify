@@ -1509,7 +1509,7 @@ export class DecisionController {
           : (String(toStatus).toLowerCase() as DecisionWorkflowStatus);
 
       const validation = validateDecisionWorkflowTransition(currentWorkflow, targetWorkflow);
-      if (!validation.allowed) {
+      if (validation.allowed === false) {
         res.status(400).json({ error: validation.message });
         return;
       }

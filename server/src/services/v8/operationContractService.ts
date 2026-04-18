@@ -32,8 +32,8 @@ export function createOperationContract(params: CreateOperationContractParams): 
     version: 'v1',
     kind: validated.kind,
     stage: validated.stage,
-    links: validated.links,
-    preview: validated.preview,
+    links: validated.links as OperationContractLinks,
+    preview: validated.preview as OperationContractPreview,
     createdAt: validated.createdAt || now,
     updatedAt: validated.updatedAt || validated.createdAt || now,
   };

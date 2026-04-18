@@ -2351,7 +2351,9 @@ router.get(
     const generatedAt = new Date().toISOString();
 
     const [storedBlocks, inboxStats, storedCalendarPhases] = await Promise.all([
-      myWorkRoofService.getHomeBlockMaturity(organizationId).catch(() => []),
+      myWorkRoofService
+        .getHomeBlockMaturity(organizationId)
+        .catch(() => [] as Awaited<ReturnType<typeof myWorkRoofService.getHomeBlockMaturity>>),
       myWorkRoofService.getInboxMaterializationStats(userId, organizationId).catch(() => ({
         avgLatencyMs: 0,
         latencyBandDistribution: {
@@ -2360,11 +2362,17 @@ router.get(
           degraded: 0,
         },
       })),
-      myWorkRoofService.getCalendarPhases(organizationId).catch(() => []),
+      myWorkRoofService
+        .getCalendarPhases(organizationId)
+        .catch(() => [] as Awaited<ReturnType<typeof myWorkRoofService.getCalendarPhases>>),
     ]);
 
-    const blockMap = new Map(storedBlocks.map((block) => [block.blockName, block]));
-    const calendarMap = new Map(storedCalendarPhases.map((phase) => [phase.phaseName, phase]));
+    const blockMap = new Map<HomeBlockName, (typeof storedBlocks)[number]>(
+      storedBlocks.map((block) => [block.blockName, block] as const)
+    );
+    const calendarMap = new Map<CalendarPhaseName, (typeof storedCalendarPhases)[number]>(
+      storedCalendarPhases.map((phase) => [phase.phaseName, phase] as const)
+    );
 
     const homeBlocks = DERIVED_HOME_BLOCKS.map((block) => {
       const stored = blockMap.get(block.blockName);

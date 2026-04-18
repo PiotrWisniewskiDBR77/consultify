@@ -125,7 +125,7 @@ async function safeDomainCall<T>(
 }
 
 function getSafeDomainError<T>(result: SafeDomainCallResult<T>): string {
-  return result.ok ? 'Unknown domain failure' : result.error;
+  return 'error' in result ? result.error : 'Unknown domain failure';
 }
 
 // ---------------------------------------------------------------------------

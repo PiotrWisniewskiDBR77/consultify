@@ -321,10 +321,10 @@ export async function createProposal(params: CreateProposalParams): Promise<Acti
     targetRef: validated.targetRef,
     summary: validated.summary,
     reason: validated.reason,
-    mutationDescription: validated.mutationDescription,
+    mutationDescription: validated.mutationDescription as MutationDescriptor,
     riskClass: validated.riskClass,
     approvalClass: validated.approvalClass,
-    previewPayload: validated.previewPayload ?? null,
+    previewPayload: (validated.previewPayload ?? null) as ActionPreview | null,
     dependsOn: validated.dependsOn,
     status: 'draft',
     createdAt: now,
@@ -348,7 +348,9 @@ export async function createProposal(params: CreateProposalParams): Promise<Acti
           title: validated.summary,
           summary: validated.reason,
           intent: validated.summary,
-          previewLines: buildActionPreviewLines(validated.previewPayload ?? null),
+          previewLines: buildActionPreviewLines(
+            (validated.previewPayload ?? null) as ActionPreview | null
+          ),
           riskLabel: validated.riskClass,
         })
       : undefined,

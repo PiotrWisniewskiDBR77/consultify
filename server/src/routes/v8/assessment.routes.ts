@@ -569,7 +569,7 @@ router.get(
       userRole,
       permission: 'canView',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     const state = await AssessmentWorkbenchService.load(
@@ -607,7 +607,7 @@ router.get(
       userRole,
       permission: 'canView',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     const state = await AssessmentWorkbenchService.load(
@@ -645,7 +645,7 @@ router.post(
       userRole,
       permission: 'canEdit',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     try {
@@ -690,7 +690,7 @@ router.post(
       userRole,
       permission: to === 'completed' ? 'canApprove' : 'canEdit',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     try {
@@ -729,7 +729,7 @@ router.post(
       userRole,
       permission: 'canEdit',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     try {
@@ -765,7 +765,7 @@ router.post(
       userRole,
       permission: 'canEdit',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     try {
@@ -800,7 +800,7 @@ router.post(
       userRole,
       permission: 'canEdit',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     try {
@@ -851,7 +851,7 @@ router.post(
       userRole,
       permission: 'canApprove',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     const action = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
@@ -896,7 +896,7 @@ router.post(
       userRole,
       permission: 'canEdit',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     try {
@@ -936,7 +936,7 @@ router.post(
       userRole,
       permission: 'canApprove',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     const intAction = String(req.body?.action || '') as 'accept' | 'reject' | 'override';
@@ -993,7 +993,7 @@ router.get(
       userRole,
       permission: 'canView',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     const state = await AssessmentWorkbenchService.load(
@@ -1049,7 +1049,7 @@ router.post(
       userRole,
       permission: 'canApprove',
     });
-    if (!permission.ok) {
+    if (permission.ok === false) {
       return res.status(permission.status).json(permission.body);
     }
     try {
