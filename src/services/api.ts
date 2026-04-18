@@ -9902,21 +9902,21 @@ export const Api = {
     );
     return handleResponse(res, 'Failed to check domain reputation');
   },
-  // Chat projects - Real API implementations
+  // Chat projects (folders) - unified through fetchWithRetry + handleResponse so
+  // server-side error details (403 permissions, 404, 409 etc.) reach the UI.
+  // chat-history fix 2026-04-18 (feedback #407a17df, #84f6e58f, #fb2d4e30).
   getChatProjects: async (options?: { scope?: 'personal' | 'team' }) => {
     const params = new URLSearchParams();
     if (options?.scope) params.append('scope', options.scope);
     const qs = params.toString();
-    const response = await fetch(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch chat projects');
-    return response.json();
+    return handleResponse(res, 'Failed to fetch chat projects');
   },
   getChatProject: async (id: string) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch chat project');
-    return response.json();
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch chat project');
   },
   createChatProject: async (data: {
     name: string;
@@ -9925,44 +9925,40 @@ export const Api = {
     icon?: string;
     scope?: 'personal' | 'team';
   }) => {
-    const response = await fetch(`${API_URL}/chat-projects`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to create chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to create chat folder');
   },
   updateChatProject: async (
     id: string,
     data: { name?: string; description?: string; color?: string; icon?: string }
   ) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to update chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to update chat folder');
   },
   deleteChatProject: async (id: string) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to delete chat folder');
   },
   moveConversationToProject: async (projectId: string, conversationId: string) => {
-    const response = await fetch(
+    const res = await fetchWithRetry(
       `${API_URL}/chat-projects/${projectId}/conversations/${conversationId}`,
       {
         method: 'POST',
         headers: getHeaders(),
       }
     );
-    if (!response.ok) throw new Error('Failed to move conversation to project');
-    return response.json();
+    return handleResponse(res, 'Failed to move conversation to folder');
   },
   // Analytics Reports - connected to real API
   getAnalyticsReports: async (filters?: any): Promise<any[]> => {

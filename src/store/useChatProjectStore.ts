@@ -29,8 +29,31 @@ import { Conversation, useConversationStore } from './useConversationStore';
 // Prevent request storms when components remount in dev (StrictMode / refresh),
 // which can otherwise cascade into "TypeError: Failed to fetch" and freeze the UI.
 const FETCH_DEDUPE_WINDOW_MS = 1500;
+// chat-history fix 2026-04-18 (feedback #3a41921c): hard deadline so a hung
+// backend can't leave the sidebar stuck in "Loading…" forever.
+const FETCH_HARD_TIMEOUT_MS = 20000;
 let _inflightFetchProjects: Promise<void> | null = null;
 let _lastFetchProjectsAt = 0;
+
+function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const err = new Error(`${label} timed out after ${ms}ms`);
+      (err as any).code = 'FETCH_TIMEOUT';
+      reject(err);
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      }
+    );
+  });
+}
 
 // ==================== TYPES ====================
 
@@ -135,7 +158,11 @@ export const useChatProjectStore = create<ChatProjectState>()(
         set({ isLoading: true, error: null });
         _inflightFetchProjects = (async () => {
           try {
-            const result = await Api.getChatProjects();
+            const result = await withDeadline(
+              Api.getChatProjects(),
+              FETCH_HARD_TIMEOUT_MS,
+              'fetchProjects'
+            );
             // Backend may return either:
             // - { projects: [...] }
             // - { projects: { rows: [...] } } (SQLite shim)
@@ -222,11 +249,14 @@ export const useChatProjectStore = create<ChatProjectState>()(
             expandedProjectIds: state.expandedProjectIds.filter((eid) => eid !== id),
           }));
 
-          // Refresh conversations to update their chat_project_id
-          useConversationStore.getState().fetchConversations();
+          // chat-history fix 2026-04-18 (feedback #407a17df): folder delete must
+          // trigger a FORCED conversation refresh so the sidebar reflects the new
+          // chat_project_id=null state immediately. Without `force:true` the
+          // fetch-dedupe window could swallow this call and leave ghost entries.
+          useConversationStore.getState().fetchConversations({ force: true });
         } catch (err: any) {
           console.error('[ChatProjectStore] Delete error:', err);
-          set({ error: err.message || 'Failed to delete project' });
+          set({ error: err.message || 'Failed to delete folder' });
           throw err;
         }
       },

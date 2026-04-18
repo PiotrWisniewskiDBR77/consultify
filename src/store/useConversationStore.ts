@@ -34,10 +34,35 @@ const STORE_DEBUG = import.meta.env.VITE_STORE_DEBUG === 'true';
 // If the network is transiently unavailable, repeated mounts can spam /api and
 // cascade into "TypeError: Failed to fetch" + UI freeze.
 const FETCH_DEDUPE_WINDOW_MS = 1500;
+// chat-history fix 2026-04-18 (feedback #3a41921c CRIT "infinite Loading conversations…"):
+// Without a hard deadline, a hung backend or stalled proxy leaves isLoading=true
+// forever. Give fetches a 20s ceiling; on timeout we release the loader and
+// surface an error so the UI can recover (and the user can retry / refresh).
+const FETCH_HARD_TIMEOUT_MS = 20000;
 let _inflightFetchConversations: Promise<void> | null = null;
 let _lastFetchConversationsAt = 0;
 const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
+
+function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const err = new Error(`${label} timed out after ${ms}ms`);
+      (err as any).code = 'FETCH_TIMEOUT';
+      reject(err);
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      }
+    );
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Title generation de-dupe / retry
@@ -536,10 +561,14 @@ export const useConversationStore = create<ConversationState>()(
         set({ isLoading: true });
         _inflightFetchConversations = (async () => {
           try {
-            const result = await Api.getConversations({
-              archived: options?.archived,
-              projectId: options?.projectId,
-            });
+            const result = await withDeadline(
+              Api.getConversations({
+                archived: options?.archived,
+                projectId: options?.projectId,
+              }),
+              FETCH_HARD_TIMEOUT_MS,
+              'fetchConversations'
+            );
 
             const conversations = (result?.conversations || []).map(mapApiConversation);
             set((state) => {
@@ -556,6 +585,8 @@ export const useConversationStore = create<ConversationState>()(
             });
           } catch (err) {
             console.error('[ConversationStore] Fetch error:', err);
+            // Always release the loader so the sidebar never sits in an
+            // "infinite Loading conversations…" state (feedback #3a41921c).
             set({ isLoading: false });
           }
         })().finally(() => {
