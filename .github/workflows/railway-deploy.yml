@@ -67,12 +67,12 @@ jobs:
           attempt=0
           while [ "$attempt" -lt 60 ]; do
             deployment_json="$(railway deployment list --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
-            if ! printf '%s' "$deployment_json" | grep -F "\"cliMessage\":\"$DEPLOY_MESSAGE\"" >/dev/null 2>&1; then
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
               attempt=$((attempt + 1))
               sleep 5
               continue
             fi
-            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')"
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
             echo "staging app deployment status: $status"
             case "$status" in
               SUCCESS) break ;;
@@ -94,12 +94,12 @@ jobs:
           attempt=0
           while [ "$attempt" -lt 60 ]; do
             deployment_json="$(railway deployment list --service "$SECONDARY_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
-            if ! printf '%s' "$deployment_json" | grep -F "\"cliMessage\":\"$DEPLOY_MESSAGE\"" >/dev/null 2>&1; then
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
               attempt=$((attempt + 1))
               sleep 5
               continue
             fi
-            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')"
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
             echo "staging secondary deployment status: $status"
             case "$status" in
               SUCCESS) break ;;
@@ -169,12 +169,12 @@ jobs:
           attempt=0
           while [ "$attempt" -lt 60 ]; do
             deployment_json="$(railway deployment list --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
-            if ! printf '%s' "$deployment_json" | grep -F "\"cliMessage\":\"$DEPLOY_MESSAGE\"" >/dev/null 2>&1; then
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
               attempt=$((attempt + 1))
               sleep 5
               continue
             fi
-            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')"
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
             echo "production app deployment status: $status"
             case "$status" in
               SUCCESS) break ;;
@@ -196,12 +196,12 @@ jobs:
           attempt=0
           while [ "$attempt" -lt 60 ]; do
             deployment_json="$(railway deployment list --service "$SECONDARY_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
-            if ! printf '%s' "$deployment_json" | grep -F "\"cliMessage\":\"$DEPLOY_MESSAGE\"" >/dev/null 2>&1; then
+            if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
               attempt=$((attempt + 1))
               sleep 5
               continue
             fi
-            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')"
+            status="$(printf '%s' "$deployment_json" | sed -n 's/.*"status":[[:space:]]*"\([^"]*\)".*/\1/p')"
             echo "production secondary deployment status: $status"
             case "$status" in
               SUCCESS) break ;;
