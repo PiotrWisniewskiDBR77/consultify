@@ -61,12 +61,22 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
   return (
     <AnimatePresence>
+      {/*
+       * Feedback #f574311b "Pasek Limitations - wizualnie": previously the
+       * outer banner animated in with `y: -100 → 0` (CSS translate). During
+       * the enter animation the banner is visually offset upwards while
+       * still occupying its layout slot, which made the translated banner
+       * draw on top of the sibling `TrialBanner` below — reproducing the
+       * "bar overlaps bar below" report. Opacity-only entry keeps the
+       * layout stable so the expanded section only pushes content down in
+       * normal document flow and never floats above other bars.
+       */}
       <motion.div
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -100, opacity: 0 }}
-        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className={`bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 ${className}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18 }}
+        className={`relative z-0 bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 ${className}`}
       >
         {/* Main Banner Row */}
         <div className="px-4 py-2">
@@ -108,8 +118,22 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                         : 'bg-navy-800/50 text-slate-400 border-white/5'
                     }`}
+                    title={t(
+                      'demo.banner.aiUsageTooltip',
+                      'AI calls used today / daily limit'
+                    )}
                   >
-                    AI: {snapshot.usageToday.aiCalls ?? 0}/{snapshot.limits.maxAICallsPerDay ?? 10}
+                    {/*
+                      Feedback #a26d96f3: the old "AI: 25/25" label was read by
+                      users as "25 remaining of 25", so they assumed they still
+                      had quota while the chat was actually blocked. Show the
+                      direction explicitly with a "used" suffix and keep the
+                      tooltip for the full explanation.
+                    */}
+                    {t('demo.banner.aiUsageLabel', 'AI')}{' '}
+                    {snapshot.usageToday.aiCalls ?? 0}/
+                    {snapshot.limits.maxAICallsPerDay ?? 10}{' '}
+                    {t('demo.banner.used', 'used')}
                   </span>
                 )}
                 {snapshot?.limits &&
@@ -121,9 +145,14 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                           ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                           : 'bg-navy-800/50 text-slate-400 border-white/5'
                       }`}
+                      title={t(
+                        'demo.banner.tokenUsageTooltip',
+                        'Tokens used today / daily limit'
+                      )}
                     >
                       {(snapshot.usageToday.tokensUsed ?? 0) / 1000}k/
-                      {(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k
+                      {(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k{' '}
+                      {t('demo.banner.used', 'used')}
                     </span>
                   )}
               </div>
@@ -131,13 +160,20 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
-              {/* Expand/collapse button */}
+              {/* Expand/collapse button — feedback #b85f5a91 wants a clear
+                   "Limitations" label across all locales. The toggle flips
+                   between "Limitations" / "Ograniczenia" when collapsed and
+                   "Hide" / "Ukryj" when expanded. */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`hidden sm:flex ${buttonSecondaryClass}`}
               >
                 <Lightbulb className="w-3.5 h-3.5" />
-                <span>{t('demo.banner.hints', 'Hints')}</span>
+                <span>
+                  {isExpanded
+                    ? t('demo.banner.hideLimitations', 'Hide')
+                    : t('demo.banner.showLimitations', 'Limitations')}
+                </span>
                 {isExpanded ? (
                   <ChevronUp className="w-3.5 h-3.5" />
                 ) : (

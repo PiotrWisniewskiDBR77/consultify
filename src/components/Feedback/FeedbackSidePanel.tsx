@@ -24,6 +24,7 @@ import {
   Meh,
   MessageSquareWarning,
   Monitor,
+  Paperclip,
   Send,
   Smile,
   Sparkles,
@@ -31,6 +32,7 @@ import {
   ThumbsDown,
   ThumbsUp,
   TrendingUp,
+  Upload,
   X,
   Zap,
 } from 'lucide-react';
@@ -39,6 +41,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { buildFeedbackDossier } from '../../services/feedbackCollector';
 import { useAppStore } from '../../store/useAppStore';
 
 // ==================== TYPES ====================
@@ -184,15 +187,214 @@ export const FeedbackSidePanel: React.FC = () => {
   const [capturedCtx, setCapturedCtx] = useState<CapturedContext | null>(null);
   const wasOpenRef = useRef(false);
 
+  // Cursor-ready capture state (V2)
+  // Screenshot is opt-in by default (off) — avoids payload bloat, GDPR
+  // surprises and slow DOM rasterisation on large dashboards. Diagnostics
+  // (console/network/breadcrumbs) stay on because they are cheap and textual.
+  const [attachScreenshot, setAttachScreenshot] = useState(false);
+  const [attachDiagnostics, setAttachDiagnostics] = useState(true);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isPreparingDossier, setIsPreparingDossier] = useState(false);
+
+  // Feedback #00835312 — testers asked for a way to attach their OWN
+  // screenshot to a bug report (screenshot of the full desktop, of a
+  // different window, of a phone, annotated in Skitch, etc.). The old
+  // flow only offered the auto-captured viewport via html-to-image,
+  // which (a) often failed on complex dashboards and (b) never covered
+  // anything outside the current browser tab. This state carries a
+  // user-provided image (file upload OR clipboard paste) and takes
+  // precedence over the auto-capture when set.
+  const [uploadedScreenshot, setUploadedScreenshot] = useState<{
+    dataUrl: string;
+    approxBytes: number;
+    width: number;
+    height: number;
+    fileName?: string;
+  } | null>(null);
+  const screenshotFileInputRef = useRef<HTMLInputElement | null>(null);
+
   const isOpen = activeSidePanel === 'FEEDBACK';
 
   // Capture context snapshot when panel opens
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       setCapturedCtx(capturePageContext(t));
+      // Accept optional prefill from ErrorBoundary or other sources
+      try {
+        const prefill = (window as any).__FEEDBACK_PREFILL__;
+        if (prefill && typeof prefill === 'object') {
+          if (prefill.type === 'BUG' || prefill.type === 'IDEA') {
+            setReportType(prefill.type);
+            setActiveTab('report');
+          }
+          if (typeof prefill.title === 'string') setReportTitle(prefill.title);
+          if (typeof prefill.message === 'string') setMessage(prefill.message);
+          if (
+            prefill.severity === 'LOW' ||
+            prefill.severity === 'MEDIUM' ||
+            prefill.severity === 'HIGH' ||
+            prefill.severity === 'CRITICAL'
+          ) {
+            setSeverity(prefill.severity);
+          }
+          if (prefill.error && typeof prefill.error === 'object') {
+            const parts: string[] = [];
+            if (prefill.error.message) parts.push(`Error: ${prefill.error.message}`);
+            if (prefill.error.stack)
+              parts.push(`Stack:\n${String(prefill.error.stack).slice(0, 2000)}`);
+            if (parts.length) setActualBehavior(parts.join('\n\n'));
+          }
+          delete (window as any).__FEEDBACK_PREFILL__;
+        }
+      } catch {
+        // ignore prefill failures
+      }
+    }
+    if (!isOpen && wasOpenRef.current) {
+      setScreenshotPreview(null);
     }
     wasOpenRef.current = isOpen;
   }, [isOpen, t]);
+
+  // When user enters Report tab in BUG mode, prepare a screenshot preview.
+  useEffect(() => {
+    let cancelled = false;
+    async function preparePreview() {
+      if (!isOpen || activeTab !== 'report' || !attachScreenshot) {
+        setScreenshotPreview(null);
+        return;
+      }
+      setIsPreparingDossier(true);
+      try {
+        const dossier = await buildFeedbackDossier({
+          includeScreenshot: true,
+          user: {
+            userId: currentUser?.id || null,
+            role: currentUser?.role || null,
+          },
+        });
+        if (!cancelled) {
+          setScreenshotPreview(dossier.screenshot?.dataUrl || null);
+        }
+      } catch (err) {
+        if (!cancelled) setScreenshotPreview(null);
+      } finally {
+        if (!cancelled) setIsPreparingDossier(false);
+      }
+    }
+    preparePreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, activeTab, attachScreenshot, currentUser?.id, currentUser?.role]);
+
+  // Listen for programmatic open events (e.g. ErrorBoundary)
+  useEffect(() => {
+    function onOpen() {
+      try {
+        useAppStore.getState().openSidePanel?.('FEEDBACK');
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('feedback:open', onOpen as EventListener);
+    return () => window.removeEventListener('feedback:open', onOpen as EventListener);
+  }, []);
+
+  // Feedback #00835312 — load a user-provided image (file or clipboard
+  // blob) into `uploadedScreenshot`. Server Zod schema caps the base64
+  // dataUrl at 2,000,000 characters (~1.5 MB of image data after
+  // encoding), so we cap the raw file at ~1.4 MB and hard-fail with a
+  // toast instead of silently dropping the attachment.
+  const MAX_UPLOADED_SCREENSHOT_BYTES = 1.4 * 1024 * 1024;
+  const loadScreenshotFromFile = useCallback(
+    async (file: File | Blob, fileName?: string) => {
+      try {
+        if (!file.type?.startsWith('image/')) {
+          toast.error(
+            t(
+              'feedback.attach.notAnImage',
+              'Plik musi być obrazem (PNG, JPG, GIF lub WebP).'
+            )
+          );
+          return;
+        }
+        if (file.size > MAX_UPLOADED_SCREENSHOT_BYTES) {
+          toast.error(
+            t(
+              'feedback.attach.tooLarge',
+              'Zrzut ekranu jest za duży (max ~1.4 MB). Użyj narzędzia do kompresji lub przytnij obraz.'
+            )
+          );
+          return;
+        }
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        if (!dataUrl || dataUrl.length < 100) {
+          toast.error(
+            t(
+              'feedback.attach.readFailed',
+              'Nie udało się odczytać pliku. Spróbuj ponownie.'
+            )
+          );
+          return;
+        }
+        const dims = await new Promise<{ width: number; height: number }>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+          img.onerror = () => resolve({ width: 0, height: 0 });
+          img.src = dataUrl;
+        });
+        setUploadedScreenshot({
+          dataUrl,
+          approxBytes: file.size,
+          width: dims.width || 0,
+          height: dims.height || 0,
+          fileName: fileName || (file as File).name || 'screenshot.png',
+        });
+        toast.success(
+          t('feedback.attach.uploaded', 'Screenshot dodany do zgłoszenia.'),
+          { duration: 1500 }
+        );
+      } catch (err) {
+        console.warn('[FeedbackSidePanel] loadScreenshotFromFile failed:', err);
+        toast.error(
+          t('feedback.attach.readFailed', 'Nie udało się odczytać pliku. Spróbuj ponownie.')
+        );
+      }
+    },
+    [t]
+  );
+
+  const handleScreenshotFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) await loadScreenshotFromFile(file);
+      if (screenshotFileInputRef.current) screenshotFileInputRef.current.value = '';
+    },
+    [loadScreenshotFromFile]
+  );
+
+  // Ctrl/Cmd-V paste support while the Report tab is open.
+  useEffect(() => {
+    if (!isOpen || activeTab !== 'report' || reportType !== 'BUG') return;
+    const onPaste = async (e: ClipboardEvent) => {
+      if (!e.clipboardData) return;
+      const items = Array.from(e.clipboardData.items || []);
+      const imageItem = items.find((it) => it.type?.startsWith('image/'));
+      if (!imageItem) return;
+      const blob = imageItem.getAsFile();
+      if (!blob) return;
+      e.preventDefault();
+      await loadScreenshotFromFile(blob, `pasted-${Date.now()}.png`);
+    };
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  }, [isOpen, activeTab, reportType, loadScreenshotFromFile]);
 
   const currentContext =
     capturedCtx?.routePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
@@ -235,6 +437,7 @@ export const FeedbackSidePanel: React.FC = () => {
     setFeatureName('');
     setFeatureDescription('');
     setFeatureImpact('medium');
+    setUploadedScreenshot(null);
   }, []);
 
   // Handle success state
@@ -263,6 +466,24 @@ export const FeedbackSidePanel: React.FC = () => {
     if (impactNotes.trim()) structuredBlocks.push(`Impact:\n${impactNotes.trim()}`);
 
     const fullDescription = [message.trim(), ...structuredBlocks.map((b) => `\n\n${b}`)].join('');
+
+    let dossier: Awaited<ReturnType<typeof buildFeedbackDossier>> | null = null;
+    try {
+      dossier = await buildFeedbackDossier({
+        includeScreenshot: attachScreenshot,
+        user: {
+          userId: currentUser?.id || null,
+          role: currentUser?.role || null,
+        },
+        forSignature: {
+          message: `${reportTitle.trim()} ${message.trim()}`.trim(),
+          route: ctx.routePath,
+        },
+      });
+    } catch (err) {
+      console.warn('[FeedbackSidePanel] buildFeedbackDossier failed:', err);
+    }
+
     try {
       await Api.sendFeedback({
         userId: currentUser?.id || undefined,
@@ -288,6 +509,31 @@ export const FeedbackSidePanel: React.FC = () => {
           screenSize: ctx.screenSize,
           scrollPosition: ctx.scrollPosition,
         },
+        signatureHash: dossier?.signatureHash,
+        appContext: dossier ? (dossier.appContext as any) : undefined,
+        consoleLogs: attachDiagnostics && dossier ? (dossier.consoleLogs as any) : undefined,
+        networkErrors: attachDiagnostics && dossier ? (dossier.networkErrors as any) : undefined,
+        breadcrumbs: attachDiagnostics && dossier ? (dossier.breadcrumbs as any) : undefined,
+        lastUncaughtError: attachDiagnostics && dossier ? dossier.lastUncaughtError : undefined,
+        // Feedback #00835312 — user-uploaded image wins over the
+        // auto-captured viewport so a tester who pastes / uploads their
+        // own annotated screenshot always sees it travel with the
+        // report, even if the `attachScreenshot` checkbox is off.
+        screenshot: uploadedScreenshot
+          ? {
+              dataUrl: uploadedScreenshot.dataUrl,
+              approxBytes: uploadedScreenshot.approxBytes,
+              width: uploadedScreenshot.width,
+              height: uploadedScreenshot.height,
+            }
+          : attachScreenshot && dossier?.screenshot
+            ? {
+                dataUrl: dossier.screenshot.dataUrl,
+                approxBytes: dossier.screenshot.approxBytes,
+                width: dossier.screenshot.width,
+                height: dossier.screenshot.height,
+              }
+            : null,
       });
       handleSuccess(
         reportType === 'BUG'
@@ -651,6 +897,126 @@ export const FeedbackSidePanel: React.FC = () => {
               onChange={(e) => setImpactNotes(e.target.value)}
             />
           </div>
+        </div>
+      )}
+
+      {/* Cursor-ready capture bundle */}
+      {reportType === 'BUG' && (
+        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span>{t('feedback.attach.title', 'Cursor-ready dowody')}</span>
+            {isPreparingDossier ? (
+              <span className="inline-flex items-center gap-1 text-slate-400">
+                <Loader2 size={12} className="animate-spin" />
+                {t('feedback.attach.preparing', 'Przygotowuję…')}
+              </span>
+            ) : null}
+          </div>
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={attachScreenshot}
+              onChange={(e) => setAttachScreenshot(e.target.checked)}
+              className="h-3.5 w-3.5"
+              disabled={!!uploadedScreenshot}
+            />
+            {t('feedback.attach.screenshot', 'Dołącz screenshot bieżącego widoku (opcjonalnie)')}
+          </label>
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={attachDiagnostics}
+              onChange={(e) => setAttachDiagnostics(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            {t(
+              'feedback.attach.diagnostics',
+              'Dołącz logi konsoli, błędy sieci i breadcrumbs (bez wartości z formularzy)'
+            )}
+          </label>
+
+          {/* Feedback #00835312 — explicit upload + paste affordance so
+              testers can attach their OWN screenshot (full desktop,
+              another window, phone photo, annotated in Skitch, etc.).
+              Takes precedence over the auto-captured viewport. */}
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => screenshotFileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+              title={t(
+                'feedback.attach.uploadHint',
+                'Wgraj własny zrzut ekranu (PNG/JPG, max ~1.4 MB) lub wklej obraz ze schowka (Ctrl/Cmd+V).'
+              )}
+            >
+              <Upload size={12} />
+              {uploadedScreenshot
+                ? t('feedback.attach.replace', 'Wymień screenshot')
+                : t('feedback.attach.upload', 'Wgraj własny screenshot')}
+            </button>
+            {uploadedScreenshot ? (
+              <button
+                type="button"
+                onClick={() => setUploadedScreenshot(null)}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                title={t('feedback.attach.remove', 'Usuń załączony screenshot')}
+              >
+                <X size={12} />
+                {t('feedback.attach.removeShort', 'Usuń')}
+              </button>
+            ) : (
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                {t(
+                  'feedback.attach.pasteHint',
+                  'lub wklej (Ctrl/⌘+V)'
+                )}
+              </span>
+            )}
+            <input
+              ref={screenshotFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleScreenshotFileChange}
+              className="hidden"
+            />
+          </div>
+
+          {uploadedScreenshot ? (
+            <div className="mt-1 overflow-hidden rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-900">
+              <img
+                src={uploadedScreenshot.dataUrl}
+                alt={uploadedScreenshot.fileName || 'uploaded-screenshot'}
+                className="w-full h-auto max-h-48 object-contain object-top bg-slate-950"
+              />
+              <div className="flex items-center justify-between px-2 py-1 text-[10px] text-slate-400">
+                <span className="truncate">
+                  <Paperclip size={10} className="inline-block mr-1 align-text-bottom" />
+                  {uploadedScreenshot.fileName || 'screenshot.png'}
+                  {uploadedScreenshot.width && uploadedScreenshot.height
+                    ? ` — ${uploadedScreenshot.width}×${uploadedScreenshot.height}`
+                    : ''}
+                </span>
+                <span className="shrink-0">
+                  {Math.max(1, Math.round(uploadedScreenshot.approxBytes / 1024))} KB
+                </span>
+              </div>
+            </div>
+          ) : attachScreenshot && screenshotPreview ? (
+            <div className="mt-1 overflow-hidden rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-900">
+              <img
+                src={screenshotPreview}
+                alt="preview"
+                className="w-full h-auto max-h-48 object-cover object-top"
+                data-feedback-redact
+              />
+              <div className="px-2 py-1 text-[10px] text-slate-400">
+                {t(
+                  'feedback.attach.previewHint',
+                  'Hasła i pola email są zamazywane automatycznie. Użyj atrybutu data-feedback-redact dla innych wrażliwych miejsc.'
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 

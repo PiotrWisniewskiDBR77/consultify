@@ -250,11 +250,36 @@ export const RecordDecisionRequestSchema = z.object({
 // Update User Preferences Request
 export const UpdateUserPreferencesRequestSchema = z.record(z.string(), z.unknown());
 
+/**
+ * V8 chat-emission addendum.
+ *
+ * Any V8-aware endpoint that operates on an `ai_actions` lifecycle can pass
+ * `conversationId` to wire the action to a chat thread so governed
+ * proposal / progress / result messages get persisted inline (Chat V8
+ * §ACTIONS_AND_APPROVALS). Fully optional — absence preserves legacy behavior.
+ */
+const ChatEmissionFieldsSchema = {
+  conversationId: z.string().uuid().optional(),
+  planSummary: z.string().max(500).optional(),
+  stepCount: z.number().int().nonnegative().optional(),
+  steps: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        label: z.string().optional(),
+        description: z.string().optional(),
+      })
+    )
+    .optional(),
+  risk: z.enum(['low', 'medium', 'high']).optional(),
+};
+
 // Create Draft Request
 export const CreateDraftRequestSchema = z.object({
   draftType: z.string().min(1),
   content: z.string().min(1),
   projectId: z.string().uuid(),
+  ...ChatEmissionFieldsSchema,
 });
 
 // Get Pending Actions Query
@@ -265,12 +290,19 @@ export const GetPendingActionsQuerySchema = z.object({
 // Approve Action Request
 export const ApproveActionRequestSchema = z.object({
   alwaysApprove: z.boolean().optional(),
+  ...ChatEmissionFieldsSchema,
 });
 
 // Reject Action Request
 export const RejectActionRequestSchema = z.object({
   reason: z.string().optional(),
   alwaysReject: z.boolean().optional(),
+  ...ChatEmissionFieldsSchema,
+});
+
+// Execute Action Request (V8 addition) — optional chat emission hint
+export const ExecuteActionRequestSchema = z.object({
+  ...ChatEmissionFieldsSchema,
 });
 
 // Generate Proposals Query
@@ -552,6 +584,7 @@ export type UpdateUserPreferencesRequest = z.infer<typeof UpdateUserPreferencesR
 export type CreateDraftRequest = z.infer<typeof CreateDraftRequestSchema>;
 export type ApproveActionRequest = z.infer<typeof ApproveActionRequestSchema>;
 export type RejectActionRequest = z.infer<typeof RejectActionRequestSchema>;
+export type ExecuteActionRequest = z.infer<typeof ExecuteActionRequestSchema>;
 export type RecommendRequest = z.infer<typeof RecommendRequestSchema>;
 export type RoadmapRequest = z.infer<typeof RoadmapRequestSchema>;
 export type InitiativeConflictsRequest = z.infer<typeof InitiativeConflictsRequestSchema>;

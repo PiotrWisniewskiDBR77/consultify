@@ -27,6 +27,12 @@ export type WorkspaceType =
   | 'interview'
   | 'presentation'
   | 'general'
+  // Chat V8 workspace contexts — surfaces added by the unified interview /
+  // insight / presentation workflows. Additive on purpose so existing callers
+  // keep compiling even when they only know the original types.
+  | 'interview'
+  | 'insight'
+  | 'presentation'
   | 'empty';
 
 /**

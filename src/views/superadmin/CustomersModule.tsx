@@ -9,8 +9,8 @@ import {
   Bell,
   BookOpen,
   Building2,
-  Command,
   CircleDollarSign,
+  Command,
   FileCheck,
   FileText,
   HeadphonesIcon,
@@ -40,16 +40,17 @@ import {
   CustomerLifecycleView,
   CustomerSuccessPlaybooksView,
 } from './customers';
-import { OrganizationsView } from './OrganizationsView';
+import { ModuleWaitlistView } from './ModuleWaitlistView';
 import { OrganizationResourceManager } from './OrganizationResourceManager';
+import { OrganizationsView } from './OrganizationsView';
 import { RevenueModule } from './RevenueModule';
 import { SecurityModuleView } from './security/SecurityModuleView';
+import { SuperAdminFeedbackAnalyticsView } from './SuperAdminFeedbackAnalyticsView';
 import { SuperAdminFeedbackBacklogView } from './SuperAdminFeedbackBacklogView';
 import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
 import { SuperAdminUserManagement } from './SuperAdminUserManagement';
-import { TenantCommandCenterView } from './TenantCommandCenterView';
 import { SupportModuleView } from './support/SupportModuleView';
-import { ModuleWaitlistView } from './ModuleWaitlistView';
+import { TenantCommandCenterView } from './TenantCommandCenterView';
 
 interface CustomersModuleProps {
   initialTab?: string;
@@ -131,6 +132,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
       support: 'superadmin_customers_support',
       feedback: 'superadmin_customers_feedback',
       'feedback-backlog': 'superadmin_customers_feedback_backlog',
+      'feedback-analytics': 'superadmin_customers_feedback_analytics',
       analytics: 'superadmin_customers_analytics',
       compliance: 'superadmin_customers_compliance',
       automation: 'superadmin_customers_automation',
@@ -160,6 +162,7 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
       badge: pendingFeedbackCount,
     },
     { id: 'feedback-backlog', label: 'Backlog', icon: <ListTodo size={16} /> },
+    { id: 'feedback-analytics', label: 'Feedback Analytics', icon: <BarChart3 size={16} /> },
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
     { id: 'compliance', label: 'Compliance', icon: <FileCheck size={16} /> },
     { id: 'automation', label: 'Automation', icon: <Zap size={16} /> },
@@ -225,6 +228,12 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
         return (
           <div className="p-6 overflow-y-auto h-full">
             <SuperAdminFeedbackBacklogView />
+          </div>
+        );
+      case 'feedback-analytics':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <SuperAdminFeedbackAnalyticsView />
           </div>
         );
       case 'analytics':

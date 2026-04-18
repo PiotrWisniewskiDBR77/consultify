@@ -871,11 +871,15 @@ export const Api = {
   },
 
   deleteUser: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    // Feedback #406b042a — route through fetchWithRetry + handleResponse so
+    // backend errors (e.g. "Cannot delete Account Owner", "User not found",
+    // stale token / 401) surface to the UI with actionable messages instead
+    // of a generic "Failed to delete user" toast.
+    const res = await fetchWithRetry(`${API_URL}/users/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to delete user');
+    await handleResponse(res, 'Failed to delete user');
   },
 
   checkSystemHealth: async (): Promise<{
@@ -1833,16 +1837,62 @@ export const Api = {
                               ? uiLang === 'pl'
                                 ? '⚠️ Lokalny provider AI jest niedozwolony w tym środowisku.'
                                 : '⚠️ Local AI provider is not allowed in this environment.'
-                              : dataCode === 'STREAM_ERROR' ||
-                                  dataCode === 'AI_STREAM_ERROR' ||
-                                  dataCode === 'AI_PIPELINE_ERROR'
-                                ? uiLang === 'pl'
-                                  ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
-                                  : '⚠️ An error occurred while generating the response. Please try again.'
-                                : null;
+                              : // Feedback #a9fcdd99 / #3b6c0287 — circuit breaker is open
+                                // for the LLM provider (e.g. OpenRouter temporarily down or
+                                // rate-limited). Previously we had no mapping so the raw
+                                // text "Circuit [openrouter] is OPEN. Retry in 18s" leaked
+                                // into the chat bubble. Try to parse the cooldown seconds
+                                // from the message so we can show the user a concrete
+                                // "try again in N seconds" hint.
+                                dataCode === 'CIRCUIT_OPEN'
+                                ? (() => {
+                                    const rawMsg = String(data.error || '');
+                                    const retryMatch = rawMsg.match(/Retry in (\d+)s/i);
+                                    const seconds = retryMatch ? retryMatch[1] : null;
+                                    if (uiLang === 'pl') {
+                                      return seconds
+                                        ? `⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za ${seconds} s lub wybierz inny model.`
+                                        : '⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za chwilę lub wybierz inny model.';
+                                    }
+                                    return seconds
+                                      ? `⚠️ The AI provider is temporarily unavailable. Please try again in ${seconds}s or switch to a different model.`
+                                      : '⚠️ The AI provider is temporarily unavailable. Please try again in a moment or switch to a different model.';
+                                  })()
+                                : dataCode === 'STREAM_ERROR' ||
+                                    dataCode === 'AI_STREAM_ERROR' ||
+                                    dataCode === 'AI_PIPELINE_ERROR' ||
+                                    // Feedback #a9fcdd99 / #3b6c0287 — legacy generic code
+                                    // the backend used to emit for any uncategorized
+                                    // pipeline error. Map it here so we never fall through
+                                    // to dumping `String(data.error)` into the bubble.
+                                    dataCode === 'AI_ERROR'
+                                  ? uiLang === 'pl'
+                                    ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
+                                    : '⚠️ An error occurred while generating the response. Please try again.'
+                                  : null;
 
                   hasAnyVisibleOutput = true;
-                  onChunk(friendlyByCode || String(data.error));
+                  // Feedback #a9fcdd99 / #3b6c0287 — never surface raw backend
+                  // error strings (e.g. "Circuit [openrouter] is OPEN. Retry in
+                  // 18s") directly in the chat. If we don't recognize the code,
+                  // fall back to a generic friendly message and log the raw text
+                  // to the console so ops can still debug from browser logs.
+                  if (!friendlyByCode) {
+                    try {
+                      console.warn(
+                        '[AI Stream] Unmapped error code surfaced:',
+                        dataCode,
+                        String(data.error || '').slice(0, 240)
+                      );
+                    } catch {
+                      /* ignore */
+                    }
+                  }
+                  const genericFallback =
+                    uiLang === 'pl'
+                      ? '⚠️ Wystąpił nieoczekiwany błąd AI. Spróbuj ponownie za chwilę.'
+                      : '⚠️ An unexpected AI error occurred. Please try again in a moment.';
+                  onChunk(friendlyByCode || genericFallback);
 
                   if (sid) {
                     console.info('[AI Stream] sessionId:', sid);
@@ -2110,7 +2160,11 @@ export const Api = {
       licensePlanId?: string | null;
     }
   ): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
+    // Feedback #1e3d749a / #682d4134 / #76ef6831 — surface the specific backend
+    // reason ("Target organization not found", Zod validation detail, 404
+    // "User not found", etc.) to the UI instead of collapsing everything into
+    // a generic "Failed to update user" toast.
+    const res = await fetchWithRetry(`${API_URL}/superadmin/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
@@ -2233,14 +2287,36 @@ export const Api = {
     return data;
   },
 
-  impersonateUser: async (userId: string): Promise<{ user: User; token: string }> => {
+  impersonateUser: async (
+    userId: string,
+    reason?: string
+  ): Promise<{ user: User; token: string }> => {
+    // Feedback #b8bf4422 — the `/superadmin/impersonate` route is gated by
+    // `requireConfirmation('impersonate_user', 'critical')` + `requireAudit`,
+    // so the payload MUST include `confirmation: true` and a non-empty
+    // `reason` (>= 3 chars). Previously we only sent `{ userId }`, which the
+    // middleware rejected with 428 CONFIRMATION_REQUIRED and the UI surfaced
+    // as "Failed to impersonate user" with no hint. We default the reason to
+    // a generic "Superadmin support session" when the caller doesn't pass one
+    // so the action still works without forcing every call site to prompt.
+    const finalReason =
+      typeof reason === 'string' && reason.trim().length >= 3
+        ? reason.trim()
+        : 'Superadmin support session';
     const res = await fetch(`${API_URL}/superadmin/impersonate`, {
       method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ userId }),
+      headers: {
+        ...getHeaders(),
+        'X-Audit-Reason': finalReason,
+      },
+      body: JSON.stringify({ userId, confirmation: true, reason: finalReason }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to impersonate user');
+    const data = await res.json().catch(() => ({}) as any);
+    if (!res.ok) {
+      const msg =
+        (data && (data.error || data.message)) || `Failed to impersonate user (HTTP ${res.status})`;
+      throw new Error(msg);
+    }
     return data;
   },
 
@@ -5919,17 +5995,19 @@ export const Api = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const headers = getHeaders();
-    delete (headers as any)['Content-Type'];
+    // Intentionally skip default JSON headers so the browser sets multipart/form-data
+    // boundary. We still want auth header + 401→refresh retry via fetchWithRetry.
+    const authHeader: Record<string, string> = {};
+    const token = tokenService.getToken();
+    if (token) authHeader['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_URL}/ai/attachments/ingest`, {
+    const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest`, {
       method: 'POST',
-      headers,
+      headers: authHeader,
       body: formData,
+      skipDefaultHeaders: true,
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest attachment');
-    return data;
+    return handleResponse(res, 'Failed to ingest attachment');
   },
 
   ingestChatUrlAttachment: async (
@@ -5944,7 +6022,7 @@ export const Api = {
     totalChunks?: number;
     embeddedChunks?: number;
   }> => {
-    const res = await fetch(`${API_URL}/ai/attachments/ingest-url`, {
+    const res = await fetchWithRetry(`${API_URL}/ai/attachments/ingest-url`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
@@ -5952,9 +6030,7 @@ export const Api = {
         title: options?.title,
       }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest URL');
-    return data;
+    return handleResponse(res, 'Failed to ingest URL');
   },
 
   // --- GENERIC DOCUMENT UPLOAD (For Context Builder) ---
@@ -5999,6 +6075,18 @@ export const Api = {
     workspaceContext?: string;
     clientEnv?: string;
     metadata?: Record<string, unknown>;
+    signatureHash?: string;
+    appContext?: Record<string, unknown>;
+    consoleLogs?: Array<Record<string, unknown>>;
+    networkErrors?: Array<Record<string, unknown>>;
+    breadcrumbs?: Array<Record<string, unknown>>;
+    lastUncaughtError?: Record<string, unknown> | null;
+    screenshot?: {
+      dataUrl: string;
+      approxBytes?: number;
+      width?: number;
+      height?: number;
+    } | null;
   }): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/feedback`, {
       method: 'POST',
@@ -6066,11 +6154,36 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch feedback AI insights');
   },
 
-  getFeedback: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/feedback`, { headers: getHeaders() });
+  getFeedback: async (opts?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> => {
+    // Thin wrapper kept for backward compat — returns just the array so
+    // existing call sites (pending-badge count, dashboards) keep working.
+    const page = await Api.getFeedbackPage(opts);
+    return page.items;
+  },
+
+  /**
+   * Paginated feedback list. Returns items + total (read from X-Total-Count)
+   * so the Superadmin UI can show "N / total" and offer Load more.
+   */
+  getFeedbackPage: async (opts?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{ items: any[]; total: number; limit: number; offset: number }> => {
+    const params = new URLSearchParams();
+    if (opts?.limit != null) params.set('limit', String(opts.limit));
+    if (opts?.offset != null) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    const url = `${API_URL}/feedback${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch feedback');
-    const data = await res.json();
-    return data || [];
+    const items = (await res.json()) || [];
+    const total = Number(res.headers.get('X-Total-Count') || items.length);
+    const limit = Number(res.headers.get('X-Page-Limit') || items.length);
+    const offset = Number(res.headers.get('X-Page-Offset') || 0);
+    return { items, total, limit, offset };
   },
 
   updateFeedbackStatus: async (id: string, status: string): Promise<void> => {
@@ -6082,6 +6195,44 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to update feedback status');
   },
 
+  updateFeedbackWorkflow: async (
+    id: string,
+    payload: {
+      owner?: string | null;
+      cluster?: string | null;
+      source?: string | null;
+      branch?: string | null;
+      prUrl?: string | null;
+      taskUrl?: string | null;
+      linkedTaskId?: string | null;
+      deployStatus?: string | null;
+      deployTargets?: string[];
+      deployedAt?: string | null;
+      verifiedBy?: string | null;
+      verifiedAt?: string | null;
+      waitingOn?: string | null;
+      resolution?: {
+        type?: string | null;
+        summary?: string | null;
+        rootCause?: string | null;
+        verificationNotes?: string | null;
+        testPlan?: string[];
+      };
+      note?: string | null;
+    }
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/feedback/${id}/workflow`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error((data as any)?.error || 'Failed to update feedback workflow');
+    }
+    return data;
+  },
+
   getFeedbackBacklogTasks: async (limit = 200): Promise<any[]> => {
     const url = `${API_URL}/feedback/backlog/tasks?limit=${encodeURIComponent(String(limit))}`;
     const res = await fetch(url, { headers: getHeaders() });
@@ -6089,6 +6240,39 @@ export const Api = {
     const data = await res.json();
     return data || [];
   },
+
+  getFeedbackAnalyticsOverview: async (): Promise<{
+    sampleSize: number;
+    openCount: number;
+    totals: {
+      byStatus: Record<string, number>;
+      byType: Record<string, number>;
+      bySeverity: Record<string, number>;
+      byEnv: Record<string, number>;
+    };
+    aging: { under24h: number; h24_48: number; d2_7: number; over7d: number };
+    mttrLast30d: { medianHours: number | null; p90Hours: number | null; sampleSize: number };
+    last30d: { created: number; reopened: number; reopenRatePct: number };
+    generatedAt: string;
+  }> => {
+    const res = await fetch(`${API_URL}/feedback/analytics/overview`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch feedback analytics overview');
+    return res.json();
+  },
+
+  getFeedbackCursorBrief: async (id: string): Promise<string> => {
+    const res = await fetch(`${API_URL}/feedback/${encodeURIComponent(id)}/cursor-brief`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data as any)?.error || 'Failed to fetch Cursor brief');
+    }
+    return res.text();
+  },
+
+  getFeedbackScreenshotUrl: (id: string): string =>
+    `${API_URL}/feedback/${encodeURIComponent(id)}/artifacts/screenshot`,
 
   // ==========================================
   // ACCESS CONTROL
@@ -8906,8 +9090,17 @@ export const Api = {
     return (data as any)?.logs || [];
   },
   // AI Actions
-  rejectAIAction: async (actionId: string, reason?: string) => {
-    return { success: true };
+  rejectAIAction: async (actionId: string, reason?: string, conversationId?: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason, conversationId }),
+      });
+      return handleResponse(res, 'Failed to reject action');
+    } catch (err: any) {
+      console.error('[Api] rejectAIAction error:', err);
+      return { success: false, error: err.message };
+    }
   },
   // Billing
   createSetupIntent: async () => {
@@ -9820,21 +10013,21 @@ export const Api = {
     );
     return handleResponse(res, 'Failed to check domain reputation');
   },
-  // Chat projects - Real API implementations
+  // Chat projects (folders) - unified through fetchWithRetry + handleResponse so
+  // server-side error details (403 permissions, 404, 409 etc.) reach the UI.
+  // chat-history fix 2026-04-18 (feedback #407a17df, #84f6e58f, #fb2d4e30).
   getChatProjects: async (options?: { scope?: 'personal' | 'team' }) => {
     const params = new URLSearchParams();
     if (options?.scope) params.append('scope', options.scope);
     const qs = params.toString();
-    const response = await fetch(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects${qs ? `?${qs}` : ''}`, {
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch chat projects');
-    return response.json();
+    return handleResponse(res, 'Failed to fetch chat projects');
   },
   getChatProject: async (id: string) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch chat project');
-    return response.json();
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch chat project');
   },
   createChatProject: async (data: {
     name: string;
@@ -9843,44 +10036,40 @@ export const Api = {
     icon?: string;
     scope?: 'personal' | 'team';
   }) => {
-    const response = await fetch(`${API_URL}/chat-projects`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to create chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to create chat folder');
   },
   updateChatProject: async (
     id: string,
     data: { name?: string; description?: string; color?: string; icon?: string }
   ) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to update chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to update chat folder');
   },
   deleteChatProject: async (id: string) => {
-    const response = await fetch(`${API_URL}/chat-projects/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to delete chat project');
-    return response.json();
+    return handleResponse(res, 'Failed to delete chat folder');
   },
   moveConversationToProject: async (projectId: string, conversationId: string) => {
-    const response = await fetch(
+    const res = await fetchWithRetry(
       `${API_URL}/chat-projects/${projectId}/conversations/${conversationId}`,
       {
         method: 'POST',
         headers: getHeaders(),
       }
     );
-    if (!response.ok) throw new Error('Failed to move conversation to project');
-    return response.json();
+    return handleResponse(res, 'Failed to move conversation to folder');
   },
   // Analytics Reports - connected to real API
   getAnalyticsReports: async (filters?: any): Promise<any[]> => {
@@ -12145,10 +12334,329 @@ export const Api = {
     }
   },
 
-  approveAIAction: async (actionId: string) => {
+  /**
+   * V8 / Wave A6 — fetch the unified list of proposals referenced in a
+   * conversation, with lifecycle state sourced from the governance row when
+   * available. Returns `{ proposals: ChatProposalView[] }`.
+   */
+  getConversationProposals: async (conversationId: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/conversations/${conversationId}/proposals`,
+        { method: 'GET' }
+      );
+      return handleResponse(res, 'Failed to load conversation proposals');
+    } catch (err: any) {
+      console.error('[Api] getConversationProposals error:', err);
+      return { proposals: [] };
+    }
+  },
+
+  /**
+   * V8 / Wave A7.4 — Operator lookup over a persisted message's trust
+   * bundle. Returns the canonical bundle + any available `routingTrace`.
+   * Falsy on network/permission failure so the UI can gracefully fallback
+   * to the inline (message-attached) bundle.
+   */
+  getMessageTrustTrace: async (messageId: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/trust/${encodeURIComponent(messageId)}/trace`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as {
+        messageId: string;
+        conversationId: string;
+        createdAt: string;
+        modelUsed: string | null;
+        trustBundle: unknown;
+        trace: unknown[];
+        traceRef: string | null;
+      };
+    } catch (err: any) {
+      console.error('[Api] getMessageTrustTrace error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B9 — Feedback summary (admin view).
+   *
+   * Returns aggregates over `ai_response_feedback` for the admin Runs
+   * dashboard. Requires admin/owner role on the server; callers should
+   * 403-handle.
+   */
+  getAiFeedbackSummary: async (params?: {
+    windowDays?: number;
+    topNegativeLimit?: number;
+    scope?: 'org' | 'global';
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.windowDays) qs.set('windowDays', String(params.windowDays));
+      if (params?.topNegativeLimit)
+        qs.set('topNegativeLimit', String(params.topNegativeLimit));
+      if (params?.scope) qs.set('scope', params.scope);
+      const s = qs.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/feedback/summary${s ? `?${s}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { summary: any };
+    } catch (err: any) {
+      console.error('[Api] getAiFeedbackSummary error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B9 follow-up — Prompt-tuning tickets.
+   *
+   * Admin-only helpers to turn negative feedback into durable tuning
+   * tasks without leaving the dashboard.
+   */
+  listPromptTuningTickets: async (params?: {
+    status?: Array<'open' | 'in_progress' | 'resolved' | 'dismissed'>;
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status && params.status.length > 0) {
+        qs.set('status', params.status.join(','));
+      }
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const s = qs.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/feedback/tuning-tickets${s ? `?${s}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { tickets: any[] };
+    } catch (err: any) {
+      console.error('[Api] listPromptTuningTickets error:', err);
+      return null;
+    }
+  },
+
+  createPromptTuningTicket: async (input: {
+    title: string;
+    notes?: string;
+    feedbackId?: string;
+    responseModeHint?: string;
+    capabilityHint?: string;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/tuning-tickets`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { ticket: any };
+    } catch (err: any) {
+      console.error('[Api] createPromptTuningTicket error:', err);
+      return null;
+    }
+  },
+
+  updatePromptTuningTicketStatus: async (
+    id: string,
+    status: 'open' | 'in_progress' | 'resolved' | 'dismissed'
+  ) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/feedback/tuning-tickets/${encodeURIComponent(id)}/status`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ status }),
+        }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { ticket: any };
+    } catch (err: any) {
+      console.error('[Api] updatePromptTuningTicketStatus error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B5 — AI runs (scheduled agents + background jobs).
+   *
+   * Read-only list/detail for the Runs view. `status` is a
+   * comma-separated list; leaving it blank returns everything.
+   */
+  listAiRuns: async (params?: {
+    status?: string[];
+    kind?: string;
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status?.length) qs.set('status', params.status.join(','));
+      if (params?.kind) qs.set('kind', params.kind);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const s = qs.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/runs${s ? `?${s}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return { runs: [] as any[] };
+      return (await res.json()) as { runs: any[] };
+    } catch (err: any) {
+      console.error('[Api] listAiRuns error:', err);
+      return { runs: [] as any[] };
+    }
+  },
+
+  getAiRun: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/runs/${encodeURIComponent(id)}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { run: any };
+    } catch (err: any) {
+      console.error('[Api] getAiRun error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B1 — Agent catalog.
+   *
+   * Returns the six MVP agents visible in the composer picker. The
+   * server owns the canonical list; the client just renders it. Falls
+   * back to an empty array on network failure so the composer still
+   * shows "Default" and the user isn't blocked.
+   */
+  listAgents: async () => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/agents`, {
+        method: 'GET',
+      });
+      if (!res.ok) return { agents: [] as any[] };
+      return (await res.json()) as { agents: any[] };
+    } catch (err: any) {
+      console.error('[Api] listAgents error:', err);
+      return { agents: [] as any[] };
+    }
+  },
+
+  /**
+   * V8 / Wave B3 — Org memory retrieval.
+   *
+   * Lexical search over the caller's organization memory. Hits are
+   * tagged with `source_class: 'org_memory'` on the server so the
+   * trust bundle citation roll-up treats them as a first-class source.
+   */
+  searchOrgMemory: async (params: {
+    q: string;
+    limit?: number;
+    sourceType?: string;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      qs.set('q', params.q);
+      if (params.limit) qs.set('limit', String(params.limit));
+      if (params.sourceType) qs.set('sourceType', params.sourceType);
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/org-memory/search?${qs.toString()}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return { hits: [] as any[], count: 0 };
+      return (await res.json()) as { hits: any[]; count: number };
+    } catch (err: any) {
+      console.error('[Api] searchOrgMemory error:', err);
+      return { hits: [] as any[], count: 0 };
+    }
+  },
+
+  /**
+   * V8 / Wave A8 — research sessions.
+   *
+   * These endpoints back the ResearchSessionsDock UI. All calls are
+   * organization-scoped on the server side (`req.organizationId`); the
+   * client sends no extra filters beyond status / limit.
+   */
+  listResearchSessions: async (params?: {
+    status?: string[];
+    userScope?: 'me' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const q = new URLSearchParams();
+      if (params?.status?.length) q.set('status', params.status.join(','));
+      if (params?.userScope) q.set('userScope', params.userScope);
+      if (params?.limit) q.set('limit', String(params.limit));
+      const qs = q.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return { sessions: [] as any[] };
+      return (await res.json()) as { sessions: any[] };
+    } catch (err: any) {
+      console.error('[Api] listResearchSessions error:', err);
+      return { sessions: [] as any[] };
+    }
+  },
+
+  getResearchSession: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] getResearchSession error:', err);
+      return null;
+    }
+  },
+
+  createResearchSession: async (body: {
+    topic: string;
+    conversationId?: string;
+    messageId?: string;
+    workloadClass?: 'deep_research' | 'long_job' | 'background';
+    plan?: unknown;
+    stepCount?: number;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] createResearchSession error:', err);
+      return null;
+    }
+  },
+
+  cancelResearchSession: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}/cancel`,
+        { method: 'POST' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] cancelResearchSession error:', err);
+      return null;
+    }
+  },
+
+  approveAIAction: async (actionId: string, conversationId?: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/approve`, {
         method: 'POST',
+        body: JSON.stringify({ conversationId }),
       });
       return handleResponse(res, 'Failed to approve action');
     } catch (err: any) {
@@ -12873,8 +13381,25 @@ export const Api = {
     return normalized;
   },
 
-  // Get connected cloud providers
+  // Get connected cloud providers.
+  // Primary path: `/api/cloud/providers` returns the V8 Wave B8 shape
+  // (`{ id, label, connected, capabilities: { connect|browse|freshness } }`).
+  // Fallback: `/api/cloud/sources` (old behavior) for deployments that
+  // haven't been redeployed yet.
   getCloudProviders: async () => {
+    try {
+      const res = await fetch(`${API_URL}/cloud/providers`, {
+        headers: getHeaders(),
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        if (Array.isArray(payload?.providers) && payload.providers.length > 0) {
+          return { providers: payload.providers, sources: [] };
+        }
+      }
+    } catch {
+      // fall through to legacy path
+    }
     const res = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to load cloud providers');
     const payload = await res.json();
@@ -12887,6 +13412,7 @@ export const Api = {
         { id: 'google-drive', name: 'Google Drive', connected: connected.has('google_drive') },
         { id: 'onedrive', name: 'OneDrive', connected: connected.has('onedrive') },
         { id: 'dropbox', name: 'Dropbox', connected: connected.has('dropbox') },
+        { id: 'notion', name: 'Notion', connected: connected.has('notion') },
       ],
       sources,
     };

@@ -109,7 +109,11 @@ function applyPreset(anchor: Date, preset: RelativeDatePreset): Date {
   }
 }
 
-function parseStringSpec(spec: string): { preset: RelativeDatePreset; offsetDays: number } {
+function parseStringSpec(spec: string): {
+  preset: RelativeDatePreset;
+  offsetDays: number;
+  setTimeUtc?: { hour: number; minute?: number };
+} {
   const trimmed = spec.trim();
   const presetMatch = trimmed.match(
     /^(anchor|today|currentQuarter|currentQuarterStart|currentQuarterEnd|nextQuarterStart|nextQuarterEnd|monthStart|monthEnd|nextBoardMeeting)([+-]\d+d)?$/i

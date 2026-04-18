@@ -5833,6 +5833,36 @@
         "initiatives": "Deep Dive: Initiatives & Execution",
         "finance": "Deep Dive: Finance & ROI"
       }
+    },
+    "banner": {
+      "mode": "Demo Mode",
+      "exit": "Exit Demo",
+      "exitShort": "Exit",
+      "startTrial": "Start Trial",
+      "restartLocale": "Reload demo in {{locale}}",
+      "projects": "projects",
+      "initiatives": "initiatives",
+      "hints": "Hints",
+      "readOnlyTitle": "Read-only mode",
+      "readOnlyDesc": "Changes are not saved",
+      "exploreTitle": "Explore features",
+      "exploreDesc": "Browse all modules",
+      "hintTitle": "Hint",
+      "defaultHint": "Click on initiatives to see details",
+      "help": "Help",
+      "partnerProgram": "Partner Program",
+      "showLimitations": "Limitations",
+      "hideLimitations": "Hide",
+      "limitations": {
+        "readOnly": "Read-only mode — changes won't persist",
+        "sampleData": "Sample data — explore with realistic examples",
+        "session": "Session expires in 24h",
+        "aiQuota": "AI interactions limited ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "AI",
+      "used": "used",
+      "aiUsageTooltip": "AI calls used today / daily limit",
+      "tokenUsageTooltip": "Tokens used today / daily limit"
     }
   },
   "ui": {

@@ -3179,9 +3179,13 @@ router.get(
       // Import database utility
       const { all: dbAll } = await import('../utils/DbPromise.js');
 
-      // Fetch all unread notifications of signal types
+      // Fetch all unread notifications of signal types. We expose link
+      // fields (related_object_*, action_url) so the UI can deep-link from
+      // the signal popover directly to the source module (e.g. a specific
+      // feedback item inside Superadmin > Customers > Feedback).
       const signals = await dbAll(`
-                SELECT id, user_id, type, title, message, severity, created_at, read, data
+                SELECT id, user_id, type, title, message, severity, created_at, read, data,
+                       related_object_type, related_object_id, action_url
                 FROM notifications
                 WHERE type IN ('SYSTEM_ALERT', 'CLIENT_TICKET', 'USER_FEEDBACK')
                 AND read = 0
@@ -3196,7 +3200,31 @@ router.get(
                 LIMIT 100
             `);
 
-      return res.json(signals || []);
+      // Normalize to camelCase for the frontend and provide a resolved
+      // deep-link. For USER_FEEDBACK / CLIENT_TICKET we always route to the
+      // Superadmin feedback tab with the feedback id as a query param, even
+      // on legacy rows whose stored action_url still points at /admin.
+      const shaped = (signals || []).map((row: any) => {
+        const relatedObjectType: string | null =
+          row.related_object_type ||
+          (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET' ? 'FEEDBACK' : null);
+        const relatedObjectId: string | null = row.related_object_id || null;
+        let actionUrl: string | null = row.action_url || null;
+        if (
+          relatedObjectId &&
+          (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET')
+        ) {
+          actionUrl = `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(relatedObjectId)}`;
+        }
+        return {
+          ...row,
+          relatedObjectType,
+          relatedObjectId,
+          actionUrl,
+        };
+      });
+
+      return res.json(shaped);
     } catch (err: any) {
       logger.error('[SuperAdmin] Error fetching signals:', err);
       return res.status(500).json({ error: err.message });

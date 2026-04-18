@@ -42,7 +42,18 @@ export const AddMessageSchema = z.object({
   role: z.enum(['user', 'ai']),
   content: z.string().min(1),
   messageType: z
-    .enum(['text', 'action_request', 'summary', 'file', 'tool_call', 'voice'])
+    .enum([
+      'text',
+      'action_request',
+      'summary',
+      'file',
+      'tool_call',
+      'voice',
+      // V8: governed proposal + execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
+      'execution_proposal',
+      'execution_progress',
+      'execution_result',
+    ])
     .optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   tokenCount: z.number().int().positive().optional(),

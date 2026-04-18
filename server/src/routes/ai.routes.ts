@@ -51,6 +51,7 @@ import {
   ChatRequestSchema,
   ChatStreamRequestSchema,
   CreateDraftRequestSchema,
+  ExecuteActionRequestSchema,
   ExportExplanationsQuerySchema,
   GenerateCardDraftRequestSchema,
   GenerateProposalsQuerySchema,
@@ -1707,6 +1708,11 @@ router.post(
           screenContext,
           focusMode,
           conversationId,
+          // i18n-teresa fix 2026-04-18: propagate authoritative UI language so AIPipeline
+          // builds its system prompt (persona, behavioral, strict [LANGUAGE INSTRUCTION])
+          // in the locale the user actually selected — not sticky memory prefs.
+          language: language || undefined,
+          conversationLanguage: language ? String(language).split('-')[0] : undefined,
           // Tools & routing options (used by AIPipeline prompt + model selection)
           aiModes,
           knowledgeSources,
@@ -1721,6 +1727,7 @@ router.post(
         options: {
           role: roleName,
           systemInstruction: enhancedSystemInstruction,
+          language: language || undefined,
           // Tools & routing options
           aiModes,
           knowledgeSources,
@@ -2596,6 +2603,12 @@ router.post(
 
           if (Array.isArray(chunks) && chunks.length > 0) {
             attachmentChunksInjected = true;
+            emitSSE({
+              type: 'thought',
+              step: 'attachments',
+              status: 'completed',
+              label: `Found ${chunks.length} relevant fragment(s) across ${attachmentDocIds.length} attachment(s).`,
+            });
             const attachmentsText = chunks
               .slice(0, 5)
               .map((c: any, i: number) => {
@@ -2663,6 +2676,12 @@ router.post(
 
             if (Array.isArray(rows) && rows.length > 0) {
               attachmentChunksInjected = true;
+              emitSSE({
+                type: 'thought',
+                step: 'attachments',
+                status: 'completed',
+                label: `Loaded ${rows.length} raw chunk(s) directly from attachment source(s).`,
+              });
               const attachmentsText = rows
                 .map((r: any, i: number) => {
                   const source = String(r?.filename || 'Attachment');
@@ -2707,6 +2726,13 @@ router.post(
                   .filter(Boolean)
               : []
           ).join(', ');
+
+          emitSSE({
+            type: 'thought',
+            step: 'attachments',
+            status: 'warning',
+            label: `Attachment content could not be retrieved — answering from metadata only${attachmentNames ? ` (${attachmentNames})` : ''}.`,
+          });
 
           pipelineRequest = {
             ...pipelineRequest,
@@ -4478,7 +4504,8 @@ router.post(
   verifyToken,
   validateBody(CreateDraftRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { draftType, content, projectId } = req.body;
+    const { draftType, content, projectId, conversationId, planSummary, stepCount, steps, risk } =
+      req.body;
 
     try {
       const AIActionExecutor = await getAIActionExecutor();
@@ -4487,7 +4514,16 @@ router.post(
         content,
         req.userId!,
         req.organizationId!,
-        projectId
+        projectId,
+        conversationId
+          ? {
+              conversationId,
+              planSummary: planSummary || null,
+              stepCount,
+              steps,
+              risk,
+            }
+          : null
       );
       return res.json(result);
     } catch (err: any) {
@@ -4524,7 +4560,11 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const AIActionExecutor = await getAIActionExecutor();
-      const result = await AIActionExecutor.approveAction(req.params.id, req.userId!);
+      const { alwaysApprove, conversationId } = req.body || {};
+      const result = await AIActionExecutor.approveAction(req.params.id, req.userId!, {
+        alwaysApprove,
+        conversationId: conversationId || undefined,
+      });
       return res.json(result);
     } catch (err: any) {
       return res.status(500).json({ error: (err as Error).message });
@@ -4538,10 +4578,13 @@ router.patch(
   validateParams(ActionIdParamSchema),
   validateBody(RejectActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { reason } = req.body;
+    const { reason, alwaysReject, conversationId } = req.body || {};
     try {
       const AIActionExecutor = await getAIActionExecutor();
-      const result = await AIActionExecutor.rejectAction(req.params.id, req.userId!, reason);
+      const result = await AIActionExecutor.rejectAction(req.params.id, req.userId!, reason, {
+        alwaysReject,
+        conversationId: conversationId || undefined,
+      });
       return res.json(result);
     } catch (err: any) {
       return res.status(500).json({ error: (err as Error).message });
@@ -4553,12 +4596,45 @@ router.post(
   '/actions/:id/execute',
   verifyToken,
   validateParams(ActionIdParamSchema),
+  validateBody(ExecuteActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const AIActionExecutor = await getAIActionExecutor();
-      const result = await AIActionExecutor.executeAction(req.params.id, req.userId!);
+      const { conversationId } = req.body || {};
+      const result = await AIActionExecutor.executeAction(req.params.id, req.userId!, {
+        conversationId: conversationId || undefined,
+      });
       return res.json(result);
     } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+/**
+ * V8 / Wave A6 — Unified read over proposals referenced by a conversation.
+ *
+ * Returns one `ChatProposalView` per distinct proposalId referenced in the
+ * conversation's execution-family messages, merging governance truth
+ * (`ai_actions` / `v8_action_proposals`) with facade rendering hints and
+ * thread ordering. Read-only.
+ */
+router.get(
+  '/conversations/:id/proposals',
+  verifyToken,
+  validateParams(z.object({ id: z.string().uuid() })),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getConversationProposals } = await import(
+        '../services/v8/proposalUnificationService.js'
+      );
+      const proposals = await getConversationProposals({
+        conversationId: req.params.id,
+        organizationId: req.organizationId || undefined,
+      });
+      return res.json({ proposals });
+    } catch (err: any) {
+      logger.error('[AI] Unified proposals read error:', err);
       return res.status(500).json({ error: (err as Error).message });
     }
   })
@@ -5466,13 +5542,14 @@ router.post(
   validateBody(ApproveActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const alwaysApprove = (req.body as any).alwaysApprove;
+      const { alwaysApprove, conversationId } = (req.body as any) || {};
       const AIActionExecutor = await getAIActionExecutor();
       const result = await AIActionExecutor.approveAction(
         (req.params as any).actionId,
         req.userId as string,
         {
           alwaysApprove,
+          conversationId: conversationId || undefined,
         }
       );
       return res.json(result);
@@ -5490,13 +5567,13 @@ router.post(
   validateBody(RejectActionRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { reason, alwaysReject } = req.body as any;
+      const { reason, alwaysReject, conversationId } = (req.body as any) || {};
       const AIActionExecutor = await getAIActionExecutor();
       const result = await AIActionExecutor.rejectAction(
         (req.params as any).actionId,
         req.userId as string,
         reason,
-        { alwaysReject }
+        { alwaysReject, conversationId: conversationId || undefined }
       );
       return res.json(result);
     } catch (err: any) {

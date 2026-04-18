@@ -93,3 +93,22 @@ agent-transcripts/
 /test-*.mjs
 /test-rec-map-*.txt
 /validation-output*.txt
+
+# Local env files — NEVER upload secrets to Railway build context.
+# Railway env vars are injected at runtime via `railway variables`.
+# We list concrete filenames (no negation) because Railway's ignore engine
+# historically does not reliably support `!` negation patterns.
+/.env
+/.env.local
+/.env.production
+/.env.staging.local
+/.env.staging.secrets
+/server/.env
+/server/.env.local
+/server/.env.production
+/server/.env.staging.local
+/server/.env.staging.secrets
+
+# TS incremental build caches (force fresh compile)
+**/*.tsbuildinfo
+server/dist-temp/

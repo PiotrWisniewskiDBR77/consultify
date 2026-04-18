@@ -6307,7 +6307,19 @@
       "partnerProgram": "Program partnerski",
       "backToWorkspace": "Wróć do mojego workspace",
       "readyForMore": "Gotowy na własne dane?",
-      "readyForMoreWorkspace": "Chcesz przećwiczyć ten sam flow u siebie?"
+      "readyForMoreWorkspace": "Chcesz przećwiczyć ten sam flow u siebie?",
+      "showLimitations": "Ograniczenia",
+      "hideLimitations": "Ukryj",
+      "limitations": {
+        "readOnly": "Tryb tylko do odczytu — zmiany nie zostaną zapisane",
+        "sampleData": "Dane przykładowe — eksploruj na realistycznych przykładach",
+        "session": "Sesja wygasa za 24h",
+        "aiQuota": "Interakcje AI ograniczone ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "AI",
+      "used": "użyto",
+      "aiUsageTooltip": "Wywołania AI dzisiaj / limit dzienny",
+      "tokenUsageTooltip": "Tokeny zużyte dzisiaj / limit dzienny"
     },
     "session": {
       "returnWorkspace": "Wróć do mojego workspace",
@@ -7715,14 +7727,14 @@
     },
     "beyond": {
       "title": "Poza AI generatywnym",
-      "subtitle": "Produkcja stoi przed paradoksem \u201Ebogata w dane, uboga w decyzje\u201D. Vector wypełnia lukę, której generyczne AI nie jest w stanie zamknąć.",
+      "subtitle": "Produkcja stoi przed paradoksem „bogata w dane, uboga w decyzje”. Vector wypełnia lukę, której generyczne AI nie jest w stanie zamknąć.",
       "problem": {
         "title": "Problem",
         "body": "Fabryki generują eksaskalowe dane telemetryczne, ale optymalizacja wciąż zależy od powolnej analizy ludzkiej. Wąskim gardłem nie są już dane — to brak systemów decyzyjnych."
       },
       "generic": {
         "title": "Generyczne LLM-y",
-        "body": "GPT i inne LLM-y są \u201Eprzemysłowo ślepe\u201D. Nie mają podstaw w fizyce fabrycznej, analizie ruchu MTM i ograniczeniach operacyjnych. Ich odpowiedzi są płynne językowo, ale operacyjnie nieistotne."
+        "body": "GPT i inne LLM-y są „przemysłowo ślepe”. Nie mają podstaw w fizyce fabrycznej, analizie ruchu MTM i ograniczeniach operacyjnych. Ich odpowiedzi są płynne językowo, ale operacyjnie nieistotne."
       },
       "vector": {
         "title": "DBR77 Vector",
@@ -7740,7 +7752,7 @@
         },
         "02": {
           "title": "Kwantyzacja bazowa",
-          "body": "Wskaźniki operacyjne wyprowadzone z ISO 22400-2 ustalają rygorystyczny stan \u201EAs-Is\u201D — czasy cykli, alokacje FTE, bazowe OEE."
+          "body": "Wskaźniki operacyjne wyprowadzone z ISO 22400-2 ustalają rygorystyczny stan „As-Is” — czasy cykli, alokacje FTE, bazowe OEE."
         },
         "03": {
           "title": "Przyczynowa analiza strukturalna",
@@ -7841,11 +7853,26 @@
       "title": "Część kompletnego ekosystemu przemysłowego",
       "subtitle": "Vector nie jest samodzielnym narzędziem. Jest jądrem poznawczym przemysłowego systemu operacyjnego AI DBR77.",
       "layers": [
-        { "label": "Industrial IoT", "sub": "Warstwa danych" },
-        { "label": "Digital Twin", "sub": "Warstwa symulacji" },
-        { "label": "DBR77 Vector", "sub": "Warstwa decyzyjna" },
-        { "label": "IRIS", "sub": "System operacyjny" },
-        { "label": "Marketplace", "sub": "Warstwa wykonawcza" }
+        {
+          "label": "Industrial IoT",
+          "sub": "Warstwa danych"
+        },
+        {
+          "label": "Digital Twin",
+          "sub": "Warstwa symulacji"
+        },
+        {
+          "label": "DBR77 Vector",
+          "sub": "Warstwa decyzyjna"
+        },
+        {
+          "label": "IRIS",
+          "sub": "System operacyjny"
+        },
+        {
+          "label": "Marketplace",
+          "sub": "Warstwa wykonawcza"
+        }
       ]
     },
     "cta": {
@@ -7975,24 +8002,66 @@
     "techControls": {
       "title": "Szyfrowanie i kontrole techniczne",
       "items": [
-        { "label": "AES-256", "sub": "Szyfrowanie w spoczynku" },
-        { "label": "TLS 1.3", "sub": "Szyfrowanie w tranzycie" },
-        { "label": "RBAC", "sub": "Kontrola dostępu oparta na rolach" },
-        { "label": "Izolacja Docker", "sub": "Konteneryzowana inferencja" },
-        { "label": "Izolacja sesji", "sub": "Brak trwałego przechowywania" },
-        { "label": "Pipeline CI/CD", "sub": "Wersjonowany i audytowalny" }
+        {
+          "label": "AES-256",
+          "sub": "Szyfrowanie w spoczynku"
+        },
+        {
+          "label": "TLS 1.3",
+          "sub": "Szyfrowanie w tranzycie"
+        },
+        {
+          "label": "RBAC",
+          "sub": "Kontrola dostępu oparta na rolach"
+        },
+        {
+          "label": "Izolacja Docker",
+          "sub": "Konteneryzowana inferencja"
+        },
+        {
+          "label": "Izolacja sesji",
+          "sub": "Brak trwałego przechowywania"
+        },
+        {
+          "label": "Pipeline CI/CD",
+          "sub": "Wersjonowany i audytowalny"
+        }
       ]
     },
     "compliance": {
       "title": "Zgodność i standardy",
       "subtitle": "Zaprojektowane, aby przejść przeglądy procurement, prawne i bezpieczeństwa IT enterprise.",
       "standards": [
-        { "label": "ISO 27001", "sub": "Zarządzanie bezpieczeństwem informacji", "status": "Zgodne" },
-        { "label": "SOC2", "sub": "Kontrola organizacji usługowej", "status": "Zgodne" },
-        { "label": "GDPR", "sub": "Ogólne rozporządzenie o ochronie danych", "status": "Zgodne" },
-        { "label": "NIST AI RMF", "sub": "Framework zarządzania ryzykiem AI", "status": "Zgodne" },
-        { "label": "ISO 23247", "sub": "Standardy bezpieczeństwa Digital Twin", "status": "Zgodne" },
-        { "label": "ISO 22400-2", "sub": "Framework KPI przemysłowych", "status": "Zintegrowane" }
+        {
+          "label": "ISO 27001",
+          "sub": "Zarządzanie bezpieczeństwem informacji",
+          "status": "Zgodne"
+        },
+        {
+          "label": "SOC2",
+          "sub": "Kontrola organizacji usługowej",
+          "status": "Zgodne"
+        },
+        {
+          "label": "GDPR",
+          "sub": "Ogólne rozporządzenie o ochronie danych",
+          "status": "Zgodne"
+        },
+        {
+          "label": "NIST AI RMF",
+          "sub": "Framework zarządzania ryzykiem AI",
+          "status": "Zgodne"
+        },
+        {
+          "label": "ISO 23247",
+          "sub": "Standardy bezpieczeństwa Digital Twin",
+          "status": "Zgodne"
+        },
+        {
+          "label": "ISO 22400-2",
+          "sub": "Framework KPI przemysłowych",
+          "status": "Zintegrowane"
+        }
       ]
     },
     "comparison": {
@@ -8038,12 +8107,30 @@
       "title": "Audytowalny od kodu do inferencji",
       "subtitle": "Każdy krok w pipeline wdrożeniowym jest wersjonowany, zautomatyzowany i śledzalny. Brak kroków manualnych. Brak nieśledzonych zmian.",
       "steps": [
-        { "label": "Kontrola źródeł", "sub": "Repozytoria z kontrolą wersji" },
-        { "label": "CI/CD", "sub": "GitHub Actions" },
-        { "label": "Build Docker", "sub": "Konteneryzowany model" },
-        { "label": "Wdrożenie", "sub": "RunPod / On-prem" },
-        { "label": "Izolowana inferencja", "sub": "Brak współdzielonego stanu" },
-        { "label": "Brak przechowywania outputu", "sub": "Dane tylko na czas sesji" }
+        {
+          "label": "Kontrola źródeł",
+          "sub": "Repozytoria z kontrolą wersji"
+        },
+        {
+          "label": "CI/CD",
+          "sub": "GitHub Actions"
+        },
+        {
+          "label": "Build Docker",
+          "sub": "Konteneryzowany model"
+        },
+        {
+          "label": "Wdrożenie",
+          "sub": "RunPod / On-prem"
+        },
+        {
+          "label": "Izolowana inferencja",
+          "sub": "Brak współdzielonego stanu"
+        },
+        {
+          "label": "Brak przechowywania outputu",
+          "sub": "Dane tylko na czas sesji"
+        }
       ]
     },
     "disclosure": {

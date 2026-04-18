@@ -2052,5 +2052,85 @@
     "documents": "ドキュメント",
     "tables": "テーブル",
     "presentations": "プレゼンテーション"
+  },
+  "demo": {
+    "banner": {
+      "mode": "デモモード",
+      "exit": "デモを終了",
+      "exitShort": "終了",
+      "startTrial": "トライアル開始",
+      "restartLocale": "{{locale}}でデモを再読み込み",
+      "projects": "プロジェクト",
+      "initiatives": "イニシアチブ",
+      "hints": "ヒント",
+      "readOnlyTitle": "読み取り専用モード",
+      "readOnlyDesc": "変更は保存されません",
+      "exploreTitle": "機能を探索",
+      "exploreDesc": "すべてのモジュールを閲覧",
+      "hintTitle": "ヒント",
+      "defaultHint": "詳細を見るにはイニシアチブをクリック",
+      "help": "ヘルプ",
+      "partnerProgram": "パートナープログラム",
+      "showLimitations": "制限事項",
+      "hideLimitations": "隠す",
+      "limitations": {
+        "readOnly": "読み取り専用モード — 変更は保存されません",
+        "sampleData": "サンプルデータ — リアルな例で探索",
+        "session": "セッションは24時間で期限切れ",
+        "aiQuota": "AIインタラクション制限 ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "AI",
+      "used": "使用",
+      "aiUsageTooltip": "本日のAI呼び出し / 1日の上限",
+      "tokenUsageTooltip": "本日のトークン使用量 / 1日の上限"
+    }
+  },
+  "access": {
+    "banner": {
+      "demo": "デモ環境を表示しています（読み取り専用）",
+      "pastDue": "支払いが失敗しました。サービスの中断を避けるため支払い方法を更新してください。",
+      "trialExpired": "トライアルが期限切れです。続行するにはアップグレードしてください。",
+      "trialCritical": "トライアルは{{days}}日で期限切れです。今すぐアップグレードしてアクセスを維持。",
+      "trialWarning": "トライアル残り{{days}}日",
+      "approachingLimits": "使用制限に近づいています。途切れないアクセスのためアップグレードをご検討ください。"
+    },
+    "modal": {
+      "trialExpired": "トライアル期間が終了しました。データは安全ですが、組織は読み取り専用モードです。アップグレードで完全なアクセスを復元してください。",
+      "title": "アクセスが必要です",
+      "close": "閉じる",
+      "bookCall": "通話を予約"
+    },
+    "cta": {
+      "upgradePlan": "プランをアップグレード",
+      "upgradeNow": "今すぐアップグレード",
+      "fixPayment": "支払いを修正",
+      "addPaymentMethod": "支払い方法を追加",
+      "startTrial": "無料トライアル開始",
+      "completeSetup": "セットアップを完了",
+      "goToBilling": "請求へ移動",
+      "contactSales": "営業に連絡"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "組織が見つかりません。セッションを更新するために再度ログインしてください。",
+      "ORG_INACTIVE": "組織が非アクティブです。サポートにお問い合わせいただくか再度ログインしてください。",
+      "TRIAL_PROFILE_INCOMPLETE": "組織のセットアップを完了してトライアルAI体験を開始してください。",
+      "AI_TOKEN_BUDGET_EXCEEDED": "トライアルAI予算が使用されました。AI利用を続けるには支払い方法を追加してください。",
+      "AI_LIMIT_REACHED": "1日のAI呼び出し制限に達しました。続行するにはアップグレードしてください。",
+      "TRIAL_EXPIRED": "トライアルが期限切れです。すべての機能を続けて使用するにはアップグレードしてください。",
+      "DEMO_READ_ONLY": "デモモードは読み取り専用です。独自のデータを作成するには無料トライアルを開始してください。",
+      "DEMO_TIME_EXPIRED": "デモセッションが期限切れです。続行するには無料トライアルを開始してください。",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "デモAIセッションの制限に達しました。さらに使用するには無料トライアルを開始してください。",
+      "PROJECT_LIMIT_REACHED": "プロジェクトの上限に達しました。より多くのプロジェクトを作成するにはアップグレードしてください。",
+      "INITIATIVE_LIMIT_REACHED": "イニシアチブの上限に達しました。アップグレードしてください。",
+      "USER_LIMIT_REACHED": "ユーザー上限に達しました。チームメンバーを招待するにはアップグレードしてください。",
+      "STORAGE_LIMIT_REACHED": "ストレージ上限に達しました。アップグレードしてください。",
+      "SUBSCRIPTION_PAST_DUE": "支払いが失敗しました。支払い方法を更新してください。",
+      "SUBSCRIPTION_CANCELLED": "サブスクリプションはキャンセルされました。",
+      "INSUFFICIENT_TOKENS": "トークン不足。支払い方法を追加するかプランをアップグレードしてください。",
+      "default": "この操作は現在のアクセスレベルでは許可されていません。"
+    },
+    "upgrade": {
+      "instantUnlock": "アップグレード後、すべての制限が即座に解除されます"
+    }
   }
 }

@@ -90,9 +90,20 @@ export const AccessBlockedModal: React.FC = () => {
     };
     const onDemoBlocked = (evt: Event) => {
       const e = evt as CustomEvent<{ message?: string; action?: string }>;
+      // Feedback #4180b14f: backend was returning a hardcoded English
+      // "Demo mode cannot…" message which was rendered verbatim for every
+      // locale, so DE/ES/AR/JP users never saw a translated popup. We now
+      // always prefer the localized access.blocked.DEMO_READ_ONLY string and
+      // only fall back to the backend message when the i18n catalog is
+      // genuinely missing the key (shouldn't happen after this sprint).
+      const localized = t('access.blocked.DEMO_READ_ONLY');
+      const fallbackMessage =
+        !localized || localized === 'access.blocked.DEMO_READ_ONLY'
+          ? e.detail?.message || 'Demo mode is read-only.'
+          : localized;
       setDetail({
         code: 'DEMO_READ_ONLY',
-        message: e.detail?.message || t('access.blocked.DEMO_READ_ONLY'),
+        message: fallbackMessage,
       });
       setOpen(true);
     };

@@ -12,14 +12,31 @@ import { useTranslation } from 'react-i18next';
 import type { NavigateAction } from '@/services/chatNavigator';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
-/** Inline chat prompt (fills send flow) vs mechanical navigation */
-export type ChatSuggestionAction = NavigateAction | { type: 'CHAT_PROMPT'; prompt: string };
+/**
+ * Chat V8 — `{ type: 'chat'; prompt: string }` is a light-weight "inject this
+ * into the chat input and send" action, used for smart suggestions that want
+ * to prime the conversation instead of hard-navigating somewhere. The router
+ * in `UnifiedChatPanel` is responsible for turning it into a real send.
+ */
+export interface ChatInjectAction {
+  type: 'chat';
+  prompt: string;
+}
+
+export type ChatSuggestionAction = NavigateAction | ChatInjectAction;
 
 export interface ChatSuggestion {
   id: string;
   label: string;
   action: ChatSuggestionAction;
-  type?: 'initiative' | 'tool' | 'results' | 'outputs' | 'generic' | 'interview';
+  type?:
+    | 'initiative'
+    | 'tool'
+    | 'results'
+    | 'outputs'
+    | 'generic'
+    // Chat V8 — interview/insight smart-suggestion family.
+    | 'interview';
 }
 
 const SUGGESTION_ICONS: Record<string, React.ElementType> = {
@@ -53,11 +70,19 @@ export const ChatSmartSuggestions: React.FC<ChatSmartSuggestionsProps> = ({
 
   const handleClick = async (suggestion: ChatSuggestion) => {
     setLoadingId(suggestion.id);
-    trackFunnelEvent('chat_suggestion_clicked', {
-      type: suggestion.action.type,
-      targetModule:
-        suggestion.action.type === 'NAVIGATE' ? suggestion.action.targetModule : 'chat_prompt',
-    });
+    // Chat V8 — telemetry shape is polymorphic now that suggestions can be
+    // either NAVIGATE or `chat` (prompt-prime). Discriminate safely.
+    if (suggestion.action.type === 'NAVIGATE') {
+      trackFunnelEvent('chat_suggestion_clicked', {
+        type: 'NAVIGATE',
+        targetModule: suggestion.action.targetModule,
+      });
+    } else {
+      trackFunnelEvent('chat_suggestion_clicked', {
+        type: 'chat',
+        promptPreview: suggestion.action.prompt.slice(0, 80),
+      });
+    }
     try {
       await onSuggestionClick(suggestion);
       setDismissed(true);

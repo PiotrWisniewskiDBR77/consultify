@@ -187,7 +187,9 @@ export interface UpdatePlanData {
 export interface UpsertBillingData {
   subscription_plan_id?: string;
   billing_rail?: string;
-  contract_status?: string;
+  // Nullable so callers can explicitly clear the contract status on the
+  // upsert path (used when transitioning to stripe-managed subscriptions).
+  contract_status?: string | null;
   contract_type?: string;
   renewal_at?: Date | string | null;
   grace_until?: Date | string | null;

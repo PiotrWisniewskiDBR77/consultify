@@ -54,6 +54,7 @@ import { useAIActionsStore } from '../../store/useAIActionsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { useConversationStore } from '../../store/useConversationStore';
+import { useProposalLifecycleStore } from '../../store/useProposalLifecycleStore';
 import {
   AppView,
   Artifact,
@@ -64,7 +65,6 @@ import {
 } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
-import { readPreferredChatLanguage } from '../../utils/chatLanguagePreference';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
@@ -368,7 +368,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    const explicitPref = readPreferredChatLanguage();
+    const explicitPref =
+      localStorage.getItem('consultinity-preferred-chat-lang') ||
+      localStorage.getItem('consultify-preferred-chat-lang');
     // 2. Conversation-specific language (from DB/store)
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
@@ -377,11 +379,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const uiLang = i18n.language?.split('-')[0] || 'en';
     const candidate = explicitPref || activeLang || uiLang;
     const base = String(candidate).split('-')[0];
-    return (
-      readPreferredChatLanguage(candidate) ||
-      normalizeLanguageCode(base) ||
-      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')
-    ) as SupportedLanguage;
+    return (normalizeLanguageCode(base) ||
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
   }, [activeConversationId, chatLanguageByConversationId, i18n.language]);
 
   // Voice Hook (uses autoReadEnabled state)
@@ -499,6 +498,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   useEffect(() => {
     setContextSavedMessageIds(new Set());
     setContextSaveBusyMessageId(null);
+  }, [activeConversationId]);
+
+  // V8 / Wave A6 — seed the unified proposal lifecycle cache when a
+  // conversation is opened so chat bubbles can render the freshest state
+  // rather than the snapshot frozen into each message's metadata at write time.
+  useEffect(() => {
+    if (!activeConversationId) return;
+    void useProposalLifecycleStore
+      .getState()
+      .loadForConversation(activeConversationId);
   }, [activeConversationId]);
 
   // Session hook: create new session when model/preset changes mid-conversation (§2.3.1)
@@ -752,12 +761,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           ? fullText
           : getTeresaEmptyResponseMessage(i18n.language);
 
+      // Feedback #53cc607e — read the active conversation id straight from the
+      // store at callback time. The hook's option object is captured with the
+      // component's render closure, so a conversation created *during* the send
+      // (handleSendMessage → createConversation) would otherwise see a stale
+      // `activeConversationId === null` here and silently skip persisting the
+      // AI reply ("Chat nie pamięta rozmów").
+      const liveActiveConversationId =
+        useConversationStore.getState().activeConversationId || activeConversationId;
+
       let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
-      if (activeConversationId) {
+      if (liveActiveConversationId) {
         try {
           const saved = await addMessageToConversation({
-            conversationId: activeConversationId,
+            conversationId: liveActiveConversationId,
             role: 'ai',
             content: safeText,
             messageType: 'text',
@@ -766,37 +784,44 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               artifacts: artifacts as any,
               citations: meta?.citations,
               streamSessionId: meta?.sessionId,
-              extra:
-                aiConfig?.deepResearch ||
-                (aiConfig as any)?.marketResearch ||
-                meta?.policyDecision ||
-                meta?.sourceLedger ||
-                (meta?.policyNotices && meta.policyNotices.length)
-                  ? {
-                      ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-                        ? {
-                            options: [
-                              { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                              { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                              {
-                                id: 'dt-challenge',
-                                label: 'Challenge this conclusion',
-                                value: 'Challenge this conclusion',
-                              },
-                            ],
-                            multiSelect: false,
-                            deepThinking: { kind: 'report' },
-                          }
-                        : {}),
-                      ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
-                        ? {
-                            policyDecision: meta?.policyDecision,
-                            policyNotices: meta?.policyNotices,
-                          }
-                        : {}),
-                      ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
-                    }
-                  : undefined,
+            extra:
+              aiConfig?.deepResearch ||
+              (aiConfig as any)?.marketResearch ||
+              meta?.policyDecision ||
+              meta?.sourceLedger ||
+              (meta?.policyNotices && meta.policyNotices.length) ||
+              meta?.trustBundle
+                ? {
+                    ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                      ? {
+                          options: [
+                            { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
+                            { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
+                            {
+                              id: 'dt-challenge',
+                              label: 'Challenge this conclusion',
+                              value: 'Challenge this conclusion',
+                            },
+                          ],
+                          multiSelect: false,
+                          deepThinking: { kind: 'report' },
+                        }
+                      : {}),
+                    ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
+                      ? {
+                          policyDecision: meta?.policyDecision,
+                          policyNotices: meta?.policyNotices,
+                        }
+                      : {}),
+                    ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
+                    // V8 / Wave A7 — forward the canonical trust bundle so
+                    // the persisted AI row carries the same pills rendered
+                    // live in the bubble. Server also enriches on write;
+                    // this keeps client + server in lockstep and avoids
+                    // depending on a refetch for live hydration.
+                    ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
+                  }
+                : undefined,
             }),
           });
           savedAiMessageId = String((saved as any)?.id || '') || null;
@@ -834,6 +859,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           ...(meta?.policyDecision ? { policyDecision: meta.policyDecision } : {}),
           ...(meta?.policyNotices && meta.policyNotices.length ? { policyNotices: meta.policyNotices } : {}),
           ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
+          ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
         },
       });
 
@@ -885,7 +911,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (
         aiConfig?.deepResearch &&
         deepThinkingRunRef.current &&
-        deepThinkingRunRef.current.conversationId === activeConversationId &&
+        deepThinkingRunRef.current.conversationId === liveActiveConversationId &&
         Array.isArray(deepThinkingRunRef.current.agentIds) &&
         deepThinkingRunRef.current.agentIds.length > 0
       ) {
@@ -1244,37 +1270,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {
           id: 'generate-insights',
           label: t('chat.suggestions.generateInsights', 'Generate AI insights from completed sessions'),
-          type: 'interview',
-          action: {
-            type: 'CHAT_PROMPT',
-            prompt: t(
-              'chat.suggestions.generateInsightsPrompt',
-              'Generate AI insights from completed interview sessions'
-            ),
-          },
+          type: 'interview' as any,
+          action: { type: 'chat', prompt: t('chat.suggestions.generateInsightsPrompt', 'Generate AI insights from completed interview sessions') },
         },
         {
           id: 'submit-review',
           label: t('chat.suggestions.submitReview', 'Submit this insight for review'),
-          type: 'interview',
-          action: {
-            type: 'CHAT_PROMPT',
-            prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review'),
-          },
+          type: 'interview' as any,
+          action: { type: 'chat', prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review') },
         },
         {
           id: 'export-initiative',
           label: t('chat.suggestions.exportInsight', 'Export insight to initiative'),
-          type: 'interview',
-          action: {
-            type: 'CHAT_PROMPT',
-            prompt: t('chat.suggestions.exportInsightPrompt', 'Export this insight to an initiative'),
-          },
+          type: 'interview' as any,
+          action: { type: 'chat', prompt: t('chat.suggestions.exportInsightPrompt', 'Export this insight to an initiative') },
         },
         {
           id: 'view-evidence',
           label: t('chat.suggestions.viewEvidence', 'View evidence map'),
-          type: 'interview',
+          type: 'interview' as any,
           action: { type: 'NAVIGATE', targetModule: 'interview' },
         },
       );
@@ -1307,13 +1321,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {
           id: 'open-outputs',
           label: t('chat.suggestions.openOutputs', 'Open Outputs Library'),
-          type: 'outputs',
+          type: 'outputs' as any,
           action: { type: 'NAVIGATE', targetModule: 'presentations' },
         },
         {
           id: 'review-pending',
           label: t('chat.suggestions.reviewPending', 'Review pending artifacts'),
-          type: 'outputs',
+          type: 'outputs' as any,
           action: { type: 'NAVIGATE', targetModule: 'presentations', params: { tab: 'review' } },
         },
       );
@@ -1321,6 +1335,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
     return items;
   }, [displayMessages.length, isStreaming, workspaceContext, t]);
+
+  // `handleSuggestionClick` is declared below `handleSendMessage` to avoid a
+  // temporal-dead-zone reference when a suggestion of type 'chat' forwards
+  // the prompt straight into the send pipeline. See decl further down.
 
   // ========================================================================
   // Ensure messages are loaded when activeConversationId changes (e.g. after
@@ -1649,14 +1667,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Demo session enforcement (time + AI interactions quota)
       if (isDemo) {
+        // Feedback #4180b14f: previously we attached a hardcoded English
+        // `message` + `cta` to the access:blocked event, and the
+        // AccessBlockedModal preferred that string over its i18n catalog —
+        // so DE/ES/AR/JP users never saw a translated popup. Emit only the
+        // error `code` here and let the modal resolve the localized copy
+        // via `access.blocked.<code>` / `access.cta.*` keys.
         if (demoTimeRemainingMs <= 0) {
           window.dispatchEvent(
             new CustomEvent('access:blocked', {
-              detail: {
-                code: 'DEMO_TIME_EXPIRED',
-                message: 'Demo session expired. Start a free trial to continue.',
-                cta: { label: 'Start free trial', href: '/trial' },
-              },
+              detail: { code: 'DEMO_TIME_EXPIRED' },
             })
           );
           return;
@@ -1665,11 +1685,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         if ((aiInteractionsRemaining ?? 0) <= 0) {
           window.dispatchEvent(
             new CustomEvent('access:blocked', {
-              detail: {
-                code: 'DEMO_AI_SESSION_LIMIT_REACHED',
-                message: `Demo AI limit reached (${aiInteractionsLimit ?? 0}). Start a free trial to continue.`,
-                cta: { label: 'Start free trial', href: '/trial' },
-              },
+              detail: { code: 'DEMO_AI_SESSION_LIMIT_REACHED' },
             })
           );
           return;
@@ -1854,36 +1870,50 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Remove the "Analyzing file..." message once processing is done
       if (fileAnalysisMessageId) {
-        // Replace with a summary of processed attachments
         if (uploadedAttachments.length > 0) {
           const processedNames = uploadedAttachments.map((a) => a.filename).join(', ');
-          // Update the analysis message to show completion
+          const partialFailure = uploadedAttachments.length < sourcesCount;
+          addChatMessage({
+            id: fileAnalysisMessageId,
+            role: 'assistant',
+            content: partialFailure
+              ? t(
+                  'aiChat.attachments.filesPartial',
+                  '⚠️ {{processed}}/{{total}} attachment(s) processed: {{names}}. Some sources could not be read and will not be referenced. You can retry them or continue.',
+                  {
+                    processed: uploadedAttachments.length,
+                    total: sourcesCount,
+                    names: processedNames,
+                  }
+                )
+              : t(
+                  'aiChat.attachments.filesReady',
+                  '📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.',
+                  { count: uploadedAttachments.length, names: processedNames }
+                ),
+            timestamp: new Date(),
+          } as ChatMessage);
+        } else if (sourcesCount > 0) {
+          // All attachments failed — surface a persistent, actionable error in the chat
+          // instead of silently deleting the analysis message (feedback #f590c4fc, #e196a572).
+          const failedNames = [
+            ...files.map((f) => f.name),
+            ...urlAttachments.map((u) => u.name || u.url),
+          ].join(', ');
           addChatMessage({
             id: fileAnalysisMessageId,
             role: 'assistant',
             content: t(
-              'aiChat.attachments.filesReady',
-              '📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.',
-              { count: uploadedAttachments.length, names: processedNames }
+              'aiChat.attachments.allFailed',
+              '❌ Could not process the attached source(s): {{names}}. The AI will respond without them. Please re-upload in a supported format (PDF, TXT, MD, CSV, JSON) or check that the link is publicly accessible.',
+              { names: failedNames }
             ),
             timestamp: new Date(),
           } as ChatMessage);
         } else {
-          // Remove the message if no files were successfully processed
           deleteChatMessage(fileAnalysisMessageId);
         }
         setIsBotTyping(false);
-      }
-
-      if (sourcesCount > 0 && uploadedAttachments.length === 0) {
-        toast.error(
-          t(
-            'aiChat.attachments.noSourcesProcessed',
-            'Nie udało się przygotować żadnego pliku ani linku do analizy. Popraw źródła i spróbuj ponownie.'
-          ),
-          { duration: 5000 }
-        );
-        return;
       }
 
       const attachmentDocIds = Array.from(
@@ -2186,10 +2216,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     ]
   );
 
+  // Chat V8 — smart-suggestion dispatcher. Lives below `handleSendMessage`
+  // so the `type: 'chat'` branch can forward the prompt straight into the
+  // send pipeline without hitting a temporal-dead-zone reference.
   const handleSuggestionClick = useCallback(
     async (suggestion: ChatSuggestion) => {
-      if (suggestion.action.type === 'CHAT_PROMPT') {
-        await handleSendMessage(suggestion.action.prompt);
+      if (suggestion.action.type === 'chat') {
+        const prompt = String((suggestion.action as { prompt?: unknown }).prompt ?? '').trim();
+        if (!prompt) return;
+        await handleSendMessage(prompt);
         return;
       }
       await handleChatAction(suggestion.action);
@@ -3017,6 +3052,117 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   );
 
   // ========================================================================
+  // V8 governed proposal handlers (CHAT_V8_ACTIONS_AND_APPROVALS)
+  // ========================================================================
+
+  const [proposalBusyById, setProposalBusyById] = useState<
+    Record<string, { approve?: boolean; reject?: boolean }>
+  >({});
+
+  const handleProposalApprove = useCallback(
+    async (proposalId: string, msg: ChatMessage) => {
+      if (!proposalId) return;
+      setProposalBusyById((prev) => ({
+        ...prev,
+        [proposalId]: { ...(prev[proposalId] || {}), approve: true },
+      }));
+      try {
+        const result: any = await Api.approveAIAction(
+          proposalId,
+          activeConversationId || undefined
+        );
+        if (result?.success !== false) {
+          useProposalLifecycleStore.getState().patchLifecycle(proposalId, {
+            lifecycleState: 'approved',
+            actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+            latestMessageType: 'execution_progress',
+          });
+          // Optimistic local echo so the thread reflects the new lifecycle state
+          // immediately — backend already persisted the execution_progress row.
+          addChatMessage({
+            id: `exec-progress-${proposalId}-${Date.now()}`,
+            role: 'ai',
+            content: 'Proposal approved — ready to execute.',
+            timestamp: new Date(),
+            type: 'execution_progress',
+            metadata: {
+              executionProposal: {
+                proposalId,
+                lifecycleState: 'approved',
+                actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+              },
+            },
+          } as any);
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Proposal approve failed:', err);
+      } finally {
+        setProposalBusyById((prev) => {
+          const next = { ...prev };
+          const entry = { ...(next[proposalId] || {}) };
+          delete entry.approve;
+          if (Object.keys(entry).length === 0) delete next[proposalId];
+          else next[proposalId] = entry;
+          return next;
+        });
+      }
+    },
+    [activeConversationId, addChatMessage]
+  );
+
+  const handleProposalReject = useCallback(
+    async (proposalId: string, msg: ChatMessage, reason?: string) => {
+      if (!proposalId) return;
+      setProposalBusyById((prev) => ({
+        ...prev,
+        [proposalId]: { ...(prev[proposalId] || {}), reject: true },
+      }));
+      try {
+        const result: any = await Api.rejectAIAction(
+          proposalId,
+          reason,
+          activeConversationId || undefined
+        );
+        if (result?.success !== false) {
+          useProposalLifecycleStore.getState().patchLifecycle(proposalId, {
+            lifecycleState: 'rejected',
+            actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+            rejectionReason: reason || null,
+            latestMessageType: 'execution_result',
+          });
+          addChatMessage({
+            id: `exec-result-${proposalId}-${Date.now()}`,
+            role: 'ai',
+            content: reason ? `Proposal rejected — ${reason}` : 'Proposal rejected.',
+            timestamp: new Date(),
+            type: 'execution_result',
+            metadata: {
+              executionProposal: {
+                proposalId,
+                lifecycleState: 'rejected',
+                actionType: (msg as any)?.metadata?.executionProposal?.actionType,
+                rejectionReason: reason || null,
+              },
+            },
+          } as any);
+        }
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Proposal reject failed:', err);
+      } finally {
+        setProposalBusyById((prev) => {
+          const next = { ...prev };
+          const entry = { ...(next[proposalId] || {}) };
+          delete entry.reject;
+          if (Object.keys(entry).length === 0) delete next[proposalId];
+          else next[proposalId] = entry;
+          return next;
+        });
+      }
+    },
+    [activeConversationId, addChatMessage]
+  );
+
+  // ========================================================================
   // Render helpers
   // ========================================================================
 
@@ -3088,6 +3234,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleAgentAuditAccept={handleAgentAuditAccept}
       onOptionSelect={onOptionSelect}
       isRtlChatLanguage={isRtlChatLanguage}
+      onProposalApprove={handleProposalApprove}
+      onProposalReject={handleProposalReject}
+      proposalBusyById={proposalBusyById}
     />
   );
 

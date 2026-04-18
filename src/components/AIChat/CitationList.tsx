@@ -122,8 +122,20 @@ export const CitationList: React.FC<CitationListProps> = ({
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-navy-900 dark:text-white truncate">
-                    {citation.title}
+                  <div className="flex items-center gap-1.5">
+                    <div className="text-xs font-medium text-navy-900 dark:text-white truncate">
+                      {citation.title}
+                    </div>
+                    {/* Feedback #1cbe2baa — explicit "External" tag so
+                        users can see at a glance which sources are web-
+                        sourced vs workspace/RAG. Previously the Globe
+                        icon alone was ambiguous and users asked whether
+                        external links were even supposed to appear. */}
+                    {citation.type === 'external' && (
+                      <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        {t('aiChat.citationExternalBadge', 'External')}
+                      </span>
+                    )}
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                     {citation.reference}

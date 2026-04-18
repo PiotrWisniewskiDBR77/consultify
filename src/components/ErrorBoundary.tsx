@@ -1,5 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
+import { addFeedbackBreadcrumb } from '../services/feedbackCollector';
+
 interface Props {
   children: ReactNode;
 }
@@ -7,16 +9,18 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  componentStack: string | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
+    componentStack: null,
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error, componentStack: null };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -24,7 +28,25 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('[ErrorBoundary] Error info:', errorInfo);
     console.error('[ErrorBoundary] Error stack:', error.stack);
 
-    // Try to send error to backend if available
+    this.setState({ componentStack: errorInfo.componentStack || null });
+
+    try {
+      addFeedbackBreadcrumb({
+        kind: 'custom',
+        label: `ErrorBoundary: ${error.message}`.slice(0, 120),
+      });
+      if (typeof window !== 'undefined') {
+        (window as any).__LAST_BOUNDARY_ERROR__ = {
+          at: new Date().toISOString(),
+          message: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack,
+        };
+      }
+    } catch {
+      // telemetry errors must never mask the original error
+    }
+
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
       window
         .fetch('/api/errors', {
@@ -41,6 +63,27 @@ export class ErrorBoundary extends Component<Props, State> {
         });
     }
   }
+
+  private handleReport = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      (window as any).__FEEDBACK_PREFILL__ = {
+        type: 'BUG',
+        title: `Crash: ${this.state.error?.message?.slice(0, 80) || 'unknown error'}`,
+        message: this.state.error?.message || 'Aplikacja uległa awarii.',
+        severity: 'CRITICAL',
+        error: {
+          message: this.state.error?.message,
+          stack: this.state.error?.stack,
+          componentStack: this.state.componentStack,
+        },
+        openSource: 'error-boundary',
+      };
+      window.dispatchEvent(new CustomEvent('feedback:open', { detail: { source: 'error-boundary' } }));
+    } catch {
+      // ignore
+    }
+  };
 
   private handleReset = () => {
     if (typeof window !== 'undefined') {
@@ -71,12 +114,20 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="bg-slate-950 p-4 rounded-lg mb-6 overflow-auto max-h-40 text-xs font-mono text-red-400">
               {this.state.error?.message}
             </div>
-            <button
-              onClick={this.handleReset}
-              className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition-colors"
-            >
-              Reset Application Data (Fix)
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={this.handleReport}
+                className="w-full py-3 bg-amber-600 hover:bg-amber-700 rounded-lg font-bold transition-colors"
+              >
+                Zgłoś ten błąd z pełnym kontekstem
+              </button>
+              <button
+                onClick={this.handleReset}
+                className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition-colors"
+              >
+                Reset Application Data (Fix)
+              </button>
+            </div>
           </div>
         </div>
       );

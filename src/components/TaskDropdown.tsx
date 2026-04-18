@@ -28,14 +28,20 @@ export const TaskDropdown = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      // Fetch tasks - ideally we want "my tasks" or "pending tasks"
-      // For now, fetch all and filter client side for the dropdown preview
-      const allTasks = await Api.getTasks({
-        // Keep this lightweight – dropdown preview doesn't need completed tasks
-        status: 'todo,in_progress,review,blocked,pending_approval',
+      // Feedback #3d222dcf — "Mój plan działania" dropdown used to call
+      // `Api.getTasks(...)` (the legacy org/project-scoped tasks table)
+      // while the landing view bound to `{ tab: 'tasks' }` (MyTasksList-
+      // Content) reads from `Api.getPersonalTasks()`. That split produced
+      // a data-source mismatch where the dropdown confidently showed
+      // "21 oczekujących zadań" but /my-work rendered an empty list
+      // because those 21 rows live in a different table. Aligning to the
+      // personal-tasks endpoint here so the badge count and the list the
+      // user lands on always reflect the same data source.
+      const raw = await Api.getPersonalTasks({
+        includeDone: false,
       } as any);
+      const allTasks: Task[] = Array.isArray(raw) ? (raw as Task[]) : [];
 
-      // Sort by due date (closest first)
       const sorted = allTasks.sort((a, b) => {
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;

@@ -556,15 +556,32 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   );
 
   // Handle delete folder
+  // chat-history fix 2026-04-18 (feedback #407a17df): require confirm + surface
+  // server error to user instead of silently swallowing (regression).
   const handleDeleteProject = useCallback(
     async (id: string) => {
+      const folder = projects.find((p) => p.id === id);
+      const count = folder?.conversationCount ?? 0;
+      const name = folder?.name || t('aiChat.folder', 'folder');
+      const msg =
+        count > 0
+          ? t(
+              'aiChat.confirmDeleteFolderWithConvs',
+              `Delete folder "${name}"? The ${count} conversation(s) inside will NOT be deleted, just detached from this folder.`
+            )
+          : t('aiChat.confirmDeleteFolder', `Delete folder "${name}"?`);
+      if (!window.confirm(msg)) return;
       try {
         await deleteProject(id);
-      } catch (err) {
+      } catch (err: any) {
         console.error('[ChatHistorySidebar] Failed to delete folder:', err);
+        window.alert(
+          err?.message ||
+            t('aiChat.deleteFolderFailed', 'Could not delete folder. Please try again.')
+        );
       }
     },
-    [deleteProject]
+    [deleteProject, projects, t]
   );
 
   // DnD: move conversation to a folder

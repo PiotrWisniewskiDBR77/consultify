@@ -102,29 +102,37 @@ export const Modal: React.FC<ModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Handle escape key
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !preventEscapeClose) {
-        onClose();
-      }
-    },
-    [onClose, preventEscapeClose]
-  );
+  // Stable refs for props so the focus/keydown effect runs only on `open` transitions.
+  // Without this, callers that pass inline arrow functions for `onClose` cause the effect
+  // to re-run on every render, which restores focus to the trigger button and makes
+  // inputs inside the modal lose focus on every keystroke (feedback #ee34bf23).
+  const onCloseRef = useRef(onClose);
+  const preventEscapeCloseRef = useRef(preventEscapeClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  useEffect(() => {
+    preventEscapeCloseRef.current = preventEscapeClose;
+  }, [preventEscapeClose]);
 
-  // Focus management
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Escape' && !preventEscapeCloseRef.current) {
+      onCloseRef.current?.();
+    }
+  }, []);
+
   useEffect(() => {
     if (open) {
       previousActiveElement.current = document.activeElement as HTMLElement;
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
 
-      // Focus the modal
-      setTimeout(() => {
+      const focusTimer = setTimeout(() => {
         modalRef.current?.focus();
       }, 0);
 
       return () => {
+        clearTimeout(focusTimer);
         document.removeEventListener('keydown', handleKeyDown);
         document.body.style.overflow = '';
         previousActiveElement.current?.focus();

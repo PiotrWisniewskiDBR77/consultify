@@ -1,5 +1,6 @@
 import { AlertCircle, MessageSquare, PhoneIncoming, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
@@ -20,6 +21,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
   const [selectedType, setSelectedType] = useState<'system' | 'client' | 'feedback' | null>(null);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Close popover on click outside
   useEffect(() => {
@@ -67,6 +69,55 @@ export const SuperAdminSignalCenter: React.FC = () => {
       }));
     } catch (error) {
       console.error('Failed to dismiss', error);
+    }
+  };
+
+  /**
+   * Resolve the deep-link for a signal. Prefers the server-provided
+   * `actionUrl` (kept in sync on the backend), with explicit fallbacks
+   * per signal type so older notifications without an action_url still
+   * route somewhere useful.
+   */
+  const resolveTarget = (item: any, type: keyof SignalGroup): string | null => {
+    const explicit =
+      (item && (item.actionUrl || item.action_url)) ||
+      (item && item.data && (item.data.actionUrl || item.data.action_url)) ||
+      null;
+    if (typeof explicit === 'string' && explicit.length > 0) return explicit;
+
+    const feedbackId =
+      item?.relatedObjectId ||
+      item?.related_object_id ||
+      item?.data?.feedbackId ||
+      item?.data?.feedback_id ||
+      null;
+
+    if (type === 'feedback' || type === 'client') {
+      return feedbackId
+        ? `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(feedbackId)}`
+        : '/superadmin/customers/feedback';
+    }
+    if (type === 'system') return '/superadmin/system';
+    return null;
+  };
+
+  const handleOpen = async (item: any, type: keyof SignalGroup) => {
+    const target = resolveTarget(item, type);
+    // Close popover regardless so the UI doesn't linger over the destination.
+    setSelectedType(null);
+    // Mark as read in the background — do NOT block navigation on it and
+    // do NOT remove from the list until the request resolves so the user
+    // can still see the signal they clicked if nav fails.
+    Api.markNotificationRead(item.id)
+      .then(() => {
+        setNotifications((prev) => ({
+          ...prev,
+          [type]: prev[type].filter((n) => n.id !== item.id),
+        }));
+      })
+      .catch((error) => console.error('Failed to mark notification read', error));
+    if (target) {
+      navigate(target);
     }
   };
 
@@ -160,7 +211,17 @@ export const SuperAdminSignalCenter: React.FC = () => {
                 {notifications[selectedType].map((item) => (
                   <div
                     key={item.id}
-                    className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group relative"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleOpen(item, selectedType)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleOpen(item, selectedType);
+                      }
+                    }}
+                    className="p-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group relative focus:outline-none focus:bg-slate-100 dark:focus:bg-white/10 cursor-pointer"
+                    title="Open in module"
                   >
                     <div className="pr-6">
                       <p className="text-xs text-slate-800 dark:text-white font-medium mb-1">
@@ -173,6 +234,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
                     <button
                       onClick={(e) => handleDismiss(item.id, selectedType, e)}
                       className="absolute top-2 right-2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
+                      aria-label="Dismiss"
                     >
                       <X size={12} />
                     </button>

@@ -34,10 +34,35 @@ const STORE_DEBUG = import.meta.env.VITE_STORE_DEBUG === 'true';
 // If the network is transiently unavailable, repeated mounts can spam /api and
 // cascade into "TypeError: Failed to fetch" + UI freeze.
 const FETCH_DEDUPE_WINDOW_MS = 1500;
+// chat-history fix 2026-04-18 (feedback #3a41921c CRIT "infinite Loading conversations…"):
+// Without a hard deadline, a hung backend or stalled proxy leaves isLoading=true
+// forever. Give fetches a 20s ceiling; on timeout we release the loader and
+// surface an error so the UI can recover (and the user can retry / refresh).
+const FETCH_HARD_TIMEOUT_MS = 20000;
 let _inflightFetchConversations: Promise<void> | null = null;
 let _lastFetchConversationsAt = 0;
 const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
+
+function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const err = new Error(`${label} timed out after ${ms}ms`);
+      (err as any).code = 'FETCH_TIMEOUT';
+      reject(err);
+    }, ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      }
+    );
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Title generation de-dupe / retry
@@ -139,7 +164,17 @@ export interface ConversationMessage {
   conversationId: string;
   role: 'user' | 'ai';
   content: string;
-  messageType: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call' | 'voice';
+  messageType:
+    | 'text'
+    | 'action_request'
+    | 'summary'
+    | 'file'
+    | 'tool_call'
+    | 'voice'
+    // V8: governed proposal + execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
+    | 'execution_proposal'
+    | 'execution_progress'
+    | 'execution_result';
   metadata?: {
     citations?: Citation[];
     actions?: ResponseAction[];
@@ -526,10 +561,14 @@ export const useConversationStore = create<ConversationState>()(
         set({ isLoading: true });
         _inflightFetchConversations = (async () => {
           try {
-            const result = await Api.getConversations({
-              archived: options?.archived,
-              projectId: options?.projectId,
-            });
+            const result = await withDeadline(
+              Api.getConversations({
+                archived: options?.archived,
+                projectId: options?.projectId,
+              }),
+              FETCH_HARD_TIMEOUT_MS,
+              'fetchConversations'
+            );
 
             const conversations = (result?.conversations || []).map(mapApiConversation);
             set((state) => {
@@ -546,6 +585,8 @@ export const useConversationStore = create<ConversationState>()(
             });
           } catch (err) {
             console.error('[ConversationStore] Fetch error:', err);
+            // Always release the loader so the sidebar never sits in an
+            // "infinite Loading conversations…" state (feedback #3a41921c).
             set({ isLoading: false });
           }
         })().finally(() => {
@@ -557,8 +598,30 @@ export const useConversationStore = create<ConversationState>()(
 
       fetchConversation: async (id: string) => {
         const now = Date.now();
+
+        // Feedback #2ee998d3 / #53cc607e — always sync activeConversationId to the
+        // requested id up-front, even when we dedupe or reuse an inflight promise.
+        // Without this, clicking a historical conversation within the dedupe window
+        // (or while another fetch is already inflight) returned silently and the
+        // UI kept showing whatever was previously active, so users experienced
+        // "click does nothing" on conversation items.
+        const current = get().activeConversationId;
+        if (current !== id) {
+          set({
+            activeConversationId: id,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+          });
+        }
+
         if (_inflightFetchConversationById[id]) return _inflightFetchConversationById[id];
-        if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) return;
+        if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) {
+          // Dedupe: a recent successful fetch for this id is in cache. If the id
+          // is now the active one we already synced above; otherwise the call was
+          // preemptive and we can safely return.
+          return;
+        }
         _lastFetchConversationAt[id] = now;
 
         set({ isLoading: true });
@@ -929,9 +992,28 @@ export const useConversationStore = create<ConversationState>()(
           if (existing) {
             set({ draftChatLanguage: existing });
           }
+          // Feedback #2ee998d3 — sync the id eagerly so the UI immediately
+          // reflects the selection even before fetchConversation resolves.
+          // fetchConversation also performs this sync (see above) as a safety
+          // net, but doing it here avoids a one-frame delay on every click.
+          const prev = get().activeConversationId;
+          if (prev !== id) {
+            set({
+              activeConversationId: id,
+              activeMessages: [],
+              isLoading: true,
+              _activeConversationState: null,
+              _activeConversationStateMessage: null,
+            });
+          }
           get().fetchConversation(id);
         } else {
-          set({ activeConversationId: null, activeMessages: [] });
+          set({
+            activeConversationId: null,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+          });
         }
       },
 

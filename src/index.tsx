@@ -7,6 +7,19 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App';
+import { installFeedbackCollector } from './services/feedbackCollector';
+
+try {
+  installFeedbackCollector({
+    appEnv:
+      (import.meta as { env?: Record<string, string> }).env?.VITE_APP_ENV ||
+      (import.meta as { env?: Record<string, string> }).env?.MODE ||
+      null,
+    attachGlobalErrorHandlers: true,
+  });
+} catch (collectorError) {
+  console.warn('[index.tsx] Feedback collector bootstrap failed:', collectorError);
+}
 
 function initThemeClass(): void {
   // Initialize theme synchronously before React renders to prevent flicker

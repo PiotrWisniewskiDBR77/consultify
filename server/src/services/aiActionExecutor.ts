@@ -13,6 +13,10 @@ let dbGet = get;
 let dbRun = run;
 import logger from '../utils/Logger.js';
 import AIPolicyEngine from './aiPolicyEngine.js';
+import {
+  mapDbActionStatusToV8Lifecycle,
+  V8LifecycleState,
+} from '../types/chatExecutionIntegration.js';
 
 // Enums and Constants
 export const ACTION_TYPES = {
@@ -32,6 +36,113 @@ export const ACTION_STATUS = {
   REJECTED: 'REJECTED',
   EXECUTED: 'EXECUTED',
 };
+
+/**
+ * Expose the canonical V8 lifecycle state (Chat V8 §ACTIONS_AND_APPROVALS)
+ * for a given legacy DB status. Use this in API responses so clients that
+ * understand the V8 vocabulary can render the correct thread state without
+ * waiting for a DB migration of the legacy enum.
+ */
+export function lifecycleStateOf(dbStatus: string | null | undefined): V8LifecycleState {
+  return mapDbActionStatusToV8Lifecycle(dbStatus);
+}
+
+/**
+ * V8 chat emission context passed through the action lifecycle.
+ *
+ * When present, the action executor will additionally write first-class
+ * `execution_proposal`/`execution_progress`/`execution_result` rows into
+ * `conversation_messages`, so the chat thread reflects the canonical
+ * proposal → approval → execution lifecycle (Chat V8 §ACTIONS_AND_APPROVALS).
+ *
+ * This is fully opt-in: callers that do not pass `conversationId` keep the
+ * pre-existing behavior (ai_actions row only, no chat emission).
+ */
+export interface ChatEmissionOptions {
+  conversationId?: string | null;
+  /**
+   * Human-readable one-line summary of the plan, shown in the proposal bubble.
+   * Falls back to the action_type when missing.
+   */
+  planSummary?: string | null;
+  /**
+   * Optional structured plan breakdown. Rendered as a numbered list.
+   */
+  steps?: Array<{ id?: string; label?: string; description?: string }>;
+  /**
+   * Optional explicit step count — if omitted and `steps` is provided, it is
+   * derived from `steps.length`.
+   */
+  stepCount?: number;
+  /**
+   * Proposal risk level. Used by the bubble to show a risk pill.
+   */
+  risk?: 'low' | 'medium' | 'high' | string;
+  /**
+   * Optional reviewer display info for approve/reject messages.
+   */
+  reviewer?: { userId?: string; name?: string } | null;
+  /**
+   * Optional expiration to surface on the proposal bubble.
+   */
+  expiresAt?: string | null;
+}
+
+interface EmitChatExecutionMessageInput {
+  conversationId: string;
+  messageType: 'execution_proposal' | 'execution_progress' | 'execution_result';
+  content: string;
+  executionProposal: {
+    proposalId: string;
+    lifecycleState: V8LifecycleState;
+    actionType?: string;
+    planSummary?: string;
+    stepCount?: number;
+    steps?: Array<{ id?: string; label?: string; description?: string }>;
+    risk?: string;
+    reviewer?: { userId?: string; name?: string } | null;
+    rejectionReason?: string | null;
+    expiresAt?: string | null;
+    result?: unknown;
+  };
+}
+
+/**
+ * Internal helper: persist a governed execution-family message to
+ * `conversation_messages`. Best-effort — failures are logged and swallowed so
+ * they never break the underlying action workflow.
+ */
+async function emitChatExecutionMessage(input: EmitChatExecutionMessageInput): Promise<void> {
+  try {
+    const id = uuidv4();
+    await dbRun(
+      `INSERT INTO conversation_messages
+        (id, conversation_id, role, content, message_type, metadata, created_at)
+       VALUES (?, ?, 'ai', ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        id,
+        input.conversationId,
+        input.content,
+        input.messageType,
+        JSON.stringify({ executionProposal: input.executionProposal }),
+      ]
+    );
+  } catch (err: any) {
+    logger.warn(
+      '[AIActionExecutor] emitChatExecutionMessage failed:',
+      err?.message || String(err)
+    );
+  }
+}
+
+function defaultPlanSummary(actionType: string, explicit?: string | null): string {
+  const trimmed = (explicit || '').trim();
+  if (trimmed) return trimmed;
+  const readable = String(actionType || 'Action')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return `AI proposed: ${readable}`;
+}
 
 // Lazy-load dependencies to avoid circular dependencies
 let _notificationService: any = null;
@@ -108,14 +219,21 @@ const AIActionExecutor = {
   },
 
   /**
-   * Request an AI action
+   * Request an AI action.
+   *
+   * The optional `chatEmission` argument enables Chat V8 governed-proposal
+   * semantics: when `chatEmission.conversationId` is provided AND the action
+   * requires human approval, a first-class `execution_proposal` message is
+   * also persisted into the thread referenced by that conversationId.
+   * See `docs/product/CHAT_V8_ACTIONS_AND_APPROVALS.md`.
    */
   requestAction: async (
     actionType: string,
     payload: any,
     userId: string,
     organizationId: string,
-    projectId: string | null = null
+    projectId: string | null = null,
+    chatEmission: ChatEmissionOptions | null = null
   ) => {
     const RegulatoryModeGuard = await getRegulatoryModeGuard();
     const AIRoleGuard = await getAIRoleGuard();
@@ -265,6 +383,35 @@ const AIActionExecutor = {
       });
     }
 
+    // V8: emit first-class execution_proposal message into the chat thread
+    // so the proposal becomes visible, reviewable and never silent.
+    if (chatEmission?.conversationId) {
+      const stepCount =
+        typeof chatEmission.stepCount === 'number'
+          ? chatEmission.stepCount
+          : Array.isArray(chatEmission.steps)
+            ? chatEmission.steps.length
+            : undefined;
+      const planSummary = defaultPlanSummary(actionType, chatEmission.planSummary);
+      const lifecycleState: V8LifecycleState = requiresApproval ? 'pending_review' : 'approved';
+      result.lifecycleState = lifecycleState;
+      await emitChatExecutionMessage({
+        conversationId: chatEmission.conversationId,
+        messageType: 'execution_proposal',
+        content: planSummary,
+        executionProposal: {
+          proposalId: id,
+          lifecycleState,
+          actionType,
+          planSummary,
+          stepCount,
+          steps: chatEmission.steps,
+          risk: chatEmission.risk,
+          expiresAt: chatEmission.expiresAt || null,
+        },
+      });
+    }
+
     return result;
   },
 
@@ -276,7 +423,8 @@ const AIActionExecutor = {
     draftContent: any,
     userId: string,
     organizationId: string,
-    projectId: string
+    projectId: string,
+    chatEmission: ChatEmissionOptions | null = null
   ) => {
     const actionType =
       draftType === 'task' ? ACTION_TYPES.CREATE_DRAFT_TASK : ACTION_TYPES.CREATE_DRAFT_INITIATIVE;
@@ -286,7 +434,8 @@ const AIActionExecutor = {
       { draftType, content: draftContent },
       userId,
       organizationId,
-      projectId
+      projectId,
+      chatEmission
     );
 
     if (result.success) {
@@ -300,7 +449,11 @@ const AIActionExecutor = {
   },
 
   /**
-   * Approve an action
+   * Approve an action.
+   *
+   * When `options.conversationId` is provided, a follow-up
+   * `execution_progress` message with lifecycleState=`approved` is written
+   * into the chat thread, preserving the V8 visible lifecycle.
    */
   approveAction: async (actionId: string, userId: string, options: any = {}) => {
     const ApprovalPatternService = await getApprovalPatternService();
@@ -320,6 +473,20 @@ const AIActionExecutor = {
       return { success: false, error: 'Action not found or already processed' };
     }
 
+    if (options?.conversationId) {
+      await emitChatExecutionMessage({
+        conversationId: options.conversationId,
+        messageType: 'execution_progress',
+        content: 'Proposal approved — ready to execute.',
+        executionProposal: {
+          proposalId: actionId,
+          lifecycleState: 'approved',
+          actionType: action.action_type,
+          reviewer: options?.reviewer || { userId },
+        },
+      });
+    }
+
     if (ApprovalPatternService) {
       try {
         const patternResult = await ApprovalPatternService.recordDecision(
@@ -336,6 +503,7 @@ const AIActionExecutor = {
           success: true,
           actionId,
           status: ACTION_STATUS.APPROVED,
+          lifecycleState: lifecycleStateOf(ACTION_STATUS.APPROVED),
           patternLearned: true,
           patternInfo: patternResult,
         };
@@ -344,7 +512,12 @@ const AIActionExecutor = {
       }
     }
 
-    return { success: true, actionId, status: ACTION_STATUS.APPROVED };
+    return {
+      success: true,
+      actionId,
+      status: ACTION_STATUS.APPROVED,
+      lifecycleState: lifecycleStateOf(ACTION_STATUS.APPROVED),
+    };
   },
 
   /**
@@ -373,6 +546,21 @@ const AIActionExecutor = {
       return { success: false, error: 'Action not found or already processed' };
     }
 
+    if (options?.conversationId) {
+      await emitChatExecutionMessage({
+        conversationId: options.conversationId,
+        messageType: 'execution_result',
+        content: reason ? `Proposal rejected — ${reason}` : 'Proposal rejected.',
+        executionProposal: {
+          proposalId: actionId,
+          lifecycleState: 'rejected',
+          actionType: action.action_type,
+          reviewer: options?.reviewer || { userId },
+          rejectionReason: reason || null,
+        },
+      });
+    }
+
     AIActionExecutor._logAudit(actionId, userId, 'REJECTED', reason);
 
     if (ApprovalPatternService) {
@@ -391,6 +579,7 @@ const AIActionExecutor = {
           success: true,
           actionId,
           status: ACTION_STATUS.REJECTED,
+          lifecycleState: lifecycleStateOf(ACTION_STATUS.REJECTED),
           patternLearned: true,
           patternInfo: patternResult,
         };
@@ -399,13 +588,22 @@ const AIActionExecutor = {
       }
     }
 
-    return { success: true, actionId, status: ACTION_STATUS.REJECTED };
+    return {
+      success: true,
+      actionId,
+      status: ACTION_STATUS.REJECTED,
+      lifecycleState: lifecycleStateOf(ACTION_STATUS.REJECTED),
+    };
   },
 
   /**
-   * Execute an approved action
+   * Execute an approved action.
+   *
+   * When `options.conversationId` is provided, a follow-up
+   * `execution_result` message is written into the chat thread with
+   * lifecycleState=`executed` on success or `failed` on error.
    */
-  executeAction: async (actionId: string, _userId: string) => {
+  executeAction: async (actionId: string, _userId: string, options: any = {}) => {
     const action: any = await dbGet(`SELECT * FROM ai_actions WHERE id = ?`, [actionId]);
 
     if (!action) return { success: false, error: 'Action not found' };
@@ -443,8 +641,42 @@ const AIActionExecutor = {
         [actionId]
       );
 
-      return { success: true, actionId, result };
+      if (options?.conversationId) {
+        await emitChatExecutionMessage({
+          conversationId: options.conversationId,
+          messageType: 'execution_result',
+          content: 'Proposal executed successfully.',
+          executionProposal: {
+            proposalId: actionId,
+            lifecycleState: 'executed',
+            actionType: action.action_type,
+            reviewer: options?.reviewer || { userId: _userId },
+            result,
+          },
+        });
+      }
+
+      return {
+        success: true,
+        actionId,
+        result,
+        status: ACTION_STATUS.EXECUTED,
+        lifecycleState: lifecycleStateOf(ACTION_STATUS.EXECUTED),
+      };
     } catch (err: any) {
+      if (options?.conversationId) {
+        await emitChatExecutionMessage({
+          conversationId: options.conversationId,
+          messageType: 'execution_result',
+          content: `Proposal execution failed — ${(err as Error).message}`,
+          executionProposal: {
+            proposalId: actionId,
+            lifecycleState: 'failed',
+            actionType: action.action_type,
+            reviewer: options?.reviewer || { userId: _userId },
+          },
+        });
+      }
       return { success: false, error: (err as Error).message };
     }
   },

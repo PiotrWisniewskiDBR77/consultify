@@ -559,6 +559,134 @@ export const AIContextBuilder = {
       return `${base}${limitsNote}${evidenceNote}`;
     });
 
+    // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — Teresa used to
+    // reply "nie mam dostępu do danych VTS / Atelier / plików" even when the
+    // org had interview answers, evidence files, and manual notes persisted
+    // in `organization_context_items` (VTS collected Q&A, uploaded PDFs,
+    // manual entries). `resolvedContext.signals.interviewFindings` only
+    // surfaces *processed* P10 findings — the raw interview answers and
+    // evidence titles never reached the prompt. This pull exposes a compact
+    // snapshot (last ~30 rows grouped by source_type) so Teresa can reason
+    // about the tenant's actual content without a project scope.
+    let contextItemsSample: {
+      interviewAnswers: Array<{ question: string; answer: string; updatedAt: string }>;
+      evidence: Array<{ title: string; fileType?: string; updatedAt: string }>;
+      manualNotes: Array<{ title: string; snippet: string; updatedAt: string }>;
+      documentExtractions: Array<{ title: string; snippet: string; updatedAt: string }>;
+      totalItems: number;
+      lastUpdated: string | null;
+    } | null = null;
+    try {
+      const rows =
+        ((await all(
+          `SELECT id, source_type, source_label, content_json, updated_at
+             FROM organization_context_items
+            WHERE organization_id = ?
+              AND (visibility_scope IS NULL OR visibility_scope IN ('organization', 'public'))
+            ORDER BY updated_at DESC
+            LIMIT 60`,
+          [organizationId]
+        )) as Array<{
+          id: string;
+          source_type: string;
+          source_label: string | null;
+          content_json: string | null;
+          updated_at: string;
+        }>) || [];
+
+      const parseRow = (raw: string | null): Record<string, any> => {
+        if (!raw) return {};
+        try {
+          const p = JSON.parse(raw);
+          return p && typeof p === 'object' ? p : {};
+        } catch {
+          return {};
+        }
+      };
+
+      const truncate = (s: unknown, max: number) => {
+        const str = typeof s === 'string' ? s : String(s ?? '');
+        return str.length > max ? `${str.slice(0, max).trim()}…` : str;
+      };
+
+      const interviewAnswers: Array<{ question: string; answer: string; updatedAt: string }> = [];
+      const evidence: Array<{ title: string; fileType?: string; updatedAt: string }> = [];
+      const manualNotes: Array<{ title: string; snippet: string; updatedAt: string }> = [];
+      const documentExtractions: Array<{ title: string; snippet: string; updatedAt: string }> = [];
+
+      for (const row of rows) {
+        const content = parseRow(row.content_json);
+        const label = row.source_label || '';
+        const updatedAt = row.updated_at;
+
+        if (row.source_type === 'interview_answer' && interviewAnswers.length < 8) {
+          const q = String(content.questionText || label || '').trim();
+          const a = String(content.answerText || content.answer || '').trim();
+          if (q && a) {
+            interviewAnswers.push({
+              question: truncate(q, 240),
+              answer: truncate(a, 360),
+              updatedAt,
+            });
+          }
+        } else if (row.source_type === 'interview_evidence' && evidence.length < 5) {
+          const title = String(content.title || content.fileName || label || 'Evidence').trim();
+          evidence.push({
+            title: truncate(title, 120),
+            fileType: content.fileType || content.evidenceType || undefined,
+            updatedAt,
+          });
+        } else if (
+          (row.source_type === 'manual_entry' || row.source_type === 'manual_context') &&
+          manualNotes.length < 5
+        ) {
+          const title = String(label || content.title || 'Manual note').trim();
+          const snippet = String(
+            content.text || content.content || content.note || content.body || ''
+          ).trim();
+          if (snippet) {
+            manualNotes.push({
+              title: truncate(title, 120),
+              snippet: truncate(snippet, 300),
+              updatedAt,
+            });
+          }
+        } else if (
+          (row.source_type === 'doc_ingestion' || row.source_type === 'document_extraction') &&
+          documentExtractions.length < 5
+        ) {
+          const title = String(label || content.title || content.fileName || 'Document').trim();
+          const snippet = String(content.text || content.summary || content.excerpt || '').trim();
+          documentExtractions.push({
+            title: truncate(title, 120),
+            snippet: truncate(snippet, 260),
+            updatedAt,
+          });
+        }
+      }
+
+      if (
+        interviewAnswers.length ||
+        evidence.length ||
+        manualNotes.length ||
+        documentExtractions.length
+      ) {
+        contextItemsSample = {
+          interviewAnswers,
+          evidence,
+          manualNotes,
+          documentExtractions,
+          totalItems: rows.length,
+          lastUpdated: rows[0]?.updated_at || null,
+        };
+      }
+    } catch (err: any) {
+      logger.warn(
+        '[AIContextBuilder] organization_context_items snapshot failed:',
+        err?.message || String(err)
+      );
+    }
+
     return {
       organizationId,
       organizationName: resolvedContext?.profile.companyName || org.name || 'Unknown',
@@ -585,6 +713,10 @@ export const AIContextBuilder = {
       // Organization Memory: patterns and terminology for AI context
       orgPatterns: orgPatterns.length > 0 ? orgPatterns : undefined,
       terminology: Object.keys(terminology).length > 0 ? terminology : undefined,
+      // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — raw snapshot
+      // of the org's collected context (interview Q&As, evidence files,
+      // manual notes) so Teresa can cite actual tenant data in chat.
+      contextItemsSample: contextItemsSample || undefined,
     };
   },
 

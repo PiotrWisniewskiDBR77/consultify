@@ -431,7 +431,16 @@ export interface ChatMessage {
   role: 'ai' | 'user' | 'assistant' | 'system' | 'function' | 'tool';
   content: string;
   timestamp: Date | string;
-  type?: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call';
+  type?:
+    | 'text'
+    | 'action_request'
+    | 'summary'
+    | 'file'
+    | 'tool_call'
+    // V8: governed proposal + execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
+    | 'execution_proposal'
+    | 'execution_progress'
+    | 'execution_result';
 
   // Interactive Elements
   options?: ChatOption[];
@@ -1213,6 +1222,60 @@ export type AIActionType =
   | 'custom';
 
 export type AIActionStatus = 'pending' | 'approved' | 'rejected' | 'executed' | 'failed';
+
+/**
+ * V8 canonical action lifecycle vocabulary (Chat V8 §ACTIONS_AND_APPROVALS).
+ *
+ * Mirrors the server-side `V8LifecycleState` union from
+ * `server/src/types/chatExecutionIntegration.ts`. This is the single user-
+ * visible vocabulary for `proposed → pending_review → approved/rejected →
+ * executing → executed/failed → audited` that chat proposal messages display.
+ */
+export type V8LifecycleState =
+  | 'proposed'
+  | 'pending_review'
+  | 'approved'
+  | 'rejected'
+  | 'executing'
+  | 'executed'
+  | 'failed'
+  | 'audited';
+
+/**
+ * Governance source of a `ChatProposalView` — mirrors the backend
+ * `ProposalGovernanceSource` union (server/src/types/chatExecutionIntegration.ts).
+ */
+export type ProposalGovernanceSource = 'ai_actions' | 'v8_action_proposals' | 'archived';
+
+/**
+ * Unified read view of a chat proposal, returned by
+ * `GET /api/ai/conversations/:conversationId/proposals`.
+ *
+ * Used by the chat surface to render the *current* lifecycle state of a
+ * proposal, rather than the snapshot frozen into the chat message's metadata
+ * at write time. Wave A6 contract.
+ */
+export interface ChatProposalView {
+  proposalId: string;
+  source: ProposalGovernanceSource;
+  conversationId: string;
+  chatProposalId?: string;
+  messageIds: string[];
+  latestMessageType?: 'execution_proposal' | 'execution_progress' | 'execution_result';
+  lifecycleState: V8LifecycleState;
+  actionType?: string;
+  planSummary: string;
+  stepCount?: number;
+  steps?: Array<{ id?: string; label?: string; description?: string }>;
+  risk?: string;
+  renderingHints?: Record<string, unknown>;
+  reviewer?: { userId?: string; name?: string } | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  resolvedAt?: string | null;
+  expiresAt?: string | null;
+}
 
 /**
  * AI Action Proposal

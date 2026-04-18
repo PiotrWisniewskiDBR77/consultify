@@ -2,6 +2,95 @@
 
 All notable changes to Consultinity will be documented in this file.
 
+## [Unreleased] - 2026-04-17
+
+### Added - Superadmin Feedback Pipeline V2.0 (Cursor-ready capture + dossier)
+
+Source of truth: `docs/SUPERADMIN_FEEDBACK_PIPELINE.md` (updated).
+Plan and decisions: `docs/SUPERADMIN_FEEDBACK_PIPELINE_V2_PLAN.md`.
+
+- **Frontend collector module** `src/services/feedbackCollector/`:
+  - `ConsoleBuffer`, `NetworkBuffer`, `BreadcrumbBuffer`, `AppContext`
+  - `captureScreenshot` (html-to-image + hard-redact on `password`/`email` inputs
+    and `[data-feedback-redact]`), `signatureHash` (FNV-1a of normalised
+    stack + route + message)
+  - Bootstrapped from `src/index.tsx` with global `window.onerror` and
+    `unhandledrejection` handlers.
+- **Redact CSS** wired in `src/index.css` (active only while capturing).
+- **ErrorBoundary** (`src/components/ErrorBoundary.tsx`) now offers "Zgłoś ten
+  błąd" action that dispatches `feedback:open` with
+  `window.__FEEDBACK_PREFILL__` pre-filled (title, message, severity, stack).
+- **FeedbackSidePanel** (`src/components/Feedback/FeedbackSidePanel.tsx`):
+  - "Cursor-ready dowody" section with preview + redact hint
+  - Attaches `signatureHash`, `appContext`, `consoleLogs`, `networkErrors`,
+    `breadcrumbs`, `lastUncaughtError`, `screenshot` to the submission payload
+  - Accepts programmatic `feedback:open` event + `__FEEDBACK_PREFILL__`.
+- **API client** `Api.sendFeedback` payload extended; `Api.getFeedbackCursorBrief(id)`
+  and `Api.getFeedbackScreenshotUrl(id)` added.
+- **Backend** `server/src/routes/feedback.routes.ts`:
+  - `reportFeedbackSchema` accepts new optional fields (all backwards compatible)
+  - New endpoints (SuperAdmin only):
+    - `GET /api/feedback/:id/artifacts/screenshot` — streams saved bytes
+    - `GET /api/feedback/:id/cursor-brief` — markdown brief ready to paste
+      into Cursor (description, breadcrumbs, network errors, console logs,
+      uncaught error, env, checklist of expected `PATCH /:id/workflow` calls)
+  - Persists screenshot via `feedbackArtifacts.saveScreenshotFromDataUrl`,
+    records `metadata_json.artifacts[]` and `metadata_json.dossier.*`
+  - Triage: `inferCluster(route)` seeds `workflow.cluster`,
+    `findDuplicateCandidates(signatureHash)` seeds
+    `metadata_json.duplicateOf` + `duplicateCandidates`,
+    `inferPriorityForPipeline` bumps priority for production BUGs, uncaught
+    errors and duplicate storms.
+- **Storage helpers** `server/src/services/feedbackArtifacts.ts`:
+  - Uses `FEEDBACK_ARTIFACTS_DIR` env (default `<cwd>/.feedback-artifacts`),
+    Railway-volume friendly
+  - Max artifact size: ~1.2 MB per screenshot; rejects data URLs over that.
+- **Superadmin Feedback detail view**: new **Cursor dossier** panel
+  (screenshot, duplicates badge, last uncaught error, breadcrumbs, network
+  errors, console logs, app context) + **Copy Cursor brief** action +
+  signature hash badge.
+
+### Operational contract (V2)
+
+- Clients SHOULD send `signatureHash` even without a crash (based on title +
+  route) so textual duplicates cluster together.
+- Screenshots MUST be redacted before upload: the collector blurs
+  `input[type=password|email]` and any element with `data-feedback-redact`.
+  Components holding PII should add that attribute.
+- Max dossier payload: ~3 MB JSON (enforced by Zod + Express `express.json({ limit: '10mb' })`).
+- Deployment: set `FEEDBACK_ARTIFACTS_DIR=/app/.feedback-artifacts` (or a
+  mounted volume) on Railway to persist screenshots between deploys.
+
+## [Unreleased] - 2026-04-16
+
+### Added - Superadmin Feedback Pipeline V1 (bug/feedback workflow as a real delivery pipeline)
+
+Source of truth: `docs/SUPERADMIN_FEEDBACK_PIPELINE.md`.
+
+- **Backend workflow metadata on `feedback_items`** (persisted inside `metadata_json`, no schema migration required):
+  - `workflow`: `owner`, `cluster`, `source`, `branch`, `prUrl`, `taskUrl`, `linkedTaskId`, `deployStatus`, `deployTargets[]`, `deployedAt`, `verifiedBy`, `verifiedAt`, `waitingOn`, `lastUpdatedAt`
+  - `resolution`: `type`, `summary`, `rootCause`, `verificationNotes`, `testPlan[]`
+  - `workflowTimeline[]`: append-only audit of workflow changes (id, at, actor, action, note, changes) trimmed to last 50 entries
+  - Helpers: `normalizeWorkflowMeta`, `normalizeResolutionMeta`, `normalizeWorkflowTimeline`, `shapeFeedbackRow` in `server/src/routes/feedback.routes.ts`
+- **New endpoint `PATCH /api/feedback/:id/workflow`** (SuperAdmin only) to update pipeline metadata and append a timeline entry, with `linked_task_id` column sync when present.
+- **Shape changes** to existing feedback endpoints:
+  - `GET /api/feedback` and `GET /api/feedback/:id` now also return `workflow`, `resolution`, `workflowTimeline`, `owner`, `cluster`, `pr_url`, `branch`, `deploy_status`, `deploy_targets`, `resolution_summary` (backwards compatible).
+- **Frontend API client** `src/services/api.ts` — new `Api.updateFeedbackWorkflow(id, payload)`.
+- **Superadmin Feedback view** (`src/views/superadmin/SuperAdminFeedbackView.tsx`) rebuilt into a pipeline tool:
+  - Board / List toggle; per-status lanes with counts
+  - KPI row: Critical prod, Unassigned, Awaiting verification, NEW > 24h
+  - Filters: status, type, severity, **env**, **ownership (all / assigned / unassigned)**
+  - Richer cards with age, owner, cluster, linked task, PR and deploy status badges
+  - Detail sections **Operations**, **Delivery** and **Resolution** with a single "Save pipeline data" action
+  - "Take ownership" quick action for unassigned items
+  - Unified **Pipeline timeline** merging status history and workflow audit entries
+
+### Operational contract
+
+- Moving to `RESOLVED` requires `resolution.summary` and `workflow.deployStatus = production` or `verified`.
+- Moving to `REVIEWED` requires an `admin_response` (existing POST `/:id/respond`).
+- `deployTargets` accepted values: `staging`, `production`; Cursor sessions should set `workflow.source = "cursor"` when taking ownership.
+
 ## [Unreleased] - 2026-02-14
 
 ### Fixed - Task / Initiative Dependencies (N-mode UX + behavior)

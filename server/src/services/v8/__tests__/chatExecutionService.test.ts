@@ -376,9 +376,13 @@ describe('createChatActionProposal', () => {
     expect(result.renderingHints.showPreview).toBe(true);
     expect(result.renderingHints.showRiskBadge).toBe(true);
 
-    expect(mockDbRun).toHaveBeenCalledOnce();
-    const insertSql = mockDbRun.mock.calls[0][0] as string;
-    expect(insertSql).toContain('INSERT INTO v8_chat_action_proposals');
+    // V8 contract: one facade write + one first-class execution_proposal message.
+    expect(mockDbRun).toHaveBeenCalledTimes(2);
+    const facadeInsertSql = mockDbRun.mock.calls[0][0] as string;
+    expect(facadeInsertSql).toContain('INSERT INTO v8_chat_action_proposals');
+    const messageInsertSql = mockDbRun.mock.calls[1][0] as string;
+    expect(messageInsertSql).toContain('INSERT INTO conversation_messages');
+    expect(messageInsertSql).toContain('execution_proposal');
   });
 
   it('supports all rendering hint styles', async () => {

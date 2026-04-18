@@ -600,13 +600,17 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       }
       toast.success('User deleted');
       loadUsers();
-    } catch (e) {
-      toast.error('Failed to delete user');
+    } catch (e: any) {
+      // Feedback #406b042a — surface actual backend reason (e.g. owner
+      // protection, unauthorized) instead of masking every failure with a
+      // generic "Failed to delete user" toast.
+      toast.error(e?.message || 'Failed to delete user');
     }
   };
 
   const handleBlockUser = async (userId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
+    const normalizedCurrent = (currentStatus || '').toLowerCase();
+    const newStatus = normalizedCurrent === 'active' ? 'blocked' : 'active';
     const action = newStatus === 'blocked' ? 'Block' : 'Unblock';
     if (!confirm(`Are you sure you want to ${action} this user?`)) return;
 
@@ -614,8 +618,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       await Api.updateSuperAdminUser(userId, { status: newStatus });
       toast.success(`User ${newStatus === 'blocked' ? 'blocked' : 'unblocked'} successfully`);
       loadUsers();
-    } catch {
-      toast.error(`Failed to ${action.toLowerCase()} user`);
+    } catch (e: any) {
+      // Feedback #682d4134 — surface the actual backend reason (e.g. Zod
+      // validation detail, 404, 403) instead of always showing a generic
+      // "Failed to block user".
+      toast.error(e?.message || `Failed to ${action.toLowerCase()} user`);
     }
   };
 
@@ -625,8 +632,10 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       toast.success('User moved successfully');
       setMovingUser(null);
       loadUsers();
-    } catch {
-      toast.error('Failed to move user');
+    } catch (e: any) {
+      // Feedback #76ef6831 — surface e.g. "Target organization not found" so
+      // the admin understands why the move didn't go through.
+      toast.error(e?.message || 'Failed to move user');
     }
   };
 
@@ -647,8 +656,17 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       )
     )
       return;
+    // Feedback #b8bf4422 — backend middleware requires a reason (>= 3 chars)
+    // together with the confirmation flag. We ask the admin for a short
+    // justification so the audit trail is meaningful; fall back to a generic
+    // note if they skip the prompt (the API layer enforces the minimum).
+    const reasonInput = window.prompt(
+      'Reason for impersonation (min 3 chars, written to audit log):',
+      'Superadmin support session'
+    );
+    if (reasonInput === null) return;
     try {
-      const { token } = await Api.impersonateUser(userId);
+      const { token } = await Api.impersonateUser(userId, reasonInput);
       localStorage.setItem('token', token);
       window.location.href = '/';
     } catch (err: any) {
