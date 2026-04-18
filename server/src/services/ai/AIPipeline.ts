@@ -831,7 +831,12 @@ export class AIPipeline {
             ? {
                 preferences: userMemory.preferences,
                 expertise: userMemory.expertise?.slice(0, 10),
-                recentTopics: userMemory.recentTopics?.slice(0, 5),
+                // chat-scoping fix (feedback #4408f355 Quick savings context bleed):
+                // recentTopics is a GLOBAL per-user rollup across ALL conversations and orgs,
+                // so passing it to the LLM makes Teresa answer about topics from unrelated
+                // sessions (cross-conversation / cross-org leak). Drop it from runtime context;
+                // if a future "global memory" feature returns, it must be explicitly opt-in
+                // and scoped per-org.
                 interactionCount: userMemory.interactionCount,
               }
             : null,
@@ -1161,8 +1166,10 @@ export class AIPipeline {
       if (um.preferences?.detailLevel)
         memParts.push(`- Poziom szczegółowości: ${um.preferences.detailLevel}`);
       if (um.expertise?.length > 0) memParts.push(`- Ekspertyza: ${um.expertise.join(', ')}`);
-      if (um.recentTopics?.length > 0)
-        memParts.push(`- Ostatnie tematy: ${um.recentTopics.join(', ')}`);
+      // chat-scoping fix 2026-04-18 (feedback #4408f355 Quick savings context bleed):
+      // DO NOT render `recentTopics`. It is a cross-conversation / cross-org user-level
+      // rollup and caused Teresa to pull content from other sessions (privacy + scoping
+      // regression). Conversation-local context is already supplied via history + RAG.
       if (um.interactionCount)
         memParts.push(`- Liczba dotychczasowych interakcji: ${um.interactionCount}`);
       if (memParts.length > 1) parts.push(memParts.join('\n'));

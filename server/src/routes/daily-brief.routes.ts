@@ -22,15 +22,22 @@ router.get(
     const userId = req.user?.id;
     const orgId = req.user?.organizationId;
 
-    // Aggregate today's brief
-    const tasks = await dbAll(
-      `
-    SELECT id, title, priority, due_date FROM tasks 
-    WHERE assignee_id = ? AND status != 'completed' AND due_date <= date('now', '+7 days')
+    // CRITICAL: org scoping (feedback #5d9b15f7 chat-scoping — Daily brief showed VTS
+    // tasks when user was active in another org). tasks.organization_id is NOT NULL,
+    // so every task has a home org; only return tasks for the user's current active org.
+    const tasks = orgId
+      ? await dbAll(
+          `
+    SELECT id, title, priority, due_date FROM tasks
+    WHERE assignee_id = ?
+      AND organization_id = ?
+      AND status != 'completed'
+      AND (due_date IS NULL OR due_date <= date('now', '+7 days'))
     ORDER BY priority DESC, due_date ASC LIMIT 10
   `,
-      [userId]
-    );
+          [userId, orgId]
+        )
+      : [];
 
     const notifications = await dbAll(
       `
