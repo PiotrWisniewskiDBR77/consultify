@@ -1401,6 +1401,73 @@ export class AIPipeline {
       }
     }
 
+    // Feedback #1b81d375 / #30592ee0 — surface interview findings that were
+    // already computed by OrganizationContextService (P10 insights with
+    // confidence tags) so Teresa can reason about them instead of replying
+    // "nie mam danych".
+    const findings: string[] = Array.isArray(org?.signals?.interviewFindingsFormatted)
+      ? (org.signals.interviewFindingsFormatted as string[])
+      : [];
+    if (findings.length > 0) {
+      lines.push('', '### Ustalenia z wywiadów (zatwierdzone insighty):');
+      for (const f of findings.slice(0, 8)) {
+        lines.push(`- ${f}`);
+      }
+    }
+
+    // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — raw snapshot
+    // of the tenant's collected context (Q&As, uploaded evidence, manual
+    // notes, document extractions). Previously we had the data sitting in
+    // `organization_context_items` but never surfaced it to the prompt, so
+    // Teresa couldn't cite VTS/Atelier answers or attached files even when
+    // they existed.
+    const snap = org?.contextItemsSample as
+      | {
+          interviewAnswers?: Array<{ question: string; answer: string; updatedAt: string }>;
+          evidence?: Array<{ title: string; fileType?: string; updatedAt: string }>;
+          manualNotes?: Array<{ title: string; snippet: string; updatedAt: string }>;
+          documentExtractions?: Array<{ title: string; snippet: string; updatedAt: string }>;
+          totalItems?: number;
+          lastUpdated?: string | null;
+        }
+      | undefined;
+    if (snap) {
+      const snapLines: string[] = ['', '### Dane zebrane od organizacji (wywiady, dowody, notatki)'];
+      if (Array.isArray(snap.interviewAnswers) && snap.interviewAnswers.length > 0) {
+        snapLines.push('#### Ostatnie odpowiedzi z wywiadów:');
+        for (const qa of snap.interviewAnswers) {
+          snapLines.push(`- **P:** ${qa.question}`);
+          snapLines.push(`  **O:** ${qa.answer}`);
+        }
+      }
+      if (Array.isArray(snap.evidence) && snap.evidence.length > 0) {
+        snapLines.push('#### Załączone dowody / pliki:');
+        for (const ev of snap.evidence) {
+          const typeHint = ev.fileType ? ` (${ev.fileType})` : '';
+          snapLines.push(`- ${ev.title}${typeHint}`);
+        }
+      }
+      if (Array.isArray(snap.manualNotes) && snap.manualNotes.length > 0) {
+        snapLines.push('#### Notatki ręczne:');
+        for (const note of snap.manualNotes) {
+          snapLines.push(`- ${note.title}: ${note.snippet}`);
+        }
+      }
+      if (Array.isArray(snap.documentExtractions) && snap.documentExtractions.length > 0) {
+        snapLines.push('#### Wyciągi z dokumentów:');
+        for (const doc of snap.documentExtractions) {
+          snapLines.push(`- ${doc.title}: ${doc.snippet}`);
+        }
+      }
+      // Only push the section if at least one bucket produced content.
+      if (snapLines.length > 2) {
+        snapLines.push(
+          `_Łącznie zebranych wpisów: ${snap.totalItems ?? 'n/d'}. Korzystaj z tych danych cytując pytanie/źródło, gdy odpowiadasz._`
+        );
+        lines.push(...snapLines);
+      }
+    }
+
     return lines.filter(Boolean).join('\n');
   }
 
