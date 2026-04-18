@@ -2193,5 +2193,85 @@
     "documents": "Dokumente",
     "tables": "Tabellen",
     "presentations": "Präsentationen"
+  },
+  "demo": {
+    "banner": {
+      "mode": "Demo-Modus",
+      "exit": "Demo verlassen",
+      "exitShort": "Schließen",
+      "startTrial": "Testphase starten",
+      "restartLocale": "Demo in {{locale}} neu laden",
+      "projects": "Projekte",
+      "initiatives": "Initiativen",
+      "hints": "Hinweise",
+      "readOnlyTitle": "Nur-Lese-Modus",
+      "readOnlyDesc": "Änderungen werden nicht gespeichert",
+      "exploreTitle": "Funktionen erkunden",
+      "exploreDesc": "Alle Module durchsuchen",
+      "hintTitle": "Hinweis",
+      "defaultHint": "Klicken Sie auf Initiativen, um Details zu sehen",
+      "help": "Hilfe",
+      "partnerProgram": "Partnerprogramm",
+      "showLimitations": "Einschränkungen",
+      "hideLimitations": "Ausblenden",
+      "limitations": {
+        "readOnly": "Nur-Lese-Modus — Änderungen werden nicht gespeichert",
+        "sampleData": "Beispieldaten — entdecken Sie realistische Szenarien",
+        "session": "Sitzung läuft in 24 Std. ab",
+        "aiQuota": "KI-Interaktionen begrenzt ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "KI",
+      "used": "verwendet",
+      "aiUsageTooltip": "Heute verwendete KI-Aufrufe / tägliches Limit",
+      "tokenUsageTooltip": "Heute verwendete Tokens / tägliches Limit"
+    }
+  },
+  "access": {
+    "banner": {
+      "demo": "Sie sehen eine Demo-Umgebung (nur lesend)",
+      "pastDue": "Zahlung fehlgeschlagen. Bitte aktualisieren Sie Ihre Zahlungsmethode.",
+      "trialExpired": "Ihre Testphase ist abgelaufen. Upgrade, um fortzufahren.",
+      "trialCritical": "Testphase läuft in {{days}} Tag(en) ab. Jetzt upgraden.",
+      "trialWarning": "Noch {{days}} Tag(e) in Ihrer Testphase",
+      "approachingLimits": "Sie nähern sich Ihren Nutzungslimits. Upgrade für unterbrechungsfreien Zugriff."
+    },
+    "modal": {
+      "trialExpired": "Ihre Testphase ist beendet. Ihre Daten sind sicher, aber Ihre Organisation ist jetzt im Nur-Lese-Modus. Upgrade, um vollen Zugriff wiederherzustellen.",
+      "title": "Zugriff erforderlich",
+      "close": "Schließen",
+      "bookCall": "Termin buchen"
+    },
+    "cta": {
+      "upgradePlan": "Plan upgraden",
+      "upgradeNow": "Jetzt upgraden",
+      "fixPayment": "Zahlung korrigieren",
+      "addPaymentMethod": "Zahlungsmethode hinzufügen",
+      "startTrial": "Kostenlose Testphase starten",
+      "completeSetup": "Einrichtung abschließen",
+      "goToBilling": "Zur Abrechnung",
+      "contactSales": "Vertrieb kontaktieren"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "Organisation nicht gefunden. Bitte melden Sie sich erneut an.",
+      "ORG_INACTIVE": "Ihre Organisation ist inaktiv. Bitte kontaktieren Sie den Support oder melden Sie sich erneut an.",
+      "TRIAL_PROFILE_INCOMPLETE": "Organisations-Setup abschließen, um Ihre KI-Testphase zu starten.",
+      "AI_TOKEN_BUDGET_EXCEEDED": "Ihr KI-Testbudget ist aufgebraucht. Fügen Sie eine Zahlungsmethode hinzu, um KI weiter zu nutzen.",
+      "AI_LIMIT_REACHED": "Sie haben Ihr tägliches KI-Limit erreicht. Upgrade, um fortzufahren.",
+      "TRIAL_EXPIRED": "Ihre Testphase ist abgelaufen. Upgrade, um alle Funktionen weiterzunutzen.",
+      "DEMO_READ_ONLY": "Der Demo-Modus ist schreibgeschützt. Starten Sie eine kostenlose Testphase, um eigene Daten anzulegen.",
+      "DEMO_TIME_EXPIRED": "Demo-Sitzung abgelaufen. Starten Sie eine kostenlose Testphase, um fortzufahren.",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "KI-Limit der Demo-Sitzung erreicht. Starten Sie eine kostenlose Testphase für mehr.",
+      "PROJECT_LIMIT_REACHED": "Projektlimit erreicht. Upgrade für weitere Projekte.",
+      "INITIATIVE_LIMIT_REACHED": "Initiativenlimit erreicht. Upgrade für weitere Initiativen.",
+      "USER_LIMIT_REACHED": "Nutzerlimit erreicht. Upgrade, um weitere Teammitglieder einzuladen.",
+      "STORAGE_LIMIT_REACHED": "Speicherlimit erreicht. Upgrade für mehr Speicher.",
+      "SUBSCRIPTION_PAST_DUE": "Zahlung fehlgeschlagen. Bitte aktualisieren Sie Ihre Zahlungsmethode.",
+      "SUBSCRIPTION_CANCELLED": "Ihr Abonnement wurde gekündigt.",
+      "INSUFFICIENT_TOKENS": "Unzureichende Tokens. Zahlungsmethode hinzufügen oder upgraden.",
+      "default": "Diese Aktion ist auf Ihrer aktuellen Zugriffsstufe blockiert."
+    },
+    "upgrade": {
+      "instantUnlock": "Alle Limits werden sofort nach dem Upgrade entfernt"
+    }
   }
 }

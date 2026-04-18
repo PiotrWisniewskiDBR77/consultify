@@ -2062,5 +2062,85 @@
     "documents": "Documentos",
     "tables": "Tablas",
     "presentations": "Presentaciones"
+  },
+  "demo": {
+    "banner": {
+      "mode": "Modo demo",
+      "exit": "Salir del demo",
+      "exitShort": "Salir",
+      "startTrial": "Iniciar prueba",
+      "restartLocale": "Recargar demo en {{locale}}",
+      "projects": "proyectos",
+      "initiatives": "iniciativas",
+      "hints": "Sugerencias",
+      "readOnlyTitle": "Modo solo lectura",
+      "readOnlyDesc": "Los cambios no se guardan",
+      "exploreTitle": "Explorar funciones",
+      "exploreDesc": "Navegar por todos los módulos",
+      "hintTitle": "Sugerencia",
+      "defaultHint": "Haga clic en las iniciativas para ver los detalles",
+      "help": "Ayuda",
+      "partnerProgram": "Programa de socios",
+      "showLimitations": "Limitaciones",
+      "hideLimitations": "Ocultar",
+      "limitations": {
+        "readOnly": "Modo solo lectura — los cambios no se guardan",
+        "sampleData": "Datos de muestra — explora con ejemplos realistas",
+        "session": "La sesión expira en 24 h",
+        "aiQuota": "Interacciones de IA limitadas ({{remaining}}/{{limit}})"
+      },
+      "aiUsageLabel": "IA",
+      "used": "usadas",
+      "aiUsageTooltip": "Llamadas de IA usadas hoy / límite diario",
+      "tokenUsageTooltip": "Tokens usados hoy / límite diario"
+    }
+  },
+  "access": {
+    "banner": {
+      "demo": "Está viendo un entorno demo (solo lectura)",
+      "pastDue": "Pago fallido. Actualice su método de pago para evitar la interrupción del servicio.",
+      "trialExpired": "Su prueba ha expirado. Actualice para continuar.",
+      "trialCritical": "La prueba expira en {{days}} día(s). Actualice ahora para mantener el acceso completo.",
+      "trialWarning": "{{days}} día(s) restante(s) en su prueba",
+      "approachingLimits": "Se acerca a los límites de uso. Considere actualizar para un acceso sin interrupciones."
+    },
+    "modal": {
+      "trialExpired": "Su período de prueba ha terminado. Sus datos están seguros, pero su organización está en modo solo lectura. Actualice para restaurar el acceso completo.",
+      "title": "Se requiere acceso",
+      "close": "Cerrar",
+      "bookCall": "Reservar una llamada"
+    },
+    "cta": {
+      "upgradePlan": "Actualizar plan",
+      "upgradeNow": "Actualizar ahora",
+      "fixPayment": "Corregir pago",
+      "addPaymentMethod": "Añadir método de pago",
+      "startTrial": "Iniciar prueba gratuita",
+      "completeSetup": "Completar configuración",
+      "goToBilling": "Ir a facturación",
+      "contactSales": "Contactar a ventas"
+    },
+    "blocked": {
+      "ORG_NOT_FOUND": "Organización no encontrada. Vuelva a iniciar sesión para actualizar su sesión.",
+      "ORG_INACTIVE": "Su organización está inactiva. Contacte a soporte o vuelva a iniciar sesión.",
+      "TRIAL_PROFILE_INCOMPLETE": "Complete la configuración de la organización para iniciar su experiencia de IA de prueba.",
+      "AI_TOKEN_BUDGET_EXCEEDED": "Se ha consumido su presupuesto de IA de prueba. Añada un método de pago para continuar.",
+      "AI_LIMIT_REACHED": "Ha alcanzado su límite diario de IA. Actualice para continuar.",
+      "TRIAL_EXPIRED": "Su prueba ha expirado. Actualice para seguir usando todas las funciones.",
+      "DEMO_READ_ONLY": "El modo demo es solo lectura. Inicie una prueba gratuita para crear sus propios datos.",
+      "DEMO_TIME_EXPIRED": "La sesión demo ha expirado. Inicie una prueba gratuita para continuar.",
+      "DEMO_AI_SESSION_LIMIT_REACHED": "Se alcanzó el límite de IA de la sesión demo. Inicie una prueba gratuita para más.",
+      "PROJECT_LIMIT_REACHED": "Límite de proyectos alcanzado. Actualice para crear más proyectos.",
+      "INITIATIVE_LIMIT_REACHED": "Límite de iniciativas alcanzado. Actualice para crear más iniciativas.",
+      "USER_LIMIT_REACHED": "Límite de usuarios alcanzado. Actualice para invitar a más miembros.",
+      "STORAGE_LIMIT_REACHED": "Límite de almacenamiento alcanzado. Actualice para más espacio.",
+      "SUBSCRIPTION_PAST_DUE": "Pago fallido. Actualice su método de pago.",
+      "SUBSCRIPTION_CANCELLED": "Su suscripción ha sido cancelada.",
+      "INSUFFICIENT_TOKENS": "Tokens insuficientes. Añada un método de pago o actualice su plan.",
+      "default": "Esta acción está bloqueada en su nivel de acceso actual."
+    },
+    "upgrade": {
+      "instantUnlock": "Todos los límites se eliminan instantáneamente tras la actualización"
+    }
   }
 }

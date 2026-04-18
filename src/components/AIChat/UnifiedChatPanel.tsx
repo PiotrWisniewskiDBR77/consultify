@@ -1667,14 +1667,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Demo session enforcement (time + AI interactions quota)
       if (isDemo) {
+        // Feedback #4180b14f: previously we attached a hardcoded English
+        // `message` + `cta` to the access:blocked event, and the
+        // AccessBlockedModal preferred that string over its i18n catalog —
+        // so DE/ES/AR/JP users never saw a translated popup. Emit only the
+        // error `code` here and let the modal resolve the localized copy
+        // via `access.blocked.<code>` / `access.cta.*` keys.
         if (demoTimeRemainingMs <= 0) {
           window.dispatchEvent(
             new CustomEvent('access:blocked', {
-              detail: {
-                code: 'DEMO_TIME_EXPIRED',
-                message: 'Demo session expired. Start a free trial to continue.',
-                cta: { label: 'Start free trial', href: '/trial' },
-              },
+              detail: { code: 'DEMO_TIME_EXPIRED' },
             })
           );
           return;
@@ -1683,11 +1685,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         if ((aiInteractionsRemaining ?? 0) <= 0) {
           window.dispatchEvent(
             new CustomEvent('access:blocked', {
-              detail: {
-                code: 'DEMO_AI_SESSION_LIMIT_REACHED',
-                message: `Demo AI limit reached (${aiInteractionsLimit ?? 0}). Start a free trial to continue.`,
-                cta: { label: 'Start free trial', href: '/trial' },
-              },
+              detail: { code: 'DEMO_AI_SESSION_LIMIT_REACHED' },
             })
           );
           return;
