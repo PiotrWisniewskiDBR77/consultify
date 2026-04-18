@@ -61,11 +61,11 @@ jobs:
           test -n "$APP_SERVICE"
 
       - name: Deploy app to staging
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "staging app ${GITHUB_SHA}"
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" -m "staging app ${GITHUB_SHA}"
 
       - name: Deploy secondary service to staging
         if: env.SECONDARY_SERVICE != ''
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" --detach -m "staging secondary ${GITHUB_SHA}"
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" -m "staging secondary ${GITHUB_SHA}"
 
       - name: Verify staging deployment
         run: |
@@ -113,11 +113,11 @@ jobs:
           test -n "$APP_SERVICE"
 
       - name: Deploy app to production
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "production app ${GITHUB_SHA}"
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" -m "production app ${GITHUB_SHA}"
 
       - name: Deploy secondary service to production
         if: env.SECONDARY_SERVICE != ''
-        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" --detach -m "production secondary ${GITHUB_SHA}"
+        run: railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$SECONDARY_SERVICE" -m "production secondary ${GITHUB_SHA}"
 
       - name: Verify production deployment
         run: |
