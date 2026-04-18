@@ -32,9 +32,6 @@ concurrency:
   group: railway-deploy-${{ github.event_name == 'push' && 'staging' || github.event.inputs.environment }}
   cancel-in-progress: false
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   deploy-staging:
     name: Deploy Staging
@@ -51,7 +48,7 @@ jobs:
       API_HEALTH_URL: ${{ vars.STAGING_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5.0.1
 
       - name: Validate staging configuration
         run: |
@@ -153,7 +150,7 @@ jobs:
       API_HEALTH_URL: ${{ vars.PRODUCTION_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5.0.1
 
       - name: Validate production configuration
         run: |
