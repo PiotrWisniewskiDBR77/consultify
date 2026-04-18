@@ -394,8 +394,13 @@ export class LLMController {
           subprocessors_ref,
           tier,
           visibility,
-          is_active ? 1 : 0,
-          is_default ? 1 : 0,
+          // Feedback #5e16d214 — pass JS booleans so Postgres accepts them
+          // for the boolean `is_active` / `is_default` columns. 1/0 would
+          // raise "column is of type boolean but expression is of type
+          // integer" and, combined with DbPromise's fallback path, would
+          // silently no-op the INSERT.
+          !!is_active,
+          !!is_default,
           cost_per_1k,
           context_window,
         ]
@@ -443,7 +448,21 @@ export class LLMController {
         'cost_per_1k',
         'markup_multiplier',
         'context_window',
+        'priority',
       ];
+      // Feedback #5e16d214 — on Postgres the boolean columns (`is_active`,
+      // `is_default`) reject integer literals with "column is of type boolean
+      // but expression is of type integer". Previously we coerced booleans
+      // to 1/0 which made the UPDATE fail silently (the DbPromise fallback
+      // returns `{ success: false }` instead of throwing, so the controller
+      // happily re-fetched and returned the UNCHANGED row — the UI showed
+      // "Provider updated" but nothing actually persisted, so toggling a
+      // model to Active never stuck).
+      // We now pass JS booleans through to `pg`, which serializes them as
+      // TRUE/FALSE, and we run the UPDATE with `fallback: false` so a real
+      // DB error actually bubbles to the HTTP response.
+      const BOOLEAN_FIELDS = new Set(['is_active', 'is_default']);
+      const JSON_FIELDS = new Set(['execution_regions', 'allowed_data_classes']);
       const setClauses: string[] = [];
       const values: any[] = [];
 
@@ -453,10 +472,23 @@ export class LLMController {
           if (field === 'api_key' && typeof updates[field] === 'string' && !updates[field].trim()) {
             continue;
           }
+          let value: any = updates[field];
+          if (BOOLEAN_FIELDS.has(field)) {
+            // Accept both booleans and the "1"/"0"/"true"/"false" stringified
+            // variants older clients might send.
+            if (typeof value === 'string') {
+              const lowered = value.toLowerCase().trim();
+              value = lowered === 'true' || lowered === '1' || lowered === 't';
+            } else if (typeof value === 'number') {
+              value = value !== 0;
+            } else {
+              value = !!value;
+            }
+          } else if (JSON_FIELDS.has(field)) {
+            value = typeof value === 'string' ? value : JSON.stringify(value ?? []);
+          }
           setClauses.push(`${field} = ?`);
-          values.push(
-            typeof updates[field] === 'boolean' ? (updates[field] ? 1 : 0) : updates[field]
-          );
+          values.push(value);
         }
       }
 
@@ -467,7 +499,19 @@ export class LLMController {
       setClauses.push('updated_at = CURRENT_TIMESTAMP');
       values.push(id);
 
-      await dbRun(`UPDATE llm_providers SET ${setClauses.join(', ')} WHERE id = ?`, values);
+      const runResult = await dbRun(
+        `UPDATE llm_providers SET ${setClauses.join(', ')} WHERE id = ?`,
+        values,
+        { fallback: false }
+      );
+      if (runResult && (runResult as any).success === false) {
+        // Defensive: even with fallback:false, extremely old DbPromise
+        // implementations may still return a failure envelope instead of
+        // throwing.
+        const reason = (runResult as any).error || 'unknown db error';
+        logger.error('[LLMController] updateProvider UPDATE failed:', reason);
+        return res.status(500).json({ error: `Failed to update provider: ${reason}` });
+      }
 
       const updated = await dbGet('SELECT * FROM llm_providers WHERE id = ?', [id]);
       return res.json(LLMController.sanitizeProvider(updated));

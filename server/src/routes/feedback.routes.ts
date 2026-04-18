@@ -1163,38 +1163,58 @@ router.post(
       logger.warn('[Feedback] Failed to auto-create task from feedback:', e);
     }
 
-    try {
-      const alertDispatch = await dispatchFeedbackEscalation({
-        kind: 'feedback',
-        id: feedbackId,
-        organizationId: orgIdForNotifications,
-        appEnv,
-        channels: resolveEscalationChannels({
+    // Feedback #0e1e7dec — escalation previously ran inline and awaited
+    // Slack / email / WhatsApp network calls before sending the HTTP
+    // response. HIGH/CRITICAL severities add email + WhatsApp channels on
+    // top of in-app + Slack, which turned the user-visible "Submit feedback"
+    // latency from ~200ms to multi-seconds compared to MEDIUM/LOW tickets.
+    // The ticket is already persisted at this point and the task is linked —
+    // the only thing remaining is best-effort notification fan-out, which is
+    // safe to run in the background. We fire-and-forget and keep persisting
+    // the dispatch status asynchronously so the audit trail survives.
+    const escalationSnapshot = {
+      metadata: { ...metadataJson },
+      priority,
+      linkedTaskId,
+    };
+    const escalationPromise = (async () => {
+      try {
+        const alertDispatch = await dispatchFeedbackEscalation({
           kind: 'feedback',
+          id: feedbackId,
+          organizationId: orgIdForNotifications,
+          appEnv,
+          channels: resolveEscalationChannels({
+            kind: 'feedback',
+            feedbackType: type,
+            severity,
+          }),
           feedbackType: type,
-          severity,
-        }),
-        feedbackType: type,
-        severity: severity || 'MEDIUM',
-        priority,
-        userId: actualUserId,
-        userEmail: actualUserEmail,
-        userName: actualUserName,
-        routePath: routePath || null,
-        deviceType: deviceType || null,
-        screenSize: screenSize || null,
-        uiLanguage: uiLanguage || null,
-        uiTheme: uiTheme || null,
-        title,
-        message: description,
-        taskId: linkedTaskId,
-        metadata: metadataJson,
-      });
-      metadataJson = { ...metadataJson, alertDispatch };
-      await updateFeedbackMetadata(feedbackId, metadataJson);
-    } catch (dispatchErr) {
-      logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
-    }
+          severity: severity || 'MEDIUM',
+          priority: escalationSnapshot.priority,
+          userId: actualUserId,
+          userEmail: actualUserEmail,
+          userName: actualUserName,
+          routePath: routePath || null,
+          deviceType: deviceType || null,
+          screenSize: screenSize || null,
+          uiLanguage: uiLanguage || null,
+          uiTheme: uiTheme || null,
+          title,
+          message: description,
+          taskId: escalationSnapshot.linkedTaskId,
+          metadata: escalationSnapshot.metadata,
+        });
+        const persisted = { ...escalationSnapshot.metadata, alertDispatch };
+        await updateFeedbackMetadata(feedbackId, persisted);
+      } catch (dispatchErr) {
+        logger.error('[Feedback] Failed to dispatch escalation:', dispatchErr);
+      }
+    })();
+    // Attach a swallow-only handler so Node never logs "unhandledRejection"
+    // for the detached promise — the inner try/catch already reports via
+    // `logger.error`.
+    escalationPromise.catch(() => {});
 
     return res.json({ success: true, id: feedbackId, taskId: linkedTaskId });
   })
