@@ -598,8 +598,30 @@ export const useConversationStore = create<ConversationState>()(
 
       fetchConversation: async (id: string) => {
         const now = Date.now();
+
+        // Feedback #2ee998d3 / #53cc607e — always sync activeConversationId to the
+        // requested id up-front, even when we dedupe or reuse an inflight promise.
+        // Without this, clicking a historical conversation within the dedupe window
+        // (or while another fetch is already inflight) returned silently and the
+        // UI kept showing whatever was previously active, so users experienced
+        // "click does nothing" on conversation items.
+        const current = get().activeConversationId;
+        if (current !== id) {
+          set({
+            activeConversationId: id,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+          });
+        }
+
         if (_inflightFetchConversationById[id]) return _inflightFetchConversationById[id];
-        if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) return;
+        if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) {
+          // Dedupe: a recent successful fetch for this id is in cache. If the id
+          // is now the active one we already synced above; otherwise the call was
+          // preemptive and we can safely return.
+          return;
+        }
         _lastFetchConversationAt[id] = now;
 
         set({ isLoading: true });
@@ -970,9 +992,28 @@ export const useConversationStore = create<ConversationState>()(
           if (existing) {
             set({ draftChatLanguage: existing });
           }
+          // Feedback #2ee998d3 — sync the id eagerly so the UI immediately
+          // reflects the selection even before fetchConversation resolves.
+          // fetchConversation also performs this sync (see above) as a safety
+          // net, but doing it here avoids a one-frame delay on every click.
+          const prev = get().activeConversationId;
+          if (prev !== id) {
+            set({
+              activeConversationId: id,
+              activeMessages: [],
+              isLoading: true,
+              _activeConversationState: null,
+              _activeConversationStateMessage: null,
+            });
+          }
           get().fetchConversation(id);
         } else {
-          set({ activeConversationId: null, activeMessages: [] });
+          set({
+            activeConversationId: null,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+          });
         }
       },
 

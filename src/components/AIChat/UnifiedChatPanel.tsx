@@ -761,12 +761,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           ? fullText
           : getTeresaEmptyResponseMessage(i18n.language);
 
+      // Feedback #53cc607e — read the active conversation id straight from the
+      // store at callback time. The hook's option object is captured with the
+      // component's render closure, so a conversation created *during* the send
+      // (handleSendMessage → createConversation) would otherwise see a stale
+      // `activeConversationId === null` here and silently skip persisting the
+      // AI reply ("Chat nie pamięta rozmów").
+      const liveActiveConversationId =
+        useConversationStore.getState().activeConversationId || activeConversationId;
+
       let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
-      if (activeConversationId) {
+      if (liveActiveConversationId) {
         try {
           const saved = await addMessageToConversation({
-            conversationId: activeConversationId,
+            conversationId: liveActiveConversationId,
             role: 'ai',
             content: safeText,
             messageType: 'text',
@@ -902,7 +911,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (
         aiConfig?.deepResearch &&
         deepThinkingRunRef.current &&
-        deepThinkingRunRef.current.conversationId === activeConversationId &&
+        deepThinkingRunRef.current.conversationId === liveActiveConversationId &&
         Array.isArray(deepThinkingRunRef.current.agentIds) &&
         deepThinkingRunRef.current.agentIds.length > 0
       ) {
