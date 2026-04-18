@@ -2636,8 +2636,28 @@ export class AIPipeline {
 
   private handleError(error: unknown): AIError {
     if (error instanceof Error) {
+      const anyErr = error as any;
+      // Feedback #a9fcdd99 / #3b6c0287 — preserve the underlying error's `code`
+      // (e.g. CIRCUIT_OPEN, INVALID_API_KEY, RATE_LIMIT) so the route handler
+      // and SSE client can render a user-friendly localized message instead of
+      // the raw engineering text. Without this, every thrown Error was
+      // collapsed to `AI_ERROR`, which the client didn't recognize and fell
+      // back to surfacing the raw message (e.g. "Circuit [openrouter] is
+      // OPEN. Retry in 18s") in the chat bubble.
+      const preserved =
+        typeof anyErr?.code === 'string' && anyErr.code.length > 0 ? anyErr.code : null;
+      const msg = String(error.message || '');
+      const inferred = !preserved
+        ? /invalid_api_key|incorrect api key/i.test(msg)
+          ? 'INVALID_API_KEY'
+          : /quota|rate.limit|429|too many/i.test(msg)
+            ? 'RATE_LIMIT'
+            : /circuit.*open/i.test(msg)
+              ? 'CIRCUIT_OPEN'
+              : null
+        : null;
       return {
-        code: 'AI_ERROR',
+        code: preserved || inferred || 'AI_ERROR',
         message: error.message,
         retryable: true,
       };

@@ -1823,16 +1823,62 @@ export const Api = {
                               ? uiLang === 'pl'
                                 ? '⚠️ Lokalny provider AI jest niedozwolony w tym środowisku.'
                                 : '⚠️ Local AI provider is not allowed in this environment.'
-                              : dataCode === 'STREAM_ERROR' ||
-                                  dataCode === 'AI_STREAM_ERROR' ||
-                                  dataCode === 'AI_PIPELINE_ERROR'
-                                ? uiLang === 'pl'
-                                  ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
-                                  : '⚠️ An error occurred while generating the response. Please try again.'
-                                : null;
+                              : // Feedback #a9fcdd99 / #3b6c0287 — circuit breaker is open
+                                // for the LLM provider (e.g. OpenRouter temporarily down or
+                                // rate-limited). Previously we had no mapping so the raw
+                                // text "Circuit [openrouter] is OPEN. Retry in 18s" leaked
+                                // into the chat bubble. Try to parse the cooldown seconds
+                                // from the message so we can show the user a concrete
+                                // "try again in N seconds" hint.
+                                dataCode === 'CIRCUIT_OPEN'
+                                ? (() => {
+                                    const rawMsg = String(data.error || '');
+                                    const retryMatch = rawMsg.match(/Retry in (\d+)s/i);
+                                    const seconds = retryMatch ? retryMatch[1] : null;
+                                    if (uiLang === 'pl') {
+                                      return seconds
+                                        ? `⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za ${seconds} s lub wybierz inny model.`
+                                        : '⚠️ Dostawca AI jest chwilowo niedostępny. Spróbuj ponownie za chwilę lub wybierz inny model.';
+                                    }
+                                    return seconds
+                                      ? `⚠️ The AI provider is temporarily unavailable. Please try again in ${seconds}s or switch to a different model.`
+                                      : '⚠️ The AI provider is temporarily unavailable. Please try again in a moment or switch to a different model.';
+                                  })()
+                                : dataCode === 'STREAM_ERROR' ||
+                                    dataCode === 'AI_STREAM_ERROR' ||
+                                    dataCode === 'AI_PIPELINE_ERROR' ||
+                                    // Feedback #a9fcdd99 / #3b6c0287 — legacy generic code
+                                    // the backend used to emit for any uncategorized
+                                    // pipeline error. Map it here so we never fall through
+                                    // to dumping `String(data.error)` into the bubble.
+                                    dataCode === 'AI_ERROR'
+                                  ? uiLang === 'pl'
+                                    ? '⚠️ Wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.'
+                                    : '⚠️ An error occurred while generating the response. Please try again.'
+                                  : null;
 
                   hasAnyVisibleOutput = true;
-                  onChunk(friendlyByCode || String(data.error));
+                  // Feedback #a9fcdd99 / #3b6c0287 — never surface raw backend
+                  // error strings (e.g. "Circuit [openrouter] is OPEN. Retry in
+                  // 18s") directly in the chat. If we don't recognize the code,
+                  // fall back to a generic friendly message and log the raw text
+                  // to the console so ops can still debug from browser logs.
+                  if (!friendlyByCode) {
+                    try {
+                      console.warn(
+                        '[AI Stream] Unmapped error code surfaced:',
+                        dataCode,
+                        String(data.error || '').slice(0, 240)
+                      );
+                    } catch {
+                      /* ignore */
+                    }
+                  }
+                  const genericFallback =
+                    uiLang === 'pl'
+                      ? '⚠️ Wystąpił nieoczekiwany błąd AI. Spróbuj ponownie za chwilę.'
+                      : '⚠️ An unexpected AI error occurred. Please try again in a moment.';
+                  onChunk(friendlyByCode || genericFallback);
 
                   if (sid) {
                     console.info('[AI Stream] sessionId:', sid);
