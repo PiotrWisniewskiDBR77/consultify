@@ -2081,12 +2081,16 @@ export const Api = {
     id: string,
     updates: { organizationId?: string; role?: string; status?: string }
   ): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/users/${id}`, {
+    // Feedback #1e3d749a / #682d4134 / #76ef6831 — surface the specific backend
+    // reason ("Target organization not found", Zod validation detail, 404
+    // "User not found", etc.) to the UI instead of collapsing everything into
+    // a generic "Failed to update user" toast.
+    const res = await fetchWithRetry(`${API_URL}/superadmin/users/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    await handleResponse(res, 'Failed to update user');
   },
 
   createSuperAdminUser: async (user: any): Promise<User> => {
@@ -2203,14 +2207,36 @@ export const Api = {
     return data;
   },
 
-  impersonateUser: async (userId: string): Promise<{ user: User; token: string }> => {
+  impersonateUser: async (
+    userId: string,
+    reason?: string
+  ): Promise<{ user: User; token: string }> => {
+    // Feedback #b8bf4422 — the `/superadmin/impersonate` route is gated by
+    // `requireConfirmation('impersonate_user', 'critical')` + `requireAudit`,
+    // so the payload MUST include `confirmation: true` and a non-empty
+    // `reason` (>= 3 chars). Previously we only sent `{ userId }`, which the
+    // middleware rejected with 428 CONFIRMATION_REQUIRED and the UI surfaced
+    // as "Failed to impersonate user" with no hint. We default the reason to
+    // a generic "Superadmin support session" when the caller doesn't pass one
+    // so the action still works without forcing every call site to prompt.
+    const finalReason =
+      typeof reason === 'string' && reason.trim().length >= 3
+        ? reason.trim()
+        : 'Superadmin support session';
     const res = await fetch(`${API_URL}/superadmin/impersonate`, {
       method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ userId }),
+      headers: {
+        ...getHeaders(),
+        'X-Audit-Reason': finalReason,
+      },
+      body: JSON.stringify({ userId, confirmation: true, reason: finalReason }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to impersonate user');
+    const data = await res.json().catch(() => ({}) as any);
+    if (!res.ok) {
+      const msg =
+        (data && (data.error || data.message)) || `Failed to impersonate user (HTTP ${res.status})`;
+      throw new Error(msg);
+    }
     return data;
   },
 

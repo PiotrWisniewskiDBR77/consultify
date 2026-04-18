@@ -30,16 +30,33 @@ export class UserController {
         return;
       }
 
+      // Feedback #d11ec6b0 — the org-admin "Users" panel previously pulled only
+      // rows where `users.organization_id = orgId`, which hid users whose
+      // primary tenant is another org but who are active members of THIS org
+      // via `organization_members` (e.g. Piotr=OWNER of APLIX with primary
+      // `users.organization_id='vts'`). We now UNION both sources and
+      // deduplicate on user id so each member shows up exactly once.
       // Select only columns that exist in the users table
       // Note: 'title' column doesn't exist - use 'job_title' if needed, or get from user_profiles table
-      let sql =
-        'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login FROM users WHERE organization_id = ?';
+      let sql = `
+        SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.status, u.avatar_url, u.last_login
+          FROM users u
+         WHERE u.organization_id = ?
+        UNION
+        SELECT u.id, u.email, u.first_name, u.last_name,
+               COALESCE(om.role, u.role) AS role,
+               u.status, u.avatar_url, u.last_login
+          FROM organization_members om
+          JOIN users u ON u.id = om.user_id
+         WHERE om.organization_id = ?
+           AND (om.status IS NULL OR UPPER(om.status) = 'ACTIVE')
+      `;
       type SQLParam = string | number | boolean | null | undefined;
-      const params: SQLParam[] = [orgId];
+      const params: SQLParam[] = [orgId, orgId];
 
       // If canReview=true, filter to users with review permissions
       if (canReview === 'true') {
-        sql += ` AND (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
+        sql = `SELECT * FROM (${sql}) scoped WHERE (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
       }
 
       sql += ' ORDER BY first_name, last_name';

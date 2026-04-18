@@ -82,15 +82,32 @@ import {
  * GET All Organizations
  */
 const getOrganizations = catchAsync(async (req, res, next) => {
+  // Feedback #d11ec6b0 — the old query counted only rows where
+  // `users.organization_id = o.id`, but membership actually lives in two
+  // places: the `users.organization_id` primary tenant and the
+  // `organization_members` multi-tenant join table. A user can have their
+  // primary tenant set to `vts` while being an ACTIVE member of `aplix-na`,
+  // which made Piotr disappear from APLIX even though he's the OWNER there.
+  // We now count the DISTINCT union of both sources.
   const sql = `
-        SELECT 
-            o.id, o.name, o.plan, o.status, 
-            COALESCE(o.trial_started_at, o.created_at) as created_at, 
+        SELECT
+            o.id, o.name, o.plan, o.status,
+            COALESCE(o.trial_started_at, o.created_at) as created_at,
             0 as discount_percent,
-            COUNT(u.id) as user_count
+            (
+                SELECT COUNT(*) FROM (
+                    SELECT u.id AS user_id
+                      FROM users u
+                     WHERE u.organization_id = o.id
+                       AND COALESCE(u.status, 'active') <> 'deleted'
+                    UNION
+                    SELECT om.user_id AS user_id
+                      FROM organization_members om
+                     WHERE om.organization_id = o.id
+                       AND (om.status IS NULL OR UPPER(om.status) = 'ACTIVE')
+                ) combined
+            ) as user_count
         FROM organizations o
-        LEFT JOIN users u ON o.id = u.organization_id
-        GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at
         ORDER BY o.name ASC
     `;
 
@@ -294,6 +311,12 @@ const getOrgBilling = catchAsync(async (req, res, next) => {
  * GET All Users
  */
 const getUsers = catchAsync(async (req, res, next) => {
+  // Feedback #d11ec6b0 — also surface ACTIVE entries from
+  // `organization_members` so the superadmin panel can list a user under
+  // every tenant they belong to, not just their primary `users.organization_id`.
+  // We return a single row per user plus an `organizations` array that
+  // enumerates every org they're associated with (primary + memberships).
+  // The UI can filter by `u.organizationId === X || u.organizations.some(...)`.
   const sql = `
         SELECT
             u.id, u.organization_id, u.email, u.first_name, u.last_name,
@@ -304,23 +327,89 @@ const getUsers = catchAsync(async (req, res, next) => {
         ORDER BY u.created_at DESC
     `;
 
-  deps.db.all(sql, [], (err, rows) => {
+  const membershipSql = `
+        SELECT
+            om.user_id,
+            om.organization_id,
+            om.role,
+            om.status,
+            o.name as organization_name
+          FROM organization_members om
+     LEFT JOIN organizations o ON o.id = om.organization_id
+         WHERE (om.status IS NULL OR UPPER(om.status) = 'ACTIVE')
+    `;
+
+  deps.db.all(sql, [], (err, userRows) => {
     if (err) return next(new AppError(err.message, 500));
 
-    const users = rows.map((u) => ({
-      id: u.id,
-      organizationId: u.organization_id,
-      organizationName: u.organization_name,
-      firstName: u.first_name,
-      lastName: u.last_name,
-      email: u.email,
-      role: u.role,
-      status: u.status,
-      lastLogin: u.last_login,
-      createdAt: u.created_at,
-    }));
-    // Documented shape: { users, total } (see docs/api/SUPERADMIN_API). Keeps dashboard counts and list in sync.
-    res.json({ users, total: users.length });
+    deps.db.all(membershipSql, [], (mErr, memberRows) => {
+      // Soft-fail: if the membership table isn't available (e.g. early-stage
+      // environments) we still return the primary-tenant view rather than 500.
+      if (mErr) {
+        logger.warn('[SuperAdmin] organization_members lookup failed:', mErr.message);
+      }
+
+      const membershipByUser = new Map<string, Array<{
+        organizationId: string;
+        organizationName: string | null;
+        role: string | null;
+        source: 'primary' | 'member';
+      }>>();
+
+      for (const r of (memberRows || []) as Array<any>) {
+        if (!r?.user_id || !r?.organization_id) continue;
+        const list = membershipByUser.get(r.user_id) || [];
+        list.push({
+          organizationId: r.organization_id,
+          organizationName: r.organization_name || null,
+          role: r.role || null,
+          source: 'member',
+        });
+        membershipByUser.set(r.user_id, list);
+      }
+
+      const users = (userRows || []).map((u: any) => {
+        const extras = membershipByUser.get(u.id) || [];
+        // Merge primary org first, then any memberships (deduped by orgId).
+        const seen = new Set<string>();
+        const organizations: Array<{
+          organizationId: string;
+          organizationName: string | null;
+          role: string | null;
+          source: 'primary' | 'member';
+        }> = [];
+        if (u.organization_id) {
+          organizations.push({
+            organizationId: u.organization_id,
+            organizationName: u.organization_name || null,
+            role: u.role || null,
+            source: 'primary',
+          });
+          seen.add(u.organization_id);
+        }
+        for (const m of extras) {
+          if (seen.has(m.organizationId)) continue;
+          organizations.push(m);
+          seen.add(m.organizationId);
+        }
+        return {
+          id: u.id,
+          organizationId: u.organization_id,
+          organizationName: u.organization_name,
+          firstName: u.first_name,
+          lastName: u.last_name,
+          email: u.email,
+          role: u.role,
+          status: u.status,
+          lastLogin: u.last_login,
+          createdAt: u.created_at,
+          organizations,
+          organizationIds: organizations.map((o) => o.organizationId),
+        };
+      });
+      // Documented shape: { users, total } (see docs/api/SUPERADMIN_API). Keeps dashboard counts and list in sync.
+      res.json({ users, total: users.length });
+    });
   });
 });
 
@@ -331,9 +420,38 @@ const updateUser = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { organizationId, role, status } = req.body;
 
+  // Feedback #1e3d749a / #682d4134 / #76ef6831 — normalize values so mixed-case
+  // payloads from the UI match the casing the rest of the platform uses:
+  // roles are stored UPPERCASE, status LOWERCASE. We keep nulls/undefined as
+  // "no-op" via COALESCE in SQL.
+  const normalizedRole =
+    typeof role === 'string' && role.trim().length > 0 ? role.trim().toUpperCase() : null;
+  const normalizedStatus =
+    typeof status === 'string' && status.trim().length > 0 ? status.trim().toLowerCase() : null;
+  const normalizedOrgId =
+    typeof organizationId === 'string' && organizationId.trim().length > 0
+      ? organizationId.trim()
+      : null;
+
+  // Feedback #76ef6831 — validate the target org exists before we let the
+  // update succeed, so moving to a non-existent tenant surfaces a clean 404
+  // instead of creating a dangling FK.
+  if (normalizedOrgId) {
+    const orgExists = await new Promise<boolean>((resolve) => {
+      deps.db.get(
+        'SELECT id FROM organizations WHERE id = ?',
+        [normalizedOrgId],
+        (err: any, row: any) => resolve(!err && !!row)
+      );
+    });
+    if (!orgExists) {
+      return next(new AppError(`Target organization '${normalizedOrgId}' not found`, 404));
+    }
+  }
+
   const sql = `UPDATE users SET organization_id = COALESCE(?, organization_id), role = COALESCE(?, role), status = COALESCE(?, status) WHERE id = ? `;
 
-  deps.db.run(sql, [organizationId, role, status, id], function (err) {
+  deps.db.run(sql, [normalizedOrgId, normalizedRole, normalizedStatus, id], function (err) {
     if (err) return next(new AppError(err.message, 500));
     if (this.changes === 0) return next(new AppError('User not found', 404));
 
@@ -342,7 +460,11 @@ const updateUser = catchAsync(async (req, res, next) => {
       action: 'updated',
       entityType: 'user',
       entityId: id,
-      newValue: { organizationId, role, status },
+      newValue: {
+        organizationId: normalizedOrgId,
+        role: normalizedRole,
+        status: normalizedStatus,
+      },
     });
 
     res.json({ message: 'User updated successfully' });
