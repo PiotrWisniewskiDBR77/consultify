@@ -557,8 +557,11 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       await Api.deleteUser(id);
       toast.success('User deleted');
       loadUsers();
-    } catch (e) {
-      toast.error('Failed to delete user');
+    } catch (e: any) {
+      // Feedback #406b042a — surface actual backend reason (e.g. owner
+      // protection, unauthorized) instead of masking every failure with a
+      // generic "Failed to delete user" toast.
+      toast.error(e?.message || 'Failed to delete user');
     }
   };
 

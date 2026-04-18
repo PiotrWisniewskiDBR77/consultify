@@ -857,11 +857,15 @@ export const Api = {
   },
 
   deleteUser: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    // Feedback #406b042a — route through fetchWithRetry + handleResponse so
+    // backend errors (e.g. "Cannot delete Account Owner", "User not found",
+    // stale token / 401) surface to the UI with actionable messages instead
+    // of a generic "Failed to delete user" toast.
+    const res = await fetchWithRetry(`${API_URL}/users/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to delete user');
+    await handleResponse(res, 'Failed to delete user');
   },
 
   checkSystemHealth: async (): Promise<{

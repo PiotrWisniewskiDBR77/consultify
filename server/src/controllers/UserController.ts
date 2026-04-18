@@ -187,7 +187,26 @@ export class UserController {
   );
 
   /**
-   * Delete user
+   * Delete user (soft delete)
+   *
+   * Feedback #406b042a CRIT — "Nie można usuwać kont":
+   * - Previously attempted to UPDATE users.deleted_at which didn't exist on
+   *   the PG schema, so every call failed server-side and the UI only saw a
+   *   generic "Failed to delete user" toast.
+   * - Also required `organization_id` match on the target user, which blocked
+   *   superadmins operating cross-org (their own organizationId is rarely
+   *   the same as the tenant they're managing).
+   * - Sessions table has a user_id FK with no ON DELETE action, so leaving
+   *   live sessions behind would let a "deleted" user keep hitting the API
+   *   until their JWT expired — we explicitly purge them here.
+   *
+   * New behaviour:
+   * - SUPERADMIN can delete any non-owner user, regardless of org scoping.
+   * - ADMIN can only delete users inside their own organization.
+   * - Email is anonymized to free up the address for future re-registration.
+   * - Sessions are hard-deleted so the token is invalidated immediately.
+   * - Soft delete writes status='deleted' + deleted_at NOW() (the schema
+   *   migration 20260418_users_deleted_at_column.sql adds the column).
    */
   static deleteUser = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -195,15 +214,16 @@ export class UserController {
       const orgId = req.user?.organizationId;
       const currentUserId = req.user?.id;
       const currentUserRole = req.user?.role;
+      const isSuperadmin = currentUserRole === 'SUPERADMIN';
 
-      if (!orgId) {
-        res.status(401).json({ error: 'Unauthorized' });
+      // Only admins can delete users. Superadmins don't need an org.
+      if (currentUserRole !== 'ADMIN' && !isSuperadmin) {
+        res.status(403).json({ error: 'Only admins can delete users' });
         return;
       }
 
-      // Only admins can delete users
-      if (currentUserRole !== 'ADMIN' && currentUserRole !== 'SUPERADMIN') {
-        res.status(403).json({ error: 'Only admins can delete users' });
+      if (!isSuperadmin && !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
@@ -213,19 +233,29 @@ export class UserController {
         return;
       }
 
-      // Check if user exists and belongs to organization
-      const user = await queryHelpers.queryOne(
-        'SELECT id, role FROM users WHERE id = ? AND organization_id = ?',
-        [id, orgId]
-      );
+      // Look up the target user. Superadmin bypasses the org filter so they
+      // can manage users across tenants; regular admins stay scoped.
+      const user = (await queryHelpers.queryOne(
+        isSuperadmin
+          ? 'SELECT id, role, email, organization_id FROM users WHERE id = ?'
+          : 'SELECT id, role, email, organization_id FROM users WHERE id = ? AND organization_id = ?',
+        isSuperadmin ? [id] : [id, orgId]
+      )) as {
+        id: string;
+        role?: string;
+        email?: string;
+        organization_id?: string;
+      } | null;
 
       if (!user) {
         res.status(404).json({ error: 'User not found' });
         return;
       }
 
-      // Cannot delete owner
-      if ((user as any).role === 'OWNER') {
+      // Cannot delete the Account Owner. Upper-cased role values are the
+      // convention used elsewhere in this controller, but some older rows
+      // use lowercase — normalize before comparing.
+      if (String(user.role || '').toLowerCase() === 'owner') {
         res.status(403).json({
           error: 'Cannot delete Account Owner. Transfer ownership first.',
           code: 'OWNER_PROTECTED',
@@ -233,13 +263,37 @@ export class UserController {
         return;
       }
 
-      // Soft delete - set status to deleted
+      const nowIso = new Date().toISOString();
+      // Anonymized email preserves the unique index while freeing the original
+      // address for re-registration. Using a '+' tag keeps the original value
+      // recoverable from the audit trail if needed.
+      const anonymizedEmail = user.email
+        ? `${user.email}.deleted-${Date.now()}@deleted.local`
+        : `deleted-${id}@deleted.local`;
+
+      // 1) Revoke live sessions so the user is kicked off immediately. Sessions
+      //    has no ON DELETE CASCADE so we purge explicitly — this also unblocks
+      //    the soft delete path from any lingering FK issues on that table.
+      try {
+        await queryHelpers.queryRun('DELETE FROM sessions WHERE user_id = ?', [id]);
+      } catch (err) {
+        // sessions table may not exist in every environment (tests, local) —
+        // don't block the delete, but surface it in logs.
+        console.warn('[UserController.deleteUser] failed to purge sessions:', err);
+      }
+
+      // 2) Soft-delete with anonymization. `deleted_at` is provided by the
+      //    20260418_users_deleted_at_column.sql migration.
       await queryHelpers.queryRun(
-        `UPDATE users SET status = 'deleted', deleted_at = ? WHERE id = ? AND organization_id = ?`,
-        [new Date().toISOString(), id, orgId]
+        `UPDATE users
+            SET status = 'deleted',
+                deleted_at = ?,
+                email = ?
+          WHERE id = ?`,
+        [nowIso, anonymizedEmail, id]
       );
 
-      res.json({ message: 'User deleted successfully' });
+      res.json({ message: 'User deleted successfully', id });
     }
   );
 
