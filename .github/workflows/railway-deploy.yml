@@ -66,11 +66,23 @@ jobs:
 
       - name: Verify staging deployment
         run: |
+          fetch_url() {
+            if command -v curl >/dev/null 2>&1; then
+              curl -fsSL "$1" >/dev/null
+            elif command -v wget >/dev/null 2>&1; then
+              wget -qO- "$1" >/dev/null
+            elif command -v busybox >/dev/null 2>&1; then
+              busybox wget -qO- "$1" >/dev/null
+            else
+              echo "No supported HTTP client found in runner image" >&2
+              exit 1
+            fi
+          }
           if [ -n "${API_HEALTH_URL:-}" ]; then
-            curl -fsSL "$API_HEALTH_URL" >/dev/null
+            fetch_url "$API_HEALTH_URL"
           fi
           if [ -n "${FRONTEND_URL:-}" ]; then
-            curl -fsSL "$FRONTEND_URL" >/dev/null
+            fetch_url "$FRONTEND_URL"
           fi
 
   deploy-production:
@@ -106,9 +118,21 @@ jobs:
 
       - name: Verify production deployment
         run: |
+          fetch_url() {
+            if command -v curl >/dev/null 2>&1; then
+              curl -fsSL "$1" >/dev/null
+            elif command -v wget >/dev/null 2>&1; then
+              wget -qO- "$1" >/dev/null
+            elif command -v busybox >/dev/null 2>&1; then
+              busybox wget -qO- "$1" >/dev/null
+            else
+              echo "No supported HTTP client found in runner image" >&2
+              exit 1
+            fi
+          }
           if [ -n "${API_HEALTH_URL:-}" ]; then
-            curl -fsSL "$API_HEALTH_URL" >/dev/null
+            fetch_url "$API_HEALTH_URL"
           fi
           if [ -n "${FRONTEND_URL:-}" ]; then
-            curl -fsSL "$FRONTEND_URL" >/dev/null
+            fetch_url "$FRONTEND_URL"
           fi
