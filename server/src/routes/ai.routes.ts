@@ -1708,6 +1708,11 @@ router.post(
           screenContext,
           focusMode,
           conversationId,
+          // i18n-teresa fix 2026-04-18: propagate authoritative UI language so AIPipeline
+          // builds its system prompt (persona, behavioral, strict [LANGUAGE INSTRUCTION])
+          // in the locale the user actually selected — not sticky memory prefs.
+          language: language || undefined,
+          conversationLanguage: language ? String(language).split('-')[0] : undefined,
           // Tools & routing options (used by AIPipeline prompt + model selection)
           aiModes,
           knowledgeSources,
@@ -1722,6 +1727,7 @@ router.post(
         options: {
           role: roleName,
           systemInstruction: enhancedSystemInstruction,
+          language: language || undefined,
           // Tools & routing options
           aiModes,
           knowledgeSources,

@@ -711,6 +711,15 @@ export class AIPipeline {
           }
         }
 
+        // i18n-teresa fix 2026-04-18: propagate authoritative UI language
+        const authoritativeLanguageDT =
+          (request as any)?.options?.language ||
+          (request.context as any)?.language ||
+          (lightContext as any)?.conversationLanguage ||
+          (lightContext as any)?.userMemory?.preferences?.language ||
+          'en';
+        (lightContext as any).conversationLanguage = String(authoritativeLanguageDT).split('-')[0];
+
         return {
           context: lightContext as any,
           ragResults: 0,
@@ -801,9 +810,23 @@ export class AIPipeline {
           }
         }
 
+        // Resolve authoritative UI language for this request.
+        // Order of precedence (i18n-teresa fix 2026-04-18):
+        //   1. request.options.language / request.context.language    (explicit UI locale)
+        //   2. ctx.conversationLanguage                                (existing thread language)
+        //   3. userMemory.preferences.language                         (sticky profile pref)
+        //   4. 'en' fallback (NOT 'pl' — previously defaulted to Polish)
+        const authoritativeLanguage =
+          (request as any)?.options?.language ||
+          (request.context as any)?.language ||
+          (fullContext as any)?.conversationLanguage ||
+          userMemory?.preferences?.language ||
+          'en';
+
         // Merge memory into context
         const contextWithMemory = {
           ...fullContext,
+          conversationLanguage: String(authoritativeLanguage).split('-')[0],
           userMemory: userMemory
             ? {
                 preferences: userMemory.preferences,
@@ -875,8 +898,16 @@ export class AIPipeline {
 
       // Fallback: use context from request
       logger.info('[AIPipeline] Using fallback context (no userId/organizationId)');
+      const fallbackContext: any = { ...(request.context || {}) };
+      // i18n-teresa fix 2026-04-18: still propagate authoritative language in fallback
+      const authoritativeLanguageFallback =
+        (request as any)?.options?.language ||
+        fallbackContext?.language ||
+        fallbackContext?.conversationLanguage ||
+        'en';
+      fallbackContext.conversationLanguage = String(authoritativeLanguageFallback).split('-')[0];
       return {
-        context: request.context || {},
+        context: fallbackContext,
         ragResults: 0,
         memoryUsed: false,
       };
@@ -1117,6 +1148,11 @@ export class AIPipeline {
     }
 
     // 4.5. User memory (preferences, expertise, communication style)
+    // i18n-teresa fix 2026-04-18: DO NOT inject `preferences.language` into the prompt.
+    // It used to be rendered in Polish as "Preferowany język: pl", which the LLM treated as
+    // an authoritative user preference and overrode the UI locale (EN) with Polish output —
+    // even literally quoting "preferowany język to polski". The authoritative language is
+    // now enforced exclusively via the strict LANGUAGE INSTRUCTION block below.
     if (ctx?.userMemory) {
       const um = ctx.userMemory;
       const memParts: string[] = ['## PREFERENCJE UŻYTKOWNIKA'];
@@ -1124,8 +1160,6 @@ export class AIPipeline {
         memParts.push(`- Styl komunikacji: ${um.preferences.communicationStyle}`);
       if (um.preferences?.detailLevel)
         memParts.push(`- Poziom szczegółowości: ${um.preferences.detailLevel}`);
-      if (um.preferences?.language)
-        memParts.push(`- Preferowany język: ${um.preferences.language}`);
       if (um.expertise?.length > 0) memParts.push(`- Ekspertyza: ${um.expertise.join(', ')}`);
       if (um.recentTopics?.length > 0)
         memParts.push(`- Ostatnie tematy: ${um.recentTopics.join(', ')}`);
@@ -1252,6 +1286,24 @@ export class AIPipeline {
 
     // 8. Behavioral instructions
     parts.push(this.buildBehavioralInstructions(capability, ctx, request));
+
+    // 9. Strict LANGUAGE INSTRUCTION (i18n-teresa fix 2026-04-18).
+    //    Appended LAST so it is the most recent / highest-priority directive the LLM sees.
+    //    Mirrors the non-negotiable language policy used in /chat/stream & /chat/confirm routes.
+    const langBaseFinal = conversationLang ? String(conversationLang).split('-')[0] : 'en';
+    const languageLabelMap: Record<string, string> = {
+      pl: 'Polish (Polski)',
+      en: 'English',
+      de: 'German (Deutsch)',
+      es: 'Spanish (Español)',
+      ja: 'Japanese (日本語)',
+      jp: 'Japanese (日本語)',
+      ar: 'Arabic (العربية)',
+    };
+    const langLabel = languageLabelMap[langBaseFinal] || 'English';
+    parts.push(
+      `[LANGUAGE INSTRUCTION: You MUST always respond in ${langLabel}. This is the user's chosen application language and takes absolute priority over any other hint (memory, organization terminology, prior conversation). Even if the user writes their message in a different language, your response must be in ${langLabel}. Never mix languages within a single response. This is non-negotiable.]`
+    );
 
     return parts.filter(Boolean).join('\n\n');
   }
@@ -1690,6 +1742,9 @@ export class AIPipeline {
     ctx: any,
     request: AIPipelineRequest
   ): string {
+    // i18n-teresa fix 2026-04-18: rules 5-7 previously told the model to respond in the
+    // language the user WROTE in, which directly contradicted the strict LANGUAGE INSTRUCTION
+    // appended later. Replaced with a single rule that defers to the authoritative block.
     const instructions: string[] = [
       '## INSTRUKCJE',
       '1. Odpowiadaj konkretnie i pomocnie, wykorzystując powyższy kontekst.',
@@ -1697,9 +1752,7 @@ export class AIPipeline {
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
-      '5. MULTI-LANGUAGE SUPPORT: Twoją natywną funkcją jest obsługa 6 języków: polski (pl), angielski (en), niemiecki (de), hiszpański (es), arabski (ar), japoński (ja).',
-      '6. Zawsze odpowiadaj w tym samym języku, w którym zwrócił się do Ciebie użytkownik. Jeśli użytkownik mówi po polsku, odpowiadaj po polsku. Jeśli po japońsku - po japońsku, itd.',
-      '7. Dbaj o naturalność i poprawność językową w każdym z tych języków.',
+      '5. LANGUAGE POLICY: You support Polish (pl), English (en), German (de), Spanish (es), Arabic (ar) and Japanese (ja). ALWAYS respond in the single language specified by the final [LANGUAGE INSTRUCTION] block — do NOT auto-detect from the user\'s input and do NOT mix languages within one response. Natural, idiomatic output in the selected language is required.',
     ];
 
     // Chat runtime modes (ToolsMenu)

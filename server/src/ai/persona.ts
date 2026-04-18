@@ -434,11 +434,14 @@ export function detectLanguage(
   conversationLanguage?: string | null,
   userPreferredLanguage?: string | null
 ): PersonaLanguage {
-  const lang = (conversationLanguage || userPreferredLanguage || 'pl').toLowerCase().slice(0, 2);
+  // i18n-teresa fix 2026-04-18: default is English, not Polish. Previously, an unset
+  // language would silently Polonize the persona prompt, which biased the LLM toward PL
+  // output even when the user had selected EN in the UI.
+  const lang = (conversationLanguage || userPreferredLanguage || 'en').toLowerCase().slice(0, 2);
   if (lang in LANGUAGE_CONFIGS) return lang as PersonaLanguage;
   // Map common variants
   if (lang === 'pt' || lang === 'it' || lang === 'fr') return 'en'; // fallback to English for unsupported
-  return 'pl'; // default Polish
+  return 'en';
 }
 
 // ---------------------------------------------------------------------------
@@ -452,7 +455,8 @@ export function buildPersonaPrompt(
   currentScreen?: string | null,
   language?: PersonaLanguage | string | null
 ): string {
-  const lang = language && language in LANGUAGE_CONFIGS ? (language as PersonaLanguage) : 'pl';
+  // i18n-teresa fix 2026-04-18: default is 'en' (was 'pl') — see detectLanguage comment.
+  const lang = language && language in LANGUAGE_CONFIGS ? (language as PersonaLanguage) : 'en';
 
   const emphasis = getScreenEmphasis(currentScreen);
 
