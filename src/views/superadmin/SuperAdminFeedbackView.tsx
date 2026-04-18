@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
@@ -279,6 +280,21 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [pageLimit, setPageLimit] = useState<number>(1000);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Deep-link support: when the Superadmin signal popover (or any other
+  // caller) navigates here with `?feedbackId=<id>`, auto-open that item's
+  // detail drawer as soon as it's loaded, then strip the query param so
+  // the URL stays clean on back/forward.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const requestedFeedbackId = useMemo(() => {
+    try {
+      return new URLSearchParams(location.search).get('feedbackId');
+    } catch {
+      return null;
+    }
+  }, [location.search]);
+  const [deepLinkConsumed, setDeepLinkConsumed] = useState(false);
+
   const fetchFeedback = useCallback(
     async (limit?: number) => {
       try {
@@ -364,6 +380,44 @@ export const SuperAdminFeedbackView: React.FC = () => {
       setSelectedItem(item);
     }
   };
+
+  const loadDetailById = useCallback(
+    async (id: string) => {
+      try {
+        const detail = await Api.get(`/feedback/${id}`);
+        setSelectedItem(normalizeItem(detail));
+      } catch (error) {
+        console.error('[Feedback] Deep-link failed to load detail:', error);
+      }
+    },
+    [normalizeItem]
+  );
+
+  useEffect(() => {
+    if (!requestedFeedbackId || deepLinkConsumed || isLoading) return;
+    // We intentionally don't require the item to already be in the
+    // currently-loaded page — older items might live beyond the first
+    // page. loadDetailById always hits the server for that specific id.
+    loadDetailById(requestedFeedbackId);
+    setDeepLinkConsumed(true);
+    // Strip the query param so the user can close/reopen the drawer
+    // without re-triggering the effect or leaving a stale URL.
+    const params = new URLSearchParams(location.search);
+    params.delete('feedbackId');
+    const nextSearch = params.toString();
+    navigate(
+      { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
+      { replace: true }
+    );
+  }, [
+    requestedFeedbackId,
+    deepLinkConsumed,
+    isLoading,
+    loadDetailById,
+    location.pathname,
+    location.search,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (!selectedItem) return;

@@ -523,8 +523,13 @@ async function dispatchFeedbackEscalation(input: {
           : input.severity === 'HIGH'
             ? 'WARNING'
             : 'INFO';
+  // Deep-link Superadmin signals straight to the feedback/feature module
+  // with the item id as a query param. The feedback view reads `feedbackId`
+  // on mount and auto-opens the detail drawer.
   const actionUrl =
-    input.kind === 'feature' ? '/admin?section=features' : '/admin?section=feedback';
+    input.kind === 'feature'
+      ? `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(input.id)}&tab=features`
+      : `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(input.id)}`;
   const body = buildNotificationBody(input.message, [
     input.routePath ? `Route: ${input.routePath}` : '',
     input.taskId ? `Task: ${input.taskId}` : '',
