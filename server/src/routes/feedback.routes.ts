@@ -1207,8 +1207,32 @@ router.post(
 router.get(
   '/',
   verifySuperAdmin,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureFeedbackSchema();
+
+    // Historically this endpoint hard-capped at LIMIT 200 with no paging,
+    // which silently hid older tickets once the queue grew past that mark
+    // (reported as "where did all my feedback go?" in V2.1 smoke tests).
+    // We now accept explicit ?limit / ?offset, default to 1000 so most
+    // installations see everything in one shot, and always report the
+    // real backing count via X-Total-Count so the UI can surface it.
+    const rawLimit = Number(req.query.limit);
+    const rawOffset = Number(req.query.offset);
+    const limit = Math.min(
+      Math.max(Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 1000, 1),
+      5000
+    );
+    const offset = Math.max(Number.isFinite(rawOffset) && rawOffset > 0 ? rawOffset : 0, 0);
+
+    const totalRow = await dbGet<{ count: number }>(
+      `SELECT COUNT(*)::int as count FROM feedback_items`,
+      []
+    ).catch(async () =>
+      // SQLite doesn't like `::int` — fall back to the untyped variant.
+      dbGet<{ count: number }>(`SELECT COUNT(*) as count FROM feedback_items`, [])
+    );
+    const total = Number(totalRow?.count || 0);
+
     const rows = await dbAll<any>(
       `
         SELECT
@@ -1233,13 +1257,16 @@ router.get(
         FROM feedback_items f
         LEFT JOIN users u ON u.id = f.user_id
         ORDER BY f.created_at DESC
-        LIMIT 200
+        LIMIT ? OFFSET ?
       `,
-      []
+      [limit, offset]
     );
 
     const shaped = (rows || []).map((r: any) => shapeFeedbackRow(r));
 
+    res.setHeader('X-Total-Count', String(total));
+    res.setHeader('X-Page-Limit', String(limit));
+    res.setHeader('X-Page-Offset', String(offset));
     return res.json(shaped);
   })
 );

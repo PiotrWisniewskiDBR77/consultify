@@ -275,20 +275,36 @@ export const SuperAdminFeedbackView: React.FC = () => {
     []
   );
 
-  const fetchFeedback = useCallback(async () => {
-    try {
-      const data = await Api.getFeedback();
-      setFeedback((data || []).map((item: any) => normalizeItem(item)));
-    } catch (error) {
-      console.error('Error fetching feedback:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [normalizeItem]);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [pageLimit, setPageLimit] = useState<number>(1000);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const fetchFeedback = useCallback(
+    async (limit?: number) => {
+      try {
+        const page = await Api.getFeedbackPage({ limit: limit ?? pageLimit });
+        setFeedback((page.items || []).map((item: any) => normalizeItem(item)));
+        setTotalCount(page.total);
+        if (limit) setPageLimit(limit);
+      } catch (error) {
+        console.error('Error fetching feedback:', error);
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    },
+    [normalizeItem, pageLimit]
+  );
+
+  const loadMoreFeedback = useCallback(async () => {
+    setIsLoadingMore(true);
+    await fetchFeedback(pageLimit + 1000);
+  }, [fetchFeedback, pageLimit]);
 
   useEffect(() => {
     fetchFeedback();
-  }, [fetchFeedback]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateStatus = async (id: string, newStatus: FeedbackStatus) => {
     try {
@@ -1594,6 +1610,48 @@ export const SuperAdminFeedbackView: React.FC = () => {
         </div>
       ) : (
         <>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs text-slate-600 dark:text-slate-400">
+            <div>
+              {t('feedback.counter', 'Showing')}{' '}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {filteredFeedback.length}
+              </span>{' '}
+              {t('feedback.counter.of', 'of')}{' '}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {feedback.length}
+              </span>{' '}
+              {t('feedback.counter.loaded', 'loaded')}
+              {totalCount != null && totalCount > feedback.length && (
+                <>
+                  {' · '}
+                  <span className="text-amber-600 dark:text-amber-400">
+                    {totalCount - feedback.length}{' '}
+                    {t('feedback.counter.more', 'older ticket(s) not yet loaded')}
+                  </span>
+                </>
+              )}
+              {totalCount != null && totalCount === feedback.length && feedback.length > 0 && (
+                <>
+                  {' · '}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {t('feedback.counter.all', 'all in')}
+                  </span>
+                </>
+              )}
+            </div>
+            {totalCount != null && totalCount > feedback.length && (
+              <button
+                type="button"
+                onClick={loadMoreFeedback}
+                disabled={isLoadingMore}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingMore
+                  ? t('feedback.loadingMore', 'Loading…')
+                  : t('feedback.loadMore', `Load ${Math.min(1000, totalCount - feedback.length)} more`)}
+              </button>
+            )}
+          </div>
           {filteredFeedback.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-navy-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
               <p className="text-slate-500">

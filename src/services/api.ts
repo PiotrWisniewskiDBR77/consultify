@@ -6043,11 +6043,36 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch feedback AI insights');
   },
 
-  getFeedback: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/feedback`, { headers: getHeaders() });
+  getFeedback: async (opts?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<any[]> => {
+    // Thin wrapper kept for backward compat — returns just the array so
+    // existing call sites (pending-badge count, dashboards) keep working.
+    const page = await Api.getFeedbackPage(opts);
+    return page.items;
+  },
+
+  /**
+   * Paginated feedback list. Returns items + total (read from X-Total-Count)
+   * so the Superadmin UI can show "N / total" and offer Load more.
+   */
+  getFeedbackPage: async (opts?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{ items: any[]; total: number; limit: number; offset: number }> => {
+    const params = new URLSearchParams();
+    if (opts?.limit != null) params.set('limit', String(opts.limit));
+    if (opts?.offset != null) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    const url = `${API_URL}/feedback${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch feedback');
-    const data = await res.json();
-    return data || [];
+    const items = (await res.json()) || [];
+    const total = Number(res.headers.get('X-Total-Count') || items.length);
+    const limit = Number(res.headers.get('X-Page-Limit') || items.length);
+    const offset = Number(res.headers.get('X-Page-Offset') || 0);
+    return { items, total, limit, offset };
   },
 
   updateFeedbackStatus: async (id: string, status: string): Promise<void> => {
