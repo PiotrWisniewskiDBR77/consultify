@@ -270,8 +270,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   const submitUrl = () => {
     const raw = urlValue.trim();
     if (!raw) return;
+    // Feedback #acc27ab3 — users were pasting/typing bare hosts like
+    // `example.com` or `www.example.com/path` and hitting "Invalid link"
+    // because `new URL(raw)` needs a protocol. Auto-prepend `https://`
+    // when no scheme is present so the common paste path just works.
+    // Strings that already contain an explicit scheme (http:, https:,
+    // mailto:, ftp:, javascript:, data:, etc.) are left untouched so the
+    // downstream protocol guard still rejects non-http(s) values.
+    const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(raw);
+    const candidate = hasScheme ? raw : `https://${raw}`;
     try {
-      const u = new URL(raw);
+      const u = new URL(candidate);
       if (u.protocol !== 'http:' && u.protocol !== 'https:') {
         toast.error(t('aiChat.menu.urlUnsupportedProtocol', 'Only http(s) links are supported'));
         return;

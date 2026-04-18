@@ -874,8 +874,30 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Submit session
   const handleSubmitSession = useCallback(async () => {
-    if (!session) return;
-    if (isLocked) return;
+    // Feedback #8f12f96f — the old code silently `return`ed when
+    // `session` was null or `isLocked` was true, so clicking
+    // "Zatwierdź i wyślij" produced no visible reaction. That is the
+    // exact symptom the tester filed. Surface the reason as a toast so
+    // the user always gets feedback for their click, and treat an
+    // already-locked state as success (nothing to do) rather than a
+    // silent fail.
+    if (!session) {
+      toast.error(
+        isPolish
+          ? 'Nie udało się załadować sesji. Odśwież stronę i spróbuj ponownie.'
+          : 'Session not loaded. Refresh the page and try again.'
+      );
+      return;
+    }
+    if (isLocked) {
+      toast(
+        isPolish
+          ? 'Ten wywiad został już zatwierdzony i jest tylko do odczytu.'
+          : 'This interview is already submitted and read-only.',
+        { icon: 'ℹ️' }
+      );
+      return;
+    }
 
     try {
       if (session.assignmentId) {
@@ -899,9 +921,19 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       await Api.patch(`/interview/sessions/${session.id}`, { status: 'completed' });
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
       onComplete?.(session.id);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[InterviewWorkspace] Failed to submit session:', error);
-      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Failed to submit');
+      const apiMsg =
+        error?.response?.data?.error || error?.response?.data?.message || error?.message;
+      toast.error(
+        apiMsg
+          ? isPolish
+            ? `Nie udało się zatwierdzić: ${apiMsg}`
+            : `Failed to submit: ${apiMsg}`
+          : isPolish
+            ? 'Nie udało się zatwierdzić'
+            : 'Failed to submit'
+      );
     }
   }, [session, isLocked, isPolish, onComplete, questions]);
 
