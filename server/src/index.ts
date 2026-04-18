@@ -1225,6 +1225,29 @@ if (startServer && shouldStartHttpServer) {
   (async () => {
     logger.info('[Server] Starting HTTP server after route registration...');
 
+    // Feedback artifact retention pruner (best-effort, daily, idempotent).
+    // Keeps screenshot storage bounded even when the Railway volume is not
+    // yet attached — safe to run on ephemeral dirs too.
+    try {
+      const { startArtifactPruner } = await import('./services/feedbackArtifacts.js');
+      const maxAgeDays = Number(process.env.FEEDBACK_ARTIFACTS_RETENTION_DAYS || 30);
+      startArtifactPruner({ maxAgeDays });
+      logger.info(
+        `[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`
+      );
+    } catch (err: any) {
+      logger.warn('[Server] Feedback artifact pruner not started:', err?.message);
+    }
+
+    // Feedback Slack digest (daily). Gated on FEEDBACK_DIGEST_ENABLED=true so
+    // non-prod / local envs stay silent by default.
+    try {
+      const { startFeedbackDigestCron } = await import('./services/feedbackDigest.js');
+      startFeedbackDigestCron();
+    } catch (err: any) {
+      logger.warn('[Server] Feedback digest cron not started:', err?.message);
+    }
+
     // V4-IDEA-02: Idea collab WebSocket /ws/collab/:ideaId (native ws for CollaborationOverlay)
     try {
       const { attachIdeaCollabWs } = await import('./gateways/ideaCollabWs.gateway.js');

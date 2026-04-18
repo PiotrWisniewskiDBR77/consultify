@@ -12,11 +12,11 @@ import {
   Globe,
   Image as ImageIcon,
   Lightbulb,
-  PanelsTopLeft,
   MessageSquare,
   MessageSquareWarning,
   Monitor,
   Palette,
+  PanelsTopLeft,
   Search,
   Send,
   Sparkles,
@@ -120,6 +120,11 @@ interface FeedbackItem {
   deploy_status?: string | null;
   deploy_targets?: string[];
   resolution_summary?: string | null;
+  duplicate_count?: number;
+  duplicate_of?: string | null;
+  signature_hash?: string | null;
+  has_screenshot?: boolean;
+  has_diagnostics?: boolean;
 }
 
 interface WorkflowTimelineEntry {
@@ -417,8 +422,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
           ...(selectedItem.resolution || {}),
           summary: workflowDraft.resolutionSummary || null,
         },
-        workflowTimeline:
-          result?.workflowTimeline || selectedItem.workflowTimeline || [],
+        workflowTimeline: result?.workflowTimeline || selectedItem.workflowTimeline || [],
       });
 
       setFeedback((prev) => prev.map((item) => (item.id === nextItem.id ? nextItem : item)));
@@ -503,11 +507,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const envOptions = useMemo(
     () =>
       Array.from(
-        new Set(
-          feedback
-            .map((item) => String(item.source_env || '').trim())
-            .filter(Boolean)
-        )
+        new Set(feedback.map((item) => String(item.source_env || '').trim()).filter(Boolean))
       ),
     [feedback]
   );
@@ -555,6 +555,36 @@ export const SuperAdminFeedbackView: React.FC = () => {
                   className={`text-[11px] font-bold ${SEVERITY_CONFIG[item.severity]?.color || 'text-slate-400'} flex items-center gap-1`}
                 >
                   {SEVERITY_CONFIG[item.severity]?.icon} {item.severity}
+                </span>
+              )}
+              {typeof item.duplicate_count === 'number' && item.duplicate_count > 0 && (
+                <span
+                  className="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-900 inline-flex items-center gap-1"
+                  title={t(
+                    'feedback.duplicateBadge.title',
+                    'Triage wykrył podobne zgłoszenia — otwórz szczegóły żeby je zobaczyć'
+                  )}
+                >
+                  <Copy size={10} />×{item.duplicate_count}
+                </span>
+              )}
+              {item.has_screenshot && (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-900 inline-flex items-center gap-1"
+                  title={t('feedback.hasScreenshot', 'Zgłoszenie zawiera screenshot')}
+                >
+                  <ImageIcon size={10} />
+                </span>
+              )}
+              {item.has_diagnostics && (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-900 inline-flex items-center gap-1"
+                  title={t(
+                    'feedback.hasDiagnostics',
+                    'Zgłoszenie zawiera logi konsoli / sieci / breadcrumbs'
+                  )}
+                >
+                  <Sparkles size={10} />
                 </span>
               )}
             </div>
@@ -612,12 +642,16 @@ export const SuperAdminFeedbackView: React.FC = () => {
     const meta = parseMetadata(selectedItem.metadata);
     const alertDispatch = parseAlertDispatch(meta);
     const alertResults = alertDispatch?.results || {};
-    const dossier = (meta.dossier && typeof meta.dossier === 'object'
-      ? (meta.dossier as Record<string, unknown>)
-      : {}) as Record<string, unknown>;
-    const appCtx = (dossier.appContext && typeof dossier.appContext === 'object'
-      ? (dossier.appContext as Record<string, unknown>)
-      : {}) as Record<string, unknown>;
+    const dossier = (
+      meta.dossier && typeof meta.dossier === 'object'
+        ? (meta.dossier as Record<string, unknown>)
+        : {}
+    ) as Record<string, unknown>;
+    const appCtx = (
+      dossier.appContext && typeof dossier.appContext === 'object'
+        ? (dossier.appContext as Record<string, unknown>)
+        : {}
+    ) as Record<string, unknown>;
     const consoleLogs = Array.isArray(dossier.consoleLogs)
       ? (dossier.consoleLogs as Array<{ at?: string; level?: string; message?: string }>)
       : [];
@@ -644,7 +678,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
       | undefined;
     const artifacts = Array.isArray(meta.artifacts) ? (meta.artifacts as any[]) : [];
     const hasScreenshot = artifacts.some((a) => a && a.kind === 'screenshot');
-    const signatureHash = typeof meta.signatureHash === 'string' ? (meta.signatureHash as string) : null;
+    const signatureHash =
+      typeof meta.signatureHash === 'string' ? (meta.signatureHash as string) : null;
     const duplicateCandidates = Array.isArray(meta.duplicateCandidates)
       ? (meta.duplicateCandidates as Array<{ id: string; title: string | null }>)
       : [];
@@ -698,7 +733,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
         note: entry.note,
         actor: entry.changed_by,
         color:
-          STATUS_CONFIG[entry.to_status as FeedbackStatus]?.color || 'text-slate-700 dark:text-slate-300',
+          STATUS_CONFIG[entry.to_status as FeedbackStatus]?.color ||
+          'text-slate-700 dark:text-slate-300',
       })),
     ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
@@ -832,7 +868,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <span className="text-slate-500">{t('feedback.cluster', 'Cluster')}</span>
                 <input
                   value={workflowDraft.cluster}
-                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, cluster: e.target.value }))}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, cluster: e.target.value }))
+                  }
                   className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
                   placeholder="Inbox / Superadmin Users"
                 />
@@ -841,7 +879,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <span className="text-slate-500">{t('feedback.waitingOn', 'Waiting on')}</span>
                 <input
                   value={workflowDraft.waitingOn}
-                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, waitingOn: e.target.value }))}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, waitingOn: e.target.value }))
+                  }
                   className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
                   placeholder="user verification / deploy / design"
                 />
@@ -869,7 +909,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <span className="text-slate-500">Branch</span>
                 <input
                   value={workflowDraft.branch}
-                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, branch: e.target.value }))}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, branch: e.target.value }))
+                  }
                   className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
                 />
               </label>
@@ -885,7 +927,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <span className="text-slate-500">Task URL</span>
                 <input
                   value={workflowDraft.taskUrl}
-                  onChange={(e) => setWorkflowDraft((prev) => ({ ...prev, taskUrl: e.target.value }))}
+                  onChange={(e) =>
+                    setWorkflowDraft((prev) => ({ ...prev, taskUrl: e.target.value }))
+                  }
                   className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
                 />
               </label>
@@ -1193,14 +1237,29 @@ export const SuperAdminFeedbackView: React.FC = () => {
             </div>
 
             {duplicateCandidates.length > 0 && (
-              <div className="text-xs text-slate-600 dark:text-slate-400">
-                <span className="font-semibold">
-                  {t('feedback.duplicates', 'Possible duplicates')}:
-                </span>{' '}
-                {duplicateCandidates
-                  .slice(0, 5)
-                  .map((d) => d.title || d.id.slice(0, 8))
-                  .join(' · ')}
+              <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                <div className="font-semibold flex items-center gap-1.5">
+                  <Copy size={12} />
+                  {t('feedback.duplicates', 'Possible duplicates')}{' '}
+                  <span className="text-[10px] font-normal text-slate-500 dark:text-slate-500">
+                    ({duplicateCandidates.length})
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {duplicateCandidates.slice(0, 5).map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => loadDetail({ id: d.id } as FeedbackItem)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                      title={`${d.id} — ${d.title || ''}`}
+                    >
+                      <ChevronRight size={10} />
+                      <span className="font-mono text-[10px]">{d.id.slice(0, 8)}</span>
+                      {d.title ? <span className="max-w-[160px] truncate">{d.title}</span> : null}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -1265,9 +1324,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       <span className="text-slate-400">
                         {n.at ? format(new Date(n.at), 'HH:mm:ss') : ''}
                       </span>{' '}
-                      <span className="text-red-600 dark:text-red-400">
-                        {n.status ?? 'ERR'}
-                      </span>{' '}
+                      <span className="text-red-600 dark:text-red-400">{n.status ?? 'ERR'}</span>{' '}
                       {n.method} {n.url} ({n.durationMs ?? '?'}ms)
                       {n.error ? ` — ${n.error}` : ''}
                     </li>
@@ -1285,10 +1342,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <pre className="mt-2 max-h-60 overflow-auto text-[11px] bg-slate-50 dark:bg-navy-900 p-2 rounded font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                   {consoleLogs
                     .slice(-30)
-                    .map(
-                      (c) =>
-                        `[${c.level || 'log'}] ${c.at || ''} ${c.message || ''}`
-                    )
+                    .map((c) => `[${c.level || 'log'}] ${c.at || ''} ${c.message || ''}`)
                     .join('\n')}
                 </pre>
               </details>

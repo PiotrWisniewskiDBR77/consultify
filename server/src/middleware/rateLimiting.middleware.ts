@@ -159,4 +159,20 @@ export const conversationsRateLimiter = createLimiter({
   prefix: 'conv',
 });
 
+/**
+ * Feedback submission: 10 req / min (prod).
+ *
+ * Keys by userId when authenticated, else IP. Scoped narrowly because each
+ * POST /api/feedback payload can hold up to ~1.2 MB of diagnostics (screenshot
+ * + breadcrumbs + console + network buffers). Without a dedicated limiter one
+ * bored user could easily fill the feedback_items table and the
+ * FEEDBACK_ARTIFACTS_DIR volume in minutes.
+ */
+export const feedbackRateLimiter = createLimiter({
+  windowMs: 60_000,
+  max: isProd ? 10 : 100,
+  prefix: 'feedback',
+  message: 'Feedback submission rate limit exceeded. Please try again in a moment.',
+});
+
 export default defaultRateLimiter;

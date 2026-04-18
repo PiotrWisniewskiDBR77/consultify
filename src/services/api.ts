@@ -6105,6 +6105,25 @@ export const Api = {
     return data || [];
   },
 
+  getFeedbackAnalyticsOverview: async (): Promise<{
+    sampleSize: number;
+    openCount: number;
+    totals: {
+      byStatus: Record<string, number>;
+      byType: Record<string, number>;
+      bySeverity: Record<string, number>;
+      byEnv: Record<string, number>;
+    };
+    aging: { under24h: number; h24_48: number; d2_7: number; over7d: number };
+    mttrLast30d: { medianHours: number | null; p90Hours: number | null; sampleSize: number };
+    last30d: { created: number; reopened: number; reopenRatePct: number };
+    generatedAt: string;
+  }> => {
+    const res = await fetch(`${API_URL}/feedback/analytics/overview`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch feedback analytics overview');
+    return res.json();
+  },
+
   getFeedbackCursorBrief: async (id: string): Promise<string> => {
     const res = await fetch(`${API_URL}/feedback/${encodeURIComponent(id)}/cursor-brief`, {
       headers: getHeaders(),
@@ -12199,6 +12218,306 @@ export const Api = {
     }
   },
 
+  /**
+   * V8 / Wave A7.4 — Operator lookup over a persisted message's trust
+   * bundle. Returns the canonical bundle + any available `routingTrace`.
+   * Falsy on network/permission failure so the UI can gracefully fallback
+   * to the inline (message-attached) bundle.
+   */
+  getMessageTrustTrace: async (messageId: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/trust/${encodeURIComponent(messageId)}/trace`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as {
+        messageId: string;
+        conversationId: string;
+        createdAt: string;
+        modelUsed: string | null;
+        trustBundle: unknown;
+        trace: unknown[];
+        traceRef: string | null;
+      };
+    } catch (err: any) {
+      console.error('[Api] getMessageTrustTrace error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B9 — Feedback summary (admin view).
+   *
+   * Returns aggregates over `ai_response_feedback` for the admin Runs
+   * dashboard. Requires admin/owner role on the server; callers should
+   * 403-handle.
+   */
+  getAiFeedbackSummary: async (params?: {
+    windowDays?: number;
+    topNegativeLimit?: number;
+    scope?: 'org' | 'global';
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.windowDays) qs.set('windowDays', String(params.windowDays));
+      if (params?.topNegativeLimit)
+        qs.set('topNegativeLimit', String(params.topNegativeLimit));
+      if (params?.scope) qs.set('scope', params.scope);
+      const s = qs.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/feedback/summary${s ? `?${s}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { summary: any };
+    } catch (err: any) {
+      console.error('[Api] getAiFeedbackSummary error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B9 follow-up — Prompt-tuning tickets.
+   *
+   * Admin-only helpers to turn negative feedback into durable tuning
+   * tasks without leaving the dashboard.
+   */
+  listPromptTuningTickets: async (params?: {
+    status?: Array<'open' | 'in_progress' | 'resolved' | 'dismissed'>;
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status && params.status.length > 0) {
+        qs.set('status', params.status.join(','));
+      }
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const s = qs.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/feedback/tuning-tickets${s ? `?${s}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { tickets: any[] };
+    } catch (err: any) {
+      console.error('[Api] listPromptTuningTickets error:', err);
+      return null;
+    }
+  },
+
+  createPromptTuningTicket: async (input: {
+    title: string;
+    notes?: string;
+    feedbackId?: string;
+    responseModeHint?: string;
+    capabilityHint?: string;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/tuning-tickets`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { ticket: any };
+    } catch (err: any) {
+      console.error('[Api] createPromptTuningTicket error:', err);
+      return null;
+    }
+  },
+
+  updatePromptTuningTicketStatus: async (
+    id: string,
+    status: 'open' | 'in_progress' | 'resolved' | 'dismissed'
+  ) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/feedback/tuning-tickets/${encodeURIComponent(id)}/status`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ status }),
+        }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { ticket: any };
+    } catch (err: any) {
+      console.error('[Api] updatePromptTuningTicketStatus error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B5 — AI runs (scheduled agents + background jobs).
+   *
+   * Read-only list/detail for the Runs view. `status` is a
+   * comma-separated list; leaving it blank returns everything.
+   */
+  listAiRuns: async (params?: {
+    status?: string[];
+    kind?: string;
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status?.length) qs.set('status', params.status.join(','));
+      if (params?.kind) qs.set('kind', params.kind);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const s = qs.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/runs${s ? `?${s}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return { runs: [] as any[] };
+      return (await res.json()) as { runs: any[] };
+    } catch (err: any) {
+      console.error('[Api] listAiRuns error:', err);
+      return { runs: [] as any[] };
+    }
+  },
+
+  getAiRun: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/runs/${encodeURIComponent(id)}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { run: any };
+    } catch (err: any) {
+      console.error('[Api] getAiRun error:', err);
+      return null;
+    }
+  },
+
+  /**
+   * V8 / Wave B1 — Agent catalog.
+   *
+   * Returns the six MVP agents visible in the composer picker. The
+   * server owns the canonical list; the client just renders it. Falls
+   * back to an empty array on network failure so the composer still
+   * shows "Default" and the user isn't blocked.
+   */
+  listAgents: async () => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/agents`, {
+        method: 'GET',
+      });
+      if (!res.ok) return { agents: [] as any[] };
+      return (await res.json()) as { agents: any[] };
+    } catch (err: any) {
+      console.error('[Api] listAgents error:', err);
+      return { agents: [] as any[] };
+    }
+  },
+
+  /**
+   * V8 / Wave B3 — Org memory retrieval.
+   *
+   * Lexical search over the caller's organization memory. Hits are
+   * tagged with `source_class: 'org_memory'` on the server so the
+   * trust bundle citation roll-up treats them as a first-class source.
+   */
+  searchOrgMemory: async (params: {
+    q: string;
+    limit?: number;
+    sourceType?: string;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      qs.set('q', params.q);
+      if (params.limit) qs.set('limit', String(params.limit));
+      if (params.sourceType) qs.set('sourceType', params.sourceType);
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/org-memory/search?${qs.toString()}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return { hits: [] as any[], count: 0 };
+      return (await res.json()) as { hits: any[]; count: number };
+    } catch (err: any) {
+      console.error('[Api] searchOrgMemory error:', err);
+      return { hits: [] as any[], count: 0 };
+    }
+  },
+
+  /**
+   * V8 / Wave A8 — research sessions.
+   *
+   * These endpoints back the ResearchSessionsDock UI. All calls are
+   * organization-scoped on the server side (`req.organizationId`); the
+   * client sends no extra filters beyond status / limit.
+   */
+  listResearchSessions: async (params?: {
+    status?: string[];
+    userScope?: 'me' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const q = new URLSearchParams();
+      if (params?.status?.length) q.set('status', params.status.join(','));
+      if (params?.userScope) q.set('userScope', params.userScope);
+      if (params?.limit) q.set('limit', String(params.limit));
+      const qs = q.toString();
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return { sessions: [] as any[] };
+      return (await res.json()) as { sessions: any[] };
+    } catch (err: any) {
+      console.error('[Api] listResearchSessions error:', err);
+      return { sessions: [] as any[] };
+    }
+  },
+
+  getResearchSession: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}`,
+        { method: 'GET' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] getResearchSession error:', err);
+      return null;
+    }
+  },
+
+  createResearchSession: async (body: {
+    topic: string;
+    conversationId?: string;
+    messageId?: string;
+    workloadClass?: 'deep_research' | 'long_job' | 'background';
+    plan?: unknown;
+    stepCount?: number;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] createResearchSession error:', err);
+      return null;
+    }
+  },
+
+  cancelResearchSession: async (id: string) => {
+    try {
+      const res = await fetchWithRetry(
+        `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}/cancel`,
+        { method: 'POST' }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as { session: any };
+    } catch (err: any) {
+      console.error('[Api] cancelResearchSession error:', err);
+      return null;
+    }
+  },
+
   approveAIAction: async (actionId: string, conversationId?: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/approve`, {
@@ -12928,8 +13247,25 @@ export const Api = {
     return normalized;
   },
 
-  // Get connected cloud providers
+  // Get connected cloud providers.
+  // Primary path: `/api/cloud/providers` returns the V8 Wave B8 shape
+  // (`{ id, label, connected, capabilities: { connect|browse|freshness } }`).
+  // Fallback: `/api/cloud/sources` (old behavior) for deployments that
+  // haven't been redeployed yet.
   getCloudProviders: async () => {
+    try {
+      const res = await fetch(`${API_URL}/cloud/providers`, {
+        headers: getHeaders(),
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        if (Array.isArray(payload?.providers) && payload.providers.length > 0) {
+          return { providers: payload.providers, sources: [] };
+        }
+      }
+    } catch {
+      // fall through to legacy path
+    }
     const res = await fetch(`${API_URL}/cloud/sources`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to load cloud providers');
     const payload = await res.json();
@@ -12942,6 +13278,7 @@ export const Api = {
         { id: 'google-drive', name: 'Google Drive', connected: connected.has('google_drive') },
         { id: 'onedrive', name: 'OneDrive', connected: connected.has('onedrive') },
         { id: 'dropbox', name: 'Dropbox', connected: connected.has('dropbox') },
+        { id: 'notion', name: 'Notion', connected: connected.has('notion') },
       ],
       sources,
     };

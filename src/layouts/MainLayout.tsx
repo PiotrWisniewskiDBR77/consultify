@@ -9,6 +9,7 @@ import { AIFreezeBanner } from '../components/AIFreezeBanner';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';
+import { FeedbackFloatingButton } from '../components/Feedback/FeedbackFloatingButton';
 import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
 import { HelpDeepLinkListener } from '../components/Help/HelpDeepLinkListener';
@@ -185,6 +186,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       <HelpSidePanel />
       <DocumentSidePanel />
       <FeedbackSidePanel />
+      <FeedbackFloatingButton />
 
       {/* Global access/paywall modal */}
       <AccessBlockedModal />

@@ -186,7 +186,10 @@ export const FeedbackSidePanel: React.FC = () => {
   const wasOpenRef = useRef(false);
 
   // Cursor-ready capture state (V2)
-  const [attachScreenshot, setAttachScreenshot] = useState(true);
+  // Screenshot is opt-in by default (off) — avoids payload bloat, GDPR
+  // surprises and slow DOM rasterisation on large dashboards. Diagnostics
+  // (console/network/breadcrumbs) stay on because they are cheap and textual.
+  const [attachScreenshot, setAttachScreenshot] = useState(false);
   const [attachDiagnostics, setAttachDiagnostics] = useState(true);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isPreparingDossier, setIsPreparingDossier] = useState(false);
@@ -218,7 +221,8 @@ export const FeedbackSidePanel: React.FC = () => {
           if (prefill.error && typeof prefill.error === 'object') {
             const parts: string[] = [];
             if (prefill.error.message) parts.push(`Error: ${prefill.error.message}`);
-            if (prefill.error.stack) parts.push(`Stack:\n${String(prefill.error.stack).slice(0, 2000)}`);
+            if (prefill.error.stack)
+              parts.push(`Stack:\n${String(prefill.error.stack).slice(0, 2000)}`);
             if (parts.length) setActualBehavior(parts.join('\n\n'));
           }
           delete (window as any).__FEEDBACK_PREFILL__;
@@ -790,7 +794,7 @@ export const FeedbackSidePanel: React.FC = () => {
               onChange={(e) => setAttachScreenshot(e.target.checked)}
               className="h-3.5 w-3.5"
             />
-            {t('feedback.attach.screenshot', 'Dołącz screenshot bieżącego widoku')}
+            {t('feedback.attach.screenshot', 'Dołącz screenshot bieżącego widoku (opcjonalnie)')}
           </label>
           <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
             <input

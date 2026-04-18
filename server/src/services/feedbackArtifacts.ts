@@ -115,8 +115,7 @@ export async function readScreenshot(feedbackId: string): Promise<{
     const filepath = path.join(dir, `${id}.screenshot.${ext}`);
     try {
       const buffer = await fs.readFile(filepath);
-      const mimeType =
-        ext === 'jpg' ? 'image/jpeg' : ext === 'png' ? 'image/png' : 'image/webp';
+      const mimeType = ext === 'jpg' ? 'image/jpeg' : ext === 'png' ? 'image/png' : 'image/webp';
       return { buffer, mimeType };
     } catch (err: any) {
       if (err && err.code !== 'ENOENT') {
@@ -139,4 +138,76 @@ export async function deleteArtifactsFor(feedbackId: string): Promise<void> {
       // ignore missing
     }
   }
+}
+
+/**
+ * Delete screenshot files older than `maxAgeDays` days. Best-effort; never
+ * throws. Called by the periodic pruner bootstrapped from `server/index.ts`.
+ * Also acts as a safety net when the volume is NOT a Railway persistent mount
+ * (dev, ephemeral staging rebuilds) — keeps the directory bounded.
+ */
+export async function pruneOldArtifacts(
+  maxAgeDays = 30
+): Promise<{ scanned: number; deleted: number; errors: number }> {
+  const dir = getArtifactsDir();
+  let entries: string[];
+  try {
+    entries = await fs.readdir(dir);
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    if (code === 'ENOENT') return { scanned: 0, deleted: 0, errors: 0 };
+    logger.warn('[feedbackArtifacts] pruneOldArtifacts readdir failed:', err);
+    return { scanned: 0, deleted: 0, errors: 1 };
+  }
+
+  const cutoffMs = Date.now() - Math.max(1, maxAgeDays) * 24 * 60 * 60 * 1000;
+  let deleted = 0;
+  let errors = 0;
+
+  for (const entry of entries) {
+    if (
+      !entry.endsWith('.screenshot.jpg') &&
+      !entry.endsWith('.screenshot.png') &&
+      !entry.endsWith('.screenshot.webp')
+    ) {
+      continue;
+    }
+    const filepath = path.join(dir, entry);
+    try {
+      const stat = await fs.stat(filepath);
+      if (stat.mtimeMs < cutoffMs) {
+        await fs.unlink(filepath);
+        deleted++;
+      }
+    } catch (err) {
+      errors++;
+      logger.warn('[feedbackArtifacts] pruneOldArtifacts stat/unlink failed:', err);
+    }
+  }
+
+  if (deleted > 0 || errors > 0) {
+    logger.info(
+      `[feedbackArtifacts] Pruned ${deleted}/${entries.length} screenshot(s) older than ${maxAgeDays}d (${errors} errors).`
+    );
+  }
+  return { scanned: entries.length, deleted, errors };
+}
+
+let pruneTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Start a daily prune timer (no-op in test mode). Safe to call multiple times
+ * — idempotent. Immediately runs once so staging/prod sees the effect without
+ * waiting 24h.
+ */
+export function startArtifactPruner(opts?: { maxAgeDays?: number; intervalMs?: number }): void {
+  if (process.env.NODE_ENV === 'test') return;
+  if (pruneTimer) return;
+  const maxAgeDays = opts?.maxAgeDays ?? 30;
+  const intervalMs = opts?.intervalMs ?? 24 * 60 * 60 * 1000;
+  void pruneOldArtifacts(maxAgeDays).catch(() => {});
+  pruneTimer = setInterval(() => {
+    void pruneOldArtifacts(maxAgeDays).catch(() => {});
+  }, intervalMs);
+  if (typeof pruneTimer.unref === 'function') pruneTimer.unref();
 }

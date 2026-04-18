@@ -1,8 +1,73 @@
 # Superadmin Feedback Pipeline — Source of Truth
 
-Status: V2.0 (2026-04-17) — adds rich capture + Cursor-ready dossier.
-Previously: V1 (2026-04-16) — metadata-driven pipeline (no schema migration).
+Status: V2.1 (2026-04-17) — operations hardening on top of V2.0.
+Previously: V2.0 (2026-04-17) — rich capture + Cursor dossier; V1 (2026-04-16) — metadata-driven pipeline.
 Owner: Piotr Wiśniewski / Consultinity Platform.
+
+> V2.1 changelog (incremental on top of V2.0):
+>
+> - **Screenshot capture is now opt-in (default off)** in
+>   `FeedbackSidePanel`. Diagnostics (console / network / breadcrumbs)
+>   remain on by default because they are cheap and textual. Rationale:
+>   eliminate payload bloat, GDPR surprises on admin views, and avoid
+>   rasterising enormous dashboards. When disabled, the dossier still
+>   ships console logs, network errors, breadcrumbs, uncaught errors
+>   and app context — enough for 90% of Cursor sessions.
+> - **Feedback submission rate limiter**
+>   (`server/src/middleware/rateLimiting.middleware.ts →
+>   feedbackRateLimiter`) — 10 req/min (prod) / 100 (dev) per user/IP,
+>   applied to `POST /api/feedback`, `/pulse`, `/feature`. Protects the
+>   queue + volume from malicious loops and accidental retry storms.
+> - **Automatic Cursor handoff**: `GET /api/feedback/:id/cursor-brief`
+>   now side-effects a workflow PATCH — first time a brief is pulled we
+>   stamp `workflow.source = 'cursor'`, set `branch = feedback/<short>`
+>   if empty, and append a `workflow_updated` timeline entry. No more
+>   manual "I forgot to flip the source" in triage.
+> - **Triage data on the list view**: the Superadmin feedback list now
+>   shows first-class badges for `duplicate_count`, `has_screenshot`,
+>   `has_diagnostics` (extracted on the backend in `feedbackShape.ts`,
+>   surfaced on every `GET /api/feedback*` response). Duplicate chips in
+>   the detail view are clickable and load the matching ticket in place.
+> - **Unit tests**: `server/src/services/__tests__/feedbackTriage.test.ts`
+>   (14) and `feedbackShape.test.ts` (16) cover clustering, priority
+>   inference, duplicate lookup, workflow/resolution normalisation and
+>   the full `shapeFeedbackRow` contract. Run with `npm test` inside
+>   `server/`.
+> - **Artifact retention pruner**: `startArtifactPruner()` (called from
+>   `server/src/index.ts` on boot) deletes screenshots older than
+>   `FEEDBACK_ARTIFACTS_RETENTION_DAYS` (default 30) once per day. Safe
+>   on ephemeral dirs and Railway volumes alike.
+> - **Operational docs for Railway volume**:
+>   `docs/operations/FEEDBACK_VOLUME_SETUP.md` — exact steps to mount
+>   `/app/server/.feedback-artifacts`, with rationale and smoke test.
+> - **Global feedback entry point**: `FeedbackFloatingButton` in
+>   `MainLayout` plus keyboard shortcut `Shift+Ctrl+B` (or `Shift+⌘+B`
+>   on macOS). Hidden inside `/superadmin/*` and when the panel is open.
+> - **Cursor plumbing scripts**:
+>   - `scripts/feedback-link-pr.ts` — reads current git branch
+>     `feedback/<8>`, PATCHes workflow with `branch`, `prUrl`,
+>     `deployStatus`, `owner=cursor`, `source=cursor`.
+>   - `scripts/generate-feedback-regression-test.ts` — pulls ticket
+>     details and scaffolds a vitest/playwright regression skeleton in
+>     `tests/regression/feedback-<short>.spec.ts`.
+> - **Slack daily digest**: `server/src/services/feedbackDigest.ts`
+>   runs once per UTC day (configurable via
+>   `FEEDBACK_DIGEST_HOUR_UTC`, gated on `FEEDBACK_DIGEST_ENABLED=true`).
+>   Sections: *new in last 24h*, *stuck in NEW > 48h*, *open CRITICAL
+>   on production*. Severity of the Slack system alert escalates to
+>   `CRITICAL` when the prod list is non-empty.
+> - **Analytics surface**:
+>   `GET /api/feedback/analytics/overview` + new tab
+>   `Feedback Analytics` in the Superadmin Customers module. KPIs: open
+>   count, MTTR (median + p90, last 30d), aging distribution of NEW,
+>   volume breakdown by status/type/severity/env, re-open rate.
+> - **Additive workflow columns** (migration
+>   `server/migrations/20260417_feedback_workflow_columns.sql`):
+>   `owner`, `cluster`, `deploy_status`, `workflow_updated_at` on
+>   `feedback_items`. Metadata JSON remains the source of truth; the
+>   columns are written through on each workflow PATCH (and at creation
+>   time for `cluster`). Enables cheap SQL dashboards without back-
+>   parsing JSON.
 
 > V2.0 changelog (incremental on top of V1):
 > - **Frontend collector** (`src/services/feedbackCollector/`) installs global

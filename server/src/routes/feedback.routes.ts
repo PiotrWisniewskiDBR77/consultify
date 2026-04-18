@@ -22,7 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { apiAuthRateLimiter, feedbackRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getAlertEmailService } from '../services/AlertEmailService.js';
 import feedbackAIService from '../services/feedbackAIService.js';
@@ -31,9 +31,20 @@ import {
   saveScreenshotFromDataUrl,
 } from '../services/feedbackArtifacts.js';
 import {
+  compactObject,
+  type FeedbackResolutionRecord,
+  type FeedbackWorkflowRecord,
+  type FeedbackWorkflowTimelineEntry,
+  normalizeResolutionMeta,
+  normalizeStringArray,
+  normalizeWorkflowMeta,
+  normalizeWorkflowTimeline,
+  shapeFeedbackRow,
+} from '../services/feedbackShape.js';
+import {
+  findDuplicateCandidates as findFeedbackDuplicates,
   inferCluster as inferFeedbackCluster,
   inferPriorityForPipeline as inferFeedbackPriority,
-  findDuplicateCandidates as findFeedbackDuplicates,
 } from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
 import slackService from '../services/slackService.js';
@@ -95,6 +106,10 @@ async function ensureFeedbackSchema(): Promise<void> {
         responded_at TIMESTAMP,
         responded_by TEXT,
         metadata_json TEXT,
+        owner TEXT,
+        cluster TEXT,
+        deploy_status TEXT,
+        workflow_updated_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -119,6 +134,24 @@ async function ensureFeedbackSchema(): Promise<void> {
     await dbRun(
       `CREATE INDEX IF NOT EXISTS idx_feedback_items_status_history_created ON feedback_items_status_history(created_at)`
     );
+
+    // Additive workflow columns (V2.1) — safe on both SQLite and Postgres.
+    // We attempt each ADD COLUMN independently so a legacy SQLite that
+    // already has the column still succeeds for the remaining ones.
+    const additive: Array<[string, string]> = [
+      ['owner', 'TEXT'],
+      ['cluster', 'TEXT'],
+      ['deploy_status', 'TEXT'],
+      ['workflow_updated_at', 'TIMESTAMP'],
+    ];
+    for (const [col, type] of additive) {
+      try {
+        await dbRun(`ALTER TABLE feedback_items ADD COLUMN ${col} ${type}`);
+      } catch {
+        // Column already exists or engine doesn't support it — non-fatal.
+      }
+    }
+
     _feedbackSchemaEnsured = true;
   } catch (err) {
     logger.warn('[Feedback] Failed to ensure feedback schema (will rely on migrations):', err);
@@ -836,6 +869,7 @@ router.post(
   '/',
   optionalVerifyToken,
   apiAuthRateLimiter,
+  feedbackRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureFeedbackSchema();
     const parsed = reportFeedbackSchema.safeParse(req.body || {});
@@ -1023,6 +1057,10 @@ router.post(
       ['metadata_json', JSON.stringify(metadataJson)],
       ['severity', severity || null],
       ['source_env', appEnv],
+      // V2.1 additive columns. Only the cluster seed is known at creation
+      // time; owner / deploy_status land once a human (or Cursor) PATCHes
+      // the workflow.
+      ['cluster', (workflowSeed?.cluster as string | undefined) || null],
     ];
 
     for (const [col, val] of optional) {
@@ -1157,152 +1195,10 @@ router.post(
   })
 );
 
-type FeedbackWorkflowRecord = {
-  owner?: string | null;
-  cluster?: string | null;
-  source?: string | null;
-  branch?: string | null;
-  prUrl?: string | null;
-  taskUrl?: string | null;
-  linkedTaskId?: string | null;
-  deployStatus?: string | null;
-  deployTargets?: string[];
-  deployedAt?: string | null;
-  verifiedBy?: string | null;
-  verifiedAt?: string | null;
-  waitingOn?: string | null;
-  lastUpdatedAt?: string | null;
-};
-
-type FeedbackResolutionRecord = {
-  type?: string | null;
-  summary?: string | null;
-  rootCause?: string | null;
-  verificationNotes?: string | null;
-  testPlan?: string[];
-};
-
-type FeedbackWorkflowTimelineEntry = {
-  id: string;
-  at: string;
-  actor: string | null;
-  action: string;
-  note?: string | null;
-  changes?: string[];
-};
-
-function compactObject<T extends Record<string, unknown>>(input: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(input).filter(([, value]) => {
-      if (value === undefined) return false;
-      if (value === null) return false;
-      if (typeof value === 'string' && !value.trim()) return false;
-      if (Array.isArray(value) && value.length === 0) return false;
-      return true;
-    })
-  ) as Partial<T>;
-}
-
-function normalizeStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((entry) => String(entry || '').trim()).filter(Boolean);
-}
-
-function normalizeWorkflowMeta(meta: Record<string, unknown>): FeedbackWorkflowRecord {
-  const raw = meta.workflow;
-  const workflow =
-    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
-  return compactObject({
-    owner: typeof workflow.owner === 'string' ? (workflow.owner as string) : null,
-    cluster: typeof workflow.cluster === 'string' ? (workflow.cluster as string) : null,
-    source: typeof workflow.source === 'string' ? (workflow.source as string) : null,
-    branch: typeof workflow.branch === 'string' ? (workflow.branch as string) : null,
-    prUrl: typeof workflow.prUrl === 'string' ? (workflow.prUrl as string) : null,
-    taskUrl: typeof workflow.taskUrl === 'string' ? (workflow.taskUrl as string) : null,
-    linkedTaskId:
-      typeof workflow.linkedTaskId === 'string'
-        ? (workflow.linkedTaskId as string)
-        : typeof meta.linkedTaskId === 'string'
-          ? (meta.linkedTaskId as string)
-          : null,
-    deployStatus:
-      typeof workflow.deployStatus === 'string' ? (workflow.deployStatus as string) : null,
-    deployTargets: normalizeStringArray(workflow.deployTargets),
-    deployedAt: typeof workflow.deployedAt === 'string' ? (workflow.deployedAt as string) : null,
-    verifiedBy: typeof workflow.verifiedBy === 'string' ? (workflow.verifiedBy as string) : null,
-    verifiedAt: typeof workflow.verifiedAt === 'string' ? (workflow.verifiedAt as string) : null,
-    waitingOn: typeof workflow.waitingOn === 'string' ? (workflow.waitingOn as string) : null,
-    lastUpdatedAt:
-      typeof workflow.lastUpdatedAt === 'string' ? (workflow.lastUpdatedAt as string) : null,
-  });
-}
-
-function normalizeResolutionMeta(meta: Record<string, unknown>): FeedbackResolutionRecord {
-  const raw = meta.resolution;
-  const resolution =
-    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
-  return compactObject({
-    type: typeof resolution.type === 'string' ? (resolution.type as string) : null,
-    summary: typeof resolution.summary === 'string' ? (resolution.summary as string) : null,
-    rootCause: typeof resolution.rootCause === 'string' ? (resolution.rootCause as string) : null,
-    verificationNotes:
-      typeof resolution.verificationNotes === 'string'
-        ? (resolution.verificationNotes as string)
-        : null,
-    testPlan: normalizeStringArray(resolution.testPlan),
-  });
-}
-
-function normalizeWorkflowTimeline(meta: Record<string, unknown>): FeedbackWorkflowTimelineEntry[] {
-  const raw = meta.workflowTimeline;
-  if (!Array.isArray(raw)) return [];
-  const entries: FeedbackWorkflowTimelineEntry[] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-    const record = entry as Record<string, unknown>;
-    entries.push({
-      id: typeof record.id === 'string' ? (record.id as string) : uuidv4(),
-      at: typeof record.at === 'string' ? (record.at as string) : new Date().toISOString(),
-      actor: typeof record.actor === 'string' ? (record.actor as string) : null,
-      action: typeof record.action === 'string' ? (record.action as string) : 'updated',
-      note: typeof record.note === 'string' ? (record.note as string) : null,
-      changes: normalizeStringArray(record.changes),
-    });
-  }
-  return entries;
-}
-
-function shapeFeedbackRow(row: any) {
-  const meta = safeJsonParse<Record<string, unknown>>(row.metadata, {});
-  const resolvedUserEmail = row.user_email || (meta.userEmail as string | undefined) || null;
-  const resolvedUserName =
-    row.user_name || (meta.userName as string | undefined) || row.user_id || null;
-  const workflow = normalizeWorkflowMeta(meta);
-  const resolution = normalizeResolutionMeta(meta);
-  const workflowTimeline = normalizeWorkflowTimeline(meta);
-
-  return {
-    ...row,
-    user_email: resolvedUserEmail,
-    user_name: resolvedUserName,
-    route_path: (meta.routePath as string | undefined) || (meta.context as string | undefined) || null,
-    device_type: (meta.deviceType as string | undefined) || null,
-    screen_size: (meta.screenSize as string | undefined) || null,
-    ui_language: (meta.uiLanguage as string | undefined) || null,
-    ui_theme: (meta.uiTheme as string | undefined) || null,
-    metadata: row.metadata ? String(row.metadata) : null,
-    workflow,
-    resolution,
-    workflowTimeline,
-    owner: workflow.owner || null,
-    cluster: workflow.cluster || null,
-    pr_url: workflow.prUrl || null,
-    branch: workflow.branch || null,
-    deploy_status: workflow.deployStatus || null,
-    deploy_targets: workflow.deployTargets || [],
-    resolution_summary: resolution.summary || null,
-  };
-}
+// Types + pure helpers (normalize/shape) now live in
+// `../services/feedbackShape.ts` — imported at the top of the file. This keeps
+// the route module lean and makes the shaping logic unit-testable without
+// touching Express.
 
 /**
  * GET /api/feedback
@@ -1531,6 +1427,24 @@ router.patch(
       updateCols.push('linked_task_id = ?');
       updateVals.push(nextWorkflow.linkedTaskId || null);
     }
+    // Write-through for the V2.1 additive workflow columns. We only write
+    // when the field is actually being touched in this PATCH so we don't
+    // clobber values set by another actor through the JSON blob.
+    if (feedbackCols.has('owner') && owner !== undefined) {
+      updateCols.push('owner = ?');
+      updateVals.push(nextWorkflow.owner || null);
+    }
+    if (feedbackCols.has('cluster') && cluster !== undefined) {
+      updateCols.push('cluster = ?');
+      updateVals.push(nextWorkflow.cluster || null);
+    }
+    if (feedbackCols.has('deploy_status') && deployStatus !== undefined) {
+      updateCols.push('deploy_status = ?');
+      updateVals.push(nextWorkflow.deployStatus || null);
+    }
+    if (feedbackCols.has('workflow_updated_at') && changedFields.length > 0) {
+      updateCols.push('workflow_updated_at = CURRENT_TIMESTAMP');
+    }
     if (feedbackCols.has('updated_at')) {
       updateCols.push('updated_at = CURRENT_TIMESTAMP');
     }
@@ -1746,6 +1660,147 @@ router.get(
 );
 
 /**
+ * GET /api/feedback/analytics/overview
+ * Aggregated KPIs for the feedback triage dashboard:
+ *   - totals by status
+ *   - open volume per env + per type + per severity
+ *   - aging buckets (24h / 48h / 7d / >7d) for NEW
+ *   - MTTR (median hours between created_at and resolved_at) over last 30d
+ *   - re-open rate (tickets whose timeline contains status_reverted) last 30d
+ * SuperAdmin only.
+ */
+router.get(
+  '/analytics/overview',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    await ensureFeedbackSchema();
+    const rows = await dbAll<any>(
+      `
+        SELECT id, feedback_type, status, severity, priority, source_env,
+               created_at, updated_at, metadata_json
+        FROM feedback_items
+        ORDER BY created_at DESC
+        LIMIT 5000
+      `,
+      []
+    );
+
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const cutoff30d = now - 30 * day;
+
+    const byStatus: Record<string, number> = {};
+    const byType: Record<string, number> = {};
+    const bySeverity: Record<string, number> = {};
+    const byEnv: Record<string, number> = {};
+    const agingBuckets = { under24h: 0, h24_48: 0, d2_7: 0, over7d: 0 };
+    const resolutionDurationsHours: number[] = [];
+    let reopenCount = 0;
+    let totalLast30d = 0;
+
+    for (const r of rows || []) {
+      const status = String(r.status || '').toUpperCase() || 'NEW';
+      byStatus[status] = (byStatus[status] || 0) + 1;
+
+      const type = String(r.feedback_type || 'UNKNOWN').toUpperCase();
+      byType[type] = (byType[type] || 0) + 1;
+
+      const severity = String(r.severity || '').toUpperCase() || 'UNSPECIFIED';
+      bySeverity[severity] = (bySeverity[severity] || 0) + 1;
+
+      const env = String(r.source_env || 'unknown').toLowerCase();
+      byEnv[env] = (byEnv[env] || 0) + 1;
+
+      const createdMs = r.created_at ? new Date(r.created_at).getTime() : NaN;
+      if (Number.isFinite(createdMs) && createdMs >= cutoff30d) {
+        totalLast30d++;
+      }
+
+      if (status === 'NEW' && Number.isFinite(createdMs)) {
+        const age = now - createdMs;
+        if (age < 24 * 60 * 60 * 1000) agingBuckets.under24h++;
+        else if (age < 48 * 60 * 60 * 1000) agingBuckets.h24_48++;
+        else if (age < 7 * 24 * 60 * 60 * 1000) agingBuckets.d2_7++;
+        else agingBuckets.over7d++;
+      }
+
+      // Resolution time: derive from timeline (status changes → RESOLVED)
+      const meta = safeJsonParse<Record<string, unknown>>(r.metadata_json, {});
+      const timeline = Array.isArray((meta as any).workflowTimeline)
+        ? ((meta as any).workflowTimeline as Array<{
+            at?: string;
+            action?: string;
+            note?: string;
+            changes?: string[];
+          }>)
+        : [];
+
+      if (status === 'RESOLVED' && Number.isFinite(createdMs) && r.updated_at) {
+        const resolvedMs = new Date(r.updated_at).getTime();
+        if (Number.isFinite(resolvedMs) && resolvedMs >= cutoff30d) {
+          const hours = (resolvedMs - createdMs) / (60 * 60 * 1000);
+          if (hours >= 0 && hours < 24 * 365) resolutionDurationsHours.push(hours);
+        }
+      }
+
+      const hasReopenEvent = timeline.some((entry) => {
+        if (!entry) return false;
+        const action = String(entry.action || '').toLowerCase();
+        if (action.includes('reopen')) return true;
+        const note = String(entry.note || '').toLowerCase();
+        return note.includes('reopen');
+      });
+      if (hasReopenEvent && Number.isFinite(createdMs) && createdMs >= cutoff30d) {
+        reopenCount++;
+      }
+    }
+
+    const sortedDurations = resolutionDurationsHours.slice().sort((a, b) => a - b);
+    const median =
+      sortedDurations.length === 0
+        ? null
+        : sortedDurations.length % 2 === 1
+          ? sortedDurations[(sortedDurations.length - 1) / 2]
+          : (sortedDurations[sortedDurations.length / 2 - 1] +
+              sortedDurations[sortedDurations.length / 2]) /
+            2;
+    const p90 =
+      sortedDurations.length === 0
+        ? null
+        : sortedDurations[
+            Math.min(sortedDurations.length - 1, Math.floor(sortedDurations.length * 0.9))
+          ];
+
+    const openCount = Object.entries(byStatus)
+      .filter(([k]) => k !== 'RESOLVED' && k !== 'ARCHIVED')
+      .reduce((sum, [, v]) => sum + v, 0);
+
+    return res.json({
+      sampleSize: rows?.length || 0,
+      openCount,
+      totals: {
+        byStatus,
+        byType,
+        bySeverity,
+        byEnv,
+      },
+      aging: agingBuckets,
+      mttrLast30d: {
+        medianHours: median,
+        p90Hours: p90,
+        sampleSize: resolutionDurationsHours.length,
+      },
+      last30d: {
+        created: totalLast30d,
+        reopened: reopenCount,
+        reopenRatePct: totalLast30d > 0 ? Math.round((reopenCount / totalLast30d) * 1000) / 10 : 0,
+      },
+      generatedAt: new Date().toISOString(),
+    });
+  })
+);
+
+/**
  * GET /api/feedback/backlog/tasks
  * List tasks created from feedback tickets (for SuperAdmin backlog).
  */
@@ -1794,6 +1849,7 @@ router.post(
   '/pulse',
   optionalVerifyToken,
   apiAuthRateLimiter,
+  feedbackRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const parsed = pulseFeedbackSchema.safeParse({
       ...(req.body || {}),
@@ -1894,6 +1950,7 @@ router.post(
   '/feature',
   optionalVerifyToken,
   apiAuthRateLimiter,
+  feedbackRateLimiter,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const parsed = featureFeedbackSchema.safeParse(req.body || {});
     if (!parsed.success) {
@@ -2504,9 +2561,11 @@ router.get(
       }
     })();
 
-    const dossier = (meta.dossier && typeof meta.dossier === 'object'
-      ? (meta.dossier as Record<string, unknown>)
-      : {}) as Record<string, unknown>;
+    const dossier = (
+      meta.dossier && typeof meta.dossier === 'object'
+        ? (meta.dossier as Record<string, unknown>)
+        : {}
+    ) as Record<string, unknown>;
     const appCtx = (dossier.appContext || {}) as Record<string, unknown>;
     const workflow = (meta.workflow || {}) as Record<string, unknown>;
     const signatureHash = (meta.signatureHash as string | undefined) || '—';
@@ -2525,7 +2584,9 @@ router.get(
     );
     lines.push(`- **Reporter:** ${(meta.userEmail as string) || (meta.userName as string) || '—'}`);
     lines.push(`- **Created:** ${row.created_at || '—'}`);
-    lines.push(`- **Build:** ${(appCtx.buildSha as string) || '—'} @ ${(appCtx.buildAt as string) || '—'}`);
+    lines.push(
+      `- **Build:** ${(appCtx.buildSha as string) || '—'} @ ${(appCtx.buildAt as string) || '—'}`
+    );
     lines.push(`- **Signature:** \`${signatureHash}\``);
     if (row.linked_task_id) lines.push(`- **Linked task:** ${row.linked_task_id}`);
     if (Array.isArray(meta.duplicateCandidates) && (meta.duplicateCandidates as any[]).length > 0) {
@@ -2625,6 +2686,55 @@ router.get(
     lines.push('');
 
     const markdown = lines.join('\n');
+
+    // Side-effect: the moment someone pulls the Cursor brief, mark the ticket
+    // as picked up by Cursor. Keeps the Superadmin timeline honest — otherwise
+    // operators had to manually flip `workflow.source` and inevitably forgot.
+    // We only write when nothing was set yet, so we don't spam the audit log.
+    try {
+      const existingWorkflow = (meta.workflow || {}) as Record<string, unknown>;
+      const alreadyCursor = String(existingWorkflow.source || '').toLowerCase() === 'cursor';
+      if (!alreadyCursor) {
+        const feedbackCols = await getTableColumns('feedback_items');
+        if (feedbackCols.has('metadata_json')) {
+          const currentWorkflow = normalizeWorkflowMeta(meta);
+          const currentTimeline = normalizeWorkflowTimeline(meta);
+          const shortId = String(row.id).slice(0, 8);
+          const nextWorkflow = compactObject({
+            ...currentWorkflow,
+            source: 'cursor',
+            branch: currentWorkflow.branch || `feedback/${shortId}`,
+            lastUpdatedAt: new Date().toISOString(),
+          }) as FeedbackWorkflowRecord;
+          const nextTimeline = [
+            ...currentTimeline,
+            {
+              id: uuidv4(),
+              at: new Date().toISOString(),
+              actor: (req as any).user?.email || (req as any).user?.id || 'cursor',
+              action: 'workflow_updated',
+              note: 'Cursor brief pulled',
+              changes: ['source', ...(currentWorkflow.branch ? [] : ['branch'])],
+            } satisfies FeedbackWorkflowTimelineEntry,
+          ].slice(-50);
+          const nextMeta = {
+            ...meta,
+            workflow: nextWorkflow,
+            workflowTimeline: nextTimeline,
+          };
+          await dbRun(`UPDATE feedback_items SET metadata_json = ? WHERE id = ?`, [
+            JSON.stringify(nextMeta),
+            row.id,
+          ]);
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        '[Feedback] cursor-brief auto-source PATCH failed (non-fatal):',
+        err instanceof Error ? err.message : err
+      );
+    }
+
     res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
     return res.send(markdown);
   })
