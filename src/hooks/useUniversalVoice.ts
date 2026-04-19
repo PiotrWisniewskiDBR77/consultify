@@ -14,6 +14,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import {
+  bucketTranscriptLength,
+  emitTtsOn,
+  emitVoiceStart,
+  emitVoiceSttFail,
+  emitVoiceSttSuccess,
+} from '../utils/voiceFunnelTelemetry';
+
 // ============================================================================
 // Language → BCP-47 mapping for all 6 supported app languages
 // ============================================================================
@@ -370,6 +378,15 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
 
       if (finalTranscript) {
         onTranscript?.(finalTranscript.trim(), true);
+        // VM10 · `voice_stt_success` — web-speech path. Fires once per
+        // final result; interim transcripts don't count because they
+        // are not actionable by the user yet.
+        emitVoiceSttSuccess({
+          sttProvider: 'web',
+          trigger: continuousModeRef.current ? 'conversation' : 'single',
+          language: settings.language,
+          transcriptLengthBucket: bucketTranscriptLength(finalTranscript),
+        });
       } else if (interimTranscript) {
         onTranscript?.(interimTranscript, false);
       }
@@ -377,6 +394,25 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
 
     recognition.onerror = (event: any) => {
       console.error('[Voice] Web Speech error:', event.error);
+      // VM10 · `voice_stt_fail` — web-speech path. The event's `error`
+      // field is a closed enum defined by the Web Speech spec, so we
+      // can map it directly without leaking server strings.
+      const webReason: 'no_speech' | 'permission_denied' | 'network' | 'aborted' | 'unknown' =
+        event.error === 'no-speech'
+          ? 'no_speech'
+          : event.error === 'not-allowed' || event.error === 'service-not-allowed'
+            ? 'permission_denied'
+            : event.error === 'network'
+              ? 'network'
+              : event.error === 'aborted'
+                ? 'aborted'
+                : 'unknown';
+      emitVoiceSttFail({
+        sttProvider: 'web',
+        trigger: continuousModeRef.current ? 'conversation' : 'single',
+        language: settings.language,
+        reason: webReason,
+      });
       if (event.error !== 'no-speech') {
         setState((prev) => ({
           ...prev,
@@ -445,6 +481,15 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
             }));
             onTranscript?.(text, true);
 
+            // VM10 · `voice_stt_success` — whisper path. Length bucket
+            // only, never the transcript text itself.
+            emitVoiceSttSuccess({
+              sttProvider: 'whisper',
+              trigger: continuousModeRef.current ? 'conversation' : 'single',
+              language: settings.language,
+              transcriptLengthBucket: bucketTranscriptLength(text),
+            });
+
             // Auto-send if in continuous mode
             if (continuousModeRef.current && text.trim()) {
               await onSendMessage?.(text.trim());
@@ -457,6 +502,23 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
               mode: 'idle',
               isProcessing: false,
             }));
+            // VM10 · `voice_stt_fail` — whisper path. We map fetch
+            // network errors (TypeError) vs server non-OK (caught and
+            // rethrown by `transcribeWithServer` with the server's
+            // `error` field) as distinct closed reasons. Anything else
+            // is `unknown` until we observe it and add a mapping.
+            const reason =
+              error?.name === 'TypeError'
+                ? 'network'
+                : typeof error?.message === 'string' && error.message.length > 0
+                  ? 'server_error'
+                  : 'unknown';
+            emitVoiceSttFail({
+              sttProvider: 'whisper',
+              trigger: continuousModeRef.current ? 'conversation' : 'single',
+              language: settings.language,
+              reason,
+            });
           }
         }
       };
@@ -480,6 +542,20 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
         isListening: false,
         mode: 'idle',
       }));
+      // VM10 · `voice_stt_fail` — getUserMedia rejected. The most
+      // common cause is `NotAllowedError` (user dismissed the mic
+      // permission prompt); we also see `NotFoundError` on devices
+      // with no mic. Both map to `permission_denied` from the funnel's
+      // point of view — the outcome is "we couldn't capture audio".
+      emitVoiceSttFail({
+        sttProvider: 'whisper',
+        trigger: continuousModeRef.current ? 'conversation' : 'single',
+        language: settings.language,
+        reason:
+          error?.name === 'NotAllowedError' || error?.name === 'NotFoundError'
+            ? 'permission_denied'
+            : 'unknown',
+      });
     }
   }, [
     transcribeWithServer,
@@ -487,6 +563,7 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
     onSendMessage,
     startAudioLevelMonitoring,
     stopAudioLevelMonitoring,
+    settings.language,
   ]);
 
   // ========================================================================
@@ -505,6 +582,15 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
       interimTranscript: '',
       recordingDuration: 0,
     }));
+
+    // VM10 · `voice_start` — emit exactly once per idle → listening
+    // transition. Guarded by the `if (isListening || isSpeaking)` above
+    // so duplicate calls don't double-count. No transcript yet.
+    emitVoiceStart({
+      sttProvider: settings.sttProvider,
+      trigger: continuousModeRef.current ? 'conversation' : 'single',
+      language: settings.language,
+    });
 
     if (settings.sttProvider === 'whisper') {
       startMediaRecording();
@@ -595,6 +681,17 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
       }
 
       setState((prev) => ({ ...prev, isSpeaking: true, mode: 'speaking' }));
+
+      // VM10 · `tts_on` — we emit BEFORE the provider fetch so the
+      // funnel counts the user intent even when the backend later
+      // rejects the request. `auto` is derived from the persistent
+      // setting, not from this call's origin — that field answers
+      // "did the user opt into auto-read?", not "was this call manual?".
+      emitTtsOn({
+        ttsProvider: settings.ttsProvider,
+        language: settings.language,
+        auto: settings.autoSpeakResponses,
+      });
 
       try {
         if (settings.ttsProvider === 'web') {
