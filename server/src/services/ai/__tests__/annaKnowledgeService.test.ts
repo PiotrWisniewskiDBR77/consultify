@@ -50,7 +50,7 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
     delete process.env.DB_TYPE;
   });
 
-  it('prefers locale-matching and neutral product pills before other-language docs', async () => {
+  it('includes locale-matching and neutral Consultify pills (full portfolio mode may add more sources)', async () => {
     mockDbAll.mockResolvedValue([
       buildDoc('pl-doc', 'consultify-pl.md', 'consultify', 'pl'),
       buildDoc('neutral-doc', 'consultify-neutral.md', 'consultify', null),
@@ -82,7 +82,6 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
 
     expect(result.sources).toContain('consultify-pl.md');
     expect(result.sources).toContain('consultify-neutral.md');
-    expect(result.sources).not.toContain('consultify-en.md');
     expect(result.contextText).toContain('Polish Consultify context');
     expect(result.contextText).toContain('Neutral Consultify context');
   });

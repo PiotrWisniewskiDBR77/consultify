@@ -179,36 +179,6 @@ function detectRequestedProducts(query: string): {
   };
 }
 
-function isDbR77PortfolioQuestion(query: string): boolean {
-  const q = String(query || '').toLowerCase();
-  const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
-  const mentionsAnnaOrProduct =
-    /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
-
-  const portfolioKeywords =
-    /\bportfolio\b/.test(q) ||
-    /\bekosystem\b/.test(q) ||
-    /\bprodukty\b/.test(q) ||
-    /\bprodukt\b/.test(q) ||
-    /\boferta\b/.test(q) ||
-    /\bco macie\b/.test(q) ||
-    /\bjakie.*(produkty|produkt)\b/.test(q) ||
-    /\bjakie znasz\b/.test(q) ||
-    /\bco oferujecie\b/.test(q) ||
-    /\bwhat.*offer\b/.test(q) ||
-    /\bwhat products\b/.test(q) ||
-    /\byour products\b/.test(q) ||
-    /\bwasze produkty\b/.test(q) ||
-    /\bwhat do you (have|know)\b/.test(q) ||
-    /\btell me about your\b/.test(q) ||
-    /\bopowiedz.*o.*produk\b/.test(q) ||
-    /\bprzedstaw.*ofert\b/.test(q);
-
-  if (mentionsDbR && portfolioKeywords) return true;
-  if (portfolioKeywords && !mentionsAnnaOrProduct) return true;
-  return false;
-}
-
 async function loadIndexedProductDocs(): Promise<AnnaIndexedDoc[]> {
   let rows: AnnaDocRow[];
 
@@ -414,7 +384,8 @@ export async function buildAnnaKnowledgeContext(opts: {
   const preferredCrossProductRequest = Boolean(
     sitePreferredProducts.some((product) => product !== siteConfig.primaryProductSlug)
   );
-  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
+  // Always load full DBR77 portfolio context for public Anna (same intent as anna/teresa workers).
+  const portfolioMode = true;
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
   const explicitProducts = detected.matchedProducts;
   const primaryProducts = portfolioMode
@@ -519,7 +490,7 @@ export async function buildAnnaKnowledgeContext(opts: {
       siteConfig.crossSellRule
     );
     const contextText = portfolioMode
-      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.`
+      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.\n- You always have the governed product knowledge above; when a question touches any DBR77 product, use it. Do not claim you lack access to that product line.`
       : rawContextText;
     return {
       contextText,

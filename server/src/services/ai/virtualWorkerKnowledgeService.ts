@@ -73,6 +73,9 @@ const PRODUCT_ORDER = [
   'marketplace',
 ] as const;
 
+/** Always retrieve full DBR77 portfolio context (pills + RAG) for these workers. */
+const WORKER_SLUGS_FULL_PORTFOLIO = new Set(['anna', 'teresa']);
+
 const PRODUCT_MATCHERS: Record<string, RegExp[]> = {
   consultify: [/\bconsultify\b/i, /\bconsultinity\b/i],
   vector: [/\bvector\b/i, /\bllm\b/i, /\blarge language model\b/i],
@@ -142,7 +145,9 @@ function detectProducts(query: string): string[] {
 function isDbR77PortfolioQuestion(query: string): boolean {
   const q = String(query || '').toLowerCase();
   const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
-  const mentionsAnnaOrProduct = /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
+  // Do not treat the assistant name "Anna" as narrowing the topic — users often
+  // address Anna while asking about the full DBR77 portfolio ("Anna, jakie macie produkty?").
+  const mentionsConsultifyOrDbR = /\bconsultify\b/.test(q) || mentionsDbR;
   const portfolioKeywords =
     /\bportfolio\b/.test(q) ||
     /\bekosystem\b/.test(q) ||
@@ -161,7 +166,7 @@ function isDbR77PortfolioQuestion(query: string): boolean {
     /\btell me about your\b/.test(q) ||
     /\bopowiedz.*o.*produk\b/.test(q) ||
     /\bprzedstaw.*ofert\b/.test(q);
-  return (mentionsDbR && portfolioKeywords) || (portfolioKeywords && !mentionsAnnaOrProduct);
+  return (mentionsDbR && portfolioKeywords) || (portfolioKeywords && !mentionsConsultifyOrDbR);
 }
 
 function splitDocsByLanguagePreference(
@@ -482,7 +487,8 @@ export async function buildWorkerKnowledgeContext(opts: {
     };
   }
 
-  const portfolioMode = isDbR77PortfolioQuestion(originalQuery);
+  const forceFullPortfolio = WORKER_SLUGS_FULL_PORTFOLIO.has(opts.workerSlug);
+  const portfolioMode = forceFullPortfolio || isDbR77PortfolioQuestion(originalQuery);
   const detectedProducts = detectProducts(originalQuery);
   const assignedProductSlugs = uniq(
     assignments.filter((assignment) => assignment.product_slug).map((assignment) => assignment.product_slug!)
@@ -632,7 +638,11 @@ export async function buildWorkerKnowledgeContext(opts: {
     );
 
     const contextText = portfolioMode
-      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.`
+      ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.${
+          forceFullPortfolio
+            ? '\n- You always have the governed product knowledge above; when a question touches any DBR77 product, use it. Do not claim you lack access to that product line.'
+            : ''
+        }`
       : rawContextText;
 
     return {
