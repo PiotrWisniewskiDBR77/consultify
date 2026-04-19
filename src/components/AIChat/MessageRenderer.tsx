@@ -45,6 +45,7 @@ import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
+import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
 
 // V8 governed proposal / execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
@@ -139,7 +140,15 @@ function renderNodesWithCitations(
       }
       if (lastIndex < node.length) parts.push(node.slice(lastIndex));
       CITATION_MARKER_RE.lastIndex = 0;
-      return parts.length === 1 ? parts[0] : <>{parts.map((p, idx) => <React.Fragment key={`${path}-f-${idx}`}>{p}</React.Fragment>)}</>;
+      return parts.length === 1 ? (
+        parts[0]
+      ) : (
+        <>
+          {parts.map((p, idx) => (
+            <React.Fragment key={`${path}-f-${idx}`}>{p}</React.Fragment>
+          ))}
+        </>
+      );
     }
     if (Array.isArray(node)) {
       return node.map((n, idx) => (
@@ -958,24 +967,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               // citation rewiring on all text-carrying block
                               // elements so `[N]` markers become clickable
                               // pills linked to `msg.citations`.
-                              p: ({ children }: any) => (
-                                <p>{withCitations(children, 'p')}</p>
-                              ),
-                              li: ({ children }: any) => (
-                                <li>{withCitations(children, 'li')}</li>
-                              ),
-                              td: ({ children }: any) => (
-                                <td>{withCitations(children, 'td')}</td>
-                              ),
-                              th: ({ children }: any) => (
-                                <th>{withCitations(children, 'th')}</th>
-                              ),
+                              p: ({ children }: any) => <p>{withCitations(children, 'p')}</p>,
+                              li: ({ children }: any) => <li>{withCitations(children, 'li')}</li>,
+                              td: ({ children }: any) => <td>{withCitations(children, 'td')}</td>,
+                              th: ({ children }: any) => <th>{withCitations(children, 'th')}</th>,
                               strong: ({ children }: any) => (
                                 <strong>{withCitations(children, 'strong')}</strong>
                               ),
-                              em: ({ children }: any) => (
-                                <em>{withCitations(children, 'em')}</em>
-                              ),
+                              em: ({ children }: any) => <em>{withCitations(children, 'em')}</em>,
                             }}
                           >
                             {cleanContent}
@@ -1582,6 +1581,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               }}
             />
           ))}
+        </div>
+      )}
+
+      {/* TRUST T-TR1 — compact always-visible summary chip. Sits above
+          the full `CitationList` so skim-reading the conversation shows
+          "this reply cites N sources" without expanding anything. The
+          chip also renders for replies with ZERO citations (the "No
+          cited sources" tone) so users never silently assume a reply is
+          backed by retrieved material when it isn't. Flag-gated; when
+          off the component returns null and the layout is unchanged. */}
+      {msg.role === 'ai' && !msg.isStreaming && (
+        <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
+          <TrustBadge
+            citations={msg.citations}
+            modelUsed={
+              typeof (msg as { metadata?: { modelUsed?: unknown } }).metadata?.modelUsed ===
+              'string'
+                ? ((msg as { metadata?: { modelUsed?: string } }).metadata?.modelUsed as string)
+                : null
+            }
+          />
         </div>
       )}
 

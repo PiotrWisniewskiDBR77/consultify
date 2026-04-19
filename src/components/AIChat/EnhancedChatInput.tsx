@@ -23,11 +23,17 @@ import { useTranslation } from 'react-i18next';
 import { CloudFile, CloudProviderId, useCloudIntegrations } from '../../hooks/useCloudIntegrations';
 import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
+import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CoThinkerMenu } from './CoThinkerMenu';
 import { MoveToProjectModal } from './MoveToProjectModal';
 import { ToolsMenu } from './ToolsMenu';
+import { InputCharCounter } from './InputCharCounter';
+import { InputSoftLimitToast } from './InputSoftLimitToast';
+import { InputHintStrip } from './InputHintStrip';
+import { NextModelChip } from './NextModelChip';
+import { VoiceModeLegend } from './VoiceModeLegend';
 
 // ============================================================================
 // Types
@@ -580,7 +586,23 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     if (!canSend) return;
     if (isStreaming) return;
     stopDictation();
-    onSend(value.trim(), attachments.length > 0 ? attachments : undefined);
+    const outgoing = value.trim();
+    onSend(outgoing, attachments.length > 0 ? attachments : undefined);
+    // T-PM2-lite — advisory post-send nudge. Dispatched on `window`
+    // so the headless `PiiHeuristicToast` can run the detector
+    // without this component knowing anything about toasts. The
+    // event is a no-op when the kill-switch is off (listener
+    // detached) or when no category hits.
+    if (typeof window !== 'undefined' && outgoing.length > 0) {
+      try {
+        window.dispatchEvent(
+          new CustomEvent(CHAT_V9_PII_CHECK_EVENT, { detail: { text: outgoing } })
+        );
+      } catch {
+        // CustomEvent is supported everywhere we target; the guard
+        // exists only for server-rendered / degraded environments.
+      }
+    }
     setValue('');
     setAttachments([]);
     if (textareaRef.current) {
@@ -806,10 +828,45 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             />
             <ToolsMenu onToolSelect={handleToolSelect} disabled={isInputDisabled} icon={Pen} />
             <CoThinkerMenu disabled={isInputDisabled} />
+            {/* C-IN1 — Next-message model hint. Read-only pill showing
+                which model will handle the next send. Self-gates on
+                `isNextModelChipEnabled()` and renders null when the
+                user has no resolvable model id, so the action bar
+                collapses cleanly when the signal is unavailable. */}
+            <NextModelChip />
+            {/* C-IN2 — Input character counter. Invisible until the
+                message crosses the default 400-char threshold, then
+                colour-escalates through amber at 80% of the 8k soft
+                max and rose once over. Purely advisory; never blocks
+                Send. Self-gates on `isInputCharCounterEnabled()`. */}
+            <InputCharCounter value={value} />
+            {/* C-IN6-lite — one-shot soft-limit inline toast. Headless
+                sibling of the counter that fires a single
+                `toast.custom` the first time `value.length` crosses
+                the counter's rose threshold in this tab, with a
+                "Don't show again this session" escape. Self-gates on
+                `isInputSoftLimitToastEnabled()` and the sessionStorage
+                fired / dismiss sentinels. */}
+            <InputSoftLimitToast value={value} />
           </div>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* VM3 — voice modes legend. Sits immediately before the mic so
+                the "?" reads as "what does this mic button do?". Component
+                self-gates on `isVoiceModeLegendEnabled()`; when the flag is
+                off it renders null and the mic cluster collapses normally.
+                VM1-lite: when `speechSupported === false` and the Teresa
+                live-voice affordance is also absent, the mic button is
+                hidden entirely — the legend then becomes the user's only
+                way to learn *why* voice does not work in this browser. */}
+            <VoiceModeLegend
+              unavailable={
+                !speechSupported &&
+                teresaVoiceStatus !== 'live' &&
+                teresaVoiceStatus !== 'connecting'
+              }
+            />
             {/* Mic button: mute/unmute when Teresa voice is live, dictation otherwise */}
             {(teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting') ? (
               <button
@@ -909,6 +966,13 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           </div>
         </div>
       </div>
+
+      {/* C-IN4-lite — Keyboard-affordance hint strip. Passive,
+          decorative, aria-hidden (every hinted key is already
+          announced by screen readers via textarea role). Self-
+          gates on `isInputHintStripEnabled()`; kill-switch OFF
+          restores the pre-C-IN4 layout pixel-for-pixel. */}
+      <InputHintStrip />
 
       {/* Cloud File Picker Modal */}
       {activeProvider && (

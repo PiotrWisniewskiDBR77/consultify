@@ -22,7 +22,6 @@ import {
   Bot,
   Briefcase,
   History,
-  Lock,
   MessageSquare,
   Plus,
   Sparkles,
@@ -64,6 +63,7 @@ import {
   ThinkingStep,
 } from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
+import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
@@ -80,6 +80,7 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
+import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
@@ -3341,27 +3342,30 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             conversationId={activeConversationId}
             defaultGoal={latestUserGoalHint}
           />
-          {isPrivateMode && (
-            <div
-              className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"
-              title={t(
-                'aiChat.menu.modes.privateMode.desc',
-                'Disable memory injection and personalization for this chat'
-              )}
-              aria-label={t('aiChat.menu.modes.privateMode.label', 'Private mode')}
-            >
-              <Lock size={11} strokeWidth={2} />
-              <span>{t('aiChat.menu.modes.privateMode.label', 'Private mode')}</span>
-            </div>
-          )}
+          {/* TRUST T-PM1 — `PrivateModeDetails` replaces the legacy static
+              chip. When the feature flag is on, the badge becomes a button
+              that opens a short popover explaining what private mode
+              does and does NOT do (RODO honesty). When the flag is off
+              the component renders the original read-only chip with the
+              same classes, so disabling the flag is visually invisible. */}
+          {isPrivateMode && <PrivateModeDetails />}
           {ttsSupported && (
             <button
               onClick={() => {
-                // While speaking, this button must always mute/turn OFF.
-                if (voiceState.isSpeaking) {
+                // VM4 — snapshot `isSpeaking` BEFORE `stopSpeaking()` flips
+                // it to false so the barge-in toast only fires when the
+                // click actually interrupted an ongoing read. Debounce
+                // (1.5 s) is enforced inside `notifyBargeIn`, so repeated
+                // mute gestures produce at most one visible toast.
+                const wasBargeIn = voiceState.isSpeaking;
+                if (wasBargeIn) {
                   stopSpeaking();
+                  notifyBargeIn({
+                    message: t('voice.bargeInToast', 'Reading interrupted.'),
+                    source: 'mute_button',
+                  });
                 }
-                const nextState = voiceState.isSpeaking ? false : !autoReadEnabled;
+                const nextState = wasBargeIn ? false : !autoReadEnabled;
                 setAutoReadEnabled(nextState);
                 updateVoiceSettings({ autoSpeakResponses: nextState });
                 setAIConfig({ textToSpeech: nextState } as any);

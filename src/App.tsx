@@ -10,6 +10,14 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 
+import { ChatV9FlagsIndicator } from './components/admin/ChatV9FlagsIndicator';
+import { ChatV9FlagsOverlay } from './components/admin/ChatV9FlagsOverlay';
+import { ChatV9FlagsResetHandler } from './components/admin/ChatV9FlagsResetHandler';
+import { PiiHeuristicToast } from './components/AIChat/PiiHeuristicToast';
+import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
+import { BackToChatButton } from './components/navigation/BackToChatButton';
+import { BackToChatShortcut } from './components/navigation/BackToChatShortcut';
+import { WorkspaceBreadcrumb } from './components/navigation/WorkspaceBreadcrumb';
 import { RouterSync } from './components/RouterSync';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
@@ -217,6 +225,63 @@ function AppContent() {
       <ImpersonationBanner />
       {/* Single source of truth for URL ↔ State sync */}
       <RouterSync />
+      {/* Chat V9 / ADMIN AG1 — URL-triggered flag dashboard. Mounted
+          globally so `?v9flags=1` opens it on any route without a new
+          route definition. Returns null when inactive (zero cost). */}
+      <ChatV9FlagsOverlay />
+      {/* Chat V9 / ADMIN AG1 v1.3 — URL reset one-liner handler.
+          Runs once on mount: if `?v9flags=reset` is present and the
+          user is authorised, nukes every V9 override and rewrites
+          the query to `?v9flags=1` so the overlay opens as visible
+          confirmation. Mounted AFTER the overlay so the overlay's
+          event listener is attached before the handler dispatches
+          `chat-v9-flags:open` (effects fire in JSX declaration
+          order during commit). Returns null. */}
+      <ChatV9FlagsResetHandler />
+      {/* Chat V9 / ADMIN AG1 v1.1 — admin-only chip that renders in the
+          bottom-right corner when one or more V9 flags are overridden
+          in this session. Clicking it dispatches the same open event
+          the overlay listens to. Returns null for non-admins and for
+          sessions with zero overrides — no chrome by default. */}
+      <ChatV9FlagsIndicator />
+      {/* Chat V9 / NAV NAV-M1 — global "Back to chat" pill. Self-gates
+          on `currentView !== AI_CHAT/WELCOME` AND `activeConversationId`
+          so it never shows up on the chat view itself or before any
+          conversation exists. Kill-switch: flag OFF returns null and
+          users fall back to sidebar / per-module headers. */}
+      <BackToChatButton />
+      {/* Chat V9 / NAV-M2-lite — floating `Chat › <view label>` pill
+          at top-center of non-chat workspace views. Pure wayfinding:
+          the `Chat` segment calls the same `returnToFullChat()` as
+          NAV-M1 / NAV-M1.1, so the three exits agree. Same
+          `activeConversationId` gate as BackToChatButton — never
+          paints before any chat exists. Kill-switch: flag OFF
+          returns null. No telemetry (NAV-M1 already captures the
+          "user returned to chat" signal). */}
+      <WorkspaceBreadcrumb />
+      {/* Chat V9 / NAV NAV-M1.1 — headless Alt+Shift+C shortcut that
+          triggers the same `returnToFullChat()` action. Shares the
+          same view / conversation gates as the button, plus a
+          focus-in-editable-element guard so it never hijacks typing.
+          Kill-switch: flag OFF detaches the listener entirely. */}
+      <BackToChatShortcut />
+      {/* Chat V9 / VOICE VM3.1 — global Alt+Shift+V opens the voice-
+          modes legend popover from anywhere. Headless; dispatches a
+          `chat-v9-voice-legend:open` CustomEvent that the mounted
+          `VoiceModeLegend` in `EnhancedChatInput` listens for. Same
+          focus-in-editable + open-modal guards as NAV-M1.1, so the
+          chord never hijacks typing. Kill-switch: flag OFF detaches
+          the listener entirely — the help button keeps working. */}
+      <VoiceLegendShortcut />
+      {/* Chat V9 / TRUST T-PM2-lite — headless post-send PII
+          heuristic toast. Listens on `chat-v9-pii-check` dispatched
+          by `EnhancedChatInput.handleSend` right after submit. Runs
+          a local, pure detector (email / phone / IBAN) on the
+          outgoing text and shows a one-shot advisory toast when any
+          category hits. Telemetry payload is closed-enum categories
+          only — never the raw message. Kill-switch: flag OFF
+          detaches the listener; the dispatch is a no-op. */}
+      <PiiHeuristicToast />
       <Routes>
         <Route path="/invite/:token" element={<InviteRouteWrapper />} />
         <Route
