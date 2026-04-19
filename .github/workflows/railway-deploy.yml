@@ -2,7 +2,7 @@ name: Railway Deploy
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, feat/ai-chat-v9]
     paths:
       - 'src/**'
       - 'server/**'
@@ -12,6 +12,7 @@ on:
       - 'railway*.json'
       - 'infrastructure/**'
       - 'scripts/deploy-gate.sh'
+      - '.github/workflows/railway-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -35,7 +36,7 @@ concurrency:
 jobs:
   deploy-staging:
     name: Deploy Staging
-    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feat/ai-chat-v9'))
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     environment: staging
