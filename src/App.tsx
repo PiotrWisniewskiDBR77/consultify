@@ -10,9 +10,9 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 
-import { ChatV9FlagsIndicator } from './components/admin/ChatV9FlagsIndicator';
-import { ChatV9FlagsOverlay } from './components/admin/ChatV9FlagsOverlay';
-import { ChatV9FlagsResetHandler } from './components/admin/ChatV9FlagsResetHandler';
+import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
+import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
+import { ChatV9FlagsResetHandler } from './components/Admin/ChatV9FlagsResetHandler';
 import { PiiHeuristicToast } from './components/AIChat/PiiHeuristicToast';
 import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
 import { BackToChatButton } from './components/navigation/BackToChatButton';
