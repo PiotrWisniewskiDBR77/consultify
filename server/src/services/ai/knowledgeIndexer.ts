@@ -483,13 +483,6 @@ export class KnowledgeIndexer {
   } {
     const normalized = relativeFilePath.replace(/\\/g, '/');
     const parts = normalized.split('/').filter(Boolean);
-    const knowledgeIdx = parts.indexOf('knowledge');
-    if (knowledgeIdx < 0 || parts.length < knowledgeIdx + 3) {
-      return { productSlug: null, pillId: null, language: null };
-    }
-
-    const productFolder = parts[knowledgeIdx + 2] || null;
-    const productSlug = productFolder ? this.resolveProductSlug(productFolder) : null;
     const base = path.basename(normalized);
     const withoutExt = base.replace(/\.(md|markdown)$/i, '');
     const pillId = this.slugifySegment(withoutExt) || null;
@@ -497,6 +490,23 @@ export class KnowledgeIndexer {
       ? base.match(/\.([a-z]{2})\./i)?.[1]?.toLowerCase() || null
       : 'pl';
 
+    // Docker/Railway: pills are copied to `/app/knowledge-runtime/product-pills/<product-folder>/*.md`
+    // (see Dockerfile.api). Relative path from CWD `/app/server` is
+    // `../knowledge-runtime/product-pills/Vector-info-pills/file.md` — no `knowledge/` segment.
+    const runtimeIdx = parts.indexOf('knowledge-runtime');
+    if (runtimeIdx >= 0 && parts[runtimeIdx + 1] === 'product-pills' && parts.length >= runtimeIdx + 4) {
+      const productFolder = parts[runtimeIdx + 2] || null;
+      const productSlug = productFolder ? this.resolveProductSlug(productFolder) : null;
+      return { productSlug, pillId, language };
+    }
+
+    const knowledgeIdx = parts.indexOf('knowledge');
+    if (knowledgeIdx < 0 || parts.length < knowledgeIdx + 3) {
+      return { productSlug: null, pillId, language };
+    }
+
+    const productFolder = parts[knowledgeIdx + 2] || null;
+    const productSlug = productFolder ? this.resolveProductSlug(productFolder) : null;
     return { productSlug, pillId, language };
   }
 

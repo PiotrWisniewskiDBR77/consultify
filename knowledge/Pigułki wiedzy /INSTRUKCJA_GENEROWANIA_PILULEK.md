@@ -304,6 +304,8 @@ curl -X POST http://localhost:3001/api/ai-operations/knowledge/product-pills/ind
   -d '{"forceReindex": true}'
 ```
 
+**Produkcja (Railway):** ten sam endpoint na URL API (`https://…/api/ai-operations/knowledge/product-pills/index`). Zawsze `forceReindex: true` po dodaniu lub zmianie plików `.md` w repozytorium (deploy buduje paczkę `knowledge-runtime/product-pills` z folderu `knowledge/Pigułki wiedzy /`). Bez tego kroku baza RAG nie ma aktualnych fragmentów — Anna/Teresa odpowiadają tylko z pigółek DB + fallbacków.
+
 ---
 
 ## Kolejność generowania (rekomendowana)
