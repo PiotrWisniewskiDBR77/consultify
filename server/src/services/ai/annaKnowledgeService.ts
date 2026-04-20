@@ -179,6 +179,10 @@ function detectRequestedProducts(query: string): {
   };
 }
 
+function prioritizeProducts(explicitProducts: string[], baseProducts: string[]): string[] {
+  return explicitProducts.length > 0 ? uniq([...explicitProducts, ...baseProducts]) : uniq(baseProducts);
+}
+
 async function loadIndexedProductDocs(): Promise<AnnaIndexedDoc[]> {
   let rows: AnnaDocRow[];
 
@@ -388,8 +392,9 @@ export async function buildAnnaKnowledgeContext(opts: {
   const portfolioMode = true;
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
   const explicitProducts = detected.matchedProducts;
+  const portfolioProducts = uniq(['dbr77', ...sitePreferredProducts]);
   const primaryProducts = portfolioMode
-    ? uniq(['dbr77', ...sitePreferredProducts])
+    ? prioritizeProducts(explicitProducts, portfolioProducts)
     : explicitProducts.length > 0
       ? uniq([...explicitProducts, ...sitePreferredProducts])
       : sitePreferredProducts;

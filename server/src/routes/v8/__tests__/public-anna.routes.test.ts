@@ -11,6 +11,11 @@ import publicAnnaRouter, {
   resetAnnaFunnelEventRateLimitStoreForTests,
 } from '../../public-anna.routes.js';
 
+const { buildWorkerKnowledgeContextMock, buildWorkerVoiceBootstrapMock } = vi.hoisted(() => ({
+  buildWorkerKnowledgeContextMock: vi.fn(),
+  buildWorkerVoiceBootstrapMock: vi.fn(),
+}));
+
 vi.mock('../../../services/ai/annaKnowledgeService.js', () => ({
   buildAnnaKnowledgeContext: vi.fn().mockResolvedValue({
     contextText: 'Public knowledge context',
@@ -27,8 +32,8 @@ vi.mock('../../../services/ai/annaKnowledgeService.js', () => ({
 }));
 
 vi.mock('../../../services/ai/virtualWorkerKnowledgeService.js', () => ({
-  buildWorkerKnowledgeContext: vi.fn(),
-  buildWorkerVoiceBootstrap: vi.fn(),
+  buildWorkerKnowledgeContext: buildWorkerKnowledgeContextMock,
+  buildWorkerVoiceBootstrap: buildWorkerVoiceBootstrapMock,
 }));
 
 vi.mock('../../../services/ai/virtualWorkerService.js', () => ({
@@ -37,7 +42,9 @@ vi.mock('../../../services/ai/virtualWorkerService.js', () => ({
 
 vi.mock('../../../services/ai/virtualWorkerConversationLogger.js', () => ({
   findOrCreateConversation: vi.fn(),
+  getConversationBySession: vi.fn().mockResolvedValue(null),
   logMessage: vi.fn(),
+  updateConversationIntelligence: vi.fn(),
 }));
 
 const { recordPublicAnnaFunnelEvent } = vi.hoisted(() => ({
@@ -268,6 +275,48 @@ describe('Public Anna route guardrails', () => {
     expect(res.body.fallbackReason).toBe('service_unavailable');
     expect(res.body.message).toBe(
       'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.'
+    );
+  });
+
+  it('falls back to legacy Anna knowledge when worker retrieval is degraded', async () => {
+    vi.mocked(getWorkerWithProfile).mockResolvedValueOnce({
+      worker: {
+        id: 'worker-anna',
+        slug: 'anna',
+        name: 'Anna',
+        role: 'sales_lp',
+        status: 'active',
+        surface: 'landing_page',
+        voice_enabled: true,
+        voice_name: 'Aoede',
+        locale_default: 'en',
+        avatar_url: null,
+        description: null,
+        created_at: '2026-03-27T00:00:00.000Z',
+        updated_at: '2026-03-27T00:00:00.000Z',
+      },
+      profile: null,
+    } as any);
+    buildWorkerKnowledgeContextMock.mockResolvedValueOnce({
+      contextText: 'No knowledge assigned to this worker.',
+      sources: [],
+      matchedProducts: [],
+      primaryProducts: [],
+      fallbackReason: 'no_assignments',
+    });
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/public/anna/chat')
+      .send({ message: 'What is Vector?', sessionId: 'session-worker-fallback', locale: 'en' });
+
+    expect(res.status).toBe(200);
+    expect(buildWorkerKnowledgeContextMock).toHaveBeenCalled();
+    expect(buildAnnaKnowledgeContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: 'What is Vector?',
+        locale: 'en',
+      })
     );
   });
 

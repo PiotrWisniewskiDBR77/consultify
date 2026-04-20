@@ -76,11 +76,30 @@ type AnnaRateLimitEntry = {
 
 type AnnaConversationLanguage = 'pl' | 'en' | 'es' | 'de' | 'jp' | 'ar' | 'unsupported';
 
+type AnnaKnowledgePayload = {
+  contextText: string;
+  sources: string[];
+  matchedProducts: string[];
+  primaryProducts: string[];
+  usedPillIds?: string[];
+  usedPillSections?: string[];
+  fallbackReason?: string | null;
+};
+
 export const ANNA_CHAT_RATE_LIMIT_WINDOW_MS = 60_000;
 export const ANNA_CHAT_RATE_LIMIT_MAX_REQUESTS = 8;
 
 const annaChatRateLimitStore = new Map<string, AnnaRateLimitEntry>();
 const annaFunnelEventRateLimitStore = new Map<string, AnnaRateLimitEntry>();
+
+function shouldFallbackToLegacyAnnaKnowledge(knowledge: AnnaKnowledgePayload): boolean {
+  if (!knowledge.sources || knowledge.sources.length === 0) return true;
+  return (
+    knowledge.fallbackReason === 'no_assignments' ||
+    knowledge.fallbackReason === 'knowledge_resolution_failed' ||
+    knowledge.fallbackReason === 'worker_not_found'
+  );
+}
 
 
 
@@ -854,15 +873,7 @@ router.post(
       const startMs = Date.now();
 
       // Try worker-based knowledge first, fall back to legacy
-      let knowledge: {
-        contextText: string;
-        sources: string[];
-        matchedProducts: string[];
-        primaryProducts: string[];
-        usedPillIds?: string[];
-        usedPillSections?: string[];
-        fallbackReason?: string | null;
-      };
+      let knowledge: AnnaKnowledgePayload;
       let workerConfig: Awaited<ReturnType<typeof getWorkerWithProfile>> = null;
       try {
         workerConfig = await getWorkerWithProfile('anna');
@@ -885,11 +896,7 @@ router.post(
           query: retrievalQuery,
           locale: body.locale,
         });
-        if (
-          (!knowledge.sources || knowledge.sources.length === 0) &&
-          (knowledge.fallbackReason === 'no_assignments' ||
-            knowledge.fallbackReason === 'knowledge_resolution_failed')
-        ) {
+        if (shouldFallbackToLegacyAnnaKnowledge(knowledge)) {
           knowledge = await buildAnnaKnowledgeContext({
             query: retrievalQuery,
             locale: body.locale,
@@ -1093,13 +1100,7 @@ router.get(
         ? req.query.sessionId.trim()
         : undefined;
 
-    let knowledge: {
-      contextText: string;
-      sources: string[];
-      matchedProducts: string[];
-      primaryProducts: string[];
-      fallbackReason?: string | null;
-    };
+    let knowledge: AnnaKnowledgePayload;
     let workerConfig: Awaited<ReturnType<typeof getWorkerWithProfile>> = null;
     try {
       workerConfig = await getWorkerWithProfile('anna');
@@ -1109,11 +1110,7 @@ router.get(
 
     if (workerConfig?.worker) {
       knowledge = await buildWorkerVoiceBootstrap('anna', locale);
-      if (
-        (!knowledge.sources || knowledge.sources.length === 0) &&
-        (knowledge.fallbackReason === 'no_assignments' ||
-          knowledge.fallbackReason === 'knowledge_resolution_failed')
-      ) {
+      if (shouldFallbackToLegacyAnnaKnowledge(knowledge)) {
         knowledge = await buildAnnaVoiceBootstrap(locale, siteKey);
       }
     } else {

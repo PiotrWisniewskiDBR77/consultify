@@ -142,6 +142,10 @@ function detectProducts(query: string): string[] {
   return matched;
 }
 
+function prioritizeProducts(explicitProducts: string[], baseProducts: string[]): string[] {
+  return explicitProducts.length > 0 ? uniq([...explicitProducts, ...baseProducts]) : uniq(baseProducts);
+}
+
 function isDbR77PortfolioQuestion(query: string): boolean {
   const q = String(query || '').toLowerCase();
   const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
@@ -501,17 +505,18 @@ export async function buildWorkerKnowledgeContext(opts: {
   const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
 
+  const portfolioProducts = uniq([
+    'dbr77',
+    'consultify',
+    'vector',
+    'iris',
+    'digital-twin',
+    'iiot',
+    'marketplace',
+    ...assignedProductSlugs,
+  ]);
   const primaryProducts = portfolioMode
-    ? uniq([
-        'dbr77',
-        'consultify',
-        'vector',
-        'iris',
-        'digital-twin',
-        'iiot',
-        'marketplace',
-        ...assignedProductSlugs,
-      ])
+    ? prioritizeProducts(detectedProducts, portfolioProducts)
     : explicitAssignedProducts.length > 0
       ? uniq([
           ...explicitAssignedProducts.filter((product) => product !== defaultProduct),
@@ -615,11 +620,18 @@ export async function buildWorkerKnowledgeContext(opts: {
     const fallbackProducts = portfolioMode ? allKnownProducts : primaryProducts;
     ragHits = dedupeHits([...ragHits, ...buildFallbackHits(fallbackProducts)]);
 
+    const explicitPriority = new Map(detectedProducts.map((product, index) => [product, index]));
     const sorted = ragHits
       .sort((a, b) => {
-        const aWeight = weightMap.get(a.productSlug) ?? 1.0;
-        const bWeight = weightMap.get(b.productSlug) ?? 1.0;
-        if (aWeight !== bWeight) return bWeight - aWeight;
+        if (explicitPriority.size > 0) {
+          const aExplicit = explicitPriority.has(a.productSlug)
+            ? (explicitPriority.get(a.productSlug) as number)
+            : explicitPriority.size + 1;
+          const bExplicit = explicitPriority.has(b.productSlug)
+            ? (explicitPriority.get(b.productSlug) as number)
+            : explicitPriority.size + 1;
+          if (aExplicit !== bExplicit) return aExplicit - bExplicit;
+        }
         const aPriority = primaryProducts.indexOf(a.productSlug);
         const bPriority = primaryProducts.indexOf(b.productSlug);
         const aScore = aPriority >= 0 ? aPriority : primaryProducts.length + 1;
@@ -628,6 +640,9 @@ export async function buildWorkerKnowledgeContext(opts: {
         const aLanguage = scoreLanguagePreference(a.language, preferredLanguage);
         const bLanguage = scoreLanguagePreference(b.language, preferredLanguage);
         if (aLanguage !== bLanguage) return aLanguage - bLanguage;
+        const aWeight = weightMap.get(a.productSlug) ?? 1.0;
+        const bWeight = weightMap.get(b.productSlug) ?? 1.0;
+        if (aWeight !== bWeight) return bWeight - aWeight;
         return b.similarity - a.similarity;
       })
       .slice(0, limit);
@@ -653,7 +668,7 @@ export async function buildWorkerKnowledgeContext(opts: {
       usedPillIds,
       usedPillSections,
       fallbackReason:
-        sorted.some((hit) => hit.source.startsWith('pill:'))
+        sorted.some((hit) => !hit.source.endsWith('-fallback'))
           ? null
           : sorted.some((hit) => hit.source.endsWith('-fallback'))
             ? 'fallback_context_only'
