@@ -157,6 +157,7 @@ export interface Assignment {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  isActive?: boolean;
 }
 
 export interface AssignmentMember {
@@ -313,6 +314,7 @@ class InterviewAssignmentService {
     await ensureAssignmentColumn('ai_review_snapshot_json', 'ai_review_snapshot_json TEXT');
     await ensureAssignmentColumn('ai_reviewed_at', 'ai_reviewed_at TIMESTAMP');
     await ensureAssignmentColumn('review_decision_memory_json', 'review_decision_memory_json TEXT');
+    await ensureAssignmentColumn('is_active', 'is_active INTEGER DEFAULT 1');
 
     await querySafe(`
       CREATE TABLE IF NOT EXISTS interview_assignment_members (
@@ -341,6 +343,19 @@ class InterviewAssignmentService {
         sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         read_at TIMESTAMP,
         metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await querySafe(`
+      CREATE TABLE IF NOT EXISTS interview_assignment_events (
+        id TEXT PRIMARY KEY,
+        assignment_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        actor_id TEXT,
+        event_type TEXT NOT NULL,
+        reason TEXT,
+        payload_json TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -379,6 +394,17 @@ class InterviewAssignmentService {
       await querySafe(
         `CREATE INDEX IF NOT EXISTS idx_interview_notifications_user
          ON interview_notifications(user_id)`
+      );
+    }
+
+    if (await tableExists('interview_assignment_events')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_assignment
+         ON interview_assignment_events(assignment_id, created_at DESC)`
+      );
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_org
+         ON interview_assignment_events(organization_id, created_at DESC)`
       );
     }
   }
@@ -737,7 +763,7 @@ class InterviewAssignmentService {
     const db = await this.getDb();
     const params: any[] = [organizationId, userId, userId];
 
-    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR EXISTS (
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND (a.assignee_user_id = ? OR EXISTS (
       SELECT 1
       FROM interview_assignment_members m
       WHERE m.assignment_id = a.id AND m.user_id = ?
@@ -792,7 +818,7 @@ class InterviewAssignmentService {
       options?.scope || (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: managerId });
     const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
 
-    let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1${scopeClause.clause}`;
     params.push(...scopeClause.params);
 
     if (options?.projectId) {
@@ -839,7 +865,7 @@ class InterviewAssignmentService {
     const now = new Date().toISOString();
     const params: any[] = [now];
 
-    let where = `WHERE a.due_at < ? AND a.status NOT IN ('completed', 'submitted')`;
+    let where = `WHERE a.due_at < ? AND COALESCE(a.is_active, 1) = 1 AND a.status NOT IN ('completed', 'submitted')`;
 
     if (organizationId) {
       where += ` AND a.organization_id = ?`;
@@ -896,6 +922,7 @@ class InterviewAssignmentService {
        FROM interview_assignments
        WHERE organization_id = ?
          ${scopeClause.clause}
+         AND COALESCE(is_active, 1) = 1
          AND due_at < ?
          AND status NOT IN ('completed', 'submitted')`,
       [organizationId, ...scopeClause.params, now]
@@ -944,7 +971,8 @@ class InterviewAssignmentService {
       `SELECT a.*, t.name as template_name
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
-       WHERE a.status IN ('assigned', 'in_progress', 'sent_back')
+       WHERE COALESCE(a.is_active, 1) = 1
+         AND a.status IN ('assigned', 'in_progress', 'sent_back')
          AND a.due_at IS NOT NULL
          AND a.due_at > ?`,
       [now.toISOString()]
@@ -1031,7 +1059,8 @@ class InterviewAssignmentService {
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
        LEFT JOIN users escalation_target ON escalation_target.id = COALESCE(a.escalate_to, a.created_by)
-       WHERE a.status IN ('assigned', 'in_progress', 'sent_back')
+       WHERE COALESCE(a.is_active, 1) = 1
+         AND a.status IN ('assigned', 'in_progress', 'sent_back')
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
          AND (a.escalated_at IS NULL OR a.escalated_at < ?)`,
@@ -1376,6 +1405,7 @@ class InterviewAssignmentService {
       createdBy: row.created_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      isActive: row.is_active !== 0,
     };
   }
 

@@ -2391,5 +2391,11 @@
     "upgrade": {
       "instantUnlock": "Alle Limits werden sofort nach dem Upgrade entfernt"
     }
+  },
+  "feedback": {
+    "floatingButton": {
+      "label": "Fehler melden",
+      "ariaLabel": "Fehler melden (Shift+Ctrl+B)"
+    }
   }
 }

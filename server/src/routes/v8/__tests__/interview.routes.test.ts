@@ -15,6 +15,7 @@ const mockResolveInterviewManagerScope = vi.fn();
 const mockStartAssignment = vi.fn();
 const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
+const mockManageAssignment = vi.fn();
 const mockSendBackAssignment = vi.fn();
 const mockApproveAssignment = vi.fn();
 const mockEvaluateSessionAnswers = vi.fn();
@@ -30,6 +31,7 @@ vi.mock('../../../controllers/InterviewController.js', () => ({
     startAssignment: (...args: unknown[]) => mockStartAssignment(...args),
     submitAssignment: (...args: unknown[]) => mockSubmitAssignment(...args),
     sendAssignmentReminder: (...args: unknown[]) => mockSendAssignmentReminder(...args),
+    manageAssignment: (...args: unknown[]) => mockManageAssignment(...args),
     sendBackAssignment: (...args: unknown[]) => mockSendBackAssignment(...args),
     approveAssignment: (...args: unknown[]) => mockApproveAssignment(...args),
     evaluateSessionAnswers: (...args: unknown[]) => mockEvaluateSessionAnswers(...args),
@@ -410,6 +412,27 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.data?.success).toBe(true);
     expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockSendAssignmentReminder).toHaveBeenCalled();
+  });
+
+  it('PATCH /api/v8/interview/assignments/:id/manage wraps response in V8 envelope', async () => {
+    mockManageAssignment.mockImplementation(async (req: any, res: any) => {
+      res.json({
+        assignment: { id: req.params.id, status: 'assigned' },
+        action: 'updated',
+        createdFreshAssignment: false,
+      });
+    });
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/assignments/asg-manage/manage')
+      .set('Authorization', 'Bearer x')
+      .send({ priority: 'high', mode: 'update' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.assignment?.id).toBe('asg-manage');
+    expect(res.body.data?.action).toBe('updated');
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
+    expect(mockManageAssignment).toHaveBeenCalled();
   });
 
   it('POST /api/v8/interview/assignments/:id/send-back wraps response in V8 envelope', async () => {

@@ -14,9 +14,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
-// Role organizacyjne z uprawnieniami do przydzielania
-// OWNER dziedziczy uprawnienia ADMIN (plus billing/ownership/deletion)
-const ORG_ROLES_WITH_ASSIGN = ['SUPERADMIN', 'OWNER', 'ADMIN', 'PROJECT_MANAGER'];
+// Role organizacyjne z uprawnieniami do przydzielania.
+// `ADMINISTRATOR` is a legacy/session alias for `ADMIN` that still appears
+// in some auth flows; keep it equivalent so manager views do not disappear.
+const ORG_ROLES_WITH_ASSIGN = ['SUPERADMIN', 'OWNER', 'ADMIN', 'ADMINISTRATOR', 'PROJECT_MANAGER'];
 
 // Role projektowe z uprawnieniami do przydzielania
 const PROJECT_ROLES_WITH_ASSIGN = ['PMO_LEAD', 'WORKSTREAM_OWNER', 'INITIATIVE_OWNER', 'SPONSOR'];
@@ -59,6 +60,10 @@ export interface InterviewPermissions {
   canAssignToUser: (userId: string, projectId?: string) => boolean;
   getAssignableProjects: () => ProjectMembership[];
 }
+
+export const hasOrgLevelInterviewAssignPermission = (role?: string | null): boolean => {
+  return ORG_ROLES_WITH_ASSIGN.includes(String(role || '').trim().toUpperCase());
+};
 
 export const useInterviewPermissions = (): InterviewPermissions => {
   const { currentUser, currentOrganization } = useAppStore();
@@ -108,8 +113,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
 
   // Sprawdź czy użytkownik ma uprawnienia do przydzielania na podstawie roli organizacyjnej
   const hasOrgLevelAssignPermission = useMemo(() => {
-    if (!currentUser?.role) return false;
-    return ORG_ROLES_WITH_ASSIGN.includes(currentUser.role.toUpperCase());
+    return hasOrgLevelInterviewAssignPermission(currentUser?.role);
   }, [currentUser?.role]);
 
   // Sprawdź czy użytkownik ma uprawnienia do przydzielania na podstawie ról projektowych

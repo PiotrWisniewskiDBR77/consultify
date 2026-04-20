@@ -6753,6 +6753,10 @@
   "feedback": {
     "title": "Opinie użytkowników i triage",
     "subtitle": "Zarządzaj zgłoszeniami, pomysłami i prośbami o funkcje.",
+    "floatingButton": {
+      "label": "Zgłoś błąd",
+      "ariaLabel": "Zgłoś błąd (Shift+Ctrl+B)"
+    },
     "search": "Szukaj...",
     "allStatuses": "Wszystkie statusy",
     "allTypes": "Wszystkie typy",

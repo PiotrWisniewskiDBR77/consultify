@@ -2142,5 +2142,11 @@
     "upgrade": {
       "instantUnlock": "Todos los límites se eliminan instantáneamente tras la actualización"
     }
+  },
+  "feedback": {
+    "floatingButton": {
+      "label": "Reportar error",
+      "ariaLabel": "Reportar error (Shift+Ctrl+B)"
+    }
   }
 }

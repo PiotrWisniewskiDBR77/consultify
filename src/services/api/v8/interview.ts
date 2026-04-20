@@ -119,6 +119,24 @@ export interface V8InterviewAssignment {
   };
 }
 
+export interface V8InterviewManageAssignmentPayload {
+  assigneeUserId?: string;
+  templateId?: string;
+  dueAt?: string | null;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  notes?: string | null;
+  mode?: 'update' | 'restart' | 'assign_again';
+  reason?: string;
+}
+
+export interface V8InterviewManageAssignmentResponse {
+  assignment: V8InterviewAssignment | null;
+  action: 'updated' | 'restarted' | 'assigned_again';
+  createdFreshAssignment: boolean;
+  previousAssignmentId?: string;
+  previousAssignmentDeactivated?: boolean;
+}
+
 export interface V8InterviewInsight {
   id: string;
   organizationId: string;
@@ -386,6 +404,12 @@ export const V8InterviewApi = {
 
   remindAssignment: (id: string) =>
     v8Post(`/interview/assignments/${encodeURIComponent(id)}/remind`, {}),
+
+  manageAssignment: (id: string, payload: V8InterviewManageAssignmentPayload) =>
+    v8Patch<V8InterviewManageAssignmentResponse>(
+      `/interview/assignments/${encodeURIComponent(id)}/manage`,
+      payload
+    ),
 
   sendBackAssignment: (
     id: string,

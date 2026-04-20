@@ -311,6 +311,8 @@ router.post('/assignments/:id/submit', v8Wrap(InterviewController.submitAssignme
 
 router.post('/assignments/:id/remind', v8Wrap(InterviewController.sendAssignmentReminder, interviewMeta));
 
+router.patch('/assignments/:id/manage', v8Wrap(InterviewController.manageAssignment, interviewMeta));
+
 router.post('/assignments/:id/send-back', v8Wrap(InterviewController.sendBackAssignment, interviewMeta));
 
 router.post('/assignments/:id/approve', v8Wrap(InterviewController.approveAssignment, interviewMeta));

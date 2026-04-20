@@ -6257,6 +6257,10 @@
   "feedback": {
     "title": "User Feedback & Triage",
     "subtitle": "Manage incoming reports, ideas, and feature requests.",
+    "floatingButton": {
+      "label": "Report bug",
+      "ariaLabel": "Report bug (Shift+Ctrl+B)"
+    },
     "search": "Search...",
     "allStatuses": "All Statuses",
     "allTypes": "All Types",

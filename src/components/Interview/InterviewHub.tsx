@@ -94,6 +94,7 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
+import { ManageAssignmentModal } from './ManageAssignmentModal';
 import {
   InterviewAssignmentPreviewBody,
   InterviewAssignmentPreviewFooter,
@@ -574,6 +575,7 @@ export const InterviewHub: React.FC = () => {
   // Modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showSendBackModal, setShowSendBackModal] = useState(false);
   const [showInsightModal, setShowInsightModal] = useState(false);
@@ -679,6 +681,32 @@ export const InterviewHub: React.FC = () => {
       ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
       : [];
   }, []);
+
+  const refreshAssignmentViews = useCallback(
+    async (includeManagedSessions = false) => {
+      const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
+        loadMyAssignments(),
+        canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
+        canViewOverdue ? loadOverdueAssignments() : Promise.resolve([]),
+        includeManagedSessions && canViewManaged ? loadManagedSessions() : Promise.resolve(null),
+      ]);
+
+      setMyAssignments(myRes);
+      setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
+      setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+      if (includeManagedSessions && Array.isArray(sessionsRes)) {
+        setSessions(sessionsRes);
+      }
+    },
+    [
+      canViewManaged,
+      canViewOverdue,
+      loadManagedAssignments,
+      loadManagedSessions,
+      loadMyAssignments,
+      loadOverdueAssignments,
+    ]
+  );
 
   // V3-A02: Dynamic documents state with sessionStorage persistence (shared hook)
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
@@ -1568,6 +1596,11 @@ export const InterviewHub: React.FC = () => {
     setShowSendBackModal(true);
   }, []);
 
+  const handleOpenManageAssignmentModal = useCallback((assignment: InterviewAssignment) => {
+    setSelectedAssignment(assignment);
+    setShowManageAssignmentModal(true);
+  }, []);
+
   const handleSendBack = useCallback(
     async (reason: string) => {
       if (!selectedAssignment) return;
@@ -2294,6 +2327,16 @@ export const InterviewHub: React.FC = () => {
                                   label: isPolish ? 'Odeślij' : 'Send back',
                                   icon: ArrowRight,
                                   onClick: () => handleOpenSendBackModal(linkedAssignment),
+                                },
+                              ]
+                            : []),
+                          ...(linkedAssignment && canAssign
+                            ? [
+                                {
+                                  id: 'manage-assignment',
+                                  label: isPolish ? 'Zarządzaj assignmentem' : 'Manage assignment',
+                                  icon: Edit3,
+                                  onClick: () => handleOpenManageAssignmentModal(linkedAssignment),
                                 },
                               ]
                             : []),
@@ -4536,6 +4579,12 @@ Return ONLY the answer text (no markdown fences).`;
                           assignment.status !== 'approved'
                             ? [
                                 {
+                                  id: 'manage',
+                                  label: isPolish ? 'Zarządzaj assignmentem' : 'Manage assignment',
+                                  icon: Edit3,
+                                  onClick: () => handleOpenManageAssignmentModal(assignment),
+                                },
+                                {
                                   id: 'remind',
                                   label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
                                   icon: Bell,
@@ -4558,6 +4607,20 @@ Return ONLY the answer text (no markdown fences).`;
                                       },
                                     ]
                                   : []),
+                              ]
+                            : []),
+                          ...(showAssignee &&
+                          canAssign &&
+                          (assignment.status === 'completed' || assignment.status === 'approved')
+                            ? [
+                                {
+                                  id: 'manage-closed',
+                                  label: isPolish
+                                    ? 'Przydziel ponownie'
+                                    : 'Assign again / manage',
+                                  icon: Edit3,
+                                  onClick: () => handleOpenManageAssignmentModal(assignment),
+                                },
                               ]
                             : []),
                           {
@@ -6435,22 +6498,33 @@ Return ONLY the answer text (no markdown fences).`;
           setSelectedTemplateForAssign(null);
         }}
         onSuccess={async () => {
-          // Refresh assignments after successful creation
           try {
-            const [myRes, managedRes, overdueRes] = await Promise.all([
-              loadMyAssignments(),
-              canViewManaged ? loadManagedAssignments() : Promise.resolve([]),
-              canViewOverdue ? loadOverdueAssignments() : Promise.resolve([]),
-            ]);
-            setMyAssignments(myRes);
-            setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-            setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+            await refreshAssignmentViews(false);
             setSelectedTemplateForAssign(null);
           } catch (error) {
             console.error('[InterviewHub] Failed to refresh assignments:', error);
           }
         }}
         preselectedTemplateId={selectedTemplateForAssign?.id}
+      />
+
+      <ManageAssignmentModal
+        isOpen={showManageAssignmentModal}
+        assignment={selectedAssignment}
+        onClose={() => {
+          setShowManageAssignmentModal(false);
+          setSelectedAssignment(null);
+        }}
+        onSuccess={async () => {
+          try {
+            await refreshAssignmentViews(true);
+          } catch (error) {
+            console.error('[InterviewHub] Failed to refresh after manage assignment:', error);
+          } finally {
+            setShowManageAssignmentModal(false);
+            setSelectedAssignment(null);
+          }
+        }}
       />
 
       {/* Reminder Modal */}

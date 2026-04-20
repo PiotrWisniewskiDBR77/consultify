@@ -177,6 +177,8 @@ const parseReviewDecisionMemory = (
 ): InterviewReviewDecisionMemoryEntry[] =>
   parseJson<InterviewReviewDecisionMemoryEntry[]>(value, []);
 
+type InterviewAssignmentManageMode = 'update' | 'restart' | 'assign_again';
+
 const normalizeInterviewAiFixType = (
   value: unknown,
   meta?: { verdict?: InterviewAiAnswerVerdict; isRequired?: boolean; feedback?: string }
@@ -561,6 +563,67 @@ async function ensureInterviewAssignmentAiReviewColumns(): Promise<void> {
     await queryHelpers.queryRun(
       `ALTER TABLE interview_assignments ADD COLUMN review_decision_memory_json TEXT`
     );
+  }
+}
+
+async function ensureInterviewAssignmentManagementSchema(): Promise<void> {
+  await ensureInterviewAssignmentAiReviewColumns();
+  const cols = await getTableColumns('interview_assignments');
+  if (!cols.has('is_active')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_assignments ADD COLUMN is_active INTEGER DEFAULT 1`
+    );
+  }
+
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS interview_assignment_events (
+      id TEXT PRIMARY KEY,
+      assignment_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      actor_id TEXT,
+      event_type TEXT NOT NULL,
+      reason TEXT,
+      payload_json TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_assignment
+     ON interview_assignment_events(assignment_id, created_at DESC)`
+  );
+  await queryHelpers.queryRun(
+    `CREATE INDEX IF NOT EXISTS idx_interview_assignment_events_org
+     ON interview_assignment_events(organization_id, created_at DESC)`
+  );
+}
+
+async function logInterviewAssignmentEvent(params: {
+  assignmentId: string;
+  organizationId: string;
+  actorId?: string;
+  eventType: string;
+  reason?: string;
+  payload?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await ensureInterviewAssignmentManagementSchema();
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_assignment_events
+       (id, assignment_id, organization_id, actor_id, event_type, reason, payload_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.assignmentId,
+        params.organizationId,
+        params.actorId || null,
+        params.eventType,
+        params.reason || null,
+        params.payload ? JSON.stringify(params.payload) : null,
+        new Date().toISOString(),
+      ]
+    );
+  } catch (error) {
+    logger.warn('[InterviewController] Failed to log interview assignment event', error);
   }
 }
 
@@ -1489,6 +1552,7 @@ export async function loadAcceptedInterviewSessionsForManager(
     totalQuestions: number;
   }>
 > {
+  await ensureInterviewAssignmentManagementSchema();
   const rows = await queryHelpers.queryAll(
     `SELECT
        s.id, s.name as name, s.template_id, s.status, s.started_at, s.completed_at, s.owner_id,
@@ -1496,11 +1560,12 @@ export async function loadAcceptedInterviewSessionsForManager(
        t.name as template_name, t.category as template_category,
        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
      FROM interview_sessions s
-     INNER JOIN interview_assignments a
-       ON a.session_id = s.id
-       AND a.organization_id = ?
-       AND a.created_by = ?
-       AND a.status IN ('approved', 'completed')
+      INNER JOIN interview_assignments a
+      ON a.session_id = s.id
+      AND a.organization_id = ?
+      AND a.created_by = ?
+      AND COALESCE(a.is_active, 1) = 1
+      AND a.status IN ('approved', 'completed')
      LEFT JOIN projects p ON p.id = s.project_id
      LEFT JOIN interview_library_templates t ON t.id = s.template_id
      LEFT JOIN users u ON u.id = s.owner_id
@@ -1565,6 +1630,7 @@ export async function loadManagedInterviewSessionsForManager(
     sentBackReason?: string;
   }>
 > {
+  await ensureInterviewAssignmentManagementSchema();
   const scope =
     options?.scope ||
     (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: userId });
@@ -1610,6 +1676,7 @@ export async function loadManagedInterviewSessionsForManager(
      LEFT JOIN users assignee_u ON assignee_u.id = a.assignee_user_id
      WHERE a.organization_id = ?
        ${scopeClause.clause}
+       AND COALESCE(a.is_active, 1) = 1
        AND a.status IN ('in_progress', 'submitted', 'sent_back', 'approved', 'completed')
        AND (
          p.organization_id = ?
@@ -2031,10 +2098,11 @@ export const InterviewController = {
 
   getMyAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const { status, includeCompleted } = req.query as any;
 
     const params: unknown[] = [user.organizationId, user.id, user.id];
-    let where = `WHERE a.organization_id = ? AND (a.assignee_user_id = ? OR m.user_id = ?)`;
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND (a.assignee_user_id = ? OR m.user_id = ?)`;
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -2068,7 +2136,7 @@ export const InterviewController = {
     } catch {
       // Back-compat: environments without `interview_assignment_members`.
       const fallbackParams: unknown[] = [user.organizationId, user.id];
-      let fallbackWhere = `WHERE a.organization_id = ? AND a.assignee_user_id = ?`;
+      let fallbackWhere = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1 AND a.assignee_user_id = ?`;
       if (status) {
         fallbackWhere += ` AND a.status = ?`;
         fallbackParams.push(status);
@@ -2315,10 +2383,11 @@ export const InterviewController = {
 
   listAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const admin = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const { status, assigneeUserId, createdBy, projectId, overdue } = req.query as any;
 
     const params: unknown[] = [admin.organizationId];
-    let where = `WHERE a.organization_id = ?`;
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1`;
     if (status) {
       where += ` AND a.status = ?`;
       params.push(status);
@@ -3024,6 +3093,7 @@ export const InterviewController = {
 
   getManagedAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const { status, projectId } = req.query as any;
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
@@ -3032,7 +3102,7 @@ export const InterviewController = {
     });
     const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
     const params: unknown[] = [user.organizationId, ...scopeClause.params];
-    let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
+    let where = `WHERE a.organization_id = ? AND COALESCE(a.is_active, 1) = 1${scopeClause.clause}`;
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -3120,6 +3190,7 @@ export const InterviewController = {
 
   getOverdueAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const now = new Date().toISOString();
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
@@ -3143,6 +3214,7 @@ export const InterviewController = {
        LEFT JOIN interview_sessions s ON s.id = a.session_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
        WHERE a.organization_id = ?
+         AND COALESCE(a.is_active, 1) = 1
          ${scopeClause.clause}
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
@@ -3190,6 +3262,7 @@ export const InterviewController = {
 
   getAssignmentCounts: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewAssignmentManagementSchema();
     const now = new Date().toISOString();
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
@@ -3208,6 +3281,7 @@ export const InterviewController = {
          FROM interview_assignments a
          LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
          WHERE a.organization_id = ?
+           AND COALESCE(a.is_active, 1) = 1
            AND (a.assignee_user_id = ? OR m.user_id = ?)
            AND a.status NOT IN ('approved', 'completed')`,
         [user.organizationId, user.id, user.id]
@@ -3217,7 +3291,7 @@ export const InterviewController = {
       myResult = await queryHelpers.queryOne(
         `SELECT COUNT(*) as count
          FROM interview_assignments
-         WHERE organization_id = ? AND assignee_user_id = ? AND status NOT IN ('approved', 'completed')`,
+         WHERE organization_id = ? AND COALESCE(is_active, 1) = 1 AND assignee_user_id = ? AND status NOT IN ('approved', 'completed')`,
         [user.organizationId, user.id]
       );
     }
@@ -3227,6 +3301,7 @@ export const InterviewController = {
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
+         AND COALESCE(is_active, 1) = 1
          ${countScopeClause.clause}`,
       [user.organizationId, ...countScopeClause.params]
     );
@@ -3236,6 +3311,7 @@ export const InterviewController = {
       `SELECT COUNT(*) as count
        FROM interview_assignments
        WHERE organization_id = ?
+         AND COALESCE(is_active, 1) = 1
          ${countScopeClause.clause}
          AND due_at IS NOT NULL
          AND due_at < ?
@@ -3422,6 +3498,359 @@ export const InterviewController = {
       [id]
     );
     res.json(updated);
+  }),
+
+  manageAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const {
+      assigneeUserId,
+      templateId,
+      dueAt,
+      priority,
+      notes,
+      mode,
+      reason,
+    } = req.body || {};
+
+    await ensureInterviewAssignmentManagementSchema();
+
+    const allowedPriorities = new Set(['low', 'medium', 'high', 'urgent']);
+    const allowedModes = new Set<InterviewAssignmentManageMode>(['update', 'restart', 'assign_again']);
+    if (mode !== undefined && !allowedModes.has(mode)) {
+      res.status(400).json({ error: 'Invalid mode. Must be update, restart, or assign_again.' });
+      return;
+    }
+    if (priority !== undefined && !allowedPriorities.has(String(priority))) {
+      res.status(400).json({ error: 'Invalid priority' });
+      return;
+    }
+    if (
+      dueAt !== undefined &&
+      dueAt !== null &&
+      (typeof dueAt !== 'string' || Number.isNaN(new Date(dueAt).getTime()))
+    ) {
+      res.status(400).json({ error: 'Invalid dueAt value' });
+      return;
+    }
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    if (Number((existing as any).is_active ?? 1) === 0) {
+      res.status(409).json({ error: 'Assignment has already been superseded' });
+      return;
+    }
+
+    const nextAssigneeUserId =
+      assigneeUserId !== undefined ? String(assigneeUserId || '').trim() : (existing as any).assignee_user_id;
+    const nextTemplateId =
+      templateId !== undefined ? String(templateId || '').trim() : (existing as any).template_id;
+    const nextPriority =
+      priority !== undefined ? String(priority) : String((existing as any).priority || 'medium');
+    const nextDueAt = dueAt !== undefined ? dueAt : ((existing as any).due_at ?? null);
+    const nextNotes = notes !== undefined ? notes : ((existing as any).notes ?? null);
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+
+    if (!nextAssigneeUserId) {
+      res.status(400).json({ error: 'assigneeUserId is required' });
+      return;
+    }
+    if (!nextTemplateId) {
+      res.status(400).json({ error: 'templateId is required' });
+      return;
+    }
+
+    const assigneeChanged = nextAssigneeUserId !== String((existing as any).assignee_user_id || '');
+    const templateChanged = nextTemplateId !== String((existing as any).template_id || '');
+    const dueAtChanged = (nextDueAt ?? null) !== ((existing as any).due_at ?? null);
+    const priorityChanged = nextPriority !== String((existing as any).priority || 'medium');
+    const notesChanged = (nextNotes ?? null) !== ((existing as any).notes ?? null);
+    const hasSensitiveChange = assigneeChanged || templateChanged;
+
+    const currentStatus = String((existing as any).status || '').toLowerCase();
+    let effectiveMode: InterviewAssignmentManageMode = 'update';
+    if (mode === 'assign_again') {
+      effectiveMode =
+        currentStatus === 'approved' || currentStatus === 'completed' ? 'assign_again' : 'restart';
+    } else if (mode === 'restart') {
+      effectiveMode = 'restart';
+    } else if (mode === 'update') {
+      effectiveMode = 'update';
+    } else if (currentStatus === 'approved' || currentStatus === 'completed') {
+      effectiveMode = hasSensitiveChange ? 'assign_again' : 'update';
+    } else if (currentStatus !== 'assigned' && hasSensitiveChange) {
+      effectiveMode = 'restart';
+    }
+
+    const template = await queryHelpers.queryOne(
+      `SELECT id, name, version, status FROM interview_library_templates WHERE id = ?`,
+      [nextTemplateId]
+    );
+    if (!template) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+    if (String((template as any).status || '').toLowerCase() !== 'approved') {
+      res.status(400).json({ error: 'Template is not approved yet' });
+      return;
+    }
+
+    const assigneeMembership = await queryHelpers.queryOne(
+      `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+      [user.organizationId, nextAssigneeUserId]
+    );
+    if (!assigneeMembership) {
+      res.status(404).json({ error: 'Assignee is not a member of this organization' });
+      return;
+    }
+    if ((existing as any).project_id) {
+      const projectMember = await queryHelpers.queryOne(
+        `SELECT user_id FROM project_members WHERE project_id = ? AND user_id = ?`,
+        [(existing as any).project_id, nextAssigneeUserId]
+      );
+      if (!projectMember) {
+        res.status(403).json({
+          error: 'Assignee must be a member of the assignment project to receive this interview.',
+        });
+        return;
+      }
+    }
+
+    const hasAnyChange =
+      assigneeChanged ||
+      templateChanged ||
+      dueAtChanged ||
+      priorityChanged ||
+      notesChanged ||
+      effectiveMode !== 'update';
+    if (!hasAnyChange) {
+      res.status(400).json({ error: 'No changes provided' });
+      return;
+    }
+
+    const { default: interviewAssignmentService } =
+      await import('../services/InterviewAssignmentService.js');
+    const now = new Date().toISOString();
+
+    if (effectiveMode === 'update') {
+      if (currentStatus !== 'assigned' && hasSensitiveChange) {
+        res.status(409).json({
+          error:
+            'Changing assignee or template after the interview has started requires creating a fresh assignment.',
+        });
+        return;
+      }
+
+      const updates: string[] = [];
+      const params: unknown[] = [];
+
+      if (dueAtChanged) {
+        updates.push('due_at = ?');
+        params.push(nextDueAt);
+      }
+      if (priorityChanged) {
+        updates.push('priority = ?');
+        params.push(nextPriority);
+      }
+      if (notesChanged) {
+        updates.push('notes = ?');
+        params.push(nextNotes);
+      }
+      if (assigneeChanged) {
+        updates.push('assignee_user_id = ?');
+        params.push(nextAssigneeUserId);
+      }
+      if (templateChanged) {
+        updates.push('template_id = ?');
+        params.push(nextTemplateId);
+        updates.push('template_version = ?');
+        params.push((template as any).version || 1);
+      }
+
+      if (updates.length === 0) {
+        res.status(400).json({ error: 'No supported updates for this assignment state' });
+        return;
+      }
+
+      updates.push('updated_at = ?');
+      params.push(now, id);
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments SET ${updates.join(', ')} WHERE id = ?`,
+        params
+      );
+
+      if ((existing as any).task_id) {
+        const taskUpdates: string[] = [];
+        const taskParams: unknown[] = [];
+        if (dueAtChanged) {
+          taskUpdates.push('due_date = ?');
+          taskParams.push(nextDueAt);
+        }
+        if (priorityChanged) {
+          taskUpdates.push('priority = ?');
+          taskParams.push(nextPriority);
+        }
+        if (assigneeChanged) {
+          taskUpdates.push('assignee_id = ?');
+          taskParams.push(nextAssigneeUserId);
+        }
+        if (templateChanged) {
+          taskUpdates.push('title = ?');
+          taskParams.push(`Interview: ${(template as any).name || 'Discovery Interview'}`);
+          taskUpdates.push('description = ?');
+          taskParams.push(
+            JSON.stringify({
+              type: 'interview_assignment',
+              assignmentId: id,
+              templateId: nextTemplateId,
+              templateVersion: (template as any).version || 1,
+            })
+          );
+        }
+        if (taskUpdates.length > 0) {
+          taskUpdates.push('updated_at = ?');
+          taskParams.push(now, (existing as any).task_id);
+          await queryHelpers.queryRun(
+            `UPDATE tasks SET ${taskUpdates.join(', ')} WHERE id = ?`,
+            taskParams
+          );
+        }
+      }
+
+      const updatedAssignment = await interviewAssignmentService.getByIdWithDetails(id);
+      await logInterviewAssignmentEvent({
+        assignmentId: id,
+        organizationId: user.organizationId,
+        actorId: user.id,
+        eventType: 'assignment_updated',
+        reason: normalizedReason || undefined,
+        payload: {
+          assigneeChanged,
+          templateChanged,
+          dueAtChanged,
+          priorityChanged,
+          notesChanged,
+          mode: effectiveMode,
+        },
+      });
+      res.json({
+        assignment: updatedAssignment,
+        action: 'updated',
+        createdFreshAssignment: false,
+      });
+      return;
+    }
+
+    if (
+      effectiveMode === 'restart' &&
+      currentStatus !== 'assigned' &&
+      currentStatus !== 'in_progress' &&
+      currentStatus !== 'sent_back' &&
+      currentStatus !== 'submitted'
+    ) {
+      res.status(409).json({ error: 'This assignment state cannot be restarted' });
+      return;
+    }
+
+    if (
+      effectiveMode === 'restart' &&
+      currentStatus !== 'assigned' &&
+      !normalizedReason
+    ) {
+      res.status(400).json({ error: 'Reason is required when replacing a started assignment' });
+      return;
+    }
+
+    const created = await interviewAssignmentService.create({
+      organizationId: user.organizationId,
+      projectId: (existing as any).project_id || undefined,
+      templateId: nextTemplateId,
+      templateVersion: (template as any).version || 1,
+      assigneeUserIds: [nextAssigneeUserId],
+      dueAt:
+        typeof nextDueAt === 'string' && nextDueAt
+          ? nextDueAt
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      priority: nextPriority as 'low' | 'medium' | 'high' | 'urgent',
+      escalateTo: (existing as any).escalate_to || user.id,
+      notes:
+        typeof nextNotes === 'string' && nextNotes.trim().length > 0
+          ? nextNotes.trim()
+          : undefined,
+      processRef: (existing as any).process_ref || undefined,
+      createdBy: user.id,
+    });
+    const replacementAssignment = await interviewAssignmentService.getByIdWithDetails(created.id);
+
+    const shouldDeactivateCurrent =
+      effectiveMode === 'restart' && currentStatus !== 'approved' && currentStatus !== 'completed';
+
+    if (shouldDeactivateCurrent) {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments SET is_active = 0, updated_at = ? WHERE id = ?`,
+        [now, id]
+      );
+      if ((existing as any).task_id) {
+        await queryHelpers.queryRun(`UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?`, [
+          'cancelled',
+          now,
+          (existing as any).task_id,
+        ]);
+      }
+      if ((existing as any).session_id) {
+        await queryHelpers.queryRun(
+          `UPDATE interview_sessions
+           SET status = 'archived',
+               completed_at = COALESCE(completed_at, ?),
+               last_activity_at = ?,
+               updated_at = ?
+           WHERE id = ?`,
+          [now, now, now, (existing as any).session_id]
+        );
+      }
+    }
+
+    await logInterviewAssignmentEvent({
+      assignmentId: id,
+      organizationId: user.organizationId,
+      actorId: user.id,
+      eventType: shouldDeactivateCurrent ? 'assignment_replaced' : 'assignment_follow_up_created',
+      reason: normalizedReason || undefined,
+      payload: {
+        createdAssignmentId: created.id,
+        mode: effectiveMode,
+        assigneeChanged,
+        templateChanged,
+        dueAtChanged,
+        priorityChanged,
+        notesChanged,
+      },
+    });
+    await logInterviewAssignmentEvent({
+      assignmentId: created.id,
+      organizationId: user.organizationId,
+      actorId: user.id,
+      eventType: 'assignment_created_from_existing',
+      reason: normalizedReason || undefined,
+      payload: {
+        sourceAssignmentId: id,
+        mode: effectiveMode,
+      },
+    });
+
+    res.json({
+      assignment: replacementAssignment,
+      action: effectiveMode === 'assign_again' ? 'assigned_again' : 'restarted',
+      createdFreshAssignment: true,
+      previousAssignmentId: id,
+      previousAssignmentDeactivated: shouldDeactivateCurrent,
+    });
   }),
 
   deleteAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

@@ -2142,5 +2142,11 @@
     "upgrade": {
       "instantUnlock": "تُزال جميع الحدود فوراً بعد الترقية"
     }
+  },
+  "feedback": {
+    "floatingButton": {
+      "label": "الإبلاغ عن خطأ",
+      "ariaLabel": "الإبلاغ عن خطأ (Shift+Ctrl+B)"
+    }
   }
 }

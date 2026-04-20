@@ -139,6 +139,13 @@ router.patch(
   InterviewController.updateAssignment
 );
 
+/** PATCH /interview/assignments/:id/manage - Manage or recreate assignment safely */
+router.patch(
+  '/assignments/:id/manage',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.manageAssignment
+);
+
 /** DELETE /interview/assignments/:id - Delete assignment (only if not started) */
 router.delete(
   '/assignments/:id',

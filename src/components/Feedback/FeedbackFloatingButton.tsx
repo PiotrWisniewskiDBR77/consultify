@@ -66,8 +66,8 @@ export const FeedbackFloatingButton: React.FC = () => {
 
   if (!shouldRender) return null;
 
-  const label = t('feedback.floatingButton.label', 'Zgłoś błąd');
-  const ariaLabel = t('feedback.floatingButton.ariaLabel', 'Zgłoś błąd (Shift+Ctrl+B)');
+  const label = t('feedback.floatingButton.label', 'Report bug');
+  const ariaLabel = t('feedback.floatingButton.ariaLabel', 'Report bug (Shift+Ctrl+B)');
 
   return (
     <button
