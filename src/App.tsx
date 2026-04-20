@@ -15,9 +15,7 @@ import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
 import { ChatV9FlagsResetHandler } from './components/Admin/ChatV9FlagsResetHandler';
 import { PiiHeuristicToast } from './components/AIChat/PiiHeuristicToast';
 import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
-import { BackToChatButton } from './components/navigation/BackToChatButton';
 import { BackToChatShortcut } from './components/navigation/BackToChatShortcut';
-import { WorkspaceBreadcrumb } from './components/navigation/WorkspaceBreadcrumb';
 import { RouterSync } from './components/RouterSync';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
@@ -244,21 +242,6 @@ function AppContent() {
           the overlay listens to. Returns null for non-admins and for
           sessions with zero overrides — no chrome by default. */}
       <ChatV9FlagsIndicator />
-      {/* Chat V9 / NAV NAV-M1 — global "Back to chat" pill. Self-gates
-          on `currentView !== AI_CHAT/WELCOME` AND `activeConversationId`
-          so it never shows up on the chat view itself or before any
-          conversation exists. Kill-switch: flag OFF returns null and
-          users fall back to sidebar / per-module headers. */}
-      <BackToChatButton />
-      {/* Chat V9 / NAV-M2-lite — floating `Chat › <view label>` pill
-          at top-center of non-chat workspace views. Pure wayfinding:
-          the `Chat` segment calls the same `returnToFullChat()` as
-          NAV-M1 / NAV-M1.1, so the three exits agree. Same
-          `activeConversationId` gate as BackToChatButton — never
-          paints before any chat exists. Kill-switch: flag OFF
-          returns null. No telemetry (NAV-M1 already captures the
-          "user returned to chat" signal). */}
-      <WorkspaceBreadcrumb />
       {/* Chat V9 / NAV NAV-M1.1 — headless Alt+Shift+C shortcut that
           triggers the same `returnToFullChat()` action. Shares the
           same view / conversation gates as the button, plus a
