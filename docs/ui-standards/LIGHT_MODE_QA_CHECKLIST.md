@@ -153,15 +153,35 @@ Jeśli zespół ma wątpliwość, czy dana implementacja jest zgodna z light mod
 
 ---
 
-## 6. Known gaps / backlog
+## 6. Status wdrożenia planu (Light Mode System)
 
-Obszary rozpoznane ale niedomknięte w v3.2 (dla przyszłych sprintów):
+Mapowanie realizacji planu [`.cursor/plans/light_mode_system_1840b898.plan.md`](file:///Users/piotrwisniewski/.cursor/plans/light_mode_system_1840b898.plan.md):
 
-- **Module-level sweep:** Pozostało ~500 ad-hoc wystąpień `bg-*/10-20 + text-*/400` w widokach modułów poza prymitywami. Migracja etapowa po najwyższym wpływie (MyWork, Interview, Studio, Admin settings).
-- **Tokenizacja border-subtle:** rozważyć migrację `border-slate-200/50` / `border-white/5` na `border-edge-subtle` w kodzie.
-- **Domyślny theme:** zmiana z `dark` na `system` w `uiSlice.ts` — wymaga decyzji produktowej + migracji istniejących użytkowników.
-- **Mass badge adoption:** zastąpienie lokalnych implementacji badge komponentem `Badge` z `src/components/ui/primitives/Badge.tsx` lub klasami `.lm-badge-*`.
-- **Data density switch:** ekspozycja `compact` vs `comfortable` jako ustawienie per-moduł (dziś zakodowane per-ekran).
+### Zrealizowane
+- **Faza 1 — Standard + kontrakt:** `light-mode-readability.md` (v3.2 pełny rewrite), `UI_UX_CANON_V3.md` §1 update, `app-table-standard.md` §3.1 light parity, `table-preview-pane-standard.md` §3.2 light parity, `visual-language.md` §0 disclaimer o SSOT.
+- **Faza 2 — Tokeny:** CSS variables w `src/index.css` (`--text-*`, `--surface-*`, `--border-*`, `--status-*`, `--focus-ring`), mapping w `tailwind.config.js`, komponenty `.lm-badge-*`, `.lm-surface-*`, `.focus-ring`. First-paint sync w `src/index.tsx` + runtime reactive w `AppProviders.tsx`.
+- **Faza 3 — Prymitywy:** Button, Badge, Input, Tabs, Dropdown, Card, Modal, EmptyState.
+- **Faza 4 — Chrome (kompletna):**
+  - Core shell: MainLayout, Sidebar, NavItem, WorkspaceBreadcrumb, BottomNavigation, FloatingSubmenu.
+  - Module topbars: `Admin/shared/PageHeader`, `DiscoveryTools/ToolHeader`, `Reports/ReportHeader`, `Discovery/DiscoveryHeader`, `shared/ToolWizard/ToolWizardHeader`, `shared/NModeLayout/NModeHeader`, `SuperAdmin/TabLayout`.
+  - Chat rail / AI panel chrome: `layout/SplitLayout`, `AIChat/UnifiedChatPanel`, `AIChat/ChatHistorySidebar`.
+  - Side panels / preview surfaces: `ui/primitives/Drawer`, `ui/sheet`, `Help/HelpSidePanel`, `Feedback/FeedbackSidePanel`, `MyWork/Notifications/NotificationDetailPanel`.
+  - Nav states / subnav / breadcrumbs: `SuperAdmin/TabLayout` tabs, `MyWork/table/TableTabStrip`, `assessment/Breadcrumb`, `FloatingSubmenu` selected/hover, focus-visible i `ring-1 ring-inset` dla aktywnych.
+- **Faza 5 — Data surfaces:** TableHeader, PreviewPaneShell, BulkActionBar, FilterDropdown, ColumnResizer, DataTable (z istniejącym `compact` propem jako wstęp do density kontraktu).
+- **Faza 7 — QA:** Ten dokument (5 ekranów referencyjnych, review checklist, grep audyt, quarterly regression).
+
+### Świadomie odłożone (known gaps)
+- **Faza 2 — Domyślny theme:** pozostaje `'dark'`. Zmiana na `'system'` to decyzja produktowa, pierwszy paint w `src/index.tsx` już obsługuje `'system'` dla userów, którzy ręcznie tę opcję wybiorą.
+- **Faza 5 — Density switch:** `compact` vs `comfortable` istnieje jako prop w `DataTable`, ale nie jako user-facing ustawienie per-moduł.
+- **Faza 6 — Moduły produktowe:** tylko spot-fix w `SuperAdminFeedbackView.tsx`. Chat, My Work, Interview, Executive, Studio, Admin settings — pełen sweep do kolejnych sprintów.
+- **Faza 7 — CSS sweep:** ~500 wystąpień `bg-*/10-20 + text-*/400` nadal w widokach modułów; adres w module-level sweep.
+
+### Backlog (do kolejnych sprintów)
+
+- **Module-level sweep:** migracja ad-hoc `bg-*/10-20 + text-*/400` w MyWork, Interview, Studio, Admin settings.
+- **Tokenizacja border-subtle:** `border-slate-200/50` / `border-white/5` → `border-edge-subtle`.
+- **Mass badge adoption:** zastąpienie lokalnych badge komponentem `Badge` lub klasami `.lm-badge-*`.
+- **Data density switch:** ekspozycja `compact` vs `comfortable` jako user preference.
 - **Lint automation:** custom ESLint plugin wyłapujący zakazane wzorce z §3.
 
-Te pozycje należy śledzić w module-specific backlogu, nie blokują core standardu.
+Te pozycje są pod-standardowe i nie blokują core kontraktu, ale muszą zostać domknięte zanim light mode zostanie uznany za "shipped across all modules".

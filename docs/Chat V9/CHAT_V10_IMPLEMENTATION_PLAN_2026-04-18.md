@@ -198,7 +198,7 @@ Exception: onboarding flags default-off but `ff.onboard_trust_first_banner` and 
 
 ## 5. Telemetry contract extensions
 
-The current `CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md` defines one `FunnelEventName` union and Index/detailed sections per event. V10 adds **8 new event families** with approximately **120 new events**.
+The current `CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md` defines one `FunnelEventName` union and Index/detailed sections per event. V10 adds **8 new event families** with approximately **120 new events**.
 
 ### 5.1 New event families
 
@@ -231,7 +231,7 @@ Each family extends the base V9 property set with family-specific required prope
 
 ### 5.3 Contract file update plan
 
-The single `CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md` will be **renamed** `CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md` once all families above are added. Per-block dev plans contribute events via pull requests that each extend the contract index + detailed sections for one family. CI invariant 11 (index ↔ detailed bijection) already enforces consistency.
+The telemetry contract has been renamed in-place to `CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md` (per ADR-V10-003). Per-block dev plans contribute events via pull requests that extend the contract index + detailed sections for one family. CI invariant 11 (index ↔ detailed bijection) enforces consistency.
 
 ---
 

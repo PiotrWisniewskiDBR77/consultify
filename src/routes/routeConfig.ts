@@ -28,6 +28,7 @@ export const ROUTES = {
 
   // Main App Routes
   AI_CHAT: '/chat',
+  AI_CHAT_V10_RUNTIME: '/chat/v10-runtime',
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   WORDY: '/wordy',
@@ -203,6 +204,9 @@ export const ROUTES = {
   // Wizards
   ORG_SETUP: '/setup/organization',
   ONBOARDING: '/setup/onboarding',
+  ONBOARDING_ADMIN: '/setup/onboarding/admin',
+  ONBOARDING_SEED: '/setup/onboarding/seed/:persona',
+  ONBOARDING_SEED_BASE: '/setup/onboarding/seed',
   TRIAL_ENTRY: '/trial',
 
   // Affiliate
@@ -567,6 +571,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
 
+  if (normalized === ROUTES.AI_CHAT_V10_RUNTIME) return AppView.AI_CHAT;
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
   if (normalized.startsWith(ROUTES.DOCS)) return AppView.KNOWLEDGE_BASE;

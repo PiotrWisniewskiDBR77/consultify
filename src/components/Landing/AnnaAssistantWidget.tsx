@@ -68,8 +68,6 @@ type AnnaWindow = Window &
 
 const LIVE_VOICE_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
 const LIVE_VOICE_NAME = 'Kore';
-const FRONTEND_GEMINI_KEY =
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
 
 const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
   en: {
@@ -705,7 +703,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceAvailable, setVoiceAvailable] = useState(false);
-  const [voiceApiKey, setVoiceApiKey] = useState<string | null>(FRONTEND_GEMINI_KEY || null);
+  const [voiceApiKey, setVoiceApiKey] = useState<string | null>(null);
   const [voiceName, setVoiceName] = useState(LIVE_VOICE_NAME);
   const [surfaceContext, setSurfaceContext] = useState<AnnaSurfaceContext | null>(null);
   const [messages, setMessages] = useState<AnnaMessage[]>(() => [
@@ -822,21 +820,13 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       setVoiceAvailable(Boolean(nextApiKey && nextEnabled && hasAudioContext && hasMicrophone));
     };
 
-    if (FRONTEND_GEMINI_KEY) {
-      applyVoiceConfig({
-        apiKey: FRONTEND_GEMINI_KEY,
-        voiceName: LIVE_VOICE_NAME,
-        enabled: true,
-      });
-    }
-
     fetch('/api/public/anna/voice-config')
       .then(async (response) => {
         if (!response.ok) {
           return {
-            apiKey: FRONTEND_GEMINI_KEY || null,
+            apiKey: null,
             voiceName: LIVE_VOICE_NAME,
-            enabled: true,
+            enabled: false,
           };
         }
         const data = await response.json();
@@ -844,19 +834,19 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           apiKey:
             typeof data?.apiKey === 'string' && data.apiKey.trim()
               ? data.apiKey.trim()
-              : FRONTEND_GEMINI_KEY || null,
+              : null,
           voiceName: typeof data?.voiceName === 'string' ? data.voiceName.trim() : LIVE_VOICE_NAME,
           enabled: data?.enabled !== false,
         };
       })
       .then((config) => applyVoiceConfig(config))
-      .catch(() =>
+      .catch(() => {
         applyVoiceConfig({
-          apiKey: FRONTEND_GEMINI_KEY || null,
+          apiKey: null,
           voiceName: LIVE_VOICE_NAME,
-          enabled: true,
-        })
-      );
+          enabled: false,
+        });
+      });
 
     return () => {
       cancelled = true;

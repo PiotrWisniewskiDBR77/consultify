@@ -159,6 +159,28 @@ export const handleResponse = async <T = unknown>(
   throw err;
 };
 
+export const handleDataResponse = async <T = unknown>(
+  res: Response,
+  defaultError: string
+): Promise<T> => {
+  const payload = await handleResponse<unknown>(res, defaultError);
+
+  if (!payload || typeof payload !== 'object' || !('data' in payload)) {
+    const err: any = new Error(`${defaultError}: invalid response envelope`);
+    err.data = payload;
+    throw err;
+  }
+
+  const data = (payload as { data?: T }).data;
+  if (typeof data === 'undefined') {
+    const err: any = new Error(`${defaultError}: missing response data`);
+    err.data = payload;
+    throw err;
+  }
+
+  return data;
+};
+
 /**
  * HTTP method helpers
  */

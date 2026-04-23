@@ -166,8 +166,13 @@ const SuperAdminView = React.lazy(() =>
   import('@/views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView }))
 );
 
-// AI Chat (Full Screen Chat View)
-const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
+// AI Chat (canonical full-screen surface)
+const UnifiedChatPanelView = React.lazy(() =>
+  import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
+);
+const V10RuntimeWorkspaceView = React.lazy(() =>
+  import('@/views/V10RuntimeWorkspaceView').then((m) => ({ default: m.V10RuntimeWorkspaceView }))
+);
 
 // KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
 const WordyView = React.lazy(() =>
@@ -1072,7 +1077,20 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <UnifiedChatPanelView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        <Route
+          path={ROUTES.AI_CHAT_V10_RUNTIME}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI Chat', 'V10 Runtime']} noPadding>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <V10RuntimeWorkspaceView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1087,7 +1105,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <UnifiedChatPanelView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1944,6 +1962,22 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path={ROUTES.ONBOARDING}
+          element={
+            <AnimationWrapper variant="slideUp">
+              <OnboardingWizard />
+            </AnimationWrapper>
+          }
+        />
+        <Route
+          path={ROUTES.ONBOARDING_ADMIN}
+          element={
+            <AnimationWrapper variant="slideUp">
+              <OnboardingWizard />
+            </AnimationWrapper>
+          }
+        />
+        <Route
+          path={ROUTES.ONBOARDING_SEED}
           element={
             <AnimationWrapper variant="slideUp">
               <OnboardingWizard />

@@ -133,10 +133,11 @@ export const BottomNavigation: React.FC = () => {
               className={`
                                 flex-1 flex flex-col items-center justify-center gap-0.5 
                                 transition-all duration-200 relative touch-target no-select
+                                focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset
                                 ${
                                   active
-                                    ? 'text-purple-600 dark:text-purple-400'
-                                    : 'text-slate-400 dark:text-slate-500 active:text-purple-600 dark:active:text-purple-400'
+                                    ? 'text-purple-700 dark:text-purple-400'
+                                    : 'text-slate-600 dark:text-slate-500 active:text-purple-700 dark:active:text-purple-400'
                                 }
                             `}
             >

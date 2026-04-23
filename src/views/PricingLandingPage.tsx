@@ -71,6 +71,7 @@ export const PricingLandingPage: React.FC = () => {
         ],
       }) as string[],
       cta: t('pricing.plans.trial.cta', 'Start trial'),
+      featured: false,
     },
     {
       key: 'user',
@@ -93,6 +94,7 @@ export const PricingLandingPage: React.FC = () => {
         ],
       }) as string[],
       cta: t('pricing.plans.user.cta', 'Choose User'),
+      featured: false,
     },
     {
       key: 'admin',
@@ -138,6 +140,7 @@ export const PricingLandingPage: React.FC = () => {
         ],
       }) as string[],
       cta: t('pricing.plans.enterprise.cta', 'Contact sales'),
+      featured: false,
     },
   ] as const;
 

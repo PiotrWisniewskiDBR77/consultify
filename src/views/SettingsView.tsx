@@ -378,9 +378,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       case 'calendar-sync':
         return <CalendarSyncSettings />;
       case 'api-keys':
-        return <APIAccessSettings currentUser={currentUser} />;
+        return <APIAccessSettings />;
       case 'webhooks':
-        return <WebhooksSettings currentUser={currentUser} />;
+        return <WebhooksSettings />;
 
       // Data & Privacy
       case 'data-controls':

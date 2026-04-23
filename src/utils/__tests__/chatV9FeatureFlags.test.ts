@@ -25,6 +25,7 @@ import {
   resetAllChatV9FlagOverrides,
   setChatV9FlagOverride,
 } from '../chatV9FeatureFlags';
+import { CHAT_V10_FLAGS } from '../chatV10FeatureFlags';
 
 // Registry scope note (pass 33 · 2026-04-18)
 // -------------------------------------------
@@ -193,7 +194,7 @@ describe('chatV9FeatureFlags registry', () => {
       path.join(repoRoot, 'src', 'services', 'funnelAnalytics.ts'),
       'utf8',
     );
-    const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_]+)'/gm;
+    const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_.]+)'/gm;
     const knownEvents = new Set<string>();
     for (const match of funnelSource.matchAll(FUNNEL_EVENT_RE)) {
       knownEvents.add(match[1]);
@@ -203,8 +204,13 @@ describe('chatV9FeatureFlags registry', () => {
     // falsely report "zero drift".
     expect(knownEvents.size, 'failed to parse any FunnelEventName entries').toBeGreaterThan(50);
 
+    const allFlags = [
+      ...CHAT_V9_FLAGS.map((f) => ({ id: f.id, telemetry: f.telemetry as readonly string[] })),
+      ...CHAT_V10_FLAGS.map((f) => ({ id: f.id, telemetry: f.telemetry as readonly string[] })),
+    ];
+
     const orphans: string[] = [];
-    for (const flag of CHAT_V9_FLAGS) {
+    for (const flag of allFlags) {
       for (const eventName of flag.telemetry) {
         if (!knownEvents.has(eventName)) {
           orphans.push(`${flag.id} → ${eventName}`);
@@ -228,7 +234,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     );
     const contractSource = readFileSync(contractPath, 'utf8');
 
@@ -238,7 +244,7 @@ describe('chatV9FeatureFlags registry', () => {
     // heading" form; prose headings like "## Ground rules" contain a
     // space and are correctly skipped.
     const headingSet = new Set<string>();
-    const HEADING_RE = /^#{2,3}\s+`?([a-z][a-z0-9_]*)`?\s*$/gm;
+    const HEADING_RE = /^#{2,3}\s+`?([a-z][a-z0-9_.]*)`?\s*$/gm;
     for (const match of contractSource.matchAll(HEADING_RE)) {
       headingSet.add(match[1]);
     }
@@ -247,8 +253,13 @@ describe('chatV9FeatureFlags registry', () => {
       'failed to parse any event headings from the telemetry contract doc',
     ).toBeGreaterThan(5);
 
+    const allFlags = [
+      ...CHAT_V9_FLAGS.map((f) => ({ id: f.id, telemetry: f.telemetry as readonly string[] })),
+      ...CHAT_V10_FLAGS.map((f) => ({ id: f.id, telemetry: f.telemetry as readonly string[] })),
+    ];
+
     const undocumented: string[] = [];
-    for (const flag of CHAT_V9_FLAGS) {
+    for (const flag of allFlags) {
       for (const eventName of flag.telemetry) {
         if (!headingSet.has(eventName)) {
           undocumented.push(`${flag.id} → ${eventName}`);
@@ -734,7 +745,7 @@ describe('chatV9FeatureFlags registry', () => {
     const REQUIRED_LINKS = [
       'CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md',
       'CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     ];
 
     const broken: string[] = [];
@@ -776,7 +787,7 @@ describe('chatV9FeatureFlags registry', () => {
       path.join(repoRoot, 'src', 'services', 'funnelAnalytics.ts'),
       'utf8',
     );
-    const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_]+)'/gm;
+    const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_.]+)'/gm;
     const unionEvents = new Set<string>();
     for (const m of funnelSource.matchAll(FUNNEL_EVENT_RE)) {
       unionEvents.add(m[1]);
@@ -814,7 +825,7 @@ describe('chatV9FeatureFlags registry', () => {
       path.join(repoRoot, 'src', 'services', 'funnelAnalytics.ts'),
       'utf8',
     );
-    const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_]+)'/gm;
+    const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_.]+)'/gm;
     const unionEvents = new Set<string>();
     for (const m of funnelSource.matchAll(FUNNEL_EVENT_RE)) unionEvents.add(m[1]);
 
@@ -822,7 +833,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     );
     const contractSource = readFileSync(contractPath, 'utf8');
 
@@ -886,7 +897,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     );
     const source = readFileSync(contractPath, 'utf8');
     const SECTION_RE = /## Index\s*\n([\s\S]*?)(?=\n## )/;
@@ -897,7 +908,7 @@ describe('chatV9FeatureFlags registry', () => {
     // Each data row begins with `| \`event_name\``; `|---` separator
     // and header rows have no backticks inside the first cell, so
     // filtering by that regex is enough to skip them.
-    const ROW_RE = /^\|\s*`([a-z0-9_]+)`\s*\|\s*([^|]+?)\s*\|\s*`([a-z0-9-]+)`\s*\|/gm;
+    const ROW_RE = /^\|\s*`([a-z0-9_.]+)`\s*\|\s*([^|]+?)\s*\|\s*`([a-z0-9-]+)`\s*\|/gm;
 
     // Reuse the same normaliser as the README ticket-column test in
     // pass 82 so `AG1 v1.N` ↔ `AG1.N` and `X-lite` variants count as
@@ -910,8 +921,12 @@ describe('chatV9FeatureFlags registry', () => {
         .replace(/-lite(?:-plus)*(?:-v\d+)?$/i, '')
         .trim();
 
-    const flagsByEvent = new Map<string, (typeof CHAT_V9_FLAGS)[number]>();
-    for (const flag of CHAT_V9_FLAGS) {
+    type AnyFlag = (typeof CHAT_V9_FLAGS)[number] | (typeof CHAT_V10_FLAGS)[number];
+    const allFlags: readonly AnyFlag[] = [...CHAT_V9_FLAGS, ...CHAT_V10_FLAGS];
+    const getTicket = (flag: AnyFlag): string => ('ticket' in flag ? flag.ticket : flag.ticketId);
+
+    const flagsByEvent = new Map<string, AnyFlag>();
+    for (const flag of allFlags) {
       for (const ev of flag.telemetry) flagsByEvent.set(ev, flag);
     }
 
@@ -935,10 +950,10 @@ describe('chatV9FeatureFlags registry', () => {
       // Event → ticket: the row's ticket cell must normalise to
       // the same ticket as the flag's registry ticket.
       const a = normalise(ticketCell);
-      const b = normalise(flagByEvent.ticket);
+      const b = normalise(getTicket(flagByEvent));
       if (a !== b) {
         drift.push(
-          `${event}: index ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${flagByEvent.ticket}" (→ "${b}")`,
+          `${event}: index ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${getTicket(flagByEvent)}" (→ "${b}")`,
         );
       }
     }
@@ -973,7 +988,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     );
     const source = readFileSync(contractPath, 'utf8');
 
@@ -983,7 +998,7 @@ describe('chatV9FeatureFlags registry', () => {
     const body = afterIndex![1];
 
     const SECTION_RE =
-      /^## `([a-z0-9_]+)`\s*\n+\*\*Ticket:\*\*\s*([^·]+?)\s*·\s*\*\*Flag:\*\*\s*`([^`]+)`/gm;
+      /^## `([a-z0-9_.]+)`\s*\n+\*\*Ticket:\*\*\s*([^·]+?)\s*·\s*\*\*Flag:\*\*\s*`([^`]+)`/gm;
 
     const normalise = (raw: string): string =>
       raw
@@ -993,8 +1008,12 @@ describe('chatV9FeatureFlags registry', () => {
         .replace(/-lite(?:-plus)*(?:-v\d+)?$/i, '')
         .trim();
 
-    const flagsByEvent = new Map<string, (typeof CHAT_V9_FLAGS)[number]>();
-    for (const flag of CHAT_V9_FLAGS) {
+    type AnyFlag = (typeof CHAT_V9_FLAGS)[number] | (typeof CHAT_V10_FLAGS)[number];
+    const allFlags: readonly AnyFlag[] = [...CHAT_V9_FLAGS, ...CHAT_V10_FLAGS];
+    const getTicket = (flag: AnyFlag): string => ('ticket' in flag ? flag.ticket : flag.ticketId);
+
+    const flagsByEvent = new Map<string, AnyFlag>();
+    for (const flag of allFlags) {
       for (const ev of flag.telemetry) flagsByEvent.set(ev, flag);
     }
 
@@ -1009,10 +1028,10 @@ describe('chatV9FeatureFlags registry', () => {
         continue;
       }
       const a = normalise(ticketCell);
-      const b = normalise(flag.ticket);
+      const b = normalise(getTicket(flag));
       if (a !== b) {
         drift.push(
-          `${event}: section ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${flag.ticket}" (→ "${b}")`,
+          `${event}: section ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${getTicket(flag)}" (→ "${b}")`,
         );
       }
       if (flagKeyCell !== flag.keys.localStorage) {
@@ -1044,7 +1063,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     );
     const source = readFileSync(contractPath, 'utf8');
 
@@ -1053,7 +1072,7 @@ describe('chatV9FeatureFlags registry', () => {
     expect(sectionMatch, '"## Index" section not found').not.toBeNull();
     const indexBlock = sectionMatch![1];
 
-    const INDEX_ROW_RE = /^\|\s*`([a-z0-9_]+)`/gm;
+    const INDEX_ROW_RE = /^\|\s*`([a-z0-9_.]+)`/gm;
     const indexed = new Set<string>();
     for (const m of indexBlock.matchAll(INDEX_ROW_RE)) indexed.add(m[1]);
 
@@ -1065,7 +1084,7 @@ describe('chatV9FeatureFlags registry', () => {
     // sections — e.g. the Voice funnel (VM10) parent groups four
     // events under `### \`voice_start\``, `### \`voice_stt_success\``
     // etc. rather than giving each its own H2.
-    for (const m of afterIndex![1].matchAll(/^#{2,3} `([a-z0-9_]+)`/gm)) {
+    for (const m of afterIndex![1].matchAll(/^#{2,3} `([a-z0-9_.]+)`/gm)) {
       detailed.add(m[1]);
     }
 
@@ -1192,7 +1211,7 @@ describe('chatV9FeatureFlags registry', () => {
     const REQUIRED = new Set([
       './CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md',
       './CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md',
-      './CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      './CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     ]);
 
     const drift: string[] = [];
@@ -1322,7 +1341,7 @@ describe('chatV9FeatureFlags registry', () => {
   //   - *_DEVELOPMENT_PLAN_*.md (one per block)
   //   - CHAT_V9_OPERATIONS_RUNBOOK_*.md
   //   - CHAT_V9_CONTRIBUTOR_GUIDE_*.md
-  //   - CHAT_V9_TELEMETRY_CONTRACT_*.md
+  //   - CHAT_V10_TELEMETRY_CONTRACT_*.md
   //
   // Any file outside this taxonomy is an orphan — either a
   // work-in-progress left behind, or a new doc type nobody taught
@@ -1339,13 +1358,16 @@ describe('chatV9FeatureFlags registry', () => {
       /^.*_DEVELOPMENT_PLAN_\d{4}-\d{2}-\d{2}\.md$/,
       /^CHAT_V9_OPERATIONS_RUNBOOK_\d{4}-\d{2}-\d{2}\.md$/,
       /^CHAT_V9_CONTRIBUTOR_GUIDE_\d{4}-\d{2}-\d{2}\.md$/,
-      /^CHAT_V9_TELEMETRY_CONTRACT_\d{4}-\d{2}-\d{2}\.md$/,
+      /^CHAT_V10_TELEMETRY_CONTRACT_\d{4}-\d{2}-\d{2}\.md$/,
+      // Chat V10 master skeleton + authoritative deep-research docs live in the same folder.
+      /^CHAT_V10_IMPLEMENTATION_PLAN_\d{4}-\d{2}-\d{2}\.md$/,
+      /^DEEP_RESEARCH_.+_\d{4}-\d{2}-\d{2}\.md$/,
     ];
 
     const orphans = entries.filter((f) => !KNOWN.some((rx) => rx.test(f)));
     expect(
       orphans,
-      `docs/Chat V9/ files that do not match any known taxonomy:\n${orphans.join('\n')}\n\nExpected taxonomies: README.md, *_DEVELOPMENT_PLAN_YYYY-MM-DD.md, CHAT_V9_OPERATIONS_RUNBOOK_YYYY-MM-DD.md, CHAT_V9_CONTRIBUTOR_GUIDE_YYYY-MM-DD.md, CHAT_V9_TELEMETRY_CONTRACT_YYYY-MM-DD.md`,
+      `docs/Chat V9/ files that do not match any known taxonomy:\n${orphans.join('\n')}\n\nExpected taxonomies: README.md, *_DEVELOPMENT_PLAN_YYYY-MM-DD.md, CHAT_V9_OPERATIONS_RUNBOOK_YYYY-MM-DD.md, CHAT_V9_CONTRIBUTOR_GUIDE_YYYY-MM-DD.md, CHAT_V10_TELEMETRY_CONTRACT_YYYY-MM-DD.md, CHAT_V10_IMPLEMENTATION_PLAN_YYYY-MM-DD.md, DEEP_RESEARCH_*_YYYY-MM-DD.md`,
     ).toEqual([]);
   });
 

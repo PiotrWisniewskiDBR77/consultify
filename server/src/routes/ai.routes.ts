@@ -4,6 +4,7 @@
  */
 
 import * as cheerio from 'cheerio';
+import crypto from 'crypto';
 import { Response, Router } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
@@ -87,6 +88,37 @@ import {
 } from '../validators/ai.validators.js';
 
 const router = Router();
+
+const DEEP_THINKING_CONFIRM_TTL_MS = 30 * 60 * 1000;
+let deepThinkingConfirmTableReady: Promise<void> | null = null;
+
+async function ensureDeepThinkingConfirmTable(): Promise<void> {
+  if (!deepThinkingConfirmTableReady) {
+    deepThinkingConfirmTableReady = (async () => {
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS ai_deep_thinking_confirms (
+          token TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          organization_id TEXT,
+          conversation_id TEXT,
+          message_hash TEXT NOT NULL,
+          confirm_payload TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          expires_at TEXT NOT NULL,
+          consumed_at TEXT
+        )`
+      );
+    })().catch((error) => {
+      deepThinkingConfirmTableReady = null;
+      throw error;
+    });
+  }
+  await deepThinkingConfirmTableReady;
+}
+
+function hashDeepThinkingMessage(message: unknown): string {
+  return crypto.createHash('sha256').update(String(message || '').trim()).digest('hex');
+}
 
 // Apply rate limiting to all AI routes
 router.use(aiRateLimiter);
@@ -781,9 +813,9 @@ router.post(
       const db = dbMod;
 
       const messages = (await db.all(
-        `SELECT content, metadata, role FROM conversation_messages
+        `SELECT content, metadata, role, created_at FROM conversation_messages
          WHERE conversation_id = ? AND role = 'ai'
-         ORDER BY created_at DESC LIMIT 1`,
+         ORDER BY created_at DESC LIMIT 10`,
         [conversationId]
       )) as any[];
 
@@ -791,13 +823,43 @@ router.post(
         return res.status(404).json({ error: 'No AI messages found in conversation' });
       }
 
-      const content = messages[0].content || '';
+      const reportMessage =
+        messages.find((message) => {
+          try {
+            const metadata =
+              typeof message?.metadata === 'string'
+                ? JSON.parse(message.metadata)
+                : message?.metadata || {};
+            return (
+              metadata?.deepThinking?.kind === 'report' ||
+              (typeof metadata?.deepThinkingReport === 'string' &&
+                metadata.deepThinkingReport.trim().length > 0)
+            );
+          } catch {
+            return false;
+          }
+        }) || messages[0];
+      const parsedMetadata =
+        typeof reportMessage?.metadata === 'string'
+          ? JSON.parse(reportMessage.metadata || '{}')
+          : reportMessage?.metadata || {};
+      const expectedOutput =
+        parsedMetadata?.deepThinking?.expectedOutput ||
+        parsedMetadata?.deepThinkingConfirm?.understanding?.expectedOutput ||
+        'FullReport';
+      const content =
+        String(parsedMetadata?.deepThinkingReport || '').trim() || String(reportMessage?.content || '');
       const exportFormat = format || 'markdown';
 
       return res.json({
         success: true,
         format: exportFormat,
         content,
+        report: {
+          expectedOutput,
+          createdAt: reportMessage?.created_at || null,
+          metadata: parsedMetadata?.deepThinking || null,
+        },
         exportedAt: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -1164,8 +1226,34 @@ router.post(
 
     logger.info('[AI Confirm] LLM call succeeded, returning result');
 
+    await ensureDeepThinkingConfirmTable();
+    const confirmToken = uuidv4();
+    const conversationId =
+      typeof body.conversationId === 'string' && body.conversationId.trim().length > 0
+        ? body.conversationId.trim()
+        : typeof (context as any)?.conversationId === 'string' &&
+            String((context as any)?.conversationId).trim().length > 0
+          ? String((context as any)?.conversationId).trim()
+          : null;
+    const expiresAt = new Date(Date.now() + DEEP_THINKING_CONFIRM_TTL_MS).toISOString();
+    await dbRun(
+      `INSERT INTO ai_deep_thinking_confirms
+         (token, user_id, organization_id, conversation_id, message_hash, confirm_payload, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        confirmToken,
+        req.userId as string,
+        req.organizationId || null,
+        conversationId,
+        hashDeepThinkingMessage(message),
+        JSON.stringify(result.object || {}),
+        expiresAt,
+      ]
+    );
+
     return res.json({
       confirm: result.object,
+      confirmToken,
       metadata: {
         provider: modelCfg.provider,
         model: modelCfg.id,
@@ -1305,13 +1393,64 @@ router.post(
     // Deep Thinking determinism: enforce Confirm gate server-side (not just UI).
     if (aiModes?.deepResearch) {
       const confirmed = Boolean((context as any)?.deepThinkingConfirmed);
-      if (!confirmed) {
+      const confirmTokenRaw = String((context as any)?.deepThinkingConfirmToken || '').trim();
+      if (!confirmed || !confirmTokenRaw) {
         return res.status(400).json({
           error:
-            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and then retry with context.deepThinkingConfirmed=true.',
+            'Deep Thinking requires Confirm Understanding first. Call /api/ai/chat/confirm and retry with a valid confirm token.',
           code: 'DEEP_THINKING_CONFIRM_REQUIRED',
         });
       }
+      await ensureDeepThinkingConfirmTable();
+      const tokenRow = (await dbGet(
+        `SELECT token, conversation_id, message_hash, expires_at, consumed_at
+           FROM ai_deep_thinking_confirms
+          WHERE token = ? AND user_id = ?`,
+        [confirmTokenRaw, req.userId as string]
+      )) as
+        | {
+            token: string;
+            conversation_id?: string | null;
+            message_hash: string;
+            expires_at: string;
+            consumed_at?: string | null;
+          }
+        | undefined;
+
+      const requestedConversationId =
+        typeof conversationId === 'string' && conversationId.trim().length > 0
+          ? conversationId.trim()
+          : typeof (context as any)?.conversationId === 'string' &&
+              String((context as any)?.conversationId).trim().length > 0
+            ? String((context as any)?.conversationId).trim()
+            : null;
+
+      const tokenExpired =
+        !tokenRow?.expires_at || Number.isNaN(Date.parse(tokenRow.expires_at))
+          ? true
+          : Date.parse(tokenRow.expires_at) < Date.now();
+      const tokenConversationMismatch =
+        Boolean(tokenRow?.conversation_id) &&
+        Boolean(requestedConversationId) &&
+        tokenRow?.conversation_id !== requestedConversationId;
+      const tokenMessageMismatch =
+        !tokenRow?.message_hash || tokenRow.message_hash !== hashDeepThinkingMessage(message);
+
+      if (
+        !tokenRow ||
+        Boolean(tokenRow.consumed_at) ||
+        tokenExpired ||
+        tokenConversationMismatch ||
+        tokenMessageMismatch
+      ) {
+        return res.status(400).json({
+          error: 'Deep Thinking confirm token is missing, expired, or does not match this request.',
+          code: 'DEEP_THINKING_CONFIRM_INVALID',
+        });
+      }
+      await dbRun(`UPDATE ai_deep_thinking_confirms SET consumed_at = CURRENT_TIMESTAMP WHERE token = ?`, [
+        confirmTokenRaw,
+      ]);
     }
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
@@ -3391,7 +3530,7 @@ router.post(
 
               const { runAgentAudit } =
                 await import('../services/ai/agentAudit/orchestratorService.js');
-              const { createAgentAuditRun } =
+              const { AgentAuditPersistenceError, createAgentAuditRun, getAgentAuditRun } =
                 await import('../services/ai/agentAudit/agentAuditStore.js');
 
               const auditOut = await runAgentAudit({
@@ -3411,27 +3550,40 @@ router.post(
                 emit: emitSSE,
               } as any);
 
-              // Persist run (best-effort)
-              try {
-                await createAgentAuditRun({
-                  id: auditOut.orchestratorRunId,
-                  organizationId: req.organizationId!,
-                  userId: req.userId!,
-                  conversationId: conversationId || null,
-                  dtSessionId: streamSessionId,
-                  userIntent: String(agentAudit?.userIntent || 'validate'),
-                  loopIteration: Number(agentAudit?.loopIteration || 1),
-                  decisionContext: decisionContext || null,
-                  selectedAgentIds: agentIds,
-                  verdict: auditOut.verdict || null,
-                  reviews: (auditOut.reviews || []).map((r: any) => ({
-                    agentId: String(r.agentId || ''),
-                    overreach: r.overreach || null,
-                    review: r,
-                  })),
-                } as any);
-              } catch {
-                /* ignore */
+              emitSSE({
+                type: 'agent_audit_state',
+                state: 'aggregating',
+                orchestratorRunId: auditOut.orchestratorRunId,
+                agentsTotal: agentIds.length,
+                qualityStatus: auditOut?.verdict?.qualityStatus,
+                gatesTriggered: auditOut?.verdict?.gatesTriggered || [],
+              });
+
+              await createAgentAuditRun({
+                id: auditOut.orchestratorRunId,
+                organizationId: req.organizationId!,
+                userId: req.userId!,
+                conversationId: conversationId || null,
+                dtSessionId: streamSessionId,
+                userIntent: String(agentAudit?.userIntent || 'validate'),
+                loopIteration: Number(agentAudit?.loopIteration || 1),
+                decisionContext: decisionContext || null,
+                selectedAgentIds: agentIds,
+                verdict: auditOut.verdict || null,
+                reviews: (auditOut.reviews || []).map((r: any) => ({
+                  agentId: String(r.agentId || ''),
+                  overreach: r.overreach || null,
+                  review: r,
+                })),
+              } as any);
+              const persistedAuditRun = await getAgentAuditRun({
+                runId: auditOut.orchestratorRunId,
+                organizationId: req.organizationId!,
+              });
+              if (!persistedAuditRun) {
+                throw new AgentAuditPersistenceError(
+                  `Persisted agent audit run ${auditOut.orchestratorRunId} could not be reloaded`
+                );
               }
 
               emitSSE({
@@ -3443,6 +3595,15 @@ router.post(
                 agentIds,
                 userIntent: agentAudit?.userIntent || 'validate',
                 loopIteration: agentAudit?.loopIteration || 1,
+                persistedRunId: persistedAuditRun.id,
+              });
+              emitSSE({
+                type: 'agent_audit_state',
+                state: 'done',
+                orchestratorRunId: auditOut.orchestratorRunId,
+                agentsTotal: agentIds.length,
+                qualityStatus: auditOut?.verdict?.qualityStatus,
+                gatesTriggered: auditOut?.verdict?.gatesTriggered || [],
               });
             }
           } catch (auditErr: any) {

@@ -37,8 +37,17 @@ import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
+import {
+  buildDeepThinkingConfirmCardContent,
+  buildDeepThinkingConfirmMessageMetadata,
+  buildDeepThinkingConfirmedContext,
+  buildDeepThinkingReportMetadata,
+  shouldOpenDeepThinkingClarification,
+  type DeepThinkingPendingConfirmBase,
+} from '../components/AIChat/deepThinkingRuntime';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
+import { ResearchClarification } from '../components/AIChat/ResearchClarification';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
@@ -175,14 +184,9 @@ export const AIChatWelcomeView: React.FC = () => {
 
   // Deep Thinking confirm state
   const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
-  const [dtPendingConfirm, setDtPendingConfirm] = useState<{
-    messageId: string;
-    conversationId: string | null;
-    originalMessage: string;
-    editedMessage: string;
-    confirm: any;
-    context: any;
-  } | null>(null);
+  const [dtPendingConfirm, setDtPendingConfirm] = useState<DeepThinkingPendingConfirmBase | null>(
+    null
+  );
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
@@ -232,7 +236,19 @@ export const AIChatWelcomeView: React.FC = () => {
             artifacts: artifacts as any,
             citations: meta?.citations,
             streamSessionId: meta?.sessionId,
-            extra: meta?.proposal ? { proposal: meta.proposal } : {},
+            extra:
+              aiConfig?.deepResearch || (aiConfig as any)?.marketResearch || meta?.proposal
+                ? {
+                    ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                      ? buildDeepThinkingReportMetadata({
+                          confirm: dtPendingConfirm?.confirm,
+                          report: safeText,
+                          streamSessionId: meta?.sessionId,
+                        })
+                      : {}),
+                    ...(meta?.proposal ? { proposal: meta.proposal } : {}),
+                  }
+                : {},
           }) as any,
         });
 
@@ -803,36 +819,64 @@ For example: REMEMBER: preferred_language: Polish`;
   );
 
   // Handle Deep Thinking proceed (after user confirms)
+  const startDeepThinkingRun = useCallback(
+    (pendingConfirm: NonNullable<typeof dtPendingConfirm>) => {
+      const history = activeChatMessagesRef.current
+        .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
+        .map((m) => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }],
+        }));
+
+      const systemPrompt = buildSystemPrompt();
+
+      startStream(
+        pendingConfirm.editedMessage || pendingConfirm.originalMessage,
+        history,
+        systemPrompt,
+        buildDeepThinkingConfirmedContext(pendingConfirm),
+        undefined,
+        undefined,
+        chatLanguage
+      );
+
+      setDtPendingConfirm(null);
+    },
+    [buildSystemPrompt, startStream, chatLanguage]
+  );
+
   const handleDeepThinkingProceed = useCallback(async () => {
     if (!dtPendingConfirm) return;
     if (isStreaming) return;
+    if (
+      shouldOpenDeepThinkingClarification(
+        dtPendingConfirm.confirm,
+        dtPendingConfirm.clarificationHandled
+      ) &&
+      !dtPendingConfirm.clarificationRequested
+    ) {
+      setDtPendingConfirm((prev) => (prev ? { ...prev, clarificationRequested: true } : prev));
+      return;
+    }
+    startDeepThinkingRun(dtPendingConfirm);
+  }, [dtPendingConfirm, isStreaming, startDeepThinkingRun]);
 
-    const history = activeChatMessagesRef.current
-      .filter((m) => !((m as any).metadata?.deepThinking?.kind === 'confirm'))
-      .map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      }));
+  const handleDeepThinkingClarificationComplete = useCallback(
+    async (answers: Record<string, string> | null) => {
+      if (!dtPendingConfirm || isStreaming) return;
+      const nextPendingConfirm = {
+        ...dtPendingConfirm,
+        clarificationRequested: false,
+        clarificationHandled: true,
+        clarificationAnswers: answers,
+      };
+      setDtPendingConfirm(nextPendingConfirm);
+      startDeepThinkingRun(nextPendingConfirm);
+    },
+    [dtPendingConfirm, isStreaming, startDeepThinkingRun]
+  );
 
-    const systemPrompt = buildSystemPrompt();
-
-    // Start stream with Deep Thinking context confirmed
-    startStream(
-      dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage,
-      history,
-      systemPrompt,
-      {
-        ...(dtPendingConfirm.context || {}),
-        deepThinkingConfirmed: true,
-        deepThinkingConfirm: dtPendingConfirm.confirm,
-      },
-      undefined,
-      undefined,
-      chatLanguage
-    );
-
-    setDtPendingConfirm(null);
-  }, [dtPendingConfirm, isStreaming, buildSystemPrompt, startStream, chatLanguage]);
+  
 
   // Handle sending a message
   const handleSend = useCallback(
@@ -1021,27 +1065,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
           const c = (confirmRes as any)?.confirm || {};
           const u = c?.understanding || {};
-          const md = [
-            '**My understanding of your task**',
-            `- Goal: ${u.goal || ''}`,
-            u.context ? `- Context: ${u.context}` : '',
-            Array.isArray(u.constraints) && u.constraints.length
-              ? `- Constraints: ${u.constraints.join('; ')}`
-              : '',
-            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
-            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
-            '',
-            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
-              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
-                  .slice(0, 3)
-                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
-                  .join('\n')}`
-              : '',
-            '',
-            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
-          ]
-            .filter(Boolean)
-            .join('\n');
+          const md = buildDeepThinkingConfirmCardContent(c);
 
           let confirmMessageId = `dt-confirm-${Date.now()}`;
           try {
@@ -1050,10 +1074,11 @@ When citing knowledge base articles, always reference them by article_id (slug).
               role: 'ai',
               content: md,
               messageType: 'text',
-              metadata: {
-                deepThinking: { kind: 'confirm', originalMessage: message.trim() },
-                deepThinkingConfirm: c,
-              } as any,
+              metadata: buildDeepThinkingConfirmMessageMetadata({
+                originalMessage: message.trim(),
+                confirm: c,
+                confirmToken: (confirmRes as any)?.confirmToken || null,
+              }) as any,
             });
             confirmMessageId = (saved as any)?.id || confirmMessageId;
           } catch (persistErr) {
@@ -1067,6 +1092,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
             editedMessage: message.trim(),
             confirm: c,
             context: fullContext,
+            confirmToken: (confirmRes as any)?.confirmToken || null,
           });
 
           return; // Don't start stream yet - wait for user to confirm
@@ -1482,27 +1508,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
             );
             const c = (confirmRes as any)?.confirm || {};
             const u = c?.understanding || {};
-            const md = [
-              '**My understanding of your task**',
-              `- Goal: ${u.goal || ''}`,
-              u.context ? `- Context: ${u.context}` : '',
-              Array.isArray(u.constraints) && u.constraints.length
-                ? `- Constraints: ${u.constraints.join('; ')}`
-                : '',
-              u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
-              u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
-              '',
-              Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
-                ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
-                    .slice(0, 3)
-                    .map((q: any, i: number) => `${i + 1}. ${q.question}`)
-                    .join('\n')}`
-                : '',
-              '',
-              '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
-            ]
-              .filter(Boolean)
-              .join('\n');
+            const md = buildDeepThinkingConfirmCardContent(c);
 
             let confirmMessageId = `dt-confirm-${Date.now()}`;
             try {
@@ -1511,10 +1517,11 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 role: 'ai',
                 content: md,
                 messageType: 'text',
-                metadata: {
-                  deepThinking: { kind: 'confirm', originalMessage: newText },
-                  deepThinkingConfirm: c,
-                } as any,
+                metadata: buildDeepThinkingConfirmMessageMetadata({
+                  originalMessage: newText,
+                  confirm: c,
+                  confirmToken: (confirmRes as any)?.confirmToken || null,
+                }) as any,
               });
               confirmMessageId = (saved as any)?.id || confirmMessageId;
             } catch (persistErr) {
@@ -1527,6 +1534,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
               editedMessage: newText,
               confirm: c,
               context: fullContext,
+              confirmToken: (confirmRes as any)?.confirmToken || null,
             });
           } finally {
             setDtConfirmBusy(false);
@@ -1876,7 +1884,14 @@ When citing knowledge base articles, always reference them by article_id (slug).
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleDeepThinkingProceed}
-                                  disabled={dtConfirmBusy || isStreaming}
+                                  disabled={
+                                    dtConfirmBusy ||
+                                    isStreaming ||
+                                    shouldOpenDeepThinkingClarification(
+                                      dtPendingConfirm.confirm,
+                                      dtPendingConfirm.clarificationHandled
+                                    )
+                                  }
                                   className="px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                   {dtConfirmBusy
@@ -1893,6 +1908,28 @@ When citing knowledge base articles, always reference them by article_id (slug).
                                   {t('common.cancel', 'Cancel')}
                                 </button>
                               </div>
+                              {dtPendingConfirm.clarificationRequested ? (
+                                <ResearchClarification
+                                  message={
+                                    dtPendingConfirm.editedMessage ||
+                                    dtPendingConfirm.originalMessage
+                                  }
+                                  onComplete={handleDeepThinkingClarificationComplete}
+                                  onCancel={() =>
+                                    setDtPendingConfirm((prev) =>
+                                      prev
+                                        ? {
+                                            ...prev,
+                                            clarificationRequested: false,
+                                            clarificationHandled: true,
+                                            clarificationAnswers: null,
+                                          }
+                                        : prev
+                                    )
+                                  }
+                                  className="mt-3"
+                                />
+                              ) : null}
                             </div>
                           </div>
                         )}
@@ -2034,6 +2071,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 onStopGenerating={abortStream}
                 onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
                 teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceError={teresaVoice.voiceError}
                 teresaVoiceMuted={teresaVoice.isMuted}
                 onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
                 isStreaming={isStreaming}
@@ -2167,6 +2205,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
               onStopGenerating={abortStream}
               onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
               teresaVoiceStatus={teresaVoice.voiceStatus}
+              teresaVoiceError={teresaVoice.voiceError}
               teresaVoiceMuted={teresaVoice.isMuted}
               onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
               isStreaming={isStreaming}

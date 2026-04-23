@@ -4,25 +4,25 @@ import type {
   ApprovalBarrierSequence,
   BarrierPauseState,
   BarrierResumeResult,
-} from '../../../../src/models/agent/ApprovalBarrierSequence.js';
+} from '../../models/agent/ApprovalBarrierSequence.js';
 import type {
   ExecutionProposalV1,
   Severity,
   TenantId,
-} from '../../../../src/models/agent/ExecutionProposalV1.js';
+} from '../../models/agent/ExecutionProposalV1.js';
 import type {
   CompensationRecord,
   InterruptVerb,
   NextStateDecision,
   RunState,
-} from '../../../../src/models/agent/InterruptVerbs.js';
+} from '../../models/agent/InterruptVerbs.js';
 import type {
   LedgerQuery,
   RunId,
   RunRow,
   RunStatus,
-} from '../../../../src/models/agent/RunLedger.js';
-import type { AgentExecutionPipelineOutput } from '../../../../src/models/v10/pipelines/AgentExecutionPipeline.js';
+} from '../../models/agent/RunLedger.js';
+import type { AgentExecutionPipelineOutput } from '../../models/v10/pipelines/AgentExecutionPipeline.js';
 
 export type AgentRuntimeLedgerEventCategory =
   | 'proposal_evaluated'
@@ -112,6 +112,11 @@ export interface ResumeApprovalBarrierInput {
   readonly pause: BarrierPauseState;
   readonly decision: 'approved' | 'rejected';
   readonly resumedAt: string;
+  readonly actorId?: string;
+  readonly actorRole?: string | null;
+  readonly reviewerCount?: number;
+  readonly adminSignature?: string | null;
+  readonly note?: string | null;
 }
 
 export interface ResumeApprovalBarrierResult {
@@ -158,14 +163,14 @@ export interface SummarizeRunLedgerInput {
 }
 
 export interface AgentRuntimeLedgerStore {
-  upsertRun(run: RunRow): RunRow;
-  getRun(runId: RunId, tenantId: TenantId): RunRow | null;
-  transitionRun(runId: RunId, tenantId: TenantId, status: RunStatus, at: string): RunRow | null;
-  appendEvent(event: AgentRuntimeLedgerEvent): AgentRuntimeLedgerEvent;
-  query(query: LedgerQuery): AgentRuntimeLedgerQueryResult;
-  summarize(runId: RunId, tenantId: TenantId): AgentRuntimeLedgerSummary;
-  setRuntimeState(runId: RunId, tenantId: TenantId, state: RunState): void;
-  getRuntimeState(runId: RunId, tenantId: TenantId): RunState | null;
+  upsertRun(run: RunRow): Promise<RunRow>;
+  getRun(runId: RunId, tenantId: TenantId): Promise<RunRow | null>;
+  transitionRun(runId: RunId, tenantId: TenantId, status: RunStatus, at: string): Promise<RunRow | null>;
+  appendEvent(event: AgentRuntimeLedgerEvent): Promise<AgentRuntimeLedgerEvent>;
+  query(query: LedgerQuery): Promise<AgentRuntimeLedgerQueryResult>;
+  summarize(runId: RunId, tenantId: TenantId): Promise<AgentRuntimeLedgerSummary>;
+  setRuntimeState(runId: RunId, tenantId: TenantId, state: RunState): Promise<void>;
+  getRuntimeState(runId: RunId, tenantId: TenantId): Promise<RunState | null>;
 }
 
 export const EvaluateExecutionProposalSchema = z.object({
@@ -191,13 +196,28 @@ export const ResumeApprovalBarrierSchema = z.object({
   pause: z.custom<BarrierPauseState>(),
   decision: z.enum(['approved', 'rejected']),
   resumedAt: z.string().min(1),
+  actorId: z.string().min(1).optional(),
+  actorRole: z.string().nullable().optional(),
+  reviewerCount: z.number().int().nonnegative().optional(),
+  adminSignature: z.string().nullable().optional(),
+  note: z.string().max(2000).nullable().optional(),
 });
 
 export const SubmitInterruptVerbSchema = z.object({
   tenantId: z.string().min(1),
   runId: z.string().min(1),
   currentState: z.custom<RunState>().optional(),
-  verb: z.custom<InterruptVerb>(),
+  verb: z.enum([
+    'pause',
+    'resume',
+    'cancel',
+    'skip',
+    'redo',
+    'retry',
+    'reset',
+    'rewind',
+    'abort',
+  ] as [InterruptVerb, ...InterruptVerb[]]),
   actorId: z.string().min(1),
   recordedAt: z.string().min(1),
   compensationRecord: z.custom<CompensationRecord>().nullable().optional(),
@@ -229,6 +249,10 @@ export const QueryRunLedgerSchema = z.object({
     tenantId: z.string().min(1),
     id: z.string().optional(),
     correlationId: z.string().optional(),
+    conversationId: z.string().optional(),
+    origin: z.string().optional(),
+    runType: z.string().optional(),
+    parentRunId: z.string().optional(),
     status: z.custom<RunStatus>().optional(),
     severity: z.custom<Severity>().optional(),
     startedAtFrom: z.string().optional(),

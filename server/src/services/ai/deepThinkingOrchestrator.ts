@@ -61,17 +61,35 @@ function normalizeDepth(raw: unknown): DeepThinkingDepth {
 
 function buildDeepThinkingFormatAddon(
   showHighlights?: boolean,
-  researchType?: ResearchType
+  researchType?: ResearchType,
+  expectedOutput?: 'Decision' | 'StructuredAnalysis' | 'FullReport'
 ): string {
+  const outputMode = expectedOutput || 'FullReport';
   // If research has task-specific synthesis, use lighter format rules
   if (researchType && researchType !== 'general_research') {
     return [
       '\n\n## OUTPUT QUALITY RULES (must follow)',
+      `- Output mode: ${outputMode}.`,
       '- No fluff. No blog style. This is boardroom-grade.',
       '- Separate facts vs assumptions explicitly.',
       '- Use citation markers [n] to reference sources.',
       '- Include specific data: company names, numbers, dates, financial figures.',
       '- Be opinionated — give clear recommendations, not just neutral descriptions.',
+      ...(outputMode === 'Decision'
+        ? [
+            '- Lead with one recommended decision and explain the trade-offs briefly.',
+            '- Keep the response compact and executive. Focus on recommendation, rationale, risks, next moves.',
+          ]
+        : []),
+      ...(outputMode === 'StructuredAnalysis'
+        ? [
+            '- Use a structured analysis format with explicit comparison criteria and evidence.',
+            '- Keep recommendations concise; the core deliverable is the analysis itself.',
+          ]
+        : []),
+      ...(outputMode === 'FullReport'
+        ? ['- Deliver a comprehensive report with clear sections, evidence, and implementation guidance.']
+        : []),
       ...(showHighlights
         ? ['- Include a "Reasoning highlights" section (3–6 bullets, high-level).']
         : []),
@@ -81,13 +99,36 @@ function buildDeepThinkingFormatAddon(
 
   return [
     '\n\n## DEEP THINKING OUTPUT FORMAT (must follow)',
-    '1) Executive Summary (5–7 lines)',
-    '2) Problem Framing',
-    '3) Options (2–4)',
-    '4) Recommendation + boundary conditions',
-    ...(showHighlights ? ['5) Reasoning highlights (3–6 bullets, high-level)'] : []),
-    `5${showHighlights ? 'b' : ''}) Risks & Blind spots (Assumptions & Gaps)`,
-    '6) Next actions (checklist + early signals)',
+    `Output mode: ${outputMode}`,
+    ...(outputMode === 'Decision'
+      ? [
+          '1) Decision recommendation',
+          '2) Why this decision now',
+          '3) Trade-offs and rejected options',
+          '4) Risks & blind spots (Assumptions & Gaps)',
+          ...(showHighlights ? ['5) Reasoning highlights (3–6 bullets, high-level)'] : []),
+          `5${showHighlights ? 'b' : ''}) Next actions (owners / signals / timing)`,
+        ]
+      : outputMode === 'StructuredAnalysis'
+        ? [
+            '1) Executive Summary (3–5 lines)',
+            '2) Problem Framing',
+            '3) Evaluation criteria',
+            '4) Options analysis (2–4)',
+            '5) Recommendation + boundary conditions',
+            ...(showHighlights ? ['6) Reasoning highlights (3–6 bullets, high-level)'] : []),
+            `6${showHighlights ? 'b' : ''}) Risks & Blind spots (Assumptions & Gaps)`,
+            '7) Next actions (checklist + early signals)',
+          ]
+        : [
+            '1) Executive Summary (5–7 lines)',
+            '2) Problem Framing',
+            '3) Options (2–4)',
+            '4) Recommendation + boundary conditions',
+            ...(showHighlights ? ['5) Reasoning highlights (3–6 bullets, high-level)'] : []),
+            `5${showHighlights ? 'b' : ''}) Risks & Blind spots (Assumptions & Gaps)`,
+            '6) Next actions (checklist + early signals)',
+          ]),
     '',
     'Rules:',
     '- No fluff. No blog style. This is boardroom-grade.',
@@ -195,6 +236,10 @@ export class DeepThinkingOrchestrator {
 
     const confirm =
       (context as any)?.deepThinkingConfirm || (context as any)?.deepThinking?.confirm;
+    const expectedOutput =
+      (context as any)?.deepThinkingExpectedOutput ||
+      confirm?.understanding?.expectedOutput ||
+      'FullReport';
     const planItems =
       Array.isArray(confirm?.researchPlanItems) && confirm.researchPlanItems.length
         ? confirm.researchPlanItems
@@ -471,7 +516,7 @@ export class DeepThinkingOrchestrator {
 
     const researchType = forcedResearchType || researchOutput?.researchType;
     const addon = [
-      buildDeepThinkingFormatAddon(showHighlights, researchType),
+      buildDeepThinkingFormatAddon(showHighlights, researchType, expectedOutput),
       historicalContextAddon,
       researchOutput ? buildResearchAddon(researchOutput) : '',
       researchOutput ? '\n\nRules (research):\n- If sources are provided, cite them as [n].' : '',

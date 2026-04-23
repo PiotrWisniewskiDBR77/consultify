@@ -38,7 +38,7 @@ export function createAgentRuntimeRouter(service: AgentRuntimeService = agentRun
     '/proposals/evaluate',
     validateBody(EvaluateExecutionProposalSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      const result = service.evaluateExecutionProposal(req.body);
+      const result = await service.evaluateExecutionProposal(req.body);
       return res.status(200).json({ data: result, meta: meta() });
     })
   );
@@ -47,7 +47,7 @@ export function createAgentRuntimeRouter(service: AgentRuntimeService = agentRun
     '/approval-barriers/plan',
     validateBody(PlanApprovalBarrierSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      const result = service.planApprovalBarrier(req.body);
+      const result = await service.planApprovalBarrier(req.body);
       return res.status(200).json({ data: result, meta: meta() });
     })
   );
@@ -56,7 +56,7 @@ export function createAgentRuntimeRouter(service: AgentRuntimeService = agentRun
     '/approval-barriers/resume',
     validateBody(ResumeApprovalBarrierSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      const result = service.resumeApprovalBarrier(req.body);
+      const result = await service.resumeApprovalBarrier(req.body);
       return res.status(200).json({ data: result, meta: meta() });
     })
   );
@@ -65,7 +65,7 @@ export function createAgentRuntimeRouter(service: AgentRuntimeService = agentRun
     '/interrupt-verbs/submit',
     validateBody(SubmitInterruptVerbSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      const result = service.submitInterruptVerb(req.body);
+      const result = await service.submitInterruptVerb(req.body);
       return res.status(200).json({ data: result, meta: meta() });
     })
   );
@@ -74,7 +74,7 @@ export function createAgentRuntimeRouter(service: AgentRuntimeService = agentRun
     '/run-ledger/append',
     validateBody(AppendRunLedgerSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      const result = service.appendRunLedger(req.body);
+      const result = await service.appendRunLedger(req.body);
       return res.status(201).json({ data: result, meta: meta() });
     })
   );
@@ -83,7 +83,7 @@ export function createAgentRuntimeRouter(service: AgentRuntimeService = agentRun
     '/run-ledger/query',
     validateBody(QueryRunLedgerSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      const result = service.queryRunLedger(req.body);
+      const result = await service.queryRunLedger(req.body);
       return res.status(200).json({ data: result, meta: meta() });
     })
   );
@@ -92,7 +92,7 @@ export function createAgentRuntimeRouter(service: AgentRuntimeService = agentRun
     '/run-ledger/summarize',
     validateBody(SummarizeRunLedgerSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      const result = service.summarizeRunLedger(req.body);
+      const result = await service.summarizeRunLedger(req.body);
       return res.status(200).json({ data: result, meta: meta() });
     })
   );

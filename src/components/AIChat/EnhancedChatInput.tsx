@@ -15,7 +15,17 @@
  * @version 2.0.0
  */
 
-import { ArrowUp, AudioLines, Loader2, Mic, MicOff, Pen, Square, StopCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowUp,
+  AudioLines,
+  Loader2,
+  Mic,
+  MicOff,
+  Pen,
+  Square,
+  StopCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -75,6 +85,8 @@ interface EnhancedChatInputProps {
 
   /** Teresa real-time voice status: 'idle' | 'connecting' | 'live' | 'error' */
   teresaVoiceStatus?: string;
+  /** Teresa real-time voice last error (optional, for UX) */
+  teresaVoiceError?: string | null;
   /** Toggle Teresa real-time voice on/off */
   onTeresaVoiceToggle?: () => void;
   /** Whether Teresa mic is currently muted */
@@ -105,6 +117,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   stopVoiceListening,
   onToolSelect,
   teresaVoiceStatus,
+  teresaVoiceError,
   onTeresaVoiceToggle,
   teresaVoiceMuted,
   onTeresaVoiceMuteToggle,
@@ -155,6 +168,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const vadIntervalRef = useRef<number | null>(null);
   const isDictatingRef = useRef(false);
+  const lastTeresaVoiceToastRef = useRef<string | null>(null);
 
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isInputDisabled = isDisabled || isStreaming;
@@ -208,6 +222,14 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       stopAllRecording();
     };
   }, []);
+
+  useEffect(() => {
+    if (teresaVoiceStatus !== 'error') return;
+    const msg = (teresaVoiceError || '').trim() || t('aiChat.voiceError', 'Voice error');
+    if (lastTeresaVoiceToastRef.current === msg) return;
+    lastTeresaVoiceToastRef.current = msg;
+    toast.error(msg);
+  }, [t, teresaVoiceError, teresaVoiceStatus]);
 
   // ========================================================================
   // Auto-resize textarea
@@ -952,6 +974,19 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     <AudioLines size={18} />
                   </>
                 )}
+              </button>
+            ) : teresaVoiceStatus === 'error' ? (
+              <button
+                onClick={() => onTeresaVoiceToggle?.()}
+                disabled={isDisabled}
+                className="relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+                title={
+                  (teresaVoiceError || '').trim()
+                    ? `${teresaVoiceError} (${t('common.tryAgain', 'Try again')})`
+                    : t('aiChat.retryVoiceConversation', 'Voice error — click to retry')
+                }
+              >
+                <AlertTriangle size={18} />
               </button>
             ) : (
               <button

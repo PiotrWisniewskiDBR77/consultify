@@ -74,6 +74,15 @@ import {
 } from './chatAttachmentSupport';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
+import {
+  buildDeepThinkingConfirmCardContent,
+  buildDeepThinkingConfirmMessageMetadata,
+  buildDeepThinkingConfirmedContext,
+  buildDeepThinkingReportMetadata,
+  resolveDeepThinkingDepth,
+  shouldOpenDeepThinkingClarification,
+  type DeepThinkingPendingConfirmBase,
+} from './deepThinkingRuntime';
 import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { ContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
@@ -428,13 +437,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [abortFeedback, setAbortFeedback] = useState<'partial' | 'cancelled' | null>(null);
   const [dtSavingDecision, setDtSavingDecision] = useState<string | null>(null);
   const [dtDecisionSaved, setDtDecisionSaved] = useState<Set<string>>(new Set());
-  const [dtPendingConfirm, setDtPendingConfirm] = useState<{
-    messageId: string;
-    conversationId: string | null;
-    originalMessage: string;
-    editedMessage: string;
-    confirm: any;
-    context: any;
+  const [dtPendingConfirm, setDtPendingConfirm] = useState<(DeepThinkingPendingConfirmBase & {
     attachments?: any[];
     agentAudit?: {
       suggested?: any;
@@ -450,15 +453,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         riskFocus?: string[];
       };
     };
-  } | null>(null);
+  }) | null>(null);
   const [dtConfirmBusy, setDtConfirmBusy] = useState(false);
 
   // Agent Audit Layer (registry + post-DT verdict)
   const [agentRegistryById, setAgentRegistryById] = useState<Record<string, any>>({});
   const [agentAuditBusy, setAgentAuditBusy] = useState(false);
+  const [agentAuditHistoryRuns, setAgentAuditHistoryRuns] = useState<any[]>([]);
   const [agentAuditActiveTabByMessageId, setAgentAuditActiveTabByMessageId] = useState<
     Record<string, string>
   >({});
+  const [runtimeSummaryByRunId, setRuntimeSummaryByRunId] = useState<Record<string, any>>({});
   const deepThinkingRunRef = useRef<{
     conversationId: string | null;
     decisionContext: {
@@ -794,19 +799,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               meta?.trustBundle
                 ? {
                     ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-                      ? {
-                          options: [
-                            { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                            { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                            {
-                              id: 'dt-challenge',
-                              label: 'Challenge this conclusion',
-                              value: 'Challenge this conclusion',
-                            },
-                          ],
-                          multiSelect: false,
-                          deepThinking: { kind: 'report' },
-                        }
+                      ? buildDeepThinkingReportMetadata({
+                          confirm: deepThinkingRunRef.current?.deepThinkingConfirm || dtPendingConfirm?.confirm,
+                          report: safeText,
+                          streamSessionId: meta?.sessionId,
+                        })
                       : {}),
                     ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
                       ? {
@@ -840,22 +837,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         thinkingSteps: thinking,
         artifacts,
         ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-          ? ({
-              options: [
-                { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                {
-                  id: 'dt-challenge',
-                  label: 'Challenge this conclusion',
-                  value: 'Challenge this conclusion',
-                },
-              ],
-              multiSelect: false,
-            } as any)
+          ? (buildDeepThinkingReportMetadata({
+              confirm: deepThinkingRunRef.current?.deepThinkingConfirm || dtPendingConfirm?.confirm,
+              report: safeText,
+              streamSessionId: meta?.sessionId,
+            }) as any)
           : {}),
         metadata: {
           ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-            ? { deepThinking: { kind: 'report' } }
+            ? buildDeepThinkingReportMetadata({
+                confirm: deepThinkingRunRef.current?.deepThinkingConfirm || dtPendingConfirm?.confirm,
+                report: safeText,
+                streamSessionId: meta?.sessionId,
+              })
             : {}),
           ...(meta?.policyDecision ? { policyDecision: meta.policyDecision } : {}),
           ...(meta?.policyNotices && meta.policyNotices.length ? { policyNotices: meta.policyNotices } : {}),
@@ -953,7 +947,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             });
             verdict = (reviewRes as any)?.verdict || {};
             reviews = (reviewRes as any)?.reviews || [];
-            runId = String((reviewRes as any)?.orchestratorRunId || '').trim() || null;
+            runId =
+              String((reviewRes as any)?.run?.id || '').trim() ||
+              String((reviewRes as any)?.orchestratorRunId || '').trim() ||
+              null;
           }
 
           const lines: string[] = [];
@@ -963,6 +960,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             `- Gates: ${Array.isArray(verdict.gatesTriggered) && verdict.gatesTriggered.length ? verdict.gatesTriggered.join(', ') : '—'}`
           );
           lines.push(`- Reviewers: ${deepThinkingRunRef.current.agentIds.length}`);
+          if (runId) lines.push(`- Runtime run: \`${runId}\``);
           lines.push('');
 
           if (Array.isArray(verdict.criticalRisks) && verdict.criticalRisks.length) {
@@ -1002,6 +1000,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 agentAudit: {
                   kind: 'verdict',
                   orchestratorRunId: runId,
+                  runtimeRunId: runId,
                   verdict,
                   reviews,
                   decisionContext: deepThinkingRunRef.current.decisionContext,
@@ -1023,6 +1022,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               agentAudit: {
                 kind: 'verdict',
                 orchestratorRunId: runId,
+                runtimeRunId: runId,
                 verdict,
                 reviews,
                 decisionContext: deepThinkingRunRef.current.decisionContext,
@@ -1244,6 +1244,116 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     workspaceContext?.entityId,
     workspaceContext?.projectId,
   ]);
+
+  const normalizedAgentAuditRole = useMemo(
+    () => String(currentUser?.role || '').trim().toLowerCase(),
+    [currentUser?.role]
+  );
+  const canAcceptAgentAuditRisk = useMemo(
+    () =>
+      ['admin', 'administrator', 'superadmin', 'super_admin', 'owner'].includes(
+        normalizedAgentAuditRole
+      ),
+    [normalizedAgentAuditRole]
+  );
+  const canRunDirectedDeepening = useMemo(
+    () => Boolean(currentUser),
+    [currentUser]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!activeConversationId) {
+      setAgentAuditHistoryRuns([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (typeof (Api as any).agentAuditListRuns !== 'function') {
+      setAgentAuditHistoryRuns([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void (Api as any)
+      .agentAuditListRuns({ conversationId: activeConversationId, limit: 8 })
+      .then((res: any) => {
+        if (!cancelled) {
+          setAgentAuditHistoryRuns(Array.isArray(res?.runs) ? res.runs : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setAgentAuditHistoryRuns([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConversationId]);
+
+  const runtimeRunIdsForTimeline = useMemo(() => {
+    const ids = new Set<string>();
+    for (const msg of displayMessages) {
+      const audit = (msg as any)?.metadata?.agentAudit || null;
+      const runId = String(audit?.runtimeRunId || audit?.orchestratorRunId || '').trim();
+      if (runId) ids.add(runId);
+    }
+    for (const run of agentAuditHistoryRuns) {
+      const id = String(run?.id || '').trim();
+      if (id) ids.add(id);
+    }
+    return Array.from(ids);
+  }, [agentAuditHistoryRuns, displayMessages]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!currentOrganization?.id || runtimeRunIdsForTimeline.length === 0) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const missingRunIds = runtimeRunIdsForTimeline.filter((id) => !runtimeSummaryByRunId[id]);
+    if (missingRunIds.length === 0) {
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (typeof (Api as any).agentRuntimeSummarizeRunLedger !== 'function') {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void Promise.all(
+      missingRunIds.map(async (runId) => {
+        try {
+          const res: any = await (Api as any).agentRuntimeSummarizeRunLedger({
+            tenantId: String(currentOrganization.id),
+            runId,
+          });
+          return [runId, res] as const;
+        } catch {
+          return [runId, null] as const;
+        }
+      })
+    ).then((entries) => {
+      if (cancelled) return;
+      setRuntimeSummaryByRunId((prev) => {
+        const next = { ...prev };
+        for (const [runId, summary] of entries) {
+          if (summary) next[runId] = summary;
+        }
+        return next;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrganization?.id, runtimeRunIdsForTimeline, runtimeSummaryByRunId]);
 
   // ========================================================================
   // V3-B01: Contextual smart suggestions (shown below input after first exchange)
@@ -2081,27 +2191,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           } catch {
             // best-effort; DT can proceed without agent layer
           }
-          const md = [
-            '**My understanding of your task**',
-            `- Goal: ${u.goal || ''}`,
-            u.context ? `- Context: ${u.context}` : '',
-            Array.isArray(u.constraints) && u.constraints.length
-              ? `- Constraints: ${u.constraints.join('; ')}`
-              : '',
-            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
-            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
-            '',
-            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
-              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
-                  .slice(0, 3)
-                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
-                  .join('\n')}`
-              : '',
-            '',
-            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
-          ]
-            .filter(Boolean)
-            .join('\n');
+          const md = buildDeepThinkingConfirmCardContent(c);
 
           // Persist confirm card as an AI message (so it survives refresh / history)
           let confirmMessageId = `dt-confirm-${Date.now()}`;
@@ -2111,11 +2201,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               role: 'ai',
               content: md,
               messageType: 'text',
-              metadata: {
-                deepThinking: { kind: 'confirm', originalMessage: effectivePrompt },
-                deepThinkingConfirm: c,
-                agentAuditSuggested: suggestedAgentsSet,
-              } as any,
+              metadata: buildDeepThinkingConfirmMessageMetadata({
+                originalMessage: effectivePrompt,
+                confirm: c,
+                confirmToken: (confirmRes as any)?.confirmToken || null,
+                extra: { agentAuditSuggested: suggestedAgentsSet },
+              }) as any,
             });
             confirmMessageId = (saved as any)?.id || confirmMessageId;
           } else {
@@ -2124,11 +2215,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               role: 'ai',
               content: md,
               timestamp: new Date(),
-              metadata: {
-                deepThinking: { kind: 'confirm', originalMessage: effectivePrompt },
-                deepThinkingConfirm: c,
-                agentAuditSuggested: suggestedAgentsSet,
-              },
+              metadata: buildDeepThinkingConfirmMessageMetadata({
+                originalMessage: effectivePrompt,
+                confirm: c,
+                confirmToken: (confirmRes as any)?.confirmToken || null,
+                extra: { agentAuditSuggested: suggestedAgentsSet },
+              }),
             } as any);
           }
 
@@ -2139,6 +2231,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             editedMessage: effectivePrompt,
             confirm: c,
             context,
+            confirmToken: (confirmRes as any)?.confirmToken || null,
             attachments,
             agentAudit: {
               suggested: suggestedAgentsSet,
@@ -2256,10 +2349,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     onKickoffConsumed,
   ]);
 
-  const handleDeepThinkingProceed = useCallback(async () => {
-    if (!dtPendingConfirm) return;
-    if (isDisabled) return;
-
+  const startDeepThinkingRun = useCallback(async (pendingConfirm: NonNullable<typeof dtPendingConfirm>) => {
     // Build backend-compatible history, excluding confirm cards (they are UI-only)
     const base = (customMessages || messages).filter(
       (m) => !((m as any).metadata?.deepThinking?.kind === 'confirm')
@@ -2269,25 +2359,24 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       parts: [{ text: m.content }],
     }));
 
-    const depthRaw = dtPendingConfirm?.confirm?.suggestedDepth || 'Standard';
-    const depth = String(depthRaw).toLowerCase(); // light|standard|hard
+    const depth = resolveDeepThinkingDepth(pendingConfirm.confirm?.suggestedDepth);
 
     // Agent Audit Layer: lock context for post-DT review + directed loop
     const agentIds =
-      dtPendingConfirm.agentAudit?.selectedAgentIds ||
-      (Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents)
-        ? dtPendingConfirm.agentAudit?.suggested?.agents
+      pendingConfirm.agentAudit?.selectedAgentIds ||
+      (Array.isArray(pendingConfirm.agentAudit?.suggested?.agents)
+        ? pendingConfirm.agentAudit?.suggested?.agents
             ?.map((a: any) => String(a?.agentId || '').trim())
             .filter(Boolean)
         : []);
     const decisionContext =
-      dtPendingConfirm.agentAudit?.decisionContext ||
+      pendingConfirm.agentAudit?.decisionContext ||
       ({
         topic: String(
-          dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage || ''
+          pendingConfirm.editedMessage || pendingConfirm.originalMessage || ''
         ).trim(),
         horizon:
-          String(dtPendingConfirm?.confirm?.understanding?.decisionHorizon || '').trim() ||
+          String(pendingConfirm?.confirm?.understanding?.decisionHorizon || '').trim() ||
           undefined,
         industry: undefined,
         functions: [],
@@ -2295,18 +2384,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       } as any);
 
     deepThinkingRunRef.current = {
-      conversationId: dtPendingConfirm.conversationId,
+      conversationId: pendingConfirm.conversationId,
       decisionContext,
       agentIds,
-      userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+      userIntent: pendingConfirm.agentAudit?.userIntent || 'validate',
       loopIteration: 1,
-      deepThinkingConfirm: dtPendingConfirm.confirm,
+      deepThinkingConfirm: pendingConfirm.confirm,
     };
 
     // Persist approved agent set for transparency/history
-    if (dtPendingConfirm.conversationId) {
+    if (pendingConfirm.conversationId) {
       try {
-        const suggested = dtPendingConfirm.agentAudit?.suggested?.agents || [];
+        const suggested = pendingConfirm.agentAudit?.suggested?.agents || [];
         const selectedSet = new Set(agentIds);
         const selectedAgents = (Array.isArray(suggested) ? suggested : [])
           .map((a: any) => ({
@@ -2317,10 +2406,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         const lines: string[] = [];
         lines.push('**Agent Audit — approved reviewers (pre Deep Thinking)**');
-        lines.push(
-          `- Intent: **${String(dtPendingConfirm.agentAudit?.userIntent || 'validate')}**`
-        );
-        lines.push(`- Max agents: **${String(dtPendingConfirm.agentAudit?.maxAgents || 3)}**`);
+        lines.push(`- Intent: **${String(pendingConfirm.agentAudit?.userIntent || 'validate')}**`);
+        lines.push(`- Max agents: **${String(pendingConfirm.agentAudit?.maxAgents || 3)}**`);
         lines.push('');
         for (const a of selectedAgents) {
           const label =
@@ -2333,17 +2420,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
         const approvalContent = lines.filter(Boolean).join('\n');
         await addMessageToConversation({
-          conversationId: dtPendingConfirm.conversationId,
+          conversationId: pendingConfirm.conversationId,
           role: 'ai',
           content: approvalContent,
           messageType: 'text',
           metadata: {
             agentAudit: {
               kind: 'approval',
-              suggested: dtPendingConfirm.agentAudit?.suggested || null,
+              suggested: pendingConfirm.agentAudit?.suggested || null,
               selectedAgentIds: agentIds,
-              userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
-              maxAgents: dtPendingConfirm.agentAudit?.maxAgents || 3,
+              userIntent: pendingConfirm.agentAudit?.userIntent || 'validate',
+              maxAgents: pendingConfirm.agentAudit?.maxAgents || 3,
               decisionContext,
             },
           } as any,
@@ -2364,22 +2451,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
     // Start stream with Deep Thinking context hints
     await startStream(
-      dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage,
+      pendingConfirm.editedMessage || pendingConfirm.originalMessage,
       history,
       systemPrompt,
-      {
-        ...(dtPendingConfirm.context || {}),
-        deepThinkingConfirmed: true,
-        deepThinkingConfirm: dtPendingConfirm.confirm,
+      buildDeepThinkingConfirmedContext(pendingConfirm, {
         deepThinkingDepth: depth,
         agentAudit: {
-          orchestratorRunId: dtPendingConfirm.agentAudit?.orchestratorRunId || null,
+          orchestratorRunId: pendingConfirm.agentAudit?.orchestratorRunId || null,
           agentIds,
-          userIntent: dtPendingConfirm.agentAudit?.userIntent || 'validate',
+          userIntent: pendingConfirm.agentAudit?.userIntent || 'validate',
           loopIteration: 1,
           decisionContext,
         },
-      },
+      }),
       focusMode,
       roleName,
       chatLanguage
@@ -2387,8 +2471,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
     setDtPendingConfirm(null);
   }, [
-    dtPendingConfirm,
-    isDisabled,
     customMessages,
     messages,
     addChatMessage,
@@ -2400,6 +2482,37 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     roleName,
     chatLanguage,
   ]);
+
+  const handleDeepThinkingProceed = useCallback(async () => {
+    if (!dtPendingConfirm) return;
+    if (isDisabled) return;
+    if (
+      shouldOpenDeepThinkingClarification(
+        dtPendingConfirm.confirm,
+        dtPendingConfirm.clarificationHandled
+      ) &&
+      !dtPendingConfirm.clarificationRequested
+    ) {
+      setDtPendingConfirm((prev) => (prev ? { ...prev, clarificationRequested: true } : prev));
+      return;
+    }
+    await startDeepThinkingRun(dtPendingConfirm);
+  }, [dtPendingConfirm, isDisabled, startDeepThinkingRun]);
+
+  const handleDeepThinkingClarificationComplete = useCallback(
+    async (answers: Record<string, string> | null) => {
+      if (!dtPendingConfirm || isDisabled) return;
+      const nextPendingConfirm = {
+        ...dtPendingConfirm,
+        clarificationRequested: false,
+        clarificationHandled: true,
+        clarificationAnswers: answers,
+      };
+      setDtPendingConfirm(nextPendingConfirm);
+      await startDeepThinkingRun(nextPendingConfirm);
+    },
+    [dtPendingConfirm, isDisabled, startDeepThinkingRun]
+  );
 
   const handleDeepThinkingReconfirm = useCallback(async () => {
     if (!dtPendingConfirm) return;
@@ -2925,37 +3038,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           const c = (confirmRes as any)?.confirm || {};
           const u = c?.understanding || {};
-          const md = [
-            '**My understanding of your task**',
-            `- Goal: ${u.goal || ''}`,
-            u.context ? `- Context: ${u.context}` : '',
-            Array.isArray(u.constraints) && u.constraints.length
-              ? `- Constraints: ${u.constraints.join('; ')}`
-              : '',
-            u.expectedOutput ? `- Output: ${u.expectedOutput}` : '',
-            u.decisionHorizon ? `- Horizon: ${u.decisionHorizon}` : '',
-            '',
-            Array.isArray(c.missingInfoQuestions) && c.missingInfoQuestions.length
-              ? `**Assumptions & gaps (optional):**\n${c.missingInfoQuestions
-                  .slice(0, 3)
-                  .map((q: any, i: number) => `${i + 1}. ${q.question}`)
-                  .join('\n')}`
-              : '',
-            '',
-            '_Confirm to start Deep Thinking. Adjust if the task needs correction._',
-          ]
-            .filter(Boolean)
-            .join('\n');
+          const md = buildDeepThinkingConfirmCardContent(c);
 
           const saved = await addMessageToConversation({
             conversationId: activeConversationId,
             role: 'ai',
             content: md,
             messageType: 'text',
-            metadata: {
-              deepThinking: { kind: 'confirm', originalMessage: newText },
-              deepThinkingConfirm: c,
-            } as any,
+            metadata: buildDeepThinkingConfirmMessageMetadata({
+              originalMessage: newText,
+              confirm: c,
+              confirmToken: (confirmRes as any)?.confirmToken || null,
+            }) as any,
           });
           const confirmMessageId = (saved as any)?.id || `dt-confirm-${Date.now()}`;
 
@@ -2966,6 +3060,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             editedMessage: newText,
             confirm: c,
             context,
+            confirmToken: (confirmRes as any)?.confirmToken || null,
             attachments: [],
           } as any);
         } finally {
@@ -3023,6 +3118,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const content = [
           '**Agent Audit — risk accepted**',
           `- Run: \`${runId}\``,
+          `- Runtime run: \`${runId}\``,
           '- Decision: user accepted proceeding despite FAIL.',
         ].join('\n');
         if (activeConversationId) {
@@ -3032,7 +3128,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             content,
             messageType: 'text',
             metadata: {
-              agentAudit: { kind: 'accept', runId },
+              agentAudit: { kind: 'accept', runId, runtimeRunId: runId },
             } as any,
           });
         }
@@ -3041,7 +3137,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role: 'ai',
           content,
           timestamp: new Date(),
-          metadata: { agentAudit: { kind: 'accept', runId } },
+          metadata: { agentAudit: { kind: 'accept', runId, runtimeRunId: runId } },
         } as any);
       } catch (err) {
         console.error('[UnifiedChatPanel] Failed to accept audit run:', err);
@@ -3188,6 +3284,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       agentSourcesByAgentId={agentSourcesByAgentId}
       agentAuditActiveTabByMessageId={agentAuditActiveTabByMessageId}
       setAgentAuditActiveTabByMessageId={setAgentAuditActiveTabByMessageId}
+      runtimeSummaryByRunId={runtimeSummaryByRunId}
+      canAcceptAgentAuditRisk={canAcceptAgentAuditRisk}
+      canRunDirectedDeepening={canRunDirectedDeepening}
       deepThinkingHint={deepThinkingHint}
       dtHintDismissed={dtHintDismissed}
       dtPendingConfirm={dtPendingConfirm}
@@ -3218,6 +3317,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleEnableDeepThinking={handleEnableDeepThinking}
       handleDeepThinkingProceed={handleDeepThinkingProceed}
       handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
+      handleDeepThinkingClarificationComplete={handleDeepThinkingClarificationComplete}
       handleSaveAsDecision={handleSaveAsDecision}
       handleSaveAsIdea={handleSaveAsIdea}
       handleSaveAsNote={handleSaveAsNote}
@@ -3264,7 +3364,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       {/* Header — Tech Sexy (T104/T105) */}
       <div
-        className={`flex items-center justify-between ${isCompact ? 'px-3 py-1.5' : 'px-4 py-2'} border-b border-slate-200/60 dark:border-white/[0.06] bg-white/50 dark:bg-navy-950/60 backdrop-blur-sm`}
+        className={`flex items-center justify-between ${isCompact ? 'px-3 py-1.5' : 'px-4 py-2'} border-b border-slate-200 dark:border-white/[0.06] bg-white/80 dark:bg-navy-950/60 backdrop-blur-sm`}
       >
         <div className="flex items-center gap-0.5">
           <button
@@ -3433,23 +3533,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-3" />
             <p
-              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-400 dark:text-slate-500`}
+              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}
             >
               {t('aiChat.loadingConversation', 'Loading conversation…')}
             </p>
           </div>
         ) : displayMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
-              <MessageSquare size={24} className="text-primary-500" />
+            <div className="w-12 h-12 rounded-full bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 flex items-center justify-center mb-4">
+              <MessageSquare size={24} className="text-primary-700 dark:text-primary-300" />
             </div>
             <h3
-              className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}
+              className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-slate-900 dark:text-white mb-1`}
             >
               {t('aiChat.teresaWelcome', 'Talk to Teresa')}
             </h3>
             <p
-              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}
+              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400 max-w-xs`}
             >
               {t(
                 'aiChat.teresaWelcomeSubtitle',
@@ -3490,6 +3590,33 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 <span className="text-xs text-slate-600 dark:text-slate-400">
                   {t('aiChat.notFound', 'This conversation does not exist or has been permanently removed.')}
                 </span>
+              </div>
+            )}
+            {agentAuditHistoryRuns.length > 0 && (
+              <div className="mx-2 mb-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30 p-3">
+                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  Recent Agent Audit runs
+                </div>
+                <div className="mt-2 space-y-1.5">
+                  {agentAuditHistoryRuns.slice(0, 5).map((run: any) => {
+                    const summary = runtimeSummaryByRunId[String(run?.id || '').trim()]?.run || null;
+                    return (
+                      <div
+                        key={String(run?.id || Math.random())}
+                        className="text-[11px] text-slate-600 dark:text-slate-300"
+                      >
+                        <span className="font-medium">
+                          {String(run?.verdict?.qualityStatus || '—')}
+                        </span>
+                        {run?.acceptedAt ? ' · accepted risk' : ''}
+                        {summary?.approvalState ? ` · ${String(summary.approvalState)}` : ''}
+                        {summary?.latestBarrierState
+                          ? ` · barrier=${String(summary.latestBarrierState)}`
+                          : ''}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
             {displayMessages.map((msg, index) => renderMessage(msg, index))}
@@ -3563,6 +3690,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           }}
           onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
           teresaVoiceStatus={teresaVoice.voiceStatus}
+          teresaVoiceError={teresaVoice.voiceError}
           teresaVoiceMuted={teresaVoice.isMuted}
           onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
           isStreaming={isStreaming}

@@ -1,6 +1,6 @@
 import { ZodError } from 'zod';
 
-import { unsafeActorId } from '../../../../../src/models/agent/ExecutionProposalV1.js';
+import { unsafeActorId } from '../../../models/agent/ExecutionProposalV1.js';
 import {
   type Artifact,
   unsafeArtifactId,
@@ -9,60 +9,60 @@ import {
   unsafeRetentionPolicyId,
   unsafeTenantId,
   unsafeUserId,
-} from '../../../../../src/models/artifact/Artifact.js';
-import type { ArtifactCanonicalContent } from '../../../../../src/models/artifact/ArtifactCanonicalContent.js';
-import { unsafeNodeId } from '../../../../../src/models/artifact/ArtifactCanonicalContent.js';
-import type { ArtifactOp } from '../../../../../src/models/artifact/ArtifactOp.js';
+} from '../../../models/artifact/Artifact.js';
+import type { ArtifactCanonicalContent } from '../../../models/artifact/ArtifactCanonicalContent.js';
+import { unsafeNodeId } from '../../../models/artifact/ArtifactCanonicalContent.js';
+import type { ArtifactOp } from '../../../models/artifact/ArtifactOp.js';
 import {
   assertArtifactOp,
   reverseArtifactOps,
   unsafeCellId,
   unsafeChartId,
-} from '../../../../../src/models/artifact/ArtifactOp.js';
-import type { LineageNode } from '../../../../../src/models/artifact/ArtifactVersionLineage.js';
+} from '../../../models/artifact/ArtifactOp.js';
+import type { LineageNode } from '../../../models/artifact/ArtifactVersionLineage.js';
 import {
   assertLineageInvariant,
   buildLineageGraph,
-} from '../../../../../src/models/artifact/ArtifactVersionLineage.js';
+} from '../../../models/artifact/ArtifactVersionLineage.js';
 import type {
   AnchorMutation,
   MentionNotificationIntent,
   TypedComment,
-} from '../../../../../src/models/artifact/CommentsAndAnnotations.js';
+} from '../../../models/artifact/CommentsAndAnnotations.js';
 import {
   assertAnchorSurvivesMutation,
   assertMentionNotifications,
   assertTypedComment,
   reattachCommentToMutation,
-} from '../../../../../src/models/artifact/CommentsAndAnnotations.js';
-import { canExportToFormat } from '../../../../../src/models/artifact/DataClassification.js';
+} from '../../../models/artifact/CommentsAndAnnotations.js';
+import { canExportToFormat } from '../../../models/artifact/DataClassification.js';
 import type {
   EvidenceRef as ExportEvidenceRef,
   ExportDestination,
-} from '../../../../../src/models/artifact/ExportManifest.js';
+} from '../../../models/artifact/ExportManifest.js';
 import {
   assertFolderTransitionSound,
   assertLibraryFolderPlacement,
   placeArtifactInFolder,
-} from '../../../../../src/models/artifact/LibraryFolders.js';
-import type { MutationProposal } from '../../../../../src/models/artifact/MutationProposal.js';
+} from '../../../models/artifact/LibraryFolders.js';
+import type { MutationProposal } from '../../../models/artifact/MutationProposal.js';
 import {
   assertMutationProposal,
   unsafeMutationProposalId,
   unsafeTrustBundleHash,
   unsafeTxnId,
-} from '../../../../../src/models/artifact/MutationProposal.js';
+} from '../../../models/artifact/MutationProposal.js';
 import type {
   FooterTarget,
   TenantWatermarkPolicy,
   WatermarkSpec,
-} from '../../../../../src/models/artifact/ProvenanceFooter.js';
-import type { ReviewEvent } from '../../../../../src/models/artifact/ReviewStateMachine.js';
+} from '../../../models/artifact/ProvenanceFooter.js';
+import type { ReviewEvent } from '../../../models/artifact/ReviewStateMachine.js';
 import type {
   ApprovalContext,
   ApprovalRoutingRule,
   ApprovalRoutingTable,
-} from '../../../../../src/models/artifact/RoleBasedApprovalGates.js';
+} from '../../../models/artifact/RoleBasedApprovalGates.js';
 import {
   assertApprovalRoutingTable,
   assertCfoArtifactRequiresFinance,
@@ -72,28 +72,28 @@ import {
   assertRoutingCoverage,
   assertTenantOverrideDoesNotWeakenBaseline,
   resolveRequiredReviewer,
-} from '../../../../../src/models/artifact/RoleBasedApprovalGates.js';
+} from '../../../models/artifact/RoleBasedApprovalGates.js';
 import type {
   ScopeVerdict,
   SelectionContext,
-} from '../../../../../src/models/artifact/SelectionScope.js';
+} from '../../../models/artifact/SelectionScope.js';
 import {
   assertOpsWithinSelection,
   resolveOpScope,
-} from '../../../../../src/models/artifact/SelectionScope.js';
-import type { ArtifactStructure } from '../../../../../src/models/artifact/TemplateFingerprint.js';
+} from '../../../models/artifact/SelectionScope.js';
+import type { ArtifactStructure } from '../../../models/artifact/TemplateFingerprint.js';
 import {
   assertFingerprintDeterministic,
   computeTemplateFingerprint,
-} from '../../../../../src/models/artifact/TemplateFingerprint.js';
+} from '../../../models/artifact/TemplateFingerprint.js';
 import {
   runArtifactExportPipeline,
   unsafeArtifactExportRunId,
-} from '../../../../../src/models/v10/pipelines/ArtifactExportPipeline.js';
+} from '../../../models/v10/pipelines/ArtifactExportPipeline.js';
 import {
   runArtifactMutationPipeline,
   unsafeArtifactMutationRunId,
-} from '../../../../../src/models/v10/pipelines/ArtifactMutationPipeline.js';
+} from '../../../models/v10/pipelines/ArtifactMutationPipeline.js';
 import {
   type ArtifactRuntimeApprovalEvaluateRequest,
   artifactRuntimeApprovalEvaluateRequestSchema,
@@ -179,8 +179,8 @@ function toArtifact(dto: ArtifactRuntimeArtifactDto): Artifact {
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     archivedAt: dto.archivedAt,
-    exportRecords: dto.exportRecords as never,
-    evidenceRefs: dto.evidenceRefs as readonly never[],
+    exportRecords: dto.exportRecords,
+    evidenceRefs: dto.evidenceRefs as Artifact['evidenceRefs'],
     content: dto.content as Artifact['content'],
   };
 }

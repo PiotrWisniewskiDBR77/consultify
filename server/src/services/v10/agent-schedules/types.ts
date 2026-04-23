@@ -110,6 +110,7 @@ export interface AgentScheduleListItem {
   readonly timezone: string;
   readonly nextRunAt: string;
   readonly lastRunAt: string | null;
+  readonly lastRunId?: string | null;
   readonly registryStatus: AgentScheduleRegistryStatus;
   readonly approvalMode: AgentRuntimeApprovalMode;
   readonly budget: AgentScheduleBudgetV1;

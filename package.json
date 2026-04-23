@@ -51,6 +51,7 @@
     "smoke:v3:meeting-runtime": "tsx server/scripts/smoke-v3-meeting-runtime.ts",
     "smoke:v3:finance-gap-closure": "tsx server/scripts/smoke-v3-finance-gap-closure.ts",
     "smoke:statement-ready": "tsx server/scripts/smoke-statement-ready.ts",
+    "smoke:v10:http": "tsx server/scripts/v10-http-smoke.ts",
     "smoke:v3:reports-quality": "tsx server/scripts/smoke-v3-reports-quality.ts",
     "smoke:v3:presentations-runtime": "tsx server/scripts/smoke-v3-presentations-runtime.ts",
     "smoke:v3:communication-sync": "tsx server/scripts/smoke-v3-communication-sync.ts",

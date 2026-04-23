@@ -439,6 +439,21 @@ const handleResponse = async (res: Response, defaultError: string) => {
   throw err;
 };
 
+const handleDataResponse = async <T = unknown>(res: Response, defaultError: string): Promise<T> => {
+  const payload = await handleResponse(res, defaultError);
+  if (!payload || typeof payload !== 'object' || !('data' in payload)) {
+    const err: any = new Error(`${defaultError}: invalid response envelope`);
+    err.data = payload;
+    throw err;
+  }
+  if (typeof (payload as any).data === 'undefined') {
+    const err: any = new Error(`${defaultError}: missing response data`);
+    err.data = payload;
+    throw err;
+  }
+  return (payload as any).data as T;
+};
+
 type CachedApiEntry = {
   expiresAt: number;
   value?: unknown;
@@ -1275,6 +1290,50 @@ export const Api = {
       throw err;
     }
     return data;
+  },
+
+  agentAuditListRuns: async (args?: {
+    conversationId?: string;
+    dtSessionId?: string;
+    acceptedOnly?: boolean;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (args?.conversationId) params.set('conversationId', args.conversationId);
+    if (args?.dtSessionId) params.set('dtSessionId', args.dtSessionId);
+    if (typeof args?.acceptedOnly === 'boolean') params.set('acceptedOnly', String(args.acceptedOnly));
+    if (typeof args?.limit === 'number') params.set('limit', String(args.limit));
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetch(`${API_URL}/ai/agent-audit/runs${suffix}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+      const err: any = new Error(msg);
+      err.code = data?.code;
+      throw err;
+    }
+    return data;
+  },
+
+  agentRuntimeQueryRunLedger: async (query: Record<string, unknown>) => {
+    const response = await fetch(`${API_URL}/v10/agent-runtime/run-ledger/query`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ query }),
+    });
+    return handleDataResponse(response, 'Failed to query agent runtime ledger');
+  },
+
+  agentRuntimeSummarizeRunLedger: async (args: { tenantId: string; runId: string }) => {
+    const response = await fetch(`${API_URL}/v10/agent-runtime/run-ledger/summarize`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(args),
+    });
+    return handleDataResponse(response, 'Failed to summarize agent runtime ledger');
   },
 
   // Chat Traces (Admin)

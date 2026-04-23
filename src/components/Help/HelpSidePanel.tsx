@@ -374,7 +374,7 @@ export const HelpSidePanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
+        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-40 transition-opacity"
         onClick={() => setOpen(false)}
       />
 
@@ -387,7 +387,7 @@ export const HelpSidePanel: React.FC = () => {
           </h2>
           <button
             onClick={() => setOpen(false)}
-            className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
           >
             <X size={18} />
           </button>
@@ -410,10 +410,10 @@ export const HelpSidePanel: React.FC = () => {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
                 activeTab === id
-                  ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? 'border-purple-600 text-purple-700 dark:border-purple-500 dark:text-purple-400'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               <Icon size={14} />

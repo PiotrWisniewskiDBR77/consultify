@@ -4,14 +4,17 @@
  * Tabs: LLM Config | AI Health | Help Analytics | Token Management
  */
 
-import { Coins, Cpu, HeartPulse, HelpCircle } from 'lucide-react';
-import React, { useState } from 'react';
+import { Blocks, Coins, Cpu, Gauge, HeartPulse, HelpCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
+import { ChatV10RuntimesPanel } from '../../components/Admin/ChatV10RuntimesPanel';
 import { AIMissionControl } from '../../components/Admin/AIMissionControl';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { AdminLLMView } from './AdminLLMView';
 import { HelpAnalyticsDashboard } from './HelpAnalyticsDashboard';
+import { OnboardingKpiDashboardView } from './OnboardingKpiDashboardView';
 import { TokenBillingManagementView } from './TokenBillingManagementView';
 
 interface AIModuleProps {
@@ -20,13 +23,33 @@ interface AIModuleProps {
 
 export const AIModule: React.FC<AIModuleProps> = ({ initialTab }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(initialTab || 'llm-config');
+  const location = useLocation();
+  const queryTab = new URLSearchParams(location.search).get('tab') || undefined;
+  const [activeTab, setActiveTab] = useState(queryTab || initialTab || 'llm-config');
+
+  useEffect(() => {
+    if (queryTab) {
+      setActiveTab(queryTab);
+      return;
+    }
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab, queryTab]);
 
   const tabs: Tab[] = [
     {
       id: 'llm-config',
       label: t('admin.tabs.llmConfig', 'LLM Config'),
       icon: <Cpu size={16} />,
+    },
+    {
+      id: 'chat-v10',
+      label: t('admin.tabs.chatV10', 'Chat V10'),
+      icon: <Blocks size={16} />,
+    },
+    {
+      id: 'onboarding-kpis',
+      label: t('admin.tabs.onboardingKpis', 'Onboarding KPI'),
+      icon: <Gauge size={16} />,
     },
     {
       id: 'ai-health',
@@ -49,6 +72,18 @@ export const AIModule: React.FC<AIModuleProps> = ({ initialTab }) => {
     switch (activeTab) {
       case 'llm-config':
         return <AdminLLMView />;
+      case 'chat-v10':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <ChatV10RuntimesPanel />
+          </div>
+        );
+      case 'onboarding-kpis':
+        return (
+          <div className="overflow-y-auto h-full">
+            <OnboardingKpiDashboardView />
+          </div>
+        );
       case 'ai-health':
         return (
           <div className="p-6 overflow-y-auto h-full">

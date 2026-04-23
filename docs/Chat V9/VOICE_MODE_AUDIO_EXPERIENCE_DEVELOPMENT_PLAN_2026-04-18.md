@@ -8,7 +8,7 @@
 > **Cross-refs**
 > - Kill-switches & incident response → [`CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md`](./CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md)
 > - Adding a new voice feature → [`CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md`](./CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md)
-> - Telemetry payloads → [`CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md`](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md)
+> - Telemetry payloads → [`CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md`](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md)
 
 ## Shipped
 
@@ -310,7 +310,7 @@ funnel.
       strings. Confirmed by regression test.
 - [x] One flag kills the whole funnel without touching voice runtime.
 - [x] Event contract documented — see
-      [telemetry contract](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md).
+      [telemetry contract](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md).
 
 ### Deliberately out of scope
 

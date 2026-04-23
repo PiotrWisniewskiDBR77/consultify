@@ -15,7 +15,7 @@
 - **Jedna aplikacja, jeden język wizualny.** Moduły i tryby widoku nie wprowadzają własnej palety, ramek, typografii ani "stylu kart".
 - **Minimalizm DBR77.** UI ma być "enterprise clean": mniej ramek, więcej rytmu spacing + hierarchii typograficznej + subtelnych separatorów.
 - **Semantyka kolorów jest święta.** Kolory oznaczają znaczenie (CTA / info / warning / danger / success), nie "ład".
-- **Dark mode jest pierwszoplanowy.** Każdy komponent musi wyglądać równie dobrze w `dark`.
+- **Dark mode jest pierwszoplanowy w chrome, light mode jest pierwszoplanowy w ekranach operacyjnych.** Każdy komponent musi przejść osobny review w obu trybach. Dla light mode obowiązuje [light-mode-readability.md](./light-mode-readability.md) jako SSOT, a "invisible borders" mają wyjątek dla data-dense surfaces (tabele, preview pane, paneli bocznych) — tam widoczny border jest obowiązkowy.
 - **Powściągliwość (restraint).** Na ekranie jest **jeden** kolorowy element (CTA). Reszta jest monochromatyczna. Elegancja przez brak.
 - **Przestrzeń to element designu.** Pusta przestrzeń to nie "brak contentu" — to celowa cisza, która podnosi premium feel.
 - **Separacja przez tło i przestrzeń, nie linie.** Bordery są ostatecznością. Preferuj zmianę tła, cień lub whitespace.

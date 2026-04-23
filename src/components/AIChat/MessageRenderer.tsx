@@ -42,11 +42,13 @@ import { CitationList, CitationMarker } from './CitationList';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ResearchProgress } from './ResearchProgress';
+import { ResearchClarification } from './ResearchClarification';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
+import { shouldOpenDeepThinkingClarification, type DeepThinkingPendingConfirmBase } from './deepThinkingRuntime';
 
 // V8 governed proposal / execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
 const V8_EXECUTION_MESSAGE_TYPES = new Set<string>([
@@ -191,17 +193,14 @@ export interface MessageRendererProps {
   agentSourcesByAgentId?: Record<string, { kb: any[]; web: any[] }>;
   agentAuditActiveTabByMessageId: Record<string, string>;
   setAgentAuditActiveTabByMessageId: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  runtimeSummaryByRunId?: Record<string, any>;
+  canAcceptAgentAuditRisk?: boolean;
+  canRunDirectedDeepening?: boolean;
 
   // Deep Thinking state
   deepThinkingHint: { reason: string; confidence: 'low' | 'medium' | 'high' } | null;
   dtHintDismissed: boolean;
-  dtPendingConfirm: {
-    messageId: string;
-    conversationId: string | null;
-    originalMessage: string;
-    editedMessage: string;
-    confirm: any;
-    context: any;
+  dtPendingConfirm: (DeepThinkingPendingConfirmBase & {
     attachments?: any[];
     agentAudit?: {
       suggested?: any;
@@ -217,7 +216,7 @@ export interface MessageRendererProps {
         riskFocus?: string[];
       };
     };
-  } | null;
+  }) | null;
   setDtPendingConfirm: React.Dispatch<
     React.SetStateAction<MessageRendererProps['dtPendingConfirm']>
   >;
@@ -259,6 +258,7 @@ export interface MessageRendererProps {
   handleEnableDeepThinking: () => void;
   handleDeepThinkingProceed: () => void;
   handleDeepThinkingReconfirm: () => void;
+  handleDeepThinkingClarificationComplete: (answers: Record<string, string> | null) => void;
   handleSaveAsDecision: (messageId: string, content: string) => void;
   handleSaveAsIdea: (messageId: string, content: string) => void;
   handleSaveAsNote: (messageId: string, content: string) => void;
@@ -316,6 +316,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   agentSourcesByAgentId,
   agentAuditActiveTabByMessageId,
   setAgentAuditActiveTabByMessageId,
+  runtimeSummaryByRunId,
+  canAcceptAgentAuditRisk = false,
+  canRunDirectedDeepening = true,
   deepThinkingHint,
   dtHintDismissed,
   dtPendingConfirm,
@@ -346,6 +349,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleEnableDeepThinking,
   handleDeepThinkingProceed,
   handleDeepThinkingReconfirm,
+  handleDeepThinkingClarificationComplete,
   handleSaveAsDecision,
   handleSaveAsIdea,
   handleSaveAsNote,
@@ -853,6 +857,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             disabled={
                               dtConfirmBusy ||
                               isDisabled ||
+                              shouldOpenDeepThinkingClarification(
+                                dtPendingConfirm.confirm,
+                                dtPendingConfirm.clarificationHandled
+                              ) ||
                               (Array.isArray(dtPendingConfirm.agentAudit?.suggested?.agents) &&
                                 dtPendingConfirm.agentAudit?.suggested?.agents?.length > 0 &&
                                 (dtPendingConfirm.agentAudit?.selectedAgentIds?.length || 0) === 0)
@@ -1026,6 +1034,12 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             const audit = (msg as any).metadata?.agentAudit || {};
                             const verdict = audit?.verdict || {};
                             const reviews = Array.isArray(audit?.reviews) ? audit.reviews : [];
+                            const runtimeRunId =
+                              String(audit?.runtimeRunId || audit?.orchestratorRunId || '').trim() || null;
+                            const runtimeSummary =
+                              (runtimeRunId && runtimeSummaryByRunId?.[runtimeRunId]?.run) ||
+                              runtimeSummaryByRunId?.[runtimeRunId] ||
+                              null;
                             const gates = Array.isArray(verdict?.gatesTriggered)
                               ? verdict.gatesTriggered
                               : [];
@@ -1120,6 +1134,29 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                   </div>
                                 </div>
 
+                                {runtimeSummary ? (
+                                  <div className="mt-3 rounded-md border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-950 px-3 py-2">
+                                    <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                                      Runtime run
+                                    </div>
+                                    <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                                      Status:{' '}
+                                      <span className="font-medium">
+                                        {String(runtimeSummary?.status || '—')}
+                                      </span>
+                                      {runtimeSummary?.approvalState
+                                        ? ` · Approval: ${String(runtimeSummary.approvalState)}`
+                                        : ''}
+                                      {runtimeSummary?.latestBarrierState
+                                        ? ` · Barrier: ${String(runtimeSummary.latestBarrierState)}`
+                                        : ''}
+                                      {runtimeSummary?.latestInterruptState
+                                        ? ` · Interrupt: ${String(runtimeSummary.latestInterruptState)}`
+                                        : ''}
+                                    </div>
+                                  </div>
+                                ) : null}
+
                                 {gateExplanations.length ? (
                                   <div className="mt-2">
                                     <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1">
@@ -1145,13 +1182,17 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                                   <div className="mt-3 flex flex-wrap items-center gap-2">
                                     <button
                                       onClick={() => handleAgentAuditAccept(audit, msg.id)}
-                                      disabled={isDisabled || agentAuditBusy}
+                                      disabled={
+                                        isDisabled || agentAuditBusy || !canAcceptAgentAuditRisk
+                                      }
                                       className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-700 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                       Accept risk & proceed
                                     </button>
                                     <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                      This is recorded in the audit trail.
+                                      {canAcceptAgentAuditRisk
+                                        ? 'This is recorded in the audit trail.'
+                                        : 'Admin approval is required to accept risk.'}
                                     </div>
                                   </div>
                                 ) : null}
@@ -1687,6 +1728,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               )}
             </button>
           </div>
+                        {dtPendingConfirm.clarificationRequested ? (
+                          <ResearchClarification
+                            message={
+                              dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage
+                            }
+                            onComplete={handleDeepThinkingClarificationComplete}
+                            onCancel={() =>
+                              setDtPendingConfirm((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      clarificationRequested: false,
+                                      clarificationHandled: true,
+                                      clarificationAnswers: null,
+                                    }
+                                  : prev
+                              )
+                            }
+                            className="mt-2"
+                          />
+                        ) : null}
         </div>
       )}
 
@@ -1882,7 +1944,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               disabled={
                 isDisabled ||
                 agentAuditBusy ||
-                Number((msg as any).metadata?.agentAudit?.loopIteration || 1) >= 2
+                Number((msg as any).metadata?.agentAudit?.loopIteration || 1) >= 2 ||
+                !canRunDirectedDeepening
               }
               className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -1890,6 +1953,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </button>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 self-center">
               Iterations: {String((msg as any).metadata?.agentAudit?.loopIteration || 1)}/2
+              {!canRunDirectedDeepening ? ' · Requires authenticated operator access' : ''}
             </div>
           </div>
         )}

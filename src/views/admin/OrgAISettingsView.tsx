@@ -158,7 +158,10 @@ export const OrgAISettingsView: React.FC = () => {
 
     setSaving(true);
     try {
-      const updated = await AdminApi.updateOrganizationAISettings(currentOrganization.id, settings);
+      const updated = await AdminApi.updateOrganizationAISettings(
+        currentOrganization.id,
+        settings as unknown as Record<string, unknown>
+      );
       setSettings(updated as OrgAISettings);
       setHasChanges(false);
       toast.success('Organization AI settings saved');

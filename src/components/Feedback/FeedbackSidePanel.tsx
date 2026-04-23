@@ -669,10 +669,10 @@ export const FeedbackSidePanel: React.FC = () => {
         <button
           key={id}
           onClick={() => setActiveTab(id as Exclude<FeedbackTab, 'pulse'>)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
             activeTab === id
-              ? 'border-amber-500 text-amber-600 dark:text-amber-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              ? 'border-amber-600 text-amber-800 dark:border-amber-500 dark:text-amber-400'
+              : 'border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
           }`}
         >
           <Icon size={14} />
@@ -1317,7 +1317,7 @@ export const FeedbackSidePanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
+        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-40 transition-opacity"
         onClick={closeSidePanel}
       />
 
@@ -1333,7 +1333,7 @@ export const FeedbackSidePanel: React.FC = () => {
             {!showSuccess && renderQuickPulseHeader()}
             <button
               onClick={closeSidePanel}
-              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
             >
               <X size={18} />
             </button>
@@ -1358,8 +1358,8 @@ export const FeedbackSidePanel: React.FC = () => {
 
         {/* Footer */}
         {!showSuccess && (
-          <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+            <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center">
               {t('feedback.footer', 'Opinia wysyłana jako')}{' '}
               <b>{currentUser?.email || t('feedback.anonymous', 'Anonimowo')}</b>
             </div>

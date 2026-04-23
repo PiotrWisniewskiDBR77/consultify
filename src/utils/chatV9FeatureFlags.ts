@@ -247,7 +247,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     testId: 'voice-barge-in',
     specDocs: [
       'docs/Chat V9/VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm4',
-      'docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     ],
   },
   {
@@ -264,7 +264,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     testId: 'voice-mode-legend-trigger',
     specDocs: [
       'docs/Chat V9/VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3',
-      'docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     ],
   },
   {
@@ -313,7 +313,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     testId: null,
     specDocs: [
       'docs/Chat V9/VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm10',
-      'docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md',
     ],
   },
   {
@@ -330,7 +330,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     testId: 'private-mode-badge-trigger',
     specDocs: [
       'docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-pm1',
-      'docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#private_mode_details_opened',
+      'docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#private_mode_details_opened',
     ],
   },
   {
@@ -347,7 +347,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     testId: 'back-to-chat-button',
     specDocs: [
       'docs/Chat V9/NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m1',
-      'docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_clicked',
+      'docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_clicked',
     ],
   },
   {
@@ -364,7 +364,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     testId: null,
     specDocs: [
       'docs/Chat V9/NAVIGATION_INFORMATION_ARCHITECTURE_DEVELOPMENT_PLAN_2026-04-18.md#nav-m1-1',
-      'docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_shortcut',
+      'docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#navigation_back_to_chat_shortcut',
     ],
   },
   {
@@ -509,7 +509,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     testId: 'trust-badge-trigger',
     specDocs: [
       'docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1',
-      'docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md#trust_badge_opened',
+      'docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md#trust_badge_opened',
     ],
   },
   {

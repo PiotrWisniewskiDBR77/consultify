@@ -20,6 +20,7 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { getWorkerWithProfile } from '../../services/ai/virtualWorkerService.js';
 import {
   type HandoffTargetModule,
   P08_ACCEPTANCE_CHECKLIST,
@@ -110,7 +111,9 @@ router.post(
       const data = await teresaToolOperatorService.proposeInitiativeDraftOperator({
         organizationId,
         userId,
-        sessionId: String(req.body?.sessionId || req.body?.conversationId || `initiative-${userId}`),
+        sessionId: String(
+          req.body?.sessionId || req.body?.conversationId || `initiative-${userId}`
+        ),
         conversationId: req.body?.conversationId ? String(req.body.conversationId) : null,
         contextSnapshotId: req.body?.contextSnapshotId ? String(req.body.contextSnapshotId) : null,
         sourceSurface: 'initiatives',
@@ -332,6 +335,48 @@ router.get(
       }
       throw err;
     }
+  })
+);
+
+// ---------------------------------------------------------------------------
+// GET /voice-config
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/voice-config',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const apiKey =
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || '';
+    let voiceName: string | null = null;
+    let workerVoiceEnabled = true;
+
+    try {
+      const workerConfig = await getWorkerWithProfile('teresa');
+      const configuredVoiceName = String(workerConfig?.worker?.voice_name || '').trim();
+
+      if (workerConfig?.worker) {
+        const worker = workerConfig.worker;
+        const workerSurface = worker.surface === 'in_platform' || worker.surface === 'both';
+        if (worker.voice_enabled === false || worker.status !== 'active' || !workerSurface) {
+          workerVoiceEnabled = false;
+        }
+      }
+
+      if (configuredVoiceName) {
+        voiceName = configuredVoiceName;
+      }
+    } catch {
+      // Worker table may not exist yet.
+    }
+
+    return res.json({
+      data: {
+        enabled: Boolean(apiKey) && workerVoiceEnabled,
+        apiKey: apiKey || null,
+        voiceName,
+      },
+      meta: teresaMeta({ action: 'voice_config' }),
+    });
   })
 );
 

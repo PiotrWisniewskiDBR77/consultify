@@ -1,4 +1,4 @@
-import type { RunState } from '../../../../../src/models/agent/InterruptVerbs.js';
+import type { RunState } from '../../../models/agent/InterruptVerbs.js';
 import {
   assertLedgerQueryWhitelisted,
   assertRunTransition,
@@ -8,7 +8,7 @@ import {
   type RunRow,
   type RunStatus,
   type TenantId,
-} from '../../../../../src/models/agent/RunLedger.js';
+} from '../../../models/agent/RunLedger.js';
 import type {
   AgentRuntimeLedgerEvent,
   AgentRuntimeLedgerQueryResult,
@@ -23,6 +23,10 @@ function keyFor(tenantId: TenantId, runId: RunId): string {
 function matchesRunQuery(run: RunRow, query: LedgerQuery): boolean {
   if (query.id && run.id !== query.id) return false;
   if (query.correlationId && run.correlationId !== query.correlationId) return false;
+  if (query.conversationId && run.conversationId !== query.conversationId) return false;
+  if (query.origin && run.origin !== query.origin) return false;
+  if (query.runType && run.runType !== query.runType) return false;
+  if (query.parentRunId && run.parentRunId !== query.parentRunId) return false;
   if (query.status && run.status !== query.status) return false;
   if (query.severity && run.severity !== query.severity) return false;
   if (query.startedAtFrom && run.startedAt && run.startedAt < query.startedAtFrom) return false;
@@ -35,18 +39,23 @@ export class InMemoryAgentRuntimeLedgerStore implements AgentRuntimeLedgerStore 
   private readonly runtimeStates = new Map<string, RunState>();
   private readonly events: AgentRuntimeLedgerEvent[] = [];
 
-  upsertRun(run: RunRow): RunRow {
+  async upsertRun(run: RunRow): Promise<RunRow> {
     assertTenantScoped(run, run.tenantId);
     this.runs.set(keyFor(run.tenantId, run.id), run);
     return run;
   }
 
-  getRun(runId: RunId, tenantId: TenantId): RunRow | null {
+  async getRun(runId: RunId, tenantId: TenantId): Promise<RunRow | null> {
     return this.runs.get(keyFor(tenantId, runId)) ?? null;
   }
 
-  transitionRun(runId: RunId, tenantId: TenantId, status: RunStatus, at: string): RunRow | null {
-    const current = this.getRun(runId, tenantId);
+  async transitionRun(
+    runId: RunId,
+    tenantId: TenantId,
+    status: RunStatus,
+    at: string
+  ): Promise<RunRow | null> {
+    const current = await this.getRun(runId, tenantId);
     if (current === null) return null;
 
     if (current.status !== status) {
@@ -66,12 +75,12 @@ export class InMemoryAgentRuntimeLedgerStore implements AgentRuntimeLedgerStore 
     return next;
   }
 
-  appendEvent(event: AgentRuntimeLedgerEvent): AgentRuntimeLedgerEvent {
+  async appendEvent(event: AgentRuntimeLedgerEvent): Promise<AgentRuntimeLedgerEvent> {
     this.events.push(event);
     return event;
   }
 
-  query(query: LedgerQuery): AgentRuntimeLedgerQueryResult {
+  async query(query: LedgerQuery): Promise<AgentRuntimeLedgerQueryResult> {
     assertLedgerQueryWhitelisted(query as unknown as Record<string, unknown>);
 
     const limit = query.limit ?? 50;
@@ -99,9 +108,9 @@ export class InMemoryAgentRuntimeLedgerStore implements AgentRuntimeLedgerStore 
     return { runs, events };
   }
 
-  summarize(runId: RunId, tenantId: TenantId): AgentRuntimeLedgerSummary {
-    const run = this.getRun(runId, tenantId);
-    const runtimeState = this.getRuntimeState(runId, tenantId);
+  async summarize(runId: RunId, tenantId: TenantId): Promise<AgentRuntimeLedgerSummary> {
+    const run = await this.getRun(runId, tenantId);
+    const runtimeState = await this.getRuntimeState(runId, tenantId);
     const relevantEvents = this.events.filter(
       (event) => event.tenantId === tenantId && event.runId === runId
     );
@@ -122,11 +131,11 @@ export class InMemoryAgentRuntimeLedgerStore implements AgentRuntimeLedgerStore 
     };
   }
 
-  setRuntimeState(runId: RunId, tenantId: TenantId, state: RunState): void {
+  async setRuntimeState(runId: RunId, tenantId: TenantId, state: RunState): Promise<void> {
     this.runtimeStates.set(keyFor(tenantId, runId), state);
   }
 
-  getRuntimeState(runId: RunId, tenantId: TenantId): RunState | null {
+  async getRuntimeState(runId: RunId, tenantId: TenantId): Promise<RunState | null> {
     return this.runtimeStates.get(keyFor(tenantId, runId)) ?? null;
   }
 }

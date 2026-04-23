@@ -118,13 +118,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.NEXT_PUBLIC_GEMINI_API_KEY': JSON.stringify(
-        env.NEXT_PUBLIC_GEMINI_API_KEY || env.GEMINI_API_KEY
-      ),
-    },
+    // SECURITY: do not embed LLM API keys in the frontend bundle.
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),

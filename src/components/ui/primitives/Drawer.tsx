@@ -184,7 +184,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           {/* Overlay */}
           {showOverlay && (
             <motion.div
-              className="fixed inset-0 z-40 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -204,7 +204,9 @@ export const Drawer: React.FC<DrawerProps> = ({
               ${positionStyles[position]}
               ${sizeStyles[position][size]}
               bg-white dark:bg-navy-900
-              shadow-[0_25px_50px_rgba(0,0,0,0.15)]
+              border-${position === 'left' ? 'r' : position === 'right' ? 'l' : position === 'top' ? 'b' : 't'}
+              border-slate-200 dark:border-navy-700
+              shadow-[0_25px_50px_rgba(15,23,42,0.18),0_12px_24px_rgba(15,23,42,0.12)]
               dark:shadow-[0_25px_50px_rgba(0,0,0,0.5)]
               flex flex-col
               outline-none
@@ -263,10 +265,10 @@ export const DrawerHeader = React.forwardRef<HTMLDivElement, DrawerHeaderProps>(
         {...props}
       >
         {title && (
-          <h2 className="text-lg font-semibold text-navy-900 dark:text-white pr-8">{title}</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white pr-8">{title}</h2>
         )}
         {description && (
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>
         )}
         {children}
       </div>

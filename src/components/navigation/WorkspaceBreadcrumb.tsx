@@ -280,7 +280,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
       aria-label="Breadcrumb"
       className="fixed top-14 left-1/2 z-[80] -translate-x-1/2 pointer-events-none"
     >
-      <ol className="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/90 backdrop-blur px-3 py-1 text-[12px] font-medium text-slate-700 shadow-sm dark:border-navy-700 dark:bg-navy-900/85 dark:text-slate-200">
+      <ol className="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 backdrop-blur px-3 py-1 text-[12px] font-medium text-slate-800 shadow-hig-sm dark:border-navy-700 dark:bg-navy-900/85 dark:text-slate-200">
         {crumb.segments.map((segment, idx) => {
           const isLast = idx === crumb.segments.length - 1;
           return (
@@ -288,7 +288,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
               {idx > 0 && (
                 <li
                   aria-hidden
-                  className="text-slate-300 dark:text-slate-600 select-none"
+                  className="text-slate-400 dark:text-slate-600 select-none"
                 >
                   ›
                 </li>
@@ -300,7 +300,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
                       type="button"
                       data-testid={`workspace-breadcrumb-segment-${idx}`}
                       onClick={handleChatClick}
-                      className="rounded px-1 -mx-1 hover:bg-slate-100 dark:hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary-400/50 text-primary-700 dark:text-primary-200"
+                      className="rounded px-1 -mx-1 hover:bg-primary-50 dark:hover:bg-navy-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 text-primary-700 dark:text-primary-200"
                     >
                       {segment.label}
                     </button>
@@ -321,8 +321,8 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
                     title={segment.title}
                     className={
                       isLast
-                        ? 'text-slate-800 dark:text-slate-100'
-                        : 'text-slate-500 dark:text-slate-400'
+                        ? 'text-slate-900 dark:text-slate-100 font-semibold'
+                        : 'text-slate-600 dark:text-slate-400'
                     }
                   >
                     {segment.label}

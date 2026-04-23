@@ -1839,9 +1839,26 @@ export class AIPipeline {
     const responseStyle = request.options?.responseStyle || (ctx as any)?.responseStyle;
 
     if (aiModes?.deepResearch) {
+      const expectedOutput =
+        (ctx as any)?.deepThinkingExpectedOutput ||
+        (ctx as any)?.deepThinkingConfirm?.understanding?.expectedOutput ||
+        'FullReport';
       instructions.push(
         '8. TRYB: Deep Research — zanim odpowiesz, doprecyzuj brakujące informacje i przedstaw uporządkowaną analizę, założenia oraz rekomendacje.'
       );
+      if (expectedOutput === 'Decision') {
+        instructions.push(
+          '8a. OUTPUT MODE: Decision — deliver a concise decision-ready recommendation first, followed by rationale, trade-offs, risks, and immediate next actions.'
+        );
+      } else if (expectedOutput === 'StructuredAnalysis') {
+        instructions.push(
+          '8a. OUTPUT MODE: StructuredAnalysis — use a structured comparison with explicit criteria, options, evidence, and a concise recommendation.'
+        );
+      } else {
+        instructions.push(
+          '8a. OUTPUT MODE: FullReport — provide a full strategic report with detailed sections, evidence, implications, and next-step guidance.'
+        );
+      }
     }
 
     // Web search instruction — active when user toggle is on OR when auto-detected

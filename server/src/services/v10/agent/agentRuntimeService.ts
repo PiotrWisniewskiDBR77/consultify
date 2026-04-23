@@ -4,22 +4,23 @@ import {
   assertResumePoint,
   resumeAfterBarrier,
   simulateBarrierSequence,
-} from '../../../../../src/models/agent/ApprovalBarrierSequence.js';
+} from '../../../models/agent/ApprovalBarrierSequence.js';
 import {
   type ExecutionProposalV1,
   type Severity,
   type TenantId,
-} from '../../../../../src/models/agent/ExecutionProposalV1.js';
+} from '../../../models/agent/ExecutionProposalV1.js';
 import {
   applyInterrupt,
   assertCompensationImpliedByVerb,
-} from '../../../../../src/models/agent/InterruptVerbs.js';
-import { type RunId, type RunRow, unsafeRunId } from '../../../../../src/models/agent/RunLedger.js';
-import { getSeverityPolicy } from '../../../../../src/models/agent/SeverityPolicies.js';
+  type RunState,
+} from '../../../models/agent/InterruptVerbs.js';
+import { type RunId, type RunRow, unsafeRunId } from '../../../models/agent/RunLedger.js';
+import { getSeverityPolicy } from '../../../models/agent/SeverityPolicies.js';
 import {
   runAgentExecutionPipeline,
   unsafeAgentExecutionPipelineRunId,
-} from '../../../../../src/models/v10/pipelines/AgentExecutionPipeline.js';
+} from '../../../models/v10/pipelines/AgentExecutionPipeline.js';
 import type {
   AgentRuntimeApprovalContract,
   AgentRuntimeLedgerEvent,
@@ -37,7 +38,7 @@ import type {
   SubmitInterruptVerbResult,
   SummarizeRunLedgerInput,
 } from '../../../types/v10/agent-runtime.js';
-import { createInMemoryAgentRuntimeLedgerStore } from './runLedgerMemoryStore.js';
+import { createDatabaseBackedAgentRuntimeLedgerStore } from './runLedgerDbStore.js';
 
 type SupportedRunStatus = RunRow['status'];
 
@@ -90,6 +91,7 @@ function buildPendingRunRow(proposal: ExecutionProposalV1, runId: RunId): RunRow
     id: runId,
     tenantId: proposal.tenantId,
     correlationId: proposal.correlationId,
+    approvalState: proposal.approvalMode === 'implicit' ? 'approved' : 'awaiting_approval',
     status: 'pending',
     severity: proposal.severity,
     startedAt: null,
@@ -212,11 +214,27 @@ function createLedgerEvent(
   };
 }
 
+function normalizeRole(value: unknown): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+}
+
+function roleSatisfies(requiredRoles: readonly string[], actorRole: string | null | undefined): boolean {
+  const normalized = normalizeRole(actorRole);
+  if (!normalized) return false;
+  if (normalized === 'superadmin' || normalized === 'super_admin' || normalized === 'owner') {
+    return true;
+  }
+  return requiredRoles.map(normalizeRole).includes(normalized);
+}
+
 export class AgentRuntimeService {
   private sequence = 0;
 
   constructor(
-    private readonly store: AgentRuntimeLedgerStore = createInMemoryAgentRuntimeLedgerStore()
+    private readonly store: AgentRuntimeLedgerStore = createDatabaseBackedAgentRuntimeLedgerStore()
   ) {}
 
   private nextEventId(prefix: string, runId: RunId, recordedAt: string): string {
@@ -224,9 +242,9 @@ export class AgentRuntimeService {
     return eventId(prefix, runId, recordedAt, this.sequence);
   }
 
-  evaluateExecutionProposal(
+  async evaluateExecutionProposal(
     input: EvaluateExecutionProposalInput
-  ): EvaluateExecutionProposalResult {
+  ): Promise<EvaluateExecutionProposalResult> {
     const runId = unsafeRunId(input.runId);
     const pipeline = runAgentExecutionPipeline({
       pipelineRunId: unsafeAgentExecutionPipelineRunId(input.pipelineRunId),
@@ -244,27 +262,27 @@ export class AgentRuntimeService {
 
     if (input.persistRun === true) {
       const baseRun = pipeline.ledgerRunRow ?? buildPendingRunRow(input.proposal, runId);
-      this.store.upsertRun(baseRun);
-      this.store.setRuntimeState(
+      await this.store.upsertRun(baseRun);
+      await this.store.setRuntimeState(
         runId,
         input.proposal.tenantId,
         interruptStateFromRunStatus(baseRun.status)
       );
 
       if (pipeline.gateDecision === 'rejected') {
-        const cancelled = this.store.transitionRun(
+        const cancelled = await this.store.transitionRun(
           runId,
           input.proposal.tenantId,
           'cancelled',
           input.now
         );
         if (cancelled !== null) {
-          this.store.setRuntimeState(runId, input.proposal.tenantId, 'cancelled');
+          await this.store.setRuntimeState(runId, input.proposal.tenantId, 'cancelled');
         }
       }
     }
 
-    this.store.appendEvent(
+    await this.store.appendEvent(
       createLedgerEvent(
         this.nextEventId('proposal', runId, input.now),
         input.proposal.tenantId,
@@ -289,7 +307,7 @@ export class AgentRuntimeService {
     };
   }
 
-  planApprovalBarrier(input: PlanApprovalBarrierInput): PlanApprovalBarrierResult {
+  async planApprovalBarrier(input: PlanApprovalBarrierInput): Promise<PlanApprovalBarrierResult> {
     const runId = unsafeRunId(input.runId);
     const stepCount = Math.max(1, input.stepCount ?? input.proposal.ops.length + 1);
     const sequence = buildBarrierSequence(input.proposal, stepCount);
@@ -300,7 +318,12 @@ export class AgentRuntimeService {
 
     assertBarrierEventEmitted(simulation);
 
-    this.store.appendEvent(
+    if (simulation.outcome === 'paused') {
+      await this.trySyncRunStatus(runId, input.proposal.tenantId, 'paused', input.emittedAt);
+      await this.store.setRuntimeState(runId, input.proposal.tenantId, 'paused');
+    }
+
+    await this.store.appendEvent(
       createLedgerEvent(
         this.nextEventId('barrier-plan', runId, input.emittedAt),
         input.proposal.tenantId,
@@ -318,50 +341,85 @@ export class AgentRuntimeService {
     return { sequence, simulation };
   }
 
-  resumeApprovalBarrier(input: ResumeApprovalBarrierInput): ResumeApprovalBarrierResult {
+  async resumeApprovalBarrier(
+    input: ResumeApprovalBarrierInput
+  ): Promise<ResumeApprovalBarrierResult> {
     const resume = resumeAfterBarrier(input.pause, input.decision, input.resumedAt);
     assertResumePoint(input.pause, resume);
 
-    let run: RunRow | null = null;
-    if (resume.outcome === 'resumed') {
-      run = this.trySyncRunStatus(input.runId, input.tenantId, 'running', input.resumedAt);
-      this.store.setRuntimeState(input.runId, input.tenantId, 'running');
-    } else {
-      run = this.trySyncRunStatus(input.runId, input.tenantId, 'cancelled', input.resumedAt);
-      this.store.setRuntimeState(input.runId, input.tenantId, 'cancelled');
+    const run = await this.store.getRun(input.runId, input.tenantId);
+    if (!run) {
+      throw new Error(`Run ${String(input.runId)} not found`);
     }
 
-    this.store.appendEvent(
+    const contract = buildApprovalContract(run.severity);
+    if (contract.requiredReviewerCount > 0) {
+      if ((input.reviewerCount ?? 0) < contract.requiredReviewerCount) {
+        throw new Error(
+          `Resume requires ${contract.requiredReviewerCount} reviewer approvals for ${run.severity}`
+        );
+      }
+      if (!roleSatisfies(contract.requiredRoles, input.actorRole || null)) {
+        throw new Error(`Role ${String(input.actorRole || 'unknown')} cannot resume ${run.severity}`);
+      }
+    }
+    if (contract.requiresAdminSignature && !String(input.adminSignature || '').trim()) {
+      throw new Error(`Resume for ${run.severity} requires admin signature`);
+    }
+
+    let syncedRun: RunRow | null = null;
+    if (resume.outcome === 'resumed') {
+      syncedRun = await this.trySyncRunStatus(input.runId, input.tenantId, 'running', input.resumedAt);
+      await this.store.setRuntimeState(input.runId, input.tenantId, 'running');
+    } else {
+      syncedRun = await this.trySyncRunStatus(
+        input.runId,
+        input.tenantId,
+        'cancelled',
+        input.resumedAt
+      );
+      await this.store.setRuntimeState(input.runId, input.tenantId, 'cancelled');
+    }
+
+    await this.store.appendEvent(
       createLedgerEvent(
         this.nextEventId('barrier-resume', input.runId, input.resumedAt),
         input.tenantId,
         input.runId,
         'approval_barrier_resumed',
         input.resumedAt,
-        resume
+        {
+          ...resume,
+          actorId: input.actorId || null,
+          actorRole: input.actorRole || null,
+          reviewerCount: input.reviewerCount ?? 0,
+          adminSignaturePresent: Boolean(input.adminSignature),
+          note: input.note || null,
+        },
+        input.actorId || null
       )
     );
 
-    return { resume, run };
+    return { resume, run: syncedRun };
   }
 
-  submitInterruptVerb(input: SubmitInterruptVerbInput): SubmitInterruptVerbResult {
+  async submitInterruptVerb(input: SubmitInterruptVerbInput): Promise<SubmitInterruptVerbResult> {
     const inferredCurrentState =
       input.currentState ??
-      this.store.getRuntimeState(input.runId, input.tenantId) ??
-      this.inferCurrentStateFromRun(input.runId, input.tenantId);
+      (await this.store.getRuntimeState(input.runId, input.tenantId)) ??
+      (await this.inferCurrentStateFromRun(input.runId, input.tenantId));
 
     assertCompensationImpliedByVerb(input.verb, input.compensationRecord);
     const decision = applyInterrupt(inferredCurrentState, input.verb);
 
     if (decision.reason !== 'illegal') {
-      this.store.setRuntimeState(input.runId, input.tenantId, decision.nextState);
+      await this.store.setRuntimeState(input.runId, input.tenantId, decision.nextState);
     }
 
     let syncedRun: RunRow | null = null;
     const mappedStatus = runStatusFromInterruptState(decision.nextState);
     if (decision.reason !== 'illegal' && mappedStatus !== null) {
-      syncedRun = this.trySyncRunStatus(
+      syncedRun = await this.trySyncRunStatus(
         input.runId,
         input.tenantId,
         mappedStatus,
@@ -369,7 +427,7 @@ export class AgentRuntimeService {
       );
     }
 
-    this.store.appendEvent(
+    await this.store.appendEvent(
       createLedgerEvent(
         this.nextEventId('interrupt', input.runId, input.recordedAt),
         input.tenantId,
@@ -392,10 +450,10 @@ export class AgentRuntimeService {
     };
   }
 
-  appendRunLedger(input: AppendRunLedgerInput): AgentRuntimeLedgerEvent {
+  async appendRunLedger(input: AppendRunLedgerInput): Promise<AgentRuntimeLedgerEvent> {
     if (input.run) {
-      this.store.upsertRun(input.run);
-      this.store.setRuntimeState(
+      await this.store.upsertRun(input.run);
+      await this.store.setRuntimeState(
         input.run.id,
         input.run.tenantId,
         interruptStateFromRunStatus(input.run.status)
@@ -415,11 +473,11 @@ export class AgentRuntimeService {
     );
   }
 
-  queryRunLedger(input: QueryRunLedgerInput) {
+  async queryRunLedger(input: QueryRunLedgerInput) {
     return this.store.query(input.query);
   }
 
-  summarizeRunLedger(input: SummarizeRunLedgerInput) {
+  async summarizeRunLedger(input: SummarizeRunLedgerInput) {
     return this.store.summarize(input.runId, input.tenantId);
   }
 
@@ -427,24 +485,24 @@ export class AgentRuntimeService {
     return this.store;
   }
 
-  private inferCurrentStateFromRun(
+  private async inferCurrentStateFromRun(
     runId: RunId,
     tenantId: TenantId
-  ): SubmitInterruptVerbResult['currentState'] {
-    const run = this.store.getRun(runId, tenantId);
+  ): Promise<SubmitInterruptVerbResult['currentState']> {
+    const run = await this.store.getRun(runId, tenantId);
     return run ? interruptStateFromRunStatus(run.status) : 'idle';
   }
 
-  private trySyncRunStatus(
+  private async trySyncRunStatus(
     runId: RunId,
     tenantId: TenantId,
     status: SupportedRunStatus,
     at: string
-  ): RunRow | null {
+  ): Promise<RunRow | null> {
     try {
-      const run = this.store.transitionRun(runId, tenantId, status, at);
+      const run = await this.store.transitionRun(runId, tenantId, status, at);
       if (run !== null) {
-        this.store.appendEvent(
+        await this.store.appendEvent(
           createLedgerEvent(
             this.nextEventId('run-sync', runId, at),
             tenantId,

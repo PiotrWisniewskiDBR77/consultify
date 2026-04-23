@@ -254,6 +254,7 @@ import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
+import v10Router from './routes/v10/index.js';
 import verifyRoutes from './routes/verify.routes.js';
 import videoRoutes from './routes/videos.routes.js';
 import virtualWorkersRoutes from './routes/virtual-workers.routes.js';
@@ -752,6 +753,10 @@ export class ApiGateway {
       // V8 API namespace — feature-gated
       logger.info('[ApiGateway] Mounting /api/v8');
       app.use('/api/v8', v8FeatureGate, v8Router);
+
+      // V10 API namespace — authenticated by each router, default-off by flags internally.
+      logger.info('[ApiGateway] Mounting /api/v10');
+      app.use('/api/v10', v10Router);
 
       // Catch-all RBAC or 404 for /api
       app.use('/api', rbacRoutes);

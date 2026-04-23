@@ -2,7 +2,7 @@ import { BellRing, CalendarClock, Loader2, Mail, PlayCircle, RefreshCw, Save } f
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { useAgentSchedules, useAgentScheduleTimeline } from '@/hooks/v10/useAgentSchedules';
+import { useAgentSchedules, useAgentScheduleTimeline } from '@/hooks/v10';
 import {
   type AgentScheduleDraftInput,
   buildDefaultAgentScheduleDraft,
@@ -25,6 +25,7 @@ export function AgentSchedulePanel({ tenantId, className }: AgentSchedulePanelPr
     previewMutation,
     createMutation,
     updatePreferencesMutation,
+    triggerMutation,
   } = useAgentSchedules(tenantId);
   const [draft, setDraft] = useState<AgentScheduleDraftInput>(() =>
     buildDefaultAgentScheduleDraft({ tenantId })
@@ -122,6 +123,18 @@ export function AgentSchedulePanel({ tenantId, className }: AgentSchedulePanelPr
       toast.success('Schedule notification defaults saved');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save notification defaults');
+    }
+  };
+
+  const handleTrigger = async () => {
+    if (!selectedScheduleId) return;
+    try {
+      const result = await triggerMutation.mutateAsync(selectedScheduleId);
+      toast.success(
+        `Run ${result.gateDecision === 'approved' ? 'started' : 'queued for approval'}`
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to trigger schedule');
     }
   };
 
@@ -421,6 +434,19 @@ export function AgentSchedulePanel({ tenantId, className }: AgentSchedulePanelPr
                   : 'Select a schedule to inspect its run state.'}
               </div>
             </div>
+            <button
+              type="button"
+              onClick={handleTrigger}
+              disabled={!selectedScheduleId || triggerMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+            >
+              {triggerMutation.isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <PlayCircle size={14} />
+              )}
+              Trigger run
+            </button>
           </div>
           <div className="mt-4">
             <RunTimelineSummary

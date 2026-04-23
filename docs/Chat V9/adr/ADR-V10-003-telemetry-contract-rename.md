@@ -7,7 +7,7 @@
 ## Context
 
 The current telemetry contract file is
-`docs/Chat V9/CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md`. V10 adds 8
+`docs/Chat V9/CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md`. V10 adds 8
 new event families (`reasoning.*`, `learning.*`, `agent.*`,
 `research.*`, `artifact.*`, `connect.*`, `outcome.*`, `onboard.*`)
 plus extensions to existing V9 families.
@@ -34,6 +34,9 @@ The rename happens in-place. The **execution trigger** is explicit:
 the rename lands in the same PR as the first V10 flag that declares a
 telemetry event. Until then, the file keeps its V9 name so that V9
 invariants (which read the file by hard-coded path) stay green.
+
+**Update (2026-04-21):** The trigger has been met; the contract now
+lives under the V10 filename and is treated as the single SSoT.
 
 ## Rationale
 
@@ -66,6 +69,7 @@ invariants (which read the file by hard-coded path) stay green.
 - Until the rename, V9 invariants continue to reference the V9 file;
   V10 dev plans already cite `CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md`
   as their future target (noted in each plan's Cross-refs block).
+- Post-rename, V9 invariants and doc references point at the V10 filename.
 - Post-rename, V9 and V10 flags share the same `FunnelEventName`
   union in `src/services/funnelAnalytics.ts`; V10 extensions are
   appended to the union in the same PR.

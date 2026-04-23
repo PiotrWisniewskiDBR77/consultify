@@ -161,14 +161,14 @@ const FolderSection: React.FC<FolderSectionProps> = ({
         }}
         aria-expanded={!sectionCollapsed}
       >
-        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-          <span className="shrink-0 text-slate-400 dark:text-slate-500 group-hover/section:text-slate-600 dark:group-hover/section:text-slate-300">
+        <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="shrink-0 text-slate-500 dark:text-slate-500 group-hover/section:text-slate-700 dark:group-hover/section:text-slate-300">
             {sectionCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
           </span>
           {icon}
           {title}
           {projects.length > 0 && (
-            <span className="text-[9px] text-slate-300 dark:text-slate-600 font-normal tabular-nums">
+            <span className="text-[9px] text-slate-500 dark:text-slate-600 font-normal tabular-nums">
               {projects.length}
             </span>
           )}
@@ -178,7 +178,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
             e.stopPropagation();
             setShowInput(true);
           }}
-          className="p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
+          className="p-0.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
           title={createButtonLabel}
         >
           <FolderPlus size={12} />
@@ -237,7 +237,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                       onDrop={(e) => handleFolderDrop(e, project.id)}
                     >
                       <button
-                        className="shrink-0 text-slate-400 dark:text-slate-500"
+                        className="shrink-0 text-slate-500 dark:text-slate-500"
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleExpanded(project.id);
@@ -247,7 +247,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                       </button>
                       <Folder size={13} className="shrink-0" style={{ color: project.color }} />
                       <span
-                        className="flex-1 text-[13px] text-slate-700 dark:text-slate-300 truncate hover:text-primary-600 dark:hover:text-primary-400"
+                        className="flex-1 text-[13px] text-slate-800 dark:text-slate-300 truncate hover:text-primary-700 dark:hover:text-primary-400"
                         onClick={(e) => {
                           if (onFolderClick) {
                             e.stopPropagation();
@@ -258,7 +258,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                       >
                         {project.name}
                       </span>
-                      <span className="text-[10px] tabular-nums text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] tabular-nums text-slate-600 dark:text-slate-500">
                         {project.conversationCount}
                       </span>
                       <div className="relative">
@@ -267,7 +267,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                             e.stopPropagation();
                             setMenuId(menuId === project.id ? null : project.id);
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded transition-all"
+                          className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 rounded transition-all"
                         >
                           <MoreHorizontal size={13} />
                         </button>
@@ -307,7 +307,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                     )}
 
                     {isExpanded && projectConversations.length === 0 && (
-                      <div className="ml-7 px-2 py-1 text-[11px] text-slate-400 dark:text-slate-500 italic">
+                      <div className="ml-7 px-2 py-1 text-[11px] text-slate-600 dark:text-slate-500 italic">
                         {t('aiChat.noFolderConversations', 'No conversations in this folder')}
                       </div>
                     )}
@@ -318,7 +318,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
               {hasMore && (
                 <button
                   onClick={() => setShowAll(!showAll)}
-                  className="w-full flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-md transition-colors"
+                  className="w-full flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/50 rounded-md transition-colors"
                 >
                   {showAll ? (
                     <>
@@ -340,7 +340,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                 e.stopPropagation();
                 setShowInput(true);
               }}
-              className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border border-dashed border-slate-300/60 dark:border-navy-700/60 rounded-md hover:border-slate-400 dark:hover:border-navy-600 transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-300 border border-dashed border-slate-300 dark:border-navy-700/60 rounded-md hover:border-slate-400 dark:hover:border-navy-600 transition-colors"
             >
               <FolderPlus size={12} />
               {emptyLabel}
@@ -635,7 +635,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
       {/* Overlay Background */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 z-40 lg:hidden"
           onClick={toggleSidebar}
         />
       )}
@@ -672,7 +672,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               <button
                 onClick={toggleSidebar}
                 data-testid="chat-history-close"
-                className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors"
+                className="p-1 text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 title={t('aiChat.closeSidebar', 'Close sidebar')}
               >
                 <X size={16} />
@@ -700,15 +700,15 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
           {/* Folder breadcrumb */}
           {activeFolderId && activeFolder && (
-            <div className="px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 flex items-center gap-1.5">
+            <div className="px-3 py-1.5 border-b border-slate-200 dark:border-navy-700/60 flex items-center gap-1.5">
               <button
                 onClick={() => setActiveFolderId(null)}
-                className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                className="text-[11px] text-slate-600 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 transition-colors"
               >
                 {t('aiChat.allConversations', 'All')}
               </button>
-              <ChevronRight size={10} className="text-slate-300 dark:text-slate-600" />
-              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+              <ChevronRight size={10} className="text-slate-500 dark:text-slate-600" />
+              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-800 dark:text-slate-300">
                 <Folder size={11} style={{ color: activeFolder.color }} />
                 <span className="truncate">{activeFolder.name}</span>
               </div>
@@ -725,10 +725,10 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               /* C3.3: Folder-scoped view — show only this folder's conversations */
               folderConversations.length === 0 ? (
                 <div className="text-center py-12 px-4">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                    <Folder size={20} className="text-slate-400 dark:text-slate-500" />
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center">
+                    <Folder size={20} className="text-slate-600 dark:text-slate-400" />
                   </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {t('aiChat.noFolderConversations', 'No conversations in this folder')}
                   </p>
                 </div>
@@ -746,16 +746,16 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               serverSearchLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                  <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                  <span className="ml-2 text-xs text-slate-600 dark:text-slate-500">
                     {t('aiChat.searching', 'Searching...')}
                   </span>
                 </div>
               ) : visibleGroups.length === 0 && !searchPartial ? (
                 <div className="text-center py-12 px-4">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                    <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center">
+                    <Search size={20} className="text-slate-600 dark:text-slate-400" />
                   </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {t('aiChat.noResults', 'No conversations found')}
                   </p>
                 </div>
@@ -853,13 +853,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   personalProjects.length === 0 &&
                   teamProjects.length === 0 ? (
                     <div className="text-center py-12 px-4">
-                      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                        <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 flex items-center justify-center">
+                        <Search size={20} className="text-slate-600 dark:text-slate-400" />
                       </div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         {t('aiChat.noConversations', 'No conversations yet')}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                         {t('aiChat.startNewChat', 'Start a new chat to begin')}
                       </p>
                     </div>
@@ -876,19 +876,19 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           </div>
 
           {/* Footer - Archive toggle */}
-          <div className="px-3 py-2 border-t border-slate-200/60 dark:border-navy-700/60">
+          <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700/60">
             <button
               onClick={toggleShowArchived}
-              className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
                 showArchived
-                  ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
+                  ? 'bg-slate-100 dark:bg-navy-800 text-slate-800 dark:text-slate-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               <Archive size={14} />
               {t('aiChat.sections.archived', 'Archived')}
               {displayGroups.archived.length > 0 && (
-                <span className="ml-auto text-[10px] tabular-nums bg-slate-200 dark:bg-navy-700 px-1.5 py-0.5 rounded-full">
+                <span className="ml-auto text-[10px] tabular-nums bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded-full">
                   {displayGroups.archived.length}
                 </span>
               )}

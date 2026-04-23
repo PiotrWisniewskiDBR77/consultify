@@ -13,7 +13,7 @@
 > **Cross-refs**
 > - Kill-switches & incident response → [`CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md`](./CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md)
 > - Adding a new onboarding feature → [`CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md`](./CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md)
-> - Telemetry payloads → [`CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md`](./CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md)
+> - Telemetry payloads → [`CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md`](./CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md)
 
 ## Block summary
 
@@ -726,7 +726,7 @@ On return, the resume handler:
 
 **Requirement:** R-ONBOARD-23 (P0) — onboarding-specific telemetry must support persona, minute, connector, and artifact funnel analysis.
 
-**Design.** 22 events in the `onboard.*` family, each carrying 11 required properties. Events and properties are defined in `src/services/onboarding/telemetry.ts` (new) and contributed to `CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md` (to be renamed V10) via this ticket's PR.
+**Design.** 22 events in the `onboard.*` family, each carrying 11 required properties. Events and properties are defined in `src/services/onboarding/telemetry.ts` (new) and contributed to `CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md` via this ticket's PR.
 
 **Events:**
 `onboard.started`, `onboard.persona_inferred`, `onboard.persona_confirmed`, `onboard.admin_console_seen`, `onboard.trust_banner_viewed`, `onboard.connector_offer_rendered`, `onboard.connector_oauth_started`, `onboard.connector_oauth_succeeded`, `onboard.connector_oauth_failed`, `onboard.fallback_upload_used`, `onboard.artifact_seeded`, `onboard.artifact_first_draft_rendered`, `onboard.provenance_panel_opened`, `onboard.approval_gate_opened`, `onboard.artifact_approved`, `onboard.artifact_saved`, `onboard.export_manifest_viewed`, `onboard.export_completed`, `onboard.memory_opt_in`, `onboard.team_invite_sent`, `onboard.resume_reentered`, `onboard.abandoned`.

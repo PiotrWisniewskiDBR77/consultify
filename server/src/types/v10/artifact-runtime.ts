@@ -1,37 +1,37 @@
 import { z } from 'zod';
 
-import type { ApprovalMode } from '../../../../src/models/agent/ApprovalMode.js';
-import { APPROVAL_MODES } from '../../../../src/models/agent/ApprovalMode.js';
+import type { ApprovalMode } from '../../models/agent/ApprovalMode.js';
+import { APPROVAL_MODES } from '../../models/agent/ApprovalMode.js';
 import type {
   ArtifactType,
   ExportFormat,
-} from '../../../../src/models/artifact/ArtifactTypeRegistry.js';
+} from '../../models/artifact/ArtifactTypeRegistry.js';
 import {
   ARTIFACT_TYPES,
   EXPORT_FORMATS,
-} from '../../../../src/models/artifact/ArtifactTypeRegistry.js';
+} from '../../models/artifact/ArtifactTypeRegistry.js';
 import type {
   ReattachOutcome,
   TypedComment,
-} from '../../../../src/models/artifact/CommentsAndAnnotations.js';
-import type { DataClassification } from '../../../../src/models/artifact/DataClassification.js';
-import { DATA_CLASSIFICATIONS } from '../../../../src/models/artifact/DataClassification.js';
+} from '../../models/artifact/CommentsAndAnnotations.js';
+import type { DataClassification } from '../../models/artifact/DataClassification.js';
+import { DATA_CLASSIFICATIONS } from '../../models/artifact/DataClassification.js';
 import {
   EXPORT_DESTINATIONS,
   type ExportDestination,
-} from '../../../../src/models/artifact/ExportManifest.js';
+} from '../../models/artifact/ExportManifest.js';
 import {
   LIBRARY_FOLDER_TRANSITION_EVENTS,
   LIBRARY_FOLDERS,
   type LibraryFolder,
   type LibraryFolderTransitionEvent,
-} from '../../../../src/models/artifact/LibraryFolders.js';
+} from '../../models/artifact/LibraryFolders.js';
 import {
   FOOTER_TARGETS,
   type FooterTarget,
-} from '../../../../src/models/artifact/ProvenanceFooter.js';
-import type { ReviewEvent } from '../../../../src/models/artifact/ReviewStateMachine.js';
-import { REVIEW_EVENTS } from '../../../../src/models/artifact/ReviewStateMachine.js';
+} from '../../models/artifact/ProvenanceFooter.js';
+import type { ReviewEvent } from '../../models/artifact/ReviewStateMachine.js';
+import { REVIEW_EVENTS } from '../../models/artifact/ReviewStateMachine.js';
 import {
   type ApprovalContext,
   type ApprovalRoutingRule,
@@ -41,8 +41,8 @@ import {
   type ReviewerRole,
   ROUTING_MATCH_KINDS,
   STANDARD_PERSONAS,
-} from '../../../../src/models/artifact/RoleBasedApprovalGates.js';
-import { SELECTION_SCOPE_KINDS } from '../../../../src/models/artifact/SelectionScope.js';
+} from '../../models/artifact/RoleBasedApprovalGates.js';
+import { SELECTION_SCOPE_KINDS } from '../../models/artifact/SelectionScope.js';
 
 const reviewStates = [
   'draft',
@@ -417,7 +417,7 @@ export type ArtifactRuntimeApprovalEvaluateRequest = z.infer<
 export interface ArtifactRuntimeMutationPlanResponse {
   scope: ArtifactRuntimeScope;
   runId: string;
-  status: 'ready' | 'rejected';
+  status: 'ready' | 'apply_ready' | 'rejected';
   scopeVerdict:
     | { kind: 'whole_artifact' }
     | { kind: 'scoped_to_selection'; nodeIds: string[] }

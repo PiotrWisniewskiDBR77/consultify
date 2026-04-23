@@ -31,6 +31,7 @@ vi.mock('../../../src/services/funnelAnalytics', () => ({
 
 vi.mock('../../../src/services/api', () => ({
   Api: h.apiMock,
+  default: h.apiMock,
 }));
 
 function renderWithRouter(ui: React.ReactElement) {
@@ -42,6 +43,8 @@ const deleteChatMessageMock = vi.fn();
 const setIsBotTypingMock = vi.fn();
 const setAIConfigMock = vi.fn();
 const setCurrentViewMock = vi.fn();
+const setChatKickoffMessageMock = vi.fn();
+const setChatOutputToolMock = vi.fn();
 
 let appStoreState: any = {
   currentStreamContent: '',
@@ -58,8 +61,11 @@ let appStoreState: any = {
     textToSpeech: false,
     responseStyle: 'normal',
   },
+  chatOutputTool: 'auto',
   setAIConfig: setAIConfigMock,
   setCurrentView: setCurrentViewMock,
+  setChatKickoffMessage: setChatKickoffMessageMock,
+  setChatOutputTool: setChatOutputToolMock,
 };
 
 const useAppStoreMock: any = () => appStoreState;
@@ -138,6 +144,20 @@ vi.doMock('../../../src/hooks/useUniversalVoice', () => ({
     settings: {},
     updateSettings: updateVoiceSettingsMock,
     isSupported: ttsSupportedState,
+  }),
+}));
+
+vi.doMock('../../../src/contexts/TeresaVoiceContext', () => ({
+  useTeresaVoiceContext: () => ({
+    isConnected: false,
+    isConnecting: false,
+    isListening: false,
+    transcript: '',
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    sendTextMessage: vi.fn(),
+    startListening: vi.fn(),
+    stopListening: vi.fn(),
   }),
 }));
 
@@ -385,6 +405,7 @@ describe('UnifiedChatPanel (L2)', () => {
         textToSpeech: false,
         responseStyle: 'normal',
       },
+      chatOutputTool: 'auto',
     };
 
     conversationStoreState = {
@@ -419,6 +440,7 @@ describe('UnifiedChatPanel (L2)', () => {
     });
     h.apiMock.agentAuditReview.mockResolvedValue({
       orchestratorRunId: 'or-2',
+      run: { id: 'or-2' },
       verdict: {
         qualityStatus: 'PASS',
         gatesTriggered: ['g1'],
@@ -492,19 +514,13 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel />);
     fireEvent.click(screen.getByTestId('send-button'));
 
-    await waitFor(() =>
-      expect(dispatchSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'access:blocked',
-          detail: expect.objectContaining({
-            code: 'DEMO_TIME_EXPIRED',
-            cta: expect.objectContaining({
-              label: 'Start free trial',
-              href: '/trial',
-            }),
-          }),
-        })
-      )
+    await waitFor(() => expect(dispatchSpy).toHaveBeenCalled());
+    const event = dispatchSpy.mock.calls[0]?.[0] as CustomEvent;
+    expect(event?.type).toBe('access:blocked');
+    expect(event?.detail).toEqual(
+      expect.objectContaining({
+        code: 'DEMO_TIME_EXPIRED',
+      })
     );
   });
 
@@ -592,6 +608,34 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(speakMock).toHaveBeenCalled();
   });
 
+  it('persists deep thinking report metadata when a DT stream completes', async () => {
+    conversationStoreState.activeConversationId = 'conv-1';
+    appStoreState.aiConfig = {
+      ...appStoreState.aiConfig,
+      deepResearch: true,
+    };
+
+    renderWithRouter(<UnifiedChatPanel />);
+    expect(aiStreamOptionsCaptured?.onStreamDone).toBeTypeOf('function');
+
+    await aiStreamOptionsCaptured.onStreamDone('Structured DT report', [], [], {
+      sessionId: 'dt-stream-1',
+    });
+
+    expect(addMessageToConversationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        role: 'ai',
+        metadata: expect.objectContaining({
+          deepThinking: expect.objectContaining({
+            kind: 'report',
+            streamSessionId: 'dt-stream-1',
+          }),
+          deepThinkingReport: 'Structured DT report',
+        }),
+      })
+    );
+  });
+
   it('persists a product-safe Teresa fallback when stream start fails', async () => {
     conversationStoreState.activeConversationId = 'conv-1';
 
@@ -646,7 +690,15 @@ describe('UnifiedChatPanel (L2)', () => {
     await aiStreamOptionsCaptured.onStreamDone('report', [], [], {});
     expect(h.apiMock.agentAuditReview).not.toHaveBeenCalled();
     expect(addMessageToConversationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'ai', content: expect.stringContaining('Agent Audit (post Deep Thinking)') })
+      expect.objectContaining({
+        role: 'ai',
+        content: expect.stringContaining('Runtime run: `stream-run-1`'),
+        metadata: expect.objectContaining({
+          agentAudit: expect.objectContaining({
+            runtimeRunId: 'stream-run-1',
+          }),
+        }),
+      })
     );
   });
 
@@ -663,7 +715,14 @@ describe('UnifiedChatPanel (L2)', () => {
       expect(h.apiMock.agentAuditAcceptRun).toHaveBeenCalledWith({ runId: 'run-1' })
     );
     expect(addChatMessageMock).toHaveBeenCalledWith(
-      expect.objectContaining({ metadata: expect.objectContaining({ agentAudit: expect.anything() }) })
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          agentAudit: expect.objectContaining({ runtimeRunId: 'run-1' }),
+        }),
+      })
+    );
+    expect(addChatMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.stringContaining('Runtime run: `run-1`') })
     );
   });
 

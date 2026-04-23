@@ -120,7 +120,7 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.2 }}
-      className={`overflow-hidden border-t border-slate-100 dark:border-navy-700`}
+      className={`overflow-hidden border-t border-slate-200 dark:border-navy-700`}
     >
       <div className={`p-4 ${severityColors.bg}`}>
         {/* Project Context */}
@@ -129,13 +129,13 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
             className={`mb-3 p-2 rounded-lg ${severityColors.border} border bg-white/50 dark:bg-navy-900/50`}
           >
             <div className="flex items-center gap-2 text-xs">
-              <Folder size={12} className="text-slate-400 dark:text-slate-500" />
-              <span className="font-medium text-navy-900 dark:text-white">
+              <Folder size={12} className="text-slate-600 dark:text-slate-500" />
+              <span className="font-medium text-slate-900 dark:text-white">
                 {notification.projectName}
               </span>
               {notification.relatedObjectType && (
                 <>
-                  <ChevronRight size={10} className="text-slate-300" />
+                  <ChevronRight size={10} className="text-slate-500" />
                   <span
                     className={`px-1.5 py-0.5 rounded ${severityColors.badge} text-[10px] font-medium`}
                   >
@@ -157,7 +157,7 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
         {/* Related Object Card */}
         {notification.relatedObjectType && notification.relatedObjectId && (
           <div className="mb-4">
-            <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5 font-medium">
+            <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1.5 font-medium">
               {t('notifications.relatedObject', 'Related')}{' '}
               {formatObjectType(notification.relatedObjectType)}
             </div>
@@ -173,16 +173,16 @@ export const NotificationDetailPanel: React.FC<NotificationDetailPanelProps> = (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {getRelatedObjectIcon(notification.relatedObjectType)}
-                  <span className="text-sm font-medium text-navy-900 dark:text-white">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white">
                     {notification.title}
                   </span>
                 </div>
                 <ExternalLink
                   size={14}
-                  className="text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-colors"
+                  className="text-slate-600 dark:text-slate-500 group-hover:text-blue-600 transition-colors"
                 />
               </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2">
                 <Clock size={10} />
                 <span>ID: {notification.relatedObjectId.slice(0, 8)}...</span>
               </div>

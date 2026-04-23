@@ -225,7 +225,7 @@ function showCoreSystems(orgType: OrganizationType): boolean {
   return ['MANUFACTURING', 'SERVICES', 'TECHNOLOGY', 'PUBLIC_SECTOR'].includes(orgType);
 }
 function showOperatingSection(orgType: OrganizationType): boolean {
-  return !!orgType && orgType !== '';
+  return Boolean(orgType);
 }
 
 // ─── Cross-validation (Phase 3.1) ───
@@ -484,9 +484,7 @@ export const OrganizationProfileModule: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('orgId', orgId);
-      const res = await Api.post('/ai/extract-org-context', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await Api.postMultipart('/ai/extract-org-context', formData);
       if (res.proposals && Array.isArray(res.proposals)) {
         setDocExtractProposals(res.proposals.map((p: any) => ({ ...p, accepted: null })));
         toast.success(`Teresa extracted ${res.proposals.length} field(s) from the document`);

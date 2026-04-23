@@ -870,12 +870,12 @@ describe('chatV10FeatureFlags · requirement coverage report (invariant 31 inbou
     const researchFiles = readdirSync(DOCS_DIR).filter((f) =>
       /^DEEP_RESEARCH_.+_\d{4}-\d{2}-\d{2}\.md$/.test(f),
     );
-    const requirementIds = new Set<string>();
+    const requirementIds = new Set<`R-${string}-${number}`>();
     const REQ_TABLE_RE = /\|\s*(R-[A-Z]+-\d+)\s*\|/g;
     for (const file of researchFiles) {
       const src = readFileSync(path.join(DOCS_DIR, file), 'utf8');
       for (const match of src.matchAll(REQ_TABLE_RE)) {
-        requirementIds.add(match[1]);
+        requirementIds.add(match[1] as `R-${string}-${number}`);
       }
     }
 
@@ -891,5 +891,53 @@ describe('chatV10FeatureFlags · requirement coverage report (invariant 31 inbou
         `${missing.length} pending.`,
     );
     expect(requirementIds.size).toBeGreaterThanOrEqual(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Telemetry contract sync (Phase 4: V10 runtime MVP events).
+// ---------------------------------------------------------------------------
+
+describe('chatV10FeatureFlags · telemetry contract sync', () => {
+  it('every declared V10 telemetry event exists in FunnelEventName', () => {
+    const repoRoot = path.resolve(__dirname, '../../..');
+    const funnelSource = readFileSync(path.join(repoRoot, 'src', 'services', 'funnelAnalytics.ts'), 'utf8');
+    const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_.]+)'/gm;
+    const knownEvents = new Set<string>();
+    for (const match of funnelSource.matchAll(FUNNEL_EVENT_RE)) knownEvents.add(match[1]);
+    expect(knownEvents.size, 'failed to parse FunnelEventName union').toBeGreaterThan(50);
+
+    const orphans: string[] = [];
+    for (const flag of CHAT_V10_FLAGS) {
+      for (const ev of flag.telemetry) {
+        if (!knownEvents.has(ev)) orphans.push(`${flag.id} → ${ev}`);
+      }
+    }
+    expect(orphans, `V10 flags declare telemetry events not in FunnelEventName:\n${orphans.join('\n')}`).toEqual(
+      [],
+    );
+  });
+
+  it('every declared V10 telemetry event has a heading in the telemetry contract doc', () => {
+    const contractSource = readFileSync(
+      path.join(DOCS_DIR, 'CHAT_V10_TELEMETRY_CONTRACT_2026-04-18.md'),
+      'utf8',
+    );
+
+    const headingSet = new Set<string>();
+    const HEADING_RE = /^#{2,3}\s+`?([a-z][a-z0-9_.]*)`?\s*$/gm;
+    for (const match of contractSource.matchAll(HEADING_RE)) headingSet.add(match[1]);
+    expect(headingSet.size, 'failed to parse event headings from telemetry contract doc').toBeGreaterThan(5);
+
+    const undocumented: string[] = [];
+    for (const flag of CHAT_V10_FLAGS) {
+      for (const ev of flag.telemetry) {
+        if (!headingSet.has(ev)) undocumented.push(`${flag.id} → ${ev}`);
+      }
+    }
+    expect(
+      undocumented,
+      `V10 flags declare telemetry events missing from the contract doc:\n${undocumented.join('\n')}`,
+    ).toEqual([]);
   });
 });
