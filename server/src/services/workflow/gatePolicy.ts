@@ -20,7 +20,10 @@ export type GateContextType =
 
 export type GateAction =
   // Interview
-  'SUBMIT_INTERVIEW' | 'SEND_BACK_INTERVIEW' | 'APPROVE_INTERVIEW';
+  | 'SUBMIT_INTERVIEW'
+  | 'SEND_BACK_INTERVIEW'
+  | 'APPROVE_INTERVIEW'
+  | 'REVOKE_INTERVIEW_APPROVAL';
 
 export type GateDecision =
   | { allow: true }
@@ -82,6 +85,19 @@ export function evaluateGatePolicy(input: GatePolicyInput): GateDecision {
           allow: false,
           code: 'INVALID_STATE',
           error: 'Only submitted assignments can be approved',
+        };
+      }
+      return { allow: true };
+    }
+
+    if (action === 'REVOKE_INTERVIEW_APPROVAL') {
+      if (!hasSession)
+        return { allow: false, code: 'MISSING_DATA', error: 'Assignment has no session yet' };
+      if (status !== 'approved') {
+        return {
+          allow: false,
+          code: 'INVALID_STATE',
+          error: 'Only approved assignments can have approval revoked',
         };
       }
       return { allow: true };

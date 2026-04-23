@@ -418,7 +418,7 @@ export const Sidebar: React.FC = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             data-testid="mobile-sidebar-overlay"
-            className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-slate-900/40 dark:bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -430,7 +430,7 @@ export const Sidebar: React.FC = () => {
         data-tour="sidebar-nav"
         className={`
           fixed inset-y-0 left-0 z-[60]
-          bg-slate-50 dark:bg-navy-950 backdrop-blur-xl
+          bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-transparent backdrop-blur-xl
           flex flex-col
           ${sidebarWidthClass}
           ${

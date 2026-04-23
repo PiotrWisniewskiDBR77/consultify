@@ -16,8 +16,10 @@ const mockStartAssignment = vi.fn();
 const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
 const mockManageAssignment = vi.fn();
+const mockArchiveAssignment = vi.fn();
 const mockSendBackAssignment = vi.fn();
 const mockApproveAssignment = vi.fn();
+const mockRevokeApproval = vi.fn();
 const mockEvaluateSessionAnswers = vi.fn();
 
 const mockInsightList = vi.fn();
@@ -32,8 +34,10 @@ vi.mock('../../../controllers/InterviewController.js', () => ({
     submitAssignment: (...args: unknown[]) => mockSubmitAssignment(...args),
     sendAssignmentReminder: (...args: unknown[]) => mockSendAssignmentReminder(...args),
     manageAssignment: (...args: unknown[]) => mockManageAssignment(...args),
+    archiveAssignment: (...args: unknown[]) => mockArchiveAssignment(...args),
     sendBackAssignment: (...args: unknown[]) => mockSendBackAssignment(...args),
     approveAssignment: (...args: unknown[]) => mockApproveAssignment(...args),
+    revokeApproval: (...args: unknown[]) => mockRevokeApproval(...args),
     evaluateSessionAnswers: (...args: unknown[]) => mockEvaluateSessionAnswers(...args),
   },
   loadInterviewSessionsForOrganization: (...args: unknown[]) => mockListSessions(...args),
@@ -435,6 +439,23 @@ describe('V8 Interview read-only routes', () => {
     expect(mockManageAssignment).toHaveBeenCalled();
   });
 
+  it('POST /api/v8/interview/assignments/:id/archive wraps response in V8 envelope', async () => {
+    mockArchiveAssignment.mockImplementation(async (req: any, res: any) => {
+      res.json({ success: true, archived: true, assignmentId: req.params.id });
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/assignments/asg-archive/archive')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.assignmentId).toBe('asg-archive');
+    expect(res.body.data?.archived).toBe(true);
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
+    expect(mockArchiveAssignment).toHaveBeenCalled();
+  });
+
   it('POST /api/v8/interview/assignments/:id/send-back wraps response in V8 envelope', async () => {
     mockSendBackAssignment.mockImplementation(async (req: any, res: any) => {
       res.json({ id: req.params.id, status: 'sent_back' });
@@ -467,6 +488,23 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.data?.assignment?.status).toBe('approved');
     expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockApproveAssignment).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/interview/assignments/:id/revoke-approval wraps response in V8 envelope', async () => {
+    mockRevokeApproval.mockImplementation(async (req: any, res: any) => {
+      res.json({ assignment: { id: req.params.id, status: 'in_progress' }, entersContext: false });
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/assignments/asg-5/revoke-approval')
+      .set('Authorization', 'Bearer x')
+      .send({ reason: 'Approved by mistake' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.assignment?.id).toBe('asg-5');
+    expect(res.body.data?.assignment?.status).toBe('in_progress');
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
+    expect(mockRevokeApproval).toHaveBeenCalled();
   });
 
   it('POST /api/v8/interview/sessions/:id/evaluate-answers wraps AI evaluation in V8 envelope', async () => {

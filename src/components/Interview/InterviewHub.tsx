@@ -70,6 +70,36 @@ const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) 
   toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
 };
 
+const buildAiSendBackDraftReason = (params: {
+  isPolish: boolean;
+  assignment?: { aiReview?: any } | null;
+}): string => {
+  const aiReview = params.assignment?.aiReview;
+  const weakAnswerMap = Array.isArray(aiReview?.weakAnswerMap) ? aiReview.weakAnswerMap : [];
+  const recommendations = Array.isArray(aiReview?.recommendations) ? aiReview.recommendations : [];
+
+  if (weakAnswerMap.length === 0 && recommendations.length === 0) {
+    return params.isPolish
+      ? 'Uzupełnij odpowiedzi i dopracuj jakość submission przed ponownym wysłaniem.'
+      : 'Please complete the answers and improve the submission quality before resubmitting.';
+  }
+
+  const weakLines = weakAnswerMap
+    .slice(0, 3)
+    .map(
+      (item: any) =>
+        `- ${String(item.label || 'Question')}: ${String(item.feedback || '').trim() || (params.isPolish ? 'wymaga dopracowania' : 'needs improvement')}`
+    );
+  const recommendationLine =
+    recommendations.length > 0
+      ? `\n\n${params.isPolish ? 'Sugestia AI:' : 'AI suggestion:'} ${String(recommendations[0] || '').trim()}`
+      : '';
+
+  return params.isPolish
+    ? `AI wskazało odpowiedzi wymagające poprawy:\n${weakLines.join('\n')}${recommendationLine}`
+    : `AI identified answers that need improvement:\n${weakLines.join('\n')}${recommendationLine}`;
+};
+
 import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Modal } from '@/components/ui/primitives/Modal';
@@ -577,7 +607,11 @@ export const InterviewHub: React.FC = () => {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showManageAssignmentModal, setShowManageAssignmentModal] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
-  const [showSendBackModal, setShowSendBackModal] = useState(false);
+  const [showReviewActionModal, setShowReviewActionModal] = useState(false);
+  const [reviewActionMode, setReviewActionMode] = useState<'send_back' | 'revoke_approval'>(
+    'send_back'
+  );
+  const [reviewActionReason, setReviewActionReason] = useState('');
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
@@ -1591,54 +1625,122 @@ export const InterviewHub: React.FC = () => {
     setShowReminderModal(true);
   }, []);
 
+  const handleOpenReviewActionModal = useCallback(
+    (assignment: InterviewAssignment, mode: 'send_back' | 'revoke_approval') => {
+      setSelectedAssignment(assignment);
+      setReviewActionMode(mode);
+      setReviewActionReason(
+        mode === 'send_back' ? buildAiSendBackDraftReason({ assignment, isPolish }) : ''
+      );
+      setShowReviewActionModal(true);
+    },
+    [isPolish]
+  );
+
   const handleOpenSendBackModal = useCallback((assignment: InterviewAssignment) => {
+    handleOpenReviewActionModal(assignment, 'send_back');
+  }, [handleOpenReviewActionModal]);
+
+  const handleOpenRevokeApprovalModal = useCallback((assignment: InterviewAssignment) => {
     setSelectedAssignment(assignment);
-    setShowSendBackModal(true);
-  }, []);
+    handleOpenReviewActionModal(assignment, 'revoke_approval');
+  }, [handleOpenReviewActionModal]);
 
   const handleOpenManageAssignmentModal = useCallback((assignment: InterviewAssignment) => {
     setSelectedAssignment(assignment);
     setShowManageAssignmentModal(true);
   }, []);
 
-  const handleSendBack = useCallback(
+  const refreshInterviewCockpit = useCallback(async () => {
+    const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
+      loadMyAssignments(),
+      loadManagedAssignments(),
+      loadOverdueAssignments(),
+      loadManagedSessions(),
+    ]);
+    setMyAssignments(myRes);
+    setManagedAssignments(managedRes);
+    setOverdueAssignments(overdueRes);
+    setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
+  }, [loadManagedAssignments, loadManagedSessions, loadMyAssignments, loadOverdueAssignments]);
+
+  const handleArchiveAssignment = useCallback(
+    async (assignment: InterviewAssignment) => {
+      if (
+        !confirm(
+          isPolish
+            ? `Czy na pewno chcesz zarchiwizować assignment "${assignment.template?.name || assignment.id}"? Zniknie z aktywnej listy Assigned.`
+            : `Are you sure you want to archive assignment "${assignment.template?.name || assignment.id}"? It will disappear from the active Assigned list.`
+        )
+      ) {
+        return;
+      }
+
+      try {
+        await V8InterviewApi.archiveAssignment(assignment.id).catch(() =>
+          Api.post(`/interview/assignments/${assignment.id}/archive`, {})
+        );
+        toast.success(
+          isPolish
+            ? 'Assignment został zarchiwizowany.'
+            : 'The assignment has been archived.'
+        );
+        await refreshInterviewCockpit();
+      } catch (error: any) {
+        console.error('[InterviewHub] Failed to archive assignment:', error);
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się zarchiwizować assignmentu' : 'Failed to archive assignment',
+          isPolish
+        );
+      }
+    },
+    [isPolish, refreshInterviewCockpit]
+  );
+
+  const handleReviewAction = useCallback(
     async (reason: string) => {
       if (!selectedAssignment) return;
 
       try {
-        await V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason }).catch(() =>
-          Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason })
-        );
-        toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
-        setShowSendBackModal(false);
+        if (reviewActionMode === 'revoke_approval') {
+          await V8InterviewApi.revokeApproval(selectedAssignment.id, { reason }).catch(() =>
+            Api.post(`/interview/assignments/${selectedAssignment.id}/revoke-approval`, { reason })
+          );
+          toast.success(
+            isPolish
+              ? 'Zatwierdzenie cofnięte. Wywiad wrócił do pracy.'
+              : 'Approval revoked. The interview is editable again.'
+          );
+        } else {
+          await V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason }).catch(() =>
+            Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason })
+          );
+          toast.success(isPolish ? 'Wywiad zwrócony do poprawy!' : 'Interview sent back!');
+        }
+        setShowReviewActionModal(false);
+        setReviewActionReason('');
         setSelectedAssignment(null);
-
-        // Refresh all assignments + manager sessions cockpit
-        const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
-          loadMyAssignments(),
-          loadManagedAssignments(),
-          loadOverdueAssignments(),
-          loadManagedSessions(),
-        ]);
-        setMyAssignments(myRes);
-        setManagedAssignments(managedRes);
-        setOverdueAssignments(overdueRes);
-        setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
+        await refreshInterviewCockpit();
       } catch (error: any) {
-        console.error('[InterviewHub] Failed to send back:', error);
+        console.error('[InterviewHub] Failed to execute review action:', error);
         safeToastError(
           error,
-          isPolish ? 'Nie udało się zwrócić wywiadu' : 'Failed to send back',
+          reviewActionMode === 'revoke_approval'
+            ? isPolish
+              ? 'Nie udało się cofnąć zatwierdzenia'
+              : 'Failed to revoke approval'
+            : isPolish
+              ? 'Nie udało się zwrócić wywiadu'
+              : 'Failed to send back',
           isPolish
         );
       }
     },
     [
       isPolish,
-      loadManagedAssignments,
-      loadManagedSessions,
-      loadMyAssignments,
-      loadOverdueAssignments,
+      refreshInterviewCockpit,
+      reviewActionMode,
       selectedAssignment,
     ]
   );
@@ -1651,17 +1753,7 @@ export const InterviewHub: React.FC = () => {
         );
         toast.success(isPolish ? 'Wywiad zatwierdzony!' : 'Interview approved!');
 
-        // Refresh assignments + manager sessions cockpit (post-approval)
-        const [myRes, managedRes, overdueRes, sessionsRes] = await Promise.all([
-          loadMyAssignments(),
-          loadManagedAssignments(),
-          loadOverdueAssignments(),
-          loadManagedSessions(),
-        ]);
-        setMyAssignments(myRes);
-        setManagedAssignments(managedRes);
-        setOverdueAssignments(overdueRes);
-        setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
+        await refreshInterviewCockpit();
       } catch (error: any) {
         console.error('[InterviewHub] Failed to approve assignment:', error);
         safeToastError(
@@ -1673,10 +1765,7 @@ export const InterviewHub: React.FC = () => {
     },
     [
       isPolish,
-      loadManagedSessions,
-      loadManagedAssignments,
-      loadMyAssignments,
-      loadOverdueAssignments,
+      refreshInterviewCockpit,
     ]
   );
 
@@ -2172,25 +2261,25 @@ export const InterviewHub: React.FC = () => {
         <table className="w-full table-fixed">
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
-              <th className="w-[40%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              <th className="w-[40%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 {isPolish ? 'Nazwa' : 'Name'}
               </th>
               {!hiddenSet.has('status') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Status' : 'Status'}
                 </th>
               )}
               {!hiddenSet.has('progress') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Postęp' : 'Progress'}
                 </th>
               )}
               {!hiddenSet.has('date') && (
-                <th className="w-[15%] px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                <th className="w-[15%] px-4 py-3 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   {isPolish ? 'Data' : 'Date'}
                 </th>
               )}
-              <th className="w-[15%] px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              <th className="w-[15%] px-4 py-3 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 <button
                   onClick={() => setIsSessionsViewSettingsOpen(true)}
                   className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
@@ -2233,7 +2322,7 @@ export const InterviewHub: React.FC = () => {
                       : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
                   ].join(' ')}
                 >
-                  <td className="px-3 py-2">
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${statusConfig.bgColor}`}
@@ -2254,7 +2343,7 @@ export const InterviewHub: React.FC = () => {
                   </td>
 
                   {!hiddenSet.has('status') && (
-                    <td className="px-3 py-2">
+                    <td className="px-4 py-3">
                       <div
                         className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}
                       >
@@ -2269,7 +2358,7 @@ export const InterviewHub: React.FC = () => {
                   )}
 
                   {!hiddenSet.has('progress') && (
-                    <td className="px-3 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 max-w-[100px] h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                           <div
@@ -2287,7 +2376,7 @@ export const InterviewHub: React.FC = () => {
                   )}
 
                   {!hiddenSet.has('date') && (
-                    <td className="px-3 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
                         <Calendar size={12} />
                         {session.dueAt
@@ -2303,7 +2392,7 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
 
-                  <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end">
                       <RowActionsMenu
                         iconVariant="vertical"
@@ -2327,6 +2416,17 @@ export const InterviewHub: React.FC = () => {
                                   label: isPolish ? 'Odeślij' : 'Send back',
                                   icon: ArrowRight,
                                   onClick: () => handleOpenSendBackModal(linkedAssignment),
+                                },
+                              ]
+                            : []),
+                          ...(isApproved && linkedAssignment
+                            ? [
+                                {
+                                  id: 'revoke-approval',
+                                  label: isPolish ? 'Cofnij zatwierdzenie' : 'Revoke approval',
+                                  icon: RotateCcw,
+                                  onClick: () => handleOpenRevokeApprovalModal(linkedAssignment),
+                                  variant: 'danger' as const,
                                 },
                               ]
                             : []),
@@ -4590,23 +4690,6 @@ Return ONLY the answer text (no markdown fences).`;
                                   icon: Bell,
                                   onClick: () => handleOpenReminderModal(assignment),
                                 },
-                                ...(assignment.status === 'submitted'
-                                  ? [
-                                      {
-                                        id: 'approve',
-                                        label: isPolish ? 'Zatwierdź' : 'Approve',
-                                        icon: Check,
-                                        onClick: () => handleApproveAssignment(assignment),
-                                      },
-                                      {
-                                        id: 'sendback',
-                                        label: isPolish ? 'Zwróć do poprawy' : 'Send back',
-                                        icon: RotateCcw,
-                                        onClick: () => handleOpenSendBackModal(assignment),
-                                        variant: 'danger' as const,
-                                      },
-                                    ]
-                                  : []),
                               ]
                             : []),
                           ...(showAssignee &&
@@ -4620,6 +4703,14 @@ Return ONLY the answer text (no markdown fences).`;
                                     : 'Assign again / manage',
                                   icon: Edit3,
                                   onClick: () => handleOpenManageAssignmentModal(assignment),
+                                },
+                                {
+                                  id: 'archive',
+                                  label: isPolish ? 'Archiwizuj' : 'Archive',
+                                  icon: Trash2,
+                                  onClick: () => void handleArchiveAssignment(assignment),
+                                  variant: 'danger' as const,
+                                  divider: true,
                                 },
                               ]
                             : []),
@@ -6602,17 +6693,24 @@ Return ONLY the answer text (no markdown fences).`;
         </div>
       )}
 
-      {/* Send Back Modal */}
-      {showSendBackModal && selectedAssignment && (
+      {/* Review Action Modal */}
+      {showReviewActionModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Zwróć do poprawy' : 'Send Back for Revision'}
+                {reviewActionMode === 'revoke_approval'
+                  ? isPolish
+                    ? 'Cofnij zatwierdzenie'
+                    : 'Revoke approval'
+                  : isPolish
+                    ? 'Zwróć do poprawy'
+                    : 'Send Back for Revision'}
               </h2>
               <button
                 onClick={() => {
-                  setShowSendBackModal(false);
+                  setShowReviewActionModal(false);
+                  setReviewActionReason('');
                   setSelectedAssignment(null);
                 }}
                 className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -6623,23 +6721,32 @@ Return ONLY the answer text (no markdown fences).`;
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const reason = formData.get('reason') as string;
-                handleSendBack(reason);
+                void handleReviewAction(reviewActionReason);
               }}
               className="p-4"
             >
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                {isPolish
-                  ? 'Podaj powód zwrotu wywiadu do poprawy:'
-                  : 'Provide a reason for sending the interview back:'}
+                {reviewActionMode === 'revoke_approval'
+                  ? isPolish
+                    ? 'Podaj powód cofnięcia zatwierdzenia i ponownego otwarcia pracy:'
+                    : 'Provide a reason for revoking approval and reopening the work:'
+                  : isPolish
+                    ? 'Podaj powód zwrotu wywiadu do poprawy:'
+                    : 'Provide a reason for sending the interview back:'}
               </p>
               <textarea
-                name="reason"
                 required
                 rows={4}
+                value={reviewActionReason}
+                onChange={(e) => setReviewActionReason(e.target.value)}
                 placeholder={
-                  isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
+                  reviewActionMode === 'revoke_approval'
+                    ? isPolish
+                      ? 'Wyjaśnij dlaczego zatwierdzenie trzeba cofnąć...'
+                      : 'Explain why the approval must be revoked...'
+                    : isPolish
+                      ? 'Opisz co wymaga poprawy...'
+                      : 'Describe what needs to be improved...'
                 }
                 className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
               />
@@ -6647,7 +6754,8 @@ Return ONLY the answer text (no markdown fences).`;
                 <button
                   type="button"
                   onClick={() => {
-                    setShowSendBackModal(false);
+                    setShowReviewActionModal(false);
+                    setReviewActionReason('');
                     setSelectedAssignment(null);
                   }}
                   className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
@@ -6656,10 +6764,17 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
                 <button
                   type="submit"
+                  disabled={!reviewActionReason.trim()}
                   className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors"
                 >
                   <RotateCcw size={16} className="inline mr-2" />
-                  {isPolish ? 'Zwróć' : 'Send Back'}
+                  {reviewActionMode === 'revoke_approval'
+                    ? isPolish
+                      ? 'Cofnij approval'
+                      : 'Revoke approval'
+                    : isPolish
+                      ? 'Zwróć'
+                      : 'Send Back'}
                 </button>
               </div>
             </form>

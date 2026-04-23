@@ -70,7 +70,7 @@ const toIsoDateOrNull = (value: string): string | null => {
 };
 
 const FIELD_CLASSNAME =
-  'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 dark:border-navy-600 dark:bg-navy-800 dark:text-white';
+  'w-full min-h-[48px] rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 dark:border-navy-600 dark:bg-navy-800 dark:text-white';
 
 const TEXTAREA_CLASSNAME = `${FIELD_CLASSNAME} min-h-[132px] resize-y`;
 
@@ -288,9 +288,9 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
   if (!isOpen || !assignment) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-2 py-6">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative mx-4 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-navy-700 dark:bg-navy-900">
+      <div className="relative flex w-full max-w-4xl max-h-[90vh] min-h-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-navy-700 dark:bg-navy-900">
         <div className="flex items-start justify-between border-b border-slate-200 px-8 py-6 dark:border-navy-700">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -321,7 +321,7 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
           </button>
         </div>
 
-        <div className="max-h-[calc(90vh-182px)] space-y-8 overflow-y-auto px-8 py-7">
+        <div className="flex-1 min-h-0 space-y-8 overflow-y-auto px-8 py-7">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -394,7 +394,7 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
                     <select
                       value={assigneeUserId}
                       onChange={(e) => setAssigneeUserId(e.target.value)}
-                      className={FIELD_CLASSNAME}
+                      className={`${FIELD_CLASSNAME} appearance-none`}
                     >
                       <option value="">{isPolish ? 'Wybierz użytkownika' : 'Select user'}</option>
                       {users.map((user) => (
@@ -412,7 +412,7 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
                     <select
                       value={templateId}
                       onChange={(e) => setTemplateId(e.target.value)}
-                      className={FIELD_CLASSNAME}
+                      className={`${FIELD_CLASSNAME} appearance-none`}
                     >
                       <option value="">{isPolish ? 'Wybierz szablon' : 'Select template'}</option>
                       {templates.map((template) => (
@@ -432,7 +432,7 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className={FIELD_CLASSNAME}
+                      className={`${FIELD_CLASSNAME} appearance-none`}
                     />
                   </label>
 
@@ -541,7 +541,7 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
           )}
         </div>
 
-        <div className="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/80 px-8 py-5 dark:border-navy-700 dark:bg-navy-950/40 md:flex-row md:items-center md:justify-between">
+        <div className="shrink-0 flex flex-col gap-4 border-t border-slate-200 bg-slate-50/80 px-8 py-5 dark:border-navy-700 dark:bg-navy-950/40 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">{actionSummary}</div>
           <div className="flex items-center justify-end gap-3">
             <button

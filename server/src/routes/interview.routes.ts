@@ -146,6 +146,13 @@ router.patch(
   InterviewController.manageAssignment
 );
 
+/** POST /interview/assignments/:id/archive - Archive closed assignment from active operations list */
+router.post(
+  '/assignments/:id/archive',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.archiveAssignment
+);
+
 /** DELETE /interview/assignments/:id - Delete assignment (only if not started) */
 router.delete(
   '/assignments/:id',
@@ -165,6 +172,13 @@ router.post(
   '/assignments/:id/approve',
   requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   InterviewController.approveAssignment
+);
+
+/** POST /interview/assignments/:id/revoke-approval - Admin/PM revoke approval and reopen work */
+router.post(
+  '/assignments/:id/revoke-approval',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.revokeApproval
 );
 
 // ==========================================

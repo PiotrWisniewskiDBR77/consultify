@@ -36,6 +36,15 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
   children?: React.ReactNode;
 }
 
+/**
+ * Light Mode System v3.2 — Button variants.
+ * SSOT: docs/ui-standards/00-foundation/light-mode-readability.md §10
+ *
+ * Contract:
+ *   - text-* must hit WCAG AA on its background (ghost/outline text = slate-700 min),
+ *   - focus-visible ring: primary-500 @ 2px, offset-2 on white (light) / navy-950 (dark),
+ *   - no raw slate-400 for text.
+ */
 const variantStyles: Record<ButtonVariant, string> = {
   primary: `
     text-white
@@ -43,21 +52,23 @@ const variantStyles: Record<ButtonVariant, string> = {
     shadow-[0_4px_14px_rgba(124,58,237,0.25)]
     hover:from-primary-600 hover:to-primary-700
     hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)]
-    focus-visible:ring-primary-500/30
+    focus-visible:ring-primary-500
     dark:from-primary-500 dark:to-primary-600
   `,
   secondary: `
-    text-navy-900 dark:text-white
-    bg-slate-100 dark:bg-navy-800
-    hover:bg-slate-200 dark:hover:bg-navy-700
-    focus-visible:ring-primary-500/20
+    text-slate-900 dark:text-white
+    bg-slate-100 border border-slate-200
+    hover:bg-slate-200 hover:border-slate-300
+    dark:bg-navy-800 dark:border-navy-700
+    dark:hover:bg-navy-700 dark:hover:border-navy-600
+    focus-visible:ring-primary-500
   `,
   ghost: `
-    text-slate-600 dark:text-slate-400
+    text-slate-700 dark:text-slate-300
     bg-transparent
-    hover:bg-slate-100 dark:hover:bg-white/5
-    hover:text-navy-900 dark:hover:text-white
-    focus-visible:ring-primary-500/20
+    hover:bg-slate-100 hover:text-slate-900
+    dark:hover:bg-white/5 dark:hover:text-white
+    focus-visible:ring-primary-500
   `,
   danger: `
     text-white
@@ -65,15 +76,15 @@ const variantStyles: Record<ButtonVariant, string> = {
     shadow-[0_4px_14px_rgba(220,38,38,0.2)]
     hover:from-danger-600 hover:to-danger-700
     hover:shadow-[0_6px_20px_rgba(220,38,38,0.3)]
-    focus-visible:ring-danger-500/30
+    focus-visible:ring-danger-500
   `,
   outline: `
-    text-slate-700 dark:text-slate-200
-    bg-transparent
+    text-slate-800 dark:text-slate-200
+    bg-white dark:bg-transparent
     border border-slate-300 dark:border-navy-700
-    hover:border-primary-500 hover:text-primary-600
-    dark:hover:border-primary-500 dark:hover:text-primary-400
-    focus-visible:ring-primary-500/20
+    hover:border-primary-500 hover:text-primary-700 hover:bg-primary-50
+    dark:hover:border-primary-500 dark:hover:text-primary-400 dark:hover:bg-primary-950/20
+    focus-visible:ring-primary-500
   `,
 };
 

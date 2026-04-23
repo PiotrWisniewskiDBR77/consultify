@@ -215,21 +215,25 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   }, [assignmentStatus, session?.assignmentId, session?.status]);
 
   const isAssignmentMode = Boolean(session?.assignmentId);
+  const isManagerReviewActor = useMemo(() => {
+    if (!isAssignmentMode) return false;
+    const sessionOwnerId = session?.ownerId;
+    return Boolean(sessionOwnerId) && sessionOwnerId !== currentUser?.id;
+  }, [currentUser?.id, isAssignmentMode, session?.ownerId]);
 
   // V6-C04: Reviewer mode — activates when the session is submitted and the
   // current user is NOT the assignee (i.e. they are the reviewer/manager).
   const isReviewerMode = useMemo(() => {
-    if (!isAssignmentMode) return false;
     const asgStatus = (assignmentStatus || '').toLowerCase();
     if (asgStatus !== 'submitted') return false;
-    const sessionOwnerId = session?.ownerId;
-    return Boolean(sessionOwnerId) && sessionOwnerId !== currentUser?.id;
-  }, [assignmentStatus, currentUser?.id, isAssignmentMode, session?.ownerId]);
+    return isManagerReviewActor;
+  }, [assignmentStatus, isManagerReviewActor]);
 
   const [sendBackReason, setSendBackReason] = useState('');
   const [sendBackMissingItems, setSendBackMissingItems] = useState<SendBackChecklistItem[]>([]);
   const [isSendingBack, setIsSendingBack] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isRevokingApproval, setIsRevokingApproval] = useState(false);
   const [showSendBackForm, setShowSendBackForm] = useState(false);
 
   // Populate send-back checklist when entering reviewer mode
@@ -405,6 +409,35 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       : [];
     return decisions.length > 0 ? decisions[decisions.length - 1] : null;
   }, [assignmentInfo]);
+  const latestReviewDecisionLabel = useMemo(() => {
+    const action = String(latestReviewDecision?.action || '');
+    if (action === 'approve') return isPolish ? 'zatwierdzenie' : 'approval';
+    if (action === 'send_back') return isPolish ? 'odesłanie do poprawy' : 'send back';
+    if (action === 'revoke_approval') return isPolish ? 'cofnięcie zatwierdzenia' : 'approval revoked';
+    return '-';
+  }, [isPolish, latestReviewDecision]);
+  const canRevokeApproval = useMemo(
+    () => isManagerReviewActor && currentStatus === 'approved',
+    [currentStatus, isManagerReviewActor]
+  );
+  const buildAiSendBackDraftReason = useCallback(() => {
+    if (aiWeakAnswerMap.length === 0 && (!aiEvaluation || aiEvaluation.recommendations.length === 0)) {
+      return isPolish
+        ? 'Uzupełnij odpowiedzi i dopracuj submission przed ponownym wysłaniem do review.'
+        : 'Please complete the answers and improve the submission before resubmitting for review.';
+    }
+    const weakLines = aiWeakAnswerMap.slice(0, 3).map((item) => {
+      const fallback = isPolish ? 'wymaga dopracowania' : 'needs improvement';
+      return `- ${item.label}: ${item.feedback?.trim() || fallback}`;
+    });
+    const recommendation =
+      aiEvaluation?.recommendations?.[0] && String(aiEvaluation.recommendations[0]).trim()
+        ? `\n\n${isPolish ? 'Sugestia AI:' : 'AI suggestion:'} ${String(aiEvaluation.recommendations[0]).trim()}`
+        : '';
+    return isPolish
+      ? `AI wskazało odpowiedzi wymagające poprawy:\n${weakLines.join('\n')}${recommendation}`
+      : `AI identified answers that need improvement:\n${weakLines.join('\n')}${recommendation}`;
+  }, [aiEvaluation, aiWeakAnswerMap, isPolish]);
   const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.in_progress;
 
   const runAiQualityReview = useCallback(
@@ -1126,6 +1159,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     session?.assignmentId,
   ]);
 
+  const handleOpenSendBackForm = useCallback(() => {
+    setSendBackReason((prev) => prev.trim() || buildAiSendBackDraftReason());
+    setShowSendBackForm(true);
+  }, [buildAiSendBackDraftReason]);
+
   const handleApprove = useCallback(async () => {
     if (!session?.assignmentId) return;
     setIsApproving(true);
@@ -1152,6 +1190,58 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       setIsApproving(false);
     }
   }, [session?.assignmentId, isPolish]);
+
+  const handleRevokeApproval = useCallback(async () => {
+    if (!session?.assignmentId) return;
+    const defaultReason = isPolish
+      ? 'Zatwierdzenie zostało wykonane zbyt wcześnie i wymaga cofnięcia.'
+      : 'The approval was applied too early and needs to be revoked.';
+    const reason = window.prompt(
+      isPolish
+        ? 'Podaj powód cofnięcia zatwierdzenia i ponownego otwarcia pracy:'
+        : 'Provide a reason for revoking approval and reopening the work:',
+      defaultReason
+    );
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!normalizedReason) return;
+
+    setIsRevokingApproval(true);
+    try {
+      const result = (await V8InterviewApi.revokeApproval(session.assignmentId, {
+        reason: normalizedReason,
+      }).catch(() =>
+        Api.post(`/interview/assignments/${session.assignmentId}/revoke-approval`, {
+          reason: normalizedReason,
+        })
+      )) as any;
+      const updatedAssignment = (result as any)?.assignment;
+      const updatedSession = (result as any)?.session;
+      if (updatedAssignment?.status) {
+        setAssignmentStatus(String(updatedAssignment.status));
+        setAssignmentInfo((prev: any) => ({ ...(prev || {}), ...updatedAssignment }));
+      } else {
+        setAssignmentStatus('in_progress');
+      }
+      if (updatedSession) {
+        setSession(updatedSession);
+        onSessionChange?.(updatedSession);
+      }
+      setShowSendBackForm(false);
+      setSendBackReason('');
+      toast.success(
+        isPolish
+          ? 'Zatwierdzenie cofnięte. Wywiad wrócił do dalszej pracy.'
+          : 'Approval revoked. The interview is open for further work.'
+      );
+    } catch (error) {
+      console.error('[InterviewWorkspace] Failed to revoke approval:', error);
+      toast.error(
+        isPolish ? 'Nie udało się cofnąć zatwierdzenia.' : 'Failed to revoke approval.'
+      );
+    } finally {
+      setIsRevokingApproval(false);
+    }
+  }, [isPolish, onSessionChange, session?.assignmentId]);
 
   // Open chat
   const handleOpenChat = useCallback(() => {
@@ -1249,7 +1339,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Export handlers
   const handleExportMarkdown = () => {
-    const content = `# ${sessionName}\n\n## Progress: ${overallPercent}%\n\n${summaryData.facts.map((f) => `- ${f}`).join('\n')}`;
+    const factsText = summaryData.facts.map((f) => `- ${typeof f === 'string' ? f : (f as any)?.fact || JSON.stringify(f)}`).join('\n');
+    const content = `# ${sessionName}\n\n## Progress: ${overallPercent}%\n\n${factsText}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1261,7 +1352,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   };
 
   const handleCopy = () => {
-    const content = `${sessionName}\n\nProgress: ${overallPercent}%\n\nFacts:\n${summaryData.facts.map((f) => `- ${f}`).join('\n')}`;
+    const factsText = summaryData.facts.map((f) => `- ${typeof f === 'string' ? f : (f as any)?.fact || JSON.stringify(f)}`).join('\n');
+    const content = `${sessionName}\n\nProgress: ${overallPercent}%\n\nFacts:\n${factsText}`;
     navigator.clipboard.writeText(content);
     toast.success(isPolish ? 'Skopiowano' : 'Copied');
   };
@@ -1497,15 +1589,24 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         icon: ThumbsUp,
         variant: 'success',
         onClick: handleApprove,
-        disabled: isApproving || isSendingBack,
+        disabled: isApproving || isSendingBack || isRevokingApproval,
       });
       out.push({
         id: 'send-back',
         label: { en: 'Send back', pl: 'Odeślij' },
         icon: AlertTriangle,
         variant: 'danger',
-        onClick: () => setShowSendBackForm(true),
-        disabled: isApproving || isSendingBack,
+        onClick: handleOpenSendBackForm,
+        disabled: isApproving || isSendingBack || isRevokingApproval,
+      });
+    } else if (canRevokeApproval) {
+      out.push({
+        id: 'revoke-approval',
+        label: { en: 'Revoke approval', pl: 'Cofnij zatwierdzenie' },
+        icon: RefreshCw,
+        variant: 'danger',
+        onClick: handleRevokeApproval,
+        disabled: isRevokingApproval,
       });
     } else if (!isLocked) {
       if (isAssignmentMode) {
@@ -1633,7 +1734,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {latestReviewDecision && (
                   <p className="text-xs opacity-80">
                     {isPolish ? 'Ostatnia decyzja review:' : 'Latest review decision:'}{' '}
-                    <strong>{String(latestReviewDecision.action || '-')}</strong>
+                    <strong>{latestReviewDecisionLabel}</strong>
                     {' · '}
                     {isPolish ? 'AI alignment:' : 'AI alignment:'}{' '}
                     <strong>{String(latestReviewDecision.alignment || '-')}</strong>
@@ -1730,12 +1831,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           </div>
         )}
         <Callout
-          variant={isReviewerMode ? 'info' : isLocked ? 'info' : 'purple'}
+          variant={isReviewerMode || canRevokeApproval ? 'info' : isLocked ? 'info' : 'purple'}
           title={
             isReviewerMode
               ? isPolish
                 ? 'Status przeglądu'
                 : 'Review status'
+              : canRevokeApproval
+                ? isPolish
+                  ? 'Zatwierdzenie aktywne'
+                  : 'Approval active'
               : isLocked
                 ? isPolish
                   ? 'Tryb tylko do odczytu'
@@ -1758,6 +1863,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             ? isPolish
               ? `Przeglądasz zgłoszoną wersję. Respondent nadal może ją edytować do czasu zatwierdzenia.`
               : `You are reviewing a submitted version. The respondent can still edit until approval.`
+            : canRevokeApproval
+              ? isPolish
+                ? `Ta sesja została zatwierdzona. Możesz jednak cofnąć approval i oddać ją z powrotem do dalszej pracy.`
+                : `This session has already been approved, but you can still revoke the approval and return it to active work.`
             : currentStatus === 'submitted'
               ? isPolish
                 ? `Wysłane do review. Nadal możesz edytować odpowiedzi i wysłać je ponownie.`
@@ -2153,7 +2262,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
                     >
                       <Check size={14} className="text-emerald-500 mt-0.5" />
-                      {f}
+                      {typeof f === 'string' ? f : (f as any)?.fact || JSON.stringify(f)}
                     </li>
                   ))}
                 </ul>
@@ -2185,9 +2294,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
 
     return (
-      <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-[#0a0f1e] dark:to-navy-950">
+      <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-navy-950 dark:via-[#0a0f1e] dark:to-navy-950">
         {/* Minimal top bar */}
-        <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl">
+        <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-slate-200 bg-white/90 dark:border-white/[0.06] dark:bg-white/[0.02] backdrop-blur-xl">
           <button
             type="button"
             onClick={onClose || (() => {})}
@@ -2196,25 +2305,25 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <ChevronLeft size={16} />
             {isPolish ? 'Wróć' : 'Back'}
           </button>
-          <div className="h-4 w-px bg-white/[0.08]" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-white/[0.08]" />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[300px]">
             {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
           </span>
           <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${statusConfig.color}`} />
           <div className="flex-1" />
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+          <span className="text-xs tabular-nums text-slate-500 dark:text-slate-500">
             {answeredCount}/{totalCount}
           </span>
-          <div className="w-24 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="w-24 h-1.5 rounded-full bg-slate-200 overflow-hidden dark:bg-white/[0.06]">
             <div
               className="h-full rounded-full bg-primary-500 transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+          <span className="text-xs tabular-nums text-slate-500 dark:text-slate-500">
             {progressPct}%
           </span>
-          <div className="h-4 w-px bg-white/[0.08]" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-white/[0.08]" />
           {isReviewerMode ? (
             <>
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
@@ -2236,7 +2345,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => setShowSendBackForm(true)}
+                onClick={handleOpenSendBackForm}
                 disabled={isSendingBack}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors disabled:opacity-50"
               >
@@ -2244,6 +2353,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {isPolish ? 'Odeślij' : 'Send back'}
               </button>
             </>
+          ) : canRevokeApproval ? (
+            <button
+              type="button"
+              onClick={handleRevokeApproval}
+              disabled={isRevokingApproval}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors disabled:opacity-50"
+            >
+              {isRevokingApproval ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <RefreshCw size={13} />
+              )}
+              {isPolish ? 'Cofnij approval' : 'Revoke approval'}
+            </button>
           ) : (
             <button
               type="button"
@@ -2268,7 +2391,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
         {/* Send-back form (immersive mode) */}
         {showSendBackForm && isReviewerMode && (
-          <div className="shrink-0 px-6 py-3 border-b border-white/[0.06] bg-amber-500/[0.04]">
+          <div className="shrink-0 px-6 py-3 border-b border-amber-200 bg-amber-50/90 dark:border-white/[0.06] dark:bg-amber-500/[0.04]">
             <div className="max-w-2xl mx-auto space-y-3">
               <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
                 {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}

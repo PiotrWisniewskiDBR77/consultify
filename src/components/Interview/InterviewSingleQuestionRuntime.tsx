@@ -995,7 +995,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         rows={QUESTION_INPUT_TYPES.shortText.has(normalizedType) ? 2 : immersive ? 5 : 7}
         className={`w-full rounded-xl border px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 ${
           immersive
-            ? 'border-white/[0.06] bg-white/[0.03] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500'
+            ? 'border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/[0.06] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500'
             : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white'
         }`}
         placeholder={
@@ -1255,12 +1255,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         /* ── Immersive: flat question list nav ── */
         <nav
           ref={navRef}
-          className="hidden md:flex flex-col w-72 shrink-0 border-r border-white/[0.06] bg-white/[0.02] dark:bg-white/[0.01]"
+          className="hidden md:flex flex-col w-72 shrink-0 border-r border-slate-200 bg-white/80 dark:border-white/[0.06] dark:bg-white/[0.01]"
           role="navigation"
           aria-label={isPolish ? 'Nawigacja pytań' : 'Question navigation'}
         >
           {/* Header with progress */}
-          <div className="px-4 py-3 border-b border-white/[0.06]">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06]">
             <div className="flex items-center justify-between">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Pytania' : 'Questions'}
@@ -1275,7 +1275,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 {answeredCount}/{orderedQuestions.length}
               </span>
             </div>
-            <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden mt-2">
+            <div className="h-1 rounded-full bg-slate-200 overflow-hidden mt-2 dark:bg-white/[0.06]">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${answeredCount === orderedQuestions.length ? 'bg-emerald-500' : 'bg-primary-500'}`}
                 style={{
@@ -1306,7 +1306,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     isCurrent
                       ? 'bg-primary-500/10 dark:bg-primary-500/15 ring-1 ring-primary-500/20'
                       : isAnswered
-                        ? 'opacity-50 hover:opacity-80'
+                        ? 'opacity-75 hover:opacity-95'
                         : 'hover:bg-slate-50 dark:hover:bg-navy-900/50'
                   }`}
                 >
@@ -1519,7 +1519,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               key={currentQuestion.id}
               className={`w-full ${immersive ? 'max-w-4xl' : 'max-w-3xl'} ${
                 immersive
-                  ? 'bg-white/[0.03] dark:bg-white/[0.02] border border-white/[0.04] dark:border-white/[0.03] rounded-2xl backdrop-blur-sm p-6 md:p-8 lg:p-10'
+                  ? 'bg-white border border-slate-200 shadow-xl shadow-slate-200/60 dark:bg-white/[0.02] dark:border-white/[0.03] rounded-2xl backdrop-blur-sm p-6 md:p-8 lg:p-10'
                   : 'rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50'
               }`}
             >
@@ -1557,7 +1557,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
                               immersive
-                                ? 'bg-white/[0.04] text-slate-400 ring-1 ring-white/[0.06]'
+                                ? 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-white/[0.04] dark:text-slate-400 dark:ring-white/[0.06]'
                                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                             }`}
                           >
@@ -1606,7 +1606,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           className={`rounded-xl px-4 py-3 border ${
                             immersive
                               ? 'bg-amber-500/[0.06] border-amber-500/10'
-                              : 'bg-amber-50 dark:bg-amber-500/[0.06] border-amber-200/80 dark:border-amber-500/10 shadow-sm shadow-amber-100/40'
+                              : 'bg-amber-100/80 dark:bg-amber-500/[0.06] border-amber-300 dark:border-amber-500/10 shadow-sm shadow-amber-200/50'
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
@@ -1619,7 +1619,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
                                   immersive
                                     ? 'text-amber-400/70'
-                                    : 'text-amber-700 dark:text-amber-400/70'
+                                    : 'text-amber-800 dark:text-amber-400/70'
                                 }`}
                               >
                                 {isPolish ? 'Wskazówka' : 'Hint'}
@@ -1643,7 +1643,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           className={`rounded-xl px-4 py-3 border ${
                             immersive
                               ? 'bg-sky-500/[0.06] border-sky-500/10'
-                              : 'bg-sky-50 dark:bg-sky-500/[0.06] border-sky-200/80 dark:border-sky-500/10 shadow-sm shadow-sky-100/40'
+                              : 'bg-sky-100/80 dark:bg-sky-500/[0.06] border-sky-300 dark:border-sky-500/10 shadow-sm shadow-sky-200/50'
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
@@ -1656,7 +1656,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                 className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
                                   immersive
                                     ? 'text-sky-400/70'
-                                    : 'text-sky-700 dark:text-sky-400/70'
+                                    : 'text-sky-800 dark:text-sky-400/70'
                                 }`}
                               >
                                 {isPolish ? 'Czego szukamy' : 'What we look for'}
@@ -1683,7 +1683,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       className={`flex items-center gap-2 rounded-xl px-3 py-2 border ${
                         immersive
                           ? 'bg-primary-500/[0.06] border-primary-500/10'
-                          : 'bg-primary-50 dark:bg-primary-500/10 border-primary-200/80 dark:border-primary-500/15 shadow-sm shadow-primary-500/5'
+                          : 'bg-primary-100/80 dark:bg-primary-500/10 border-primary-300 dark:border-primary-500/15 shadow-sm shadow-primary-500/10'
                       }`}
                     >
                       <Sparkles

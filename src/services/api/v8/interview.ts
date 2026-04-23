@@ -60,7 +60,7 @@ export interface V8InterviewWeakAnswerItem {
 
 export interface V8InterviewReviewDecisionMemoryEntry {
   id: string;
-  action: 'approve' | 'send_back';
+  action: 'approve' | 'send_back' | 'revoke_approval';
   actorId: string;
   actorRole?: string;
   createdAt: string;
@@ -411,6 +411,12 @@ export const V8InterviewApi = {
       payload
     ),
 
+  archiveAssignment: (id: string) =>
+    v8Post<{ success: boolean; archived: boolean; assignmentId: string }>(
+      `/interview/assignments/${encodeURIComponent(id)}/archive`,
+      {}
+    ),
+
   sendBackAssignment: (
     id: string,
     payload: { reason: string; missingItems?: Array<string | Record<string, unknown>> }
@@ -424,6 +430,13 @@ export const V8InterviewApi = {
       entersContext: boolean;
       aiReview?: V8InterviewSessionEvaluation | null;
     }>(`/interview/assignments/${encodeURIComponent(id)}/approve`, {}),
+
+  revokeApproval: (id: string, payload: { reason: string }) =>
+    v8Post<{
+      assignment: V8InterviewAssignment;
+      session: V8InterviewSession;
+      entersContext: boolean;
+    }>(`/interview/assignments/${encodeURIComponent(id)}/revoke-approval`, payload),
 
   // --- Insights ---
 

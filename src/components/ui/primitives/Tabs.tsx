@@ -188,6 +188,7 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
         className={`
           relative z-10 flex items-center justify-center gap-2
           font-medium transition-colors duration-150
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-navy-900
           disabled:opacity-50 disabled:cursor-not-allowed
           ${
             isPills
@@ -195,16 +196,16 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
               px-4 py-2 text-sm rounded-lg
               ${
                 isActive
-                  ? 'text-navy-900 dark:text-white'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                  ? 'text-slate-900 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }
             `
               : `
               px-4 py-3 text-sm border-b-2 -mb-px
               ${
                 isActive
-                  ? 'text-primary-600 dark:text-primary-400 border-primary-500'
-                  : 'text-slate-600 dark:text-slate-400 border-transparent hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:border-navy-700 dark:hover:border-slate-600'
+                  ? 'text-primary-700 dark:text-primary-300 border-primary-500'
+                  : 'text-slate-600 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600'
               }
             `
           }

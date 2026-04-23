@@ -156,7 +156,7 @@ type InterviewAiReviewSnapshot = {
 
 type InterviewReviewDecisionMemoryEntry = {
   id: string;
-  action: 'approve' | 'send_back';
+  action: 'approve' | 'send_back' | 'revoke_approval';
   actorId: string;
   actorRole?: string;
   createdAt: string;
@@ -306,7 +306,7 @@ const buildInterviewAiReviewSnapshot = (
 };
 
 const resolveInterviewReviewAlignment = (
-  action: 'approve' | 'send_back',
+  action: 'approve' | 'send_back' | 'revoke_approval',
   aiReview: InterviewAiReviewSnapshot | null
 ): InterviewReviewAlignment => {
   const verdict = aiReview?.overallVerdict;
@@ -319,7 +319,7 @@ const resolveInterviewReviewAlignment = (
 
 const appendInterviewReviewDecisionMemory = (params: {
   existing: InterviewReviewDecisionMemoryEntry[];
-  action: 'approve' | 'send_back';
+  action: 'approve' | 'send_back' | 'revoke_approval';
   actorId: string;
   actorRole?: string;
   aiReview: InterviewAiReviewSnapshot | null;
@@ -3087,6 +3087,173 @@ export const InterviewController = {
     });
   }),
 
+  revokeApproval: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const reviewer = requireUser(req);
+    const { id } = req.params;
+    const { reason } = req.body || {};
+    await ensureInterviewAssignmentAiReviewColumns();
+
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!normalizedReason) {
+      res.status(400).json({ error: 'Revoke reason is required' });
+      return;
+    }
+
+    const assignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, reviewer.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+    const revokeGate = evaluateGatePolicy({
+      action: 'REVOKE_INTERVIEW_APPROVAL',
+      contextType: 'interview_assignment',
+      user: reviewer,
+      context: { assignment },
+    });
+    if (!revokeGate.allow) {
+      const gateError = revokeGate as {
+        allow: false;
+        error: string;
+        code?: 'FORBIDDEN' | 'INVALID_STATE' | 'MISSING_DATA';
+      };
+      res.status(gateError.code === 'INVALID_STATE' ? 409 : 400).json({ error: gateError.error });
+      return;
+    }
+
+    const sessionRow = await queryHelpers.queryOne(
+      `SELECT s.*
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+      [(assignment as any).session_id, reviewer.organizationId, reviewer.organizationId]
+    );
+    if (!sessionRow) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const aiReview = parseAiReviewSnapshot((assignment as any)?.ai_review_snapshot_json);
+    const reviewDecisionMemory = appendInterviewReviewDecisionMemory({
+      existing: parseReviewDecisionMemory((assignment as any)?.review_decision_memory_json),
+      action: 'revoke_approval',
+      actorId: reviewer.id,
+      actorRole: reviewer.role,
+      aiReview,
+      reason: normalizedReason,
+      createdAt: now,
+    });
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = 'in_progress',
+             sent_back_at = ?,
+             sent_back_reason = ?,
+             missing_items_json = NULL,
+             review_decision_memory_json = ?,
+             updated_at = ?
+         WHERE id = ?`,
+        [now, normalizedReason, JSON.stringify(reviewDecisionMemory), now, id]
+      );
+    } catch (error) {
+      await queryHelpers.queryRun(
+        `UPDATE interview_assignments
+         SET status = 'in_progress',
+             sent_back_at = ?,
+             sent_back_reason = ?,
+             review_decision_memory_json = ?,
+             updated_at = ?
+         WHERE id = ?`,
+        [now, normalizedReason, JSON.stringify(reviewDecisionMemory), now, id]
+      );
+      logger.warn(
+        '[InterviewController] revokeApproval: missing_items_json column unavailable, using reason-only fallback'
+      );
+      logger.debug('[InterviewController] revokeApproval fallback details', error);
+    }
+    await queryHelpers.queryRun(
+      `UPDATE interview_sessions
+       SET status = 'active',
+           completed_at = NULL,
+           updated_at = ?,
+           last_activity_at = ?
+       WHERE id = ?`,
+      [now, now, (assignment as any).session_id]
+    );
+
+    if ((assignment as any).task_id) {
+      await queryHelpers.queryRun(
+        `UPDATE tasks SET status = ?, progress = ?, updated_at = ? WHERE id = ?`,
+        ['in_progress', 75, now, (assignment as any).task_id]
+      );
+    }
+
+    try {
+      const recipients = new Set<string>();
+      if ((assignment as any).assignee_user_id) {
+        recipients.add(String((assignment as any).assignee_user_id));
+      }
+      try {
+        const memberRows = await queryHelpers.queryAll(
+          `SELECT user_id FROM interview_assignment_members WHERE assignment_id = ?`,
+          [id]
+        );
+        (memberRows || []).forEach((row: any) => {
+          if (row?.user_id) recipients.add(String(row.user_id));
+        });
+      } catch {
+        // ignore - members table may not exist
+      }
+      for (const userId of recipients) {
+        await notificationService.send({
+          userId,
+          organizationId: reviewer.organizationId,
+          type: 'interview_sent_back',
+          title: 'Interview approval revoked',
+          body: normalizedReason,
+          entityType: 'interview_assignment',
+          entityId: id,
+          actionUrl: `/discovery?assignmentId=${id}`,
+          priority: 'high',
+          actorId: reviewer.id,
+        });
+      }
+    } catch (e) {
+      logger.warn('[InterviewController] Failed to send interview_approval_revoked notification', e);
+    }
+
+    const updatedAssignment = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    const updatedSession = await queryHelpers.queryOne(
+      `SELECT * FROM interview_sessions WHERE id = ?`,
+      [(assignment as any).session_id]
+    );
+
+    res.json({
+      assignment: {
+        ...(updatedAssignment as any),
+        status: normalizeAssignmentStatusForClient((updatedAssignment as any)?.status),
+        missingItems: parseMissingItems((updatedAssignment as any)?.missing_items_json),
+        aiReview: parseAiReviewSnapshot((updatedAssignment as any)?.ai_review_snapshot_json),
+        aiReviewedAt: (updatedAssignment as any)?.ai_reviewed_at || null,
+        reviewDecisionMemory: parseReviewDecisionMemory(
+          (updatedAssignment as any)?.review_decision_memory_json
+        ),
+      },
+      session: buildSessionResponse(updatedSession),
+      entersContext: false,
+    });
+  }),
+
   // ==========================================
   // EXTENDED ASSIGNMENTS (Team, Reminders, Counts)
   // ==========================================
@@ -3850,6 +4017,48 @@ export const InterviewController = {
       createdFreshAssignment: true,
       previousAssignmentId: id,
       previousAssignmentDeactivated: shouldDeactivateCurrent,
+    });
+  }),
+
+  archiveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    await ensureInterviewAssignmentManagementSchema();
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ? AND COALESCE(is_active, 1) = 1`,
+      [id, user.organizationId]
+    );
+    if (!existing) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const currentStatus = String((existing as any).status || '').toLowerCase();
+    if (currentStatus !== 'approved' && currentStatus !== 'completed') {
+      res.status(409).json({ error: 'Only approved or completed assignments can be archived' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET is_active = 0, updated_at = ? WHERE id = ?`,
+      [now, id]
+    );
+
+    await logInterviewAssignmentEvent({
+      assignmentId: id,
+      organizationId: user.organizationId,
+      actorId: user.id,
+      eventType: 'assignment_archived',
+      payload: { previousStatus: currentStatus },
+    });
+
+    res.json({
+      success: true,
+      archived: true,
+      assignmentId: id,
     });
   }),
 

@@ -59,30 +59,29 @@ function buildDefaultThinkingSteps(
   // AI thinking steps are always displayed in English regardless of UI language
   const labelVariants = {
     analyzing: [
-      'Analyzing your question and finding the best way to respond…',
-      'Processing your request and evaluating the relevant context…',
-      'Understanding what you need and preparing my approach…',
+      'Thinking…',
+      'Preparing a response…',
+      'Working on your answer…',
     ],
     context: [
-      'Gathering context from project data and related documents…',
-      'Searching conversation history and organization data for connections…',
-      'Reviewing initiatives, tasks, and progress to build a complete picture…',
-      'Collecting insights from available sources for a more thorough answer…',
+      'Checking the most relevant context…',
+      'Pulling in the details that matter most…',
+      'Reviewing the available context before answering…',
     ],
     planning: [
-      'Planning the response — selecting the most important points to cover…',
-      'Organizing the gathered information and prioritizing key findings…',
-      'Choosing an approach that best addresses your specific question…',
+      'Structuring the response…',
+      'Choosing the clearest way to answer…',
+      'Organizing the key points…',
     ],
     validating: [
-      'Checking my analysis for consistency and verifying the details…',
-      'Cross-referencing information to make sure there are no contradictions…',
-      'Finalizing the details — making sure everything checks out…',
+      'Checking the details…',
+      'Verifying the final answer…',
+      'Making sure everything is consistent…',
     ],
     composing: [
-      'Composing the answer — weaving conclusions into a clear response…',
-      'Putting it all together with concrete recommendations…',
-      'Finishing up and polishing the response to be as helpful as possible…',
+      'Finalizing the answer…',
+      'Putting it all together…',
+      'Wrapping up the response…',
     ],
   };
 
@@ -229,6 +228,52 @@ export function getCurrentThinkingLabel(steps: ThinkingStep[]): string {
     steps.find((s) => s.status === 'pending')?.label ||
     ''
   );
+}
+
+function shouldShowBackendThoughtStep(
+  stepId: string,
+  options: { isDeepThinking: boolean; showReasoning: boolean }
+): boolean {
+  if (options.isDeepThinking) return true;
+  const baseVisibleSteps = new Set(['knowledge', 'web_search_check', 'attachments']);
+  const reasoningVisibleSteps = new Set(['policy', 'memory', 'generating']);
+  return (
+    baseVisibleSteps.has(stepId) || (options.showReasoning && reasoningVisibleSteps.has(stepId))
+  );
+}
+
+function mapResearchProgressToThinkingStep(
+  evt: ResearchProgressEvent,
+  options: { isDeepThinking: boolean; showReasoning: boolean }
+): ThinkingStep[] | null {
+  if (options.isDeepThinking) return null;
+  if (!options.showReasoning && !evt.queries?.length && !evt.sources?.length && !evt.error) {
+    return null;
+  }
+
+  const labels: Record<ResearchProgressEvent['stage'], string> = {
+    generating_queries: 'Preparing live search queries…',
+    queries_ready: 'Search queries are ready…',
+    searching: 'Checking live sources…',
+    deepening: 'Following up on the best sources…',
+    aggregating: 'Reviewing and filtering sources…',
+    synthesizing: 'Summarizing the gathered sources…',
+    complete: evt.error ? evt.error : 'Live source check complete.',
+  };
+
+  const status: ThinkingStep['status'] =
+    evt.stage === 'complete' ? (evt.error ? 'failed' : 'completed') : 'in_progress';
+
+  return [
+    {
+      id: 'backend-research-progress',
+      label: labels[evt.stage],
+      content: '',
+      status,
+      timestamp: new Date(),
+      category: 'research',
+    },
+  ];
 }
 
 type StreamOptions = {
@@ -517,12 +562,13 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
 
       let fullText = '';
       const isDeepThinking = aiConfig?.deepResearch === true;
+      const shouldUseSyntheticThinking = isDeepThinking;
+      const shouldShowExtendedReasoningProgress = Boolean(aiConfig?.showReasoning);
       // Adaptive complexity: start light for casual queries, escalate if response takes long
       const initialComplexity: ThinkingComplexity = isDeepThinking ? 'deep' : 'light';
-      let currentThinking: ThinkingStep[] = buildDefaultThinkingSteps(
-        language || '',
-        initialComplexity
-      );
+      let currentThinking: ThinkingStep[] = shouldUseSyntheticThinking
+        ? buildDefaultThinkingSteps(language || '', initialComplexity)
+        : [];
       let hasEscalatedComplexity = isDeepThinking; // deep starts fully expanded
       let step = 0;
       let hasReceivedContent = false;
@@ -575,13 +621,18 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           return;
         }
 
+        if (!shouldUseSyntheticThinking) {
+          return;
+        }
+
         // Simulated mode: use client-side steps when backend doesn't send thoughts
         currentThinking = advanceThinkingSteps(currentThinking, pct);
         setThinkingSteps([...currentThinking]);
         options.onThinkingUpdate?.([...currentThinking]);
 
-        // Escalate from 'light' (1 step) to 'medium' (3 steps) if response takes > 5s
-        if (!hasEscalatedComplexity && elapsed > 5000) {
+        // Escalate from 'light' (1 step) to 'medium' (3 steps) only after a
+        // meaningfully long wait, so normal chat doesn't look like Deep Thinking.
+        if (!hasEscalatedComplexity && elapsed > 12000) {
           hasEscalatedComplexity = true;
           currentThinking = buildDefaultThinkingSteps(language || '', 'medium');
           // Mark first step as completed to show progress
@@ -601,11 +652,10 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
-        } else if (elapsed > 10000 && !isDeepThinking) {
+        } else if (elapsed > 18000 && !isDeepThinking) {
           const escalationStep = currentThinking.find((s) => s.status === 'in_progress');
           if (escalationStep && !escalationStep.label.includes('moment')) {
-            escalationStep.label =
-              'This is taking a moment — analyzing more complex aspects of your question…';
+            escalationStep.label = 'This is taking a bit longer than usual…';
             setThinkingSteps([...currentThinking]);
             options.onThinkingUpdate?.([...currentThinking]);
           }
@@ -845,6 +895,15 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'research_progress') {
           const e = evt as ResearchProgressEvent;
           setResearchProgress(e);
+          const researchSteps = mapResearchProgressToThinkingStep(e, {
+            isDeepThinking,
+            showReasoning: shouldShowExtendedReasoningProgress,
+          });
+          if (researchSteps) {
+            hasReceivedBackendThought = true;
+            setThinkingSteps(researchSteps);
+            options.onThinkingUpdate?.(researchSteps);
+          }
           return;
         }
 
@@ -904,6 +963,14 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           const stepId = e.step || 'unknown';
           const label = e.label || stepId;
           const now = new Date();
+          const shouldShowStep = shouldShowBackendThoughtStep(stepId, {
+            isDeepThinking,
+            showReasoning: shouldShowExtendedReasoningProgress,
+          });
+
+          if (!shouldShowStep) {
+            return;
+          }
 
           // Switch from simulated steps to real backend-driven steps
           hasReceivedBackendThought = true;
@@ -918,7 +985,10 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               updated[existingIdx] = {
                 ...updated[existingIdx],
                 label,
-                status: e.status === 'done' ? ('done' as const) : ('in_progress' as const),
+                status:
+                  e.status === 'done' || e.status === 'completed'
+                    ? ('done' as const)
+                    : ('in_progress' as const),
                 timestamp: now,
               };
               // Mark all previous steps as done

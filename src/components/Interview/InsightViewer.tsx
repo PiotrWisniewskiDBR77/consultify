@@ -3382,12 +3382,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {isPolish ? 'Official answers' : 'Official answers'}
                           </div>
                           {summary.facts.length > 0 ? (
-                            summary.facts.slice(0, 4).map((fact) => (
+                            summary.facts.slice(0, 4).map((fact, fi) => (
                               <div
-                                key={fact}
+                                key={typeof fact === 'string' ? fact : (fact as any)?.fact || fi}
                                 className="text-sm text-slate-700 dark:text-slate-300"
                               >
-                                {fact}
+                                {typeof fact === 'string' ? fact : (fact as any)?.fact || JSON.stringify(fact)}
                               </div>
                             ))
                           ) : (
@@ -3412,12 +3412,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               ...summary.painPoints,
                             ])
                               .slice(0, 4)
-                              .map((item) => (
+                              .map((item, ii) => (
                                 <div
-                                  key={item}
+                                  key={typeof item === 'string' ? item : (item as any)?.gap || (item as any)?.constraint || (item as any)?.painPoint || ii}
                                   className="text-sm text-slate-700 dark:text-slate-300"
                                 >
-                                  {item}
+                                  {typeof item === 'string' ? item : (item as any)?.gap || (item as any)?.constraint || (item as any)?.painPoint || JSON.stringify(item)}
                                 </div>
                               ))
                           ) : (

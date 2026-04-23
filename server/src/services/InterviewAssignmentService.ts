@@ -94,7 +94,7 @@ export interface InterviewAiReviewSnapshot {
 
 export interface InterviewReviewDecisionMemoryEntry {
   id: string;
-  action: 'approve' | 'send_back';
+  action: 'approve' | 'send_back' | 'revoke_approval';
   actorId: string;
   actorRole?: string;
   createdAt: string;

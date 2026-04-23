@@ -1857,7 +1857,7 @@ export class AIPipeline {
         );
       } else {
         instructions.push(
-          '9. TRYB: Web Search — wyszukiwanie jest włączone, ale w tym przypadku nie dostarczono wyników. Nie udawaj, że wykonałeś wyszukiwanie. Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy, zaznaczając że odpowiedź nie jest oparta na najświeższych danych z internetu.'
+          '9. TRYB: Web Search — dla tego żądania nie dostarczono użytecznych wyników web. Nie udawaj, że wykonałeś skuteczne wyszukiwanie ani nie twierdź ogólnie, że system "nie ma internetu". Odpowiedz najlepiej jak potrafisz na podstawie swojej wiedzy i wyraźnie zaznacz, że ta odpowiedź nie została ugruntowana świeżymi źródłami z web search.'
         );
       }
     }

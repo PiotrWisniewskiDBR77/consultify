@@ -374,6 +374,7 @@ interface ConversationState {
   createConversation: (options?: {
     title?: string;
     projectId?: string;
+    chatProjectId?: string;
     pmoContext?: {
       assessmentId?: string;
       initiativeIds?: string[];
@@ -717,6 +718,7 @@ export const useConversationStore = create<ConversationState>()(
           const result = await Api.createConversation({
             title: options?.title,
             projectId: options?.projectId,
+            chatProjectId: options?.chatProjectId,
             pmoContext: options?.pmoContext,
             language,
           });

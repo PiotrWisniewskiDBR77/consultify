@@ -1244,7 +1244,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                         <p className={`text-xs ${statusConfig.text}`}>{result.detail}</p>
                       )}
                       {(typeof result?.recipientCount === 'number' || result?.attemptedAt) && (
-                        <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-400">
                           {typeof result?.recipientCount === 'number' && (
                             <span>
                               {t('feedback.alertRecipientCount', 'Recipients')}:{' '}
@@ -1299,7 +1299,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                       console.error('Failed to copy Cursor brief', err);
                     }
                   }}
-                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
+                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
                 >
                   <Copy size={12} /> {t('feedback.copyCursorBrief', 'Copy Cursor brief')}
                 </button>
@@ -1335,7 +1335,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
             {hasScreenshot && (
               <div className="space-y-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400 flex items-center gap-1">
                   <ImageIcon size={12} /> {t('feedback.screenshot', 'Screenshot')}
                 </div>
                 <img

@@ -55,6 +55,17 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       }
     });
 
+    it('POST /api/conversations accepts chatProjectId for folder-scoped threads or returns 401 without auth', async () => {
+      const res = await request(app).post('/api/conversations').send({
+        title: 'Folder conversation',
+        chatProjectId: '00000000-0000-0000-0000-000000000123',
+      });
+      expect([201, 401]).toContain(res.status);
+      if (res.status === 201) {
+        expect(res.body.chat_project_id).toBe('00000000-0000-0000-0000-000000000123');
+      }
+    });
+
     it('PATCH /api/conversations/:id returns 200 or 401/404', async () => {
       const res = await request(app)
         .patch('/api/conversations/00000000-0000-0000-0000-000000000001')

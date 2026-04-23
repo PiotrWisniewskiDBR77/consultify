@@ -133,8 +133,8 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                         transition-colors
                         ${
                           isSelected
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
+                            ? 'bg-primary-50 text-primary-800 font-medium dark:bg-primary-900/30 dark:text-primary-300'
+                            : 'text-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
                         }
                       `}
                     >
@@ -143,8 +143,8 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                           w-4 h-4 rounded border flex items-center justify-center
                           ${
                             isSelected
-                              ? 'bg-primary-500 border-primary-500'
-                              : 'border-slate-300 dark:border-navy-500'
+                              ? 'bg-primary-600 border-primary-600'
+                              : 'bg-white border-slate-400 dark:bg-navy-800 dark:border-navy-500'
                           }
                         `}
                       >
@@ -160,12 +160,12 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
               <div className="p-3">
                 <div className="flex flex-col gap-2">
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-400 mb-1 block">
                       From
                     </label>
                     <input
                       type="date"
-                      className="w-full px-2 py-1 text-sm rounded border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-slate-900 dark:text-white"
+                      className="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus:border-primary-500"
                       value={(localValue as DateRange)?.from?.toISOString().split('T')[0] || ''}
                       onChange={(e) =>
                         setLocalValue({
@@ -176,12 +176,12 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-400 mb-1 block">
                       To
                     </label>
                     <input
                       type="date"
-                      className="w-full px-2 py-1 text-sm rounded border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-700 text-slate-900 dark:text-white"
+                      className="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus:border-primary-500"
                       value={(localValue as DateRange)?.to?.toISOString().split('T')[0] || ''}
                       onChange={(e) =>
                         setLocalValue({
@@ -199,7 +199,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
             <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 dark:border-navy-600 bg-slate-50 dark:bg-navy-900/50">
               <button
                 onClick={handleClear}
-                className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                className="text-xs font-medium text-slate-700 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
               >
                 Clear
               </button>

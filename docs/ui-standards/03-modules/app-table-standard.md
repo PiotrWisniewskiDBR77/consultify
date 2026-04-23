@@ -26,6 +26,22 @@ Ten dokument opisuje **standard tabel aplikacji** (UI/UX), który utrzymujemy ko
 - **Wewnątrz ramki / panelu**: jaśniejsze (`bg-navy-900`)
 - Delikatne obramowania: `border-navy-700/50` oraz separatory `border-b border-navy-700/50`
 
+### 3.1) Tła i "ramka" (light UI) — parity
+
+**Nie jest to rozjaśniona wersja dark UI.** Tabela w light mode musi trzymać jawną hierarchię warstw:
+
+- **Tło aplikacji (poza ramką):** `bg-slate-100` (nie `bg-white`)
+- **Wewnątrz ramki / panelu:** `bg-white`
+- **Header tabeli:** `bg-slate-50`
+- **Obramowania i separatory:** `border-slate-200` (NIE `border-*/10`, NIE `border-slate-100`)
+- **Hover wiersza:** `bg-slate-50`
+- **Selected wiersz:** `bg-primary-50 ring-1 ring-inset ring-primary-200`
+- **Resizer kolumny:** `bg-slate-200` z hover `bg-primary-400`
+
+Tabela w light mode musi być rozróżnialna od preview pane bez zgadywania. Wymagany wyraźny border `border-slate-200` na granicy tabela / preview.
+
+SSOT pełny dla light mode (kontrast, badge, focus, stany): `docs/ui-standards/00-foundation/light-mode-readability.md`.
+
 ### 4) Top bar (nad tabelą) – identyczna wysokość kontrolek
 
 Wszystkie kontrolki w top barze mają być **tej samej wysokości**: **`h-9`**.

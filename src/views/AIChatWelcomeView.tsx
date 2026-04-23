@@ -1726,15 +1726,11 @@ When citing knowledge base articles, always reference them by article_id (slug).
                       </div>
                     )}
 
-                    {/* Thinking Status Line - elapsed time + retry info */}
-                    {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && (
+                    {/* Retry status line - only show when the stream is retrying */}
+                    {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && retryInfo && (
                       <div className="mb-2 max-w-[85%]">
                         <ThinkingStatusLine
-                          label={
-                            retryInfo
-                              ? `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries}...`
-                              : 'Thinking...'
-                          }
+                          label={`Reconnecting to the response stream (${retryInfo.attempt}/${retryInfo.maxRetries})...`}
                           compact
                         />
                       </div>

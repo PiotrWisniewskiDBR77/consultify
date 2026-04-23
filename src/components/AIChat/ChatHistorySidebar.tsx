@@ -511,7 +511,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
     clearActiveChat();
     if (activeFolderId) {
       try {
-        const conv = await createConversation({ projectId: activeFolderId });
+        const conv = await createConversation({ chatProjectId: activeFolderId });
         if (conv?.id) {
           setActiveConversation(conv.id);
           return;

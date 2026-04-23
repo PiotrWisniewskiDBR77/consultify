@@ -313,9 +313,16 @@ router.post('/assignments/:id/remind', v8Wrap(InterviewController.sendAssignment
 
 router.patch('/assignments/:id/manage', v8Wrap(InterviewController.manageAssignment, interviewMeta));
 
+router.post('/assignments/:id/archive', v8Wrap(InterviewController.archiveAssignment, interviewMeta));
+
 router.post('/assignments/:id/send-back', v8Wrap(InterviewController.sendBackAssignment, interviewMeta));
 
 router.post('/assignments/:id/approve', v8Wrap(InterviewController.approveAssignment, interviewMeta));
+
+router.post(
+  '/assignments/:id/revoke-approval',
+  v8Wrap(InterviewController.revokeApproval, interviewMeta)
+);
 
 router.post('/sessions/:sessionId/evaluate-answers', v8Wrap(InterviewController.evaluateSessionAnswers, interviewMeta));
 

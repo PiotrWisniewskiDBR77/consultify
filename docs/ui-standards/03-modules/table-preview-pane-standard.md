@@ -40,6 +40,18 @@ Kanon:
   - border zgodny z table card: `border-slate-200 dark:border-navy-700`
   - `bg-white/70 dark:bg-navy-900/70` + opcjonalny `backdrop-blur`
 
+**MUST (light mode parity):**
+
+- W light mode preview pane **musi** być rozróżnialne od tabeli bez zgadywania:
+  - `bg-white` z `border-slate-200` na lewej krawędzi + delikatny `shadow-hig-sm`,
+  - separator tabela / preview: `bg-slate-100` (gap) albo mocny border `border-slate-200` (bez gapu),
+  - nie używamy `bg-white` na obu stronach bez wyraźnego borderu.
+- Header preview: `text-slate-900 font-semibold` dla tytułu, `text-slate-600` dla metadata.
+- Footer (actions): `bg-slate-50 border-t border-slate-200`.
+- Close / dismiss: `text-slate-500 hover:text-slate-900 hover:bg-slate-100`.
+
+Pełny standard (surface, stany, focus, badge): `docs/ui-standards/00-foundation/light-mode-readability.md` §12.
+
 **MUST (spójność rounded):**
 
 - Jeśli tabela/surface ma zaokrąglony kontener (np. `rounded-xl`), to preview pane **musi** wyglądać jak część tego samego “composite container”:

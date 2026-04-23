@@ -8389,6 +8389,7 @@ export const Api = {
   createConversation: async (data?: {
     title?: string;
     projectId?: string;
+    chatProjectId?: string;
     pmoContext?: Record<string, any>;
     language?: string;
   }): Promise<any> => {

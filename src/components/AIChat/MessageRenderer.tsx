@@ -438,10 +438,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
     >
       {/* Cursor-like thinking log: plain dim text, no background, no panel */}
       {/* Only show for the LAST streaming AI message to avoid duplicated lines */}
-      {msg.role === 'ai' &&
-        msg.isStreaming &&
-        isLastMessage &&
-        (thinkingSteps.length > 0 || !msg.content?.trim()) && (
+      {msg.role === 'ai' && msg.isStreaming && isLastMessage && thinkingSteps.length > 0 && (
           <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
             <ThinkingStatusLine
               compact={isCompact}
@@ -459,7 +456,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         : ('pending' as const),
                 }))
                 .slice(-6)}
-              label={t('thinking.processing', 'Thinking…') as string}
+              label={t('thinking.processing', 'Processing live steps…') as string}
             />
           </div>
         )}

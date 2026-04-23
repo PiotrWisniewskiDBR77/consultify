@@ -17,7 +17,7 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
-import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
+import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
 import type { WorkerWebAccessPolicy } from '../services/ai/virtualWorkerWebAccessService.js';
 import {
   triggerAIDependencyConflict,
@@ -1283,6 +1283,9 @@ router.post(
       (aiModes as any).deepResearch = true;
       (context as any).__forceResearchType = 'market_research';
     }
+    if (aiModes?.marketResearch && !aiModes?.webSearch) {
+      (aiModes as any).webSearch = true;
+    }
 
     // Detect "force depth" triggers (user control). These must cause a real structure change.
     const rawMsg = String(message || '').trim();
@@ -2225,76 +2228,83 @@ router.post(
       // --------------------------------------------------------
       // Help / KB documentation grounding (product how-to)
       // --------------------------------------------------------
-      // Lightweight retrieval: inject only a few relevant KB articles as snippets.
-      // Also stream KB citations so the UI can show them.
-      emitSSE({
-        type: 'thought',
-        step: 'knowledge',
-        status: 'in_progress',
-        label: 'Searching knowledge base and documentation…',
-      });
-      try {
-        const kbModuleId =
-          String(
-            (screenContext as any)?.page?.helpModuleId ||
-              (screenContext as any)?.moduleId ||
-              (screenContext as any)?.module ||
-              (screenContext as any)?.currentModule ||
-              (screenContext as any)?.screenId ||
-              (screenContext as any)?.currentScreen ||
-              ''
-          ).trim() || null;
+      // Only run the heavier help-doc retrieval for explicit product/how-to
+      // prompts or when the current surface already points at help content.
+      const kbModuleId =
+        String((screenContext as any)?.page?.helpModuleId || '').trim() ||
+        String(
+          (screenContext as any)?.moduleId ||
+            (screenContext as any)?.module ||
+            (screenContext as any)?.currentModule ||
+            ''
+        ).trim() ||
+        null;
+      const hasExplicitHelpContext = Boolean(
+        (screenContext as any)?.page?.helpDocumentId || (screenContext as any)?.page?.helpModuleId
+      );
+      const shouldGroundWithHelpDocs =
+        !aiModes?.deepResearch &&
+        (hasExplicitHelpContext || isProductOrHowToQuery(String(message || ''), language as any));
 
-        const kb = await buildHelpDocsContext({
-          query: message,
-          language,
-          moduleId: kbModuleId,
-          surface: 'ai_recommendations',
-          maxArticles: 3,
-          maxCharsPerArticle: 1200,
+      if (shouldGroundWithHelpDocs) {
+        emitSSE({
+          type: 'thought',
+          step: 'knowledge',
+          status: 'in_progress',
+          label: 'Checking relevant help and product documentation…',
         });
+        try {
+          const kb = await buildHelpDocsContext({
+            query: message,
+            language,
+            moduleId: kbModuleId,
+            surface: 'ai_recommendations',
+            maxArticles: 3,
+            maxCharsPerArticle: 1200,
+          });
 
-        if (kb?.citations?.length) {
-          emitSSE({ type: 'citations', citations: kb.citations });
-          if (chatRunId) {
-            import('../services/ai/chatTraceService.js')
-              .then((m: any) =>
-                (m.default || m).addEvent(chatRunId, 'kb_docs', {
-                  moduleId: kbModuleId,
-                  citationsCount: kb.citations.length,
-                })
-              )
-              .catch(() => {
-                /* ignore */
-              });
+          if (kb?.citations?.length) {
+            emitSSE({ type: 'citations', citations: kb.citations });
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'kb_docs', {
+                    moduleId: kbModuleId,
+                    citationsCount: kb.citations.length,
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
           }
-        }
 
-        if (kb?.systemInstructionAddon?.trim()) {
-          pipelineRequest = {
-            ...pipelineRequest,
-            options: {
-              ...(pipelineRequest.options || {}),
-              systemInstruction:
-                String((pipelineRequest.options as any)?.systemInstruction || '') +
-                `\n\n${kb.systemInstructionAddon}\n`,
-            },
-            context: {
-              ...((pipelineRequest as any).context || {}),
-              external: {
-                ...((pipelineRequest as any).context?.external || {}),
-                helpDocs: {
-                  query: message,
-                  moduleId: kbModuleId,
-                  articles: kb.articles || [],
-                  citations: kb.citations || [],
+          if (kb?.systemInstructionAddon?.trim()) {
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n${kb.systemInstructionAddon}\n`,
+              },
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                external: {
+                  ...((pipelineRequest as any).context?.external || {}),
+                  helpDocs: {
+                    query: message,
+                    moduleId: kbModuleId,
+                    articles: kb.articles || [],
+                    citations: kb.citations || [],
+                  },
                 },
               },
-            },
-          } as any;
+            } as any;
+          }
+        } catch (kbErr: any) {
+          logger.warn('[AI Stream] KB docs retrieval failed, continuing without it:', kbErr?.message);
         }
-      } catch (kbErr: any) {
-        logger.warn('[AI Stream] KB docs retrieval failed, continuing without it:', kbErr?.message);
       }
 
       // --------------------------------------------------------
@@ -2327,74 +2337,79 @@ router.post(
       // 3. Use optimized search queries (not raw message) for better results
       // 4. Run multiple queries for complex questions
       // 5. Inject results + citations into system instruction for grounded answers
-      if (!aiModes?.deepResearch && (aiModes?.webSearch || message?.trim().length >= 20)) {
-        emitSSE({
-          type: 'thought',
-          step: 'web_search_check',
-          status: 'in_progress',
-          label: 'Checking if web search is needed…',
-        });
-      }
       if (!aiModes?.deepResearch) {
         const userEnabledWebSearch = aiModes?.webSearch === true;
+        const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
         const orgIdForWeb = req.organizationId || null;
-
-        // T118: unified governance for all web search (policy + SSRF + allow/deny + sanitize + cache)
-        let webPolicy: any = null;
-        let webGov: any = null;
-        try {
-          webGov = (await import('../services/ai/webSearchGovernance.js')) as any;
-          const getEffectiveWebSearchPolicy =
-            webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
-          if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
-            webPolicy = await getEffectiveWebSearchPolicy(
-              String(orgIdForWeb),
-              projectId || undefined
-            );
-          }
-          if (workerWebPolicyOverride) {
-            const mergeWorkerWebAccessPolicy = (
-              await import('../services/ai/virtualWorkerWebAccessService.js')
-            ).mergeWorkerWebAccessPolicy;
-            webPolicy = mergeWorkerWebAccessPolicy({
-              workerPolicy: workerWebPolicyOverride as any,
-              orgPolicy: webPolicy,
-              requireOrgPolicy: true,
-            });
-          }
-        } catch {
-          webPolicy = null;
-          webGov = null;
-        }
 
         // Auto-detect web search intent
         let searchIntent: any = null;
-        try {
-          const { detectWebSearchIntent } =
-            await import('../services/ai/webSearchIntentDetector.js');
-          searchIntent = detectWebSearchIntent(message, {
-            userEnabledWebSearch:
-              userEnabledWebSearch || Boolean((workerWebPolicyOverride as any)?.autoSearch),
-            historyLength: Array.isArray(history) ? history.length : 0,
-          });
-        } catch (err: any) {
-          logger.debug('[AI Stream] Intent detector not available:', err?.message);
-          // Fallback: if user enabled webSearch, search with raw message
-          if (userEnabledWebSearch) {
-            searchIntent = {
-              shouldSearch: true,
-              confidence: 0.5,
-              reason: 'user toggle enabled (fallback)',
-              queries: [message.slice(0, 150)],
-              searchDepth: 'basic' as const,
-              maxResults: 5,
-            };
+        if (userEnabledWebSearch || workerAutoSearchRequested || message?.trim().length >= 20) {
+          try {
+            const { detectWebSearchIntent } =
+              await import('../services/ai/webSearchIntentDetector.js');
+            searchIntent = detectWebSearchIntent(message, {
+              userEnabledWebSearch: userEnabledWebSearch || workerAutoSearchRequested,
+              historyLength: Array.isArray(history) ? history.length : 0,
+            });
+          } catch (err: any) {
+            logger.debug('[AI Stream] Intent detector not available:', err?.message);
+            // Fallback: if user enabled webSearch, search with raw message
+            if (userEnabledWebSearch || workerAutoSearchRequested) {
+              searchIntent = {
+                shouldSearch: true,
+                confidence: 0.5,
+                reason: 'user toggle enabled (fallback)',
+                queries: [message.slice(0, 150)],
+                searchDepth: 'basic' as const,
+                maxResults: 5,
+              };
+            }
           }
         }
 
-        const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
+        const shouldAttemptWebSearch = Boolean(
+          searchIntent?.shouldSearch || userEnabledWebSearch || workerAutoSearchRequested
+        );
+        let webPolicy: any = null;
+        let webGov: any = null;
+
+        if (shouldAttemptWebSearch) {
+          emitSSE({
+            type: 'thought',
+            step: 'web_search_check',
+            status: 'in_progress',
+            label: 'Checking live web access for this request…',
+          });
+
+          try {
+            webGov = (await import('../services/ai/webSearchGovernance.js')) as any;
+            const getEffectiveWebSearchPolicy =
+              webGov.getEffectiveWebSearchPolicy || webGov.default?.getEffectiveWebSearchPolicy;
+            if (orgIdForWeb && typeof getEffectiveWebSearchPolicy === 'function') {
+              webPolicy = await getEffectiveWebSearchPolicy(
+                String(orgIdForWeb),
+                projectId || undefined
+              );
+            }
+            if (workerWebPolicyOverride) {
+              const mergeWorkerWebAccessPolicy = (
+                await import('../services/ai/virtualWorkerWebAccessService.js')
+              ).mergeWorkerWebAccessPolicy;
+              webPolicy = mergeWorkerWebAccessPolicy({
+                workerPolicy: workerWebPolicyOverride as any,
+                orgPolicy: webPolicy,
+                requireOrgPolicy: true,
+              });
+            }
+          } catch {
+            webPolicy = null;
+            webGov = null;
+          }
+        }
+
         if (
-          (searchIntent?.shouldSearch || workerAutoSearchRequested) &&
+          shouldAttemptWebSearch &&
           webPolicy?.internetEnabled
         ) {
           try {
@@ -2409,6 +2424,7 @@ router.post(
             // Execute search queries (possibly multiple for complex questions)
             const searchQueries: string[] =
               searchIntent.queries?.length > 0 ? searchIntent.queries : [message.slice(0, 150)];
+            const queryLimit = userEnabledWebSearch ? 2 : 1;
 
             emitSSE({
               type: 'research_progress',
@@ -2420,7 +2436,7 @@ router.post(
 
             const allResults: any[] = [];
             const allAnswers: string[] = [];
-            for (const query of searchQueries.slice(0, 3)) {
+            for (const query of searchQueries.slice(0, queryLimit)) {
               try {
                 const cleanQuery =
                   typeof sanitizeQuery === 'function' ? sanitizeQuery(String(query || '')) : query;
@@ -2549,11 +2565,11 @@ router.post(
               stage: 'complete',
               queries: [],
               sources: [],
-              error: 'Web research unavailable',
+              error: 'Live web search failed for this request',
             });
           }
-        } else if (searchIntent?.shouldSearch && !webPolicy?.internetEnabled) {
-          // User/auto-detect wants web search but policy forbids or key missing
+        } else if (shouldAttemptWebSearch && !webPolicy?.internetEnabled) {
+          // User/auto-detect wants web search but policy forbids or runtime is unavailable.
           logger.info('[AI Stream] Web search intent detected but internet is disabled', {
             reason: webPolicy?.reason || null,
           });

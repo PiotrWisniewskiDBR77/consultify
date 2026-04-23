@@ -163,7 +163,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const mobileGlobalRailBottomOffset = isMobile ? 64 + (safeAreaInsets.bottom || 0) + 12 : null;
 
   return (
-    <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
+    <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-slate-900 dark:text-white font-sans overflow-hidden">
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
       <div
         data-testid="global-fab-rail"
@@ -234,7 +234,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           />
           <AIFreezeBanner />
 
-          <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+          <div className="h-12 border-b border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}

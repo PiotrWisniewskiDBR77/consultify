@@ -153,7 +153,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
             />
             <div
               ref={panelRef}
-              className="fixed z-[9999] min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
+              className="fixed z-[9999] min-w-[180px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
               role="menu"
               style={
                 panelPos
@@ -174,7 +174,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                 return (
                   <React.Fragment key={action.id}>
                     {action.divider && (
-                      <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
+                      <div className="my-1.5 border-t border-slate-200 dark:border-navy-700" />
                     )}
                     <button
                       onClick={(e) => {
@@ -182,11 +182,13 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                         action.onClick();
                         setIsOpen(false);
                       }}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${variantStyles[action.variant || 'default']}`}
+                      className={`w-full min-h-9 flex items-center gap-2 px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors ${variantStyles[action.variant || 'default']}`}
                       role="menuitem"
                     >
-                      {Icon && <Icon size={14} />}
-                      {action.label}
+                      <span className="inline-flex w-4 shrink-0 items-center justify-center">
+                        {Icon ? <Icon size={14} /> : null}
+                      </span>
+                      <span className="truncate">{action.label}</span>
                     </button>
                   </React.Fragment>
                 );
