@@ -1,4 +1,13 @@
-import { AlertTriangle, ArrowRight, BookOpen, Clock, Eye, FileWarning, Lock, Shield } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  Clock,
+  Eye,
+  FileWarning,
+  Lock,
+  Shield,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

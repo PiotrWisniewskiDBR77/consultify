@@ -302,7 +302,7 @@ export function evaluateFormula(formula: string, row: Record<string, any>): stri
       const val = row[key];
       return typeof val === 'number' ? String(val) : (Number(val) || 0).toString();
     });
-    // eslint-disable-next-line no-new-func
+
     const result = new Function(`return (${expr})`)();
     return typeof result === 'number' ? Math.round(result * 100) / 100 : String(result);
   } catch {

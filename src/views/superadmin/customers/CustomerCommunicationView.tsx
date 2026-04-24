@@ -7,8 +7,8 @@ import { Clock, Loader2, Mail, MessageSquare, Plus, Send, Users } from 'lucide-r
 import React, { useEffect, useState } from 'react';
 
 import { Card } from '../../../components/Admin/shared/Card';
-import { InfoButton } from '../../../components/shared/InfoButton';
 import { CommunicationSurfaceModelPanel } from '../../../components/shared/CommunicationSurfaceModelPanel';
+import { InfoButton } from '../../../components/shared/InfoButton';
 import Api from '../../../services/api';
 
 interface Communication {

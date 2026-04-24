@@ -40,7 +40,9 @@ export const PresentationPreviewFooter: React.FC<PresentationPreviewFooterProps>
   onExport,
 }) => (
   <div className="space-y-3">
-    <div className="text-xs text-slate-500 dark:text-slate-400">Updated: {presentation.updatedAt}</div>
+    <div className="text-xs text-slate-500 dark:text-slate-400">
+      Updated: {presentation.updatedAt}
+    </div>
     <div className="flex flex-wrap gap-2">
       {onExport && (
         <button onClick={onExport} className="rounded-md border px-3 py-1 text-xs">

@@ -4,13 +4,13 @@
  */
 
 import { Response, Router } from 'express';
-import logger from '../../utils/Logger.js';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { EscalationService } from '../../services/escalationService.js';
 import NotificationService from '../../services/notificationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 function isMissingTableError(error: unknown): boolean {
   const message = (error as any)?.message;

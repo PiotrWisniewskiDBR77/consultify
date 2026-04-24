@@ -5,6 +5,7 @@
 import { createElement, useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
+
 import { MAX_MINDMAP_NODES, resolveDeleteAnchor, wouldCreateCycle } from './mindmapCanonHelpers';
 
 // ── Clipboard ────────────────────────────────────────────────────────────────
@@ -376,7 +377,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       setEdges((prev: Edge[]) => [...prev, newEdge]);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
-      toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', { id: 'mm-op-cue', duration: 1500 });
+      toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', {
+        id: 'mm-op-cue',
+        duration: 1500,
+      });
 
       setTimeout(() => {
         try {
@@ -502,7 +506,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         setTimeout(() => {
           try {
             fitView({ nodes: [{ id: anchor } as any], padding: 0.5, duration: 300 });
-          } catch { /* */ }
+          } catch {
+            /* */
+          }
         }, 60);
       }
     },
@@ -613,9 +619,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       });
 
       setNodes((prev) =>
-        prev.map((n) =>
-          n.id === nodeId ? { ...n, data: { ...n.data, _justMoved: true } } : n
-        )
+        prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, _justMoved: true } } : n))
       );
       setTimeout(() => {
         setNodes((prev) =>
@@ -628,10 +632,10 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       }, 2500);
 
       const parentLabel = newParent.data?.label || newParentId;
-      toast.success(
-        isPolish ? `Przeniesiono pod ${parentLabel}` : `Moved under ${parentLabel}`,
-        { id: 'mm-op-cue', duration: 2000 }
-      );
+      toast.success(isPolish ? `Przeniesiono pod ${parentLabel}` : `Moved under ${parentLabel}`, {
+        id: 'mm-op-cue',
+        duration: 2000,
+      });
 
       setTimeout(() => focusSelectedNode(), 30);
       return true;

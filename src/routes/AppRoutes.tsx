@@ -320,13 +320,19 @@ const BusinessCasesPage = React.lazy(() =>
 
 // Documentation Portal (Public)
 const KnowledgeBaseHomePage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({ default: m.KnowledgeBaseHomePage }))
+  import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({
+    default: m.KnowledgeBaseHomePage,
+  }))
 );
 const KnowledgeBaseCategoryPage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({ default: m.KnowledgeBaseCategoryPage }))
+  import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({
+    default: m.KnowledgeBaseCategoryPage,
+  }))
 );
 const KnowledgeBaseArticlePage = React.lazy(() =>
-  import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({ default: m.KnowledgeBaseArticlePage }))
+  import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({
+    default: m.KnowledgeBaseArticlePage,
+  }))
 );
 const DocsLayout = React.lazy(() =>
   import('@/layouts/DocsLayout').then((m) => ({ default: m.DocsLayout }))
@@ -711,7 +717,10 @@ export const AppRoutes: React.FC = () => {
         {/* Knowledge Base - Public Product KB */}
         <Route path="/knowledge-base" element={<KnowledgeBaseHomePage />} />
         <Route path="/knowledge-base/:categorySlug" element={<KnowledgeBaseCategoryPage />} />
-        <Route path="/knowledge-base/:categorySlug/:articleSlug" element={<KnowledgeBaseArticlePage />} />
+        <Route
+          path="/knowledge-base/:categorySlug/:articleSlug"
+          element={<KnowledgeBaseArticlePage />}
+        />
 
         {/* Public Form Page (Table Platform) — no auth required */}
         <Route
@@ -1080,7 +1089,10 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]} noPadding>
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}
+                noPadding
+              >
                 <RouteErrorBoundary>
                   <PrezentacjeView />
                 </RouteErrorBoundary>
@@ -1548,7 +1560,14 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/wizard"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.outputsLibrary', 'Outputs'), t('rap.breadcrumb.presentationWizard', 'Presentation Wizard')]}>
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('rap.breadcrumb.presentationWizard', 'Presentation Wizard'),
+                ]
+              }
+            >
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <PresentationWizard />
@@ -1560,7 +1579,14 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/builder/:deckId"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.outputsLibrary', 'Outputs'), t('rap.breadcrumb.deckBuilder', 'Deck Builder')]}>
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('rap.breadcrumb.deckBuilder', 'Deck Builder'),
+                ]
+              }
+            >
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <DeckBuilder />

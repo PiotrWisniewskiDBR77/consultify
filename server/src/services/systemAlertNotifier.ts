@@ -1,6 +1,6 @@
-import WhatsAppService from './WhatsAppService.js';
-import slackService from './slackService.js';
 import logger from '../utils/Logger.js';
+import slackService from './slackService.js';
+import WhatsAppService from './WhatsAppService.js';
 
 export type SystemAlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
 

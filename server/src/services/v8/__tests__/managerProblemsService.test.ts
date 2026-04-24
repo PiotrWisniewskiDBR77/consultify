@@ -290,7 +290,9 @@ describe('getManagerProblems', () => {
 
     const rows = await getManagerProblems(ORG_ID, 'risk');
     expect(rows.length).toBeGreaterThan(0);
-    expect(rows.some((r) => r.sourceEntityType === 'RAID_ITEM' && r.title.startsWith('Risk:'))).toBe(true);
+    expect(
+      rows.some((r) => r.sourceEntityType === 'RAID_ITEM' && r.title.startsWith('Risk:'))
+    ).toBe(true);
     expect(rows.some((r) => r.problemType === 'missing_baseline')).toBe(true);
     rows.forEach((r) => expectManagerProblemShape(r as Record<string, unknown>));
   });

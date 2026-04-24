@@ -964,7 +964,6 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
-
         </div>
       </div>
     </>

@@ -93,7 +93,9 @@ export const LandingNarrativeCtaBand: React.FC<LandingNarrativeCtaBandProps> = (
                     <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-primary-500/20 bg-primary-500/12 text-[11px] font-black text-primary-600 dark:text-primary-300">
                       {index + 1}
                     </div>
-                    <p className="text-sm leading-relaxed text-slate-600 dark:text-white/65">{point}</p>
+                    <p className="text-sm leading-relaxed text-slate-600 dark:text-white/65">
+                      {point}
+                    </p>
                   </div>
                 </div>
               ))}

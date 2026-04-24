@@ -228,7 +228,9 @@ class AIOperatorService {
   async getFoundationOverview(organizationId: string, userId?: string | null) {
     await this.ensureSchema();
     const profile = await this.getProfile(organizationId, userId);
-    const resolvedOrgContext = await organizationContextService.buildResolvedContext(organizationId).catch(() => null);
+    const resolvedOrgContext = await organizationContextService
+      .buildResolvedContext(organizationId)
+      .catch(() => null);
     const orgRow = {
       id: organizationId,
       name: resolvedOrgContext?.profile?.companyName || 'Organization',
@@ -236,64 +238,58 @@ class AIOperatorService {
       size: resolvedOrgContext?.profile?.companySize || 'unknown',
       updated_at: resolvedOrgContext?.snapshotUpdatedAt || null,
     };
-    const [
-      convoStats,
-      meetingStats,
-      initiativeStats,
-      taskStats,
-      decisionStats,
-      reportStats,
-    ] = await Promise.all([
-      this.safeFirst<any>(
-        `SELECT COUNT(*) as total, MAX(updated_at) as last_touch
+    const [convoStats, meetingStats, initiativeStats, taskStats, decisionStats, reportStats] =
+      await Promise.all([
+        this.safeFirst<any>(
+          `SELECT COUNT(*) as total, MAX(updated_at) as last_touch
            FROM conversations
            WHERE organization_id = ?`,
-        [organizationId],
-        { total: 0, last_touch: null }
-      ),
-      this.safeFirst<any>(
-        `SELECT COUNT(*) as total, MAX(start_at) as last_touch
+          [organizationId],
+          { total: 0, last_touch: null }
+        ),
+        this.safeFirst<any>(
+          `SELECT COUNT(*) as total, MAX(start_at) as last_touch
            FROM meetings
            WHERE organization_id = ?`,
-        [organizationId],
-        { total: 0, last_touch: null }
-      ),
-      this.safeFirst<any>(
-        `SELECT
+          [organizationId],
+          { total: 0, last_touch: null }
+        ),
+        this.safeFirst<any>(
+          `SELECT
              COUNT(*) as total,
              SUM(CASE WHEN status IN ('ACTIVE', 'IN_PROGRESS', 'AT_RISK', 'BLOCKED', 'PLANNING') THEN 1 ELSE 0 END) as active_count
            FROM initiatives
            WHERE organization_id = ?`,
-        [organizationId],
-        { total: 0, active_count: 0 }
-      ),
-      this.safeFirst<any>(
-        `SELECT
+          [organizationId],
+          { total: 0, active_count: 0 }
+        ),
+        this.safeFirst<any>(
+          `SELECT
              COUNT(*) as total,
              SUM(CASE WHEN LOWER(COALESCE(status, '')) IN ('completed', 'done', 'validated') THEN 1 ELSE 0 END) as completed_count,
              SUM(CASE WHEN due_date IS NOT NULL AND due_date < ${currentDateSql()} AND LOWER(COALESCE(status, '')) NOT IN ('completed', 'done', 'validated') THEN 1 ELSE 0 END) as overdue_count
            FROM tasks
            WHERE organization_id = ?`,
-        [organizationId],
-        { total: 0, completed_count: 0, overdue_count: 0 }
-      ),
-      this.safeFirst<any>(
-        `SELECT
+          [organizationId],
+          { total: 0, completed_count: 0, overdue_count: 0 }
+        ),
+        this.safeFirst<any>(
+          `SELECT
              COUNT(*) as total,
              SUM(CASE WHEN LOWER(COALESCE(status, '')) IN ('pending', 'escalated') THEN 1 ELSE 0 END) as pending_count
            FROM decisions
            WHERE organization_id = ?`,
-        [organizationId],
-        { total: 0, pending_count: 0 }
-      ),
-      this.safeFirst<any>(
-        `SELECT COUNT(*) as total
+          [organizationId],
+          { total: 0, pending_count: 0 }
+        ),
+        this.safeFirst<any>(
+          `SELECT COUNT(*) as total
            FROM reports
            WHERE organization_id = ?`,
-        [organizationId],
-        { total: 0 }
-      ),
-    ]);
+          [organizationId],
+          { total: 0 }
+        ),
+      ]);
 
     const lastTouchCandidates = [
       convoStats?.last_touch,

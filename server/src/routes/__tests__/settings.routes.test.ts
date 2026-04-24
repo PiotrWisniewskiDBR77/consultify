@@ -368,14 +368,16 @@ describe('settings integrations authority continuity', () => {
     app.use(express.json());
     app.use('/api/settings', settingsRoutes);
 
-    const res = await request(app).put('/api/settings/integrations/jira/config').send({
-      config: {
-        cloud_id: 'cloud-1',
-        client_id: 'jira-client-id',
-        client_secret: 'jira-client-secret',
-        ignored_field: 'should-not-persist',
-      },
-    });
+    const res = await request(app)
+      .put('/api/settings/integrations/jira/config')
+      .send({
+        config: {
+          cloud_id: 'cloud-1',
+          client_id: 'jira-client-id',
+          client_secret: 'jira-client-secret',
+          ignored_field: 'should-not-persist',
+        },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -772,7 +774,10 @@ describe('settings registry contract endpoints', () => {
       if (sql.includes('FROM user_preferences')) {
         return undefined;
       }
-      if (sql.includes('FROM settings') && params[0] === 'module:org-1:interview:recording_auto_start') {
+      if (
+        sql.includes('FROM settings') &&
+        params[0] === 'module:org-1:interview:recording_auto_start'
+      ) {
         return { value: 'true' };
       }
       return undefined;

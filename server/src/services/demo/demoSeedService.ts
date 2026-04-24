@@ -1,5 +1,7 @@
+import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import {
+  type DemoLeaderTemplate,
   getAtelierToysDemoScenarios,
   getAtelierToysInitiatives,
   getAtelierToysKnowledgeDocs,
@@ -8,11 +10,9 @@ import {
   getAtelierToysPrompts,
   getAtelierToysReports,
   getAtelierToysToolCoverage,
-  type DemoLeaderTemplate,
 } from './atelierToysDemoTemplate.js';
-import { getDemoAnchorDate, materializeRelativeIso } from './demoRelativeDate.js';
-import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
+import { getDemoAnchorDate, materializeRelativeIso } from './demoRelativeDate.js';
 
 export interface SeedDemoDatasetInput {
   organizationId: string;
@@ -138,7 +138,14 @@ function buildMindmapMap(
 ) {
   const centerId = 'root';
   const branchRadius = 300;
-  const angles = [-Math.PI / 2, -Math.PI / 6, Math.PI / 6, Math.PI / 2, (5 * Math.PI) / 6, (7 * Math.PI) / 6];
+  const angles = [
+    -Math.PI / 2,
+    -Math.PI / 6,
+    Math.PI / 6,
+    Math.PI / 2,
+    (5 * Math.PI) / 6,
+    (7 * Math.PI) / 6,
+  ];
   const nodes: any[] = [
     {
       id: centerId,
@@ -271,7 +278,12 @@ function buildWhiteboardMap(
       id: `current-${index}`,
       type: 'stickyNote',
       position: { x: 20 + (index % 3) * 180, y: 40 + Math.floor(index / 3) * 140 },
-      data: { label, color: colors[index % colors.length], colorIndex: index % colors.length, size: 'm' },
+      data: {
+        label,
+        color: colors[index % colors.length],
+        colorIndex: index % colors.length,
+        size: 'm',
+      },
     });
   });
   config.future.forEach((label, index) => {
@@ -279,7 +291,12 @@ function buildWhiteboardMap(
       id: `future-${index}`,
       type: 'stickyNote',
       position: { x: 630 + (index % 3) * 180, y: 40 + Math.floor(index / 3) * 140 },
-      data: { label, color: colors[(index + 2) % colors.length], colorIndex: (index + 2) % colors.length, size: 'm' },
+      data: {
+        label,
+        color: colors[(index + 2) % colors.length],
+        colorIndex: (index + 2) % colors.length,
+        size: 'm',
+      },
     });
   });
   config.actions.forEach((label, index) => {
@@ -287,7 +304,12 @@ function buildWhiteboardMap(
       id: `action-${index}`,
       type: 'stickyNote',
       position: { x: 220 + (index % 3) * 190, y: 395 + Math.floor(index / 3) * 110 },
-      data: { label, color: colors[(index + 1) % colors.length], colorIndex: (index + 1) % colors.length, size: 'm' },
+      data: {
+        label,
+        color: colors[(index + 1) % colors.length],
+        colorIndex: (index + 1) % colors.length,
+        size: 'm',
+      },
     });
   });
   config.metrics.forEach((label, index) => {
@@ -295,13 +317,29 @@ function buildWhiteboardMap(
       id: `metric-${index}`,
       type: 'shapeNode',
       position: { x: 300 + index * 250, y: -140 },
-      data: { label, shape: index % 2 === 0 ? 'circle' : 'diamond', bgColor: index % 2 === 0 ? '#34d399' : '#fbbf24' },
+      data: {
+        label,
+        shape: index % 2 === 0 ? 'circle' : 'diamond',
+        bgColor: index % 2 === 0 ? '#34d399' : '#fbbf24',
+      },
     });
   });
 
   const edges: any[] = [
-    { id: 'e1', source: 'frame-current', target: 'frame-future', type: 'default', data: { label: 'Transformation' } },
-    { id: 'e2', source: 'frame-future', target: 'frame-actions', type: 'default', data: { label: 'Delivery' } },
+    {
+      id: 'e1',
+      source: 'frame-current',
+      target: 'frame-future',
+      type: 'default',
+      data: { label: 'Transformation' },
+    },
+    {
+      id: 'e2',
+      source: 'frame-future',
+      target: 'frame-actions',
+      type: 'default',
+      data: { label: 'Delivery' },
+    },
   ];
 
   return {
@@ -373,11 +411,7 @@ function buildProcessFlowMap(
   };
 }
 
-function buildTableMap(
-  _ideaId: string,
-  columns: any[],
-  rows: Array<Record<string, unknown>>
-) {
+function buildTableMap(_ideaId: string, columns: any[], rows: Array<Record<string, unknown>>) {
   return {
     nodes: rows.map((row, index) => ({
       id: `row-${index}`,
@@ -391,7 +425,13 @@ function buildTableMap(
         columns,
         views: [
           { id: 'view-default', name: 'Default', layout: 'table', icon: '📊' },
-          { id: 'view-priority', name: 'Priority', layout: 'table', sort: [{ key: 'priority', direction: 'desc' }], icon: '⭐' },
+          {
+            id: 'view-priority',
+            name: 'Priority',
+            layout: 'table',
+            sort: [{ key: 'priority', direction: 'desc' }],
+            icon: '⭐',
+          },
           { id: 'view-status', name: 'Status', layout: 'kanban', groupBy: 'status', icon: '📋' },
         ],
         activeViewId: 'view-default',
@@ -533,24 +573,48 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
               key: 'signals',
               label: 'Sygnały',
               items: [
-                { label: 'Attach rate poprawił się w pilotażach partnerskich', nodeType: 'evidence', priority: 70 },
-                { label: 'Pewność odnowień rośnie wraz z dowodami aktywacji', nodeType: 'evidence', priority: 68 },
+                {
+                  label: 'Attach rate poprawił się w pilotażach partnerskich',
+                  nodeType: 'evidence',
+                  priority: 70,
+                },
+                {
+                  label: 'Pewność odnowień rośnie wraz z dowodami aktywacji',
+                  nodeType: 'evidence',
+                  priority: 68,
+                },
               ],
             },
             {
               key: 'risks',
               label: 'Ryzyka',
               items: [
-                { label: 'Słaba aktywacja edukatorów po sprzedaży', nodeType: 'risk', priority: 76 },
-                { label: 'Messaging nadal różni się między partnerami', nodeType: 'risk', priority: 72 },
+                {
+                  label: 'Słaba aktywacja edukatorów po sprzedaży',
+                  nodeType: 'risk',
+                  priority: 76,
+                },
+                {
+                  label: 'Messaging nadal różni się między partnerami',
+                  nodeType: 'risk',
+                  priority: 72,
+                },
               ],
             },
             {
               key: 'moves',
               label: 'Ruchy strategiczne',
               items: [
-                { label: 'Spakować historię Digital Twin do toolkitów partnerów', nodeType: 'option', priority: 74 },
-                { label: 'Uruchomić pakiet sygnałów renewal risk', nodeType: 'option', priority: 71 },
+                {
+                  label: 'Spakować historię Digital Twin do toolkitów partnerów',
+                  nodeType: 'option',
+                  priority: 74,
+                },
+                {
+                  label: 'Uruchomić pakiet sygnałów renewal risk',
+                  nodeType: 'option',
+                  priority: 71,
+                },
               ],
             },
             {
@@ -558,7 +622,11 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
               label: 'Prośby do zarządu',
               items: [
                 { label: 'Zatwierdzić pilotaż cen bundla', nodeType: 'decision', priority: 82 },
-                { label: 'Sfinansować instrumentację customer success', nodeType: 'decision', priority: 79 },
+                {
+                  label: 'Sfinansować instrumentację customer success',
+                  nodeType: 'decision',
+                  priority: 79,
+                },
               ],
             },
           ]),
@@ -580,7 +648,11 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
               label: 'Straty',
               items: [
                 { label: 'Mikroprzestoje heat-treatment', nodeType: 'pain_point', priority: 78 },
-                { label: 'Wolne przekazanie przezbrojeń między zmianami', nodeType: 'pain_point', priority: 75 },
+                {
+                  label: 'Wolne przekazanie przezbrojeń między zmianami',
+                  nodeType: 'pain_point',
+                  priority: 75,
+                },
               ],
             },
             {
@@ -588,15 +660,27 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
               label: 'Przyczyny źródłowe',
               items: [
                 { label: 'Niepełne pokrycie telemetrią', nodeType: 'cause', priority: 69 },
-                { label: 'Brak jednego ownera eskalacji na zmianie', nodeType: 'cause', priority: 71 },
+                {
+                  label: 'Brak jednego ownera eskalacji na zmianie',
+                  nodeType: 'cause',
+                  priority: 71,
+                },
               ],
             },
             {
               key: 'countermeasures',
               label: 'Countermeasures',
               items: [
-                { label: 'Ustandaryzować sekwencję przezbrojeń w twinie', nodeType: 'action', priority: 73 },
-                { label: 'Zaostrzyć trigger dispatchu maintenance', nodeType: 'action', priority: 70 },
+                {
+                  label: 'Ustandaryzować sekwencję przezbrojeń w twinie',
+                  nodeType: 'action',
+                  priority: 73,
+                },
+                {
+                  label: 'Zaostrzyć trigger dispatchu maintenance',
+                  nodeType: 'action',
+                  priority: 70,
+                },
               ],
             },
             {
@@ -629,13 +713,64 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
               { id: 'lane-marketing', label: 'Marketing', color: '#fce7f3' },
             ],
             [
-              { id: 'n1', label: 'Partner podpisuje umowę', x: 40, y: 50, laneId: 'lane-sales', shape: 'process' },
-              { id: 'n2', label: 'Powstaje plan onboardingu', x: 260, y: 50, laneId: 'lane-sales', shape: 'process', extra: { duration: '2d' } },
-              { id: 'n3', label: 'Sesja enablementowa', x: 500, y: 50, laneId: 'lane-marketing', shape: 'process', extra: { duration: '1d' } },
-              { id: 'n4', label: 'Check gotowości demo', x: 740, y: 50, laneId: 'lane-cs', shape: 'decision' },
-              { id: 'n5', label: 'Pierwszy warsztat z klientem', x: 980, y: 50, laneId: 'lane-partner', shape: 'process' },
-              { id: 'n6', label: 'Wysłana propozycja bundla', x: 1220, y: 50, laneId: 'lane-sales', shape: 'process' },
-              { id: 'n7', label: 'Pierwszy bundle cyfrowy sprzedany', x: 1460, y: 50, laneId: 'lane-partner', shape: 'end' },
+              {
+                id: 'n1',
+                label: 'Partner podpisuje umowę',
+                x: 40,
+                y: 50,
+                laneId: 'lane-sales',
+                shape: 'process',
+              },
+              {
+                id: 'n2',
+                label: 'Powstaje plan onboardingu',
+                x: 260,
+                y: 50,
+                laneId: 'lane-sales',
+                shape: 'process',
+                extra: { duration: '2d' },
+              },
+              {
+                id: 'n3',
+                label: 'Sesja enablementowa',
+                x: 500,
+                y: 50,
+                laneId: 'lane-marketing',
+                shape: 'process',
+                extra: { duration: '1d' },
+              },
+              {
+                id: 'n4',
+                label: 'Check gotowości demo',
+                x: 740,
+                y: 50,
+                laneId: 'lane-cs',
+                shape: 'decision',
+              },
+              {
+                id: 'n5',
+                label: 'Pierwszy warsztat z klientem',
+                x: 980,
+                y: 50,
+                laneId: 'lane-partner',
+                shape: 'process',
+              },
+              {
+                id: 'n6',
+                label: 'Wysłana propozycja bundla',
+                x: 1220,
+                y: 50,
+                laneId: 'lane-sales',
+                shape: 'process',
+              },
+              {
+                id: 'n7',
+                label: 'Pierwszy bundle cyfrowy sprzedany',
+                x: 1460,
+                y: 50,
+                laneId: 'lane-partner',
+                shape: 'end',
+              },
             ],
             [
               { source: 'n1', target: 'n2' },
@@ -667,13 +802,62 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
               { id: 'lane-board', label: 'Leadership', color: '#fce7f3' },
             ],
             [
-              { id: 'q1', label: 'Wykryto defekt', x: 40, y: 70, laneId: 'lane-plant', shape: 'start' },
-              { id: 'q2', label: 'Działanie containment', x: 240, y: 70, laneId: 'lane-qa', shape: 'process' },
-              { id: 'q3', label: 'Review przyczyny źródłowej', x: 470, y: 70, laneId: 'lane-eng', shape: 'process' },
-              { id: 'q4', label: 'Countermeasure zatwierdzony?', x: 710, y: 70, laneId: 'lane-board', shape: 'decision' },
-              { id: 'q5', label: 'Wdrożyć poprawkę', x: 960, y: 70, laneId: 'lane-plant', shape: 'process' },
-              { id: 'q6', label: 'Zweryfikować brak nawrotu', x: 1180, y: 70, laneId: 'lane-qa', shape: 'process' },
-              { id: 'q7', label: 'Zamknięcie wpisane do logu', x: 1410, y: 70, laneId: 'lane-board', shape: 'end' },
+              {
+                id: 'q1',
+                label: 'Wykryto defekt',
+                x: 40,
+                y: 70,
+                laneId: 'lane-plant',
+                shape: 'start',
+              },
+              {
+                id: 'q2',
+                label: 'Działanie containment',
+                x: 240,
+                y: 70,
+                laneId: 'lane-qa',
+                shape: 'process',
+              },
+              {
+                id: 'q3',
+                label: 'Review przyczyny źródłowej',
+                x: 470,
+                y: 70,
+                laneId: 'lane-eng',
+                shape: 'process',
+              },
+              {
+                id: 'q4',
+                label: 'Countermeasure zatwierdzony?',
+                x: 710,
+                y: 70,
+                laneId: 'lane-board',
+                shape: 'decision',
+              },
+              {
+                id: 'q5',
+                label: 'Wdrożyć poprawkę',
+                x: 960,
+                y: 70,
+                laneId: 'lane-plant',
+                shape: 'process',
+              },
+              {
+                id: 'q6',
+                label: 'Zweryfikować brak nawrotu',
+                x: 1180,
+                y: 70,
+                laneId: 'lane-qa',
+                shape: 'process',
+              },
+              {
+                id: 'q7',
+                label: 'Zamknięcie wpisane do logu',
+                x: 1410,
+                y: 70,
+                laneId: 'lane-board',
+                shape: 'end',
+              },
             ],
             [
               { source: 'q1', target: 'q2' },
@@ -701,19 +885,78 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             [
               { key: 'option', header: 'Opcja upgrade’u', type: 'text', visible: true, width: 220 },
               { key: 'capex', header: 'CAPEX', type: 'currency', visible: true, width: 120 },
-              { key: 'opex_delta', header: 'Zmiana OPEX', type: 'currency', visible: true, width: 130 },
+              {
+                key: 'opex_delta',
+                header: 'Zmiana OPEX',
+                type: 'currency',
+                visible: true,
+                width: 130,
+              },
               { key: 'oee_gain', header: 'Przyrost OEE', type: 'text', visible: true, width: 110 },
-              { key: 'payback', header: 'Payback (mies.)', type: 'number', visible: true, width: 120 },
-              { key: 'risk', header: 'Ryzyko', type: 'select', visible: true, width: 110, options: ['Niskie', 'Średnie', 'Wysokie'] },
+              {
+                key: 'payback',
+                header: 'Payback (mies.)',
+                type: 'number',
+                visible: true,
+                width: 120,
+              },
+              {
+                key: 'risk',
+                header: 'Ryzyko',
+                type: 'select',
+                visible: true,
+                width: 110,
+                options: ['Niskie', 'Średnie', 'Wysokie'],
+              },
               { key: 'status', header: 'Status', type: 'status', visible: true, width: 120 },
               { key: 'priority', header: 'Priorytet', type: 'rating', visible: true, width: 100 },
               { key: 'note', header: 'Dlaczego to ważne', type: 'text', visible: true, width: 240 },
             ],
             [
-              { option: 'Odświeżenie sensorów Linii 3', capex: 85000, opex_delta: 12000, oee_gain: '+3.5 pkt', payback: 14, risk: 'Niskie', status: 'done', priority: 5, note: 'Najszybszy unlock dla zaufania do telemetrii.' },
-              { option: 'Starter pack predykcyjnego maintenance', capex: 140000, opex_delta: 28000, oee_gain: '+5.2 pkt', payback: 18, risk: 'Średnie', status: 'in_progress', priority: 5, note: 'Najlepsza poprawa niezawodności w długim terminie.' },
-              { option: 'Kit automatyzacji przezbrojeń', capex: 220000, opex_delta: 32000, oee_gain: '+6.1 pkt', payback: 24, risk: 'Średnie', status: 'todo', priority: 4, note: 'Duży efekt na throughput, ale wymaga dyscypliny procesu.' },
-              { option: 'Pełny pakiet replikacji linii', capex: 410000, opex_delta: 60000, oee_gain: '+7.8 pkt', payback: 31, risk: 'Wysokie', status: 'todo', priority: 3, note: 'Ruch boardowy, powinien iść dopiero po dowodzie z pilota.' },
+              {
+                option: 'Odświeżenie sensorów Linii 3',
+                capex: 85000,
+                opex_delta: 12000,
+                oee_gain: '+3.5 pkt',
+                payback: 14,
+                risk: 'Niskie',
+                status: 'done',
+                priority: 5,
+                note: 'Najszybszy unlock dla zaufania do telemetrii.',
+              },
+              {
+                option: 'Starter pack predykcyjnego maintenance',
+                capex: 140000,
+                opex_delta: 28000,
+                oee_gain: '+5.2 pkt',
+                payback: 18,
+                risk: 'Średnie',
+                status: 'in_progress',
+                priority: 5,
+                note: 'Najlepsza poprawa niezawodności w długim terminie.',
+              },
+              {
+                option: 'Kit automatyzacji przezbrojeń',
+                capex: 220000,
+                opex_delta: 32000,
+                oee_gain: '+6.1 pkt',
+                payback: 24,
+                risk: 'Średnie',
+                status: 'todo',
+                priority: 4,
+                note: 'Duży efekt na throughput, ale wymaga dyscypliny procesu.',
+              },
+              {
+                option: 'Pełny pakiet replikacji linii',
+                capex: 410000,
+                opex_delta: 60000,
+                oee_gain: '+7.8 pkt',
+                payback: 31,
+                risk: 'Wysokie',
+                status: 'todo',
+                priority: 3,
+                note: 'Ruch boardowy, powinien iść dopiero po dowodzie z pilota.',
+              },
             ]
           ),
       },
@@ -733,18 +976,73 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             [
               { key: 'partner', header: 'Partner', type: 'text', visible: true, width: 190 },
               { key: 'region', header: 'Region', type: 'text', visible: true, width: 120 },
-              { key: 'activation_score', header: 'Wynik aktywacji', type: 'number', visible: true, width: 130 },
-              { key: 'renewal_risk', header: 'Ryzyko odnowień', type: 'select', visible: true, width: 130, options: ['Niskie', 'Średnie', 'Wysokie'] },
-              { key: 'pipeline_quality', header: 'Jakość pipeline', type: 'text', visible: true, width: 130 },
+              {
+                key: 'activation_score',
+                header: 'Wynik aktywacji',
+                type: 'number',
+                visible: true,
+                width: 130,
+              },
+              {
+                key: 'renewal_risk',
+                header: 'Ryzyko odnowień',
+                type: 'select',
+                visible: true,
+                width: 130,
+                options: ['Niskie', 'Średnie', 'Wysokie'],
+              },
+              {
+                key: 'pipeline_quality',
+                header: 'Jakość pipeline',
+                type: 'text',
+                visible: true,
+                width: 130,
+              },
               { key: 'status', header: 'Status', type: 'status', visible: true, width: 120 },
               { key: 'priority', header: 'Priorytet', type: 'rating', visible: true, width: 100 },
               { key: 'note', header: 'Następny krok', type: 'text', visible: true, width: 240 },
             ],
             [
-              { partner: 'EduMotion France', region: 'Francja', activation_score: 87, renewal_risk: 'Niskie', pipeline_quality: 'Silna', status: 'done', priority: 5, note: 'Użyć jako flagowego partnera referencyjnego.' },
-              { partner: 'STEM Iberia', region: 'Hiszpania', activation_score: 72, renewal_risk: 'Średnie', pipeline_quality: 'Dobra', status: 'in_progress', priority: 4, note: 'Potrzebuje mocniejszej kadencji onboardingu.' },
-              { partner: 'NordLearn Distribution', region: 'Nordyki', activation_score: 64, renewal_risk: 'Średnie', pipeline_quality: 'Mieszana', status: 'todo', priority: 3, note: 'Przerobić messaging wartości przed dalszą ekspansją.' },
-              { partner: 'ClassFuture DACH', region: 'DACH', activation_score: 79, renewal_risk: 'Niskie', pipeline_quality: 'Silna', status: 'in_progress', priority: 4, note: 'Dobry kandydat na pilotaż upsellu analityki.' },
+              {
+                partner: 'EduMotion France',
+                region: 'Francja',
+                activation_score: 87,
+                renewal_risk: 'Niskie',
+                pipeline_quality: 'Silna',
+                status: 'done',
+                priority: 5,
+                note: 'Użyć jako flagowego partnera referencyjnego.',
+              },
+              {
+                partner: 'STEM Iberia',
+                region: 'Hiszpania',
+                activation_score: 72,
+                renewal_risk: 'Średnie',
+                pipeline_quality: 'Dobra',
+                status: 'in_progress',
+                priority: 4,
+                note: 'Potrzebuje mocniejszej kadencji onboardingu.',
+              },
+              {
+                partner: 'NordLearn Distribution',
+                region: 'Nordyki',
+                activation_score: 64,
+                renewal_risk: 'Średnie',
+                pipeline_quality: 'Mieszana',
+                status: 'todo',
+                priority: 3,
+                note: 'Przerobić messaging wartości przed dalszą ekspansją.',
+              },
+              {
+                partner: 'ClassFuture DACH',
+                region: 'DACH',
+                activation_score: 79,
+                renewal_risk: 'Niskie',
+                pipeline_quality: 'Silna',
+                status: 'in_progress',
+                priority: 4,
+                note: 'Dobry kandydat na pilotaż upsellu analityki.',
+              },
             ]
           ),
       },
@@ -846,8 +1144,16 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             key: 'signals',
             label: 'Signals',
             items: [
-              { label: 'Attach rate improved in partner pilots', nodeType: 'evidence', priority: 70 },
-              { label: 'Renewal confidence rises with activation proof', nodeType: 'evidence', priority: 68 },
+              {
+                label: 'Attach rate improved in partner pilots',
+                nodeType: 'evidence',
+                priority: 70,
+              },
+              {
+                label: 'Renewal confidence rises with activation proof',
+                nodeType: 'evidence',
+                priority: 68,
+              },
             ],
           },
           {
@@ -862,7 +1168,11 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             key: 'moves',
             label: 'Strategic moves',
             items: [
-              { label: 'Package Digital Twin story into partner toolkit', nodeType: 'option', priority: 74 },
+              {
+                label: 'Package Digital Twin story into partner toolkit',
+                nodeType: 'option',
+                priority: 74,
+              },
               { label: 'Instrument renewal-risk signal pack', nodeType: 'option', priority: 71 },
             ],
           },
@@ -871,7 +1181,11 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             label: 'Board asks',
             items: [
               { label: 'Approve bundle pricing pilot', nodeType: 'decision', priority: 82 },
-              { label: 'Fund customer-success instrumentation', nodeType: 'decision', priority: 79 },
+              {
+                label: 'Fund customer-success instrumentation',
+                nodeType: 'decision',
+                priority: 79,
+              },
             ],
           },
         ]),
@@ -893,7 +1207,11 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             label: 'Losses',
             items: [
               { label: 'Heat-treatment micro-stops', nodeType: 'pain_point', priority: 78 },
-              { label: 'Slow changeover handoff between shifts', nodeType: 'pain_point', priority: 75 },
+              {
+                label: 'Slow changeover handoff between shifts',
+                nodeType: 'pain_point',
+                priority: 75,
+              },
             ],
           },
           {
@@ -908,7 +1226,11 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             key: 'countermeasures',
             label: 'Countermeasures',
             items: [
-              { label: 'Standardize changeover sequence in twin', nodeType: 'action', priority: 73 },
+              {
+                label: 'Standardize changeover sequence in twin',
+                nodeType: 'action',
+                priority: 73,
+              },
               { label: 'Tighten maintenance dispatch trigger', nodeType: 'action', priority: 70 },
             ],
           },
@@ -942,13 +1264,64 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             { id: 'lane-marketing', label: 'Marketing', color: '#fce7f3' },
           ],
           [
-            { id: 'n1', label: 'Partner signs agreement', x: 40, y: 50, laneId: 'lane-sales', shape: 'process' },
-            { id: 'n2', label: 'Onboarding plan created', x: 260, y: 50, laneId: 'lane-sales', shape: 'process', extra: { duration: '2d' } },
-            { id: 'n3', label: 'Enablement session', x: 500, y: 50, laneId: 'lane-marketing', shape: 'process', extra: { duration: '1d' } },
-            { id: 'n4', label: 'Demo readiness check', x: 740, y: 50, laneId: 'lane-cs', shape: 'decision' },
-            { id: 'n5', label: 'First customer workshop', x: 980, y: 50, laneId: 'lane-partner', shape: 'process' },
-            { id: 'n6', label: 'Bundle proposal sent', x: 1220, y: 50, laneId: 'lane-sales', shape: 'process' },
-            { id: 'n7', label: 'First digital bundle sold', x: 1460, y: 50, laneId: 'lane-partner', shape: 'end' },
+            {
+              id: 'n1',
+              label: 'Partner signs agreement',
+              x: 40,
+              y: 50,
+              laneId: 'lane-sales',
+              shape: 'process',
+            },
+            {
+              id: 'n2',
+              label: 'Onboarding plan created',
+              x: 260,
+              y: 50,
+              laneId: 'lane-sales',
+              shape: 'process',
+              extra: { duration: '2d' },
+            },
+            {
+              id: 'n3',
+              label: 'Enablement session',
+              x: 500,
+              y: 50,
+              laneId: 'lane-marketing',
+              shape: 'process',
+              extra: { duration: '1d' },
+            },
+            {
+              id: 'n4',
+              label: 'Demo readiness check',
+              x: 740,
+              y: 50,
+              laneId: 'lane-cs',
+              shape: 'decision',
+            },
+            {
+              id: 'n5',
+              label: 'First customer workshop',
+              x: 980,
+              y: 50,
+              laneId: 'lane-partner',
+              shape: 'process',
+            },
+            {
+              id: 'n6',
+              label: 'Bundle proposal sent',
+              x: 1220,
+              y: 50,
+              laneId: 'lane-sales',
+              shape: 'process',
+            },
+            {
+              id: 'n7',
+              label: 'First digital bundle sold',
+              x: 1460,
+              y: 50,
+              laneId: 'lane-partner',
+              shape: 'end',
+            },
           ],
           [
             { source: 'n1', target: 'n2' },
@@ -980,13 +1353,62 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
             { id: 'lane-board', label: 'Leadership', color: '#fce7f3' },
           ],
           [
-            { id: 'q1', label: 'Defect detected', x: 40, y: 70, laneId: 'lane-plant', shape: 'start' },
-            { id: 'q2', label: 'Containment action', x: 240, y: 70, laneId: 'lane-qa', shape: 'process' },
-            { id: 'q3', label: 'Root-cause review', x: 470, y: 70, laneId: 'lane-eng', shape: 'process' },
-            { id: 'q4', label: 'Countermeasure approved?', x: 710, y: 70, laneId: 'lane-board', shape: 'decision' },
-            { id: 'q5', label: 'Implement fix', x: 960, y: 70, laneId: 'lane-plant', shape: 'process' },
-            { id: 'q6', label: 'Verify recurrence stopped', x: 1180, y: 70, laneId: 'lane-qa', shape: 'process' },
-            { id: 'q7', label: 'Closure logged', x: 1410, y: 70, laneId: 'lane-board', shape: 'end' },
+            {
+              id: 'q1',
+              label: 'Defect detected',
+              x: 40,
+              y: 70,
+              laneId: 'lane-plant',
+              shape: 'start',
+            },
+            {
+              id: 'q2',
+              label: 'Containment action',
+              x: 240,
+              y: 70,
+              laneId: 'lane-qa',
+              shape: 'process',
+            },
+            {
+              id: 'q3',
+              label: 'Root-cause review',
+              x: 470,
+              y: 70,
+              laneId: 'lane-eng',
+              shape: 'process',
+            },
+            {
+              id: 'q4',
+              label: 'Countermeasure approved?',
+              x: 710,
+              y: 70,
+              laneId: 'lane-board',
+              shape: 'decision',
+            },
+            {
+              id: 'q5',
+              label: 'Implement fix',
+              x: 960,
+              y: 70,
+              laneId: 'lane-plant',
+              shape: 'process',
+            },
+            {
+              id: 'q6',
+              label: 'Verify recurrence stopped',
+              x: 1180,
+              y: 70,
+              laneId: 'lane-qa',
+              shape: 'process',
+            },
+            {
+              id: 'q7',
+              label: 'Closure logged',
+              x: 1410,
+              y: 70,
+              laneId: 'lane-board',
+              shape: 'end',
+            },
           ],
           [
             { source: 'q1', target: 'q2' },
@@ -1009,22 +1431,79 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
       branch: 'execution',
       preferredTool: 'table',
       buildMap: (ideaId) =>
-        buildTableMap(ideaId, [
-          { key: 'option', header: 'Upgrade Option', type: 'text', visible: true, width: 220 },
-          { key: 'capex', header: 'CAPEX', type: 'currency', visible: true, width: 120 },
-          { key: 'opex_delta', header: 'OPEX Delta', type: 'currency', visible: true, width: 130 },
-          { key: 'oee_gain', header: 'OEE Gain', type: 'text', visible: true, width: 110 },
-          { key: 'payback', header: 'Payback (mo.)', type: 'number', visible: true, width: 120 },
-          { key: 'risk', header: 'Risk', type: 'select', visible: true, width: 110, options: ['Low', 'Medium', 'High'] },
-          { key: 'status', header: 'Status', type: 'status', visible: true, width: 120 },
-          { key: 'priority', header: 'Priority', type: 'rating', visible: true, width: 100 },
-          { key: 'note', header: 'Why it matters', type: 'text', visible: true, width: 240 },
-        ], [
-          { option: 'Line 3 sensor refresh', capex: 85000, opex_delta: 12000, oee_gain: '+3.5 pts', payback: 14, risk: 'Low', status: 'done', priority: 5, note: 'Fastest unlock for telemetry trust.' },
-          { option: 'Predictive maintenance starter pack', capex: 140000, opex_delta: 28000, oee_gain: '+5.2 pts', payback: 18, risk: 'Medium', status: 'in_progress', priority: 5, note: 'Best long-term reliability improvement.' },
-          { option: 'Changeover automation kit', capex: 220000, opex_delta: 32000, oee_gain: '+6.1 pts', payback: 24, risk: 'Medium', status: 'todo', priority: 4, note: 'Big effect on throughput, but requires process discipline.' },
-          { option: 'Full line replication package', capex: 410000, opex_delta: 60000, oee_gain: '+7.8 pts', payback: 31, risk: 'High', status: 'todo', priority: 3, note: 'Board-scale move, should follow pilot proof.' },
-        ]),
+        buildTableMap(
+          ideaId,
+          [
+            { key: 'option', header: 'Upgrade Option', type: 'text', visible: true, width: 220 },
+            { key: 'capex', header: 'CAPEX', type: 'currency', visible: true, width: 120 },
+            {
+              key: 'opex_delta',
+              header: 'OPEX Delta',
+              type: 'currency',
+              visible: true,
+              width: 130,
+            },
+            { key: 'oee_gain', header: 'OEE Gain', type: 'text', visible: true, width: 110 },
+            { key: 'payback', header: 'Payback (mo.)', type: 'number', visible: true, width: 120 },
+            {
+              key: 'risk',
+              header: 'Risk',
+              type: 'select',
+              visible: true,
+              width: 110,
+              options: ['Low', 'Medium', 'High'],
+            },
+            { key: 'status', header: 'Status', type: 'status', visible: true, width: 120 },
+            { key: 'priority', header: 'Priority', type: 'rating', visible: true, width: 100 },
+            { key: 'note', header: 'Why it matters', type: 'text', visible: true, width: 240 },
+          ],
+          [
+            {
+              option: 'Line 3 sensor refresh',
+              capex: 85000,
+              opex_delta: 12000,
+              oee_gain: '+3.5 pts',
+              payback: 14,
+              risk: 'Low',
+              status: 'done',
+              priority: 5,
+              note: 'Fastest unlock for telemetry trust.',
+            },
+            {
+              option: 'Predictive maintenance starter pack',
+              capex: 140000,
+              opex_delta: 28000,
+              oee_gain: '+5.2 pts',
+              payback: 18,
+              risk: 'Medium',
+              status: 'in_progress',
+              priority: 5,
+              note: 'Best long-term reliability improvement.',
+            },
+            {
+              option: 'Changeover automation kit',
+              capex: 220000,
+              opex_delta: 32000,
+              oee_gain: '+6.1 pts',
+              payback: 24,
+              risk: 'Medium',
+              status: 'todo',
+              priority: 4,
+              note: 'Big effect on throughput, but requires process discipline.',
+            },
+            {
+              option: 'Full line replication package',
+              capex: 410000,
+              opex_delta: 60000,
+              oee_gain: '+7.8 pts',
+              payback: 31,
+              risk: 'High',
+              status: 'todo',
+              priority: 3,
+              note: 'Board-scale move, should follow pilot proof.',
+            },
+          ]
+        ),
     },
     {
       slug: 'table-partner-portfolio',
@@ -1037,21 +1516,80 @@ function buildDemoIdeas(locale: DemoLocale): DemoIdeaSeed[] {
       branch: 'strategy',
       preferredTool: 'table',
       buildMap: (ideaId) =>
-        buildTableMap(ideaId, [
-          { key: 'partner', header: 'Partner', type: 'text', visible: true, width: 190 },
-          { key: 'region', header: 'Region', type: 'text', visible: true, width: 120 },
-          { key: 'activation_score', header: 'Activation Score', type: 'number', visible: true, width: 130 },
-          { key: 'renewal_risk', header: 'Renewal Risk', type: 'select', visible: true, width: 130, options: ['Low', 'Medium', 'High'] },
-          { key: 'pipeline_quality', header: 'Pipeline Quality', type: 'text', visible: true, width: 130 },
-          { key: 'status', header: 'Status', type: 'status', visible: true, width: 120 },
-          { key: 'priority', header: 'Priority', type: 'rating', visible: true, width: 100 },
-          { key: 'note', header: 'Next action', type: 'text', visible: true, width: 240 },
-        ], [
-          { partner: 'EduMotion France', region: 'France', activation_score: 87, renewal_risk: 'Low', pipeline_quality: 'Strong', status: 'done', priority: 5, note: 'Use as flagship reference partner.' },
-          { partner: 'STEM Iberia', region: 'Spain', activation_score: 72, renewal_risk: 'Medium', pipeline_quality: 'Good', status: 'in_progress', priority: 4, note: 'Needs stronger onboarding cadence.' },
-          { partner: 'NordLearn Distribution', region: 'Nordics', activation_score: 64, renewal_risk: 'Medium', pipeline_quality: 'Mixed', status: 'todo', priority: 3, note: 'Rework value messaging before expansion push.' },
-          { partner: 'ClassFuture DACH', region: 'DACH', activation_score: 79, renewal_risk: 'Low', pipeline_quality: 'Strong', status: 'in_progress', priority: 4, note: 'Good candidate for analytics upsell pilot.' },
-        ]),
+        buildTableMap(
+          ideaId,
+          [
+            { key: 'partner', header: 'Partner', type: 'text', visible: true, width: 190 },
+            { key: 'region', header: 'Region', type: 'text', visible: true, width: 120 },
+            {
+              key: 'activation_score',
+              header: 'Activation Score',
+              type: 'number',
+              visible: true,
+              width: 130,
+            },
+            {
+              key: 'renewal_risk',
+              header: 'Renewal Risk',
+              type: 'select',
+              visible: true,
+              width: 130,
+              options: ['Low', 'Medium', 'High'],
+            },
+            {
+              key: 'pipeline_quality',
+              header: 'Pipeline Quality',
+              type: 'text',
+              visible: true,
+              width: 130,
+            },
+            { key: 'status', header: 'Status', type: 'status', visible: true, width: 120 },
+            { key: 'priority', header: 'Priority', type: 'rating', visible: true, width: 100 },
+            { key: 'note', header: 'Next action', type: 'text', visible: true, width: 240 },
+          ],
+          [
+            {
+              partner: 'EduMotion France',
+              region: 'France',
+              activation_score: 87,
+              renewal_risk: 'Low',
+              pipeline_quality: 'Strong',
+              status: 'done',
+              priority: 5,
+              note: 'Use as flagship reference partner.',
+            },
+            {
+              partner: 'STEM Iberia',
+              region: 'Spain',
+              activation_score: 72,
+              renewal_risk: 'Medium',
+              pipeline_quality: 'Good',
+              status: 'in_progress',
+              priority: 4,
+              note: 'Needs stronger onboarding cadence.',
+            },
+            {
+              partner: 'NordLearn Distribution',
+              region: 'Nordics',
+              activation_score: 64,
+              renewal_risk: 'Medium',
+              pipeline_quality: 'Mixed',
+              status: 'todo',
+              priority: 3,
+              note: 'Rework value messaging before expansion push.',
+            },
+            {
+              partner: 'ClassFuture DACH',
+              region: 'DACH',
+              activation_score: 79,
+              renewal_risk: 'Low',
+              pipeline_quality: 'Strong',
+              status: 'in_progress',
+              priority: 4,
+              note: 'Good candidate for analytics upsell pilot.',
+            },
+          ]
+        ),
     },
     {
       slug: 'whiteboard-board-wall',
@@ -1221,7 +1759,10 @@ async function upsertOrg(organizationId: string): Promise<void> {
 }
 
 function buildEmail(leader: DemoLeaderTemplate, organizationId: string): string {
-  return `${leader.firstName}.${leader.lastName}`.toLowerCase().replace(/\s+/g, '.') + `+${organizationId}@demo.ateliertoys.com`;
+  return (
+    `${leader.firstName}.${leader.lastName}`.toLowerCase().replace(/\s+/g, '.') +
+    `+${organizationId}@demo.ateliertoys.com`
+  );
 }
 
 async function upsertUsers(organizationId: string, locale: DemoLocale): Promise<UserMap> {
@@ -1270,7 +1811,11 @@ async function upsertUsers(organizationId: string, locale: DemoLocale): Promise<
   return userMap;
 }
 
-async function upsertTeams(organizationId: string, userMap: UserMap, locale: DemoLocale): Promise<void> {
+async function upsertTeams(
+  organizationId: string,
+  userMap: UserMap,
+  locale: DemoLocale
+): Promise<void> {
   if (!(await tableExists('teams'))) return;
 
   const teams = [
@@ -1634,7 +2179,10 @@ async function upsertInitiatives(
             organizationId,
             milestone.name,
             milestone.description,
-            materializeRelativeIso(milestone.targetDate, { anchorDate, asEndOfDay: true }).slice(0, 10),
+            materializeRelativeIso(milestone.targetDate, { anchorDate, asEndOfDay: true }).slice(
+              0,
+              10
+            ),
             milestone.status,
             index,
             milestone.isGate ? 1 : 0,
@@ -1842,7 +2390,11 @@ async function upsertToolSessions(
   userMap: UserMap,
   locale: DemoLocale
 ): Promise<void> {
-  const toolTable = (await tableExists('tool_sessions')) ? 'tool_sessions' : (await tableExists('sessions')) ? 'sessions' : null;
+  const toolTable = (await tableExists('tool_sessions'))
+    ? 'tool_sessions'
+    : (await tableExists('sessions'))
+      ? 'sessions'
+      : null;
   if (!toolTable) return;
 
   const tools = [
@@ -2000,7 +2552,15 @@ async function upsertIdeaWorkspaces(
     const ideaId = makeId(organizationId, 'idea', idea.slug);
     const map = idea.buildMap(ideaId);
 
-    const ideaCols = ['id', 'user_id', 'organization_id', 'title', 'body', 'created_at', 'updated_at'];
+    const ideaCols = [
+      'id',
+      'user_id',
+      'organization_id',
+      'title',
+      'body',
+      'created_at',
+      'updated_at',
+    ];
     const ideaVals: Array<string | number> = [
       ideaId,
       ownerUserId,
@@ -2193,7 +2753,14 @@ async function upsertDrdAssessment(
     seeded: true,
   };
 
-  const assessmentCols = ['id', 'organization_id', 'project_id', 'assessment_type', 'name', 'status'];
+  const assessmentCols = [
+    'id',
+    'organization_id',
+    'project_id',
+    'assessment_type',
+    'name',
+    'status',
+  ];
   const assessmentVals: Array<string | number | null> = [
     assessmentId,
     organizationId,
@@ -2287,7 +2854,9 @@ async function upsertDrdAssessment(
     assessmentId,
     organizationId,
     projectId,
-    locale === 'pl' ? 'Raport z baseline DRD - Atelier Forward' : 'DRD Baseline Report - Atelier Forward',
+    locale === 'pl'
+      ? 'Raport z baseline DRD - Atelier Forward'
+      : 'DRD Baseline Report - Atelier Forward',
     'APPROVED',
   ];
 
@@ -2422,7 +2991,10 @@ async function upsertNotifications(
       slug: 'board-pack',
       user: 'antoine-laurent',
       type: 'initiative',
-      title: locale === 'pl' ? 'Board pack czeka na finalny sign-off' : 'Board pack needs final sign-off',
+      title:
+        locale === 'pl'
+          ? 'Board pack czeka na finalny sign-off'
+          : 'Board pack needs final sign-off',
       message:
         locale === 'pl'
           ? 'Pakiet value trackingu jest prawie gotowy. Logika ROI dla top inicjatyw nadal wymaga potwierdzenia.'
@@ -2432,7 +3004,10 @@ async function upsertNotifications(
       slug: 'quality-issue',
       user: 'sophie-bernard',
       type: 'quality',
-      title: locale === 'pl' ? 'Oflagowano wzorzec powtarzalnego defektu' : 'Repeat defect pattern flagged',
+      title:
+        locale === 'pl'
+          ? 'Oflagowano wzorzec powtarzalnego defektu'
+          : 'Repeat defect pattern flagged',
       message:
         locale === 'pl'
           ? 'Drift tolerancji pakowania pojawił się ponownie w Lyon North. Review przyczyny źródłowej jest już zaplanowany.'
@@ -2442,7 +3017,10 @@ async function upsertNotifications(
       slug: 'partner-cohort',
       user: 'thomas-viau',
       type: 'growth',
-      title: locale === 'pl' ? 'Czas na review pierwszej kohorty partnerów' : 'First partner cohort review due',
+      title:
+        locale === 'pl'
+          ? 'Czas na review pierwszej kohorty partnerów'
+          : 'First partner cohort review due',
       message:
         locale === 'pl'
           ? 'Nowe scorecards onboardingowe są gotowe do przeglądu przed callem commercial leadership.'
@@ -2483,7 +3061,8 @@ async function upsertActivityLogs(
       user: 'marc-dubois',
       action: 'initiative.updated',
       entityType: 'initiative',
-      entityName: locale === 'pl' ? 'Rollout Digital Twin dla Linii 3' : 'Line 3 Digital Twin Rollout',
+      entityName:
+        locale === 'pl' ? 'Rollout Digital Twin dla Linii 3' : 'Line 3 Digital Twin Rollout',
       value:
         locale === 'pl'
           ? 'Milestone pilota supervisorów przeszedł na in progress po walidacji zmianowej.'
@@ -2495,7 +3074,9 @@ async function upsertActivityLogs(
       action: 'report.created',
       entityType: 'status_report',
       entityName:
-        locale === 'pl' ? 'Board pre-read: pakiet sygnałów wartości i ryzyka' : 'Board Pre-read: value and risk signal pack',
+        locale === 'pl'
+          ? 'Board pre-read: pakiet sygnałów wartości i ryzyka'
+          : 'Board Pre-read: value and risk signal pack',
       value:
         locale === 'pl'
           ? 'Board pre-read odświeżony o najnowsze confidence bands dla wartości.'
@@ -2604,21 +3185,41 @@ export async function getDemoDatasetStats(organizationId: string): Promise<{
   users: number;
 }> {
   const [projects, initiatives, tasks, decisions, users] = await Promise.all([
-    DbPromise.get<{ c: number }>(`SELECT COUNT(*) as c FROM projects WHERE organization_id = ?`, [organizationId], {
-      fallback: false,
-    }),
-    DbPromise.get<{ c: number }>(`SELECT COUNT(*) as c FROM initiatives WHERE organization_id = ?`, [organizationId], {
-      fallback: false,
-    }),
-    DbPromise.get<{ c: number }>(`SELECT COUNT(*) as c FROM tasks WHERE organization_id = ?`, [organizationId], {
-      fallback: false,
-    }),
-    DbPromise.get<{ c: number }>(`SELECT COUNT(*) as c FROM decisions WHERE organization_id = ?`, [organizationId], {
-      fallback: false,
-    }),
-    DbPromise.get<{ c: number }>(`SELECT COUNT(*) as c FROM users WHERE organization_id = ?`, [organizationId], {
-      fallback: false,
-    }),
+    DbPromise.get<{ c: number }>(
+      `SELECT COUNT(*) as c FROM projects WHERE organization_id = ?`,
+      [organizationId],
+      {
+        fallback: false,
+      }
+    ),
+    DbPromise.get<{ c: number }>(
+      `SELECT COUNT(*) as c FROM initiatives WHERE organization_id = ?`,
+      [organizationId],
+      {
+        fallback: false,
+      }
+    ),
+    DbPromise.get<{ c: number }>(
+      `SELECT COUNT(*) as c FROM tasks WHERE organization_id = ?`,
+      [organizationId],
+      {
+        fallback: false,
+      }
+    ),
+    DbPromise.get<{ c: number }>(
+      `SELECT COUNT(*) as c FROM decisions WHERE organization_id = ?`,
+      [organizationId],
+      {
+        fallback: false,
+      }
+    ),
+    DbPromise.get<{ c: number }>(
+      `SELECT COUNT(*) as c FROM users WHERE organization_id = ?`,
+      [organizationId],
+      {
+        fallback: false,
+      }
+    ),
   ]);
 
   return {
@@ -2665,7 +3266,9 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     const [table, column, joinTable, joinColumn] = query;
     if (!(await tableExists(table))) continue;
     if (!joinTable) {
-      await DbPromise.run(`DELETE FROM ${table} WHERE ${column} = ?`, [organizationId], { fallback: true });
+      await DbPromise.run(`DELETE FROM ${table} WHERE ${column} = ?`, [organizationId], {
+        fallback: true,
+      });
       continue;
     }
     if (!(await tableExists(joinTable))) continue;

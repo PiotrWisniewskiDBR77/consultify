@@ -1702,7 +1702,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
               >
                 {isLoadingMore
                   ? t('feedback.loadingMore', 'Loading…')
-                  : t('feedback.loadMore', `Load ${Math.min(1000, totalCount - feedback.length)} more`)}
+                  : t(
+                      'feedback.loadMore',
+                      `Load ${Math.min(1000, totalCount - feedback.length)} more`
+                    )}
               </button>
             )}
           </div>

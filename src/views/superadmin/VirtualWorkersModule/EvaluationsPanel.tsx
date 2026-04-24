@@ -90,9 +90,7 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
       <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Evaluations
-            </h3>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">Evaluations</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Track benchmark runs, regression checks, and readiness gates before release.
             </p>
@@ -183,9 +181,7 @@ export const EvaluationsPanel: React.FC<EvaluationsPanelProps> = ({ workerId }) 
       ) : items.length === 0 ? (
         <div className="text-center py-16">
           <FlaskConical className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            No evaluations yet.
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">No evaluations yet.</p>
         </div>
       ) : (
         <div className="space-y-3">

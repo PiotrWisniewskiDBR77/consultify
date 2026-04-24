@@ -35,7 +35,9 @@ vi.mock('../../../services/v8/interviewInsightCanon.js', () => ({
 }));
 
 vi.mock('../../../services/v8/interviewInsightFindingsService.js', () => ({
-  validateLifecycleTransition: vi.fn().mockReturnValue({ allowed: true, targetStatus: 'published' }),
+  validateLifecycleTransition: vi
+    .fn()
+    .mockReturnValue({ allowed: true, targetStatus: 'published' }),
   listFindings: vi.fn().mockResolvedValue([]),
   getFinding: vi.fn(),
   addFinding: vi.fn(),
@@ -83,7 +85,9 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
   run: vi.fn().mockResolvedValue({ changes: 1 }),
 }));
 
-import interviewInsightsRoutes, { V8_INTERVIEW_INSIGHTS_CONTRACT } from '../interview-insights.routes.js';
+import interviewInsightsRoutes, {
+  V8_INTERVIEW_INSIGHTS_CONTRACT,
+} from '../interview-insights.routes.js';
 
 function createApp(): Express {
   const app = express();

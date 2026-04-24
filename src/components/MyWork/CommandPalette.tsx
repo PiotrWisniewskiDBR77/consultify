@@ -193,7 +193,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         icon: <Calculator size={18} />,
         category: 'navigation',
         shortcut: 'G $',
-        keywords: ['finance', 'finanse', 'economics', 'model', 'valuation', 'budget', 'statement', 'analysis', 'lane'],
+        keywords: [
+          'finance',
+          'finanse',
+          'economics',
+          'model',
+          'valuation',
+          'budget',
+          'statement',
+          'analysis',
+          'lane',
+        ],
         action: () => {
           navigate('/finance');
           onClose();

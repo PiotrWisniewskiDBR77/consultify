@@ -61,7 +61,9 @@ describe('Public Anna chat — citations/uncertainty contract', () => {
         json: async () => ({
           candidates: [
             {
-              content: { parts: [{ text: 'Consultify helps structure transformation decisions.' }] },
+              content: {
+                parts: [{ text: 'Consultify helps structure transformation decisions.' }],
+              },
             },
           ],
         }),
@@ -104,4 +106,3 @@ describe('Public Anna chat — citations/uncertainty contract', () => {
     expect(res.body.message).toContain('I may be mistaken');
   });
 });
-

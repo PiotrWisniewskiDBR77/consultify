@@ -6,8 +6,8 @@
  */
 
 import { getDatabaseType } from '../config/DatabaseConfig.js';
-import type { IDatabase, RunResult } from './IDatabase.js';
 import logger from '../utils/Logger.js';
+import type { IDatabase, RunResult } from './IDatabase.js';
 
 /**
  * Execute a SQL statement that modifies data

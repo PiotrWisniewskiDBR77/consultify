@@ -51,7 +51,8 @@ vi.mock('../../../services/executionBudgetService.js', () => ({
 }));
 
 vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
-  getExecutionControlTowerQueues: (...args: unknown[]) => mockGetExecutionControlTowerQueues(...args),
+  getExecutionControlTowerQueues: (...args: unknown[]) =>
+    mockGetExecutionControlTowerQueues(...args),
   getExecutionControlTowerItemDetail: (...args: unknown[]) =>
     mockGetExecutionControlTowerItemDetail(...args),
   V8_EXECUTION_CONTROL_TOWER_CONTRACT: 'execution_control_tower_v1',
@@ -255,7 +256,12 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_TOWER_CONTRACT);
     expect(res.body.data?.inQueues).toEqual(['late', 'blocked']);
-    expect(mockGetExecutionControlTowerItemDetail).toHaveBeenCalledWith(ORG, 'INITIATIVE', 'i1', 'p1');
+    expect(mockGetExecutionControlTowerItemDetail).toHaveBeenCalledWith(
+      ORG,
+      'INITIATIVE',
+      'i1',
+      'p1'
+    );
   });
 
   it('GET /api/v8/execution-control/timeline-warnings uses shared snapshot service', async () => {

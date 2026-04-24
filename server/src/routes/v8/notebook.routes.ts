@@ -7,29 +7,29 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import {
+  parseNotebookAttachments,
+  resolveNotebookAttachmentFile,
+} from '../../services/notebookAttachmentService.js';
+import {
+  P07_ACCEPTANCE_CHECKLIST,
+  P07_ANTI_DUPLICATE_RULES,
+  P07_ATTACHMENT_ERROR_TAXONOMY,
+  P07_ATTACHMENT_LIFECYCLE_STATES,
+  P07_CAPTURE_ENTRIES,
+  P07_DEGRADED_SCENARIOS,
+  P07_HANDOFF_TARGETS,
+  P07_NON_GOALS,
+  P07_NOTEBOOK_CANON_CONTRACT,
+  P07_PROVENANCE_LANGUAGE,
+  P07_PROVENANCE_RULES,
+  P07_SEARCH_BASELINE,
+} from '../../services/v8/notebookCanon.js';
+import * as notebookHandoffService from '../../services/v8/notebookHandoffService.js';
+import * as notebookSearchService from '../../services/v8/notebookSearchService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
-import {
-  resolveNotebookAttachmentFile,
-  parseNotebookAttachments,
-} from '../../services/notebookAttachmentService.js';
-import * as notebookHandoffService from '../../services/v8/notebookHandoffService.js';
-import * as notebookSearchService from '../../services/v8/notebookSearchService.js';
-import {
-  P07_ACCEPTANCE_CHECKLIST,
-  P07_DEGRADED_SCENARIOS,
-  P07_ATTACHMENT_LIFECYCLE_STATES,
-  P07_ATTACHMENT_ERROR_TAXONOMY,
-  P07_PROVENANCE_LANGUAGE,
-  P07_PROVENANCE_RULES,
-  P07_CAPTURE_ENTRIES,
-  P07_NON_GOALS,
-  P07_ANTI_DUPLICATE_RULES,
-  P07_NOTEBOOK_CANON_CONTRACT,
-  P07_HANDOFF_TARGETS,
-  P07_SEARCH_BASELINE,
-} from '../../services/v8/notebookCanon.js';
 
 const router = Router();
 
@@ -49,7 +49,10 @@ function notebookMeta(extra?: Record<string, unknown>) {
 function parseCsvParam(v: unknown): string[] | undefined {
   if (v == null || v === '') return undefined;
   const raw = Array.isArray(v) ? v.join(',') : String(v);
-  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  const parts = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   return parts.length ? parts : undefined;
 }
 
@@ -83,7 +86,9 @@ router.get(
 
     const hasAttachmentsExplicit = parseBoolQuery(req.query.has_attachments);
     const has_attachments =
-      hasAttachmentsExplicit !== undefined ? hasAttachmentsExplicit : extractedFilters.has_attachments;
+      hasAttachmentsExplicit !== undefined
+        ? hasAttachmentsExplicit
+        : extractedFilters.has_attachments;
 
     const filters: notebookSearchService.NotebookSearchFilters = {
       ...extractedFilters,
@@ -92,7 +97,8 @@ router.get(
       maturity: req.query.maturity != null ? String(req.query.maturity) : extractedFilters.maturity,
       type: req.query.type != null ? String(req.query.type) : extractedFilters.type,
       owner: req.query.owner != null ? String(req.query.owner) : extractedFilters.owner,
-      visibility: req.query.visibility != null ? String(req.query.visibility) : extractedFilters.visibility,
+      visibility:
+        req.query.visibility != null ? String(req.query.visibility) : extractedFilters.visibility,
       capture_source:
         req.query.capture_source != null
           ? String(req.query.capture_source)
@@ -116,7 +122,9 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { noteId, suggestion } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
     }
     const payload = await notebookHandoffService.buildRadarHandoff(
       noteId,
@@ -133,7 +141,9 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { noteId, seed } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
     }
     const payload = await notebookHandoffService.buildInitiativeHandoff(
       noteId,
@@ -150,7 +160,9 @@ router.post(
     const { organizationId } = getV8Context(req);
     const { noteId, context } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_NOTEBOOK_NOTE_ID_REQUIRED' });
     }
     const payload = await notebookHandoffService.buildTeresaHandoff(
       noteId,
@@ -166,7 +178,9 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { target, payload } = req.body ?? {};
     if (target !== 'radar' && target !== 'inicjatywy' && target !== 'teresa') {
-      return res.status(400).json({ error: 'target must be radar|inicjatywy|teresa', code: 'P07_HANDOFF_TARGET' });
+      return res
+        .status(400)
+        .json({ error: 'target must be radar|inicjatywy|teresa', code: 'P07_HANDOFF_TARGET' });
     }
     const obj =
       payload && typeof payload === 'object' && !Array.isArray(payload)
@@ -223,7 +237,9 @@ router.get(
     const attachmentId = String(req.params.attachmentId || '').trim();
 
     if (!noteId || !attachmentId) {
-      return res.status(400).json({ error: 'noteId and attachmentId required', code: 'P07_PREVIEW_PARAMS_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId and attachmentId required', code: 'P07_PREVIEW_PARAMS_REQUIRED' });
     }
 
     const row = await dbGet<{
@@ -285,7 +301,9 @@ router.get(
     const noteId = String(req.params.noteId || '').trim();
 
     if (!noteId) {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_RESOLVE_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_RESOLVE_NOTE_ID_REQUIRED' });
     }
 
     const row = await dbGet<{
@@ -392,13 +410,17 @@ router.put(
     const { content, expectedVersion } = req.body ?? {};
 
     if (!noteId) {
-      return res.status(400).json({ error: 'noteId required', code: 'P07_CONTENT_NOTE_ID_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'noteId required', code: 'P07_CONTENT_NOTE_ID_REQUIRED' });
     }
     if (content === undefined || content === null) {
       return res.status(400).json({ error: 'content required', code: 'P07_CONTENT_REQUIRED' });
     }
     if (!expectedVersion) {
-      return res.status(400).json({ error: 'expectedVersion required', code: 'P07_EXPECTED_VERSION_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'expectedVersion required', code: 'P07_EXPECTED_VERSION_REQUIRED' });
     }
 
     const row = await dbGet<{
@@ -441,9 +463,8 @@ router.put(
     }
 
     const contentJson = typeof content === 'string' ? content : JSON.stringify(content);
-    const contentText = typeof content === 'string'
-      ? content
-      : (typeof content?.text === 'string' ? content.text : '');
+    const contentText =
+      typeof content === 'string' ? content : typeof content?.text === 'string' ? content.text : '';
 
     await dbRun(
       `UPDATE notebook_pages

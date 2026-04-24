@@ -15,7 +15,10 @@ import { useSearchParams } from 'react-router-dom';
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
-import { downloadSheetArtifactXlsx, resolveTablePlatformWorkspaceIdForTable } from '@/utils/sheetArtifactOpen';
+import {
+  downloadSheetArtifactXlsx,
+  resolveTablePlatformWorkspaceIdForTable,
+} from '@/utils/sheetArtifactOpen';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
@@ -51,7 +54,13 @@ export const ExceleView: React.FC = () => {
   const templatePrompt = searchParams.get('templatePrompt');
   const viewParam = searchParams.get('view');
 
-  const showHome = !artifactId && !templateArtifactId && !templatePrompt && viewParam !== 'new' && !pipeline.currentRun && !pipeline.isGenerating;
+  const showHome =
+    !artifactId &&
+    !templateArtifactId &&
+    !templatePrompt &&
+    viewParam !== 'new' &&
+    !pipeline.currentRun &&
+    !pipeline.isGenerating;
 
   const advanceRef = useRef(pipeline.advancePipeline);
   advanceRef.current = pipeline.advancePipeline;
@@ -66,7 +75,8 @@ export const ExceleView: React.FC = () => {
   // Auto-trigger from builtin template prompt
   const promptTriggered = useRef(false);
   useEffect(() => {
-    if (!templatePrompt || promptTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    if (!templatePrompt || promptTriggered.current || pipeline.currentRun || pipeline.isGenerating)
+      return;
     promptTriggered.current = true;
     autoTriggered.current = true;
     void startRef.current(templatePrompt);
@@ -75,12 +85,19 @@ export const ExceleView: React.FC = () => {
   // Auto-trigger from API template
   const templateTriggered = useRef(false);
   useEffect(() => {
-    if (!templateArtifactId || templateTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    if (
+      !templateArtifactId ||
+      templateTriggered.current ||
+      pipeline.currentRun ||
+      pipeline.isGenerating
+    )
+      return;
     templateTriggered.current = true;
     autoTriggered.current = true;
     Api.get(`/artifacts/${templateArtifactId}`)
       .then((tmpl: any) => {
-        const desc = tmpl?.originSummary?.template?.description || tmpl?.title || 'Spreadsheet from template';
+        const desc =
+          tmpl?.originSummary?.template?.description || tmpl?.title || 'Spreadsheet from template';
         void startRef.current(desc, templateArtifactId);
       })
       .catch(() => {

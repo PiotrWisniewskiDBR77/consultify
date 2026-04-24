@@ -81,12 +81,18 @@ export function exportToMarkdown(
 export const P12_CALM_LOOP_RULES = {
   selectionAfterCreate: 'New node is selected and scrolled into view immediately after creation',
   selectionAfterMove: 'Moved/reparented node retains selection; viewport adjusts if needed',
-  anchorAfterDelete: 'After delete, selection anchors to parent; if parent deleted, nearest sibling; if none, root',
-  cycleDetection: 'Reparent to own descendant is blocked with explicit user-facing error; no silent reorder',
-  collapsePreservesData: 'Collapse hides subtree visually but never deletes data; expand restores full subtree',
-  collapseStateVisible: 'Collapsed state is indicated by a visual cue (chevron/badge) on the parent node',
-  renameInPlace: 'Rename activates inline editing on the selected node; Escape cancels, Enter confirms',
-  rootConstraint: 'A mindmap always has exactly one root; create_root is only valid on an empty canvas',
+  anchorAfterDelete:
+    'After delete, selection anchors to parent; if parent deleted, nearest sibling; if none, root',
+  cycleDetection:
+    'Reparent to own descendant is blocked with explicit user-facing error; no silent reorder',
+  collapsePreservesData:
+    'Collapse hides subtree visually but never deletes data; expand restores full subtree',
+  collapseStateVisible:
+    'Collapsed state is indicated by a visual cue (chevron/badge) on the parent node',
+  renameInPlace:
+    'Rename activates inline editing on the selected node; Escape cancels, Enter confirms',
+  rootConstraint:
+    'A mindmap always has exactly one root; create_root is only valid on an empty canvas',
 } as const;
 
 export const P12_DEGRADED_SCENARIOS = [
@@ -97,7 +103,10 @@ export const P12_DEGRADED_SCENARIOS = [
   { scenario: 'Undo stack corrupted or empty', posture: 'Undo/redo buttons disabled' },
   { scenario: 'Cycle detected during reparent', posture: 'Operation blocked; error toast' },
   { scenario: 'Permission denied', posture: 'All mutation controls disabled; view-only badge' },
-  { scenario: 'Graph exceeds size limit (>500 nodes)', posture: 'Warning banner; creation blocked' },
+  {
+    scenario: 'Graph exceeds size limit (>500 nodes)',
+    posture: 'Warning banner; creation blocked',
+  },
   { scenario: 'WebSocket disconnected', posture: 'Offline badge; local edits queued' },
 ] as const;
 

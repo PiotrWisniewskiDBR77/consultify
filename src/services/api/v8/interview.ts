@@ -88,7 +88,12 @@ export interface V8InterviewInsight {
   executiveSummary?: string;
   themes?: Array<{ title: string; description: string; evidence_refs: string[]; strength: string }>;
   issues?: Array<{ title: string; description: string; severity: string; evidence_refs: string[] }>;
-  opportunities?: Array<{ title: string; description: string; impact: string; evidence_refs: string[] }>;
+  opportunities?: Array<{
+    title: string;
+    description: string;
+    impact: string;
+    evidence_refs: string[];
+  }>;
   status: string;
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
@@ -179,7 +184,10 @@ export const V8InterviewApi = {
     const query: Record<string, string> = {};
     if (params?.limit !== undefined) query.limit = String(params.limit);
     if (params?.offset !== undefined) query.offset = String(params.offset);
-    return v8Get<{ insights: V8InterviewInsight[] }>('/interview/insights', Object.keys(query).length ? query : undefined);
+    return v8Get<{ insights: V8InterviewInsight[] }>(
+      '/interview/insights',
+      Object.keys(query).length ? query : undefined
+    );
   },
 
   getInsight: (id: string) =>
@@ -195,27 +203,44 @@ export const V8InterviewApi = {
   }) => v8Post<{ insight: V8InterviewInsight }>('/interview/insights', payload),
 
   regenerateInsight: (id: string) =>
-    v8Post<{ insight: V8InterviewInsight }>(`/interview/insights/${encodeURIComponent(id)}/regenerate`, {}),
+    v8Post<{ insight: V8InterviewInsight }>(
+      `/interview/insights/${encodeURIComponent(id)}/regenerate`,
+      {}
+    ),
 
-  updateInsight: (id: string, payload: { title?: string; status?: string; exportedToTools?: boolean; exportedToAssessment?: boolean }) =>
-    v8Patch<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`, payload),
+  updateInsight: (
+    id: string,
+    payload: {
+      title?: string;
+      status?: string;
+      exportedToTools?: boolean;
+      exportedToAssessment?: boolean;
+    }
+  ) => v8Patch<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`, payload),
 
   exportInsight: (id: string, payload: { target: 'tools' | 'assessment' }) =>
     v8Post<{ success: boolean; target: string; targetId: string; assessmentType?: string }>(
-      `/interview/insights/${encodeURIComponent(id)}/export`, payload
+      `/interview/insights/${encodeURIComponent(id)}/export`,
+      payload
     ),
 
   getInsightActivity: (id: string) =>
-    v8Get<{ activity: V8InsightActivity[] }>(`/interview/insights/${encodeURIComponent(id)}/activity`),
+    v8Get<{ activity: V8InsightActivity[] }>(
+      `/interview/insights/${encodeURIComponent(id)}/activity`
+    ),
 
   getInsightComments: (id: string) =>
-    v8Get<{ comments: V8InsightComment[] }>(`/interview/insights/${encodeURIComponent(id)}/comments`),
+    v8Get<{ comments: V8InsightComment[] }>(
+      `/interview/insights/${encodeURIComponent(id)}/comments`
+    ),
 
   createInsightComment: (id: string, payload: { content: string; priority?: string }) =>
     v8Post<V8InsightComment>(`/interview/insights/${encodeURIComponent(id)}/comments`, payload),
 
   deleteInsightComment: (id: string, commentId: string) =>
-    v8Delete<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}/comments/${encodeURIComponent(commentId)}`),
+    v8Delete<{ success: boolean }>(
+      `/interview/insights/${encodeURIComponent(id)}/comments/${encodeURIComponent(commentId)}`
+    ),
 
   deleteInsight: (id: string) =>
     v8Delete<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`),
@@ -258,11 +283,7 @@ export const V8InterviewApi = {
       payload
     ),
 
-  updateFinding: (
-    insightId: string,
-    findingId: string,
-    payload: Record<string, unknown>
-  ) =>
+  updateFinding: (insightId: string, findingId: string, payload: Record<string, unknown>) =>
     v8Patch<{ data: { finding: Record<string, unknown> } }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}`,
       payload

@@ -1,10 +1,25 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronRight, Copy, Download, Loader2, Maximize2, Presentation, Sparkles, X } from 'lucide-react';
+import {
+  ChevronRight,
+  Copy,
+  Download,
+  Loader2,
+  Maximize2,
+  Presentation,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { buildReportMarkdown, computeRAG, exportReportPDF, RAG_CONFIG, type ReportDef } from './executionReports';
+import {
+  buildReportMarkdown,
+  computeRAG,
+  exportReportPDF,
+  RAG_CONFIG,
+  type ReportDef,
+} from './executionReports';
 
 interface ReportCompactPanelProps {
   report: ReportDef | null;
@@ -40,7 +55,10 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   </div>
 );
 
-const PanelSection: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+const PanelSection: React.FC<{ label: string; children: React.ReactNode }> = ({
+  label,
+  children,
+}) => (
   <section className="space-y-2">
     <SectionLabel>{label}</SectionLabel>
     {children}
@@ -67,7 +85,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
     const md = buildReportMarkdown(report, rag);
     navigator.clipboard.writeText(md).then(
       () => toast.success(t('execution.reportPanel.copied', 'Report copied to clipboard')),
-      () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed')),
+      () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
     );
   }, [rag, report, t]);
 
@@ -91,7 +109,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
     const title = encodeURIComponent(report.title);
     window.open(
       `/prezentacje?sourceType=execution_report&sourceName=${title}&content=${encoded}`,
-      '_blank',
+      '_blank'
     );
     toast.success(t('execution.reportPanel.presentationOpened', 'Opening presentation generator…'));
   }, [rag, report, t]);
@@ -129,7 +147,9 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                   <div className="mb-1 flex items-center gap-2">
                     <div className="flex items-center gap-1.5">
                       <span className={`h-2 w-2 rounded-full shadow-sm ${RAG_DOT[rag]}`} />
-                      <span className={`text-[10px] font-semibold uppercase tracking-wide ${ragConf.text}`}>
+                      <span
+                        className={`text-[10px] font-semibold uppercase tracking-wide ${ragConf.text}`}
+                      >
                         {ragConf.label}
                       </span>
                     </div>
@@ -243,7 +263,9 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                   <PanelSection label="Mandatory Sections">
                     <ol className="list-inside list-decimal space-y-0.5">
                       {report.sections.map((s) => (
-                        <li key={s} className="text-[11px] text-slate-500 dark:text-slate-400">{s}</li>
+                        <li key={s} className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {s}
+                        </li>
                       ))}
                     </ol>
                   </PanelSection>
@@ -279,7 +301,9 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                             'border-slate-200/60 bg-white/40 dark:border-white/[0.05] dark:bg-white/[0.02]',
                             action.severity === 'critical' ? 'ring-1 ring-rose-500/20' : '',
                             action.severity === 'warn' ? 'ring-1 ring-amber-500/20' : '',
-                          ].filter(Boolean).join(' ')}
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
                         >
                           <div className="text-[12px] font-semibold text-slate-900 dark:text-white">
                             {action.action}
@@ -311,10 +335,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
                     {((report.dataQuality?.knownLimitations ?? []).length ?? 0) > 0 && (
                       <div className="mt-2 space-y-1">
                         {(report.dataQuality?.knownLimitations ?? []).map((lim) => (
-                          <div
-                            key={lim}
-                            className="text-[10px] text-slate-400 dark:text-slate-500"
-                          >
+                          <div key={lim} className="text-[10px] text-slate-400 dark:text-slate-500">
                             ⚠ {lim}
                           </div>
                         ))}

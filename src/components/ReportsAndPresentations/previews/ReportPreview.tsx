@@ -23,9 +23,7 @@ export const ReportPreviewBody: React.FC<ReportPreviewBodyProps> = ({ report, tr
     <div className="text-xs text-slate-500 dark:text-slate-400">
       {report.reportType} | {report.status}
     </div>
-    <div className="text-sm text-slate-600 dark:text-slate-300">
-      Owner: {report.owner}
-    </div>
+    <div className="text-sm text-slate-600 dark:text-slate-300">Owner: {report.owner}</div>
     {trustProps ? <TrustStatePreviewSection {...trustProps} /> : null}
   </div>
 );

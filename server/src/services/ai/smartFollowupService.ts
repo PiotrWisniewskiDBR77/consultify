@@ -84,7 +84,9 @@ class SmartFollowupService {
 
     if (/\b(ROI|cost|budget|financial|koszt|budżet)\b/i.test(input.response)) {
       suggestions.push({
-        text: isPl ? 'Jakie są ryzyka finansowe tego podejścia?' : 'What are the financial risks of this approach?',
+        text: isPl
+          ? 'Jakie są ryzyka finansowe tego podejścia?'
+          : 'What are the financial risks of this approach?',
         type: 'deepDive',
         confidence: 0.7,
       });
@@ -92,7 +94,9 @@ class SmartFollowupService {
 
     if (/\b(initiative|projekt|project)\b/i.test(input.response)) {
       suggestions.push({
-        text: isPl ? 'Porównaj to z alternatywnymi rozwiązaniami' : 'Compare this with alternative solutions',
+        text: isPl
+          ? 'Porównaj to z alternatywnymi rozwiązaniami'
+          : 'Compare this with alternative solutions',
         type: 'alternative',
         confidence: 0.65,
       });
@@ -106,7 +110,9 @@ class SmartFollowupService {
 
     if (suggestions.length < 3) {
       suggestions.push({
-        text: isPl ? 'Rozwiń ten temat bardziej szczegółowo' : 'Elaborate on this topic in more detail',
+        text: isPl
+          ? 'Rozwiń ten temat bardziej szczegółowo'
+          : 'Elaborate on this topic in more detail',
         type: 'deepDive',
         confidence: 0.5,
       });

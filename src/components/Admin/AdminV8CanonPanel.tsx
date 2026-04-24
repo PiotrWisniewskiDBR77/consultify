@@ -1,4 +1,4 @@
-import { Building2, ShieldCheck, Settings2, Users2, Wrench } from 'lucide-react';
+import { Building2, Settings2, ShieldCheck, Users2, Wrench } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -31,17 +31,20 @@ const COPY: Record<Locale, CanonCopy> = {
       {
         id: 'team',
         title: 'Team operations',
-        description: 'Membership, access, profiling, and day-to-day tenant operations should live in one operator layer.',
+        description:
+          'Membership, access, profiling, and day-to-day tenant operations should live in one operator layer.',
       },
       {
         id: 'org',
         title: 'Organization controls',
-        description: 'Admin extends organization truth with operational control rather than redefining tenant identity.',
+        description:
+          'Admin extends organization truth with operational control rather than redefining tenant identity.',
       },
       {
         id: 'sync',
         title: 'Sync and integration controls',
-        description: 'Connector setup, health, and recovery belong inside the tenant operator model, not as isolated tooling.',
+        description:
+          'Connector setup, health, and recovery belong inside the tenant operator model, not as isolated tooling.',
       },
     ],
     boundaries: [
@@ -61,17 +64,20 @@ const COPY: Record<Locale, CanonCopy> = {
       {
         id: 'team',
         title: 'Operacje zespolowe',
-        description: 'Membership, access, profiling i codzienne operacje tenantu powinny byc skupione w jednej warstwie operatora.',
+        description:
+          'Membership, access, profiling i codzienne operacje tenantu powinny byc skupione w jednej warstwie operatora.',
       },
       {
         id: 'org',
         title: 'Kontrole organizacyjne',
-        description: 'Admin rozszerza truth organizacji o kontrole operacyjne zamiast na nowo definiowac tozsamosc tenantu.',
+        description:
+          'Admin rozszerza truth organizacji o kontrole operacyjne zamiast na nowo definiowac tozsamosc tenantu.',
       },
       {
         id: 'sync',
         title: 'Kontrole sync i integracji',
-        description: 'Setup connectorow, health i recovery powinny nalezec do modelu operatora tenantu, a nie do osobnych narzedzi.',
+        description:
+          'Setup connectorow, health i recovery powinny nalezec do modelu operatora tenantu, a nie do osobnych narzedzi.',
       },
     ],
     boundaries: [
@@ -110,12 +116,16 @@ export const AdminV8CanonPanel: React.FC<AdminV8CanonPanelProps> = ({
           >
             {copy.title}
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             {copy.subtitle}
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.95fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.95fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               {copy.pillarsTitle}

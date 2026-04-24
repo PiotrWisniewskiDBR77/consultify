@@ -166,7 +166,12 @@ export const ResultsHub: React.FC = () => {
     'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors'
   >(
     (VALID_REPORT_MODES as readonly string[]).includes(searchParams.get('rmode') || '')
-      ? (searchParams.get('rmode') as 'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors')
+      ? (searchParams.get('rmode') as
+          | 'tracked'
+          | 'reports'
+          | 'schedules'
+          | 'wallboards'
+          | 'connectors')
       : 'tracked'
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -242,11 +247,19 @@ export const ResultsHub: React.FC = () => {
       setActiveTabRaw(tab);
     }
     const mode = searchParams.get('mode') as typeof kpiWorkspaceMode | null;
-    if (mode && (VALID_KPI_MODES as readonly string[]).includes(mode) && mode !== kpiWorkspaceMode) {
+    if (
+      mode &&
+      (VALID_KPI_MODES as readonly string[]).includes(mode) &&
+      mode !== kpiWorkspaceMode
+    ) {
       setKpiWorkspaceModeRaw(mode);
     }
     const rmode = searchParams.get('rmode') as typeof reportWorkspaceMode | null;
-    if (rmode && (VALID_REPORT_MODES as readonly string[]).includes(rmode) && rmode !== reportWorkspaceMode) {
+    if (
+      rmode &&
+      (VALID_REPORT_MODES as readonly string[]).includes(rmode) &&
+      rmode !== reportWorkspaceMode
+    ) {
       setReportWorkspaceModeRaw(rmode);
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps

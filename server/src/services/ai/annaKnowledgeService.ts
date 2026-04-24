@@ -182,8 +182,7 @@ function detectRequestedProducts(query: string): {
 function isDbR77PortfolioQuestion(query: string): boolean {
   const q = String(query || '').toLowerCase();
   const mentionsDbR = /\bdbr77\b/.test(q) || /\bdbr\b/.test(q);
-  const mentionsAnnaOrProduct =
-    /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
+  const mentionsAnnaOrProduct = /\banna\b/.test(q) || /\bconsultify\b/.test(q) || mentionsDbR;
 
   const portfolioKeywords =
     /\bportfolio\b/.test(q) ||
@@ -385,7 +384,8 @@ export async function buildAnnaKnowledgeContext(opts: {
     if (!decision.allowed) {
       return {
         ...EMPTY_RESULT,
-        contextText: decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+        contextText:
+          decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
       };
     }
   } catch (gatewayError: unknown) {
@@ -456,7 +456,11 @@ export async function buildAnnaKnowledgeContext(opts: {
                   1
                 );
                 if (preferred.length > 0) return preferred;
-                return await searchScopedKnowledge(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
+                return await searchScopedKnowledge(
+                  `${hint} ${originalQuery}`,
+                  scoped.fallbackDocs,
+                  1
+                );
               })
           )
         ).flat()
@@ -579,7 +583,8 @@ export async function buildAnnaVoiceBootstrap(
     if (!decision.allowed) {
       return {
         ...EMPTY_RESULT,
-        contextText: decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+        contextText:
+          decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
       };
     }
   } catch (gatewayError: unknown) {

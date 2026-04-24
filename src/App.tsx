@@ -10,8 +10,8 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 
-import { RouterSync } from './components/RouterSync';
 import { EnvironmentBadge } from './components/layout/EnvironmentBadge';
+import { RouterSync } from './components/RouterSync';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppProviders } from './providers/AppProviders';

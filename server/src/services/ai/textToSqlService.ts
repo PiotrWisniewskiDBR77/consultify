@@ -18,54 +18,100 @@ export interface TextToSqlResult {
   warning?: string;
 }
 
-const DOMAIN_SCHEMAS: Record<string, { tables: string[]; description: string; sampleColumns: string[] }> = {
+const DOMAIN_SCHEMAS: Record<
+  string,
+  { tables: string[]; description: string; sampleColumns: string[] }
+> = {
   initiatives: {
     tables: ['initiatives'],
     description: 'Initiatives with ROI, status, priority, timeline, budget, and category data',
     sampleColumns: [
-      'id', 'title', 'description', 'status', 'priority', 'category',
-      'estimated_roi', 'estimated_cost', 'estimated_benefit',
-      'start_date', 'end_date', 'owner_id', 'organization_id', 'created_at',
+      'id',
+      'title',
+      'description',
+      'status',
+      'priority',
+      'category',
+      'estimated_roi',
+      'estimated_cost',
+      'estimated_benefit',
+      'start_date',
+      'end_date',
+      'owner_id',
+      'organization_id',
+      'created_at',
     ],
   },
   assessments: {
     tables: ['assessment_dimensions', 'assessment_scores'],
     description: 'Assessment dimensions, scores, maturity levels, and improvement areas',
     sampleColumns: [
-      'id', 'dimension_name', 'score', 'max_score', 'maturity_level',
-      'assessment_id', 'organization_id', 'created_at',
+      'id',
+      'dimension_name',
+      'score',
+      'max_score',
+      'maturity_level',
+      'assessment_id',
+      'organization_id',
+      'created_at',
     ],
   },
   financials: {
     tables: ['financial_analyses', 'financial_statements'],
     description: 'Financial analyses, statements, revenue, costs, and projections',
     sampleColumns: [
-      'id', 'type', 'period', 'revenue', 'costs', 'profit', 'margin',
-      'organization_id', 'created_at',
+      'id',
+      'type',
+      'period',
+      'revenue',
+      'costs',
+      'profit',
+      'margin',
+      'organization_id',
+      'created_at',
     ],
   },
   tasks: {
     tables: ['tasks'],
     description: 'Tasks with assignee, status, priority, due dates, and initiative linkage',
     sampleColumns: [
-      'id', 'title', 'status', 'priority', 'assignee_id',
-      'initiative_id', 'due_date', 'completed_at', 'organization_id',
+      'id',
+      'title',
+      'status',
+      'priority',
+      'assignee_id',
+      'initiative_id',
+      'due_date',
+      'completed_at',
+      'organization_id',
     ],
   },
   decisions: {
     tables: ['decisions'],
     description: 'Decisions with type, status, impact, stakeholders, and outcomes',
     sampleColumns: [
-      'id', 'title', 'decision_type', 'status', 'impact_level',
-      'decided_by', 'decided_at', 'organization_id',
+      'id',
+      'title',
+      'decision_type',
+      'status',
+      'impact_level',
+      'decided_by',
+      'decided_at',
+      'organization_id',
     ],
   },
   kpis: {
     tables: ['kpi_values', 'kpi_definitions'],
     description: 'KPI definitions, target values, actual values, and trends',
     sampleColumns: [
-      'id', 'kpi_name', 'target_value', 'actual_value', 'unit',
-      'period', 'organization_id', 'created_at',
+      'id',
+      'kpi_name',
+      'target_value',
+      'actual_value',
+      'unit',
+      'period',
+      'organization_id',
+      'created_at',
     ],
   },
 };
@@ -89,15 +135,23 @@ class TextToSqlService {
     const schema = DOMAIN_SCHEMAS[domain];
 
     if (!schema) {
-      throw new Error(`Unknown data domain: ${domain}. Available: ${Object.keys(DOMAIN_SCHEMAS).join(', ')}`);
+      throw new Error(
+        `Unknown data domain: ${domain}. Available: ${Object.keys(DOMAIN_SCHEMAS).join(', ')}`
+      );
     }
 
-    const sql = this.generateSql(input.question, domain, schema, input.organizationId, input.limit || 25);
+    const sql = this.generateSql(
+      input.question,
+      domain,
+      schema,
+      input.organizationId,
+      input.limit || 25
+    );
 
     this.validateSql(sql);
 
     try {
-      const rows = await dbAll(sql.query, sql.params) as Record<string, unknown>[];
+      const rows = (await dbAll(sql.query, sql.params)) as Record<string, unknown>[];
       const safeRows = (rows || []).slice(0, input.limit || 25);
       const columns = safeRows.length > 0 ? Object.keys(safeRows[0]) : [];
 
@@ -108,9 +162,10 @@ class TextToSqlService {
         rowCount: safeRows.length,
         columns,
         dataDomain: domain,
-        warning: safeRows.length >= (input.limit || 25)
-          ? `Results truncated to ${input.limit || 25} rows`
-          : undefined,
+        warning:
+          safeRows.length >= (input.limit || 25)
+            ? `Results truncated to ${input.limit || 25} rows`
+            : undefined,
       };
     } catch (err: any) {
       logger.warn(`[TextToSQL] Query execution failed: ${err?.message}`);
@@ -194,9 +249,10 @@ class TextToSqlService {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const groupBy = selectCols.includes(',') && selectCols.includes('COUNT')
-      ? `GROUP BY ${selectCols.split(',')[0].trim()}`
-      : '';
+    const groupBy =
+      selectCols.includes(',') && selectCols.includes('COUNT')
+        ? `GROUP BY ${selectCols.split(',')[0].trim()}`
+        : '';
 
     const query = `SELECT ${selectCols} FROM ${table} ${whereClause} ${groupBy} ORDER BY ${orderBy} LIMIT ?`;
     params.push(limit);
@@ -207,7 +263,9 @@ class TextToSqlService {
   private validateSql(sql: { query: string }): void {
     for (const pattern of FORBIDDEN_PATTERNS) {
       if (pattern.test(sql.query)) {
-        throw new Error('Query contains forbidden SQL operations. Only SELECT queries are allowed.');
+        throw new Error(
+          'Query contains forbidden SQL operations. Only SELECT queries are allowed.'
+        );
       }
     }
 

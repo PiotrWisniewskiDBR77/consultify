@@ -26,7 +26,12 @@ const SUGGESTION_KEYS = [
   'presentations.agent.suggestions.improveVisuals',
 ];
 
-export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, onSendMessage, conversationId }) => {
+export const AgentPanel: React.FC<AgentPanelProps> = ({
+  onClose,
+  sourceNames,
+  onSendMessage,
+  conversationId,
+}) => {
   const { t } = useTranslation();
   const { activeMessages, addMessage } = useConversationStore();
   const [messages, setMessages] = useState<AgentMessage[]>([
@@ -48,7 +53,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
       .filter((m) => m.role === 'user' || m.role === 'ai')
       .map((m) => ({
         id: m.id || `kimi-${Date.now()}-${Math.random()}`,
-        role: m.role === 'user' ? 'user' as const : 'agent' as const,
+        role: m.role === 'user' ? ('user' as const) : ('agent' as const),
         text: typeof m.content === 'string' ? m.content : '',
         timestamp: m.timestamp || new Date().toISOString(),
       }))
@@ -75,7 +80,9 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
     setInput('');
 
     if (conversationId) {
-      addMessage?.({ conversationId, role: 'user', content: message, messageType: 'text' }).catch(() => {});
+      addMessage?.({ conversationId, role: 'user', content: message, messageType: 'text' }).catch(
+        () => {}
+      );
     }
 
     try {
@@ -97,7 +104,9 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ onClose, sourceNames, on
       setMessages((prev) => [...prev, agentMsg]);
 
       if (conversationId) {
-        addMessage?.({ conversationId, role: 'ai', content: reply, messageType: 'text' }).catch(() => {});
+        addMessage?.({ conversationId, role: 'ai', content: reply, messageType: 'text' }).catch(
+          () => {}
+        );
       }
     } catch {
       const agentMsg: AgentMessage = {

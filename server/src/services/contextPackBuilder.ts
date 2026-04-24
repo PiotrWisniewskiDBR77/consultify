@@ -118,18 +118,29 @@ async function injectOrganizationContext(pack: ContextPack, organizationId: stri
   const ops = resolved.operations;
 
   if (p?.companyName) pack.headings.unshift(`Organization: ${p.companyName}`);
-  if (p?.industry) pack.key_points.push(`Industry: ${p.industry}${p.industrySubsector ? ` / ${p.industrySubsector}` : ''}`);
+  if (p?.industry)
+    pack.key_points.push(
+      `Industry: ${p.industry}${p.industrySubsector ? ` / ${p.industrySubsector}` : ''}`
+    );
   if (p?.organizationType) pack.key_points.push(`Organization type: ${p.organizationType}`);
-  if (p?.companySize) pack.key_points.push(`Scale: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} employees)` : ''}`);
+  if (p?.companySize)
+    pack.key_points.push(
+      `Scale: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} employees)` : ''}`
+    );
   if (s?.mission) pack.key_points.push(`Mission: ${s.mission}`);
-  if (s?.priorities && s.priorities.length > 0) pack.key_points.push(`Strategic priorities: ${s.priorities.join(', ')}`);
-  if (s?.competitivePosition) pack.key_points.push(`Competitive position: ${s.competitivePosition}`);
-  if (sys?.stack && sys.stack.length > 0) pack.key_points.push(`Technology stack: ${sys.stack.join(', ')}`);
-  if (sys?.coreSystems && sys.coreSystems.length > 0) pack.key_points.push(`Core systems: ${sys.coreSystems.join(', ')}`);
+  if (s?.priorities && s.priorities.length > 0)
+    pack.key_points.push(`Strategic priorities: ${s.priorities.join(', ')}`);
+  if (s?.competitivePosition)
+    pack.key_points.push(`Competitive position: ${s.competitivePosition}`);
+  if (sys?.stack && sys.stack.length > 0)
+    pack.key_points.push(`Technology stack: ${sys.stack.join(', ')}`);
+  if (sys?.coreSystems && sys.coreSystems.length > 0)
+    pack.key_points.push(`Core systems: ${sys.coreSystems.join(', ')}`);
   if (ops?.deliveryModel) pack.key_points.push(`Delivery model: ${ops.deliveryModel}`);
   if (p?.revenueModel) pack.key_points.push(`Revenue model: ${p.revenueModel}`);
   if (ops?.productionArchetype) pack.key_points.push(`Production: ${ops.productionArchetype}`);
-  if (ops?.constraints && ops.constraints.length > 0) pack.key_points.push(`Constraints: ${ops.constraints.slice(0, 3).join(', ')}`);
+  if (ops?.constraints && ops.constraints.length > 0)
+    pack.key_points.push(`Constraints: ${ops.constraints.slice(0, 3).join(', ')}`);
 }
 
 async function injectTemplateInventory(pack: ContextPack, organizationId: string): Promise<void> {
@@ -146,7 +157,11 @@ async function injectTemplateInventory(pack: ContextPack, organizationId: string
   const deprecated: string[] = [];
   for (const r of rows) {
     let summary: any = null;
-    try { summary = r.origin_summary_json ? JSON.parse(r.origin_summary_json) : null; } catch { /* */ }
+    try {
+      summary = r.origin_summary_json ? JSON.parse(r.origin_summary_json) : null;
+    } catch {
+      /* */
+    }
     const tpl = summary?.template;
     const title = tpl?.metadata?.resolvedTitle || tpl?.description || r.output_type;
     const status = String(tpl?.status || '').toLowerCase();
@@ -158,7 +173,9 @@ async function injectTemplateInventory(pack: ContextPack, organizationId: string
   }
 
   if (active.length > 0) {
-    pack.key_points.push(`Available templates (${active.length}): ${active.slice(0, 5).join(', ')}${active.length > 5 ? '...' : ''}`);
+    pack.key_points.push(
+      `Available templates (${active.length}): ${active.slice(0, 5).join(', ')}${active.length > 5 ? '...' : ''}`
+    );
   }
   if (deprecated.length > 0) {
     pack.key_points.push(`Deprecated templates: ${deprecated.join(', ')}`);
@@ -684,7 +701,8 @@ async function extractArtifactGovernanceData(
   if (!artifact) return;
 
   const parts: string[] = [];
-  if (artifact.title) parts.push(`Artifact "${artifact.title}" (${artifact.artifact_type || ref.artifact_type})`);
+  if (artifact.title)
+    parts.push(`Artifact "${artifact.title}" (${artifact.artifact_type || ref.artifact_type})`);
   if (artifact.visibility_scope) parts.push(`visibility: ${artifact.visibility_scope}`);
   if (artifact.validation_state) parts.push(`validation: ${artifact.validation_state}`);
   if (artifact.publish_state) parts.push(`publish state: ${artifact.publish_state}`);

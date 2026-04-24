@@ -145,9 +145,7 @@ function notebookSelectExpr(
   fallbackSql: string
 ): string {
   const prefix = tableAlias ? `${tableAlias}.` : '';
-  return cols.has(column)
-    ? `${prefix}${column} as ${alias}`
-    : `${fallbackSql} as ${alias}`;
+  return cols.has(column) ? `${prefix}${column} as ${alias}` : `${fallbackSql} as ${alias}`;
 }
 
 function buildNotebookSelectFields(cols: Set<string>, tableAlias = 'np'): string {
@@ -166,9 +164,7 @@ function buildNotebookSelectFields(cols: Set<string>, tableAlias = 'np'): string
     notebookSelectExpr(cols, tableAlias, 'icon', 'icon', 'NULL'),
     notebookSelectExpr(cols, tableAlias, 'summary', 'summary', 'NULL'),
     notebookSelectExpr(cols, tableAlias, 'status', 'status', `'active'`),
-    cols.has('pinned')
-      ? `coalesce(${prefix}pinned, 0) as pinned`
-      : `0 as pinned`,
+    cols.has('pinned') ? `coalesce(${prefix}pinned, 0) as pinned` : `0 as pinned`,
     cols.has('verification_status')
       ? `coalesce(${prefix}verification_status, 'unverified') as "verificationStatus"`
       : `'unverified' as "verificationStatus"`,
@@ -1127,13 +1123,15 @@ router.post(
         userId,
       });
     } catch (error) {
-      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
-        error: error instanceof Error ? error.message : 'Attachment upload failed',
-        code:
-          error instanceof NotebookAttachmentMutationError
-            ? error.code
-            : 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
-      });
+      return res
+        .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
+        .json({
+          error: error instanceof Error ? error.message : 'Attachment upload failed',
+          code:
+            error instanceof NotebookAttachmentMutationError
+              ? error.code
+              : 'NOTEBOOK_ATTACHMENT_UPLOAD_FAILED',
+        });
     }
 
     const row = await queryHelpers.queryOne<any>(
@@ -1215,7 +1213,11 @@ router.delete(
       return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
     }
 
-    if (!parseNotebookAttachments(existing.attachmentsJson).some((attachment) => attachment.id === attachmentId)) {
+    if (
+      !parseNotebookAttachments(existing.attachmentsJson).some(
+        (attachment) => attachment.id === attachmentId
+      )
+    ) {
       return res
         .status(404)
         .json({ error: 'Attachment not found', code: 'NOTEBOOK_ATTACHMENT_NOT_FOUND' });
@@ -1227,13 +1229,15 @@ router.delete(
         attachmentId,
       });
     } catch (error) {
-      return res.status(error instanceof NotebookAttachmentMutationError ? error.status : 400).json({
-        error: error instanceof Error ? error.message : 'Attachment delete failed',
-        code:
-          error instanceof NotebookAttachmentMutationError
-            ? error.code
-            : 'NOTEBOOK_ATTACHMENT_DELETE_FAILED',
-      });
+      return res
+        .status(error instanceof NotebookAttachmentMutationError ? error.status : 400)
+        .json({
+          error: error instanceof Error ? error.message : 'Attachment delete failed',
+          code:
+            error instanceof NotebookAttachmentMutationError
+              ? error.code
+              : 'NOTEBOOK_ATTACHMENT_DELETE_FAILED',
+        });
     }
 
     const row = await queryHelpers.queryOne<any>(
@@ -2170,9 +2174,8 @@ router.get(
 
     // P02 §2.3.13: Bridge external calendar items from calendarInteropService
     try {
-      const { getCalendarItems, getCalendarSources } = await import(
-        '../../services/v8/calendarInteropService.js'
-      );
+      const { getCalendarItems, getCalendarSources } =
+        await import('../../services/v8/calendarInteropService.js');
       const p02Sources = await getCalendarSources(organizationId);
       const p02Items = await getCalendarItems(organizationId, {
         startAt: start ?? undefined,
@@ -2185,15 +2188,19 @@ router.get(
         if (item.sourceSystem === 'consultify') continue;
 
         const source = sourceMap.get(item.sourceId);
-        const eventSource: string = item.sourceSystem === 'google_calendar' ? 'google'
-          : item.sourceSystem === 'outlook_calendar' ? 'outlook'
-          : 'consultify';
+        const eventSource: string =
+          item.sourceSystem === 'google_calendar'
+            ? 'google'
+            : item.sourceSystem === 'outlook_calendar'
+              ? 'outlook'
+              : 'consultify';
 
         if (!requestedSources.includes(eventSource)) continue;
 
         events.push({
           id: item.calendarItemId,
-          title: item.visibilityClass === 'free_busy_only' ? 'Busy' : (item.title ?? 'External event'),
+          title:
+            item.visibilityClass === 'free_busy_only' ? 'Busy' : (item.title ?? 'External event'),
           start: item.startAt,
           end: item.endAt || undefined,
           allDay: item.allDay,

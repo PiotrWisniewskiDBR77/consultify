@@ -6119,10 +6119,7 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch feedback AI insights');
   },
 
-  getFeedback: async (opts?: {
-    limit?: number;
-    offset?: number;
-  }): Promise<any[]> => {
+  getFeedback: async (opts?: { limit?: number; offset?: number }): Promise<any[]> => {
     // Thin wrapper kept for backward compat — returns just the array so
     // existing call sites (pending-badge count, dashboards) keep working.
     const page = await Api.getFeedbackPage(opts);
@@ -12304,10 +12301,9 @@ export const Api = {
    */
   getConversationProposals: async (conversationId: string) => {
     try {
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/conversations/${conversationId}/proposals`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/conversations/${conversationId}/proposals`, {
+        method: 'GET',
+      });
       return handleResponse(res, 'Failed to load conversation proposals');
     } catch (err: any) {
       console.error('[Api] getConversationProposals error:', err);
@@ -12358,14 +12354,12 @@ export const Api = {
     try {
       const qs = new URLSearchParams();
       if (params?.windowDays) qs.set('windowDays', String(params.windowDays));
-      if (params?.topNegativeLimit)
-        qs.set('topNegativeLimit', String(params.topNegativeLimit));
+      if (params?.topNegativeLimit) qs.set('topNegativeLimit', String(params.topNegativeLimit));
       if (params?.scope) qs.set('scope', params.scope);
       const s = qs.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/feedback/summary${s ? `?${s}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/summary${s ? `?${s}` : ''}`, {
+        method: 'GET',
+      });
       if (!res.ok) return null;
       return (await res.json()) as { summary: any };
     } catch (err: any) {
@@ -12391,10 +12385,9 @@ export const Api = {
       }
       if (params?.limit) qs.set('limit', String(params.limit));
       const s = qs.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/feedback/tuning-tickets${s ? `?${s}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/tuning-tickets${s ? `?${s}` : ''}`, {
+        method: 'GET',
+      });
       if (!res.ok) return null;
       return (await res.json()) as { tickets: any[] };
     } catch (err: any) {
@@ -12449,21 +12442,14 @@ export const Api = {
    * Read-only list/detail for the Runs view. `status` is a
    * comma-separated list; leaving it blank returns everything.
    */
-  listAiRuns: async (params?: {
-    status?: string[];
-    kind?: string;
-    limit?: number;
-  }) => {
+  listAiRuns: async (params?: { status?: string[]; kind?: string; limit?: number }) => {
     try {
       const qs = new URLSearchParams();
       if (params?.status?.length) qs.set('status', params.status.join(','));
       if (params?.kind) qs.set('kind', params.kind);
       if (params?.limit) qs.set('limit', String(params.limit));
       const s = qs.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/runs${s ? `?${s}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/runs${s ? `?${s}` : ''}`, { method: 'GET' });
       if (!res.ok) return { runs: [] as any[] };
       return (await res.json()) as { runs: any[] };
     } catch (err: any) {
@@ -12474,10 +12460,9 @@ export const Api = {
 
   getAiRun: async (id: string) => {
     try {
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/runs/${encodeURIComponent(id)}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/runs/${encodeURIComponent(id)}`, {
+        method: 'GET',
+      });
       if (!res.ok) return null;
       return (await res.json()) as { run: any };
     } catch (err: any) {
@@ -12514,20 +12499,15 @@ export const Api = {
    * tagged with `source_class: 'org_memory'` on the server so the
    * trust bundle citation roll-up treats them as a first-class source.
    */
-  searchOrgMemory: async (params: {
-    q: string;
-    limit?: number;
-    sourceType?: string;
-  }) => {
+  searchOrgMemory: async (params: { q: string; limit?: number; sourceType?: string }) => {
     try {
       const qs = new URLSearchParams();
       qs.set('q', params.q);
       if (params.limit) qs.set('limit', String(params.limit));
       if (params.sourceType) qs.set('sourceType', params.sourceType);
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/org-memory/search?${qs.toString()}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/org-memory/search?${qs.toString()}`, {
+        method: 'GET',
+      });
       if (!res.ok) return { hits: [] as any[], count: 0 };
       return (await res.json()) as { hits: any[]; count: number };
     } catch (err: any) {
@@ -12554,10 +12534,9 @@ export const Api = {
       if (params?.userScope) q.set('userScope', params.userScope);
       if (params?.limit) q.set('limit', String(params.limit));
       const qs = q.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`, {
+        method: 'GET',
+      });
       if (!res.ok) return { sessions: [] as any[] };
       return (await res.json()) as { sessions: any[] };
     } catch (err: any) {

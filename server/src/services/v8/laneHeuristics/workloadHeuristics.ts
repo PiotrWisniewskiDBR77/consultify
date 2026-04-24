@@ -13,10 +13,14 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
   const { tasks, capacityAlerts, controlTowerCounts } = input;
 
   // Build per-person workload
-  const assignees: Record<string, { total: number; done: number; blocked: number; inProgress: number; noEstimate: number }> = {};
+  const assignees: Record<
+    string,
+    { total: number; done: number; blocked: number; inProgress: number; noEstimate: number }
+  > = {};
   tasks.forEach((t: any) => {
     const a = t.assigneeName || t.assignee_id || 'Unassigned';
-    if (!assignees[a]) assignees[a] = { total: 0, done: 0, blocked: 0, inProgress: 0, noEstimate: 0 };
+    if (!assignees[a])
+      assignees[a] = { total: 0, done: 0, blocked: 0, inProgress: 0, noEstimate: 0 };
     assignees[a].total++;
     const s = String(t.status).toUpperCase();
     if (s === 'DONE' || s === 'COMPLETED') assignees[a].done++;
@@ -25,11 +29,15 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
     if (!t.estimated_hours) assignees[a].noEstimate++;
   });
 
-  const sorted = Object.entries(assignees).sort(([,a],[,b]) => b.total - a.total);
-  const overloaded = sorted.filter(([,s]) => s.total > 10);
-  const underloaded = sorted.filter(([n,s]) => n !== 'Unassigned' && s.total < 3 && s.total > 0);
+  const sorted = Object.entries(assignees).sort(([, a], [, b]) => b.total - a.total);
+  const overloaded = sorted.filter(([, s]) => s.total > 10);
+  const underloaded = sorted.filter(([n, s]) => n !== 'Unassigned' && s.total < 3 && s.total > 0);
   const unassignedCount = assignees['Unassigned']?.total || 0;
-  const noEstimateTasks = tasks.filter((t: any) => !t.estimated_hours && !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase()));
+  const noEstimateTasks = tasks.filter(
+    (t: any) =>
+      !t.estimated_hours &&
+      !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
+  );
   const overloadedCount = controlTowerCounts['overloaded'] || 0;
 
   // Observations
@@ -91,8 +99,8 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
     effects.push({
       id: uid('eff-wl'),
       insightId: insId,
-      consequence: `Overloaded team members risk slippage on ${overloaded.reduce((s, [,v]) => s + v.inProgress, 0)} in-progress tasks`,
-      blastRadius: overloaded.reduce((s, [,v]) => s + v.total, 0),
+      consequence: `Overloaded team members risk slippage on ${overloaded.reduce((s, [, v]) => s + v.inProgress, 0)} in-progress tasks`,
+      blastRadius: overloaded.reduce((s, [, v]) => s + v.total, 0),
       timelineImpact: 'Expected 1-2 week delay on overloaded work',
     });
   } else if (overloaded.length > 0) {
@@ -110,7 +118,7 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
       id: uid('eff-wl'),
       insightId: insId,
       consequence: 'Burnout risk and quality degradation on overloaded work',
-      blastRadius: overloaded.reduce((s, [,v]) => s + v.total, 0),
+      blastRadius: overloaded.reduce((s, [, v]) => s + v.total, 0),
       timelineImpact: 'Ongoing slippage without intervention',
     });
   }
@@ -119,7 +127,8 @@ export function analyzeWorkload(input: HeuristicInput): HeuristicOutput {
     insights.push({
       id: uid('ins-wl'),
       observationIds: observations.filter((o) => o.metric.includes('estimate')).map((o) => o.id),
-      interpretation: 'Over 30% of tasks lack estimates — overload analysis may be significantly understated',
+      interpretation:
+        'Over 30% of tasks lack estimates — overload analysis may be significantly understated',
       isSystemic: true,
       requiresAction: true,
       confidence: 'low',

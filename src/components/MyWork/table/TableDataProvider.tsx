@@ -9,12 +9,12 @@
 import React, { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
 
 import type {
+  FilterGroup as TPFilterGroup,
   TablePlatformBase,
   TablePlatformField,
   TablePlatformTable,
   TablePlatformView,
   ViewConfig,
-  FilterGroup as TPFilterGroup,
 } from '@/types/tablePlatform';
 
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
@@ -50,8 +50,31 @@ interface UIState {
 type UIAction =
   | { type: 'SET_DETAIL_RECORD'; id: string | null }
   | { type: 'SET_EXPANDED_RECORD'; id: string | null }
-  | { type: 'TOGGLE_PANEL'; panel: keyof Omit<UIState, 'detailRecordId' | 'expandedRecordId' | 'contextMenuColumn' | 'editingCellId' | 'editingFieldId' | 'platformTab'> }
-  | { type: 'SET_PANEL'; panel: keyof Omit<UIState, 'detailRecordId' | 'expandedRecordId' | 'contextMenuColumn' | 'editingCellId' | 'editingFieldId' | 'platformTab'>; value: boolean }
+  | {
+      type: 'TOGGLE_PANEL';
+      panel: keyof Omit<
+        UIState,
+        | 'detailRecordId'
+        | 'expandedRecordId'
+        | 'contextMenuColumn'
+        | 'editingCellId'
+        | 'editingFieldId'
+        | 'platformTab'
+      >;
+    }
+  | {
+      type: 'SET_PANEL';
+      panel: keyof Omit<
+        UIState,
+        | 'detailRecordId'
+        | 'expandedRecordId'
+        | 'contextMenuColumn'
+        | 'editingCellId'
+        | 'editingFieldId'
+        | 'platformTab'
+      >;
+      value: boolean;
+    }
   | { type: 'SET_CONTEXT_MENU_COLUMN'; key: string | null }
   | { type: 'SET_EDITING_CELL'; id: string | null }
   | { type: 'SET_EDITING_FIELD'; id: string | null }
@@ -306,4 +329,4 @@ export function useTableData(): TableDataContextValue {
 }
 
 // Re-export UI action types for consumers
-export type { UIState, UIAction };
+export type { UIAction, UIState };

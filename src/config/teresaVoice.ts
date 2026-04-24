@@ -15,8 +15,7 @@ export const TERESA_VOICE_CONFIG = {
   connectionTimeoutMs: 10000,
   recoveryPhrases: {
     pl: {
-      fallbackToText:
-        'Przechodzę na tekst, bo głos jest niestabilny. Oto propozycja.',
+      fallbackToText: 'Przechodzę na tekst, bo głos jest niestabilny. Oto propozycja.',
       repeatRequest: 'Powtórz proszę ostatnią instrukcję.',
       approvalRequired:
         'Nie mogę wykonać tej akcji bez zatwierdzenia. Powiedz: "Zatwierdź" albo kliknij Approve.',
@@ -26,8 +25,7 @@ export const TERESA_VOICE_CONFIG = {
       handoffComplete: 'Gotowe. Przekazałam kontekst do modułu {module}.',
     },
     en: {
-      fallbackToText:
-        'Switching to text — voice is unstable. Here is the proposal.',
+      fallbackToText: 'Switching to text — voice is unstable. Here is the proposal.',
       repeatRequest: 'Please repeat your last instruction.',
       approvalRequired:
         'I cannot perform this action without approval. Say "Approve" or click the Approve button.',

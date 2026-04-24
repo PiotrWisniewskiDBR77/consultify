@@ -14,7 +14,10 @@ interface MarketingLayoutProps {
   footerVariant?: 'default' | 'knowledge';
 }
 
-export const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children, footerVariant = 'default' }) => {
+export const MarketingLayout: React.FC<MarketingLayoutProps> = ({
+  children,
+  footerVariant = 'default',
+}) => {
   const navigate = useNavigate();
   const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } =
     useAppStore();

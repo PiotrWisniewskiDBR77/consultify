@@ -10,13 +10,7 @@ import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 export { default } from '../InterviewInsightService.js';
-export {
-  create,
-  getById,
-  list,
-  regenerate,
-  deleteInsight,
-} from '../InterviewInsightService.js';
+export { create, deleteInsight, getById, list, regenerate } from '../InterviewInsightService.js';
 
 const LOG_PREFIX = '[V8:InterviewInsight]';
 
@@ -44,11 +38,15 @@ export async function getCompletedSessionsWithoutInsights(params: {
     );
     const count = rows?.[0]?.cnt ?? 0;
     if (count > 0) {
-      logger.info(`${LOG_PREFIX} Found ${count} completed session(s) without insights for org ${params.organizationId}`);
+      logger.info(
+        `${LOG_PREFIX} Found ${count} completed session(s) without insights for org ${params.organizationId}`
+      );
     }
     return count;
   } catch (err) {
-    logger.warn(`${LOG_PREFIX} getCompletedSessionsWithoutInsights failed: ${(err as Error).message}`);
+    logger.warn(
+      `${LOG_PREFIX} getCompletedSessionsWithoutInsights failed: ${(err as Error).message}`
+    );
     return 0;
   }
 }

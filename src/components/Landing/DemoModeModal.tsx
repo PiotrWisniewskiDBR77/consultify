@@ -61,7 +61,8 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
           } catch (signupErr: any) {
             const message = String(signupErr?.message || '');
             const emailAlreadyExists =
-              signupErr?.code === 'EMAIL_IN_USE' || message.toLowerCase().includes('already in use');
+              signupErr?.code === 'EMAIL_IN_USE' ||
+              message.toLowerCase().includes('already in use');
 
             if (!emailAlreadyExists) {
               throw signupErr;

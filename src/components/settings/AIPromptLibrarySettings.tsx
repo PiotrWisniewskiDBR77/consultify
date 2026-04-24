@@ -97,9 +97,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
   const [editorPrompt, setEditorPrompt] = useState('');
 
   const filteredPrompts =
-    filterCategory === 'all'
-      ? prompts
-      : prompts.filter((p) => p.category === filterCategory);
+    filterCategory === 'all' ? prompts : prompts.filter((p) => p.category === filterCategory);
 
   useEffect(() => {
     const loadPrompts = async () => {
@@ -251,7 +249,9 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                 )}
               >
-                {cat === 'all' ? t('common.all', 'All') : CATEGORY_LABELS[cat as SavedPrompt['category']]}
+                {cat === 'all'
+                  ? t('common.all', 'All')
+                  : CATEGORY_LABELS[cat as SavedPrompt['category']]}
               </button>
             ))}
           </div>
@@ -351,9 +351,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     <SettingsSelect
                       options={categoryOptions}
                       value={editorCategory}
-                      onChange={(e) =>
-                        setEditorCategory(e.target.value as SavedPrompt['category'])
-                      }
+                      onChange={(e) => setEditorCategory(e.target.value as SavedPrompt['category'])}
                     />
                   </SettingsFormRow>
                 </div>
@@ -383,9 +381,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     disabled={saving}
                     className="px-4 py-1.5 text-sm font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors"
                   >
-                    {editingPrompt
-                      ? t('common.save', 'Save')
-                      : t('common.create', 'Create')}
+                    {editingPrompt ? t('common.save', 'Save') : t('common.create', 'Create')}
                   </button>
                 </div>
               </div>

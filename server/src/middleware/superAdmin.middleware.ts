@@ -55,11 +55,7 @@ const normalizeSuperAdminRole = (role?: string): string => {
     .replace(/\s+/g, '_');
 
   // Supported aliases: SUPERADMIN, SUPER_ADMIN, superadmin, super_admin.
-  if (
-    normalized === 'superadmin' ||
-    normalized === 'super_admin' ||
-    normalized === 'super-admin'
-  ) {
+  if (normalized === 'superadmin' || normalized === 'super_admin' || normalized === 'super-admin') {
     return 'superadmin';
   }
 
@@ -197,8 +193,7 @@ export const verifySuperAdmin = async (
         id: decoded.id,
         email: '',
         name: '',
-        role:
-          normalizeSuperAdminRole(userRole) === 'superadmin' ? 'SUPERADMIN' : (userRole as any),
+        role: normalizeSuperAdminRole(userRole) === 'superadmin' ? 'SUPERADMIN' : (userRole as any),
         organizationId: decoded.organizationId || decoded.organization_id || '',
         isSuperAdmin: true,
         superadminCapabilities: getSuperAdminCapabilities(userRole, decoded.superadminCapabilities),

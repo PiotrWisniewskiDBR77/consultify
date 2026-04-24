@@ -27,13 +27,17 @@ export const UpdateToolSessionSchema = z.object({
   contextSnapshot: z.record(z.string(), z.unknown()).optional(),
   status: z.enum(['DRAFT', 'IN_PROGRESS', 'REVIEW', 'FINALIZED', 'FAILED']).optional(),
   wizardState: z.record(z.string(), z.unknown()).optional(),
-  missingItems: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    severity: z.enum(['blocker', 'warning', 'info']).optional(),
-    stepId: z.string().optional(),
-    resolved: z.boolean().optional(),
-  })).optional(),
+  missingItems: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        severity: z.enum(['blocker', 'warning', 'info']).optional(),
+        stepId: z.string().optional(),
+        resolved: z.boolean().optional(),
+      })
+    )
+    .optional(),
   failureReason: z.string().optional(),
 });
 

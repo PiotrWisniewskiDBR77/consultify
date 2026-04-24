@@ -33,11 +33,10 @@ export const GlobalSecurityPostureView: React.FC = () => {
     (async () => {
       try {
         setNotice(null);
-        const [systemHealth, operatorOverview] =
-          await Promise.all([
-            Api.getSystemHealth(),
-            Api.getSuperAdminOperatorOverview(),
-          ]);
+        const [systemHealth, operatorOverview] = await Promise.all([
+          Api.getSystemHealth(),
+          Api.getSuperAdminOperatorOverview(),
+        ]);
         if (cancelled) return;
         setData({
           systemHealth,
@@ -104,7 +103,9 @@ export const GlobalSecurityPostureView: React.FC = () => {
           >
             {posture.activePrivilegedSessions}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Active admin sessions that can reach P33.</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Active admin sessions that can reach P33.
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
@@ -112,10 +113,14 @@ export const GlobalSecurityPostureView: React.FC = () => {
             <ShieldAlert className="h-4 w-4 text-rose-500" />
             Audit debt
           </div>
-          <div className={`mt-2 text-2xl font-semibold ${postureTone(posture.unresolvedAudit, 5, 15)}`}>
+          <div
+            className={`mt-2 text-2xl font-semibold ${postureTone(posture.unresolvedAudit, 5, 15)}`}
+          >
             {posture.unresolvedAudit}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Unresolved privileged actions awaiting review.</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Unresolved privileged actions awaiting review.
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
@@ -123,10 +128,14 @@ export const GlobalSecurityPostureView: React.FC = () => {
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             Critical incidents
           </div>
-          <div className={`mt-2 text-2xl font-semibold ${postureTone(posture.criticalIncidents, 1, 3)}`}>
+          <div
+            className={`mt-2 text-2xl font-semibold ${postureTone(posture.criticalIncidents, 1, 3)}`}
+          >
             {posture.criticalIncidents}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Open high-severity or critical security incidents.</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Open high-severity or critical security incidents.
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
@@ -145,7 +154,9 @@ export const GlobalSecurityPostureView: React.FC = () => {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Security controls</h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Security controls
+          </h3>
           <div className="mt-4 grid gap-3">
             {[
               {
@@ -175,7 +186,9 @@ export const GlobalSecurityPostureView: React.FC = () => {
               >
                 {item.icon}
                 <div>
-                  <div className="text-sm font-medium text-slate-900 dark:text-white">{item.label}</div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                    {item.label}
+                  </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">{item.value}</div>
                 </div>
               </div>
@@ -184,16 +197,21 @@ export const GlobalSecurityPostureView: React.FC = () => {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Evidence checklist</h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Evidence checklist
+          </h3>
           <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
             <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-              Privileged activity is visible through admin session stats, audit counts, and incident views.
+              Privileged activity is visible through admin session stats, audit counts, and incident
+              views.
             </div>
             <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-              MFA and SSO controls are separated from billing and support operations through capability-based auth.
+              MFA and SSO controls are separated from billing and support operations through
+              capability-based auth.
             </div>
             <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-              Security failures remain fail-closed: unresolved audit debt and critical incidents stay visible in the operator shell.
+              Security failures remain fail-closed: unresolved audit debt and critical incidents
+              stay visible in the operator shell.
             </div>
           </div>
         </div>

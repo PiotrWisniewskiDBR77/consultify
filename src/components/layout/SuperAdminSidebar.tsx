@@ -16,12 +16,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
 // Unified AI Platform structure (6 tabs with sub-tabs)
-export type SuperAdminSection =
-  | 'customers'
-  | 'ai-platform'
-  | 'system'
-  | 'content'
-  | 'security';
+export type SuperAdminSection = 'customers' | 'ai-platform' | 'system' | 'content' | 'security';
 
 // Mapping between sections and AppView
 export const sectionToAppView: Record<SuperAdminSection, AppView> = {
@@ -86,7 +81,12 @@ const menuItems: MenuItem[] = [
   { id: 'customers', label: 'Tenant & User Ops', icon: <Users size={20} />, separator: 'before' },
   { id: 'ai-platform', label: 'AI Operations', icon: <Brain size={20} />, separator: 'before' },
   { id: 'system', label: 'Connector Ops', icon: <Server size={20} />, separator: 'before' },
-  { id: 'content', label: 'Governance & Compliance', icon: <Layers size={20} />, separator: 'before' },
+  {
+    id: 'content',
+    label: 'Governance & Compliance',
+    icon: <Layers size={20} />,
+    separator: 'before',
+  },
   { id: 'security', label: 'Platform Security', icon: <Shield size={20} /> },
 ];
 

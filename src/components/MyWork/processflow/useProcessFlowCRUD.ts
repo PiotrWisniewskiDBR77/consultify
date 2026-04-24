@@ -6,6 +6,7 @@
  * blocking the UI. Enable via the `enabled` option.
  */
 import { useCallback, useRef } from 'react';
+
 import { Api } from '@/services/api';
 
 interface UseProcessFlowCRUDOpts {
@@ -35,74 +36,68 @@ export function useProcessFlowCRUD({ processId, enabled = false }: UseProcessFlo
         return null;
       }
     },
-    [enabled, processId],
+    [enabled, processId]
   );
 
-  const fetchContract = useCallback(
-    () => callApi('GET', 'contract'),
-    [callApi],
-  );
+  const fetchContract = useCallback(() => callApi('GET', 'contract'), [callApi]);
 
   const fetchObjects = useCallback(
     () => callApi('GET', `${processId}/objects`),
-    [callApi, processId],
+    [callApi, processId]
   );
 
   const createNode = useCallback(
     (data: { type: string; label: string; position?: { x: number; y: number }; laneId?: string }) =>
       callApi('POST', `${processId}/nodes`, data),
-    [callApi, processId],
+    [callApi, processId]
   );
 
   const updateNodeLabel = useCallback(
-    (nodeId: string, label: string) =>
-      callApi('PUT', `nodes/${nodeId}/label`, { label }),
-    [callApi],
+    (nodeId: string, label: string) => callApi('PUT', `nodes/${nodeId}/label`, { label }),
+    [callApi]
   );
 
   const moveNode = useCallback(
     (nodeId: string, position: { x: number; y: number }) =>
       callApi('PUT', `nodes/${nodeId}/move`, position),
-    [callApi],
+    [callApi]
   );
 
   const updateGatewayKind = useCallback(
     (nodeId: string, gatewayKind: 'xor' | 'and') =>
       callApi('PUT', `nodes/${nodeId}/gateway-kind`, { gatewayKind }),
-    [callApi],
+    [callApi]
   );
 
   const updateNodeLane = useCallback(
-    (nodeId: string, laneId: string) =>
-      callApi('PUT', `nodes/${nodeId}/lane`, { laneId }),
-    [callApi],
+    (nodeId: string, laneId: string) => callApi('PUT', `nodes/${nodeId}/lane`, { laneId }),
+    [callApi]
   );
 
   const deleteNode = useCallback(
     (nodeId: string) => callApi('DELETE', `nodes/${nodeId}`),
-    [callApi],
+    [callApi]
   );
 
   const createEdge = useCallback(
     (data: { source: string; target: string; label?: string }) =>
       callApi('POST', `${processId}/edges`, data),
-    [callApi, processId],
+    [callApi, processId]
   );
 
   const updateEdgeLabel = useCallback(
-    (edgeId: string, label: string) =>
-      callApi('PUT', `edges/${edgeId}/label`, { label }),
-    [callApi],
+    (edgeId: string, label: string) => callApi('PUT', `edges/${edgeId}/label`, { label }),
+    [callApi]
   );
 
   const deleteEdge = useCallback(
     (edgeId: string) => callApi('DELETE', `edges/${edgeId}`),
-    [callApi],
+    [callApi]
   );
 
   const fetchProposal = useCallback(
     (proposalId: string) => callApi('GET', `ai-proposals/${proposalId}`),
-    [callApi],
+    [callApi]
   );
 
   return {

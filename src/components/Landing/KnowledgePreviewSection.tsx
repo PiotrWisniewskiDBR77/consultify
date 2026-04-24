@@ -10,7 +10,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { isKbCategoryForCurrentSite } from '../../config/knowledgeBaseSite';
-import { KbArticleListItem, useKnowledgeFeatured, useKnowledgePublicPreview } from '../../hooks/useKnowledge';
+import {
+  KbArticleListItem,
+  useKnowledgeFeatured,
+  useKnowledgePublicPreview,
+} from '../../hooks/useKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 
 function kbImg(url: string | null | undefined): string | undefined {
@@ -82,7 +86,11 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
       <div className="relative aspect-video bg-gradient-to-br from-purple-900 to-indigo-900 overflow-hidden">
         {article.thumbnail_url ? (
           <img
-            src={kbThumb(article.thumbnail_url) || kbImg(article.thumbnail_url) || article.thumbnail_url}
+            src={
+              kbThumb(article.thumbnail_url) ||
+              kbImg(article.thumbnail_url) ||
+              article.thumbnail_url
+            }
             alt={article.title}
             width={600}
             height={338}
@@ -154,15 +162,19 @@ export const KnowledgePreviewSection: React.FC<KnowledgePreviewSectionProps> = (
   const { t } = useTranslation();
   const navigate = useNavigate();
   const previewLimit = 3;
-  const { data: featuredArticles = [], isLoading: featuredLoading } = useKnowledgeFeatured(previewLimit);
-  const { data: previewArticles = [], isLoading: previewLoading } = useKnowledgePublicPreview(previewLimit * 2);
+  const { data: featuredArticles = [], isLoading: featuredLoading } =
+    useKnowledgeFeatured(previewLimit);
+  const { data: previewArticles = [], isLoading: previewLoading } = useKnowledgePublicPreview(
+    previewLimit * 2
+  );
 
   const articles = useMemo(
-    () => buildLandingArticles(
-      featuredArticles.filter(a => isKbCategoryForCurrentSite(a.category_slug)),
-      previewArticles.filter(a => isKbCategoryForCurrentSite(a.category_slug)),
-      previewLimit
-    ),
+    () =>
+      buildLandingArticles(
+        featuredArticles.filter((a) => isKbCategoryForCurrentSite(a.category_slug)),
+        previewArticles.filter((a) => isKbCategoryForCurrentSite(a.category_slug)),
+        previewLimit
+      ),
     [featuredArticles, previewArticles]
   );
   const isLoading = featuredLoading || previewLoading;

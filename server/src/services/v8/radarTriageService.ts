@@ -8,6 +8,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -198,7 +199,11 @@ function checkHardGates(category: RadarCategory, bands: RadarBands): string[] {
   return rules;
 }
 
-function determinePriority(score: number, bands: RadarBands, hardGateRules: string[]): PriorityLevel {
+function determinePriority(
+  score: number,
+  bands: RadarBands,
+  hardGateRules: string[]
+): PriorityLevel {
   if (hardGateRules.length > 0) return 'P0';
   if (
     bands.impact >= 2 &&
@@ -239,7 +244,10 @@ function determineTriageState(signal: Partial<RadarTriageSignal>): TriageState {
   return 'ready';
 }
 
-function determineTargetModule(category: RadarCategory, archetype: P0Archetype | null): TargetModule {
+function determineTargetModule(
+  category: RadarCategory,
+  archetype: P0Archetype | null
+): TargetModule {
   if (archetype) return P0_ARCHETYPES[archetype].primaryTarget;
   switch (category) {
     case 'execution_delivery':
@@ -323,7 +331,7 @@ export async function createTriageSignal(params: {
      AND created_at > datetime('now', '-24 hours')
      ORDER BY created_at DESC LIMIT 5`,
     [params.organizationId, params.category],
-    { fallback: true },
+    { fallback: true }
   );
 
   let isDuplicate = false;
@@ -332,7 +340,7 @@ export async function createTriageSignal(params: {
       params.whyNow.rationaleText
         .toLowerCase()
         .split(/\s+/)
-        .filter((w) => w.length > 3),
+        .filter((w) => w.length > 3)
     );
     for (const dup of recentDuplicates) {
       const dupWhyNow = safeJsonParse<any>(dup.why_now_json, {});
@@ -340,7 +348,7 @@ export async function createTriageSignal(params: {
         String(dupWhyNow.rationaleText || '')
           .toLowerCase()
           .split(/\s+/)
-          .filter((w: string) => w.length > 3),
+          .filter((w: string) => w.length > 3)
       );
       const overlap = [...inputWords].filter((w) => dupWords.has(w)).length;
       if (inputWords.size > 0 && overlap / inputWords.size > 0.6) {
@@ -357,7 +365,10 @@ export async function createTriageSignal(params: {
   let archetype: P0Archetype | null = null;
   if (priorityLevel === 'P0') {
     if (params.category === 'execution_delivery') archetype = 'critical_path_blocker';
-    else if (params.category === 'decision_alignment' && params.whyNow.primaryDriver === 'escalation')
+    else if (
+      params.category === 'decision_alignment' &&
+      params.whyNow.primaryDriver === 'escalation'
+    )
       archetype = 'stakeholder_escalation';
     else if (params.category === 'decision_alignment') archetype = 'decision_needed';
     else if (params.category === 'governance_compliance') archetype = 'compliance_deadline';
@@ -426,16 +437,18 @@ export async function createTriageSignal(params: {
       signal.triageState,
       signal.createdAt,
       signal.updatedAt,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created triage signal ${signalId} P=${priorityLevel} cat=${params.category}`);
+  logger.info(
+    `${LOG_PREFIX} Created triage signal ${signalId} P=${priorityLevel} cat=${params.category}`
+  );
   return signal;
 }
 
 export async function getTriageSignals(
   organizationId: string,
-  filters?: { category?: RadarCategory; priorityLevel?: PriorityLevel; triageState?: TriageState },
+  filters?: { category?: RadarCategory; priorityLevel?: PriorityLevel; triageState?: TriageState }
 ): Promise<RadarTriageSignal[]> {
   let sql = `SELECT * FROM v8_radar_triage_signals WHERE organization_id = ?`;
   const params: unknown[] = [organizationId];
@@ -465,12 +478,12 @@ export async function getTriageSignals(
 
 export async function getTriageSignal(
   signalId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<RadarTriageSignal | null> {
   const row = await dbGet<any>(
     `SELECT * FROM v8_radar_triage_signals WHERE signal_id = ? AND organization_id = ?`,
     [signalId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) return null;
   return rowToTriageSignal(row);
@@ -495,7 +508,7 @@ export function buildHandoffContext(signal: RadarTriageSignal): RadarHandoffCont
 
 export async function executeHandoff(
   signalId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<{
   handoffContext: RadarHandoffContext;
   targetModule: TargetModule;
@@ -527,7 +540,8 @@ export async function executeHandoff(
     targetPayload = {
       ...targetPayload,
       deployment_suggestion: {
-        affected_milestone_area: signal.evidence.evidencePointers.map((p) => p.ref).join(', ') || 'TBD',
+        affected_milestone_area:
+          signal.evidence.evidencePointers.map((p) => p.ref).join(', ') || 'TBD',
         blocker_summary: signal.whyNow.rationaleText,
         next_step: `Resolve ${signal.category} issue`,
         expected_unblock: signal.whyNow.timeWindow,
@@ -548,7 +562,7 @@ export async function executeHandoff(
   const now = new Date().toISOString();
   await dbRun(
     `UPDATE v8_radar_triage_signals SET updated_at = ? WHERE signal_id = ? AND organization_id = ?`,
-    [now, signalId, organizationId],
+    [now, signalId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Executed handoff for signal ${signalId} → ${targetModule}`);

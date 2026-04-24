@@ -39,7 +39,8 @@ export const fetchWithRetry = async (
     ? { ...((requestOptions.headers as Record<string, string>) || {}) }
     : { ...getHeaders(), ...((requestOptions.headers as Record<string, string>) || {}) };
 
-  const doFetch = () => fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+  const doFetch = () =>
+    fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
 
   let res: Response;
   try {
@@ -62,7 +63,11 @@ export const fetchWithRetry = async (
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(url, { ...requestOptions, headers, credentials: options.credentials ?? 'include' });
+      res = await fetch(url, {
+        ...requestOptions,
+        headers,
+        credentials: options.credentials ?? 'include',
+      });
     } else {
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
     }

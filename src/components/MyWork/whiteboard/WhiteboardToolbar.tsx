@@ -25,8 +25,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CanvasBgPattern } from '../ideaSelectionTypes';
-import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
 import { STICKY_COLORS } from './nodes/whiteboardNodeHelpers';
+import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
 import { ToolbarBtn, ToolbarDropdown } from './WhiteboardToolbarPrimitives';
 
 export interface WhiteboardToolbarProps {

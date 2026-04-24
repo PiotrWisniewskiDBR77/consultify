@@ -45,12 +45,12 @@ import { useNavigate } from 'react-router-dom';
 import { type UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { useArtifactOutputsForInitiative } from '@/components/ReportsAndPresentations/useRapData';
 import { Api } from '@/services/api';
+import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import {
   getInitiativeGateReadinessTruth,
   getInitiativeStatusPreflightTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
-import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 import { getWorkflowStatusForInitiative } from '@/utils/initiativeWorkflowStatus';
@@ -312,7 +312,9 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
   const wfStatus = getWorkflowStatusForInitiative(initiative as any);
   const status = (
-    (Object.values(InitiativeStatus) as string[]).includes(wfStatus) ? wfStatus : InitiativeStatus.DRAFT
+    (Object.values(InitiativeStatus) as string[]).includes(wfStatus)
+      ? wfStatus
+      : InitiativeStatus.DRAFT
   ) as InitiativeStatus;
   const statusMeta = getStatusMeta(status);
   const statusActions = getStatusActions(status);
@@ -736,7 +738,6 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           </>
         )}
       </div>
-
     </motion.div>
   );
 

@@ -38,9 +38,9 @@ import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
-import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
@@ -53,8 +53,8 @@ import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
 import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
-import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useTeresaVoiceContext } from '../contexts/TeresaVoiceContext';
+import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
@@ -2061,7 +2061,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
           onClose={() => setShowExportModal(false)}
           onExport={handleExportFormat}
         />
-
       </div>
     );
   }
@@ -2379,7 +2378,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
       {/* TTS Indicator - shows when speaking */}
       <TTSIndicator />
-
     </div>
   );
 };

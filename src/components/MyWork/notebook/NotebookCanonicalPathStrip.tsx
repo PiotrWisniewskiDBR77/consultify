@@ -1,4 +1,12 @@
-import { ArrowRight, CheckCircle2, FileOutput, Lightbulb, Paperclip, Radar, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  FileOutput,
+  Lightbulb,
+  Paperclip,
+  Radar,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
 
 interface NotebookCanonicalPathStripProps {
@@ -59,14 +67,20 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
         <WorkflowStep
           icon={<Paperclip size={13} />}
           title={isPolish ? '1. Dodaj źródła' : '1. Add sources'}
-          helper={isPolish ? 'Załącz pliki i materiały wejściowe.' : 'Attach files and source material.'}
+          helper={
+            isPolish ? 'Załącz pliki i materiały wejściowe.' : 'Attach files and source material.'
+          }
           actionLabel={isPolish ? 'Attachments' : 'Attachments'}
           onClick={onOpenAttachments}
         />
         <WorkflowStep
           icon={<Sparkles size={13} />}
           title={isPolish ? '2. Zrób propozycję AI' : '2. Draft AI proposal'}
-          helper={isPolish ? 'Uruchom AI action plan dla tej notatki.' : 'Run an AI action-plan proposal for this note.'}
+          helper={
+            isPolish
+              ? 'Uruchom AI action plan dla tej notatki.'
+              : 'Run an AI action-plan proposal for this note.'
+          }
           actionLabel={isPolish ? 'AI proposal' : 'AI proposal'}
           onClick={onCreateAIProposal}
         />
@@ -89,7 +103,13 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
         <WorkflowStep
           icon={<FileOutput size={13} />}
           title={isPolish ? '4. Konwertuj' : '4. Convert'}
-          helper={canConvertDeliverable ? (isPolish ? 'Konwertuj do raportu, gdy outline jest gotowy.' : 'Convert to a report once the outline is ready.') : convertBlockedReason}
+          helper={
+            canConvertDeliverable
+              ? isPolish
+                ? 'Konwertuj do raportu, gdy outline jest gotowy.'
+                : 'Convert to a report once the outline is ready.'
+              : convertBlockedReason
+          }
           actionLabel={isPolish ? 'To report' : 'To report'}
           onClick={onConvert}
           disabled={!canConvertDeliverable}

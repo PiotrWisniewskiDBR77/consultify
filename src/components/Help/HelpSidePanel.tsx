@@ -163,7 +163,12 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
   // Show article detail view
   if (selectedArticleSlug) {
     return (
-      <KnowledgeArticleView slug={selectedArticleSlug} onBack={handleBack} onArticleClick={setSelectedArticleSlug} moduleId={moduleId} />
+      <KnowledgeArticleView
+        slug={selectedArticleSlug}
+        onBack={handleBack}
+        onArticleClick={setSelectedArticleSlug}
+        moduleId={moduleId}
+      />
     );
   }
 

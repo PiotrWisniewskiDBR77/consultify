@@ -42,11 +42,11 @@ import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
+// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
+import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
 import { useDemoSession } from '../../hooks/useDemoSession';
-// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
-import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -74,17 +74,17 @@ import {
 } from './chatAttachmentSupport';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
-import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { ContextBadge } from './ContextBadge';
+import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
-import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
-import { detectWhiteboardIntent } from './whiteboardIntentDetector';
+import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
+import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 
 // ============================================================================
 // Types
@@ -505,16 +505,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // rather than the snapshot frozen into each message's metadata at write time.
   useEffect(() => {
     if (!activeConversationId) return;
-    void useProposalLifecycleStore
-      .getState()
-      .loadForConversation(activeConversationId);
+    void useProposalLifecycleStore.getState().loadForConversation(activeConversationId);
   }, [activeConversationId]);
 
   // Session hook: create new session when model/preset changes mid-conversation (§2.3.1)
   const prevModelRef = useRef<string | null>(null);
   useEffect(() => {
     const currentModel = (aiConfig as any)?.selectedModelId ?? null;
-    if (prevModelRef.current !== null && currentModel !== prevModelRef.current && activeConversationId) {
+    if (
+      prevModelRef.current !== null &&
+      currentModel !== prevModelRef.current &&
+      activeConversationId
+    ) {
       void notifyModelChange({
         modelId: currentModel || undefined,
         presetId: (aiConfig as any)?.selectedTier || undefined,
@@ -522,7 +524,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       });
     }
     prevModelRef.current = currentModel;
-  }, [(aiConfig as any)?.selectedModelId, activeConversationId, notifyModelChange, draftChatLanguage]);
+  }, [
+    (aiConfig as any)?.selectedModelId,
+    activeConversationId,
+    notifyModelChange,
+    draftChatLanguage,
+  ]);
 
   // Ref for incremental TTS (defined here, used in effects after useAIStream)
   const spokenCharsRef = useRef(0);
@@ -784,44 +791,44 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               artifacts: artifacts as any,
               citations: meta?.citations,
               streamSessionId: meta?.sessionId,
-            extra:
-              aiConfig?.deepResearch ||
-              (aiConfig as any)?.marketResearch ||
-              meta?.policyDecision ||
-              meta?.sourceLedger ||
-              (meta?.policyNotices && meta.policyNotices.length) ||
-              meta?.trustBundle
-                ? {
-                    ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
-                      ? {
-                          options: [
-                            { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
-                            { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
-                            {
-                              id: 'dt-challenge',
-                              label: 'Challenge this conclusion',
-                              value: 'Challenge this conclusion',
-                            },
-                          ],
-                          multiSelect: false,
-                          deepThinking: { kind: 'report' },
-                        }
-                      : {}),
-                    ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
-                      ? {
-                          policyDecision: meta?.policyDecision,
-                          policyNotices: meta?.policyNotices,
-                        }
-                      : {}),
-                    ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
-                    // V8 / Wave A7 — forward the canonical trust bundle so
-                    // the persisted AI row carries the same pills rendered
-                    // live in the bubble. Server also enriches on write;
-                    // this keeps client + server in lockstep and avoids
-                    // depending on a refetch for live hydration.
-                    ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
-                  }
-                : undefined,
+              extra:
+                aiConfig?.deepResearch ||
+                (aiConfig as any)?.marketResearch ||
+                meta?.policyDecision ||
+                meta?.sourceLedger ||
+                (meta?.policyNotices && meta.policyNotices.length) ||
+                meta?.trustBundle
+                  ? {
+                      ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
+                        ? {
+                            options: [
+                              { id: 'dt-go-deeper', label: 'Go deeper', value: 'Go deeper' },
+                              { id: 'dt-too-shallow', label: 'Too shallow', value: 'Too shallow' },
+                              {
+                                id: 'dt-challenge',
+                                label: 'Challenge this conclusion',
+                                value: 'Challenge this conclusion',
+                              },
+                            ],
+                            multiSelect: false,
+                            deepThinking: { kind: 'report' },
+                          }
+                        : {}),
+                      ...(meta?.policyDecision || (meta?.policyNotices && meta.policyNotices.length)
+                        ? {
+                            policyDecision: meta?.policyDecision,
+                            policyNotices: meta?.policyNotices,
+                          }
+                        : {}),
+                      ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
+                      // V8 / Wave A7 — forward the canonical trust bundle so
+                      // the persisted AI row carries the same pills rendered
+                      // live in the bubble. Server also enriches on write;
+                      // this keeps client + server in lockstep and avoids
+                      // depending on a refetch for live hydration.
+                      ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
+                    }
+                  : undefined,
             }),
           });
           savedAiMessageId = String((saved as any)?.id || '') || null;
@@ -857,7 +864,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             ? { deepThinking: { kind: 'report' } }
             : {}),
           ...(meta?.policyDecision ? { policyDecision: meta.policyDecision } : {}),
-          ...(meta?.policyNotices && meta.policyNotices.length ? { policyNotices: meta.policyNotices } : {}),
+          ...(meta?.policyNotices && meta.policyNotices.length
+            ? { policyNotices: meta.policyNotices }
+            : {}),
           ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
           ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
         },
@@ -1269,28 +1278,46 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       items.push(
         {
           id: 'generate-insights',
-          label: t('chat.suggestions.generateInsights', 'Generate AI insights from completed sessions'),
+          label: t(
+            'chat.suggestions.generateInsights',
+            'Generate AI insights from completed sessions'
+          ),
           type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.generateInsightsPrompt', 'Generate AI insights from completed interview sessions') },
+          action: {
+            type: 'chat',
+            prompt: t(
+              'chat.suggestions.generateInsightsPrompt',
+              'Generate AI insights from completed interview sessions'
+            ),
+          },
         },
         {
           id: 'submit-review',
           label: t('chat.suggestions.submitReview', 'Submit this insight for review'),
           type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review') },
+          action: {
+            type: 'chat',
+            prompt: t('chat.suggestions.submitReviewPrompt', 'Submit this insight for review'),
+          },
         },
         {
           id: 'export-initiative',
           label: t('chat.suggestions.exportInsight', 'Export insight to initiative'),
           type: 'interview' as any,
-          action: { type: 'chat', prompt: t('chat.suggestions.exportInsightPrompt', 'Export this insight to an initiative') },
+          action: {
+            type: 'chat',
+            prompt: t(
+              'chat.suggestions.exportInsightPrompt',
+              'Export this insight to an initiative'
+            ),
+          },
         },
         {
           id: 'view-evidence',
           label: t('chat.suggestions.viewEvidence', 'View evidence map'),
           type: 'interview' as any,
           action: { type: 'NAVIGATE', targetModule: 'interview' },
-        },
+        }
       );
     }
 
@@ -1329,7 +1356,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           label: t('chat.suggestions.reviewPending', 'Review pending artifacts'),
           type: 'outputs' as any,
           action: { type: 'NAVIGATE', targetModule: 'presentations', params: { tab: 'review' } },
-        },
+        }
       );
     }
 
@@ -1644,10 +1671,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         addChatMessage({
           id: `wb-intent-${Date.now()}`,
           role: 'ai',
-          content:
-            uiLang === 'pl'
-              ? 'Wykonuję akcję na tablicy…'
-              : 'Running whiteboard action…',
+          content: uiLang === 'pl' ? 'Wykonuję akcję na tablicy…' : 'Running whiteboard action…',
           timestamp: new Date(),
         });
 
@@ -3458,33 +3482,92 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             {/* Conversation state banners (§2.3.5 — deep-link + degraded posture) */}
             {_activeConversationState === 'archived' && (
               <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40 flex items-center gap-2">
-                <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                <svg
+                  className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
                 <span className="text-xs text-amber-700 dark:text-amber-400">
-                  {t('aiChat.archivedBanner', 'This conversation is archived. Unarchive it to continue chatting.')}
+                  {t(
+                    'aiChat.archivedBanner',
+                    'This conversation is archived. Unarchive it to continue chatting.'
+                  )}
                 </span>
               </div>
             )}
             {_activeConversationState === 'deleted' && (
               <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200/60 dark:border-red-700/40 flex items-center gap-2">
-                <svg className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <svg
+                  className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
                 <span className="text-xs text-red-700 dark:text-red-400">
-                  {_activeConversationStateMessage || t('aiChat.deletedBanner', 'This conversation has been deleted.')}
+                  {_activeConversationStateMessage ||
+                    t('aiChat.deletedBanner', 'This conversation has been deleted.')}
                 </span>
               </div>
             )}
             {_activeConversationState === 'permission_denied' && (
               <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                <svg
+                  className="w-4 h-4 text-slate-600 dark:text-slate-400 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
                 <span className="text-xs text-slate-700 dark:text-slate-300">
-                  {_activeConversationStateMessage || t('aiChat.permissionDenied', 'You do not have access to this conversation. Contact the folder owner for access.')}
+                  {_activeConversationStateMessage ||
+                    t(
+                      'aiChat.permissionDenied',
+                      'You do not have access to this conversation. Contact the folder owner for access.'
+                    )}
                 </span>
               </div>
             )}
             {_activeConversationState === 'not_found' && (
               <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center gap-2">
-                <svg className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg
+                  className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
                 <span className="text-xs text-slate-600 dark:text-slate-400">
-                  {t('aiChat.notFound', 'This conversation does not exist or has been permanently removed.')}
+                  {t(
+                    'aiChat.notFound',
+                    'This conversation does not exist or has been permanently removed.'
+                  )}
                 </span>
               </div>
             )}
@@ -3602,7 +3685,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           projectId={workspaceContext?.projectId || null}
         />
       )}
-
 
       {/* AI Table Builder slide-over panel */}
       {tableBuilderOpen && (

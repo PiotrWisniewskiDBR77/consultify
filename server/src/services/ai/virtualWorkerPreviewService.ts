@@ -2,15 +2,15 @@ import { llmService } from './llmService.js';
 import { modelRouter } from './modelRouter.js';
 import { buildWorkerKnowledgeContext } from './virtualWorkerKnowledgeService.js';
 import {
+  getWorkerWithProfile,
+  type VirtualWorker,
+  type VirtualWorkerProfile,
+  VirtualWorkerValidationError,
+} from './virtualWorkerService.js';
+import {
   buildWorkerWebAccessResult,
   type WorkerWebCitation,
 } from './virtualWorkerWebAccessService.js';
-import {
-  getWorkerWithProfile,
-  VirtualWorkerValidationError,
-  type VirtualWorker,
-  type VirtualWorkerProfile,
-} from './virtualWorkerService.js';
 
 export interface VirtualWorkerPreviewResult {
   worker: Pick<VirtualWorker, 'id' | 'slug' | 'name' | 'status' | 'surface' | 'locale_default'>;
@@ -81,7 +81,10 @@ export async function previewVirtualWorkerResponse(args: {
   const profile = workerConfig.profile;
   const message = String(args.message || '').trim();
   if (!message) {
-    throw new VirtualWorkerValidationError('Preview message is required', 'VW_PREVIEW_MESSAGE_REQUIRED');
+    throw new VirtualWorkerValidationError(
+      'Preview message is required',
+      'VW_PREVIEW_MESSAGE_REQUIRED'
+    );
   }
 
   const knowledge = await buildWorkerKnowledgeContext({

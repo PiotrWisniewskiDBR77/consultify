@@ -93,7 +93,8 @@ export const demoWriteProtection = (options: { allowedRoutes?: string[] } = {}) 
       (req as any).user?.organizationId ??
       (req as any).user?.organization_id;
     const isDemoOrg = orgId === DEMO_ORG_ID;
-    const isInteractiveSession = Boolean(requestedSessionOrgId) && requestedSessionOrgId !== DEMO_ORG_ID;
+    const isInteractiveSession =
+      Boolean(requestedSessionOrgId) && requestedSessionOrgId !== DEMO_ORG_ID;
 
     if ((isDemoHeader && !isInteractiveSession) || isDemoOrg) {
       res.status(403).json({
@@ -249,7 +250,9 @@ export const getDemoStartedAt = async (userId: string): Promise<string | null> =
 /**
  * Get demo organization
  */
-export const getDemoOrganization = async (organizationId: string = DEMO_ORG_ID): Promise<DemoOrganization> => {
+export const getDemoOrganization = async (
+  organizationId: string = DEMO_ORG_ID
+): Promise<DemoOrganization> => {
   try {
     const org = await dbGet<{ id: string; name: string }>(
       `SELECT id, name FROM organizations WHERE id = ?`,

@@ -40,22 +40,24 @@ describe('Public contact intake route', () => {
   it('POST /api/public/contact accepts a valid request and records it', async () => {
     const app = await createApp();
 
-    const res = await request(app).post('/api/public/contact').send({
-      name: 'Ada Lovelace',
-      email: 'ada@example.com',
-      company: 'Analytical Engines Inc.',
-      type: 'sales',
-      message: 'Please contact me about a demo.',
-      locale: 'en',
-      annaCta: {
-        session_id: 'sess-1',
-        cta_type: 'contact',
-        language: 'en',
-        channel: 'text',
-        turn_id: 'turn-9',
-        source_intent: 'talk_to_human',
-      },
-    });
+    const res = await request(app)
+      .post('/api/public/contact')
+      .send({
+        name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        company: 'Analytical Engines Inc.',
+        type: 'sales',
+        message: 'Please contact me about a demo.',
+        locale: 'en',
+        annaCta: {
+          session_id: 'sess-1',
+          cta_type: 'contact',
+          language: 'en',
+          channel: 'text',
+          turn_id: 'turn-9',
+          source_intent: 'talk_to_human',
+        },
+      });
 
     expect(res.status).toBe(201);
     expect(res.body).toEqual({ success: true, id: 'uuid-1' });
@@ -76,4 +78,3 @@ describe('Public contact intake route', () => {
     expect(res.body.error).toBe('Invalid contact request');
   });
 });
-

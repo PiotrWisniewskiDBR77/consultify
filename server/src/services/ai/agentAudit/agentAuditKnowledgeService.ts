@@ -1,7 +1,7 @@
-import RagService from '../../ragService.js';
-import { organizationMemoryStore } from '../organizationMemoryStore.js';
-import { evaluateRetrievalPolicyDecision } from '../chatPolicyGateway.js';
 import logger from '../../../utils/Logger.js';
+import RagService from '../../ragService.js';
+import { evaluateRetrievalPolicyDecision } from '../chatPolicyGateway.js';
+import { organizationMemoryStore } from '../organizationMemoryStore.js';
 import { searchKB } from './agentKnowledgeBase.js';
 import type { SourceUsed } from './types.js';
 

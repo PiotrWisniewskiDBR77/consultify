@@ -5,8 +5,8 @@ import type {
   ArtifactFamily,
   ArtifactListFilters,
   ArtifactListItem,
-  ArtifactOriginRuntime,
   ArtifactOriginLink,
+  ArtifactOriginRuntime,
   ArtifactPlanningRequest,
   ArtifactPlanningResult,
   ArtifactRecord,
@@ -27,6 +27,7 @@ import {
   MaterializeArtifactRunParamsSchema,
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
+import type { RunState } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import * as chatExecutionService from './chatExecutionService.js';
@@ -38,7 +39,6 @@ import {
   updateOperationContractLinks,
 } from './operationContractService.js';
 import * as publishReviewService from './publishReviewService.js';
-import type { RunState } from '../../types/executionSpine.js';
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
@@ -390,7 +390,10 @@ function mapArtifactRunRow(row: ArtifactRunRow): ArtifactRunRecord {
   });
 
   const preflight = safeJsonParse<ArtifactRunPreflight | null>(row.preflight_json, null);
-  const failurePackage = safeJsonParse<ArtifactRunFailurePackage | null>(row.failure_package_json, null);
+  const failurePackage = safeJsonParse<ArtifactRunFailurePackage | null>(
+    row.failure_package_json,
+    null
+  );
   const originRuntimeRaw = String(row.materialization_origin_runtime || '').trim();
   const originRecordIdRaw = String(row.materialization_origin_record_id || '').trim();
   const materializationOrigin =
@@ -511,7 +514,11 @@ export function deriveArtifactRunStatusFromExecutionState(params: {
 export function deriveArtifactValidationSnapshot(params: {
   artifact: Pick<
     ArtifactRecord,
-    'titleSnapshot' | 'contextSnapshotId' | 'executionRunId' | 'sourceInitiativeId' | 'originSummary'
+    | 'titleSnapshot'
+    | 'contextSnapshotId'
+    | 'executionRunId'
+    | 'sourceInitiativeId'
+    | 'originSummary'
   >;
   executionState?: RunState | null;
   sourceRefs?: unknown[];
@@ -523,7 +530,9 @@ export function deriveArtifactValidationSnapshot(params: {
     message: string;
   }>;
 } {
-  const artifactFamily = String((params.artifact as any)?.artifactFamily || '').trim().toLowerCase();
+  const artifactFamily = String((params.artifact as any)?.artifactFamily || '')
+    .trim()
+    .toLowerCase();
 
   const sourceRefs =
     params.sourceRefs && Array.isArray(params.sourceRefs)
@@ -777,27 +786,29 @@ async function cleanupGhostOutputsByOrigin(params: {
     `DELETE FROM v8_artifact_access_grants WHERE organization_id = ? AND artifact_id = ?`,
     [params.organizationId, artifactId]
   );
-  await dbRun(
-    `DELETE FROM v8_review_gates WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
-  await dbRun(
-    `DELETE FROM v8_publish_records WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
+  await dbRun(`DELETE FROM v8_review_gates WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
+  await dbRun(`DELETE FROM v8_publish_records WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
   await dbRun(
     `DELETE FROM v8_artifact_origin_links WHERE organization_id = ? AND artifact_id = ?`,
     [params.organizationId, artifactId]
   );
-  await dbRun(
-    `DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id = ?`,
-    [params.organizationId, artifactId]
-  );
+  await dbRun(`DELETE FROM v8_output_artifacts WHERE organization_id = ? AND artifact_id = ?`, [
+    params.organizationId,
+    artifactId,
+  ]);
 
   return { cleanedUp: true, notes: null };
 }
 
-async function mapArtifactRunRowWithEffectiveStatus(row: ArtifactRunRow): Promise<ArtifactRunRecord> {
+async function mapArtifactRunRowWithEffectiveStatus(
+  row: ArtifactRunRow
+): Promise<ArtifactRunRecord> {
   const mapped = mapArtifactRunRow(row);
   const spineRun = await executionSpineService.getRun(mapped.executionRunId, mapped.organizationId);
   const effectiveStatus = deriveArtifactRunStatusFromExecutionState({
@@ -944,7 +955,9 @@ export async function registerArtifactOrigin(
 
   const row = await getArtifactRow(artifactId, validated.organizationId);
   if (!row) {
-    logger.warn(`${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`);
+    logger.warn(
+      `${LOG_PREFIX} Artifact ${artifactId} was not found after registration — DB constraint may have rejected the insert`
+    );
     return null;
   }
   const record = mapArtifactRow(row);
@@ -1064,7 +1077,9 @@ export async function startArtifactReview(params: {
     executionState: executionRun?.state,
   });
   if (validation.state !== 'validated') {
-    throw new Error(`Artifact ${params.artifactId} cannot enter review before artifact validation passes`);
+    throw new Error(
+      `Artifact ${params.artifactId} cannot enter review before artifact validation passes`
+    );
   }
 
   let record = await publishReviewService.getPublishRecord(
@@ -1144,7 +1159,15 @@ export async function addSecondaryOriginLink(params: {
     `INSERT INTO v8_artifact_origin_links (
       link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [linkId, params.artifactId, params.organizationId, params.originRuntime, params.originRecordId, 0, now]
+    [
+      linkId,
+      params.artifactId,
+      params.organizationId,
+      params.originRuntime,
+      params.originRecordId,
+      0,
+      now,
+    ]
   );
 }
 
@@ -1395,7 +1418,9 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
       });
       if (result) inserted++;
     } catch (err: any) {
-      logger.warn(`${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`);
+      logger.warn(
+        `${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`
+      );
     }
   }
   return inserted;
@@ -1406,8 +1431,12 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
   const now = Date.now();
   if (now - last < BACKFILL_TTL_MS) return;
 
-  const [reportsInserted, presentationsInserted, reportTemplatesInserted, presentationTemplatesInserted] =
-    await Promise.all([
+  const [
+    reportsInserted,
+    presentationsInserted,
+    reportTemplatesInserted,
+    presentationTemplatesInserted,
+  ] = await Promise.all([
     backfillReportsForOrg(organizationId),
     backfillPresentationsForOrg(organizationId),
     backfillReportTemplatesForOrg(organizationId),
@@ -1910,7 +1939,8 @@ function inferArtifactPlan(
     goal.includes('wzorzec') ||
     goal.includes('szablon')
   ) {
-    const isPresentation = goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
+    const isPresentation =
+      goal.includes('deck') || goal.includes('presentation') || goal.includes('prezentacj');
     return {
       artifactFamily: 'template',
       outputType: isPresentation ? 'presentation' : 'report',
@@ -2365,7 +2395,8 @@ function computeArtifactRunPreflight(params: {
     checks.push({
       id: 'materialization_target',
       status: 'pending',
-      message: 'Sheet materialization requires a governed table target (tableId) at materialize time',
+      message:
+        'Sheet materialization requires a governed table target (tableId) at materialize time',
     });
   } else if (params.run.plan.outputType === 'report') {
     checks.push({
@@ -2798,7 +2829,10 @@ export async function materializeArtifactRun(
             tableId = (newTable as any)?.id || '';
           }
         } catch (tableCreateErr) {
-          logger.warn('[ArtifactRegistry] Auto-create table failed, falling back to error:', tableCreateErr);
+          logger.warn(
+            '[ArtifactRegistry] Auto-create table failed, falling back to error:',
+            tableCreateErr
+          );
         }
 
         if (!tableId) {
@@ -2898,8 +2932,7 @@ export async function materializeArtifactRun(
         cleanupNotes = cleanup.notes;
       } catch (cleanupError) {
         ghostArtifactsCleanedUp = false;
-        cleanupNotes =
-          cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+        cleanupNotes = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       }
     }
 

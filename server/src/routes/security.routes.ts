@@ -5,12 +5,12 @@
  */
 
 import { Router } from 'express';
-import logger from '../utils/Logger.js';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import rolesRoutes from './security/roles.routes.js';
 
 const router = Router();

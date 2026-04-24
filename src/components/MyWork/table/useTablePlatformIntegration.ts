@@ -272,7 +272,11 @@ export function useTablePlatformIntegration(
     }
   }, [isActive, bridge.nodes]);
 
-  const columns = isActive ? (localColumns.length > 0 ? localColumns : derivedColumns) : EMPTY_COLUMNS;
+  const columns = isActive
+    ? localColumns.length > 0
+      ? localColumns
+      : derivedColumns
+    : EMPTY_COLUMNS;
   const nodes = isActive ? (localNodes.length > 0 ? localNodes : bridge.nodes) : EMPTY_NODES;
 
   const { processed: processedRows, grouped: groupedRows } = useMemo(() => {
@@ -435,7 +439,9 @@ export function useTablePlatformIntegration(
       if (!v) return;
       try {
         const cfg: Record<string, unknown> = { ...((v.config ?? {}) as Record<string, unknown>) };
-        const prevMissing = Array.isArray(cfg.missing_fields) ? (cfg.missing_fields as string[]) : [];
+        const prevMissing = Array.isArray(cfg.missing_fields)
+          ? (cfg.missing_fields as string[])
+          : [];
         cfg.missing_fields = prevMissing.filter((x) => x !== fieldId);
         const mfn = { ...((cfg.missing_field_names as Record<string, string>) ?? {}) };
         delete mfn[fieldId];

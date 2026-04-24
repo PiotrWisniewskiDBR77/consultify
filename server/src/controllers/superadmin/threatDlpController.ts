@@ -333,7 +333,10 @@ export const getDLPViolationById = catchAsync(async (req, res, next) => {
 export const resolveDLPViolation = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
-  const resolved = await deps.DLPService.resolveViolation(id, (req as AuthenticatedRequest).user!.id);
+  const resolved = await deps.DLPService.resolveViolation(
+    id,
+    (req as AuthenticatedRequest).user!.id
+  );
 
   if (!resolved) {
     return next(new AppError('DLP Violation not found', 404));

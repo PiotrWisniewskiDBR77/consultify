@@ -30,8 +30,8 @@ import {
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   CreateAccessCodeSchema,
   CreateUserAdminSchema,
@@ -130,7 +130,8 @@ function isAuditWriteFailure(error: unknown): boolean {
 
 function sendAuditUnavailable(res: Response, actionType: string): void {
   res.status(503).json({
-    error: 'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
+    error:
+      'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
     code: 'AUDIT_UNAVAILABLE',
     actionType,
     guidance: 'Retry the action. If the problem persists, contact platform support.',
@@ -177,7 +178,9 @@ function parseAuditJsonField(raw: unknown): Record<string, unknown> | undefined 
 }
 
 function isDatabaseExplorerEnabled(): boolean {
-  return process.env.ENABLE_SUPERADMIN_DB_EXPLORER === 'true' && process.env.NODE_ENV !== 'production';
+  return (
+    process.env.ENABLE_SUPERADMIN_DB_EXPLORER === 'true' && process.env.NODE_ENV !== 'production'
+  );
 }
 
 async function querySettingAuditVersions(settingKey: string): Promise<any[]> {
@@ -339,8 +342,12 @@ router.get(
       ]);
 
     const [mfaOverride, ssoOverride] = await Promise.all([
-      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:mfa_override'], { value: null }),
-      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:sso_override'], { value: null }),
+      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:mfa_override'], {
+        value: null,
+      }),
+      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:sso_override'], {
+        value: null,
+      }),
     ]);
 
     res.json({
@@ -491,7 +498,11 @@ router.get(
     >();
     connectors.forEach((row) => {
       const key = String(row.connector_type || 'unknown');
-      const current = connectorGroups.get(key) || { enabledCount: 0, disabledCount: 0, totalCount: 0 };
+      const current = connectorGroups.get(key) || {
+        enabledCount: 0,
+        disabledCount: 0,
+        totalCount: 0,
+      };
       const count = Number(row.count || 0);
       current.totalCount += count;
       if (String(row.status) === 'disabled') current.disabledCount += count;
@@ -506,7 +517,10 @@ router.get(
         desiredState: provider.is_active ? 'enabled' : 'disabled',
         appliedState: provider.health_status || 'unknown',
         drift:
-          provider.is_active && !['healthy', 'enabled', 'ok'].includes(String(provider.health_status || '').toLowerCase()),
+          provider.is_active &&
+          !['healthy', 'enabled', 'ok'].includes(
+            String(provider.health_status || '').toLowerCase()
+          ),
         note: 'Provider runtime health should match intended platform availability.',
         updatedAt: provider.updated_at || null,
       })),
@@ -535,7 +549,10 @@ router.get(
       })),
       ...overrides.map((override) => ({
         id: `override:${override.key}`,
-        domain: override.key === 'platform:mfa_override' ? 'Platform MFA override' : 'Platform SSO override',
+        domain:
+          override.key === 'platform:mfa_override'
+            ? 'Platform MFA override'
+            : 'Platform SSO override',
         desiredState: override.value || 'disabled',
         appliedState: override.value || 'disabled',
         drift: false,
@@ -689,7 +706,9 @@ router.post(
     const tenantId = req.params.id;
     const { reason } = req.body;
 
-    const tenant = await dbGet('SELECT id, name, status FROM organizations WHERE id = $1', [tenantId]);
+    const tenant = await dbGet('SELECT id, name, status FROM organizations WHERE id = $1', [
+      tenantId,
+    ]);
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
     if (tenant.status === 'suspended') {
       return res.status(409).json({
@@ -699,7 +718,10 @@ router.post(
       });
     }
 
-    const userCount = await dbGet('SELECT COUNT(*) as count FROM users WHERE organization_id = $1', [tenantId]);
+    const userCount = await dbGet(
+      'SELECT COUNT(*) as count FROM users WHERE organization_id = $1',
+      [tenantId]
+    );
 
     await executeAtomicGatedAction(req, res, 'suspend_tenant', async () => {
       await dbRun(
@@ -948,7 +970,8 @@ router.post(
           connectorId,
           reversible: true,
           affectedTenants: affected?.length || 0,
-          recoveryPath: 'Re-enable connector after vendor/security review; tenants may need reauth via Admin.',
+          recoveryPath:
+            'Re-enable connector after vendor/security review; tenants may need reauth via Admin.',
         },
       };
     });
@@ -1022,7 +1045,8 @@ router.post(
           action: 'tenant.data_purge',
           tenantId,
           irreversible: true,
-          warning: 'ALL data for this tenant will be PERMANENTLY DELETED. This action CANNOT be undone.',
+          warning:
+            'ALL data for this tenant will be PERMANENTLY DELETED. This action CANNOT be undone.',
         },
       };
     });
@@ -1174,7 +1198,8 @@ router.get(
       return res.status(404).json({
         error: 'Database explorer is disabled',
         code: 'SUPERADMIN_DB_EXPLORER_DISABLED',
-        guidance: 'Use audited exports or enable the dev-only explorer explicitly outside production.',
+        guidance:
+          'Use audited exports or enable the dev-only explorer explicitly outside production.',
       });
     }
     await SuperAdminController.getDatabaseTables(req, res, next);
@@ -1187,7 +1212,8 @@ router.get(
       return res.status(404).json({
         error: 'Database explorer is disabled',
         code: 'SUPERADMIN_DB_EXPLORER_DISABLED',
-        guidance: 'Use audited exports or enable the dev-only explorer explicitly outside production.',
+        guidance:
+          'Use audited exports or enable the dev-only explorer explicitly outside production.',
       });
     }
     await SuperAdminController.getDatabaseRows(req, res, next);
@@ -3210,10 +3236,7 @@ router.get(
           (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET' ? 'FEEDBACK' : null);
         const relatedObjectId: string | null = row.related_object_id || null;
         let actionUrl: string | null = row.action_url || null;
-        if (
-          relatedObjectId &&
-          (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET')
-        ) {
+        if (relatedObjectId && (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET')) {
           actionUrl = `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(relatedObjectId)}`;
         }
         return {

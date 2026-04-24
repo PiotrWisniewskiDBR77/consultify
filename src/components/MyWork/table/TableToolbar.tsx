@@ -53,6 +53,10 @@ import {
   Webhook,
   X,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import { Button } from '@/components/ui/primitives/Button';
 import {
   Sheet,
   SheetClose,
@@ -62,10 +66,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import toast from 'react-hot-toast';
 
-import { Button } from '@/components/ui/primitives/Button';
 import { AITableAssistant } from './AITableAssistant';
 import { AITableProposal, type TableProposal } from './AITableProposal';
 import { useTableData } from './TableDataProvider';
@@ -86,7 +87,14 @@ interface ToolbarIconButtonProps {
   className?: string;
 }
 
-function ToolbarIconButton({ onClick, active, disabled, title, children, className }: ToolbarIconButtonProps) {
+function ToolbarIconButton({
+  onClick,
+  active,
+  disabled,
+  title,
+  children,
+  className,
+}: ToolbarIconButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -298,15 +306,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         toast.error(msg || (isPl ? 'Nie udało się zastosować' : 'Apply failed'));
       }
     },
-    [
-      columns,
-      handleAddColumn,
-      isPl,
-      refresh,
-      saveCurrentView,
-      setViewLayout,
-      tableId,
-    ]
+    [columns, handleAddColumn, isPl, refresh, saveCurrentView, setViewLayout, tableId]
   );
 
   // Layout items — FROZEN order per V5-IDEA-24
@@ -363,12 +363,14 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 value={renamingViewName}
                 onChange={(e) => setRenamingViewName(e.target.value)}
                 onBlur={() => {
-                  if (renamingViewName.trim()) updateSavedView(v.id, { name: renamingViewName.trim() });
+                  if (renamingViewName.trim())
+                    updateSavedView(v.id, { name: renamingViewName.trim() });
                   setRenamingViewId(null);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    if (renamingViewName.trim()) updateSavedView(v.id, { name: renamingViewName.trim() });
+                    if (renamingViewName.trim())
+                      updateSavedView(v.id, { name: renamingViewName.trim() });
                     setRenamingViewId(null);
                   } else if (e.key === 'Escape') {
                     setRenamingViewId(null);
@@ -381,7 +383,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 onClick={() => applyView(v)}
                 onContextMenu={(e) => {
                   e.preventDefault();
-                  if (v.id !== 'default') setViewContextMenu({ viewId: v.id, x: e.clientX, y: e.clientY });
+                  if (v.id !== 'default')
+                    setViewContextMenu({ viewId: v.id, x: e.clientX, y: e.clientY });
                 }}
                 className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                   activeViewId === v.id
@@ -396,7 +399,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         ))}
         {!locked && (
           <button
-            onClick={() => { setSaveViewName(''); setShowSaveViewDialog(true); }}
+            onClick={() => {
+              setSaveViewName('');
+              setShowSaveViewDialog(true);
+            }}
             className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
             title={isPl ? 'Zapisz widok' : 'Save view'}
           >
@@ -407,22 +413,39 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* Save view dialog */}
       {showSaveViewDialog && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20" onClick={() => setShowSaveViewDialog(false)}>
-          <div className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-200">{isPl ? 'Zapisz widok' : 'Save view'}</h3>
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20"
+          onClick={() => setShowSaveViewDialog(false)}
+        >
+          <div
+            className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-200">
+              {isPl ? 'Zapisz widok' : 'Save view'}
+            </h3>
             <input
               autoFocus
               value={saveViewName}
               onChange={(e) => setSaveViewName(e.target.value)}
               placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
               className="w-full h-8 px-3 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-primary-500/30 mb-3"
-              onKeyDown={(e) => { if (e.key === 'Enter' && saveViewName.trim()) handleSaveView(saveViewName.trim()); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && saveViewName.trim()) handleSaveView(saveViewName.trim());
+              }}
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowSaveViewDialog(false)} className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800">
+              <button
+                onClick={() => setShowSaveViewDialog(false)}
+                className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+              >
                 {isPl ? 'Anuluj' : 'Cancel'}
               </button>
-              <button disabled={!saveViewName.trim()} onClick={() => handleSaveView(saveViewName.trim())} className="px-3 py-1.5 text-xs rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40">
+              <button
+                disabled={!saveViewName.trim()}
+                onClick={() => handleSaveView(saveViewName.trim())}
+                className="px-3 py-1.5 text-xs rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40"
+              >
                 {isPl ? 'Zapisz' : 'Save'}
               </button>
             </div>
@@ -433,14 +456,52 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {/* View context menu */}
       {viewContextMenu && (
         <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
-          <div className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[140px]" style={{ left: viewContextMenu.x, top: viewContextMenu.y }} onClick={(e) => e.stopPropagation()}>
-            <button className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300" onClick={() => { const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId); if (v) { setRenamingViewId(v.id); setRenamingViewName(v.name); } setViewContextMenu(null); }}>
+          <div
+            className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[140px]"
+            style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+              onClick={() => {
+                const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
+                if (v) {
+                  setRenamingViewId(v.id);
+                  setRenamingViewName(v.name);
+                }
+                setViewContextMenu(null);
+              }}
+            >
               {isPl ? 'Zmień nazwę' : 'Rename'}
             </button>
-            <button className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300" onClick={() => { updateSavedView(viewContextMenu.viewId, { sort: sort ? [sort] : undefined, filters, groupBy: groupBy ?? undefined, layout: viewLayout, columns: columns.map((c) => ({ key: c.key, visible: c.visible !== false, width: c.width })) }); toast.success(isPl ? 'Widok zaktualizowany' : 'View updated'); setViewContextMenu(null); }}>
+            <button
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+              onClick={() => {
+                updateSavedView(viewContextMenu.viewId, {
+                  sort: sort ? [sort] : undefined,
+                  filters,
+                  groupBy: groupBy ?? undefined,
+                  layout: viewLayout,
+                  columns: columns.map((c) => ({
+                    key: c.key,
+                    visible: c.visible !== false,
+                    width: c.width,
+                  })),
+                });
+                toast.success(isPl ? 'Widok zaktualizowany' : 'View updated');
+                setViewContextMenu(null);
+              }}
+            >
               {isPl ? 'Aktualizuj' : 'Update'}
             </button>
-            <button className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600" onClick={() => { deleteSavedView(viewContextMenu.viewId); toast.success(isPl ? 'Widok usunięty' : 'View deleted'); setViewContextMenu(null); }}>
+            <button
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+              onClick={() => {
+                deleteSavedView(viewContextMenu.viewId);
+                toast.success(isPl ? 'Widok usunięty' : 'View deleted');
+                setViewContextMenu(null);
+              }}
+            >
               {isPl ? 'Usuń' : 'Delete'}
             </button>
           </div>
@@ -459,7 +520,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-white dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
         />
         {props.filterInput && (
-          <button onClick={() => props.onFilterInputChange('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+          <button
+            onClick={() => props.onFilterInputChange('')}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          >
             <X size={10} />
           </button>
         )}
@@ -543,7 +607,9 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             title={v.label}
           >
             <v.icon size={12} />
-            {viewLayout === v.id && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-primary-500" />}
+            {viewLayout === v.id && (
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-primary-500" />
+            )}
           </button>
         ))}
       </div>
@@ -575,34 +641,146 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* Desktop secondary actions */}
       <div className="hidden md:contents">
-        {!locked && <ToolbarIconButton onClick={props.onShowAICategorize} title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}><Layers size={12} /></ToolbarIconButton>}
-        <ToolbarIconButton onClick={props.onShowScoringModel} title={isPl ? 'Model scoringowy' : 'Scoring Model'}><Trophy size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onShowExportPresentation} title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}><Presentation size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onShowPipeline} title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}><Rocket size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onShowCopilot} title="AI Copilot"><Brain size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onShowVoiceInput} title={isPl ? 'Głos / Obraz' : 'Voice / Image'}><Mic size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onShowCrossRelations} title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}><Network size={12} /></ToolbarIconButton>
+        {!locked && (
+          <ToolbarIconButton
+            onClick={props.onShowAICategorize}
+            title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+          >
+            <Layers size={12} />
+          </ToolbarIconButton>
+        )}
+        <ToolbarIconButton
+          onClick={props.onShowScoringModel}
+          title={isPl ? 'Model scoringowy' : 'Scoring Model'}
+        >
+          <Trophy size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={props.onShowExportPresentation}
+          title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
+        >
+          <Presentation size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={props.onShowPipeline}
+          title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
+        >
+          <Rocket size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton onClick={props.onShowCopilot} title="AI Copilot">
+          <Brain size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={props.onShowVoiceInput}
+          title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
+        >
+          <Mic size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={props.onShowCrossRelations}
+          title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
+        >
+          <Network size={12} />
+        </ToolbarIconButton>
 
         {/* Heatmap */}
         <div className="relative">
-          <ToolbarIconButton onClick={props.onToggleHeatmap} active={props.heatmapColumns.size > 0} title={isPl ? 'Heatmapa' : 'Heatmap'}><Flame size={12} /></ToolbarIconButton>
-          <HeatmapControlsComponent open={props.showHeatmap} onClose={props.onToggleHeatmap} columns={columns} enabledColumns={props.heatmapColumns} onToggleColumn={props.onToggleHeatmapColumn} palette={props.heatmapPalette} onPaletteChange={props.onHeatmapPaletteChange} />
+          <ToolbarIconButton
+            onClick={props.onToggleHeatmap}
+            active={props.heatmapColumns.size > 0}
+            title={isPl ? 'Heatmapa' : 'Heatmap'}
+          >
+            <Flame size={12} />
+          </ToolbarIconButton>
+          <HeatmapControlsComponent
+            open={props.showHeatmap}
+            onClose={props.onToggleHeatmap}
+            columns={columns}
+            enabledColumns={props.heatmapColumns}
+            onToggleColumn={props.onToggleHeatmapColumn}
+            palette={props.heatmapPalette}
+            onPaletteChange={props.onHeatmapPaletteChange}
+          />
         </div>
 
-        <ToolbarIconButton onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' })} active={ui.showAuditTrail} title={isPl ? 'Historia zmian' : 'History'}><History size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' })} active={ui.showActivityFeed} title={isPl ? 'Aktywność' : 'Activity'}><Activity size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showSnapshots' })} title={isPl ? 'Migawki' : 'Snapshots'}><Camera size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onShowKeyboardShortcuts} title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}><Keyboard size={12} /></ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' })}
+          active={ui.showAuditTrail}
+          title={isPl ? 'Historia zmian' : 'History'}
+        >
+          <History size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' })}
+          active={ui.showActivityFeed}
+          title={isPl ? 'Aktywność' : 'Activity'}
+        >
+          <Activity size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showSnapshots' })}
+          title={isPl ? 'Migawki' : 'Snapshots'}
+        >
+          <Camera size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={props.onShowKeyboardShortcuts}
+          title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
+        >
+          <Keyboard size={12} />
+        </ToolbarIconButton>
 
-        {!locked && <ToolbarIconButton onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' })} title={isPl ? 'Szablony' : 'Templates'}><LayoutTemplate size={12} /></ToolbarIconButton>}
-        {!locked && <ToolbarIconButton onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showDistribution' })} title={isPl ? 'Dystrybucja' : 'Distribute'}><Send size={12} /></ToolbarIconButton>}
-        {!locked && <ToolbarIconButton onClick={props.onShowFrameworkGen} title={isPl ? 'Generator frameworków' : 'Framework Generator'}><LayoutGrid size={12} /></ToolbarIconButton>}
-        <ToolbarIconButton onClick={props.onShowConditionalFmt} active={props.formatRules.length > 0} title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}><Paintbrush size={12} /></ToolbarIconButton>
+        {!locked && (
+          <ToolbarIconButton
+            onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' })}
+            title={isPl ? 'Szablony' : 'Templates'}
+          >
+            <LayoutTemplate size={12} />
+          </ToolbarIconButton>
+        )}
+        {!locked && (
+          <ToolbarIconButton
+            onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showDistribution' })}
+            title={isPl ? 'Dystrybucja' : 'Distribute'}
+          >
+            <Send size={12} />
+          </ToolbarIconButton>
+        )}
+        {!locked && (
+          <ToolbarIconButton
+            onClick={props.onShowFrameworkGen}
+            title={isPl ? 'Generator frameworków' : 'Framework Generator'}
+          >
+            <LayoutGrid size={12} />
+          </ToolbarIconButton>
+        )}
+        <ToolbarIconButton
+          onClick={props.onShowConditionalFmt}
+          active={props.formatRules.length > 0}
+          title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
+        >
+          <Paintbrush size={12} />
+        </ToolbarIconButton>
 
         {/* Color palette */}
         <div className="relative">
-          <ToolbarIconButton onClick={() => setShowColorPalette(!showColorPalette)} active={showColorPalette} title={isPl ? 'Paleta kolorów' : 'Color Palette'}><Palette size={12} /></ToolbarIconButton>
-          <ColorPaletteComponent open={showColorPalette} onClose={() => setShowColorPalette(false)} activePalette={props.activePalette} onPaletteChange={(id: string) => { props.onPaletteChange(id); setShowColorPalette(false); }} onAutoAssign={props.onAutoAssignColors} />
+          <ToolbarIconButton
+            onClick={() => setShowColorPalette(!showColorPalette)}
+            active={showColorPalette}
+            title={isPl ? 'Paleta kolorów' : 'Color Palette'}
+          >
+            <Palette size={12} />
+          </ToolbarIconButton>
+          <ColorPaletteComponent
+            open={showColorPalette}
+            onClose={() => setShowColorPalette(false)}
+            activePalette={props.activePalette}
+            onPaletteChange={(id: string) => {
+              props.onPaletteChange(id);
+              setShowColorPalette(false);
+            }}
+            onAutoAssign={props.onAutoAssignColors}
+          />
         </div>
 
         {/* Platform tab switcher */}
@@ -618,18 +796,47 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
                 }`}
               >
-                {tab === 'data' ? (isPl ? 'Dane' : 'Data')
-                  : tab === 'forms' ? (isPl ? 'Formularze' : 'Forms')
-                  : tab === 'interfaces' ? (isPl ? 'Interfejsy' : 'Interfaces')
-                  : tab === 'models' ? (isPl ? 'Modele' : 'Models')
-                  : 'Workflow'}
+                {tab === 'data'
+                  ? isPl
+                    ? 'Dane'
+                    : 'Data'
+                  : tab === 'forms'
+                    ? isPl
+                      ? 'Formularze'
+                      : 'Forms'
+                    : tab === 'interfaces'
+                      ? isPl
+                        ? 'Interfejsy'
+                        : 'Interfaces'
+                      : tab === 'models'
+                        ? isPl
+                          ? 'Modele'
+                          : 'Models'
+                        : 'Workflow'}
               </button>
             ))}
           </div>
         )}
 
-        {usePlatform && <ToolbarIconButton onClick={() => uiDispatch({ type: 'SET_PANEL', panel: 'showInterfaceDesigner', value: true })} active={ui.showInterfaceDesigner} title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}><Layout size={12} /></ToolbarIconButton>}
-        {usePlatform && !locked && <ToolbarIconButton onClick={() => uiDispatch({ type: 'SET_PANEL', panel: 'showFormBuilder', value: true })} title={isPl ? 'Kreator formularzy' : 'Form Builder'}><FileText size={12} /></ToolbarIconButton>}
+        {usePlatform && (
+          <ToolbarIconButton
+            onClick={() =>
+              uiDispatch({ type: 'SET_PANEL', panel: 'showInterfaceDesigner', value: true })
+            }
+            active={ui.showInterfaceDesigner}
+            title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+          >
+            <Layout size={12} />
+          </ToolbarIconButton>
+        )}
+        {usePlatform && !locked && (
+          <ToolbarIconButton
+            onClick={() => uiDispatch({ type: 'SET_PANEL', panel: 'showFormBuilder', value: true })}
+            title={isPl ? 'Kreator formularzy' : 'Form Builder'}
+          >
+            <FileText size={12} />
+          </ToolbarIconButton>
+        )}
 
         {/* Tools dropdown */}
         {usePlatform && (
@@ -637,7 +844,9 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             <button
               onClick={() => setShowToolsMenu((p) => !p)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                showToolsMenu ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                showToolsMenu
+                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
               title={isPl ? 'Narzędzia' : 'Tools'}
             >
@@ -647,33 +856,101 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             </button>
             {showToolsMenu && (
               <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{isPl ? 'Workflow' : 'Workflow'}</div>
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  {isPl ? 'Workflow' : 'Workflow'}
+                </div>
                 {[
-                  { onClick: props.onShowAutomationsManager, icon: <Rocket size={14} className="text-amber-500" />, label: isPl ? 'Automatyzacje' : 'Automations' },
-                  { onClick: props.onShowSyncManager, icon: <Link2 size={14} className="text-cyan-500" />, label: isPl ? 'Synchronizacja danych' : 'Data Sync' },
-                  { onClick: props.onShowWebhookRelays, icon: <Webhook size={14} className="text-indigo-500" />, label: isPl ? 'Webhook Relay' : 'Webhook Relays' },
-                  { onClick: props.onShowSharingManager, icon: <Network size={14} className="text-green-500" />, label: isPl ? 'Udostępnianie' : 'Sharing & Permissions' },
-                  { onClick: props.onShowDistributionManager, icon: <Send size={14} className="text-pink-500" />, label: isPl ? 'Dystrybucja' : 'Distribution' },
+                  {
+                    onClick: props.onShowAutomationsManager,
+                    icon: <Rocket size={14} className="text-amber-500" />,
+                    label: isPl ? 'Automatyzacje' : 'Automations',
+                  },
+                  {
+                    onClick: props.onShowSyncManager,
+                    icon: <Link2 size={14} className="text-cyan-500" />,
+                    label: isPl ? 'Synchronizacja danych' : 'Data Sync',
+                  },
+                  {
+                    onClick: props.onShowWebhookRelays,
+                    icon: <Webhook size={14} className="text-indigo-500" />,
+                    label: isPl ? 'Webhook Relay' : 'Webhook Relays',
+                  },
+                  {
+                    onClick: props.onShowSharingManager,
+                    icon: <Network size={14} className="text-green-500" />,
+                    label: isPl ? 'Udostępnianie' : 'Sharing & Permissions',
+                  },
+                  {
+                    onClick: props.onShowDistributionManager,
+                    icon: <Send size={14} className="text-pink-500" />,
+                    label: isPl ? 'Dystrybucja' : 'Distribution',
+                  },
                 ].map((item, i) => (
-                  <button key={i} onClick={() => { item.onClick(); setShowToolsMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300">
+                  <button
+                    key={i}
+                    onClick={() => {
+                      item.onClick();
+                      setShowToolsMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                  >
                     {item.icon} {item.label}
                   </button>
                 ))}
                 <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{isPl ? 'Budowanie' : 'Build'}</div>
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  {isPl ? 'Budowanie' : 'Build'}
+                </div>
                 {[
-                  { onClick: () => uiDispatch({ type: 'SET_PANEL', panel: 'showFormBuilder', value: true }), icon: <FileText size={14} className="text-blue-500" />, label: isPl ? 'Formularze' : 'Forms' },
-                  { onClick: () => uiDispatch({ type: 'SET_PANEL', panel: 'showInterfaceDesigner', value: true }), icon: <Layout size={14} className="text-violet-500" />, label: isPl ? 'Interfejsy' : 'Interfaces' },
-                  { onClick: () => uiDispatch({ type: 'SET_PANEL', panel: 'showTemplateGallery', value: true }), icon: <LayoutTemplate size={14} className="text-emerald-500" />, label: isPl ? 'Szablony' : 'Templates' },
-                  { onClick: props.onShowConnectorWizard, icon: <Download size={14} className="text-teal-500" />, label: isPl ? 'Konektory' : 'Connectors' },
+                  {
+                    onClick: () =>
+                      uiDispatch({ type: 'SET_PANEL', panel: 'showFormBuilder', value: true }),
+                    icon: <FileText size={14} className="text-blue-500" />,
+                    label: isPl ? 'Formularze' : 'Forms',
+                  },
+                  {
+                    onClick: () =>
+                      uiDispatch({
+                        type: 'SET_PANEL',
+                        panel: 'showInterfaceDesigner',
+                        value: true,
+                      }),
+                    icon: <Layout size={14} className="text-violet-500" />,
+                    label: isPl ? 'Interfejsy' : 'Interfaces',
+                  },
+                  {
+                    onClick: () =>
+                      uiDispatch({ type: 'SET_PANEL', panel: 'showTemplateGallery', value: true }),
+                    icon: <LayoutTemplate size={14} className="text-emerald-500" />,
+                    label: isPl ? 'Szablony' : 'Templates',
+                  },
+                  {
+                    onClick: props.onShowConnectorWizard,
+                    icon: <Download size={14} className="text-teal-500" />,
+                    label: isPl ? 'Konektory' : 'Connectors',
+                  },
                 ].map((item, i) => (
-                  <button key={i} onClick={() => { item.onClick(); setShowToolsMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300">
+                  <button
+                    key={i}
+                    onClick={() => {
+                      item.onClick();
+                      setShowToolsMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                  >
                     {item.icon} {item.label}
                   </button>
                 ))}
                 <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                <button onClick={() => { props.onShowConsultifyLink(); setShowToolsMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300">
-                  <Layers size={14} className="text-indigo-500" /> {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
+                <button
+                  onClick={() => {
+                    props.onShowConsultifyLink();
+                    setShowToolsMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                >
+                  <Layers size={14} className="text-indigo-500" />{' '}
+                  {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
                 </button>
               </div>
             )}
@@ -683,66 +960,206 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* Mobile overflow menu */}
       <MobileToolbarMenuComponent>
-        {!locked && <button onClick={props.onShowAICategorize} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}</button>}
-        <button onClick={props.onShowScoringModel} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}</button>
-        <button onClick={props.onShowExportPresentation} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}</button>
-        <button onClick={props.onShowPipeline} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}</button>
-        <button onClick={props.onShowCopilot} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Brain size={14} /> AI Copilot</button>
-        <button onClick={props.onShowVoiceInput} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}</button>
-        <button onClick={props.onShowCrossRelations} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Network size={14} /> {isPl ? 'Relacje' : 'Relations'}</button>
-        <button onClick={props.onToggleHeatmap} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}</button>
-        <button onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' })} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><History size={14} /> {isPl ? 'Historia' : 'History'}</button>
-        <button onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' })} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}</button>
-        <button onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showSnapshots' })} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}</button>
-        <button onClick={props.onShowConditionalFmt} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}</button>
-        {!locked && <button onClick={props.onShowFrameworkGen} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><LayoutGrid size={14} /> Framework</button>}
-        {!locked && <button onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' })} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"><LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}</button>}
+        {!locked && (
+          <button
+            onClick={props.onShowAICategorize}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          >
+            <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+          </button>
+        )}
+        <button
+          onClick={props.onShowScoringModel}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
+        </button>
+        <button
+          onClick={props.onShowExportPresentation}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
+        </button>
+        <button
+          onClick={props.onShowPipeline}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
+        </button>
+        <button
+          onClick={props.onShowCopilot}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Brain size={14} /> AI Copilot
+        </button>
+        <button
+          onClick={props.onShowVoiceInput}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
+        </button>
+        <button
+          onClick={props.onShowCrossRelations}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
+        </button>
+        <button
+          onClick={props.onToggleHeatmap}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
+        </button>
+        <button
+          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showAuditTrail' })}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <History size={14} /> {isPl ? 'Historia' : 'History'}
+        </button>
+        <button
+          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showActivityFeed' })}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
+        </button>
+        <button
+          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showSnapshots' })}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}
+        </button>
+        <button
+          onClick={props.onShowConditionalFmt}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+        >
+          <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
+        </button>
+        {!locked && (
+          <button
+            onClick={props.onShowFrameworkGen}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          >
+            <LayoutGrid size={14} /> Framework
+          </button>
+        )}
+        {!locked && (
+          <button
+            onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showTemplateGallery' })}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+          >
+            <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
+          </button>
+        )}
       </MobileToolbarMenuComponent>
 
       {/* CSV import/export + Connectors */}
       <div className="flex items-center gap-0.5">
         {!locked && (
-          <button onClick={props.onShowConnectorWizard} className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors" title={isPl ? 'Importuj dane' : 'Import data'}>
+          <button
+            onClick={props.onShowConnectorWizard}
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+            title={isPl ? 'Importuj dane' : 'Import data'}
+          >
             <Network size={12} /> {isPl ? 'Import' : 'Import'}
           </button>
         )}
         {props.connectors.connectors.length > 0 && (
-          <button onClick={props.onShowConnectorList} className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title={isPl ? 'Konektory' : 'Connectors'}>
+          <button
+            onClick={props.onShowConnectorList}
+            className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            title={isPl ? 'Konektory' : 'Connectors'}
+          >
             <Layers size={12} />
-            {props.connectors.connectors.some((c) => c.lastRunStatus === 'running') && <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />}
-            {props.connectors.connectors.some((c) => c.lastRunStatus === 'failed') && <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />}
+            {props.connectors.connectors.some((c) => c.lastRunStatus === 'running') && (
+              <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+            )}
+            {props.connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
+              <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+            )}
           </button>
         )}
         {usePlatform && (
-          <ToolbarIconButton onClick={props.onShowWebhookRelays} title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}><Webhook size={12} /></ToolbarIconButton>
+          <ToolbarIconButton
+            onClick={props.onShowWebhookRelays}
+            title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}
+          >
+            <Webhook size={12} />
+          </ToolbarIconButton>
         )}
-        <input ref={csvInputRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={props.onCSVImport} />
-        {!locked && <ToolbarIconButton onClick={() => csvInputRef.current?.click()} title={isPl ? 'Importuj CSV' : 'Import CSV'}><Upload size={12} /></ToolbarIconButton>}
-        <ToolbarIconButton onClick={props.onExportCSV} title={isPl ? 'Eksportuj CSV' : 'Export CSV'}><Download size={12} /></ToolbarIconButton>
-        <ToolbarIconButton onClick={props.onCopyToClipboard} title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}><ClipboardCopy size={12} /></ToolbarIconButton>
+        <input
+          ref={csvInputRef}
+          type="file"
+          accept=".csv,.tsv,.txt"
+          className="hidden"
+          onChange={props.onCSVImport}
+        />
+        {!locked && (
+          <ToolbarIconButton
+            onClick={() => csvInputRef.current?.click()}
+            title={isPl ? 'Importuj CSV' : 'Import CSV'}
+          >
+            <Upload size={12} />
+          </ToolbarIconButton>
+        )}
+        <ToolbarIconButton
+          onClick={props.onExportCSV}
+          title={isPl ? 'Eksportuj CSV' : 'Export CSV'}
+        >
+          <Download size={12} />
+        </ToolbarIconButton>
+        <ToolbarIconButton
+          onClick={props.onCopyToClipboard}
+          title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
+        >
+          <ClipboardCopy size={12} />
+        </ToolbarIconButton>
       </div>
 
       {/* Column config */}
       <div className="relative">
-        <button onClick={() => setShowColumnConfig(!showColumnConfig)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors" title={isPl ? 'Kolumny' : 'Columns'}>
+        <button
+          onClick={() => setShowColumnConfig(!showColumnConfig)}
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          title={isPl ? 'Kolumny' : 'Columns'}
+        >
           <Columns3 size={12} />
         </button>
         {showColumnConfig && (
           <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-2">
             {columns.map((col) => (
-              <button key={col.key} onClick={() => toggleColumn(col.key)} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors">
-                {col.visible ? <Eye size={12} className="text-primary-500" /> : <EyeOff size={12} className="text-slate-400" />}
+              <button
+                key={col.key}
+                onClick={() => toggleColumn(col.key)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                {col.visible ? (
+                  <Eye size={12} className="text-primary-500" />
+                ) : (
+                  <EyeOff size={12} className="text-slate-400" />
+                )}
                 {col.header}
                 <span className="ml-auto text-[9px] text-slate-400">{col.type}</span>
               </button>
             ))}
             <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-1 pt-1">
-              <button onClick={() => { setShowColumnConfig(false); uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true }); }} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors">
+              <button
+                onClick={() => {
+                  setShowColumnConfig(false);
+                  uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true });
+                }}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+              >
                 <Plus size={12} /> {isPl ? 'Nowa kolumna' : 'New column'}
               </button>
               {/* Field Manager button — wires the orphaned FieldManager component */}
               {usePlatform && (
-                <button onClick={() => { setShowColumnConfig(false); uiDispatch({ type: 'SET_PANEL', panel: 'showFieldManager', value: true }); }} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 transition-colors">
+                <button
+                  onClick={() => {
+                    setShowColumnConfig(false);
+                    uiDispatch({ type: 'SET_PANEL', panel: 'showFieldManager', value: true });
+                  }}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                >
                   <Columns3 size={12} /> {isPl ? 'Zarządzaj polami' : 'Manage Fields'}
                 </button>
               )}
@@ -753,10 +1170,20 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* Undo / Redo */}
       <div className="flex items-center gap-0.5">
-        <button onClick={props.onPlatformUndo} disabled={!usePlatform && !props.nodesUndo.canUndo} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors" title="Undo (Ctrl+Z)">
+        <button
+          onClick={props.onPlatformUndo}
+          disabled={!usePlatform && !props.nodesUndo.canUndo}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+          title="Undo (Ctrl+Z)"
+        >
           <Undo2 size={13} />
         </button>
-        <button onClick={props.nodesUndo.redo} disabled={!props.nodesUndo.canRedo} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors" title="Redo (Ctrl+Y)">
+        <button
+          onClick={props.nodesUndo.redo}
+          disabled={!props.nodesUndo.canRedo}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+          title="Redo (Ctrl+Y)"
+        >
           <Redo2 size={13} />
         </button>
       </div>
@@ -772,14 +1199,32 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           {!locked && (
             <>
               <div className="relative">
-                <button onClick={() => setShowBulkConvertMenu((p) => !p)} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors">
+                <button
+                  onClick={() => setShowBulkConvertMenu((p) => !p)}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
+                >
                   <ArrowRight size={11} /> {isPl ? 'Konwertuj' : 'Convert'} <ChevronDown size={9} />
                 </button>
                 {showBulkConvertMenu && (
                   <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1">
                     {(['initiative', 'task', 'decision'] as const).map((t) => (
-                      <button key={t} onClick={() => props.onBulkConvert(t)} className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors capitalize">
-                        → {t === 'initiative' ? (isPl ? 'Inicjatywa' : 'Initiative') : t === 'task' ? (isPl ? 'Zadanie' : 'Task') : (isPl ? 'Decyzja' : 'Decision')}
+                      <button
+                        key={t}
+                        onClick={() => props.onBulkConvert(t)}
+                        className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors capitalize"
+                      >
+                        →{' '}
+                        {t === 'initiative'
+                          ? isPl
+                            ? 'Inicjatywa'
+                            : 'Initiative'
+                          : t === 'task'
+                            ? isPl
+                              ? 'Zadanie'
+                              : 'Task'
+                            : isPl
+                              ? 'Decyzja'
+                              : 'Decision'}
                       </button>
                     ))}
                   </div>
@@ -796,10 +1241,18 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {/* Add row */}
       {!locked && (
         <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-          <button onClick={handleAddRow} className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors" title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}>
+          <button
+            onClick={handleAddRow}
+            className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
+          >
             <Plus size={12} /> {isPl ? 'Wiersz' : 'Row'}
           </button>
-          <button onClick={props.onAddRowWithTemplate} className="px-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60" title={isPl ? 'Dodaj z szablonu' : 'Add from template'}>
+          <button
+            onClick={props.onAddRowWithTemplate}
+            className="px-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
+            title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
+          >
             <ChevronDown size={10} />
           </button>
         </div>
@@ -853,7 +1306,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     id: n.id,
                     type: String(n.type || 'idea'),
                     title: String(n.data?.label || ''),
-                    snippet: String(n.data?.description || n.data?.bodyMarkdown || '').slice(0, 200),
+                    snippet: String(n.data?.description || n.data?.bodyMarkdown || '').slice(
+                      0,
+                      200
+                    ),
                   }))}
                 onSort={(s) => setSort(s)}
                 onFilter={(f) => setFilters(f)}

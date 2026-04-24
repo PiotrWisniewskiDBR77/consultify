@@ -14,8 +14,8 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-import { asyncHandler } from '../utils/asyncHandler.js';
 import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 

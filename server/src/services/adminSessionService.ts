@@ -27,7 +27,9 @@ class AdminSessionServiceClass {
   }
 
   private normalizeSessionType(sessionType?: string): 'standard' | 'jit' | 'break_glass' {
-    const normalized = String(sessionType || 'standard').trim().toLowerCase();
+    const normalized = String(sessionType || 'standard')
+      .trim()
+      .toLowerCase();
     if (normalized === 'jit') return 'jit';
     if (normalized === 'break_glass' || normalized === 'break-glass') return 'break_glass';
     return 'standard';
@@ -39,8 +41,7 @@ class AdminSessionServiceClass {
   ): number {
     const requested = Number.isFinite(Number(expiresInHours)) ? Number(expiresInHours) : 8;
     const normalizedType = this.normalizeSessionType(sessionType);
-    const maxHours =
-      normalizedType === 'break_glass' ? 1 : normalizedType === 'jit' ? 2 : 8;
+    const maxHours = normalizedType === 'break_glass' ? 1 : normalizedType === 'jit' ? 2 : 8;
     return Math.max(1, Math.min(requested, maxHours));
   }
 
@@ -158,8 +159,7 @@ class AdminSessionServiceClass {
     const breakGlassReason = data?.breakGlassReason || null;
     const approvedBy = data?.approvedBy || null;
     const createdBy = data?.createdBy || adminId;
-    const expiresAt =
-      data?.expiresAt || this.computeExpiresAt(data?.expiresInHours, sessionType);
+    const expiresAt = data?.expiresAt || this.computeExpiresAt(data?.expiresInHours, sessionType);
 
     try {
       await this.db.run(

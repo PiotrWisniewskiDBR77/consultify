@@ -381,7 +381,6 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               );
             })}
           </div>
-
         </div>
 
         {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
@@ -405,8 +404,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             <div className="flex items-center gap-1.5">
               {statusFilters.map((filter) => {
                 const isActive =
-                  activeStatusFilter === filter.id ||
-                  (filter.id === 'all' && !activeStatusFilter);
+                  activeStatusFilter === filter.id || (filter.id === 'all' && !activeStatusFilter);
                 return (
                   <button
                     key={filter.id}

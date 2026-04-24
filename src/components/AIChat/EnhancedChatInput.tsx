@@ -811,7 +811,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           {/* Right Actions */}
           <div className="flex items-center gap-2">
             {/* Mic button: mute/unmute when Teresa voice is live, dictation otherwise */}
-            {(teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting') ? (
+            {teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
               <button
                 onClick={() => onTeresaVoiceMuteToggle?.()}
                 disabled={teresaVoiceStatus !== 'live'}

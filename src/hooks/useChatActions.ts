@@ -9,13 +9,14 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  handleChatAction,
-  type ActionHandlerDeps,
-} from '@/services/chatActionHandler';
+import { type ActionHandlerDeps, handleChatAction } from '@/services/chatActionHandler';
 import { executeChatNavigate, type NavigateAction } from '@/services/chatNavigator';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import { ACTION_SCHEMA_VERSION, type ChatActionPayload, type ChatActionType } from '@/types/domain/chatActions';
+import {
+  ACTION_SCHEMA_VERSION,
+  type ChatActionPayload,
+  type ChatActionType,
+} from '@/types/domain/chatActions';
 
 export type ChatAction = NavigateAction | ChatActionPayload;
 
@@ -61,9 +62,14 @@ export function useChatActions() {
         return;
       }
 
-      const payload: ChatActionPayload = 'version' in action
-        ? action as ChatActionPayload
-        : { type: action.type as ChatActionType, version: ACTION_SCHEMA_VERSION, params: (action as any).params ?? {} };
+      const payload: ChatActionPayload =
+        'version' in action
+          ? (action as ChatActionPayload)
+          : {
+              type: action.type as ChatActionType,
+              version: ACTION_SCHEMA_VERSION,
+              params: (action as any).params ?? {},
+            };
 
       const deps: ActionHandlerDeps = { navigate, context: {} };
       const result = await handleChatAction(payload, deps);

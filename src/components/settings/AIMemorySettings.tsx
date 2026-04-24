@@ -98,10 +98,7 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
     }
   };
 
-  const update = <K extends keyof AIMemoryPreferences>(
-    key: K,
-    value: AIMemoryPreferences[K]
-  ) => {
+  const update = <K extends keyof AIMemoryPreferences>(key: K, value: AIMemoryPreferences[K]) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -153,9 +150,7 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                     onChange={(e) => update('retentionDays', parseInt(e.target.value) || 30)}
                     className="w-28"
                   />
-                  <span className="text-sm text-slate-500">
-                    {t('settings.ai.days', 'days')}
-                  </span>
+                  <span className="text-sm text-slate-500">{t('settings.ai.days', 'days')}</span>
                 </div>
               </SettingsFormRow>
 

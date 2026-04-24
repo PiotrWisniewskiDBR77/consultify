@@ -13,13 +13,7 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-const ADMIN_ROLES = new Set([
-  'owner',
-  'admin',
-  'administrator',
-  'superadmin',
-  'super_admin',
-]);
+const ADMIN_ROLES = new Set(['owner', 'admin', 'administrator', 'superadmin', 'super_admin']);
 
 const notConfigured = (res: Response) =>
   res.status(503).json({

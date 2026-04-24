@@ -15,7 +15,9 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
   const pending = decisions.filter((d: any) => String(d.status).toUpperCase() === 'PENDING');
   const overdue = decisions.filter((d: any) => {
     if (!d.dueDate) return false;
-    return new Date(d.dueDate).getTime() < Date.now() && String(d.status).toUpperCase() === 'PENDING';
+    return (
+      new Date(d.dueDate).getTime() < Date.now() && String(d.status).toUpperCase() === 'PENDING'
+    );
   });
   const noOwner = pending.filter((d: any) => !d.ownerName && !d.ownerId);
   const noDate = pending.filter((d: any) => !d.dueDate);
@@ -25,7 +27,10 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
   const latencies = pending
     .filter((d: any) => d.createdAt)
     .map((d: any) => Math.floor((now - new Date(d.createdAt).getTime()) / 86400000));
-  const avgLatency = latencies.length > 0 ? Math.round(latencies.reduce((a: number, b: number) => a + b, 0) / latencies.length) : 0;
+  const avgLatency =
+    latencies.length > 0
+      ? Math.round(latencies.reduce((a: number, b: number) => a + b, 0) / latencies.length)
+      : 0;
 
   // Observations
   if (pending.length > 0) {
@@ -86,15 +91,16 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
       const owner = d.ownerName || 'Unassigned';
       byOwner[owner] = (byOwner[owner] || 0) + 1;
     });
-    const topApprover = Object.entries(byOwner).sort(([,a],[,b]) => b - a)[0];
+    const topApprover = Object.entries(byOwner).sort(([, a], [, b]) => b - a)[0];
 
     const insId = uid('ins-dec');
     insights.push({
       id: insId,
       observationIds: observations.filter((o) => o.metric.includes('overdue')).map((o) => o.id),
-      interpretation: topApprover && topApprover[1] > 1
-        ? `Decision bottleneck: ${topApprover[0]} has ${topApprover[1]} overdue decisions — governance process may need parallel paths`
-        : `${overdue.length} decision(s) overdue — blocking downstream execution`,
+      interpretation:
+        topApprover && topApprover[1] > 1
+          ? `Decision bottleneck: ${topApprover[0]} has ${topApprover[1]} overdue decisions — governance process may need parallel paths`
+          : `${overdue.length} decision(s) overdue — blocking downstream execution`,
       isSystemic: overdue.length > 3,
       requiresAction: true,
       confidence: 'high',
@@ -115,7 +121,8 @@ export function analyzeDecisions(input: HeuristicInput): HeuristicOutput {
     insights.push({
       id: insId,
       observationIds: observations.filter((o) => o.metric.includes('latency')).map((o) => o.id),
-      interpretation: 'Decision governance cadence is too slow for execution pace — structural review needed',
+      interpretation:
+        'Decision governance cadence is too slow for execution pace — structural review needed',
       isSystemic: true,
       requiresAction: true,
       confidence: 'medium',

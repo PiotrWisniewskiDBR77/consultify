@@ -336,7 +336,13 @@ interface ConversationState {
   chatLanguageByConversationId: Record<string, SupportedLanguage>;
 
   // Deep-link / lifecycle state for the active conversation (§2.3.5)
-  _activeConversationState: 'active' | 'archived' | 'deleted' | 'not_found' | 'permission_denied' | null;
+  _activeConversationState:
+    | 'active'
+    | 'archived'
+    | 'deleted'
+    | 'not_found'
+    | 'permission_denied'
+    | null;
   _activeConversationStateMessage: string | null;
 
   // UI State
@@ -446,11 +452,14 @@ interface ConversationState {
   /**
    * Export a conversation (§2.3.5 E10).
    */
-  exportConversation: (id: string, params?: {
-    from?: string;
-    to?: string;
-    format?: 'json' | 'markdown' | 'text';
-  }) => Promise<any>;
+  exportConversation: (
+    id: string,
+    params?: {
+      from?: string;
+      to?: string;
+      format?: 'json' | 'markdown' | 'text';
+    }
+  ) => Promise<any>;
 
   /**
    * Purge own data — hard-delete a conversation (§2.3.3 delete-my-data).
@@ -636,7 +645,8 @@ export const useConversationStore = create<ConversationState>()(
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'deleted',
-                _activeConversationStateMessage: result?._stateMessage || 'This conversation has been deleted.',
+                _activeConversationStateMessage:
+                  result?._stateMessage || 'This conversation has been deleted.',
               });
               return;
             }
@@ -686,7 +696,8 @@ export const useConversationStore = create<ConversationState>()(
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'permission_denied',
-                _activeConversationStateMessage: reason || 'You do not have access to this conversation.',
+                _activeConversationStateMessage:
+                  reason || 'You do not have access to this conversation.',
               });
               return;
             }
@@ -786,7 +797,9 @@ export const useConversationStore = create<ConversationState>()(
                   };
                 });
               }
-            } catch { /* best effort refresh */ }
+            } catch {
+              /* best effort refresh */
+            }
           }
           console.error('[ConversationStore] Update error:', err);
           throw err;
@@ -1312,9 +1325,22 @@ export const useConversationStore = create<ConversationState>()(
           console.error('[ConversationStore] Server search error:', err);
           const status = err?.response?.status || err?.status;
           if (status === 429) {
-            return { conversations: [], nextCursor: null, hasMore: false, partial: true, rateLimited: true, scopeBlocked: 0 };
+            return {
+              conversations: [],
+              nextCursor: null,
+              hasMore: false,
+              partial: true,
+              rateLimited: true,
+              scopeBlocked: 0,
+            };
           }
-          return { conversations: [], nextCursor: null, hasMore: false, partial: true, scopeBlocked: 0 };
+          return {
+            conversations: [],
+            nextCursor: null,
+            hasMore: false,
+            partial: true,
+            scopeBlocked: 0,
+          };
         }
       },
 
@@ -1351,9 +1377,11 @@ export const useConversationStore = create<ConversationState>()(
             return {
               conversations: newConversations,
               groupedConversations: groupConversations(newConversations),
-              activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+              activeConversationId:
+                state.activeConversationId === id ? null : state.activeConversationId,
               activeMessages: state.activeConversationId === id ? [] : state.activeMessages,
-              _activeConversationState: state.activeConversationId === id ? null : state._activeConversationState,
+              _activeConversationState:
+                state.activeConversationId === id ? null : state._activeConversationState,
             };
           });
         } catch (err) {

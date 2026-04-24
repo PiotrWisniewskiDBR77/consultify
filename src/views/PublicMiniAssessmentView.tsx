@@ -7,12 +7,12 @@ import {
   ArrowRight,
   BarChart3,
   CheckCircle2,
+  Copy,
   Loader2,
   Mail,
   Sparkles,
   Star,
   TrendingUp,
-  Copy,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -133,7 +133,8 @@ export const PublicMiniAssessmentView: React.FC = () => {
     trackFunnelEvent('external_assessment_started');
   }, []);
 
-  const hasDraftAnswers = Array.isArray(assessmentData?.answers) && assessmentData.answers.length > 0;
+  const hasDraftAnswers =
+    Array.isArray(assessmentData?.answers) && assessmentData.answers.length > 0;
 
   const handleAnswer = useCallback((answer: SurveyAnswer) => {
     // No-op for public assessment — answers tracked internally by SurveyShell
@@ -385,7 +386,9 @@ export const PublicMiniAssessmentView: React.FC = () => {
               <p className="text-xs uppercase tracking-[0.2em] text-indigo-100/80 mb-3">
                 {aiResult.resultLabel}
               </p>
-              <h1 className="text-xl font-bold mb-2">{t('publicAssessment.resultTitle', 'Your Readiness Score')}</h1>
+              <h1 className="text-xl font-bold mb-2">
+                {t('publicAssessment.resultTitle', 'Your Readiness Score')}
+              </h1>
               <div className="text-5xl font-bold mb-2">{aiResult.overallScore}%</div>
               <span
                 className={`inline-block px-3 py-1 rounded-full text-sm font-medium bg-white/20`}
@@ -480,7 +483,10 @@ export const PublicMiniAssessmentView: React.FC = () => {
               </h2>
               <div className="space-y-3">
                 {aiResult.answerSummary.map((entry) => (
-                  <div key={entry.questionId} className="rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3">
+                  <div
+                    key={entry.questionId}
+                    className="rounded-xl bg-gray-50 dark:bg-gray-900/40 p-3"
+                  >
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                       {entry.question}
                     </p>

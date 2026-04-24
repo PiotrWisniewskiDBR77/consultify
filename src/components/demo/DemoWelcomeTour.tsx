@@ -54,7 +54,8 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
   const [selectedRole, setSelectedRole] = useState<string | null>(initialRole);
   const [selectedScenario, setSelectedScenario] = useState<string | null>(scenarios[0]?.id || null);
   const [isRoleSelected, setIsRoleSelected] = useState(false);
-  const canStartTour = Boolean(selectedRole) && (scenarios.length === 0 || Boolean(selectedScenario));
+  const canStartTour =
+    Boolean(selectedRole) && (scenarios.length === 0 || Boolean(selectedScenario));
   const sourceLabel =
     entrySource === 'profile_menu'
       ? t('tour.entrySource.profile', 'Started from your live workspace')

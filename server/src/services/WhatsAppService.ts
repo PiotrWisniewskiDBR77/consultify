@@ -37,12 +37,7 @@ function getWhatsAppConfig() {
 
 function isConfigured() {
   const cfg = getWhatsAppConfig();
-  return Boolean(
-    cfg.sid &&
-    cfg.token &&
-    cfg.from &&
-    cfg.to
-  );
+  return Boolean(cfg.sid && cfg.token && cfg.from && cfg.to);
 }
 
 async function sendNewFeedbackAlert(feedback: NewFeedbackAlert): Promise<void> {

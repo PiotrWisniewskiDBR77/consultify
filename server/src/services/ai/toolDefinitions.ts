@@ -297,12 +297,20 @@ export const AI_TOOLS: ToolDefinition[] = [
           section_title: { type: 'string', description: 'Title of the report section' },
           section_type: {
             type: 'string',
-            enum: ['executive_summary', 'analysis', 'recommendations', 'financial', 'risk', 'appendix'],
+            enum: [
+              'executive_summary',
+              'analysis',
+              'recommendations',
+              'financial',
+              'risk',
+              'appendix',
+            ],
           },
           data_sources: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Data sources to draw from (e.g., "assessment", "financials", "initiatives")',
+            description:
+              'Data sources to draw from (e.g., "assessment", "financials", "initiatives")',
           },
           format: {
             type: 'string',
@@ -352,7 +360,11 @@ export const AI_TOOLS: ToolDefinition[] = [
             type: 'string',
             enum: ['insight', 'action_item', 'meeting_note', 'decision', 'research'],
           },
-          tags: { type: 'array', items: { type: 'string' }, description: 'Tags for categorization' },
+          tags: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Tags for categorization',
+          },
         },
         required: ['title', 'content'],
       },
@@ -367,7 +379,10 @@ export const AI_TOOLS: ToolDefinition[] = [
       parameters: {
         type: 'object',
         properties: {
-          question: { type: 'string', description: 'Natural language question about organizational data' },
+          question: {
+            type: 'string',
+            description: 'Natural language question about organizational data',
+          },
           data_domain: {
             type: 'string',
             enum: ['initiatives', 'assessments', 'financials', 'tasks', 'decisions', 'kpis'],
@@ -501,7 +516,8 @@ export async function executeToolCall(
             question: args.question,
             organizationId: context.organizationId,
             userId: context.userId,
-            sessionId: context.sessionId || context.conversationId || `tables-tool-${context.userId}`,
+            sessionId:
+              context.sessionId || context.conversationId || `tables-tool-${context.userId}`,
             conversationId: context.conversationId || context.sessionId || null,
             contextSnapshotId: context.contextSnapshotId || null,
             dataDomain: args.data_domain,

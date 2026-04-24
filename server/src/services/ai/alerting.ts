@@ -6,8 +6,8 @@
 import * as http from 'http';
 import * as https from 'https';
 
-import aiLogger from './logger.js';
 import WhatsAppService from '../WhatsAppService.js';
+import aiLogger from './logger.js';
 
 export const SEVERITY = {
   INFO: 'info',

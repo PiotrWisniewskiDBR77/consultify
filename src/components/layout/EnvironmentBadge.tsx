@@ -22,7 +22,11 @@ function inferEnvFromHost(hostname: string): string | null {
   if (host === 'localhost' || host === '127.0.0.1') return 'local';
   if (host === 'consultify.ai' || host === 'www.consultify.ai') return 'production';
   if (host === 'demo.consultify.ai') return 'demo';
-  if (host === 'stage.consultinity.ai' || host === 'staging.consultify.ai' || host === 'stage.consultify.ai') {
+  if (
+    host === 'stage.consultinity.ai' ||
+    host === 'staging.consultify.ai' ||
+    host === 'stage.consultify.ai'
+  ) {
     return 'staging';
   }
   if (host.endsWith('.railway.app')) return 'railway';
@@ -139,4 +143,3 @@ export const EnvironmentBadge: React.FC = () => {
     </button>
   );
 };
-

@@ -8,19 +8,19 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  P09_COLLECTION_LANE_CONTRACT,
-  P09_SUBMISSION_STATUSES,
-  P09_SUBMISSION_NEXT_ACTIONS,
-  P09_STATUS_TRANSITIONS,
-  P09_SURVEY_LIFECYCLE,
-  P09_BRANCHING_POSTURE,
-  P09_HANDOFF_TO_P10,
-  P09_ANTI_DUPLICATE_RULES,
-  P09_DEGRADED_SCENARIOS,
-  P09_ACCEPTANCE_CHECKLIST,
-  P09_NON_GOALS,
-  isValidP09StatusTransition,
   buildP09HandoffPayloadSkeleton,
+  isValidP09StatusTransition,
+  P09_ACCEPTANCE_CHECKLIST,
+  P09_ANTI_DUPLICATE_RULES,
+  P09_BRANCHING_POSTURE,
+  P09_COLLECTION_LANE_CONTRACT,
+  P09_DEGRADED_SCENARIOS,
+  P09_HANDOFF_TO_P10,
+  P09_NON_GOALS,
+  P09_STATUS_TRANSITIONS,
+  P09_SUBMISSION_NEXT_ACTIONS,
+  P09_SUBMISSION_STATUSES,
+  P09_SURVEY_LIFECYCLE,
 } from '../../../services/v8/surveyCollectionCanon.js';
 
 describe('P09 Survey Collection Lane Canon', () => {
@@ -227,9 +227,7 @@ describe('P09 Survey Collection Lane Canon', () => {
   // ── Non-goals ──────────────────────────────────────────────────
   describe('Non-goals', () => {
     it('explicitly lists insight computation as non-goal', () => {
-      const hasInsightNonGoal = P09_NON_GOALS.some((ng) =>
-        ng.toLowerCase().includes('insight')
-      );
+      const hasInsightNonGoal = P09_NON_GOALS.some((ng) => ng.toLowerCase().includes('insight'));
       expect(hasInsightNonGoal).toBe(true);
     });
 

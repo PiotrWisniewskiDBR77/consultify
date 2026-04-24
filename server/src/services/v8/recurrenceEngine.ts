@@ -9,8 +9,8 @@
 // @ts-ignore — optional dependency, may not have type declarations
 import { RRule, RRuleSet, rrulestr } from 'rrule';
 
-import type { RecurrenceModel } from './calendarInteropService.js';
 import logger from '../../utils/Logger.js';
+import type { RecurrenceModel } from './calendarInteropService.js';
 
 const LOG_PREFIX = '[P02-RecurrenceEngine]';
 
@@ -33,32 +33,31 @@ export function materializeInstances(
   seriesEndAt: string | null,
   recurrence: RecurrenceModel,
   windowStart: string,
-  windowEnd: string,
+  windowEnd: string
 ): MaterializedInstance[] {
   const wStart = new Date(windowStart);
   const wEnd = new Date(windowEnd);
   const eventStart = new Date(seriesStartAt);
-  const durationMs = seriesEndAt
-    ? new Date(seriesEndAt).getTime() - eventStart.getTime()
-    : 0;
+  const durationMs = seriesEndAt ? new Date(seriesEndAt).getTime() - eventStart.getTime() : 0;
 
   if (!recurrence.rrule) {
-    return [{
-      startAt: seriesStartAt,
-      endAt: seriesEndAt,
-      recurrenceId: seriesStartAt,
-      isException: false,
-      isCancelled: false,
-    }];
+    return [
+      {
+        startAt: seriesStartAt,
+        endAt: seriesEndAt,
+        recurrenceId: seriesStartAt,
+        isException: false,
+        isCancelled: false,
+      },
+    ];
   }
 
   try {
     const ruleSet = new RRuleSet();
 
-    const rule = rrulestr(
-      `DTSTART:${formatRRuleDate(eventStart)}\nRRULE:${recurrence.rrule}`,
-      { forceset: false },
-    );
+    const rule = rrulestr(`DTSTART:${formatRRuleDate(eventStart)}\nRRULE:${recurrence.rrule}`, {
+      forceset: false,
+    });
     ruleSet.rrule(rule as RRule);
 
     if (recurrence.rdate) {
@@ -123,18 +122,23 @@ export function materializeInstances(
     return instances;
   } catch (err) {
     logger.error(`${LOG_PREFIX} Failed to materialize recurrence: ${(err as Error).message}`);
-    return [{
-      startAt: seriesStartAt,
-      endAt: seriesEndAt,
-      recurrenceId: seriesStartAt,
-      isException: false,
-      isCancelled: false,
-    }];
+    return [
+      {
+        startAt: seriesStartAt,
+        endAt: seriesEndAt,
+        recurrenceId: seriesStartAt,
+        isException: false,
+        isCancelled: false,
+      },
+    ];
   }
 }
 
 function formatRRuleDate(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return d
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
 }
 
 /**

@@ -33,7 +33,9 @@ export function deprecationHeader(v8Replacement: string, opts?: Partial<Deprecat
       const key = `${req.method} ${req.baseUrl}${req.path}`;
       if (!warned.has(key)) {
         warned.add(key);
-        logger.info(`[Deprecation] First call to legacy route: ${key} → migrate to ${v8Replacement}`);
+        logger.info(
+          `[Deprecation] First call to legacy route: ${key} → migrate to ${v8Replacement}`
+        );
       }
     }
 

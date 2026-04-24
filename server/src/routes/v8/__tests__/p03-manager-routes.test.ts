@@ -63,8 +63,10 @@ vi.mock('../../../services/executionBudgetService.js', () => ({
   detectOverspendSignals: (...args: unknown[]) => mockDetectOverspendSignals(...args),
 }));
 vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
-  getExecutionControlTowerQueues: (...args: unknown[]) => mockGetExecutionControlTowerQueues(...args),
-  getExecutionControlTowerItemDetail: (...args: unknown[]) => mockGetExecutionControlTowerItemDetail(...args),
+  getExecutionControlTowerQueues: (...args: unknown[]) =>
+    mockGetExecutionControlTowerQueues(...args),
+  getExecutionControlTowerItemDetail: (...args: unknown[]) =>
+    mockGetExecutionControlTowerItemDetail(...args),
   V8_EXECUTION_CONTROL_TOWER_CONTRACT: 'execution_control_tower_v1',
 }));
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -102,7 +104,8 @@ vi.mock('../../../services/v8/managerAiService.js', () => ({
   getAiManageAll: (...args: unknown[]) => mockGetAiManageAll(...args),
 }));
 
-let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null = null;
+let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null =
+  null;
 
 vi.mock('../../../middleware/auth.middleware.js', () => {
   const mw = (req: any, res: any, next: () => void) => {

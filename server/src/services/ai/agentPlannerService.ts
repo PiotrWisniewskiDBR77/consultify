@@ -10,8 +10,21 @@ import { randomUUID } from 'node:crypto';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
-export type PlanStatus = 'planning' | 'awaiting_approval' | 'executing' | 'paused' | 'completed' | 'failed' | 'cancelled';
-export type StepStatus = 'pending' | 'awaiting_approval' | 'running' | 'completed' | 'failed' | 'skipped';
+export type PlanStatus =
+  | 'planning'
+  | 'awaiting_approval'
+  | 'executing'
+  | 'paused'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+export type StepStatus =
+  | 'pending'
+  | 'awaiting_approval'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'skipped';
 
 export interface PlanStep {
   id: string;
@@ -232,11 +245,11 @@ class AgentPlannerService {
   }
 
   async approveStep(planId: string, stepIndex: number, userId: string): Promise<void> {
-    const step = await dbGet(
+    const step = (await dbGet(
       `SELECT id FROM ai_agent_plan_steps
        WHERE plan_id = ? AND step_index = ? AND status = 'awaiting_approval'`,
       [planId, stepIndex]
-    ) as any;
+    )) as any;
     if (!step) throw new Error('Step not found or not awaiting approval');
 
     await dbRun(
@@ -257,16 +270,13 @@ class AgentPlannerService {
   }
 
   async getPlan(planId: string): Promise<AgentPlan | null> {
-    const row = await dbGet(
-      `SELECT * FROM ai_agent_plans WHERE id = ?`,
-      [planId]
-    ) as any;
+    const row = (await dbGet(`SELECT * FROM ai_agent_plans WHERE id = ?`, [planId])) as any;
     if (!row) return null;
 
-    const stepRows = await dbAll(
+    const stepRows = (await dbAll(
       `SELECT * FROM ai_agent_plan_steps WHERE plan_id = ? ORDER BY step_index`,
       [planId]
-    ) as any[];
+    )) as any[];
 
     const steps: PlanStep[] = (stepRows || []).map((s: any) => ({
       id: s.id,
@@ -302,12 +312,12 @@ class AgentPlannerService {
   async listPlans(orgId: string, userId?: string): Promise<AgentPlan[]> {
     const userFilter = userId ? 'AND user_id = ?' : '';
     const params = userId ? [orgId, userId] : [orgId];
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT * FROM ai_agent_plans
        WHERE organization_id = ? ${userFilter}
        ORDER BY created_at DESC LIMIT 50`,
       params
-    ) as any[];
+    )) as any[];
 
     return (rows || []).map((row: any) => ({
       id: row.id,
@@ -351,7 +361,7 @@ class AgentPlannerService {
     currentStep?: number,
     errorMessage?: string
   ): Promise<void> {
-    const sets = ['status = ?', 'updated_at = datetime(\'now\')'];
+    const sets = ['status = ?', "updated_at = datetime('now')"];
     const params: unknown[] = [status];
 
     if (currentStep !== undefined) {
@@ -363,10 +373,10 @@ class AgentPlannerService {
       params.push(errorMessage);
     }
     if (status === 'completed') {
-      sets.push('completed_at = datetime(\'now\')');
+      sets.push("completed_at = datetime('now')");
     }
     if (status === 'executing') {
-      sets.push('started_at = COALESCE(started_at, datetime(\'now\'))');
+      sets.push("started_at = COALESCE(started_at, datetime('now'))");
     }
 
     params.push(planId);
@@ -375,10 +385,10 @@ class AgentPlannerService {
 
   private async updateStepStatus(stepId: string, status: StepStatus): Promise<void> {
     const startedClause = status === 'running' ? ", started_at = datetime('now')" : '';
-    await dbRun(
-      `UPDATE ai_agent_plan_steps SET status = ?${startedClause} WHERE id = ?`,
-      [status, stepId]
-    );
+    await dbRun(`UPDATE ai_agent_plan_steps SET status = ?${startedClause} WHERE id = ?`, [
+      status,
+      stepId,
+    ]);
   }
 
   private async updatePlanProgress(planId: string, completedSteps: number): Promise<void> {

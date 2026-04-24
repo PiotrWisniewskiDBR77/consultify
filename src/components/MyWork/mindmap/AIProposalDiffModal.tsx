@@ -44,7 +44,9 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         ? existingNodes.find((en) => en.id === parentEdge.source) ||
           proposal.add.nodes.find((an: any) => an.id === parentEdge.source)
         : null;
-      const parentLabel = parentNode ? String((parentNode as any).data?.label || parentNode.id) : '?';
+      const parentLabel = parentNode
+        ? String((parentNode as any).data?.label || parentNode.id)
+        : '?';
       result.push({
         type: 'add',
         label: String((n as any).data?.label || (n as any).id || 'Node'),
@@ -111,14 +113,21 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
           )}
           {hasDestructive && (
             <span className="inline-flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
-              <AlertTriangle size={11} /> {isPl ? 'Zawiera zmiany destrukcyjne' : 'Contains destructive changes'}
+              <AlertTriangle size={11} />{' '}
+              {isPl ? 'Zawiera zmiany destrukcyjne' : 'Contains destructive changes'}
             </span>
           )}
           <div className="ml-auto flex gap-2">
-            <button onClick={selectAll} className="text-[10px] text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] px-1.5 py-0.5 rounded-hig-sm transition-colors">
+            <button
+              onClick={selectAll}
+              className="text-[10px] text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] px-1.5 py-0.5 rounded-hig-sm transition-colors"
+            >
               {isPl ? 'Zaznacz wszystko' : 'Select all'}
             </button>
-            <button onClick={deselectAll} className="text-[10px] text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] px-1.5 py-0.5 rounded-hig-sm transition-colors">
+            <button
+              onClick={deselectAll}
+              className="text-[10px] text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] px-1.5 py-0.5 rounded-hig-sm transition-colors"
+            >
               {isPl ? 'Odznacz' : 'Deselect'}
             </button>
           </div>
@@ -157,7 +166,10 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                             type="checkbox"
                             checked={isChecked}
                             onChange={(e) =>
-                              setSelectedAddIdx((prev) => ({ ...prev, [op.idx!]: e.target.checked }))
+                              setSelectedAddIdx((prev) => ({
+                                ...prev,
+                                [op.idx!]: e.target.checked,
+                              }))
                             }
                             className="rounded"
                           />
@@ -174,15 +186,13 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                           }`}
                         >
                           {isAdd ? <Plus size={9} /> : <Trash2 size={9} />}
-                          {isAdd ? (isPl ? 'Dodaj' : 'Add') : (isPl ? 'Usuń' : 'Del')}
+                          {isAdd ? (isPl ? 'Dodaj' : 'Add') : isPl ? 'Usuń' : 'Del'}
                         </span>
                       </td>
                       <td className="py-2 font-medium text-slate-700 dark:text-slate-200">
                         {op.label}
                       </td>
-                      <td className="py-2 text-slate-400 dark:text-slate-500">
-                        {op.detail}
-                      </td>
+                      <td className="py-2 text-slate-400 dark:text-slate-500">{op.detail}</td>
                     </tr>
                   );
                 })}
@@ -194,15 +204,21 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         {/* Plan summary */}
         {proposal.rationale && (
           <div className="mx-5 mb-3 px-3 py-2 rounded-hig-xl bg-primary-50/50 dark:bg-primary-900/10 border border-primary-200/40 dark:border-primary-800/30 text-[11px] text-primary-700 dark:text-primary-300">
-            <strong>{isPl ? 'Plan:' : 'Plan:'}</strong> {isPl ? `Dodaj ${selectedCount} wybranych węzłów.` : `Add ${selectedCount} selected nodes.`}
-            {removeCount > 0 && ` ${isPl ? `Usuń ${removeCount} węzłów.` : `Remove ${removeCount} nodes.`}`}
+            <strong>{isPl ? 'Plan:' : 'Plan:'}</strong>{' '}
+            {isPl
+              ? `Dodaj ${selectedCount} wybranych węzłów.`
+              : `Add ${selectedCount} selected nodes.`}
+            {removeCount > 0 &&
+              ` ${isPl ? `Usuń ${removeCount} węzłów.` : `Remove ${removeCount} nodes.`}`}
           </div>
         )}
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-between">
           <span className="text-[11px] text-slate-400 dark:text-slate-500">
-            {isPl ? `${selectedCount} z ${addCount} zaznaczonych` : `${selectedCount} of ${addCount} selected`}
+            {isPl
+              ? `${selectedCount} z ${addCount} zaznaczonych`
+              : `${selectedCount} of ${addCount} selected`}
           </span>
           <div className="flex gap-2">
             <button

@@ -1,6 +1,5 @@
 // @ts-nocheck
 // @ts-nocheck
-import logger from '../utils/Logger.js';
 /**
  * Policy Engine (Step 9.8)
  *
@@ -13,8 +12,8 @@ import logger from '../utils/Logger.js';
  * - All decisions are deterministic and auditable
  * - Can be globally disabled by SUPERADMIN
  */
-
 import { getDatabase } from '../database/index.js';
+import logger from '../utils/Logger.js';
 const db = getDatabase();
 
 // Type definitions for database rows

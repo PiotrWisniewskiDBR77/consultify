@@ -59,7 +59,9 @@ export async function listJoinedTeams(config: Record<string, unknown>): Promise<
   if (resp.status === 401) throw new Error('Teams token expired — reauth required');
   if (!resp.ok) throw new Error(`Graph API error: ${resp.status}`);
 
-  const data = (await resp.json()) as { value?: Array<{ id: string; displayName: string; description?: string }> };
+  const data = (await resp.json()) as {
+    value?: Array<{ id: string; displayName: string; description?: string }>;
+  };
   return (data.value || []).map((t) => ({
     id: t.id,
     displayName: t.displayName,
@@ -111,7 +113,11 @@ export async function postChannelMessage(
 
   if (!resp.ok) {
     const errText = await resp.text().catch(() => resp.statusText);
-    logger.warn('[TeamsIntegration] postChannelMessage failed', { status: resp.status, teamId, channelId });
+    logger.warn('[TeamsIntegration] postChannelMessage failed', {
+      status: resp.status,
+      teamId,
+      channelId,
+    });
     return { ok: false, error: `Graph API ${resp.status}: ${errText.slice(0, 200)}` };
   }
 

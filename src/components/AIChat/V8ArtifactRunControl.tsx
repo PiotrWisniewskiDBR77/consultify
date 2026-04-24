@@ -14,6 +14,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { TrustStatePreviewSection } from '@/components/ReportsAndPresentations/TrustStatePreviewSection';
+import { useTrustState } from '@/components/ReportsAndPresentations/useTrustState';
 import type {
   ArtifactFamily,
   ArtifactPlanOutputType,
@@ -22,8 +24,8 @@ import type {
 } from '@/hooks/useV8ArtifactRuns';
 import {
   useV8AcceptArtifactRunPlan,
-  useV8CreateArtifactRunFromChat,
   useV8ArtifactRunHistory,
+  useV8CreateArtifactRunFromChat,
   useV8MaterializeArtifactRun,
   useV8PreflightArtifactRun,
   useV8RetryArtifactRun,
@@ -38,8 +40,6 @@ import {
   useV8SubmitExecutionReview,
 } from '@/hooks/useV8Execution';
 import { useV8Gate } from '@/hooks/useV8Gate';
-import { TrustStatePreviewSection } from '@/components/ReportsAndPresentations/TrustStatePreviewSection';
-import { useTrustState } from '@/components/ReportsAndPresentations/useTrustState';
 
 interface V8ArtifactRunControlProps {
   conversationId: string | null;
@@ -647,7 +647,9 @@ export function V8ArtifactRunControl({
                           className="flex items-start justify-between gap-3 text-[11px] text-amber-900 dark:text-amber-100"
                         >
                           <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium">{check.id.replace(/_/g, ' ')}</div>
+                            <div className="truncate font-medium">
+                              {check.id.replace(/_/g, ' ')}
+                            </div>
                             <div className="mt-0.5 text-amber-800/80 dark:text-amber-200/80">
                               {check.message}
                             </div>

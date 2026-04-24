@@ -81,7 +81,13 @@ export const PrezentacjeView: React.FC = () => {
   const templatePrompt = searchParams.get('templatePrompt');
   const viewParam = searchParams.get('view');
 
-  const showHome = !artifactId && !templateArtifactId && !templatePrompt && viewParam !== 'new' && !pipeline.currentRun && !pipeline.isGenerating;
+  const showHome =
+    !artifactId &&
+    !templateArtifactId &&
+    !templatePrompt &&
+    viewParam !== 'new' &&
+    !pipeline.currentRun &&
+    !pipeline.isGenerating;
 
   const advanceRef = useRef(pipeline.advancePipeline);
   advanceRef.current = pipeline.advancePipeline;
@@ -96,7 +102,8 @@ export const PrezentacjeView: React.FC = () => {
   // Auto-trigger from builtin template prompt
   const promptTriggered = useRef(false);
   useEffect(() => {
-    if (!templatePrompt || promptTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    if (!templatePrompt || promptTriggered.current || pipeline.currentRun || pipeline.isGenerating)
+      return;
     promptTriggered.current = true;
     autoTriggered.current = true;
     void startRef.current(templatePrompt);
@@ -105,12 +112,19 @@ export const PrezentacjeView: React.FC = () => {
   // Auto-trigger from API template
   const templateTriggered = useRef(false);
   useEffect(() => {
-    if (!templateArtifactId || templateTriggered.current || pipeline.currentRun || pipeline.isGenerating) return;
+    if (
+      !templateArtifactId ||
+      templateTriggered.current ||
+      pipeline.currentRun ||
+      pipeline.isGenerating
+    )
+      return;
     templateTriggered.current = true;
     autoTriggered.current = true;
     Api.get(`/artifacts/${templateArtifactId}`)
       .then((tmpl: any) => {
-        const desc = tmpl?.originSummary?.template?.description || tmpl?.title || 'Presentation from template';
+        const desc =
+          tmpl?.originSummary?.template?.description || tmpl?.title || 'Presentation from template';
         void startRef.current(desc, templateArtifactId);
       })
       .catch(() => {
@@ -129,15 +143,12 @@ export const PrezentacjeView: React.FC = () => {
 
         let statusLabel = deriveDeckLifecycleBadge(null, null);
         try {
-          const originRes = await Api.get(`/artifacts/orig/presentation/${artifactId}`) as any;
+          const originRes = (await Api.get(`/artifacts/orig/presentation/${artifactId}`)) as any;
           const artId = originRes?.data?.artifactId || originRes?.artifactId;
           if (artId) {
-            const trustRes = await Api.get(`/artifacts/${artId}/trust-state`) as any;
+            const trustRes = (await Api.get(`/artifacts/${artId}/trust-state`)) as any;
             const trust = trustRes?.data || trustRes;
-            statusLabel = deriveDeckLifecycleBadge(
-              trust?.publishState,
-              trust?.exportHistory
-            );
+            statusLabel = deriveDeckLifecycleBadge(trust?.publishState, trust?.exportHistory);
           }
         } catch {
           statusLabel = deriveDeckLifecycleBadge(
@@ -279,7 +290,9 @@ export const PrezentacjeView: React.FC = () => {
         match: /change\s*theme|zmień\s*motyw|styl/,
         handler: async () => {
           window.open(`/presentations/builder/${deckTarget}`, '_blank');
-          toast.success(t('prezentacje.intentRouted.openBuilder', 'Opening Deck Builder for theme changes'));
+          toast.success(
+            t('prezentacje.intentRouted.openBuilder', 'Opening Deck Builder for theme changes')
+          );
         },
       },
       {

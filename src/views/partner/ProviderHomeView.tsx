@@ -867,22 +867,21 @@ const AcademyPreviewSection: React.FC = () => {
           </h2>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-          Structured partner enablement beyond support docs: foundations, role-specific tracks, and certification readiness.
+          Structured partner enablement beyond support docs: foundations, role-specific tracks, and
+          certification readiness.
         </p>
         <div className="mb-6 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/80 dark:bg-violet-900/20 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">
             Academy boundary
           </div>
           <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
-            Help and partner docs explain workflows when you are working. Partner Academy is the separate learning layer for structured progression, repeatable enablement, and certification signals.
+            Help and partner docs explain workflows when you are working. Partner Academy is the
+            separate learning layer for structured progression, repeatable enablement, and
+            certification signals.
           </p>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
-              Foundations
-            </div>
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
-              Role path
-            </div>
+            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">Foundations</div>
+            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">Role path</div>
             <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
               Certification
             </div>

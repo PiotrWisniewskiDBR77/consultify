@@ -2,14 +2,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { InsightStatus } from '../InterviewInsightService.js';
 import {
+  buildP10HandoffToInitiativesSkeleton,
+  canPublishFinding,
+  isValidP10ConfidenceLevel,
+  isValidP10EvidencePointerType,
   type P10ConfidenceLevel,
   type P10EvidencePointer,
   type P10EvidencePointerType,
   type P10HandoffToInitiativesPayload,
-  isValidP10ConfidenceLevel,
-  isValidP10EvidencePointerType,
-  canPublishFinding,
-  buildP10HandoffToInitiativesSkeleton,
 } from './interviewInsightCanon.js';
 
 // ────────────────────────────────────────────────────────────────
@@ -49,15 +49,18 @@ export function isNotebookSourceRef(sourceRef: string): boolean {
 export async function resolveNotebookReference(sourceRef: string): Promise<NotebookRefResolution> {
   const pageId = parseNotebookSourceRef(sourceRef);
   if (!pageId) {
-    return { valid: false, pageId: null, error: 'Invalid notebook reference format. Expected notebook://<pageId>' };
+    return {
+      valid: false,
+      pageId: null,
+      error: 'Invalid notebook reference format. Expected notebook://<pageId>',
+    };
   }
 
   try {
     const { get } = await import('../../utils/DbPromise.js');
-    const row: any = await get(
-      `SELECT id, title FROM notebook_pages WHERE id = ? LIMIT 1`,
-      [pageId]
-    );
+    const row: any = await get(`SELECT id, title FROM notebook_pages WHERE id = ? LIMIT 1`, [
+      pageId,
+    ]);
 
     if (!row) {
       return { valid: false, pageId, error: `Notebook page not found: ${pageId}` };
@@ -141,7 +144,15 @@ const ACTION_TO_TARGET: Record<InsightLifecycleAction, InsightStatus> = {
 };
 
 const findingsStore = new Map<string, P10Finding[]>();
-const handoffLog = new Map<string, Array<{ findingId: string; payload: P10HandoffToInitiativesPayload; targetInitiativeId?: string; createdAt: string }>>();
+const handoffLog = new Map<
+  string,
+  Array<{
+    findingId: string;
+    payload: P10HandoffToInitiativesPayload;
+    targetInitiativeId?: string;
+    createdAt: string;
+  }>
+>();
 
 function dedupeKey(pointer: { sourceRef: string; sourceFingerprint: string }): string {
   return `${pointer.sourceRef}::${pointer.sourceFingerprint}`;
@@ -175,7 +186,10 @@ export function getFinding(insightId: string, findingId: string): P10Finding | u
   return listFindings(insightId).find((f) => f.id === findingId);
 }
 
-export function addFinding(insightId: string, input: CreateFindingInput): { finding?: P10Finding; error?: string } {
+export function addFinding(
+  insightId: string,
+  input: CreateFindingInput
+): { finding?: P10Finding; error?: string } {
   if (!isValidP10ConfidenceLevel(input.confidence_level)) {
     return { error: `Invalid confidence level: ${input.confidence_level}` };
   }
@@ -296,7 +310,9 @@ export function addEvidencePointer(
 
   const key = dedupeKey(input);
   const existing = finding.evidence_pointers.find(
-    (p) => !p.isTombstone && dedupeKey({ sourceRef: p.sourceRef, sourceFingerprint: p.sourceFingerprint }) === key
+    (p) =>
+      !p.isTombstone &&
+      dedupeKey({ sourceRef: p.sourceRef, sourceFingerprint: p.sourceFingerprint }) === key
   );
   if (existing) {
     return { pointer: existing };
@@ -392,7 +408,9 @@ export function buildHandoffPayload(
     insightArtifactId: insightId,
     findingId: finding.id,
     findingStatement: finding.finding_statement,
-    confidenceLevel: (finding.confidence_level === 'insufficient' ? 'unknown' : finding.confidence_level) as any,
+    confidenceLevel: (finding.confidence_level === 'insufficient'
+      ? 'unknown'
+      : finding.confidence_level) as any,
     limits: finding.limits,
     nextAction: finding.next_action,
     evidencePointers: activePointers,

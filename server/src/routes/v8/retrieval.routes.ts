@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import { Router } from 'express';
-import { ZodError, z } from 'zod';
+import { z, ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
@@ -84,7 +84,10 @@ router.post(
         });
       }
     } catch (polErr: any) {
-      logger.error('[V8 Retrieval] Policy gateway unavailable (fail-closed):', polErr?.message || String(polErr));
+      logger.error(
+        '[V8 Retrieval] Policy gateway unavailable (fail-closed):',
+        polErr?.message || String(polErr)
+      );
       return res.status(503).json({
         error: 'Policy gateway unavailable',
         code: 'POLICY_GATEWAY_UNAVAILABLE',
@@ -137,7 +140,10 @@ router.post(
         });
       }
     } catch (polErr: any) {
-      logger.error('[V8 Retrieval] Policy gateway unavailable (fail-closed):', polErr?.message || String(polErr));
+      logger.error(
+        '[V8 Retrieval] Policy gateway unavailable (fail-closed):',
+        polErr?.message || String(polErr)
+      );
       return res.status(503).json({
         error: 'Policy gateway unavailable',
         code: 'POLICY_GATEWAY_UNAVAILABLE',

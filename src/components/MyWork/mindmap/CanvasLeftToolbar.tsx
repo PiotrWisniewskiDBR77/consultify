@@ -287,7 +287,9 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               {interactionMode === 'pan'
                 ? 'PAN'
                 : interactionMode === 'connect'
-                  ? (isPl ? 'LNK' : 'LNK')
+                  ? isPl
+                    ? 'LNK'
+                    : 'LNK'
                   : isPl
                     ? 'SEL'
                     : 'SEL'}

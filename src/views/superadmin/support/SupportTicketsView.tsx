@@ -396,9 +396,7 @@ export const SupportTicketsView: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-              Conversation
-            </div>
+            <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">Conversation</div>
             <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-navy-900 space-y-3">
               {commentsLoading ? (
                 <div className="text-sm text-slate-500 dark:text-slate-400">Loading replies...</div>
@@ -411,7 +409,9 @@ export const SupportTicketsView: React.FC = () => {
                     <div className="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
                       <span>{comment.isInternal ? 'Internal note' : 'Reply'}</span>
                       <span>
-                        {comment.created_at ? new Date(comment.created_at).toLocaleString() : 'Just now'}
+                        {comment.created_at
+                          ? new Date(comment.created_at).toLocaleString()
+                          : 'Just now'}
                       </span>
                     </div>
                     <div className="mt-2 text-sm text-slate-900 dark:text-white whitespace-pre-wrap">
@@ -426,7 +426,9 @@ export const SupportTicketsView: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label className="block text-xs text-slate-500 dark:text-slate-400">Add reply</label>
+                <label className="block text-xs text-slate-500 dark:text-slate-400">
+                  Add reply
+                </label>
                 <textarea
                   value={commentDraft}
                   onChange={(e) => setCommentDraft(e.target.value)}
