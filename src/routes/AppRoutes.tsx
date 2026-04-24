@@ -1084,10 +1084,12 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        <Route path="/chat/v10-runtime" element={<Navigate to={ROUTES.AI_CHAT} replace />} />
+
         <Route
           path={ROUTES.AI_CHAT_V10_RUNTIME}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI Chat', 'V10 Runtime']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Internal', 'V10 QA']} noPadding>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <V10RuntimeWorkspaceView />

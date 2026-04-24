@@ -22,11 +22,12 @@ export function V10RuntimeWorkspaceView() {
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="max-w-4xl">
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-            Chat V10 Runtime Workspace
+            Internal V10 QA Workspace
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Aplikacyjny entrypoint do sprawdzania V10 jako calego systemu: host 8 blokow, readiness,
-            flagi i smoke surface pod testy integracyjne.
+            Wewnetrzny host QA do sprawdzania V10 jako calego systemu: 8 blokow, readiness, flagi
+            i smoke surface pod testy integracyjne. Ten ekran nie jest czescia normalnej
+            nawigacji produktu.
           </p>
         </div>
 

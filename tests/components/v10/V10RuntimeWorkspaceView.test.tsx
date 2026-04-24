@@ -12,7 +12,7 @@ vi.mock('../../../src/components/Admin/ChatV10RuntimesPanel', () => ({
 describe('V10RuntimeWorkspaceView', () => {
   it('renders the dedicated V10 entrypoint and smoke surface', () => {
     render(
-      <MemoryRouter initialEntries={['/chat/v10-runtime']}>
+      <MemoryRouter initialEntries={['/internal/v10-runtime']}>
         <V10RuntimeWorkspaceView />
       </MemoryRouter>
     );
@@ -20,7 +20,7 @@ describe('V10RuntimeWorkspaceView', () => {
     expect(screen.getByTestId('v10-runtime-entrypoint')).toBeInTheDocument();
     expect(screen.getByTestId('v10-runtime-smoke-surface')).toBeInTheDocument();
     expect(screen.getByTestId('v10-runtime-rollout-summary')).toBeInTheDocument();
-    expect(screen.getByText('/chat/v10-runtime')).toBeInTheDocument();
+    expect(screen.getByText('/internal/v10-runtime')).toBeInTheDocument();
     expect(screen.getByText('Default-off hygiene')).toBeInTheDocument();
     expect(screen.getByText('Artifact')).toBeInTheDocument();
     expect(screen.getByText('Agent')).toBeInTheDocument();

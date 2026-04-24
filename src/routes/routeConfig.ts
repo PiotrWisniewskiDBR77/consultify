@@ -28,7 +28,7 @@ export const ROUTES = {
 
   // Main App Routes
   AI_CHAT: '/chat',
-  AI_CHAT_V10_RUNTIME: '/chat/v10-runtime',
+  AI_CHAT_V10_RUNTIME: '/internal/v10-runtime',
   APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   WORDY: '/wordy',

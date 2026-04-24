@@ -26,7 +26,7 @@ test.describe('L4 Smoke — V10 runtime workspace [@module:v10]', () => {
   test.setTimeout(90000);
 
   test('renders the dedicated V10 host route with rollout and 8-block workspace chrome', async ({ page }) => {
-    await page.goto('/chat/v10-runtime');
+    await page.goto('/internal/v10-runtime');
     await dismissTourModal(page);
 
     await expect(page.locator('[data-testid="v10-runtime-entrypoint"]')).toBeVisible({ timeout: 30000 });
